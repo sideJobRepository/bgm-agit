@@ -1,0 +1,84 @@
+# Default ignored files
+/shelf/
+# Editor-based HTTP Client requests
+/httpRequests/
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
+.idea
+
+/bgm-agit-api/.gradle/
+/bgm-agit-api/build/
+/bgm-agit-api/gradle/
+/bgm-agit-api/gradlew
+/bgm-agit-api/gradlew.bat
+/bgm-agit-api/*.iml
+/bgm-agit-api/HELP.md
+
+# gradle-wrapper.jar 예외 처리
+!/bgm-agit-api/gradle/wrapper/gradle-wrapper.jar
+
+# 빌드 디렉토리 예외
+!/bgm-agit-api/**/src/main/**/build/
+/bgm-agit-api/**/src/test/**/build/
+
+### STS ###
+/bgm-agit-api/.apt_generated
+/bgm-agit-api/.classpath
+/bgm-agit-api/.factorypath
+/bgm-agit-api/.project
+/bgm-agit-api/.settings
+/bgm-agit-api/.springBeans
+/bgm-agit-api/.sts4-cache
+/bgm-agit-api/bin/
+!/bgm-agit-api/**/src/main/**/bin/
+/bgm-agit-api/**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+/bgm-agit-api/.idea
+/bgm-agit-api/out/
+!/bgm-agit-api/**/src/main/**/out/
+/bgm-agit-api/**/src/test/**/out/
+
+### NetBeans ###
+/bgm-agit-api/nbproject/private/
+/bgm-agit-api/nbbuild/
+/bgm-agit-api/dist/
+/bgm-agit-api/nbdist/
+/bgm-agit-api/.nb-gradle/
+
+/mysql_data
+
+
+# =========================
+# bgm-agit-front Git Ignore
+# 루트에서 front 모듈에만 적용
+# =========================
+
+# 로그 파일
+/bgm-agit-front/logs
+/bgm-agit-front/*.log
+/bgm-agit-front/npm-debug.log*
+/bgm-agit-front/yarn-debug.log*
+/bgm-agit-front/yarn-error.log*
+/bgm-agit-front/pnpm-debug.log*
+/bgm-agit-front/lerna-debug.log*
+
+# 빌드 및 의존성
+/bgm-agit-front/node_modules/
+/bgm-agit-front/dist/
+/bgm-agit-front/dist-ssr/
+/bgm-agit-front/*.local
+
+# 에디터 관련
+/bgm-agit-front/.vscode/*
+!/bgm-agit-front/.vscode/extensions.json
+/bgm-agit-front/.idea
+/bgm-agit-front/.DS_Store
+/bgm-agit-front/*.suo
+/bgm-agit-front/*.ntvs*
+/bgm-agit-front/*.njsproj
+/bgm-agit-front/*.sln
+/bgm-agit-front/*.sw?
+
+bgm-agit.iml
