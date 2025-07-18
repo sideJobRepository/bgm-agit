@@ -3,6 +3,7 @@ services:
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: BGMAGIT
       TZ: Asia/Seoul
     command:
       - --default-time-zone=Asia/Seoul
