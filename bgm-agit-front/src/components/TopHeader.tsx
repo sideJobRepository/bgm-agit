@@ -116,21 +116,17 @@ export default function TopHeader() {
         <ul>
           {menus.map((menu, i) => (
             <React.Fragment key={i}>
-              <li>
+              <li
+                onClick={() => {
+                  if (isMobileSubOpen === menu.name) {
+                    setIsMobileSubOpen(null);
+                  } else {
+                    setIsMobileSubOpen(menu.name);
+                  }
+                }}
+              >
                 <a>{menu.name}</a>
-                {isMobileSubOpen === menu.name ? (
-                  <MdKeyboardArrowUp
-                    onClick={() => {
-                      setIsMobileSubOpen(null);
-                    }}
-                  />
-                ) : (
-                  <MdKeyboardArrowDown
-                    onClick={() => {
-                      setIsMobileSubOpen(menu.name);
-                    }}
-                  />
-                )}
+                {isMobileSubOpen === menu.name ? <MdKeyboardArrowUp /> : <MdKeyboardArrowDown />}
               </li>
               {menu.subMenu.map((sub, j) => (
                 <AnimatedSubLiWrapper key={j} $visible={isMobileSubOpen === menu.name}>
