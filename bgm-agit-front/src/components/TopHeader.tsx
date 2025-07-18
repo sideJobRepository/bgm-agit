@@ -169,6 +169,7 @@ const Wrapper = styled.div<WithTheme>`
   }
 
   img {
+    margin-left: -20px;
     height: 100px;
     width: auto;
     margin-top: 20px;
