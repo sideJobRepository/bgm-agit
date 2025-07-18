@@ -34,7 +34,7 @@ public class BgmAgitSecurityConfig {
         //managerBuilder.authenticationProvider(chamAuthenticationProvider);
         AuthenticationManager authenticationManager = managerBuilder.build();
        
-        http.securityMatcher("/bgmagit/**")
+        http.securityMatcher("/bgm-agit/**")
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)

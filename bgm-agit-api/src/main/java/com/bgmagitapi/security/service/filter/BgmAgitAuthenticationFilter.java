@@ -17,11 +17,12 @@ public class BgmAgitAuthenticationFilter  extends AbstractAuthenticationProcessi
     
     
     public BgmAgitAuthenticationFilter() {
-        super(new OrRequestMatcher(
-                new AntPathRequestMatcher("/bgm-agit/kakao-login", "POST"),
-                new AntPathRequestMatcher("/bgm-agit/naver-login", "POST"),
-                new AntPathRequestMatcher("/bgm-agit/google-login", "POST")
-        ));
+        super(new AntPathRequestMatcher(null, "POST"));
+//        super(new OrRequestMatcher(
+//                new AntPathRequestMatcher("/bgm-agit/kakao-login", "POST"),
+//                new AntPathRequestMatcher("/bgm-agit/naver-login", "POST"),
+//                new AntPathRequestMatcher("/bgm-agit/google-login", "POST")
+//        ));
     }
     
     @Override
