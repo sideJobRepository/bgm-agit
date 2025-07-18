@@ -212,18 +212,18 @@ const Center = styled.nav<WithTheme>`
 const Right = styled.div<WithTheme>`
   display: flex;
   align-items: center;
+  justify-content: right;
 
   ul {
     color: ${({ theme }) => theme.colors.subMenuColor};
     font-size: ${({ theme }) => theme.sizes.large};
     font-weight: ${({ theme }) => theme.weight.semiBold};
-    gap: 20px;
 
     li {
       display: flex;
       align-items: center;
       width: 120px;
-      text-align: center;
+      justify-content: right;
 
       svg {
         margin-right: 8px;
