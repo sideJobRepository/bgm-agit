@@ -21,7 +21,7 @@ import java.util.List;
 @EnableWebSecurity
 @Configuration
 @RequiredArgsConstructor
-public class BgmagitSecurityConfig {
+public class BgmAgitSecurityConfig {
     
     private final String[] resource = {"/css/**", "/images/**", "/js/**", "/favicon.*", "/*/icon-*"};
     

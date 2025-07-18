@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/bgm-agit")
-public class BgmagitMenuController {
+public class BgmAgitMenuController {
 
     
     @GetMapping("/menu")
