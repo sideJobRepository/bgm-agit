@@ -1,0 +1,120 @@
+name: bgm-agit
+
+on:
+  push:
+    branches:
+      - main
+
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            backend : 
+              - 'bgm-agit-api/**'
+            frontend : 
+              - 'bgm-agit-front/**'
+
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+
+  build-backend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+
+      - name: gradle 권한 부여 및 빌드
+        run: |
+          cd bgm-agit-api
+          chmod +x ./gradlew
+          ./gradlew clean build -x test
+
+      - name: 도커 빌드
+        run: docker build -t peachcoolpis/bgmagit-server .
+
+      - name: 도커 허브 로그인
+        uses: docker/login-action@v3
+        with:
+          username: ${{secrets.DOCKERHUB_USERNAME}}
+          password: ${{secrets.DOCKERHUB_TOKEN}}
+
+      - name: 도커 허브 푸쉬
+        run: docker push peachcoolpis/bgmagit-server
+
+      - name: ssh 접속
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          script_stop: true
+          port: 22
+          script: |
+            docker stop bgmagit-server || true
+            docker rm bgmagit-server || true
+            docker pull peachcoolpis/bgmagit-server:latest
+            docker run -d --name bgmagit-server \
+             --network bgm-network \
+            -e DB_URL=${{ secrets.DB_URL }}  \
+            -e DB_PORT=${{ secrets.DB_PORT }}  \
+            -e DB_USERNAME=${{ secrets.DB_USERNAME }}  \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e SPRING_PROFILES_ACTIVE=real \
+            -v $(pwd)/logs:/app/logs \
+            -p 8080:8080 \
+            peachcoolpis/bgmagit-server:latest
+            docker image prune -f
+
+  build-frontend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: npm 인스톨
+        run: cd bgm-agit-front && npm install
+
+      - name: npm 빌드
+        run: cd bgm-agit-front && npm run build
+
+      - name: scp로 전송
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: 22
+          source: bgm-agit-front/dist/*
+          target: /home/bae/deploy/front-dist-temp
+
+      - name: ssh 접속
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: 22
+          script: |
+            sudo rm -rf /usr/share/nginx/bgm-agit-front
+            sudo mv /home/bae/deploy/front-dist-temp/* /usr/share/nginx/bgm-agit-front/
+            sudo systemctl restart nginx

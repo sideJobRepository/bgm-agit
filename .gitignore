@@ -9,9 +9,6 @@
 
 /bgm-agit-api/.gradle/
 /bgm-agit-api/build/
-/bgm-agit-api/gradle/
-/bgm-agit-api/gradlew
-/bgm-agit-api/gradlew.bat
 /bgm-agit-api/*.iml
 /bgm-agit-api/HELP.md
 
