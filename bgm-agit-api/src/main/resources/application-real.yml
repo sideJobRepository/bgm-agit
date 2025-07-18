@@ -14,9 +14,6 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
 
-
-
-
 logging:
   file:
     name: /app/logs/bgmagit.log
@@ -25,3 +22,7 @@ logging:
   logback:
     rollingpolicy:
       file-name-pattern: ${LOG_FILE}.%d{yyyy-MM-dd}.%i.log
+
+
+cors:
+  url: https://bgmagit.co.kr

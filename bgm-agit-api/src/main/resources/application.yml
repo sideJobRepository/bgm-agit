@@ -13,3 +13,7 @@ spring:
     multipart:
       max-file-size: 100MB
       max-request-size: 100MB
+
+
+cors:
+  url: http://localhost:5173
