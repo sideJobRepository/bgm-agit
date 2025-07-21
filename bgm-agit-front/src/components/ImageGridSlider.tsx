@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { FaUsers } from 'react-icons/fa';
 import { useSwipeable } from 'react-swipeable';
+import ImageLightbox from './ImageLightbox.tsx';
 
 interface GridItem {
   image: string;
@@ -20,6 +21,13 @@ interface Props {
 export default function ImageGridSlider({ items, visibleCount, labelGb, interval = 5000 }: Props) {
   const [index, setIndex] = useState(0);
 
+  //이미지 전체
+  const [lightboxIndex, setLightboxIndex] = useState(-1);
+
+  const handleImageClick = (clickedIndex: number) => {
+    setLightboxIndex(clickedIndex);
+  };
+
   const swipeHandlers = useSwipeable({
     onSwipedLeft: () => {
       setIndex(prev => (prev + 1 > items.length - visibleCount ? 0 : prev + 1));
@@ -27,7 +35,7 @@ export default function ImageGridSlider({ items, visibleCount, labelGb, interval
     onSwipedRight: () => {
       setIndex(prev => (prev === 0 ? items.length - visibleCount : prev - 1));
     },
-    trackMouse: true, // ✅ 마우스도 지원!
+    trackMouse: true,
   });
 
   useEffect(() => {
@@ -52,10 +60,21 @@ export default function ImageGridSlider({ items, visibleCount, labelGb, interval
                 )}
               </div>
             )}
-            <img src={item.image} alt={`img-${idx}`} draggable={false} />
+            <img
+              src={item.image}
+              alt={`img-${idx}`}
+              draggable={false}
+              onClick={() => labelGb === 1 && handleImageClick(idx)}
+            />
           </Slide>
         ))}
       </Slider>
+      <ImageLightbox
+        images={items.map(item => item.image)}
+        index={lightboxIndex}
+        onClose={() => setLightboxIndex(-1)}
+        onIndexChange={setLightboxIndex}
+      />
     </Wrapper>
   );
 }
