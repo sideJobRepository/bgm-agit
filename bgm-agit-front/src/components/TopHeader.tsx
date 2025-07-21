@@ -73,6 +73,7 @@ export default function TopHeader() {
           alt="로고"
           onClick={() => {
             navigate('/');
+            setIsSubOpen(false);
           }}
         />
       </Left>
@@ -93,6 +94,7 @@ export default function TopHeader() {
                   $active={location.pathname === sub.link}
                   onClick={() => {
                     navigate(sub.link);
+                    setIsSubOpen(false);
                   }}
                 >
                   <a>{sub.name}</a>
@@ -138,6 +140,7 @@ export default function TopHeader() {
                     $active={location.pathname === sub.link}
                     onClick={() => {
                       navigate(sub.link);
+                      toggleMenu();
                     }}
                   >
                     <a>{sub.name}</a>
