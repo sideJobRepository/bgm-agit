@@ -222,14 +222,14 @@ const ContentBox = styled.div<WithTheme>`
     a {
       display: inline-flex;
       align-items: center;
-
+      font-weight: ${({ theme }) => theme.weight.semiBold};
       margin-left: auto;
       margin-right: 20px;
       color: ${({ theme }) => theme.colors.navColor};
       cursor: pointer;
 
       svg {
-        margin-bottom: 2px;
+        margin-bottom: 1px;
       }
     }
   }
@@ -366,14 +366,14 @@ const TitleBox = styled.div<WithTheme>`
   a {
     display: inline-flex;
     align-items: center;
-
+    font-weight: ${({ theme }) => theme.weight.semiBold};
     margin-left: auto;
     margin-right: 20px;
     color: ${({ theme }) => theme.colors.navColor};
     cursor: pointer;
 
     svg {
-      margin-bottom: 2px;
+      margin-bottom: 1px;
     }
   }
 
