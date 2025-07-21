@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 @Getter
-public class DateSuperClass {
+public abstract class DateSuperClass {
     
     @CreatedDate
     @Column(name = "REGIST_DATE")
