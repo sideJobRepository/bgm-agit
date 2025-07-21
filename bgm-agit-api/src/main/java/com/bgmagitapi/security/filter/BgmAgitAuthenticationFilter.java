@@ -1,6 +1,9 @@
-package com.bgmagitapi.security.service.filter;
+package com.bgmagitapi.security.filter;
 
+import com.bgmagitapi.security.service.request.SocialAuthenticationRequest;
 import com.bgmagitapi.security.service.social.SocialLoginUrl;
+import com.bgmagitapi.security.token.SocialAuthenticationToken;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,20 +35,17 @@ public class BgmAgitAuthenticationFilter  extends AbstractAuthenticationProcessi
         SocialLoginUrl socialLoginUrl = SocialLoginUrl.getByPath(uri)
                 .orElseThrow(() -> new ServletException("Social Login URL not found"));
         
-        switch (socialLoginUrl) {
-            case KAKAO -> {
-                System.out.println("Kakao Login");
-                return this.getAuthenticationManager().authenticate(null);
-            }
-            case NAVER -> {
-                System.out.println("NAVER Login");
-                return this.getAuthenticationManager().authenticate(null);
-            }
-            case GOOGLE -> {
-                System.out.println("GOOGLE Login");
-                return this.getAuthenticationManager().authenticate(null);
-            }
-            default -> throw new AuthenticationServiceException("Unsupported login type: " + socialLoginUrl);
+        ObjectMapper objectMapper = new ObjectMapper();
+        SocialAuthenticationRequest loginRequest = objectMapper.readValue(request.getReader(), SocialAuthenticationRequest.class);
+        
+        if (loginRequest.getCode() == null || loginRequest.getCode().isBlank()) {
+            throw new AuthenticationServiceException("code 값이 없습니다.");
         }
+        SocialAuthenticationToken authRequest = new SocialAuthenticationToken(
+                socialLoginUrl.name().toLowerCase(),
+                loginRequest.getCode()
+        );
+        
+        return this.getAuthenticationManager().authenticate(authRequest);
     }
 }

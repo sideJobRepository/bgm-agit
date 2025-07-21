@@ -1,6 +1,6 @@
 package com.bgmagitapi.security;
 
-import com.bgmagitapi.security.service.filter.BgmAgitAuthenticationFilter;
+import com.bgmagitapi.security.filter.BgmAgitAuthenticationFilter;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.configurers.AbstractAuthenticationFilterConfigurer;
