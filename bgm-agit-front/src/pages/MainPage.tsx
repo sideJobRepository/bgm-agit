@@ -1,12 +1,16 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { FaUsers, FaCalendarAlt, FaWifi, FaCar } from 'react-icons/fa';
+import { IoChevronForward } from 'react-icons/io5';
 import ImageGridSlider from '../components/ImageGridSlider.tsx';
 import Notice from '../pages/Notice.tsx';
 import { useMediaQuery } from 'react-responsive';
+import { useNavigate } from 'react-router-dom';
 
 export default function MainPage() {
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+
+  const navigate = useNavigate();
 
   const visibleCountMain = isMobile ? 2 : 3;
   const visibleCountGame = isMobile ? 2 : 4;
@@ -18,7 +22,17 @@ export default function MainPage() {
       <TopSection>
         <LeftSection>
           <ContentBox>
-            <p>BGM 아지트란.</p>
+            <div>
+              <p>BGM 아지트란.</p>
+              <a
+                onClick={() => {
+                  navigate('/about');
+                }}
+              >
+                more
+                <IoChevronForward />
+              </a>
+            </div>
             <h2>
               누구에게나
               <br />
@@ -124,6 +138,14 @@ export default function MainPage() {
         <TitleBox>
           <h2>공지사항</h2>
           <p>BGM 아지트 중요 정보 및 이벤트를 확인해주세요!</p>
+          <a
+            onClick={() => {
+              navigate('/about');
+            }}
+          >
+            more
+            <IoChevronForward />
+          </a>
         </TitleBox>
         <SliderBox>
           <Notice
@@ -188,9 +210,28 @@ const ContentBox = styled.div<WithTheme>`
   height: 60%;
   font-weight: ${({ theme }) => theme.weight.bold};
 
-  p {
-    color: ${({ theme }) => theme.colors.blueColor};
-    font-size: ${({ theme }) => theme.sizes.bigLarge};
+  div {
+    display: flex;
+
+    align-items: center;
+    p {
+      color: ${({ theme }) => theme.colors.blueColor};
+      font-size: ${({ theme }) => theme.sizes.bigLarge};
+    }
+
+    a {
+      display: inline-flex;
+      align-items: center;
+
+      margin-left: auto;
+      margin-right: 20px;
+      color: ${({ theme }) => theme.colors.navColor};
+      cursor: pointer;
+
+      svg {
+        margin-bottom: 2px;
+      }
+    }
   }
 
   h2 {
@@ -322,6 +363,20 @@ const TitleBox = styled.div<WithTheme>`
     text-underline-offset: 4px;
   }
 
+  a {
+    display: inline-flex;
+    align-items: center;
+
+    margin-left: auto;
+    margin-right: 20px;
+    color: ${({ theme }) => theme.colors.navColor};
+    cursor: pointer;
+
+    svg {
+      margin-bottom: 2px;
+    }
+  }
+
   @media ${({ theme }) => theme.device.mobile} {
     height: 20%;
     h2 {
@@ -330,6 +385,10 @@ const TitleBox = styled.div<WithTheme>`
     p {
       margin-top: 3px;
       font-size: ${({ theme }) => theme.sizes.xxsmall};
+    }
+
+    a {
+      margin-right: 0;
     }
   }
 `;

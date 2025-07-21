@@ -2,6 +2,7 @@ import styled from 'styled-components';
 import { useEffect, useState } from 'react';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { FaUsers } from 'react-icons/fa';
+import { useSwipeable } from 'react-swipeable';
 
 interface GridItem {
   image: string;
@@ -19,6 +20,16 @@ interface Props {
 export default function ImageGridSlider({ items, visibleCount, labelGb, interval = 5000 }: Props) {
   const [index, setIndex] = useState(0);
 
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => {
+      setIndex(prev => (prev + 1 > items.length - visibleCount ? 0 : prev + 1));
+    },
+    onSwipedRight: () => {
+      setIndex(prev => (prev === 0 ? items.length - visibleCount : prev - 1));
+    },
+    trackMouse: true, // ✅ 마우스도 지원!
+  });
+
   useEffect(() => {
     const timer = setInterval(() => {
       setIndex(prev => (prev + 1 > items.length - visibleCount ? 0 : prev + 1));
@@ -27,7 +38,7 @@ export default function ImageGridSlider({ items, visibleCount, labelGb, interval
   }, [items.length, visibleCount, interval]);
 
   return (
-    <Wrapper>
+    <Wrapper {...swipeHandlers}>
       <Slider $visibleCount={visibleCount} $itemCount={items.length} $index={index}>
         {items.map((item, idx) => (
           <Slide key={idx} $visibleCount={visibleCount}>
@@ -41,7 +52,7 @@ export default function ImageGridSlider({ items, visibleCount, labelGb, interval
                 )}
               </div>
             )}
-            <img src={item.image} alt={`img-${idx}`} />
+            <img src={item.image} alt={`img-${idx}`} draggable={false} />
           </Slide>
         ))}
       </Slider>
