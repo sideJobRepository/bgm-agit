@@ -241,8 +241,19 @@ const ContentBox = styled.div<WithTheme>`
   }
 
   @media ${({ theme }) => theme.device.mobile} {
-    p {
-      font-size: ${({ theme }) => theme.sizes.medium};
+    div {
+      p {
+        font-size: ${({ theme }) => theme.sizes.medium};
+      }
+
+      a {
+        margin-right: 0;
+        font-size: ${({ theme }) => theme.sizes.xsmall};
+        svg {
+          margin-bottom: 0;
+          font-size: ${({ theme }) => theme.sizes.xxsmall};
+        }
+      }
     }
 
     h2 {
@@ -389,6 +400,11 @@ const TitleBox = styled.div<WithTheme>`
 
     a {
       margin-right: 0;
+      font-size: ${({ theme }) => theme.sizes.xsmall};
+      svg {
+        margin-top: 1px;
+        font-size: ${({ theme }) => theme.sizes.xxsmall};
+      }
     }
   }
 `;
