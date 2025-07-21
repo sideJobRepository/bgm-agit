@@ -3,8 +3,16 @@ import type { WithTheme } from '../styles/styled-props.ts';
 import { FaUsers, FaCalendarAlt, FaWifi, FaCar } from 'react-icons/fa';
 import ImageGridSlider from '../components/ImageGridSlider.tsx';
 import Notice from '../pages/Notice.tsx';
+import { useMediaQuery } from 'react-responsive';
 
 export default function MainPage() {
+  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+
+  const visibleCountMain = isMobile ? 2 : 3;
+  const visibleCountGame = isMobile ? 2 : 4;
+  const visibleCountReserve = isMobile ? 1 : 3;
+  const visibleCountFood = isMobile ? 2 : 4;
+
   return (
     <MainPageWrapper>
       <TopSection>
@@ -19,26 +27,26 @@ export default function MainPage() {
           </ContentBox>
           <LogoBox>
             <GridItem>
-              <FaUsers size={28} />
+              <FaUsers />
               <span>단체 이용가능</span>
             </GridItem>
             <GridItem>
-              <FaCalendarAlt size={28} />
+              <FaCalendarAlt />
               <span>예약 가능</span>
             </GridItem>
             <GridItem>
-              <FaWifi size={28} />
+              <FaWifi />
               <span>무선 와이파이</span>
             </GridItem>
             <GridItem>
-              <FaCar size={28} />
+              <FaCar />
               <span>주차 가능</span>
             </GridItem>
           </LogoBox>
         </LeftSection>
         <RightSection>
           <ImageGridSlider
-            visibleCount={3}
+            visibleCount={visibleCountMain}
             labelGb={1}
             items={[
               { image: '/images/slider1.jpeg', label: '메인1', group: null },
@@ -57,7 +65,7 @@ export default function MainPage() {
         </TitleBox>
         <SliderBox>
           <ImageGridSlider
-            visibleCount={4}
+            visibleCount={visibleCountGame}
             labelGb={2}
             items={[
               { image: '/images/game1.jpeg', label: '게임1', group: null },
@@ -79,7 +87,7 @@ export default function MainPage() {
         </TitleBox>
         <SliderBox>
           <ImageGridSlider
-            visibleCount={3}
+            visibleCount={visibleCountReserve}
             labelGb={3}
             items={[
               { image: '/images/room1.jpeg', label: 'A Room', group: 4 },
@@ -99,7 +107,7 @@ export default function MainPage() {
         </TitleBox>
         <SliderBox>
           <ImageGridSlider
-            visibleCount={4}
+            visibleCount={visibleCountFood}
             labelGb={4}
             items={[
               { image: '/images/food1.jpeg', label: '아이스 아메리카노', group: null },
@@ -139,10 +147,10 @@ export default function MainPage() {
 
 const MainPageWrapper = styled.div<WithTheme>`
   max-width: 1500px;
-  min-width: 1023px;
+  min-width: 1280px;
   min-height: 600px;
   height: 100%;
-  align-items: center;
+  margin: 0 auto;
   @media ${({ theme }) => theme.device.mobile} {
     max-width: 100%;
     min-width: 100%;
@@ -156,6 +164,10 @@ const TopSection = styled.section<WithTheme>`
   height: 300px;
   padding: 20px 10px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    flex-direction: column;
+  }
 `;
 
 const LeftSection = styled.section<WithTheme>`
@@ -164,6 +176,10 @@ const LeftSection = styled.section<WithTheme>`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 100%;
+    height: 60%;
+  }
 `;
 
 const ContentBox = styled.div<WithTheme>`
@@ -182,11 +198,21 @@ const ContentBox = styled.div<WithTheme>`
     font-size: ${({ theme }) => theme.sizes.xxlarge};
     text-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
   }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    p {
+      font-size: ${({ theme }) => theme.sizes.medium};
+    }
+
+    h2 {
+      font-size: ${({ theme }) => theme.sizes.large};
+    }
+  }
 `;
 
 const LogoBox = styled.div`
   display: grid;
-  height: 30%;
+  height: 40%;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   justify-items: center;
@@ -199,10 +225,23 @@ const GridItem = styled.div<WithTheme>`
   align-items: center;
   color: ${({ theme }) => theme.colors.subMenuColor};
 
+  svg {
+    font-size: ${({ theme }) => theme.sizes.xxlarge};
+  }
   span {
     font-weight: ${({ theme }) => theme.weight.semiBold};
     margin-top: 10px;
-    font-size: 14px;
+    font-size: ${({ theme }) => theme.sizes.medium};
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    svg {
+      font-size: ${({ theme }) => theme.sizes.medium};
+    }
+
+    span {
+      font-size: ${({ theme }) => theme.sizes.xxsmall};
+    }
   }
 `;
 
@@ -210,6 +249,12 @@ const RightSection = styled.section<WithTheme>`
   width: 64%;
   height: 100%;
   padding: 10px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 100%;
+    height: 40%;
+    padding: 0;
+  }
 `;
 
 const GameSection = styled.section<WithTheme>`
@@ -218,6 +263,10 @@ const GameSection = styled.section<WithTheme>`
   padding: 30px 10px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
   color: ${({ theme }) => theme.colors.greenColor};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    height: 242px;
+  }
 `;
 
 const ReservationSection = styled.section<WithTheme>`
@@ -225,6 +274,10 @@ const ReservationSection = styled.section<WithTheme>`
   height: 400px;
   padding: 30px 10px;
   color: ${({ theme }) => theme.colors.blueColor};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    height: 242px;
+  }
 `;
 
 const FoodSection = styled.section<WithTheme>`
@@ -234,13 +287,22 @@ const FoodSection = styled.section<WithTheme>`
   color: ${({ theme }) => theme.colors.bronzeColor};
   background-color: ${({ theme }) => theme.colors.basicColor};
   border-radius: 12px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    height: 242px;
+  }
 `;
 
 const NoticeSection = styled.section<WithTheme>`
   width: 100%;
-  height: 400px;
+  height: 100%;
   padding: 30px 10px;
   color: ${({ theme }) => theme.colors.menuColor};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    height: 100%;
+    overflow: hidden;
+  }
 `;
 
 const TitleBox = styled.div<WithTheme>`
@@ -260,9 +322,24 @@ const TitleBox = styled.div<WithTheme>`
     text-decoration: underline;
     text-underline-offset: 4px;
   }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    height: 20%;
+    h2 {
+      font-size: ${({ theme }) => theme.sizes.small};
+    }
+    p {
+      margin-top: 3px;
+      font-size: ${({ theme }) => theme.sizes.xxsmall};
+    }
+  }
 `;
 
 const SliderBox = styled.div<WithTheme>`
   width: 100%;
   height: 84%;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    height: 80%;
+  }
 `;

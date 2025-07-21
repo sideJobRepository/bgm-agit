@@ -29,6 +29,8 @@ export const theme = {
     large: '18px',
     medium: '16px',
     small: '14px',
+    xsmall: '12px',
+    xxsmall: '10px',
   },
   weight: {
     bold: '700',

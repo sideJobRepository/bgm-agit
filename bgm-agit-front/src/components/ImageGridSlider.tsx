@@ -4,7 +4,7 @@ import type { WithTheme } from '../styles/styled-props.ts';
 import { FaUsers } from 'react-icons/fa';
 
 interface GridItem {
-  image: null | string;
+  image: string;
   label: string;
   group: null | number;
 }
@@ -61,15 +61,22 @@ const Slider = styled.div<{
   $index: number;
 }>`
   display: flex;
+  justify-content: flex-start;
   height: 100%;
-  width: ${({ $itemCount, $visibleCount }) => `${($itemCount * 100) / $visibleCount}%`};
-  transform: ${({ $index, $itemCount }) => `translateX(-${($index * 100) / $itemCount}%)`};
-  transition: transform 0.6s ease-in-out;
   gap: 20px;
+  transition: transform 0.6s ease-in-out;
+
+  width: ${({ $itemCount, $visibleCount }) =>
+    `calc((100% - ${($visibleCount - 1) * 20}px) * ${$itemCount / $visibleCount} + ${($itemCount - 1) * 20}px)`};
+
+  transform: ${({ $index, $itemCount }) =>
+    `translateX(calc(-${$index} * (100% + 20px) / ${$itemCount}))`};
 `;
 
 const Slide = styled.div<WithTheme & { $visibleCount: number }>`
-  width: ${({ $visibleCount }) => `${100 / $visibleCount}%`};
+  width: calc(
+    (100% - ${props => (props.$visibleCount - 1) * 20}px) / ${props => props.$visibleCount}
+  );
   aspect-ratio: 1 / 1;
   box-sizing: border-box;
   position: relative;
@@ -87,12 +94,26 @@ const Slide = styled.div<WithTheme & { $visibleCount: number }>`
     top: 6px;
     left: 6px;
 
+    p {
+      @media ${({ theme }) => theme.device.mobile} {
+        font-size: ${({ theme }) => theme.sizes.xsmall};
+      }
+    }
+
     svg {
       margin: 0 4px 2px 8px;
+
+      @media ${({ theme }) => theme.device.mobile} {
+        font-size: ${({ theme }) => theme.sizes.xsmall};
+      }
     }
 
     span {
       font-size: ${({ theme }) => theme.sizes.small};
+
+      @media ${({ theme }) => theme.device.mobile} {
+        font-size: ${({ theme }) => theme.sizes.xxsmall};
+      }
     }
   }
 

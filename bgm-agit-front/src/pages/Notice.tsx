@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
+import { useMediaQuery } from 'react-responsive';
 
 interface NoticeIItem {
   id: number;
@@ -13,6 +14,8 @@ interface Props {
 }
 
 export default function NoticeTable({ items }: Props) {
+  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+
   return (
     <Table>
       <thead>
@@ -20,7 +23,7 @@ export default function NoticeTable({ items }: Props) {
           <Th>번호</Th>
           <Th>제목</Th>
           <Th>날짜</Th>
-          <Th>분류</Th>
+          {!isMobile && <Th>분류</Th>}
         </tr>
       </thead>
       <tbody>
@@ -29,7 +32,7 @@ export default function NoticeTable({ items }: Props) {
             <Td>{notice.id}</Td>
             <Td>{notice.title}</Td>
             <Td>{notice.date}</Td>
-            <Td>{notice.category}</Td>
+            {!isMobile && <Td>{notice.category}</Td>}
           </tr>
         ))}
       </tbody>
@@ -39,19 +42,27 @@ export default function NoticeTable({ items }: Props) {
 
 const Table = styled.table<WithTheme>`
   width: 100%;
+  margin-top: 30px;
   border-collapse: collapse;
   font-size: ${({ theme }) => theme.sizes.medium};
   color: ${({ theme }) => theme.colors.subMenuColor};
 
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.xsmall};
+  }
+
   th,
   td {
-    padding: 16px;
-    text-align: left;
+    padding: 14px;
+    text-align: center;
   }
 
   tbody tr {
     cursor: pointer;
     border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: ${({ theme }) => theme.sizes.xxsmall};
+    }
 
     &:hover {
       opacity: 0.6;

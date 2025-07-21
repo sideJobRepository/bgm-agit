@@ -49,7 +49,7 @@ const MainArea = styled.main<WithTheme>`
   flex: 1;
   padding: 20px;
   display: flex;
-  justify-items: center;
+  height: 100%;
   overflow-y: auto;
   overflow-x: auto;
 `;

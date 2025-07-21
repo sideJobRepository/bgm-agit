@@ -1,7 +1,6 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import logo from '/kakaomapLogo.png';
-import React from 'react';
 
 export default function Footer() {
   return (
@@ -26,13 +25,25 @@ const Wrapper = styled.div<WithTheme>`
   height: 100px;
   color: ${({ theme }) => theme.colors.white};
   font-size: ${({ theme }) => theme.sizes.medium};
+
+  @media ${({ theme }) => theme.device.tablet} {
+    max-width: 100%;
+    min-width: 100%;
+    padding: 0 16px;
+    flex-direction: column;
+    font-size: ${({ theme }) => theme.sizes.xsmall};
+  }
 `;
 
-const Left = styled.section`
+const Left = styled.section<WithTheme>`
   display: flex;
   height: 100%;
   width: 50%;
   align-items: center;
+
+  @media ${({ theme }) => theme.device.tablet} {
+    width: 100%;
+  }
 
   span {
     margin-top: 4px;
@@ -45,8 +56,13 @@ const Left = styled.section`
   }
 `;
 
-const Right = styled.section`
+const Right = styled.section<WithTheme>`
   margin: auto;
   text-align: right;
   width: 50%;
+
+  @media ${({ theme }) => theme.device.tablet} {
+    width: 100%;
+    height: 100%;
+  }
 `;
