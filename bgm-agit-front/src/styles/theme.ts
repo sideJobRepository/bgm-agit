@@ -11,6 +11,7 @@ export const theme = {
     bronzeColor: '#5C3A21',
     NoticeColor: '#988271',
     lineColor: '#D9D9D9',
+    navColor: '#757575',
     labelGb: 'rgba(66, 69, 72, 0.6)',
     white: '#FFFFFF',
     bg: '#ffffff',

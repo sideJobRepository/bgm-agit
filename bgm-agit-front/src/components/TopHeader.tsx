@@ -6,23 +6,21 @@ import { FaPhone } from 'react-icons/fa';
 import { GiHamburgerMenu } from 'react-icons/gi';
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from 'react-icons/md';
 import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { mainMenuState } from '../recoil';
+import useFetchMainMenu from '../recoil/fetch.ts';
 
 export default function TopHeader() {
-  type SubMenu = { name: string };
-  type MenuItem = { name: string; subMenu: SubMenu[] };
+  useFetchMainMenu();
+  const menus = useRecoilValue(mainMenuState);
+  const navigate = useNavigate();
+
+  const location = useLocation();
 
   //메인 메뉴, 서브 메뉴 추후에 서버에서 받아올 예정
-  const menu: MenuItem[] = [
-    { name: '소개', subMenu: [{ name: 'BGM아지트 소개' }, { name: '보유게임' }] },
-    { name: '예약하기', subMenu: [{ name: '룸' }, { name: '대탁' }, { name: '마작강의 예약' }] },
-    { name: '메뉴', subMenu: [{ name: '음료' }, { name: '식사' }, { name: '스낵' }] },
-    { name: '커뮤니티', subMenu: [{ name: '공지사항' }, { name: '게시판' }] },
-  ];
-
-  const [menus, setMenus] = useState<MenuItem[]>(menu);
 
   const [isSubOpen, setIsSubOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState<string | null>(null);
 
   //서브메뉴 높이 측정
   const subMenuRef = useRef<HTMLDivElement>(null);
@@ -70,7 +68,13 @@ export default function TopHeader() {
     <Wrapper onMouseLeave={() => setIsSubOpen(false)}>
       <BgSubWrapper $height={subMenuHeight} className={isSubOpen ? 'show' : ''} />
       <Left onClick={() => {}}>
-        <img src={logo} alt="로고" />
+        <img
+          src={logo}
+          alt="로고"
+          onClick={() => {
+            navigate('/');
+          }}
+        />
       </Left>
       <Center onMouseEnter={() => setIsSubOpen(true)}>
         <ul>
@@ -86,9 +90,9 @@ export default function TopHeader() {
               {menu.subMenu.map((sub, j) => (
                 <SubLi
                   key={j}
-                  $active={activeIndex === sub.name}
+                  $active={location.pathname === sub.link}
                   onClick={() => {
-                    setActiveIndex(sub.name);
+                    navigate(sub.link);
                   }}
                 >
                   <a>{sub.name}</a>
@@ -131,8 +135,10 @@ export default function TopHeader() {
               {menu.subMenu.map((sub, j) => (
                 <AnimatedSubLiWrapper key={j} $visible={isMobileSubOpen === menu.name}>
                   <MobileSubLi
-                    onClick={() => setActiveIndex(sub.name)}
-                    $active={activeIndex === sub.name}
+                    $active={location.pathname === sub.link}
+                    onClick={() => {
+                      navigate(sub.link);
+                    }}
                   >
                     <a>{sub.name}</a>
                   </MobileSubLi>
