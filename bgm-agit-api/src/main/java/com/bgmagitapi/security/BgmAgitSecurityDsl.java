@@ -9,7 +9,6 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 public class BgmAgitSecurityDsl<H extends HttpSecurityBuilder<H>> extends AbstractAuthenticationFilterConfigurer<H, BgmAgitSecurityDsl<H>, BgmAgitAuthenticationFilter> {
@@ -47,17 +46,17 @@ public class BgmAgitSecurityDsl<H extends HttpSecurityBuilder<H>> extends Abstra
         http.addFilterBefore(getAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
     }
     
-    public BgmAgitSecurityDsl<H> chamKaKaoSuccessHandler(AuthenticationSuccessHandler successHandler) {
+    public BgmAgitSecurityDsl<H> bgmAgitSuccessHandler(AuthenticationSuccessHandler successHandler) {
         this.successHandler = successHandler;
         return this;
     }
     
-    public BgmAgitSecurityDsl<H> chamKaKaoFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
+    public BgmAgitSecurityDsl<H> bgmAgitFailureHandler(AuthenticationFailureHandler authenticationFailureHandler) {
         this.failureHandler = authenticationFailureHandler;
         return this;
     }
     
-    public BgmAgitSecurityDsl<H> chamKaKaoEntryPoint(AuthenticationEntryPoint authenticationEntryPoint) {
+    public BgmAgitSecurityDsl<H> bgmAgitEntryPoint(AuthenticationEntryPoint authenticationEntryPoint) {
         this.entryPoint = authenticationEntryPoint;
         return this;
     }
