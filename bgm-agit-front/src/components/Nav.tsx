@@ -46,4 +46,8 @@ const Wrapper = styled.div<WithTheme>`
   font-size: ${({ theme }) => theme.sizes.small};
   color: ${({ theme }) => theme.colors.navColor};
   font-weight: ${({ theme }) => theme.weight.semiBold};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.xsmall};
+  }
 `;
