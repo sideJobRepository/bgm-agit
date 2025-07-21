@@ -36,7 +36,7 @@ const Inner = styled.div`
 `;
 
 const TopArea = styled.div<WithTheme>`
-  position: sticky;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
@@ -49,6 +49,7 @@ const MainArea = styled.main<WithTheme>`
   flex: 1;
   padding: 20px;
   display: flex;
+  margin-top: 100px;
   height: 100%;
   overflow-y: auto;
   overflow-x: auto;
