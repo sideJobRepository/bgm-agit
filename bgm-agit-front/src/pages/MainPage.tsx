@@ -250,7 +250,6 @@ const ContentBox = styled.div<WithTheme>`
         margin-right: 0;
         font-size: ${({ theme }) => theme.sizes.xsmall};
         svg {
-          margin-bottom: 0;
           font-size: ${({ theme }) => theme.sizes.xxsmall};
         }
       }
