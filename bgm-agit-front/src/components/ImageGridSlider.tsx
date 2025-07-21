@@ -77,6 +77,7 @@ const Slide = styled.div<WithTheme & { $visibleCount: number }>`
   width: calc(
     (100% - ${props => (props.$visibleCount - 1) * 20}px) / ${props => props.$visibleCount}
   );
+  height: 100%;
   aspect-ratio: 1 / 1;
   box-sizing: border-box;
   position: relative;
