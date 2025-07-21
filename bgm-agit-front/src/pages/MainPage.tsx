@@ -276,7 +276,7 @@ const ReservationSection = styled.section<WithTheme>`
   color: ${({ theme }) => theme.colors.blueColor};
 
   @media ${({ theme }) => theme.device.mobile} {
-    height: 242px;
+    height: 300px;
   }
 `;
 
@@ -300,7 +300,6 @@ const NoticeSection = styled.section<WithTheme>`
   color: ${({ theme }) => theme.colors.menuColor};
 
   @media ${({ theme }) => theme.device.mobile} {
-    height: 100%;
     overflow: hidden;
   }
 `;
