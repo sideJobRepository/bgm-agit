@@ -155,9 +155,5 @@ const Slide = styled.div<WithTheme & { $visibleCount: number }>`
     border-radius: 12px;
     display: block;
     cursor: pointer;
-
-    &:hover {
-      opacity: 0.6;
-    }
   }
 `;
