@@ -10,6 +10,8 @@ import { useMediaQuery } from 'react-responsive';
 
 interface SectionProps {
   bgColor?: string;
+  textColor?: string;
+  headerColor?: string;
 }
 
 export default function About() {
@@ -48,11 +50,11 @@ export default function About() {
                 visibleCount={2}
                 labelGb={1}
                 items={[
-                  { image: '/images/slider1.jpeg', label: '메인1', group: null },
-                  { image: '/images/slider2.jpeg', label: '메인2', group: null },
-                  { image: '/images/slider3.jpeg', label: '메인3', group: null },
-                  { image: '/images/slider4.jpeg', label: '메인4', group: null },
-                  { image: '/images/slider5.jpeg', label: '메인5', group: null },
+                  { image: '/images/slider1.jpeg', label: '메인1', group: null, link: null },
+                  { image: '/images/slider2.jpeg', label: '메인2', group: null, link: null },
+                  { image: '/images/slider3.jpeg', label: '메인3', group: null, link: null },
+                  { image: '/images/slider4.jpeg', label: '메인4', group: null, link: null },
+                  { image: '/images/slider5.jpeg', label: '메인5', group: null, link: null },
                 ]}
               />
             </Right>
@@ -84,7 +86,7 @@ export default function About() {
             <img src={boradGameImage} />
           </section>
         </ContentImage>
-        <TextBox bgColor="#1A7D55">
+        <TextBox headerColor="#1A7D55" bgColor="#1A7D55" textColor="#ffffff">
           <h2>원하는 게임이 무엇이든지!</h2>
           <div>
             <p>
@@ -101,9 +103,24 @@ export default function About() {
             visibleCount={visibleCountReserve}
             labelGb={2}
             items={[
-              { image: '/images/roomAbout1.png', label: 'Room 예약하기', group: null },
-              { image: '/images/roomAbout2.png', label: '대탁 예약하기', group: null },
-              { image: '/images/roomAbout3.png', label: '마작 강의 예약하기', group: null },
+              {
+                image: '/images/roomAbout1.png',
+                label: 'Room 예약하기',
+                group: null,
+                link: '/reservation',
+              },
+              {
+                image: '/images/roomAbout2.png',
+                label: '대탁 예약하기',
+                group: null,
+                link: '/reservation',
+              },
+              {
+                image: '/images/roomAbout3.png',
+                label: '마작 강의 예약하기',
+                group: null,
+                link: '/reservation',
+              },
             ]}
           />
         </ReservationImageBox>
@@ -121,47 +138,25 @@ export default function About() {
         </ReservationTextBox>
       </ReservationSetion>
       <ContentSetion bgColor="#ffffff">
-        {isMobile ? (
-          <>
-            <ContentImage bgColor="#F2EDEA">
-              <section>
-                <img src={foodAbout} />
-              </section>
-            </ContentImage>
-            <TextBox bgColor="#5C3A21">
-              <h2>게임하면서 즐기는 먹거리!</h2>
-              <div>
-                <p>
-                  배고프다고 식당을 더이상 찾지 마세요.
-                  <br />
-                  다양한 음료, 든든한 식사와 스낵까지 모두 준비됐습니다.
-                  <br />
-                  이젠 게임하면서 끊김 없이 간편하게 주문하세요!
-                </p>
-              </div>
-            </TextBox>
-          </>
-        ) : (
-          <CotentBgBox>
-            <ContentImage>
-              <section>
-                <img src={foodAbout} />
-              </section>
-            </ContentImage>
-            <TextBox bgColor="#5C3A21">
-              <h2>게임하면서 즐기는 먹거리!</h2>
-              <div>
-                <p>
-                  배고프다고 식당을 더이상 찾지 마세요.
-                  <br />
-                  다양한 음료, 든든한 식사와 스낵까지 모두 준비됐습니다.
-                  <br />
-                  이젠 게임하면서 끊김 없이 간편하게 주문하세요!
-                </p>
-              </div>
-            </TextBox>
-          </CotentBgBox>
-        )}
+        <CotentBgBox>
+          <ContentImage>
+            <section>
+              <img src={foodAbout} />
+            </section>
+          </ContentImage>
+          <TextBox headerColor="#5C3A21" bgColor="#F2EDEA" textColor="#5C3A21">
+            <h2>게임하면서 즐기는 먹거리!</h2>
+            <div>
+              <p>
+                배고프다고 식당을 더이상 찾지 마세요.
+                <br />
+                다양한 음료, 든든한 식사와 스낵까지 모두 준비됐습니다.
+                <br />
+                이젠 게임하면서 끊김 없이 간편하게 주문하세요!
+              </p>
+            </div>
+          </TextBox>
+        </CotentBgBox>
       </ContentSetion>
     </Wrapper>
   );
@@ -450,8 +445,9 @@ const TextBox = styled.div<WithTheme & SectionProps>`
   h2 {
     font-size: ${({ theme }) => theme.sizes.xxlarge};
     font-weight: ${({ theme }) => theme.weight.bold};
-    color: ${({ bgColor }) => bgColor};
+    color: ${({ headerColor }) => headerColor};
     margin-bottom: 20px;
+    padding: 16px;
   }
   div {
     background-color: ${({ bgColor }) => bgColor};
@@ -460,14 +456,14 @@ const TextBox = styled.div<WithTheme & SectionProps>`
     p {
       font-size: ${({ theme }) => theme.sizes.bigLarge};
       line-height: 1.6;
-      color: ${({ theme }) => theme.colors.white};
+      color: ${({ textColor }) => textColor};
     }
   }
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
     height: 30%;
     align-items: center;
-    padding-right: 0;
+    padding: 0;
 
     h2 {
       font-size: ${({ theme }) => theme.sizes.medium};
