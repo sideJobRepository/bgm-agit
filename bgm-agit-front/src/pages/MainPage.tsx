@@ -132,7 +132,9 @@ export default function MainPage() {
               { image: '/images/food3.jpg', label: '딸기라떼', group: null, link: '/food' },
               { image: '/images/food4.jpg', label: '김치볶음밥', group: null, link: '/food' },
               { image: '/images/food5.jpeg', label: '라면', group: null, link: '/food' },
-              { image: '/images/food6.jpeg', label: '감자튀김', group: null, link: '/food' },
+              { image: '/images/food6.png', label: '감자튀김', group: null, link: '/food' },
+              { image: '/images/food7.jpeg', label: '짜파게티', group: null, link: '/food' },
+              { image: '/images/food8.jpg', label: '스파게티', group: null, link: '/food' },
             ]}
           />
         </SliderBox>

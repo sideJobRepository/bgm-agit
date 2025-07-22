@@ -20,7 +20,7 @@ interface Props {
   interval?: number;
 }
 
-export default function ImageGridSlider({ items, visibleCount, labelGb, interval = 8000 }: Props) {
+export default function ImageGridSlider({ items, visibleCount, labelGb, interval = 7000 }: Props) {
   const [index, setIndex] = useState(0);
   const navigate = useNavigate();
   //이미지 전체
