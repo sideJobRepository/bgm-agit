@@ -57,8 +57,12 @@ dependencies {
 	//스프링 시큐리티 리소스 서버
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 
-
+	//S3
+	implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
+	implementation platform("io.awspring.cloud:spring-cloud-aws-dependencies:3.0.0")
 }
+
+
 
 tasks.named('test') {
 	useJUnitPlatform()
