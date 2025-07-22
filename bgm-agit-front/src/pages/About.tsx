@@ -447,7 +447,7 @@ const TextBox = styled.div<WithTheme & SectionProps>`
     font-weight: ${({ theme }) => theme.weight.bold};
     color: ${({ headerColor }) => headerColor};
     margin-bottom: 20px;
-    padding: 16px;
+    padding: 0 16px;
   }
   div {
     background-color: ${({ bgColor }) => bgColor};
