@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { FaUsers, FaCalendarAlt, FaWifi, FaCar } from 'react-icons/fa';
-import ImageGridSlider from '../components/ImageGridSlider.tsx';
+import ImageGridSlider from '../components/Grid/ImageGridSlider.tsx';
 import Notice from '../pages/Notice.tsx';
 import { useMediaQuery } from 'react-responsive';
 import { useNavigate } from 'react-router-dom';
@@ -61,11 +61,11 @@ export default function MainPage() {
             visibleCount={visibleCountMain}
             labelGb={1}
             items={[
-              { image: '/images/slider1.jpeg', label: '메인1', group: null },
-              { image: '/images/slider2.jpeg', label: '메인2', group: null },
-              { image: '/images/slider3.jpeg', label: '메인3', group: null },
-              { image: '/images/slider4.jpeg', label: '메인4', group: null },
-              { image: '/images/slider5.jpeg', label: '메인5', group: null },
+              { image: '/images/slider1.jpeg', label: '메인1', group: null, link: null },
+              { image: '/images/slider2.jpeg', label: '메인2', group: null, link: null },
+              { image: '/images/slider3.jpeg', label: '메인3', group: null, link: null },
+              { image: '/images/slider4.jpeg', label: '메인4', group: null, link: null },
+              { image: '/images/slider5.jpeg', label: '메인5', group: null, link: null },
             ]}
           />
         </RightSection>
@@ -80,14 +80,14 @@ export default function MainPage() {
             visibleCount={visibleCountGame}
             labelGb={2}
             items={[
-              { image: '/images/game1.jpeg', label: '게임1', group: null },
-              { image: '/images/game2.jpeg', label: '게임2', group: null },
-              { image: '/images/game3.jpeg', label: '게임3', group: null },
-              { image: '/images/game4.jpeg', label: '게임4', group: null },
-              { image: '/images/game5.jpeg', label: '게임5', group: null },
-              { image: '/images/game6.jpeg', label: '게임6', group: null },
-              { image: '/images/game7.jpeg', label: '게임7', group: null },
-              { image: '/images/game8.jpeg', label: '게임8', group: null },
+              { image: '/images/game1.jpeg', label: '게임1', group: null, link: '/game' },
+              { image: '/images/game2.jpeg', label: '게임2', group: null, link: '/game' },
+              { image: '/images/game3.jpeg', label: '게임3', group: null, link: '/game' },
+              { image: '/images/game4.jpeg', label: '게임4', group: null, link: '/game' },
+              { image: '/images/game5.jpeg', label: '게임5', group: null, link: '/game' },
+              { image: '/images/game6.jpeg', label: '게임6', group: null, link: '/game' },
+              { image: '/images/game7.jpeg', label: '게임7', group: null, link: '/game' },
+              { image: '/images/game8.jpeg', label: '게임8', group: null, link: '/game' },
             ]}
           />
         </SliderBox>
@@ -102,12 +102,12 @@ export default function MainPage() {
             visibleCount={visibleCountReserve}
             labelGb={3}
             items={[
-              { image: '/images/room1.jpeg', label: 'A Room', group: 4 },
-              { image: '/images/room2.jpeg', label: 'B Room', group: 6 },
-              { image: '/images/room3.jpeg', label: 'C Room', group: 6 },
-              { image: '/images/room4.jpeg', label: 'D Room', group: 8 },
-              { image: '/images/room5.jpeg', label: 'E Room', group: 10 },
-              { image: '/images/room6.jpeg', label: 'F Room', group: 12 },
+              { image: '/images/room1.jpeg', label: 'A Room', group: 4, link: '/reservation' },
+              { image: '/images/room2.jpeg', label: 'B Room', group: 6, link: '/reservation' },
+              { image: '/images/room3.jpeg', label: 'C Room', group: 6, link: '/reservation' },
+              { image: '/images/room4.jpeg', label: 'D Room', group: 8, link: '/reservation' },
+              { image: '/images/room5.jpeg', label: 'E Room', group: 10, link: '/reservation' },
+              { image: '/images/room6.jpeg', label: 'F Room', group: 12, link: '/reservation' },
             ]}
           />
         </SliderBox>
@@ -122,12 +122,17 @@ export default function MainPage() {
             visibleCount={visibleCountFood}
             labelGb={4}
             items={[
-              { image: '/images/food1.jpeg', label: '아이스 아메리카노', group: null },
-              { image: '/images/food2.jpeg', label: '카페라떼', group: null },
-              { image: '/images/food3.jpg', label: '딸기라떼', group: null },
-              { image: '/images/food4.jpg', label: '김치볶음밥', group: null },
-              { image: '/images/food5.jpeg', label: '라면', group: null },
-              { image: '/images/food6.jpeg', label: '감자튀김', group: null },
+              {
+                image: '/images/food1.jpeg',
+                label: '아이스 아메리카노',
+                group: null,
+                link: '/food',
+              },
+              { image: '/images/food2.jpeg', label: '카페라떼', group: null, link: '/food' },
+              { image: '/images/food3.jpg', label: '딸기라떼', group: null, link: '/food' },
+              { image: '/images/food4.jpg', label: '김치볶음밥', group: null, link: '/food' },
+              { image: '/images/food5.jpeg', label: '라면', group: null, link: '/food' },
+              { image: '/images/food6.jpeg', label: '감자튀김', group: null, link: '/food' },
             ]}
           />
         </SliderBox>

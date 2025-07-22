@@ -23,7 +23,7 @@ export default function useFetchMainMenu() {
             name: '소개',
             subMenu: [
               { name: 'BGM아지트 소개', link: '/about' },
-              { name: '보유게임', link: '' },
+              { name: '보유게임', link: '/game' },
             ],
           },
           {

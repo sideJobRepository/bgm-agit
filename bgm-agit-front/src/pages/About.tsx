@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { FaCalendarAlt, FaCar, FaUsers, FaWifi } from 'react-icons/fa';
-import ImageGridSlider from '../components/ImageGridSlider.tsx';
+import ImageGridSlider from '../components/Grid/ImageGridSlider.tsx';
 import Nav from '../components/Nav.tsx';
 import logo from '/aboutLogo.png';
 import boradGameImage from '/images/boradGame.jpg';
@@ -225,6 +225,7 @@ const Left = styled.div<WithTheme>`
   img {
     height: 60%;
     border-radius: 12px;
+    object-fit: fill;
   }
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -282,7 +283,7 @@ const Right = styled.div<WithTheme>`
 const Bottom = styled.section<WithTheme>`
   width: 100%;
   height: 50%;
-  padding: 30px 0;
+  padding: 30px 10px;
 `;
 
 const ContentBox = styled.div<WithTheme>`
@@ -407,6 +408,7 @@ const ContentImage = styled.div<WithTheme & SectionProps>`
     img {
       height: 80%;
       width: auto;
+      object-fit: cover;
     }
   }
 
@@ -420,7 +422,6 @@ const ContentImage = styled.div<WithTheme & SectionProps>`
     section {
       img {
         height: 100%;
-        width: auto;
       }
     }
   }

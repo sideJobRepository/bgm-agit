@@ -1,9 +1,8 @@
 import styled from 'styled-components';
-import { useEffect, useState } from 'react';
-import type { WithTheme } from '../styles/styled-props.ts';
+import { useState } from 'react';
+import type { WithTheme } from '../../styles/styled-props.ts';
 import { FaUsers } from 'react-icons/fa';
-import { useSwipeable } from 'react-swipeable';
-import ImageLightbox from './ImageLightbox.tsx';
+import ImageLightbox from '../ImageLightbox.tsx';
 
 interface GridItem {
   image: string;
@@ -14,44 +13,21 @@ interface GridItem {
 interface Props {
   items: GridItem[];
   labelGb: number;
-  visibleCount: number;
-  interval?: number;
+  columnCount: number;
 }
 
-export default function ImageGridSlider({ items, visibleCount, labelGb, interval = 8000 }: Props) {
-  const [index, setIndex] = useState(0);
-
-  //이미지 전체
+export default function ImageGrid({ items, labelGb, columnCount }: Props) {
   const [lightboxIndex, setLightboxIndex] = useState(-1);
 
   const handleImageClick = (clickedIndex: number) => {
     setLightboxIndex(clickedIndex);
   };
 
-  const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => {
-      setIndex(prev => (prev + 1 > items.length - visibleCount ? 0 : prev + 1));
-    },
-    onSwipedRight: () => {
-      setIndex(prev => (prev === 0 ? items.length - visibleCount : prev - 1));
-    },
-    trackMouse: true,
-  });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setIndex(prev => (prev + 1 > items.length - visibleCount ? 0 : prev + 1));
-    }, interval);
-    return () => clearInterval(timer);
-  }, [items.length, visibleCount, interval]);
-
-  console.log('ImageGridSlider items:', items, Array.isArray(items));
-
   return (
-    <Wrapper {...swipeHandlers}>
-      <Slider $visibleCount={visibleCount} $itemCount={items.length} $index={index}>
+    <Wrapper>
+      <GridContainer $columnCount={columnCount}>
         {items.map((item, idx) => (
-          <Slide key={idx} $visibleCount={visibleCount}>
+          <GridItemBox key={idx}>
             {labelGb !== 1 && (
               <div>
                 <p>{item.label}</p>
@@ -68,9 +44,9 @@ export default function ImageGridSlider({ items, visibleCount, labelGb, interval
               draggable={false}
               onClick={() => labelGb === 1 && handleImageClick(idx)}
             />
-          </Slide>
+          </GridItemBox>
         ))}
-      </Slider>
+      </GridContainer>
       <ImageLightbox
         images={items.map(item => item.image)}
         index={lightboxIndex}
@@ -87,29 +63,14 @@ const Wrapper = styled.div`
   overflow: hidden;
 `;
 
-const Slider = styled.div<{
-  $visibleCount: number;
-  $itemCount: number;
-  $index: number;
-}>`
-  display: flex;
-  justify-content: flex-start;
-  height: 100%;
+const GridContainer = styled.div<{ $columnCount: number }>`
+  display: grid;
+  grid-template-columns: repeat(${props => props.$columnCount}, 1fr);
   gap: 20px;
-  transition: transform 0.6s ease-in-out;
-
-  width: ${({ $itemCount, $visibleCount }) =>
-    `calc((100% - ${($visibleCount - 1) * 20}px) * ${$itemCount / $visibleCount} + ${($itemCount - 1) * 20}px)`};
-
-  transform: ${({ $index, $itemCount }) =>
-    `translateX(calc(-${$index} * (100% + 20px) / ${$itemCount}))`};
 `;
 
-const Slide = styled.div<WithTheme & { $visibleCount: number }>`
-  width: calc(
-    (100% - ${props => (props.$visibleCount - 1) * 20}px) / ${props => props.$visibleCount}
-  );
-  height: 100%;
+const GridItemBox = styled.div<WithTheme>`
+  width: 100%;
   aspect-ratio: 1 / 1;
   box-sizing: border-box;
   position: relative;
