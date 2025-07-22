@@ -80,7 +80,7 @@ export default function About() {
           </ContentBox>
         </Bottom>
       </TopSection>
-      <ContentSetion bgColor="#D9D9D9">
+      <ContentSetion bgColor="#ffffff" textColor="#D9D9D9">
         <ContentImage>
           <section>
             <img src={boradGameImage} />
@@ -137,26 +137,24 @@ export default function About() {
           </div>
         </ReservationTextBox>
       </ReservationSetion>
-      <ContentSetion bgColor="#ffffff">
-        <CotentBgBox>
-          <ContentImage>
-            <section>
-              <img src={foodAbout} />
-            </section>
-          </ContentImage>
-          <TextBox headerColor="#5C3A21" bgColor="#F2EDEA" textColor="#5C3A21">
-            <h2>게임하면서 즐기는 먹거리!</h2>
-            <div>
-              <p>
-                배고프다고 식당을 더이상 찾지 마세요.
-                <br />
-                다양한 음료, 든든한 식사와 스낵까지 모두 준비됐습니다.
-                <br />
-                이젠 게임하면서 끊김 없이 간편하게 주문하세요!
-              </p>
-            </div>
-          </TextBox>
-        </CotentBgBox>
+      <ContentSetion bgColor="#F2EDEA" textColor="#ffffff">
+        <ContentImage>
+          <section>
+            <img src={foodAbout} />
+          </section>
+        </ContentImage>
+        <TextBox headerColor="#5C3A21" bgColor="#F2EDEA" textColor="#5C3A21">
+          <h2>게임하면서 즐기는 먹거리!</h2>
+          <div>
+            <p>
+              배고프다고 식당을 더이상 찾지 마세요.
+              <br />
+              다양한 음료, 든든한 식사와 스낵까지 모두 준비됐습니다.
+              <br />
+              이젠 게임하면서 끊김 없이 간편하게 주문하세요!
+            </p>
+          </div>
+        </TextBox>
       </ContentSetion>
     </Wrapper>
   );
@@ -338,23 +336,12 @@ const ContentSetion = styled.section<WithTheme & SectionProps>`
   height: 600px;
   align-items: center;
   padding: 30px 10px;
-  border-bottom: 1px solid ${({ bgColor }) => bgColor};
-
+  border-bottom: 1px solid ${({ textColor }) => textColor};
+  background-color: ${({ bgColor }) => bgColor};
+  border-radius: 12px;
   @media ${({ theme }) => theme.device.mobile} {
     flex-direction: column;
     height: 500px;
-  }
-`;
-
-const CotentBgBox = styled.div<WithTheme>`
-  display: flex;
-  width: 100%;
-  height: 100%;
-  background-color: ${({ theme }) => theme.colors.basicColor};
-  border-radius: 12px;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    flex-direction: column;
   }
 `;
 
@@ -366,7 +353,6 @@ const ReservationSetion = styled.section<WithTheme>`
   align-items: center;
   padding: 30px 10px;
   flex-direction: column;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
 
   @media ${({ theme }) => theme.device.mobile} {
     height: 500px;
