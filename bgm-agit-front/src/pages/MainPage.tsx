@@ -102,12 +102,12 @@ export default function MainPage() {
             visibleCount={visibleCountReserve}
             labelGb={3}
             items={[
-              { image: '/images/room1.jpeg', label: 'A Room', group: 4, link: '/reservation' },
-              { image: '/images/room2.jpeg', label: 'B Room', group: 6, link: '/reservation' },
-              { image: '/images/room3.jpeg', label: 'C Room', group: 6, link: '/reservation' },
-              { image: '/images/room4.jpeg', label: 'D Room', group: 8, link: '/reservation' },
-              { image: '/images/room5.jpeg', label: 'E Room', group: 10, link: '/reservation' },
-              { image: '/images/room6.jpeg', label: 'F Room', group: 12, link: '/reservation' },
+              { image: '/images/room1.jpg', label: 'A Room', group: 4, link: '/reservation' },
+              { image: '/images/room2.jpg', label: 'B Room', group: 6, link: '/reservation' },
+              { image: '/images/room3.jpg', label: 'C Room', group: 6, link: '/reservation' },
+              { image: '/images/room4.jpg', label: 'D Room', group: 8, link: '/reservation' },
+              { image: '/images/room5.jpg', label: 'E Room', group: 10, link: '/reservation' },
+              { image: '/images/room6.jpg', label: 'F Room', group: 12, link: '/reservation' },
             ]}
           />
         </SliderBox>
