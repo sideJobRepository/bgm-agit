@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { FaUsers, FaCalendarAlt, FaWifi, FaCar } from 'react-icons/fa';
-import { IoChevronForward } from 'react-icons/io5';
+import { FiChevronRight } from 'react-icons/fi';
 import ImageGridSlider from '../components/ImageGridSlider.tsx';
 import Notice from '../pages/Notice.tsx';
 import { useMediaQuery } from 'react-responsive';
@@ -30,7 +30,7 @@ export default function MainPage() {
                 }}
               >
                 more
-                <IoChevronForward />
+                <FiChevronRight />
               </a>
             </div>
             <h2>
@@ -144,7 +144,7 @@ export default function MainPage() {
             }}
           >
             more
-            <IoChevronForward />
+            <FiChevronRight />
           </a>
         </TitleBox>
         <SliderBox>
