@@ -123,7 +123,7 @@ export default function About() {
       <ContentSetion bgColor="#ffffff">
         {isMobile ? (
           <>
-            <ContentImage>
+            <ContentImage bgColor="#F2EDEA">
               <section>
                 <img src={foodAbout} />
               </section>
@@ -377,7 +377,7 @@ const ReservationSetion = styled.section<WithTheme>`
   }
 `;
 
-const ContentImage = styled.div<WithTheme>`
+const ContentImage = styled.div<WithTheme & SectionProps>`
   display: flex;
   width: 50%;
   height: 100%;
@@ -415,10 +415,13 @@ const ContentImage = styled.div<WithTheme>`
     height: 70%;
     justify-content: center;
     padding-right: 0;
-
-    img {
-      height: 100%;
-      width: auto;
+    background-color: ${({ bgColor }) => bgColor};
+    border-radius: 12px;
+    section {
+      img {
+        height: 100%;
+        width: auto;
+      }
     }
   }
 `;
@@ -450,7 +453,6 @@ const TextBox = styled.div<WithTheme & SectionProps>`
     margin-bottom: 20px;
   }
   div {
-    width: 100%;
     background-color: ${({ bgColor }) => bgColor};
     padding: 16px;
     border-radius: 12px;
@@ -472,6 +474,7 @@ const TextBox = styled.div<WithTheme & SectionProps>`
     }
 
     div {
+      width: 100%;
       p {
         font-size: ${({ theme }) => theme.sizes.xsmall};
       }
