@@ -29,9 +29,8 @@ export default function MainPage() {
                   navigate('/about');
                 }}
               >
-                more
+                더보기
               </a>
-              <FiChevronRight />
             </div>
             <h2>
               누구에게나
@@ -143,9 +142,8 @@ export default function MainPage() {
               navigate('/about');
             }}
           >
-            more
+            더보기
           </a>
-          <FiChevronRight />
         </TitleBox>
         <SliderBox>
           <Notice
@@ -226,11 +224,6 @@ const ContentBox = styled.div<WithTheme>`
       color: ${({ theme }) => theme.colors.navColor};
       cursor: pointer;
     }
-
-    svg {
-      color: ${({ theme }) => theme.colors.navColor};
-      margin-bottom: 2px;
-    }
   }
 
   h2 {
@@ -248,9 +241,6 @@ const ContentBox = styled.div<WithTheme>`
       a {
         margin-right: 0;
         font-size: ${({ theme }) => theme.sizes.xsmall};
-      }
-      svg {
-        font-size: ${({ theme }) => theme.sizes.xxsmall};
       }
     }
 
@@ -382,11 +372,6 @@ const TitleBox = styled.div<WithTheme>`
     cursor: pointer;
   }
 
-  svg {
-    color: ${({ theme }) => theme.colors.navColor};
-    margin-bottom: 2px;
-  }
-
   @media ${({ theme }) => theme.device.mobile} {
     height: 20%;
     h2 {
@@ -399,9 +384,6 @@ const TitleBox = styled.div<WithTheme>`
 
     a {
       font-size: ${({ theme }) => theme.sizes.xsmall};
-    }
-    svg {
-      font-size: ${({ theme }) => theme.sizes.xxsmall};
     }
   }
 `;
