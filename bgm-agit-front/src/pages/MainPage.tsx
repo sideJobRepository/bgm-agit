@@ -22,17 +22,15 @@ export default function MainPage() {
       <TopSection>
         <LeftSection>
           <ContentBox>
-            <div>
-              <p>BGM 아지트란.</p>
-              <a
-                onClick={() => {
-                  navigate('/about');
-                }}
-              >
-                more
-                <FiChevronRight />
-              </a>
-            </div>
+            <p>BGM 아지트란.</p>
+            <a
+              onClick={() => {
+                navigate('/about');
+              }}
+            >
+              more
+              <FiChevronRight />
+            </a>
             <h2>
               누구에게나
               <br />
@@ -206,28 +204,27 @@ const LeftSection = styled.section<WithTheme>`
 
 const ContentBox = styled.div<WithTheme>`
   display: flex;
+  position: relative;
   flex-direction: column;
   height: 60%;
   font-weight: ${({ theme }) => theme.weight.bold};
 
-  div {
-    display: flex;
+  p {
+    color: ${({ theme }) => theme.colors.blueColor};
+    font-size: ${({ theme }) => theme.sizes.bigLarge};
+  }
 
+  a {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: inline-flex;
     align-items: center;
-    p {
-      color: ${({ theme }) => theme.colors.blueColor};
-      font-size: ${({ theme }) => theme.sizes.bigLarge};
-    }
-
-    a {
-      display: inline-flex;
-      align-items: center;
-      font-weight: ${({ theme }) => theme.weight.semiBold};
-      margin-left: auto;
-      margin-right: 20px;
-      color: ${({ theme }) => theme.colors.navColor};
-      cursor: pointer;
-    }
+    font-weight: ${({ theme }) => theme.weight.semiBold};
+    margin-left: auto;
+    margin-right: 20px;
+    color: ${({ theme }) => theme.colors.navColor};
+    cursor: pointer;
   }
 
   h2 {
@@ -355,6 +352,7 @@ const TitleBox = styled.div<WithTheme>`
   width: 100%;
   height: 16%;
   display: flex;
+  position: relative;
   h2 {
     font-size: ${({ theme }) => theme.sizes.xlarge};
     text-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
@@ -370,6 +368,9 @@ const TitleBox = styled.div<WithTheme>`
   }
 
   a {
+    position: absolute;
+    top: 0;
+    right: 0;
     display: inline-flex;
     align-items: center;
     font-weight: ${({ theme }) => theme.weight.semiBold};
