@@ -23,14 +23,18 @@ export default function MainPage() {
         <LeftSection>
           <ContentBox>
             <p>BGM 아지트란.</p>
-            <a
-              onClick={() => {
-                navigate('/about');
-              }}
-            >
-              more
-              <FiChevronRight />
-            </a>
+            <div>
+              <a
+                onClick={() => {
+                  navigate('/about');
+                }}
+              >
+                more
+                <IconWrapper>
+                  <FiChevronRight />
+                </IconWrapper>
+              </a>
+            </div>
             <h2>
               누구에게나
               <br />
@@ -142,7 +146,9 @@ export default function MainPage() {
             }}
           >
             more
-            <FiChevronRight />
+            <IconWrapper>
+              <FiChevronRight />
+            </IconWrapper>
           </a>
         </TitleBox>
         <SliderBox>
@@ -204,27 +210,28 @@ const LeftSection = styled.section<WithTheme>`
 
 const ContentBox = styled.div<WithTheme>`
   display: flex;
-  position: relative;
   flex-direction: column;
   height: 60%;
   font-weight: ${({ theme }) => theme.weight.bold};
 
-  p {
-    color: ${({ theme }) => theme.colors.blueColor};
-    font-size: ${({ theme }) => theme.sizes.bigLarge};
-  }
-
-  a {
-    position: absolute;
-    top: 0;
-    right: 0;
-    display: inline-flex;
+  div {
+    display: flex;
+    line-height: 1;
     align-items: center;
-    font-weight: ${({ theme }) => theme.weight.semiBold};
-    margin-left: auto;
-    margin-right: 20px;
-    color: ${({ theme }) => theme.colors.navColor};
-    cursor: pointer;
+    p {
+      color: ${({ theme }) => theme.colors.blueColor};
+      font-size: ${({ theme }) => theme.sizes.bigLarge};
+    }
+
+    a {
+      display: inline-flex;
+      align-items: center;
+      font-weight: ${({ theme }) => theme.weight.semiBold};
+      margin-left: auto;
+      margin-right: 20px;
+      color: ${({ theme }) => theme.colors.navColor};
+      cursor: pointer;
+    }
   }
 
   h2 {
@@ -251,6 +258,21 @@ const ContentBox = styled.div<WithTheme>`
     h2 {
       font-size: ${({ theme }) => theme.sizes.large};
     }
+  }
+`;
+
+const IconWrapper = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  margin-left: 4px;
+
+  svg {
+    width: 1em;
+    height: 1em;
+    display: block;
   }
 `;
 
@@ -352,7 +374,7 @@ const TitleBox = styled.div<WithTheme>`
   width: 100%;
   height: 16%;
   display: flex;
-  position: relative;
+  line-height: 1;
   h2 {
     font-size: ${({ theme }) => theme.sizes.xlarge};
     text-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
@@ -368,9 +390,6 @@ const TitleBox = styled.div<WithTheme>`
   }
 
   a {
-    position: absolute;
-    top: 0;
-    right: 0;
     display: inline-flex;
     align-items: center;
     font-weight: ${({ theme }) => theme.weight.semiBold};
