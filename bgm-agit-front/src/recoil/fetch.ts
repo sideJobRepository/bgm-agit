@@ -12,7 +12,7 @@ export default function useFetchMainMenu() {
   useEffect(() => {
     const fetchMainMenu = async () => {
       try {
-        const response = await api.get<MenuItem[]>('/main-menu'); // 실제 API 경로
+        const response = await api.get<MenuItem[]>('/bgm-agit/main-menu'); // 실제 API 경로
         setMainMenu(response.data);
       } catch (error) {
         console.error('메인 메뉴 불러오기 실패:', error);
