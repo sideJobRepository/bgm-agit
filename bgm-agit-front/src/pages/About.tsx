@@ -4,8 +4,18 @@ import { FaCalendarAlt, FaCar, FaUsers, FaWifi } from 'react-icons/fa';
 import ImageGridSlider from '../components/ImageGridSlider.tsx';
 import Nav from '../components/Nav.tsx';
 import logo from '/aboutLogo.png';
+import boradGameImage from '/images/boradGame.jpg';
+import foodAbout from '/images/foodAbout.png';
+import { useMediaQuery } from 'react-responsive';
+
+interface SectionProps {
+  bgColor?: string;
+}
 
 export default function About() {
+  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+  const visibleCountReserve = isMobile ? 1 : 3;
+
   return (
     <Wrapper>
       <Nav />
@@ -68,6 +78,65 @@ export default function About() {
           </ContentBox>
         </Bottom>
       </TopSection>
+      <ContentSetion bgColor="#D9D9D9">
+        <ContentImage>
+          <section>
+            <img src={boradGameImage} />
+          </section>
+        </ContentImage>
+        <TextBox bgColor="#1A7D55">
+          <h2>원하는 게임이 무엇이든지!</h2>
+          <p>
+            어떤 게임을 할지 고민하지 마지 말고, 어떤 게임 부터 할까 고민해보세요. <br />
+            BGM아지트에서 선별한 최상의 게임들이 여러분을 기다립니다. <br />
+            취향과 기분에 따라 준비된 수백여종의 게임을 즐겨보세요!
+          </p>
+        </TextBox>
+      </ContentSetion>
+      <ReservationSetion>
+        <ReservationImageBox>
+          <ImageGridSlider
+            visibleCount={visibleCountReserve}
+            labelGb={2}
+            items={[
+              { image: '/images/roomAbout1.png', label: 'Room 예약하기', group: null },
+              { image: '/images/roomAbout2.png', label: '대탁 예약하기', group: null },
+              { image: '/images/roomAbout3.png', label: '마작 강의 예약하기', group: null },
+            ]}
+          />
+        </ReservationImageBox>
+        <ReservationTextBox>
+          <h2>원하는 시간에 언제든지!</h2>
+          <div>
+            <p>
+              더이상 시간에 쫓기지 마세요.
+              <br />
+              언제든지 내가 원하는 시간에 편안하게 공간을 예약하세요.
+              <br />
+              넓고 편안한 ROOM 부터 대탁, 마작 강의까지 이젠 간편하게 즐겨보세요!
+            </p>
+          </div>
+        </ReservationTextBox>
+      </ReservationSetion>
+      <ContentSetion bgColor="#ffffff">
+        <CotentBgBox>
+          <ContentImage>
+            <section>
+              <img src={foodAbout} />
+            </section>
+          </ContentImage>
+          <TextBox bgColor="#5C3A21">
+            <h2>게임하면서 즐기는 먹거리!</h2>
+            <p>
+              목이 마르다고 카페를, 배고프다고 식당을 더이상 찾지 마세요.
+              <br />
+              커피부터 에이드까지 다양한 음료와 혀가 즐거워지는 식사와 스낵까지,
+              <br />
+              이젠 게임하면서 끊김 없이 간편하게 주문하세요!
+            </p>
+          </TextBox>
+        </CotentBgBox>
+      </ContentSetion>
     </Wrapper>
   );
 }
@@ -88,7 +157,7 @@ const Wrapper = styled.div<WithTheme>`
 const TopSection = styled.section<WithTheme>`
   display: flex;
   width: 100%;
-  height: 600px;
+  height: 800px;
   padding: 20px 0;
   border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
   flex-direction: column;
@@ -100,7 +169,7 @@ const TopSection = styled.section<WithTheme>`
 
 const Top = styled.section<WithTheme>`
   width: 100%;
-  height: 300px;
+  height: 50%;
   display: flex;
   flex-direction: column;
   @media ${({ theme }) => theme.device.mobile} {
@@ -186,26 +255,25 @@ const Right = styled.div<WithTheme>`
 
 const Bottom = styled.section<WithTheme>`
   width: 100%;
-  height: 300px;
+  height: 50%;
   padding: 30px 0;
 `;
 
 const ContentBox = styled.div<WithTheme>`
   display: flex;
+  height: 100%;
   flex-direction: column;
   gap: 8px;
+  justify-content: center;
 `;
 
 const Line1 = styled.p<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.bigLarge};
+  font-size: ${({ theme }) => theme.sizes.xlarge};
   font-weight: ${({ theme }) => theme.weight.bold};
   color: ${({ theme }) => theme.colors.blueColor};
   margin-left: 0;
   @media ${({ theme }) => theme.device.tablet} {
-    margin-left: 0;
-    h2 {
-      font-size: ${({ theme }) => theme.sizes.medium};
-    }
+    font-size: ${({ theme }) => theme.sizes.medium};
   }
 `;
 
@@ -214,7 +282,7 @@ const Line2 = styled.div<WithTheme>`
   margin-left: 10%;
 
   h2 {
-    font-size: ${({ theme }) => theme.sizes.xxlarge};
+    font-size: ${({ theme }) => theme.sizes.extra};
     font-weight: ${({ theme }) => theme.weight.bold};
     line-height: 1.4;
     text-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
@@ -239,5 +307,185 @@ const Line3 = styled.div<WithTheme>`
   @media ${({ theme }) => theme.device.tablet} {
     margin-left: 0;
     font-size: ${({ theme }) => theme.sizes.xsmall};
+  }
+`;
+
+const ContentSetion = styled.section<WithTheme & SectionProps>`
+  display: flex;
+  width: 100%;
+  height: 600px;
+  align-items: center;
+  padding: 30px 10px;
+  border-bottom: 1px solid ${({ bgColor }) => bgColor};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    flex-direction: column;
+    height: 500px;
+  }
+`;
+
+const CotentBgBox = styled.div<WithTheme>`
+  display: flex;
+  width: 100%;
+  height: 100%;
+  background-color: ${({ theme }) => theme.colors.basicColor};
+  border-radius: 12px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    flex-direction: column;
+  }
+`;
+
+const ReservationSetion = styled.section<WithTheme>`
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  height: 600px;
+  align-items: center;
+  padding: 30px 10px;
+  flex-direction: column;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    height: 500px;
+  }
+`;
+
+const ContentImage = styled.div<WithTheme>`
+  display: flex;
+  width: 50%;
+  height: 100%;
+  padding-right: 80px;
+  justify-content: right;
+  color: ${({ theme }) => theme.colors.white};
+  section {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    position: relative;
+    div {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      top: 6px;
+      left: 6px;
+      padding: 6px 12px 4px 12px;
+      border-radius: 8px;
+      background-color: rgba(66, 69, 72, 0.6);
+
+      span {
+        font-size: ${({ theme }) => theme.sizes.small};
+      }
+    }
+    img {
+      height: 80%;
+      width: auto;
+    }
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 100%;
+    height: 70%;
+    justify-content: center;
+    padding-right: 0;
+
+    img {
+      height: 100%;
+      width: auto;
+    }
+  }
+`;
+
+const ReservationImageBox = styled.div<WithTheme>`
+  width: 100%;
+  height: 50%;
+  margin-bottom: 50px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    height: 60%;
+    margin-bottom: 30px;
+  }
+`;
+
+const TextBox = styled.div<WithTheme & SectionProps>`
+  display: flex;
+  width: 50%;
+  height: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+
+  h2 {
+    font-size: ${({ theme }) => theme.sizes.xxlarge};
+    font-weight: ${({ theme }) => theme.weight.bold};
+    color: ${({ bgColor }) => bgColor};
+    margin-bottom: 40px;
+  }
+
+  p {
+    background-color: ${({ bgColor }) => bgColor};
+    font-size: ${({ theme }) => theme.sizes.bigLarge};
+    padding: 16px;
+    border-radius: 12px;
+    line-height: 1.6;
+    color: ${({ theme }) => theme.colors.white};
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 100%;
+    height: 30%;
+    align-items: center;
+
+    h2 {
+      font-size: ${({ theme }) => theme.sizes.medium};
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: ${({ theme }) => theme.sizes.xsmall};
+    }
+  }
+`;
+
+const ReservationTextBox = styled.div<WithTheme>`
+  display: flex;
+  width: 100%;
+  height: 30%;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+
+  h2 {
+    font-size: ${({ theme }) => theme.sizes.xxlarge};
+    font-weight: ${({ theme }) => theme.weight.bold};
+    color: ${({ theme }) => theme.colors.blueColor};
+    margin-bottom: 20px;
+  }
+  div {
+    width: 100%;
+    background-color: ${({ theme }) => theme.colors.blueColor};
+    padding: 16px;
+    border-radius: 12px;
+    p {
+      font-size: ${({ theme }) => theme.sizes.bigLarge};
+      line-height: 1.6;
+      color: ${({ theme }) => theme.colors.white};
+    }
+  }
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 100%;
+    height: 30%;
+    align-items: center;
+
+    h2 {
+      font-size: ${({ theme }) => theme.sizes.medium};
+      margin-bottom: 10px;
+    }
+
+    div {
+      p {
+        font-size: ${({ theme }) => theme.sizes.xsmall};
+      }
+    }
   }
 `;
