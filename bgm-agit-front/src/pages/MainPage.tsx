@@ -1,7 +1,6 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { FaUsers, FaCalendarAlt, FaWifi, FaCar } from 'react-icons/fa';
-import { FiChevronRight } from 'react-icons/fi';
 import ImageGridSlider from '../components/ImageGridSlider.tsx';
 import Notice from '../pages/Notice.tsx';
 import { useMediaQuery } from 'react-responsive';
@@ -220,7 +219,7 @@ const ContentBox = styled.div<WithTheme>`
     a {
       font-weight: ${({ theme }) => theme.weight.semiBold};
       margin-left: auto;
-      margin-right: 2px;
+      margin-right: 20px;
       color: ${({ theme }) => theme.colors.navColor};
       cursor: pointer;
     }
