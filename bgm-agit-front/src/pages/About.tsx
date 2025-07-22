@@ -87,8 +87,8 @@ export default function About() {
         <TextBox bgColor="#1A7D55">
           <h2>원하는 게임이 무엇이든지!</h2>
           <p>
-            어떤 게임을 할지 고민하지 마지 말고, 어떤 게임 부터 할까 고민해보세요. <br />
-            BGM아지트에서 선별한 최상의 게임들이 여러분을 기다립니다. <br />
+            이젠 어떤 게임부터 할까 고민해보세요. <br />
+            수백가지 다양한 최상의 게임들이 여러분을 기다립니다. <br />
             취향과 기분에 따라 준비된 수백여종의 게임을 즐겨보세요!
           </p>
         </TextBox>
@@ -113,7 +113,7 @@ export default function About() {
               <br />
               언제든지 내가 원하는 시간에 편안하게 공간을 예약하세요.
               <br />
-              넓고 편안한 ROOM 부터 대탁, 마작 강의까지 이젠 간편하게 즐겨보세요!
+              룸부터 대탁, 마작 강의까지 이젠 간편하게 즐겨보세요!
             </p>
           </div>
         </ReservationTextBox>
@@ -128,9 +128,9 @@ export default function About() {
           <TextBox bgColor="#5C3A21">
             <h2>게임하면서 즐기는 먹거리!</h2>
             <p>
-              목이 마르다고 카페를, 배고프다고 식당을 더이상 찾지 마세요.
+              배고프다고 식당을 더이상 찾지 마세요.
               <br />
-              커피부터 에이드까지 다양한 음료와 혀가 즐거워지는 식사와 스낵까지,
+              다양한 음료, 든든한 식사와 스낵까지 준비 완료됐습니다.
               <br />
               이젠 게임하면서 끊김 없이 간편하게 주문하세요!
             </p>
@@ -333,7 +333,7 @@ const CotentBgBox = styled.div<WithTheme>`
 
   @media ${({ theme }) => theme.device.mobile} {
     flex-direction: column;
-    padding: 10px 0;
+    justify-content: center;
   }
 `;
 
