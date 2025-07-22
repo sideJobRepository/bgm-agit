@@ -86,11 +86,13 @@ export default function About() {
         </ContentImage>
         <TextBox bgColor="#1A7D55">
           <h2>원하는 게임이 무엇이든지!</h2>
-          <p>
-            이젠 어떤 게임부터 할까 고민해보세요. <br />
-            수백가지 다양한 최상의 게임들이 여러분을 기다립니다. <br />
-            취향과 기분에 따라 준비된 수백여종의 게임을 즐겨보세요!
-          </p>
+          <div>
+            <p>
+              이젠 어떤 게임부터 할까 고민해보세요. <br />
+              수백가지 다양한 최상의 게임들이 여러분을 기다립니다. <br />
+              취향과 기분에 따라 준비된 수백여종의 게임을 즐겨보세요!
+            </p>
+          </div>
         </TextBox>
       </ContentSetion>
       <ReservationSetion>
@@ -119,23 +121,47 @@ export default function About() {
         </ReservationTextBox>
       </ReservationSetion>
       <ContentSetion bgColor="#ffffff">
-        <CotentBgBox>
-          <ContentImage>
-            <section>
-              <img src={foodAbout} />
-            </section>
-          </ContentImage>
-          <TextBox bgColor="#5C3A21">
-            <h2>게임하면서 즐기는 먹거리!</h2>
-            <p>
-              배고프다고 식당을 더이상 찾지 마세요.
-              <br />
-              다양한 음료, 든든한 식사와 스낵까지 준비 완료됐습니다.
-              <br />
-              이젠 게임하면서 끊김 없이 간편하게 주문하세요!
-            </p>
-          </TextBox>
-        </CotentBgBox>
+        {isMobile ? (
+          <>
+            <ContentImage>
+              <section>
+                <img src={foodAbout} />
+              </section>
+            </ContentImage>
+            <TextBox bgColor="#5C3A21">
+              <h2>게임하면서 즐기는 먹거리!</h2>
+              <div>
+                <p>
+                  배고프다고 식당을 더이상 찾지 마세요.
+                  <br />
+                  다양한 음료, 든든한 식사와 스낵까지 준비 완료됐습니다.
+                  <br />
+                  이젠 게임하면서 끊김 없이 간편하게 주문하세요!
+                </p>
+              </div>
+            </TextBox>
+          </>
+        ) : (
+          <CotentBgBox>
+            <ContentImage>
+              <section>
+                <img src={foodAbout} />
+              </section>
+            </ContentImage>
+            <TextBox bgColor="#5C3A21">
+              <h2>게임하면서 즐기는 먹거리!</h2>
+              <div>
+                <p>
+                  배고프다고 식당을 더이상 찾지 마세요.
+                  <br />
+                  다양한 음료, 든든한 식사와 스낵까지 준비 완료됐습니다.
+                  <br />
+                  이젠 게임하면서 끊김 없이 간편하게 주문하세요!
+                </p>
+              </div>
+            </TextBox>
+          </CotentBgBox>
+        )}
       </ContentSetion>
     </Wrapper>
   );
@@ -333,7 +359,6 @@ const CotentBgBox = styled.div<WithTheme>`
 
   @media ${({ theme }) => theme.device.mobile} {
     flex-direction: column;
-    justify-content: center;
   }
 `;
 
@@ -416,34 +441,40 @@ const TextBox = styled.div<WithTheme & SectionProps>`
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
+  padding-right: 10px;
 
   h2 {
     font-size: ${({ theme }) => theme.sizes.xxlarge};
     font-weight: ${({ theme }) => theme.weight.bold};
     color: ${({ bgColor }) => bgColor};
-    margin-bottom: 40px;
+    margin-bottom: 20px;
   }
-
-  p {
+  div {
+    width: 100%;
     background-color: ${({ bgColor }) => bgColor};
-    font-size: ${({ theme }) => theme.sizes.bigLarge};
     padding: 16px;
     border-radius: 12px;
-    line-height: 1.6;
-    color: ${({ theme }) => theme.colors.white};
+    p {
+      font-size: ${({ theme }) => theme.sizes.bigLarge};
+      line-height: 1.6;
+      color: ${({ theme }) => theme.colors.white};
+    }
   }
-
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
     height: 30%;
     align-items: center;
+    padding-right: 0;
 
     h2 {
       font-size: ${({ theme }) => theme.sizes.medium};
       margin-bottom: 10px;
     }
-    p {
-      font-size: ${({ theme }) => theme.sizes.xsmall};
+
+    div {
+      p {
+        font-size: ${({ theme }) => theme.sizes.xsmall};
+      }
     }
   }
 `;
@@ -477,6 +508,7 @@ const ReservationTextBox = styled.div<WithTheme>`
     width: 100%;
     height: 30%;
     align-items: center;
+    padding-right: 0;
 
     h2 {
       font-size: ${({ theme }) => theme.sizes.medium};
