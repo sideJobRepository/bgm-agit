@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { FaCalendarAlt, FaCar, FaUsers, FaWifi } from 'react-icons/fa';
-import ImageGridSlider from '../components/Grid/ImageGridSlider.tsx';
+import ImageGridSlider from '../components/grid/ImageGridSlider.tsx';
 import Nav from '../components/Nav.tsx';
 import logo from '/aboutLogo.png';
 import boradGameImage from '/images/boradGame.jpg';
@@ -16,6 +16,7 @@ interface SectionProps {
 
 export default function About() {
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+  const visibleCountMain = isMobile ? 2 : 3;
   const visibleCountReserve = isMobile ? 1 : 3;
 
   return (
@@ -47,7 +48,7 @@ export default function About() {
             </Left>
             <Right>
               <ImageGridSlider
-                visibleCount={2}
+                visibleCount={visibleCountMain}
                 labelGb={1}
                 items={[
                   { image: '/images/slider1.jpeg', label: '메인1', group: null, link: null },
@@ -176,29 +177,19 @@ const Wrapper = styled.div<WithTheme>`
 const TopSection = styled.section<WithTheme>`
   display: flex;
   width: 100%;
-  height: 800px;
   padding: 20px 0;
   border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
   flex-direction: column;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    height: 700px;
-  }
 `;
 
 const Top = styled.section<WithTheme>`
   width: 100%;
-  height: 50%;
   display: flex;
   flex-direction: column;
-  @media ${({ theme }) => theme.device.mobile} {
-    height: 400px;
-  }
 `;
 
 const ImageBox = styled.div<WithTheme>`
   width: 100%;
-  height: 100%;
   display: flex;
   background-color: ${({ theme }) => theme.colors.topBg};
   border-radius: 12px;
@@ -210,20 +201,24 @@ const ImageBox = styled.div<WithTheme>`
 
 const Left = styled.div<WithTheme>`
   width: 36%;
-  height: 100%;
   padding: 10px;
   display: flex;
   flex-direction: column;
 
   img {
-    height: 60%;
-    border-radius: 12px;
+    width: 100%;
     object-fit: fill;
+    border-radius: 12px;
+    display: block;
   }
 
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
-    height: 60%;
+    height: 200px;
+
+    img {
+      height: 100px;
+    }
   }
 `;
 
@@ -269,19 +264,16 @@ const Right = styled.div<WithTheme>`
 
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
-    height: 40%;
   }
 `;
 
 const Bottom = styled.section<WithTheme>`
   width: 100%;
-  height: 50%;
   padding: 30px 10px;
 `;
 
 const ContentBox = styled.div<WithTheme>`
   display: flex;
-  height: 100%;
   flex-direction: column;
   gap: 8px;
   justify-content: center;

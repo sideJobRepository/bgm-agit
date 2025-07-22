@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { FaUsers, FaCalendarAlt, FaWifi, FaCar } from 'react-icons/fa';
-import ImageGridSlider from '../components/Grid/ImageGridSlider.tsx';
+import ImageGridSlider from '../components/grid/ImageGridSlider.tsx';
 import Notice from '../pages/Notice.tsx';
 import { useMediaQuery } from 'react-responsive';
 import { useNavigate } from 'react-router-dom';
@@ -11,10 +11,10 @@ export default function MainPage() {
 
   const navigate = useNavigate();
 
-  const visibleCountMain = isMobile ? 2 : 3;
-  const visibleCountGame = isMobile ? 2 : 4;
-  const visibleCountReserve = isMobile ? 1 : 3;
-  const visibleCountFood = isMobile ? 2 : 4;
+  const visibleCountMain = isMobile ? 2 : 4;
+  const visibleCountGame = isMobile ? 2 : 5;
+  const visibleCountReserve = isMobile ? 2 : 4;
+  const visibleCountFood = isMobile ? 3 : 6;
 
   return (
     <MainPageWrapper>
@@ -185,7 +185,7 @@ const MainPageWrapper = styled.div<WithTheme>`
 const TopSection = styled.section<WithTheme>`
   display: flex;
   width: 100%;
-  height: 300px;
+  height: 100%;
   padding: 20px 10px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
 
@@ -196,13 +196,12 @@ const TopSection = styled.section<WithTheme>`
 
 const LeftSection = styled.section<WithTheme>`
   width: 36%;
-  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
-    height: 60%;
+    height: 160px;
   }
 `;
 
@@ -244,7 +243,7 @@ const ContentBox = styled.div<WithTheme>`
 
       a {
         margin-right: 0;
-        font-size: ${({ theme }) => theme.sizes.xsmall};
+        font-size: ${({ theme }) => theme.sizes.xxsmall};
       }
     }
 
@@ -291,50 +290,35 @@ const GridItem = styled.div<WithTheme>`
 
 const RightSection = styled.section<WithTheme>`
   width: 64%;
-  height: 100%;
+  //height: 100%;
   padding: 10px;
 
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
-    height: 40%;
+    //height: 40%;
     padding: 0;
   }
 `;
 
 const GameSection = styled.section<WithTheme>`
   width: 100%;
-  height: 400px;
   padding: 30px 10px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
   color: ${({ theme }) => theme.colors.greenColor};
-
-  @media ${({ theme }) => theme.device.mobile} {
-    height: 242px;
-  }
 `;
 
 const ReservationSection = styled.section<WithTheme>`
   width: 100%;
-  height: 400px;
   padding: 30px 10px;
   color: ${({ theme }) => theme.colors.blueColor};
-
-  @media ${({ theme }) => theme.device.mobile} {
-    height: 300px;
-  }
 `;
 
 const FoodSection = styled.section<WithTheme>`
   width: 100%;
-  height: 400px;
   padding: 30px 10px;
   color: ${({ theme }) => theme.colors.bronzeColor};
   background-color: ${({ theme }) => theme.colors.basicColor};
   border-radius: 12px;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    height: 242px;
-  }
 `;
 
 const NoticeSection = styled.section<WithTheme>`
@@ -350,7 +334,7 @@ const NoticeSection = styled.section<WithTheme>`
 
 const TitleBox = styled.div<WithTheme>`
   width: 100%;
-  height: 16%;
+  margin-bottom: 40px;
   display: flex;
   align-items: center;
   line-height: 1;
@@ -377,7 +361,8 @@ const TitleBox = styled.div<WithTheme>`
   }
 
   @media ${({ theme }) => theme.device.mobile} {
-    height: 20%;
+    margin-bottom: 20px;
+
     h2 {
       font-size: ${({ theme }) => theme.sizes.small};
     }
@@ -387,16 +372,11 @@ const TitleBox = styled.div<WithTheme>`
     }
 
     a {
-      font-size: ${({ theme }) => theme.sizes.xsmall};
+      font-size: ${({ theme }) => theme.sizes.xxsmall};
     }
   }
 `;
 
 const SliderBox = styled.div<WithTheme>`
   width: 100%;
-  height: 84%;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    height: 80%;
-  }
 `;
