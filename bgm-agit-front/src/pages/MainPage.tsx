@@ -227,10 +227,6 @@ const ContentBox = styled.div<WithTheme>`
       margin-right: 20px;
       color: ${({ theme }) => theme.colors.navColor};
       cursor: pointer;
-
-      svg {
-        margin-bottom: 1px;
-      }
     }
   }
 
@@ -381,10 +377,6 @@ const TitleBox = styled.div<WithTheme>`
     margin-right: 20px;
     color: ${({ theme }) => theme.colors.navColor};
     cursor: pointer;
-
-    svg {
-      margin-bottom: 1px;
-    }
   }
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -401,7 +393,6 @@ const TitleBox = styled.div<WithTheme>`
       margin-right: 0;
       font-size: ${({ theme }) => theme.sizes.xsmall};
       svg {
-        margin-top: 1px;
         font-size: ${({ theme }) => theme.sizes.xxsmall};
       }
     }
