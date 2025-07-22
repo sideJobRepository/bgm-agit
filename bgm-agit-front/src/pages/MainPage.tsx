@@ -5,7 +5,7 @@ import { FiChevronRight } from 'react-icons/fi';
 import ImageGridSlider from '../components/ImageGridSlider.tsx';
 import Notice from '../pages/Notice.tsx';
 import { useMediaQuery } from 'react-responsive';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 export default function MainPage() {
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
@@ -24,10 +24,14 @@ export default function MainPage() {
           <ContentBox>
             <div>
               <p>BGM 아지트란.</p>
-              <LinkStyled to="/about">
+              <a
+                onClick={() => {
+                  navigate('/about');
+                }}
+              >
                 more
-                <FiChevronRight />
-              </LinkStyled>
+              </a>
+              <FiChevronRight />
             </div>
             <h2>
               누구에게나
@@ -140,8 +144,8 @@ export default function MainPage() {
             }}
           >
             more
-            <FiChevronRight />
           </a>
+          <FiChevronRight />
         </TitleBox>
         <SliderBox>
           <Notice
@@ -214,6 +218,19 @@ const ContentBox = styled.div<WithTheme>`
       color: ${({ theme }) => theme.colors.blueColor};
       font-size: ${({ theme }) => theme.sizes.bigLarge};
     }
+
+    a {
+      font-weight: ${({ theme }) => theme.weight.semiBold};
+      margin-left: auto;
+      margin-right: 2px;
+      color: ${({ theme }) => theme.colors.navColor};
+      cursor: pointer;
+    }
+
+    svg {
+      color: ${({ theme }) => theme.colors.navColor};
+      margin-bottom: 2px;
+    }
   }
 
   h2 {
@@ -231,9 +248,9 @@ const ContentBox = styled.div<WithTheme>`
       a {
         margin-right: 0;
         font-size: ${({ theme }) => theme.sizes.xsmall};
-        svg {
-          font-size: ${({ theme }) => theme.sizes.xxsmall};
-        }
+      }
+      svg {
+        font-size: ${({ theme }) => theme.sizes.xxsmall};
       }
     }
 
@@ -341,6 +358,7 @@ const TitleBox = styled.div<WithTheme>`
   width: 100%;
   height: 16%;
   display: flex;
+  align-items: center;
   line-height: 1;
   h2 {
     font-size: ${({ theme }) => theme.sizes.xlarge};
@@ -357,13 +375,16 @@ const TitleBox = styled.div<WithTheme>`
   }
 
   a {
-    display: inline-flex;
-    align-items: center;
     font-weight: ${({ theme }) => theme.weight.semiBold};
     margin-left: auto;
-    margin-right: 20px;
+    margin-right: 2px;
     color: ${({ theme }) => theme.colors.navColor};
     cursor: pointer;
+  }
+
+  svg {
+    color: ${({ theme }) => theme.colors.navColor};
+    margin-bottom: 2px;
   }
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -377,11 +398,10 @@ const TitleBox = styled.div<WithTheme>`
     }
 
     a {
-      margin-right: 0;
       font-size: ${({ theme }) => theme.sizes.xsmall};
-      svg {
-        font-size: ${({ theme }) => theme.sizes.xxsmall};
-      }
+    }
+    svg {
+      font-size: ${({ theme }) => theme.sizes.xxsmall};
     }
   }
 `;
@@ -392,19 +412,5 @@ const SliderBox = styled.div<WithTheme>`
 
   @media ${({ theme }) => theme.device.mobile} {
     height: 80%;
-  }
-`;
-
-const LinkStyled = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  margin-left: auto;
-  gap: 4px;
-  color: ${({ theme }) => theme.colors.navColor};
-  cursor: pointer;
-  text-decoration: none;
-
-  svg {
   }
 `;
