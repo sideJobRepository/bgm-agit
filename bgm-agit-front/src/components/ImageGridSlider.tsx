@@ -48,29 +48,30 @@ export default function ImageGridSlider({ items, visibleCount, labelGb, interval
   return (
     <Wrapper {...swipeHandlers}>
       <Slider $visibleCount={visibleCount} $itemCount={items.length} $index={index}>
-        {items.map((item, idx) => (
-          <Slide key={idx} $visibleCount={visibleCount}>
-            {labelGb !== 1 && (
-              <div>
-                <p>{item.label}</p>
-                {labelGb === 3 && (
-                  <>
-                    <FaUsers /> <span> {item.group}</span>
-                  </>
-                )}
-              </div>
-            )}
-            <img
-              src={item.image}
-              alt={`img-${idx}`}
-              draggable={false}
-              onClick={() => labelGb === 1 && handleImageClick(idx)}
-            />
-          </Slide>
-        ))}
+        {Array.isArray(items) &&
+          items.map((item, idx) => (
+            <Slide key={idx} $visibleCount={visibleCount}>
+              {labelGb !== 1 && (
+                <div>
+                  <p>{item.label}</p>
+                  {labelGb === 3 && (
+                    <>
+                      <FaUsers /> <span> {item.group}</span>
+                    </>
+                  )}
+                </div>
+              )}
+              <img
+                src={item.image}
+                alt={`img-${idx}`}
+                draggable={false}
+                onClick={() => labelGb === 1 && handleImageClick(idx)}
+              />
+            </Slide>
+          ))}
       </Slider>
       <ImageLightbox
-        images={items.map(item => item.image)}
+        images={Array.isArray(items) ? items.map(item => item.image) : []}
         index={lightboxIndex}
         onClose={() => setLightboxIndex(-1)}
         onIndexChange={setLightboxIndex}
