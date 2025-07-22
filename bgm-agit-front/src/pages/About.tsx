@@ -143,7 +143,7 @@ export default function About() {
             <img src={foodAbout} />
           </section>
         </ContentImage>
-        <TextBox headerColor="#5C3A21" bgColor="#F2EDEA" textColor="#424548">
+        <TextBox headerColor="#5C3A21" bgColor="#F2EDEA" textColor="#5C3A21">
           <h2>게임하면서 즐기는 먹거리!</h2>
           <div>
             <p>
@@ -440,7 +440,7 @@ const TextBox = styled.div<WithTheme & SectionProps>`
     padding: 16px;
     border-radius: 12px;
     p {
-      font-size: ${({ theme }) => theme.sizes.bigLarge};
+      font-size: ${({ theme }) => theme.sizes.menu};
       line-height: 1.6;
       color: ${({ textColor }) => textColor};
       font-weight: ${({ theme }) => theme.weight.semiBold};
@@ -486,7 +486,7 @@ const ReservationTextBox = styled.div<WithTheme>`
     padding: 16px;
     border-radius: 12px;
     p {
-      font-size: ${({ theme }) => theme.sizes.bigLarge};
+      font-size: ${({ theme }) => theme.sizes.menu};
       font-weight: ${({ theme }) => theme.weight.semiBold};
       line-height: 1.6;
       color: ${({ theme }) => theme.colors.white};
