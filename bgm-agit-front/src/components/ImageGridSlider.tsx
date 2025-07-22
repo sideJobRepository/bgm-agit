@@ -18,7 +18,7 @@ interface Props {
   interval?: number;
 }
 
-export default function ImageGridSlider({ items, visibleCount, labelGb, interval = 5000 }: Props) {
+export default function ImageGridSlider({ items, visibleCount, labelGb, interval = 8000 }: Props) {
   const [index, setIndex] = useState(0);
 
   //이미지 전체
