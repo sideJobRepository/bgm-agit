@@ -273,7 +273,7 @@ const Line1 = styled.p<WithTheme>`
   color: ${({ theme }) => theme.colors.blueColor};
   margin-left: 0;
   @media ${({ theme }) => theme.device.tablet} {
-    font-size: ${({ theme }) => theme.sizes.medium};
+    font-size: ${({ theme }) => theme.sizes.large};
   }
 `;
 
@@ -291,7 +291,7 @@ const Line2 = styled.div<WithTheme>`
   @media ${({ theme }) => theme.device.tablet} {
     margin-left: 0;
     h2 {
-      font-size: ${({ theme }) => theme.sizes.large};
+      font-size: ${({ theme }) => theme.sizes.bigLarge};
     }
   }
 `;
@@ -306,7 +306,7 @@ const Line3 = styled.div<WithTheme>`
 
   @media ${({ theme }) => theme.device.tablet} {
     margin-left: 0;
-    font-size: ${({ theme }) => theme.sizes.xsmall};
+    font-size: ${({ theme }) => theme.sizes.small};
   }
 `;
 
@@ -333,6 +333,7 @@ const CotentBgBox = styled.div<WithTheme>`
 
   @media ${({ theme }) => theme.device.mobile} {
     flex-direction: column;
+    padding: 10px 0;
   }
 `;
 
