@@ -123,7 +123,7 @@ const TitleBox = styled.div<{ color: string } & WithTheme>`
     h2 {
       text-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
       font-weight: ${({ theme }) => theme.weight.bold};
-      font-size: ${({ theme }) => theme.sizes.small};
+      font-size: ${({ theme }) => theme.sizes.large};
     }
     p {
       margin-top: auto;
