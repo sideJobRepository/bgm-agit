@@ -47,8 +47,6 @@ export default function ImageGridSlider({ items, visibleCount, labelGb, interval
     return () => clearInterval(timer);
   }, [items.length, visibleCount, interval]);
 
-  console.log('ImageGridSlider items:', items, Array.isArray(items));
-
   return (
     <Wrapper {...swipeHandlers}>
       <Slider $visibleCount={visibleCount} $itemCount={items.length} $index={index}>

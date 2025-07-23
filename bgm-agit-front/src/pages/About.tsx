@@ -12,7 +12,6 @@ import {
   FaMoneyCheckAlt,
 } from 'react-icons/fa';
 import ImageGridSlider from '../components/grid/ImageGridSlider.tsx';
-import Nav from '../components/Nav.tsx';
 import boradGameImage from '/images/boradGame.jpg';
 import foodAbout from '/images/foodAbout.png';
 import { useMediaQuery } from 'react-responsive';
@@ -30,7 +29,6 @@ export default function About() {
 
   return (
     <Wrapper>
-      <Nav />
       <TopSection>
         <Top>
           <ImageBox>

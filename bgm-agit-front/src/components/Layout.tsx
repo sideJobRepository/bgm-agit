@@ -1,16 +1,25 @@
 import TopHeader from './TopHeader.jsx';
 import styled from 'styled-components';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import type { WithTheme } from '../styles/styled-props.ts';
 import Footer from './Footer.tsx';
+import Nav from './Nav.tsx';
 
 export default function Layout() {
+  const location = useLocation();
+  const home = location.pathname === '/';
+
+  console.log('location.pathname', location.pathname);
+
   return (
     <Wrapper>
       <Inner>
         <TopArea>
           <TopHeader />
         </TopArea>
+        <NavArea $home={home}>
+          <Nav />
+        </NavArea>
         <MainArea>
           <Outlet />
         </MainArea>
@@ -45,11 +54,17 @@ const TopArea = styled.header<WithTheme>`
   z-index: 1000;
 `;
 
+const NavArea = styled.nav<WithTheme & { $home: boolean }>`
+  display: flex;
+  height: ${({ $home }) => ($home ? '0' : '30px')};
+  background-color: ${({ theme }) => theme.colors.softColor};
+  margin-top: 100px;
+`;
+
 const MainArea = styled.main<WithTheme>`
   flex: 1;
   padding: 20px;
   display: flex;
-  margin-top: 100px;
   height: 100%;
   overflow-y: auto;
   overflow-x: auto;

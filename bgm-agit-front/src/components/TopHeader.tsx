@@ -35,7 +35,7 @@ export default function TopHeader() {
   const [isMobileSubOpen, setIsMobileSubOpen] = useState<string | null>(null);
 
   const toggleMenu = () => setIsOpen(prev => !prev);
-  console.log('menus menus:', menus, Array.isArray(menus));
+
   //메뉴바 닫기
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -156,7 +156,7 @@ export default function TopHeader() {
 }
 
 const Wrapper = styled.div<WithTheme>`
-  height: 100%;
+  height: 100px;
   padding: 0 20px;
   margin: 0 auto;
   display: flex;

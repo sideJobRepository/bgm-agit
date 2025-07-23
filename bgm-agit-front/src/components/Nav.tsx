@@ -3,11 +3,12 @@ import type { WithTheme } from '../styles/styled-props.ts';
 import { useRecoilValue } from 'recoil';
 import { mainMenuState } from '../recoil';
 import { IoChevronForward } from 'react-icons/io5';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { MainMenu } from '../types/menu.ts';
 
 export default function Nav() {
   const location = useLocation();
+  const navigate = useNavigate();
   const menus = useRecoilValue(mainMenuState);
 
   const { mainMenu, subMenu } = findMenuByPath(location.pathname, menus);
@@ -25,29 +26,52 @@ export default function Nav() {
 
   return (
     <Wrapper>
-      {mainMenu && (
-        <>
-          <span>{mainMenu.name}</span>
-          <IoChevronForward />
-        </>
-      )}
-      <span>{subMenu?.name}</span>
+      <NavBox>
+        {mainMenu && (
+          <>
+            <a
+              onClick={() => {
+                navigate('/');
+              }}
+            >
+              홈
+            </a>
+            <IoChevronForward />
+            <span>{mainMenu.name}</span>
+            <IoChevronForward />
+          </>
+        )}
+        <span>{subMenu?.name}</span>
+      </NavBox>
     </Wrapper>
   );
 }
 
 const Wrapper = styled.div<WithTheme>`
   width: 100%;
-  height: 30px;
-  display: flex;
-  padding: 0 20px;
-  align-items: center;
-  justify-content: end;
+  height: 100%;
+  max-width: 1500px;
+  min-width: 1280px;
+  padding: 0 30px;
   font-size: ${({ theme }) => theme.sizes.small};
   color: ${({ theme }) => theme.colors.navColor};
   font-weight: ${({ theme }) => theme.weight.semiBold};
 
-  @media ${({ theme }) => theme.device.mobile} {
+  @media ${({ theme }) => theme.device.tablet} {
+    max-width: 100%;
+    min-width: 100%;
     font-size: ${({ theme }) => theme.sizes.xsmall};
+  }
+`;
+
+const NavBox = styled.div<WithTheme>`
+  display: flex;
+  gap: 2px;
+  justify-content: end;
+  height: 100%;
+  align-items: center;
+
+  a {
+    cursor: pointer;
   }
 `;

@@ -1,6 +1,5 @@
 import styled from 'styled-components';
 import ImageGrid from '../components/grid/ImageGrid.tsx';
-import Nav from '../components/Nav.tsx';
 import { useMediaQuery } from 'react-responsive';
 import { Wrapper } from '../styles';
 
@@ -9,7 +8,6 @@ export default function Game() {
   const visibleCountGame = isMobile ? 2 : 4;
   return (
     <Wrapper>
-      <Nav />
       <GridBox>
         <ImageGrid
           columnCount={visibleCountGame}
