@@ -446,6 +446,7 @@ const ReservationImageBox = styled.div<WithTheme>`
   width: 100%;
   height: 50%;
   margin-bottom: 50px;
+  padding: 0 10px;
 
   @media ${({ theme }) => theme.device.mobile} {
     height: 60%;
