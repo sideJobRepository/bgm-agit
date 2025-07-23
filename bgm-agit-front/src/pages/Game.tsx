@@ -1,8 +1,8 @@
 import styled from 'styled-components';
-import type { WithTheme } from '../styles/styled-props.ts';
 import ImageGrid from '../components/grid/ImageGrid.tsx';
 import Nav from '../components/Nav.tsx';
 import { useMediaQuery } from 'react-responsive';
+import { Wrapper } from '../styles';
 
 export default function Game() {
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
@@ -39,20 +39,6 @@ export default function Game() {
     </Wrapper>
   );
 }
-
-const Wrapper = styled.div<WithTheme>`
-  max-width: 1500px;
-  min-width: 1280px;
-  min-height: 600px;
-  height: 100%;
-  margin: 0 auto;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    max-width: 100%;
-    min-width: 100%;
-    min-height: unset;
-  }
-`;
 
 const GridBox = styled.div`
   display: flex;

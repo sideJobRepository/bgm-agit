@@ -35,7 +35,7 @@ const Inner = styled.div`
   flex: 1;
 `;
 
-const TopArea = styled.div<WithTheme>`
+const TopArea = styled.header<WithTheme>`
   position: fixed;
   top: 0;
   left: 0;

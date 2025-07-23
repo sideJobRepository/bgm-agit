@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { Wrapper } from '../styles';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { FaUsers, FaCalendarAlt, FaWifi, FaCar } from 'react-icons/fa';
 import ImageGridSlider from '../components/grid/ImageGridSlider.tsx';
@@ -17,7 +18,7 @@ export default function MainPage() {
   const visibleCountFood = isMobile ? 3 : 6;
 
   return (
-    <MainPageWrapper>
+    <Wrapper>
       <TopSection>
         <LeftSection>
           <ContentBox>
@@ -167,22 +168,9 @@ export default function MainPage() {
           />
         </SliderBox>
       </NoticeSection>
-    </MainPageWrapper>
+    </Wrapper>
   );
 }
-
-const MainPageWrapper = styled.div<WithTheme>`
-  max-width: 1500px;
-  min-width: 1280px;
-  min-height: 600px;
-  height: 100%;
-  margin: 0 auto;
-  @media ${({ theme }) => theme.device.mobile} {
-    max-width: 100%;
-    min-width: 100%;
-    min-height: unset;
-  }
-`;
 
 const TopSection = styled.section<WithTheme>`
   display: flex;
