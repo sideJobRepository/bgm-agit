@@ -33,7 +33,6 @@ export default function SearchBar({ color, label }: SearchBarProps) {
 const Wrapper = styled.section`
   display: flex;
   width: 100%;
-  margin-bottom: 40px;
 `;
 const SearchGroup = styled.form<{ color: string } & WithTheme>`
   display: flex;

@@ -69,6 +69,7 @@ const Wrapper = styled.div`
 
 const GridContainer = styled.div<{ $columnCount: number }>`
   display: grid;
+  padding: 20px 0;
   grid-template-columns: repeat(${props => props.$columnCount}, 1fr);
   gap: 40px;
 `;
