@@ -14,7 +14,7 @@ export default function MainPage() {
 
   const visibleCountMain = isMobile ? 2 : 4;
   const visibleCountGame = isMobile ? 2 : 4;
-  const visibleCountReserve = isMobile ? 2 : 4;
+  const visibleCountReserve = isMobile ? 2 : 3;
   const visibleCountFood = isMobile ? 3 : 5;
 
   return (
@@ -295,7 +295,8 @@ const RightSection = styled.section<WithTheme>`
 const GameFoodSection = styled.section<WithTheme>`
   display: flex;
   width: 100%;
-  padding: 30px 10px;
+  //padding: 30px 10px;
+  margin: 30px 0;
   @media ${({ theme }) => theme.device.mobile} {
     display: flex;
     flex-direction: column;
@@ -306,19 +307,21 @@ const GameFoodSection = styled.section<WithTheme>`
 const GameSection = styled.section<WithTheme>`
   width: 50%;
   padding: 20px;
+  border-radius: 12px 0 0 12px;
   color: ${({ theme }) => theme.colors.greenColor};
   background-color: ${({ theme }) => theme.colors.softColor};
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
     padding: 10px;
     border-radius: 12px;
-    //padding: 0;
+    margin-bottom: 20px;
   }
 `;
 
 const FoodSection = styled.section<WithTheme>`
   width: 50%;
   padding: 20px;
+  border-radius: 0 12px 12px 0;
   color: ${({ theme }) => theme.colors.bronzeColor};
   background-color: ${({ theme }) => theme.colors.basicColor};
   @media ${({ theme }) => theme.device.mobile} {
@@ -331,8 +334,10 @@ const FoodSection = styled.section<WithTheme>`
 
 const ReservationSection = styled.section<WithTheme>`
   width: 100%;
-  padding: 30px 10px;
-  color: ${({ theme }) => theme.colors.blueColor};
+  padding: 30px 20px;
+  background-color: ${({ theme }) => theme.colors.blueColor};
+  border-radius: 12px;
+  color: ${({ theme }) => theme.colors.white};
 `;
 
 const NoticeSection = styled.section<WithTheme>`

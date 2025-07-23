@@ -110,13 +110,13 @@ export default function About() {
           </ContentBox>
         </Bottom>
       </TopSection>
-      <ContentSetion bgColor="#ffffff" textColor="#D9D9D9">
+      <ContentSetion bgColor="#1A7D55" textColor="#D9D9D9">
         <ContentImage>
           <section>
             <img src={boradGameImage} />
           </section>
         </ContentImage>
-        <TextBox headerColor="#1A7D55" bgColor="#1A7D55" textColor="#ffffff">
+        <TextBox headerColor="#ffffff" bgColor="#1A7D55" textColor="#ffffff">
           <h2>원하는 게임이 무엇이든지!</h2>
           <div>
             <p>
@@ -366,8 +366,8 @@ const ContentSetion = styled.section<WithTheme & SectionProps>`
   height: 600px;
   align-items: center;
   padding: 30px 10px;
-  border-bottom: 1px solid ${({ textColor }) => textColor};
   background-color: ${({ bgColor }) => bgColor};
+  margin-top: 60px;
   border-radius: 12px;
   @media ${({ theme }) => theme.device.mobile} {
     flex-direction: column;
@@ -383,6 +383,9 @@ const ReservationSetion = styled.section<WithTheme>`
   align-items: center;
   padding: 30px 10px;
   flex-direction: column;
+  background-color: ${({ theme }) => theme.colors.blueColor};
+  margin-top: 60px;
+  border-radius: 12px;
 
   @media ${({ theme }) => theme.device.mobile} {
     height: 500px;
@@ -430,6 +433,7 @@ const ContentImage = styled.div<WithTheme & SectionProps>`
     padding-right: 0;
     background-color: ${({ bgColor }) => bgColor};
     border-radius: 12px;
+    margin-bottom: 30px;
     section {
       img {
         height: 100%;
@@ -490,6 +494,7 @@ const TextBox = styled.div<WithTheme & SectionProps>`
     div {
       width: 100%;
       p {
+        text-align: center;
         font-size: ${({ theme }) => theme.sizes.xsmall};
       }
     }
@@ -501,21 +506,20 @@ const ReservationTextBox = styled.div<WithTheme>`
   width: 100%;
   height: 30%;
   flex-direction: column;
-  align-items: flex-start;
   justify-content: center;
+  align-items: center;
 
   h2 {
     font-size: ${({ theme }) => theme.sizes.xxlarge};
     font-weight: ${({ theme }) => theme.weight.bold};
-    color: ${({ theme }) => theme.colors.blueColor};
+    color: ${({ theme }) => theme.colors.white};
     margin-bottom: 20px;
   }
   div {
     width: 100%;
-    background-color: ${({ theme }) => theme.colors.blueColor};
     padding: 16px;
-    border-radius: 12px;
     p {
+      text-align: center;
       font-size: ${({ theme }) => theme.sizes.menu};
       font-weight: ${({ theme }) => theme.weight.semiBold};
       line-height: 1.6;
