@@ -368,11 +368,9 @@ const TitleBox = styled.div<WithTheme>`
 
   p {
     margin-top: 6px;
-    margin-left: 8px;
+    margin-left: 12px;
     font-size: ${({ theme }) => theme.sizes.medium};
     font-weight: ${({ theme }) => theme.weight.semiBold};
-    text-decoration: underline;
-    text-underline-offset: 4px;
   }
 
   a {
