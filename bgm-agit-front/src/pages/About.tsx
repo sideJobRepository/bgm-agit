@@ -43,7 +43,7 @@ export default function About() {
               <LogoBox>
                 <GridItem>
                   <FaUsers />
-                  <span>단체 이용가능</span>
+                  <span>단체 가능</span>
                 </GridItem>
                 <GridItem>
                   <FaCalendarAlt />

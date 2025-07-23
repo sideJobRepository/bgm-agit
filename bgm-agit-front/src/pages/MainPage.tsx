@@ -41,7 +41,7 @@ export default function MainPage() {
           <LogoBox>
             <GridItem>
               <FaUsers />
-              <span>단체 이용가능</span>
+              <span>단체 가능</span>
             </GridItem>
             <GridItem>
               <FaCalendarAlt />
@@ -250,6 +250,9 @@ const ContentBox = styled.div<WithTheme>`
 const LogoBox = styled.div<WithTheme>`
   display: grid;
   height: 36%;
+  background-color: ${({ theme }) => theme.colors.greenColor};
+  //border-radius: 12px;
+  color: ${({ theme }) => theme.colors.white};
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   justify-items: center;
@@ -265,15 +268,14 @@ const GridItem = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: ${({ theme }) => theme.colors.subMenuColor};
 
   svg {
-    font-size: ${({ theme }) => theme.sizes.xxlarge};
+    font-size: ${({ theme }) => theme.sizes.xlarge};
   }
   span {
     font-weight: ${({ theme }) => theme.weight.semiBold};
     margin-top: 10px;
-    font-size: ${({ theme }) => theme.sizes.medium};
+    font-size: ${({ theme }) => theme.sizes.small};
   }
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -290,7 +292,7 @@ const GridItem = styled.div<WithTheme>`
 const RightSection = styled.section<WithTheme>`
   width: 64%;
   //height: 100%;
-  padding: 10px;
+  padding: 0 10px;
 
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
