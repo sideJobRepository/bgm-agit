@@ -128,7 +128,7 @@ const TitleBox = styled.div<{ color: string } & WithTheme>`
     p {
       margin-top: auto;
       font-weight: ${({ theme }) => theme.weight.semiBold};
-      font-size: ${({ theme }) => theme.sizes.xxsmall};
+      font-size: ${({ theme }) => theme.sizes.xsmall};
     }
     margin-bottom: 10px;
   }

@@ -42,7 +42,6 @@ export default function NoticeTable({ items }: Props) {
 
 const Table = styled.table<WithTheme>`
   width: 100%;
-  margin-top: 30px;
   border-collapse: collapse;
   font-size: ${({ theme }) => theme.sizes.medium};
   color: ${({ theme }) => theme.colors.subColor};

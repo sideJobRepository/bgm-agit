@@ -53,11 +53,6 @@ const Left = styled.section<WithTheme>`
     width: 30px;
     margin-left: 12px;
     cursor: pointer;
-
-    @media ${({ theme }) => theme.device.mobile} {
-      width: 24px;
-      margin-left: 8px;
-    }
   }
 `;
 
@@ -67,6 +62,7 @@ const Right = styled.section<WithTheme>`
   width: 50%;
 
   @media ${({ theme }) => theme.device.tablet} {
+    text-align: left;
     width: 100%;
     height: 100%;
   }

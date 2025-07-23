@@ -68,6 +68,9 @@ const MainArea = styled.main<WithTheme>`
   height: 100%;
   overflow-y: auto;
   overflow-x: auto;
+  @media ${({ theme }) => theme.device.tablet} {
+    padding: 20px 10px;
+  }
 `;
 
 const FooterBox = styled.footer<WithTheme>`

@@ -14,7 +14,7 @@ export default function MainPage() {
 
   const visibleCountMain = isMobile ? 1 : 3;
   const visibleCountGame = isMobile ? 2 : 4;
-  const visibleCountReserve = isMobile ? 2 : 3;
+  const visibleCountReserve = isMobile ? 2 : 2;
   const visibleCountFood = isMobile ? 3 : 5;
 
   return (
@@ -121,54 +121,70 @@ export default function MainPage() {
           </SliderBox>
         </FoodSection>
       </GameFoodSection>
-      <ReservationSection>
-        <TitleBox>
-          <h2>실시간 예약하기</h2>
-          <p>내가 원하는 날짜, 시간에 간편하게 예약하세요!</p>
-        </TitleBox>
-        <SliderBox>
-          <ImageGridSlider
-            visibleCount={visibleCountReserve}
-            labelGb={3}
-            items={[
-              { image: '/images/room1.jpg', label: 'A Room', group: 4, link: '/reservation' },
-              { image: '/images/room2.jpg', label: 'B Room', group: 6, link: '/reservation' },
-              { image: '/images/room3.jpg', label: 'C Room', group: 6, link: '/reservation' },
-              { image: '/images/room4.jpg', label: 'D Room', group: 8, link: '/reservation' },
-              { image: '/images/room5.jpg', label: 'E Room', group: 10, link: '/reservation' },
-              { image: '/images/room6.jpg', label: 'F Room', group: 12, link: '/reservation' },
-            ]}
-          />
-        </SliderBox>
-      </ReservationSection>
-      <NoticeSection>
-        <TitleBox>
-          <h2>공지사항</h2>
-          <p>BGM 아지트 중요 정보 및 이벤트를 확인해주세요!</p>
-          <a
-            onClick={() => {
-              navigate('/about');
-            }}
-          >
-            더보기
-          </a>
-        </TitleBox>
-        <SliderBox>
-          <Notice
-            items={[
-              { id: 1, title: 'BGM 아지트 여름 휴가 안내', date: '2025.08.30', category: '공지' },
-              { id: 2, title: '멤버십 이벤트 안내', date: '2025.08.29', category: '이벤트' },
-              { id: 3, title: '여름맞이 음료 추가 안내', date: '2025.08.24', category: '공지' },
-              {
-                id: 4,
-                title: '동호회 가입하고 무료 포인트 받자!',
-                date: '2025.08.01',
-                category: '이벤트',
-              },
-            ]}
-          />
-        </SliderBox>
-      </NoticeSection>
+      <ReservationNoticeSection>
+        <ReservationSection>
+          <TitleBox>
+            <h2>실시간 예약하기</h2>
+            <p>내가 원하는 날짜, 시간에 간편하게 예약하세요!</p>
+          </TitleBox>
+          <SliderBox>
+            <ImageGridSlider
+              visibleCount={visibleCountReserve}
+              labelGb={3}
+              items={[
+                { image: '/images/room1.jpg', label: 'A Room', group: 4, link: '/reservation' },
+                { image: '/images/room2.jpg', label: 'B Room', group: 6, link: '/reservation' },
+                { image: '/images/room3.jpg', label: 'C Room', group: 6, link: '/reservation' },
+                { image: '/images/room4.jpg', label: 'D Room', group: 8, link: '/reservation' },
+                { image: '/images/room5.jpg', label: 'E Room', group: 10, link: '/reservation' },
+                { image: '/images/room6.jpg', label: 'F Room', group: 12, link: '/reservation' },
+              ]}
+            />
+          </SliderBox>
+        </ReservationSection>
+        <NoticeSection>
+          <TitleBox>
+            <h2>공지사항</h2>
+            <p>BGM 아지트 중요 정보 및 이벤트를 확인해주세요!</p>
+          </TitleBox>
+          <ABox>
+            <a
+              onClick={() => {
+                navigate('/about');
+              }}
+            >
+              더보기
+            </a>
+          </ABox>
+          <SliderBox>
+            <Notice
+              items={[
+                { id: 1, title: 'BGM 아지트 여름 휴가 안내', date: '2025.08.30', category: '공지' },
+                { id: 2, title: '멤버십 이벤트 안내', date: '2025.08.29', category: '이벤트' },
+                { id: 3, title: '여름맞이 음료 추가 안내', date: '2025.08.24', category: '공지' },
+                {
+                  id: 4,
+                  title: '동호회 가입하고 무료 포인트 받자!',
+                  date: '2025.08.01',
+                  category: '이벤트',
+                },
+                {
+                  id: 5,
+                  title: 'BGM 아지트 홈페이지 오픈 이벤트!',
+                  date: '2025.07.29',
+                  category: '이벤트',
+                },
+                {
+                  id: 6,
+                  title: 'BGM 아지트 홈페이지 오픈',
+                  date: '2025.07.22',
+                  category: '공지',
+                },
+              ]}
+            />
+          </SliderBox>
+        </NoticeSection>
+      </ReservationNoticeSection>
     </Wrapper>
   );
 }
@@ -219,7 +235,7 @@ const ContentBox = styled.div<WithTheme>`
       margin-right: 20px;
       color: ${({ theme }) => theme.colors.navColor};
       cursor: pointer;
-      font-size: ${({ theme }) => theme.sizes.xsmall};
+      font-size: ${({ theme }) => theme.sizes.small};
     }
   }
 
@@ -313,6 +329,18 @@ const GameFoodSection = styled.section<WithTheme>`
   }
 `;
 
+const ReservationNoticeSection = styled.section<WithTheme>`
+  display: flex;
+  width: 100%;
+  //padding: 30px 10px;
+  margin: 30px 0;
+  @media ${({ theme }) => theme.device.mobile} {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+`;
+
 const GameSection = styled.section<WithTheme>`
   width: 50%;
   padding: 20px;
@@ -339,21 +367,27 @@ const FoodSection = styled.section<WithTheme>`
 `;
 
 const ReservationSection = styled.section<WithTheme>`
-  width: 100%;
+  width: 50%;
   padding: 20px;
-  background-color: ${({ theme }) => theme.colors.blueColor};
   border-radius: 12px;
   color: ${({ theme }) => theme.colors.white};
+  background-color: ${({ theme }) => theme.colors.blueColor};
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+  }
 `;
 
 const NoticeSection = styled.section<WithTheme>`
-  width: 100%;
-  height: 100%;
-  padding: 30px 10px;
-  color: ${({ theme }) => theme.colors.menuColor};
+  width: 50%;
+  padding: 20px;
+  border-radius: 0 12px 12px 0;
+  color: ${({ theme }) => theme.colors.bronzeColor};
 
   @media ${({ theme }) => theme.device.mobile} {
-    overflow: hidden;
+    width: 100%;
+    height: 100%;
   }
 `;
 
@@ -375,32 +409,39 @@ const TitleBox = styled.div<WithTheme>`
     font-weight: ${({ theme }) => theme.weight.semiBold};
   }
 
-  a {
-    font-weight: ${({ theme }) => theme.weight.semiBold};
-    margin-left: auto;
-    margin-right: 2px;
-    color: ${({ theme }) => theme.colors.navColor};
-    font-size: ${({ theme }) => theme.sizes.xsmall};
-    cursor: pointer;
-  }
-
   @media ${({ theme }) => theme.device.mobile} {
-    margin-bottom: 20px;
+    gap: 6px;
+    flex-direction: column;
 
     h2 {
-      font-size: ${({ theme }) => theme.sizes.small};
+      font-size: ${({ theme }) => theme.sizes.medium};
     }
     p {
       margin-top: 3px;
-      font-size: ${({ theme }) => theme.sizes.xxsmall};
-    }
-
-    a {
-      font-size: ${({ theme }) => theme.sizes.xxsmall};
+      font-size: ${({ theme }) => theme.sizes.xsmall};
     }
   }
 `;
 
 const SliderBox = styled.div<WithTheme>`
   width: 100%;
+`;
+
+const ABox = styled.div<WithTheme>`
+  display: flex;
+  margin-bottom: 10px;
+  a {
+    font-weight: ${({ theme }) => theme.weight.semiBold};
+    margin-left: auto;
+    margin-right: 2px;
+    color: ${({ theme }) => theme.colors.navColor};
+    font-size: ${({ theme }) => theme.sizes.small};
+    cursor: pointer;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    a {
+      font-size: ${({ theme }) => theme.sizes.xxsmall};
+    }
+  }
 `;
