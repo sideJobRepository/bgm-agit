@@ -58,7 +58,7 @@ const Table = styled.table<WithTheme>`
 
   tbody tr {
     cursor: pointer;
-    border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
+
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.sizes.xxsmall};
     }
@@ -66,6 +66,10 @@ const Table = styled.table<WithTheme>`
     &:hover {
       opacity: 0.6;
     }
+  }
+
+  td {
+    border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
   }
 `;
 
