@@ -1,27 +1,29 @@
 package com.bgmagitapi.security;
 
 
-import com.nimbusds.jose.jwk.OctetSequenceKey;
+import com.bgmagitapi.security.entrypoint.BgmAgitAuthenticationEntryPoint;
+import com.bgmagitapi.security.manager.BgmAgitAuthorizationManager;
+import com.bgmagitapi.security.provider.SocialAuthenticationProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import javax.crypto.spec.SecretKeySpec;
 import java.util.List;
 
 @EnableWebSecurity
@@ -34,24 +36,31 @@ public class BgmAgitSecurityConfig {
     @Value("${cors.url}")
     private String corsUrl;
     
+    
+    private final AuthenticationEntryPoint bgmagitAuthenticationEntryPoint;
+    private final AuthorizationManager<RequestAuthorizationContext> bgmAgitAuthorizationManager;
+    private final AuthenticationProvider socialAuthenticationProvider;
+    
+    
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-       // AuthenticationManagerBuilder managerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
-        //managerBuilder.authenticationProvider(chamAuthenticationProvider);
-        //AuthenticationManager authenticationManager = managerBuilder.build();
-       
-        http.securityMatcher("/bgm-agit/**")
+        
+        AuthenticationManagerBuilder managerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
+        managerBuilder.authenticationProvider(socialAuthenticationProvider);
+        AuthenticationManager authenticationManager = managerBuilder.build();
+        http.  authorizeHttpRequests(auth -> auth
+                        .requestMatchers(resource).permitAll()
+                .anyRequest().access(bgmAgitAuthorizationManager))
+                .authenticationManager(authenticationManager)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                //.authenticationManager(authenticationManager)
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(Customizer.withDefaults()))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(resource).permitAll()
-                        .anyRequest().permitAll()
+                .with(new BgmAgitSecurityDsl<>(), bgmAgitSecurityDsl -> bgmAgitSecurityDsl
+                        .bgmAgitEntryPoint(bgmagitAuthenticationEntryPoint)
                 );
         return http.build();
     }
@@ -68,5 +77,7 @@ public class BgmAgitSecurityConfig {
         source.registerCorsConfiguration("/**", corsConfiguration);
         return source;
     }
+
+    
     
 }

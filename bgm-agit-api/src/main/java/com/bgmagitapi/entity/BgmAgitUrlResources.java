@@ -14,6 +14,6 @@ public class BgmAgitUrlResources extends DateSuperClass {
     @Column(name = "BGM_AGIT_URL_RESOURCES_ID")
     private Long bgmAgitUrlResourcesId;
     
-    @Column(name = "BGM_AGIT_URL")
-    private String bgmAgitUrl;
+    @Column(name = "BGM_AGIT_URL_RESOURCES_PATH")
+    private String bgmAgitUrlResourcesPath;
 }

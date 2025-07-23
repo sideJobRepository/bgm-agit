@@ -12,7 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component(value = "socialAuthenticationProvider")
 @RequiredArgsConstructor
 public class SocialAuthenticationProvider implements AuthenticationProvider {
     

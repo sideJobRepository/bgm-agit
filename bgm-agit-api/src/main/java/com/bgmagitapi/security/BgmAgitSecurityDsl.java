@@ -37,7 +37,7 @@ public class BgmAgitSecurityDsl<H extends HttpSecurityBuilder<H>> extends Abstra
         
         AuthenticationManager authenticationManager = http.getSharedObject(AuthenticationManager.class);
         getAuthenticationFilter().setAuthenticationManager(authenticationManager);
-        getAuthenticationFilter().setAuthenticationSuccessHandler(successHandler);
+        //getAuthenticationFilter().setAuthenticationSuccessHandler(successHandler);
         SessionAuthenticationStrategy sessionAuthenticationStrategy = http.getSharedObject(SessionAuthenticationStrategy.class);
         if(sessionAuthenticationStrategy != null) {
             getAuthenticationFilter().setSessionAuthenticationStrategy(sessionAuthenticationStrategy);
