@@ -412,13 +412,16 @@ const TitleBox = styled.div<WithTheme>`
   @media ${({ theme }) => theme.device.mobile} {
     gap: 6px;
     flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 20px;
 
     h2 {
-      font-size: ${({ theme }) => theme.sizes.medium};
+      font-size: ${({ theme }) => theme.sizes.large};
     }
     p {
       margin-top: 3px;
-      font-size: ${({ theme }) => theme.sizes.xsmall};
+      margin-left: 0;
+      font-size: ${({ theme }) => theme.sizes.small};
     }
   }
 `;
