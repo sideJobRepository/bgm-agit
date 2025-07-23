@@ -51,7 +51,10 @@ export default function ImageGrid({ pageData }: Props) {
       <GridContainer $columnCount={columnCount}>
         {items.map((item, idx) => (
           <GridItemBox key={idx}>
-            <ImageWrapper onClick={() => labelGb !== 3 && handleImageClick(idx)}>
+            <ImageWrapper
+              radius={labelGb === 4}
+              onClick={() => labelGb !== 3 && handleImageClick(idx)}
+            >
               <img src={item.image} alt={`img-${idx}`} draggable={false} />
               {labelGb === 3 && (
                 <TopLabel>
@@ -153,7 +156,7 @@ const GridItemBox = styled.div`
   align-items: center;
 `;
 
-const ImageWrapper = styled.div`
+const ImageWrapper = styled.div<{ radius: boolean }>`
   width: 100%;
   aspect-ratio: 1 / 1;
   position: relative;
@@ -162,7 +165,7 @@ const ImageWrapper = styled.div`
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 12px;
+    border-radius: ${({ radius }) => (radius ? '999px' : '12px')};
     display: block;
     cursor: pointer;
   }
