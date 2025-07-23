@@ -51,7 +51,7 @@ export default function ImageGrid({ pageData }: Props) {
       <GridContainer $columnCount={columnCount}>
         {items.map((item, idx) => (
           <GridItemBox key={idx}>
-            <ImageWrapper onClick={() => labelGb === 2 && handleImageClick(idx)}>
+            <ImageWrapper onClick={() => labelGb !== 3 && handleImageClick(idx)}>
               <img src={item.image} alt={`img-${idx}`} draggable={false} />
               {labelGb === 3 && (
                 <TopLabel>
