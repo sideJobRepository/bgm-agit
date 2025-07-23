@@ -257,7 +257,7 @@ const LogoTextBox = styled.div<WithTheme>`
 const LogoBox = styled.div<WithTheme>`
   display: grid;
   height: 70%;
-  color: ${({ theme }) => theme.colors.subMenuColor};
+  color: ${({ theme }) => theme.colors.subColor};
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(2, auto);
   gap: 10px 12px;
@@ -353,7 +353,7 @@ const Line3 = styled.div<WithTheme>`
   margin-left: 26%;
   font-weight: ${({ theme }) => theme.weight.semiBold};
   font-size: ${({ theme }) => theme.sizes.bigLarge};
-  color: ${({ theme }) => theme.colors.subMenuColor};
+  color: ${({ theme }) => theme.colors.subColor};
   line-height: 1.6;
 
   @media ${({ theme }) => theme.device.tablet} {

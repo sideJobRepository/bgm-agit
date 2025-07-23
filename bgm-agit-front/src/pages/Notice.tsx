@@ -45,7 +45,7 @@ const Table = styled.table<WithTheme>`
   margin-top: 30px;
   border-collapse: collapse;
   font-size: ${({ theme }) => theme.sizes.medium};
-  color: ${({ theme }) => theme.colors.subMenuColor};
+  color: ${({ theme }) => theme.colors.subColor};
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.sizes.xsmall};

@@ -1,9 +1,13 @@
 export const theme = {
   colors: {
     topBg: '#FCF8E6',
+    subBgColor: '#F8EFD9',
+    subTextBoxColor: '#F1E7CE',
+    activeMenuColor: '#3D2D1E',
+    subMenuColor: '#2C1E0F',
     bottomBg: '#988271',
     menuColor: '#2E2E2E',
-    subMenuColor: '#424548',
+    subColor: '#424548',
     purpleColor: '#482768',
     blueColor: '#093A6E',
     greenColor: '#1A7D55',

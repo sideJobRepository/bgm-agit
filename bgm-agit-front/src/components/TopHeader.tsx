@@ -7,7 +7,7 @@ import { GiHamburgerMenu } from 'react-icons/gi';
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from 'react-icons/md';
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { useRecoilValue } from 'recoil';
 import { mainMenuState } from '../recoil';
 import useFetchMainMenu from '../recoil/fetch.ts';
 
@@ -27,8 +27,8 @@ export default function TopHeader() {
   const [subMenuHeight, setSubMenuHeight] = useState(0);
 
   //모바일 메뉴
-  const menuRef = useRef(null);
-  const hamburgerRef = useRef(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const hamburgerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   //모바일 서브 메뉴
@@ -38,12 +38,12 @@ export default function TopHeader() {
   console.log('menus menus:', menus, Array.isArray(menus));
   //메뉴바 닫기
   useEffect(() => {
-    const handleClickOutside = e => {
+    const handleClickOutside = (e: MouseEvent) => {
       if (
         menuRef.current &&
-        !menuRef.current.contains(e.target) &&
+        !menuRef.current.contains(e.target as Node) &&
         hamburgerRef.current &&
-        !hamburgerRef.current.contains(e.target)
+        !hamburgerRef.current.contains(e.target as Node)
       ) {
         setIsOpen(false);
       }
@@ -249,7 +249,7 @@ const BgSubWrapper = styled.div<WithTheme & { $height: number }>`
   left: 0;
   width: 100%;
   height: ${({ $height }) => `${$height}px`};
-  background-color: ${({ theme }) => theme.colors.topBg};
+  background-color: ${({ theme }) => theme.colors.subBgColor};
 
   opacity: 0;
   transform: translateY(-10px);
@@ -262,16 +262,6 @@ const BgSubWrapper = styled.div<WithTheme & { $height: number }>`
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 40px;
-    right: 40px;
-    height: 0;
-    border-top: 1px solid ${({ theme }) => theme.colors.menuColor};
   }
 `;
 
@@ -302,7 +292,7 @@ const SubMenuWrapper = styled.nav<WithTheme>`
     margin-top: 40px;
     flex-direction: column;
     list-style: none;
-    gap: 20px;
+    gap: 0;
     font-size: ${({ theme }) => theme.sizes.large};
     font-weight: ${({ theme }) => theme.weight.semiBold};
   }
@@ -315,12 +305,11 @@ const SubLi = styled.li<WithTheme & { $active: boolean }>`
   height: 60px;
   width: 200px;
   cursor: pointer;
-  background-color: ${({ $active, theme }) => ($active ? theme.colors.purpleColor : 'transparent')};
+  background-color: ${({ $active, theme }) =>
+    $active ? theme.colors.activeMenuColor : 'transparent'};
   color: ${({ $active, theme }) => ($active ? theme.colors.white : 'subMenuColor')};
-
   &:hover {
-    background-color: ${({ theme }) => theme.colors.purpleColor};
-    color: ${({ theme }) => theme.colors.white};
+    background-color: ${({ $active, theme }) => !$active && theme.colors.subTextBoxColor};
   }
 `;
 
@@ -339,7 +328,7 @@ const MobileMenu = styled.div<WithTheme & { $open: boolean }>`
   right: 0;
   width: 50%;
   height: calc(100vh - 100px);
-  background-color: ${({ theme }) => theme.colors.topBg};
+  background-color: ${({ theme }) => theme.colors.subBgColor};
 
   transform: ${({ $open }) => ($open ? 'translateX(0)' : 'translateX(100%)')};
   opacity: ${({ $open }) => ($open ? 1 : 0)};
@@ -348,23 +337,13 @@ const MobileMenu = styled.div<WithTheme & { $open: boolean }>`
     transform 0.3s ease,
     opacity 0.3s ease;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 30px;
-    right: 30px;
-    height: 0;
-    border-top: 1px solid ${({ theme }) => theme.colors.menuColor};
-  }
-
   ul {
     display: flex;
     flex-direction: column;
     width: 100%;
     margin-top: 20px;
     gap: 10px;
-    color: ${({ theme }) => theme.colors.menuColor};
+    color: ${({ theme }) => theme.colors.subMenuColor};
     font-size: ${({ theme }) => theme.sizes.large};
     font-weight: ${({ theme }) => theme.weight.bold};
     padding: 0 20px;
@@ -389,9 +368,10 @@ const MobileMenu = styled.div<WithTheme & { $open: boolean }>`
 `;
 
 const MobileSubLi = styled.li<WithTheme & { $active: boolean }>`
-  font-size: ${({ theme }) => theme.sizes.medium};
+  font-size: ${({ theme }) => theme.sizes.small};
   font-weight: ${({ theme }) => theme.weight.semiBold};
-  background-color: ${({ $active, theme }) => ($active ? theme.colors.purpleColor : 'transparent')};
+  background-color: ${({ $active, theme }) =>
+    $active ? theme.colors.activeMenuColor : theme.colors.subTextBoxColor};
   color: ${({ $active, theme }) => ($active ? theme.colors.white : 'subMenuColor')};
 `;
 

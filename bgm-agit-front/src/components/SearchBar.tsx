@@ -80,7 +80,7 @@ const Field = styled.div<{ color: string } & WithTheme>`
     padding: 4px 4px;
     font-size: ${({ theme }) => theme.sizes.medium};
     outline: none;
-    color: ${({ theme }) => theme.colors.subMenuColor};
+    color: ${({ theme }) => theme.colors.subColor};
     background: transparent;
   }
 

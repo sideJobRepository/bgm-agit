@@ -22,7 +22,7 @@ export default function useFetchMainMenu() {
           {
             name: '소개',
             subMenu: [
-              { name: 'BGM아지트 소개', link: '/about' },
+              { name: 'BGM 아지트 소개', link: '/about' },
               { name: '보유게임', link: '/game' },
             ],
           },
@@ -31,7 +31,7 @@ export default function useFetchMainMenu() {
             subMenu: [
               { name: '룸', link: '' },
               { name: '대탁', link: '' },
-              { name: '마작강의 예약', link: '' },
+              { name: '마작 강의 예약', link: '' },
             ],
           },
           {
