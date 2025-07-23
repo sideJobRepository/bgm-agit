@@ -207,7 +207,7 @@ const Top = styled.section<WithTheme>`
 const ImageBox = styled.div<WithTheme>`
   width: 100%;
   display: flex;
-  background-color: ${({ theme }) => theme.colors.topBg};
+  background-color: ${({ theme }) => theme.colors.softColor};
   border-radius: 12px;
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -231,6 +231,7 @@ const Left = styled.div<WithTheme>`
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
     height: 200px;
+    padding-bottom: 0;
 
     img {
       height: 100px;
@@ -243,11 +244,14 @@ const LogoTextBox = styled.div<WithTheme>`
   padding: 12px;
   background-color: ${({ theme }) => theme.colors.purpleColor};
   border-radius: 12px;
-  justify-content: space-between;
   font-size: ${({ theme }) => theme.sizes.small};
   color: ${({ theme }) => theme.colors.white};
   height: 30%;
   align-items: center;
+
+  h2 {
+    margin: 0 auto;
+  }
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.sizes.xxsmall};
