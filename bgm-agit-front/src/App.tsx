@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout.tsx';
 import MainPage from './pages/MainPage.tsx';
 import About from './pages/About.tsx';
-import Game from './pages/Game.tsx';
+import Detail from './pages/Detail.tsx';
 
 function App() {
   return (
@@ -19,7 +19,7 @@ function App() {
             <Route path="/" element={<Layout />}>
               <Route index element={<MainPage />} />
               <Route path="/about" element={<About />} />
-              <Route path="/game" element={<Game />} />
+              <Route path="/detail/*" element={<Detail />} />
             </Route>
           </Routes>
         </BrowserRouter>

@@ -23,7 +23,7 @@ export const theme = {
     border: '#e5e5e5',
     text: '#222',
     kakao: '#FDDC3F',
-    liteGray: '#66696D',
+    black: '#000000',
   },
   sizes: {
     ultra: '32px',
@@ -49,4 +49,4 @@ export const theme = {
   },
 } as const;
 
-export type ThemeType = typeof theme;
+export type themeThemeType = typeof theme;

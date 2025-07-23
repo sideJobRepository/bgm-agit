@@ -81,14 +81,14 @@ export default function MainPage() {
               visibleCount={visibleCountGame}
               labelGb={2}
               items={[
-                { image: '/images/game1.jpeg', label: '게임1', group: null, link: '/game' },
-                { image: '/images/game2.jpeg', label: '게임2', group: null, link: '/game' },
-                { image: '/images/game3.jpeg', label: '게임3', group: null, link: '/game' },
-                { image: '/images/game4.jpeg', label: '게임4', group: null, link: '/game' },
-                { image: '/images/game5.jpeg', label: '게임5', group: null, link: '/game' },
-                { image: '/images/game6.jpeg', label: '게임6', group: null, link: '/game' },
-                { image: '/images/game7.jpeg', label: '게임7', group: null, link: '/game' },
-                { image: '/images/game8.jpeg', label: '게임8', group: null, link: '/game' },
+                { image: '/images/game1.jpeg', label: '게임1', group: null, link: '/detail/game' },
+                { image: '/images/game2.jpeg', label: '게임2', group: null, link: '/detail/game' },
+                { image: '/images/game3.jpeg', label: '게임3', group: null, link: '/detail/game' },
+                { image: '/images/game4.jpeg', label: '게임4', group: null, link: '/detail/game' },
+                { image: '/images/game5.jpeg', label: '게임5', group: null, link: '/detail/game' },
+                { image: '/images/game6.jpeg', label: '게임6', group: null, link: '/detail/game' },
+                { image: '/images/game7.jpeg', label: '게임7', group: null, link: '/detail/game' },
+                { image: '/images/game8.jpeg', label: '게임8', group: null, link: '/detail/game' },
               ]}
             />
           </SliderBox>
@@ -107,15 +107,45 @@ export default function MainPage() {
                   image: '/images/food1.jpeg',
                   label: '아이스 아메리카노',
                   group: null,
-                  link: '/food',
+                  link: '/detail/drink',
                 },
-                { image: '/images/food2.jpeg', label: '카페라떼', group: null, link: '/food' },
-                { image: '/images/food3.jpg', label: '딸기라떼', group: null, link: '/food' },
-                { image: '/images/food4.jpg', label: '김치볶음밥', group: null, link: '/food' },
-                { image: '/images/food5.jpeg', label: '라면', group: null, link: '/food' },
-                { image: '/images/food6.png', label: '감자튀김', group: null, link: '/food' },
-                { image: '/images/food7.jpeg', label: '짜파게티', group: null, link: '/food' },
-                { image: '/images/food8.jpg', label: '스파게티', group: null, link: '/food' },
+                {
+                  image: '/images/food2.jpeg',
+                  label: '카페라떼',
+                  group: null,
+                  link: '/detail/drink',
+                },
+                {
+                  image: '/images/food3.jpg',
+                  label: '딸기라떼',
+                  group: null,
+                  link: '/detail/drink',
+                },
+                {
+                  image: '/images/food4.jpg',
+                  label: '김치볶음밥',
+                  group: null,
+                  link: '/detail/food',
+                },
+                { image: '/images/food5.jpeg', label: '라면', group: null, link: '/detail/food' },
+                {
+                  image: '/images/food6.png',
+                  label: '감자튀김',
+                  group: null,
+                  link: '/detail/food',
+                },
+                {
+                  image: '/images/food7.jpeg',
+                  label: '짜파게티',
+                  group: null,
+                  link: '/detail/food',
+                },
+                {
+                  image: '/images/food8.jpg',
+                  label: '스파게티',
+                  group: null,
+                  link: '/detail/food',
+                },
               ]}
             />
           </SliderBox>
@@ -225,6 +255,7 @@ const ContentBox = styled.div<WithTheme>`
     line-height: 1;
     align-items: center;
     p {
+      font-family: 'Jua', sans-serif;
       color: ${({ theme }) => theme.colors.blueColor};
       font-size: ${({ theme }) => theme.sizes.bigLarge};
     }
@@ -242,7 +273,7 @@ const ContentBox = styled.div<WithTheme>`
   h2 {
     margin: auto 0;
     font-size: ${({ theme }) => theme.sizes.xxlarge};
-    text-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
+    text-shadow: 4px 4px 2px rgba(0, 0, 0, 0.2);
   }
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -254,7 +285,7 @@ const ContentBox = styled.div<WithTheme>`
 
       a {
         margin-right: 0;
-        font-size: ${({ theme }) => theme.sizes.xxsmall};
+        font-size: ${({ theme }) => theme.sizes.xsmall};
       }
     }
 
@@ -383,7 +414,7 @@ const NoticeSection = styled.section<WithTheme>`
   width: 50%;
   padding: 20px;
   border-radius: 0 12px 12px 0;
-  color: ${({ theme }) => theme.colors.bronzeColor};
+  color: ${({ theme }) => theme.colors.subColor};
 
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
@@ -398,15 +429,14 @@ const TitleBox = styled.div<WithTheme>`
   align-items: center;
   line-height: 1;
   h2 {
+    font-family: 'Jua', sans-serif;
     font-size: ${({ theme }) => theme.sizes.xlarge};
-    text-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
   }
 
   p {
-    margin-top: 6px;
     margin-left: 12px;
     font-size: ${({ theme }) => theme.sizes.medium};
-    font-weight: ${({ theme }) => theme.weight.semiBold};
+    font-weight: ${({ theme }) => theme.weight.bold};
   }
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -444,7 +474,7 @@ const ABox = styled.div<WithTheme>`
 
   @media ${({ theme }) => theme.device.mobile} {
     a {
-      font-size: ${({ theme }) => theme.sizes.xxsmall};
+      font-size: ${({ theme }) => theme.sizes.xsmall};
     }
   }
 `;

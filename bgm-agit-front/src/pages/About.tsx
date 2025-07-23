@@ -236,6 +236,7 @@ const Left = styled.div<WithTheme>`
 const LogoTextBox = styled.div<WithTheme>`
   display: flex;
   padding: 12px;
+  font-family: 'Jua', sans-serif;
   font-weight: ${({ theme }) => theme.weight.bold};
   background-color: ${({ theme }) => theme.colors.purpleColor};
   font-size: ${({ theme }) => theme.sizes.small};
@@ -318,6 +319,7 @@ const ContentBox = styled.div<WithTheme>`
 `;
 
 const Line1 = styled.p<WithTheme>`
+  font-family: 'Jua', sans-serif;
   font-size: ${({ theme }) => theme.sizes.xlarge};
   font-weight: ${({ theme }) => theme.weight.bold};
   color: ${({ theme }) => theme.colors.blueColor};
@@ -335,7 +337,7 @@ const Line2 = styled.div<WithTheme>`
     font-size: ${({ theme }) => theme.sizes.extra};
     font-weight: ${({ theme }) => theme.weight.bold};
     line-height: 1.4;
-    text-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
+    text-shadow: 4px 4px 2px rgba(0, 0, 0, 0.2);
   }
 
   @media ${({ theme }) => theme.device.tablet} {
@@ -353,6 +355,7 @@ const Line3 = styled.div<WithTheme>`
   font-size: ${({ theme }) => theme.sizes.bigLarge};
   color: ${({ theme }) => theme.colors.subColor};
   line-height: 1.6;
+  font-family: 'Jua', sans-serif;
 
   @media ${({ theme }) => theme.device.tablet} {
     margin-left: 0;
@@ -463,6 +466,7 @@ const TextBox = styled.div<WithTheme & SectionProps>`
   padding-right: 10px;
 
   h2 {
+    font-family: 'Jua', sans-serif;
     font-size: ${({ theme }) => theme.sizes.xxlarge};
     font-weight: ${({ theme }) => theme.weight.bold};
     color: ${({ headerColor }) => headerColor};

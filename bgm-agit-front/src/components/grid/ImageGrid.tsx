@@ -12,25 +12,25 @@ interface GridItem {
 }
 
 interface Props {
-  items: GridItem[];
-  color: string;
-  labelGb: number;
+  pageData: {
+    items: GridItem[];
+    bgColor: string;
+    textColor: string;
+    searchColor: string;
+    labelGb: number;
+    columnCount: number;
+    label: string;
+    title: string;
+    subTitle: string;
+  };
   columnCount: number;
-  label: string;
-  title: string;
-  subTitle: string;
 }
 
-export default function ImageGrid({
-  items,
-  labelGb,
-  columnCount,
-  color,
-  label,
-  title,
-  subTitle,
-}: Props) {
+export default function ImageGrid({ pageData }: Props) {
   const [lightboxIndex, setLightboxIndex] = useState(-1);
+
+  const { items, labelGb, bgColor, textColor, searchColor, label, title, subTitle, columnCount } =
+    pageData;
 
   const handleImageClick = (clickedIndex: number) => {
     setLightboxIndex(clickedIndex);
@@ -38,36 +38,33 @@ export default function ImageGrid({
 
   return (
     <Wrapper>
-      <SearchWrapper>
-        <TitleBox color={color}>
+      <SearchWrapper bgColor={bgColor}>
+        <TitleBox textColor={textColor}>
           <h2>{title}</h2>
           <p>{subTitle}</p>
         </TitleBox>
         <SearchBox>
-          <SearchBar color={color} label={label} />
+          <SearchBar color={searchColor} label={label} />
         </SearchBox>
       </SearchWrapper>
+
       <GridContainer $columnCount={columnCount}>
         {items.map((item, idx) => (
           <GridItemBox key={idx}>
-            <div>
-              <p>{item.label}</p>
+            <ImageWrapper onClick={() => labelGb === 2 && handleImageClick(idx)}>
+              <img src={item.image} alt={`img-${idx}`} draggable={false} />
               {labelGb === 3 && (
-                <>
-                  <FaUsers /> <span> {item.group}</span>
-                </>
+                <TopLabel>
+                  <p>{item.label}</p>
+                  <FaUsers /> <span>{item.group}</span>
+                </TopLabel>
               )}
-            </div>
-
-            <img
-              src={item.image}
-              alt={`img-${idx}`}
-              draggable={false}
-              onClick={() => labelGb === 2 && handleImageClick(idx)}
-            />
+            </ImageWrapper>
+            {labelGb !== 3 && <FoodLabel textColor={textColor}>{item.label}</FoodLabel>}
           </GridItemBox>
         ))}
       </GridContainer>
+
       <ImageLightbox
         images={items.map(item => item.image)}
         index={lightboxIndex}
@@ -81,14 +78,14 @@ export default function ImageGrid({
 const Wrapper = styled.div`
   width: 100%;
   height: 100%;
-  padding: 10px 10px;
-  overflow: hidden;
+  padding: 10px;
+  overflow: auto;
 `;
 
-const SearchWrapper = styled.div<WithTheme>`
+const SearchWrapper = styled.div<{ bgColor: string } & WithTheme>`
   display: flex;
   width: 100%;
-  background-color: ${({ theme }) => theme.colors.greenColor};
+  background-color: ${({ bgColor }) => bgColor};
   padding: 20px;
   align-items: center;
 
@@ -98,15 +95,15 @@ const SearchWrapper = styled.div<WithTheme>`
   }
 `;
 
-const TitleBox = styled.div<{ color: string } & WithTheme>`
+const TitleBox = styled.div<{ textColor: string } & WithTheme>`
   display: flex;
   flex-direction: column;
   width: 70%;
   height: 60px;
-  color: ${({ theme }) => theme.colors.white};
+  color: ${({ textColor }) => textColor};
 
   h2 {
-    text-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
+    font-family: 'Bungee', sans-serif;
     font-weight: ${({ theme }) => theme.weight.bold};
     font-size: ${({ theme }) => theme.sizes.xxlarge};
   }
@@ -120,17 +117,14 @@ const TitleBox = styled.div<{ color: string } & WithTheme>`
     width: 100%;
     height: 40px;
     text-align: center;
+    margin-bottom: 10px;
+
     h2 {
-      text-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
-      font-weight: ${({ theme }) => theme.weight.bold};
       font-size: ${({ theme }) => theme.sizes.large};
     }
     p {
-      margin-top: auto;
-      font-weight: ${({ theme }) => theme.weight.semiBold};
       font-size: ${({ theme }) => theme.sizes.xsmall};
     }
-    margin-bottom: 10px;
   }
 `;
 
@@ -144,56 +138,25 @@ const SearchBox = styled.div<WithTheme>`
 
 const GridContainer = styled.div<WithTheme & { $columnCount: number }>`
   display: grid;
-  padding: 40px 0;
   grid-template-columns: repeat(${props => props.$columnCount}, 1fr);
-  gap: 60px;
+  gap: 40px;
+  padding: 40px 0;
 
   @media ${({ theme }) => theme.device.mobile} {
-    gap: 40px;
+    gap: 24px;
   }
 `;
 
-const GridItemBox = styled.div<WithTheme>`
+const GridItemBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const ImageWrapper = styled.div`
   width: 100%;
   aspect-ratio: 1 / 1;
-  box-sizing: border-box;
   position: relative;
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.medium};
-
-  div {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: rgba(66, 69, 72, 0.6);
-    border-radius: 8px;
-    padding: 6px 12px 4px 12px;
-    top: 6px;
-    left: 6px;
-
-    p {
-      @media ${({ theme }) => theme.device.mobile} {
-        font-size: ${({ theme }) => theme.sizes.xsmall};
-      }
-    }
-
-    svg {
-      margin: 0 4px 2px 8px;
-
-      @media ${({ theme }) => theme.device.mobile} {
-        font-size: ${({ theme }) => theme.sizes.xsmall};
-      }
-    }
-
-    span {
-      font-size: ${({ theme }) => theme.sizes.small};
-
-      @media ${({ theme }) => theme.device.mobile} {
-        font-size: ${({ theme }) => theme.sizes.xxsmall};
-      }
-    }
-  }
 
   img {
     width: 100%;
@@ -202,5 +165,31 @@ const GridItemBox = styled.div<WithTheme>`
     border-radius: 12px;
     display: block;
     cursor: pointer;
+  }
+`;
+
+const TopLabel = styled.div<WithTheme>`
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(66, 69, 72, 0.6);
+  border-radius: 8px;
+  padding: 6px 12px;
+  top: 6px;
+  left: 6px;
+  color: white;
+`;
+
+const FoodLabel = styled.div<WithTheme & { textColor: string }>`
+  margin-top: 18px;
+  text-align: center;
+  font-family: 'Jua', sans-serif;
+  font-size: ${({ theme }) => theme.sizes.bigLarge};
+  // font-weight: ${({ theme }) => theme.weight.semiBold};
+  color: ${({ theme }) => theme.colors.menuColor};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.small};
   }
 `;

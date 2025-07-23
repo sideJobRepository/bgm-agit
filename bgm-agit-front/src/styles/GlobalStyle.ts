@@ -1,6 +1,7 @@
 import { createGlobalStyle } from 'styled-components';
 
 export const GlobalStyle = createGlobalStyle`
+
     /* Pretendard Font 설정 */
     @font-face {
         font-family: 'Pretendard';

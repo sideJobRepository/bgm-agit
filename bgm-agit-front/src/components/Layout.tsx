@@ -9,8 +9,6 @@ export default function Layout() {
   const location = useLocation();
   const home = location.pathname === '/';
 
-  console.log('location.pathname', location.pathname);
-
   return (
     <Wrapper>
       <Inner>
