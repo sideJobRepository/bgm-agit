@@ -313,9 +313,7 @@ const GameSection = styled.section<WithTheme>`
   background-color: ${({ theme }) => theme.colors.softColor};
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
-    padding: 10px;
     border-radius: 12px;
-    margin-bottom: 20px;
   }
 `;
 
@@ -328,14 +326,13 @@ const FoodSection = styled.section<WithTheme>`
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
     height: 100%;
-    padding: 10px;
     border-radius: 12px;
   }
 `;
 
 const ReservationSection = styled.section<WithTheme>`
   width: 100%;
-  padding: 30px 20px;
+  padding: 20px;
   background-color: ${({ theme }) => theme.colors.blueColor};
   border-radius: 12px;
   color: ${({ theme }) => theme.colors.white};
