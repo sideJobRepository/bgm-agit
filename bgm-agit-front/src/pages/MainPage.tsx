@@ -271,6 +271,7 @@ const ContentBox = styled.div<WithTheme>`
   }
 
   h2 {
+    //font-family: 'Jua', sans-serif;
     margin: auto 0;
     font-size: ${({ theme }) => theme.sizes.xxlarge};
     text-shadow: 4px 4px 2px rgba(0, 0, 0, 0.2);

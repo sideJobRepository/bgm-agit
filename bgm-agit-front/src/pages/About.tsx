@@ -334,6 +334,7 @@ const Line2 = styled.div<WithTheme>`
   margin-left: 10%;
 
   h2 {
+    //font-family: 'Jua', sans-serif;
     font-size: ${({ theme }) => theme.sizes.extra};
     font-weight: ${({ theme }) => theme.weight.bold};
     line-height: 1.4;
@@ -514,6 +515,7 @@ const ReservationTextBox = styled.div<WithTheme>`
   align-items: center;
 
   h2 {
+    font-family: 'Jua', sans-serif;
     font-size: ${({ theme }) => theme.sizes.xxlarge};
     font-weight: ${({ theme }) => theme.weight.bold};
     color: ${({ theme }) => theme.colors.white};

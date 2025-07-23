@@ -187,7 +187,7 @@ const FoodLabel = styled.div<WithTheme & { textColor: string }>`
   font-family: 'Jua', sans-serif;
   font-size: ${({ theme }) => theme.sizes.bigLarge};
   // font-weight: ${({ theme }) => theme.weight.semiBold};
-  color: ${({ theme }) => theme.colors.menuColor};
+  color: ${({ theme }) => theme.colors.black};
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.sizes.small};
