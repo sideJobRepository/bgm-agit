@@ -80,11 +80,10 @@ export default function About() {
                 visibleCount={visibleCountMain}
                 labelGb={1}
                 items={[
-                  { image: '/images/slider1.jpeg', label: '메인1', group: null, link: null },
-                  { image: '/images/slider2.jpeg', label: '메인2', group: null, link: null },
-                  { image: '/images/slider3.jpeg', label: '메인3', group: null, link: null },
-                  { image: '/images/slider4.jpeg', label: '메인4', group: null, link: null },
-                  { image: '/images/slider5.jpeg', label: '메인5', group: null, link: null },
+                  { image: '/images/main1.jpeg', label: '메인1', group: null, link: null },
+                  { image: '/images/main2.jpg', label: '메인2', group: null, link: null },
+                  { image: '/images/main3.png', label: '메인3', group: null, link: null },
+                  { image: '/images/main4.png', label: '메인4', group: null, link: null },
                 ]}
               />
             </Right>
@@ -193,8 +192,6 @@ export default function About() {
 const TopSection = styled.section<WithTheme>`
   display: flex;
   width: 100%;
-  padding: 20px 0;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
   flex-direction: column;
 `;
 
@@ -207,7 +204,6 @@ const Top = styled.section<WithTheme>`
 const ImageBox = styled.div<WithTheme>`
   width: 100%;
   display: flex;
-  background-color: ${({ theme }) => theme.colors.softColor};
   border-radius: 12px;
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -242,8 +238,8 @@ const Left = styled.div<WithTheme>`
 const LogoTextBox = styled.div<WithTheme>`
   display: flex;
   padding: 12px;
+  font-weight: ${({ theme }) => theme.weight.bold};
   background-color: ${({ theme }) => theme.colors.purpleColor};
-  border-radius: 12px;
   font-size: ${({ theme }) => theme.sizes.small};
   color: ${({ theme }) => theme.colors.white};
   height: 30%;
@@ -261,6 +257,7 @@ const LogoTextBox = styled.div<WithTheme>`
 const LogoBox = styled.div<WithTheme>`
   display: grid;
   height: 70%;
+  color: ${({ theme }) => theme.colors.subMenuColor};
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(2, auto);
   gap: 10px 12px;
@@ -274,15 +271,14 @@ const GridItem = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: ${({ theme }) => theme.colors.subMenuColor};
 
   svg {
-    font-size: ${({ theme }) => theme.sizes.xxlarge};
+    font-size: ${({ theme }) => theme.sizes.xlarge};
   }
   span {
-    font-weight: ${({ theme }) => theme.weight.semiBold};
+    font-weight: ${({ theme }) => theme.weight.bold};
     margin-top: 10px;
-    font-size: ${({ theme }) => theme.sizes.medium};
+    font-size: ${({ theme }) => theme.sizes.small};
   }
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -307,11 +303,17 @@ const Right = styled.div<WithTheme>`
 
 const Bottom = styled.section<WithTheme>`
   width: 100%;
-  padding: 30px 10px;
+  background-color: ${({ theme }) => theme.colors.softColor};
+  border-radius: 12px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    margin-top: 10px;
+  }
 `;
 
 const ContentBox = styled.div<WithTheme>`
   display: flex;
+  padding: 20px;
   flex-direction: column;
   gap: 8px;
   justify-content: center;

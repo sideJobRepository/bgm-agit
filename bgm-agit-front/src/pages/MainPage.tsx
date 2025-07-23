@@ -12,7 +12,7 @@ export default function MainPage() {
 
   const navigate = useNavigate();
 
-  const visibleCountMain = isMobile ? 1 : 4;
+  const visibleCountMain = isMobile ? 1 : 3;
   const visibleCountGame = isMobile ? 2 : 4;
   const visibleCountReserve = isMobile ? 2 : 3;
   const visibleCountFood = isMobile ? 3 : 5;
@@ -62,11 +62,10 @@ export default function MainPage() {
             visibleCount={visibleCountMain}
             labelGb={1}
             items={[
-              { image: '/images/slider1.jpeg', label: '메인1', group: null, link: null },
-              { image: '/images/slider2.jpeg', label: '메인2', group: null, link: null },
-              { image: '/images/slider3.jpeg', label: '메인3', group: null, link: null },
-              { image: '/images/slider4.jpeg', label: '메인4', group: null, link: null },
-              { image: '/images/slider5.jpeg', label: '메인5', group: null, link: null },
+              { image: '/images/main1.jpeg', label: '메인1', group: null, link: null },
+              { image: '/images/main2.jpg', label: '메인2', group: null, link: null },
+              { image: '/images/main3.png', label: '메인3', group: null, link: null },
+              { image: '/images/main4.png', label: '메인4', group: null, link: null },
             ]}
           />
         </RightSection>
@@ -251,7 +250,6 @@ const LogoBox = styled.div<WithTheme>`
   display: grid;
   height: 36%;
   background-color: ${({ theme }) => theme.colors.greenColor};
-  //border-radius: 12px;
   color: ${({ theme }) => theme.colors.white};
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;

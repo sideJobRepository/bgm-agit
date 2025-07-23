@@ -16,7 +16,6 @@ export const theme = {
     navColor: '#757575',
     labelGb: 'rgba(66, 69, 72, 0.6)',
     white: '#FFFFFF',
-    bg: '#ffffff',
     border: '#e5e5e5',
     text: '#222',
     kakao: '#FDDC3F',
