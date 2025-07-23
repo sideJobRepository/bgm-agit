@@ -13,9 +13,9 @@ export default function MainPage() {
   const navigate = useNavigate();
 
   const visibleCountMain = isMobile ? 1 : 3;
-  const visibleCountGame = isMobile ? 2 : 4;
+  const visibleCountGame = isMobile ? 2 : 3;
   const visibleCountReserve = isMobile ? 2 : 2;
-  const visibleCountFood = isMobile ? 3 : 5;
+  const visibleCountFood = isMobile ? 3 : 4;
 
   return (
     <Wrapper>
