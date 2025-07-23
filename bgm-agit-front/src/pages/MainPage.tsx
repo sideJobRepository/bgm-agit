@@ -12,7 +12,7 @@ export default function MainPage() {
 
   const navigate = useNavigate();
 
-  const visibleCountMain = isMobile ? 2 : 4;
+  const visibleCountMain = isMobile ? 1 : 4;
   const visibleCountGame = isMobile ? 2 : 4;
   const visibleCountReserve = isMobile ? 2 : 3;
   const visibleCountFood = isMobile ? 3 : 5;
@@ -193,14 +193,14 @@ const LeftSection = styled.section<WithTheme>`
   justify-content: space-between;
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
-    height: 160px;
+    height: 180px;
   }
 `;
 
 const ContentBox = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
-  height: 60%;
+  height: 64%;
   font-weight: ${({ theme }) => theme.weight.bold};
 
   div {
@@ -229,6 +229,7 @@ const ContentBox = styled.div<WithTheme>`
   }
 
   @media ${({ theme }) => theme.device.mobile} {
+    height: 60%;
     div {
       p {
         font-size: ${({ theme }) => theme.sizes.medium};
@@ -246,13 +247,18 @@ const ContentBox = styled.div<WithTheme>`
   }
 `;
 
-const LogoBox = styled.div`
+const LogoBox = styled.div<WithTheme>`
   display: grid;
-  height: 40%;
+  height: 36%;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   justify-items: center;
   align-items: center;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    height: 40%;
+    margin-bottom: 16px;
+  }
 `;
 
 const GridItem = styled.div<WithTheme>`
