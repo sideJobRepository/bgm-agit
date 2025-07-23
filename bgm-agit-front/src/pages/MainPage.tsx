@@ -218,6 +218,7 @@ const ContentBox = styled.div<WithTheme>`
       margin-right: 20px;
       color: ${({ theme }) => theme.colors.navColor};
       cursor: pointer;
+      font-size: ${({ theme }) => theme.sizes.xsmall};
     }
   }
 
@@ -376,6 +377,7 @@ const TitleBox = styled.div<WithTheme>`
     margin-left: auto;
     margin-right: 2px;
     color: ${({ theme }) => theme.colors.navColor};
+    font-size: ${({ theme }) => theme.sizes.xsmall};
     cursor: pointer;
   }
 
