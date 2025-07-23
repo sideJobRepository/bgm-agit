@@ -187,12 +187,14 @@ const TopSection = styled.section<WithTheme>`
 
 const LeftSection = styled.section<WithTheme>`
   width: 36%;
+  margin-right: 10px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
     height: 180px;
+    margin-right: 0;
   }
 `;
 

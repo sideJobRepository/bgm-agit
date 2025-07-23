@@ -369,7 +369,7 @@ const ContentSetion = styled.section<WithTheme & SectionProps>`
   align-items: center;
   padding: 30px 10px;
   background-color: ${({ bgColor }) => bgColor};
-  margin-top: 60px;
+  margin: 60px 0;
   border-radius: 12px;
   @media ${({ theme }) => theme.device.mobile} {
     flex-direction: column;
@@ -386,7 +386,6 @@ const ReservationSetion = styled.section<WithTheme>`
   padding: 30px 10px;
   flex-direction: column;
   background-color: ${({ theme }) => theme.colors.blueColor};
-  margin-top: 60px;
   border-radius: 12px;
 
   @media ${({ theme }) => theme.device.mobile} {
