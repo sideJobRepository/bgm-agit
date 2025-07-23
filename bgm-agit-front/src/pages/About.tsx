@@ -1,10 +1,18 @@
 import styled from 'styled-components';
 import { Wrapper } from '../styles';
 import type { WithTheme } from '../styles/styled-props.ts';
-import { FaCalendarAlt, FaCar, FaUsers, FaWifi } from 'react-icons/fa';
+import {
+  FaCalendarAlt,
+  FaCar,
+  FaUsers,
+  FaWifi,
+  FaRestroom,
+  FaRegClock,
+  FaWheelchair,
+  FaMoneyCheckAlt,
+} from 'react-icons/fa';
 import ImageGridSlider from '../components/grid/ImageGridSlider.tsx';
 import Nav from '../components/Nav.tsx';
-import logo from '/aboutLogo.png';
 import boradGameImage from '/images/boradGame.jpg';
 import foodAbout from '/images/foodAbout.png';
 import { useMediaQuery } from 'react-responsive';
@@ -27,7 +35,11 @@ export default function About() {
         <Top>
           <ImageBox>
             <Left>
-              <img src={logo} alt="로고" />
+              <LogoTextBox>
+                <h2>#보드게임에 진심</h2>
+                <h2>#크라임씬 맛집</h2>
+                <h2>#개인룸 완비</h2>
+              </LogoTextBox>
               <LogoBox>
                 <GridItem>
                   <FaUsers />
@@ -44,6 +56,22 @@ export default function About() {
                 <GridItem>
                   <FaCar />
                   <span>주차 가능</span>
+                </GridItem>
+                <GridItem>
+                  <FaRestroom />
+                  <span>남/녀 화장실</span>
+                </GridItem>
+                <GridItem>
+                  <FaRegClock />
+                  <span>대기공간</span>
+                </GridItem>
+                <GridItem>
+                  <FaWheelchair />
+                  <span>휠체어 가능</span>
+                </GridItem>
+                <GridItem>
+                  <FaMoneyCheckAlt />
+                  <span>간편 결제</span>
                 </GridItem>
               </LogoBox>
             </Left>
@@ -210,14 +238,32 @@ const Left = styled.div<WithTheme>`
   }
 `;
 
+const LogoTextBox = styled.div<WithTheme>`
+  display: flex;
+  padding: 12px;
+  background-color: ${({ theme }) => theme.colors.purpleColor};
+  border-radius: 12px;
+  justify-content: space-between;
+  font-size: ${({ theme }) => theme.sizes.small};
+  color: ${({ theme }) => theme.colors.white};
+  height: 30%;
+  align-items: center;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.xxsmall};
+  }
+`;
+
 const LogoBox = styled.div<WithTheme>`
   display: grid;
-  height: 30%;
-  margin-top: auto;
+  height: 70%;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  grid-template-rows: repeat(2, auto);
+  gap: 10px 12px;
   justify-items: center;
   align-items: center;
+  margin-top: auto;
+  padding: 10px 0;
 `;
 
 const GridItem = styled.div<WithTheme>`

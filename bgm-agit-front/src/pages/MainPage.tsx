@@ -13,9 +13,9 @@ export default function MainPage() {
   const navigate = useNavigate();
 
   const visibleCountMain = isMobile ? 2 : 4;
-  const visibleCountGame = isMobile ? 2 : 5;
+  const visibleCountGame = isMobile ? 2 : 4;
   const visibleCountReserve = isMobile ? 2 : 4;
-  const visibleCountFood = isMobile ? 3 : 6;
+  const visibleCountFood = isMobile ? 3 : 5;
 
   return (
     <Wrapper>
@@ -71,28 +71,57 @@ export default function MainPage() {
           />
         </RightSection>
       </TopSection>
-      <GameSection>
-        <TitleBox>
-          <h2>게임찾기</h2>
-          <p>다양한 게임을 만나보세요!</p>
-        </TitleBox>
-        <SliderBox>
-          <ImageGridSlider
-            visibleCount={visibleCountGame}
-            labelGb={2}
-            items={[
-              { image: '/images/game1.jpeg', label: '게임1', group: null, link: '/game' },
-              { image: '/images/game2.jpeg', label: '게임2', group: null, link: '/game' },
-              { image: '/images/game3.jpeg', label: '게임3', group: null, link: '/game' },
-              { image: '/images/game4.jpeg', label: '게임4', group: null, link: '/game' },
-              { image: '/images/game5.jpeg', label: '게임5', group: null, link: '/game' },
-              { image: '/images/game6.jpeg', label: '게임6', group: null, link: '/game' },
-              { image: '/images/game7.jpeg', label: '게임7', group: null, link: '/game' },
-              { image: '/images/game8.jpeg', label: '게임8', group: null, link: '/game' },
-            ]}
-          />
-        </SliderBox>
-      </GameSection>
+      <GameFoodSection>
+        <GameSection>
+          <TitleBox>
+            <h2>게임찾기</h2>
+            <p>다양한 게임을 만나보세요!</p>
+          </TitleBox>
+          <SliderBox>
+            <ImageGridSlider
+              visibleCount={visibleCountGame}
+              labelGb={2}
+              items={[
+                { image: '/images/game1.jpeg', label: '게임1', group: null, link: '/game' },
+                { image: '/images/game2.jpeg', label: '게임2', group: null, link: '/game' },
+                { image: '/images/game3.jpeg', label: '게임3', group: null, link: '/game' },
+                { image: '/images/game4.jpeg', label: '게임4', group: null, link: '/game' },
+                { image: '/images/game5.jpeg', label: '게임5', group: null, link: '/game' },
+                { image: '/images/game6.jpeg', label: '게임6', group: null, link: '/game' },
+                { image: '/images/game7.jpeg', label: '게임7', group: null, link: '/game' },
+                { image: '/images/game8.jpeg', label: '게임8', group: null, link: '/game' },
+              ]}
+            />
+          </SliderBox>
+        </GameSection>
+        <FoodSection>
+          <TitleBox>
+            <h2>먹거리 소개</h2>
+            <p>게임하면서 간편하게 즐기는 먹거리를 확인해보세요!</p>
+          </TitleBox>
+          <SliderBox>
+            <ImageGridSlider
+              visibleCount={visibleCountFood}
+              labelGb={4}
+              items={[
+                {
+                  image: '/images/food1.jpeg',
+                  label: '아이스 아메리카노',
+                  group: null,
+                  link: '/food',
+                },
+                { image: '/images/food2.jpeg', label: '카페라떼', group: null, link: '/food' },
+                { image: '/images/food3.jpg', label: '딸기라떼', group: null, link: '/food' },
+                { image: '/images/food4.jpg', label: '김치볶음밥', group: null, link: '/food' },
+                { image: '/images/food5.jpeg', label: '라면', group: null, link: '/food' },
+                { image: '/images/food6.png', label: '감자튀김', group: null, link: '/food' },
+                { image: '/images/food7.jpeg', label: '짜파게티', group: null, link: '/food' },
+                { image: '/images/food8.jpg', label: '스파게티', group: null, link: '/food' },
+              ]}
+            />
+          </SliderBox>
+        </FoodSection>
+      </GameFoodSection>
       <ReservationSection>
         <TitleBox>
           <h2>실시간 예약하기</h2>
@@ -113,33 +142,6 @@ export default function MainPage() {
           />
         </SliderBox>
       </ReservationSection>
-      <FoodSection>
-        <TitleBox>
-          <h2>먹거리 소개</h2>
-          <p>게임하면서 간편하게 즐기는 먹거리를 확인해보세요!</p>
-        </TitleBox>
-        <SliderBox>
-          <ImageGridSlider
-            visibleCount={visibleCountFood}
-            labelGb={4}
-            items={[
-              {
-                image: '/images/food1.jpeg',
-                label: '아이스 아메리카노',
-                group: null,
-                link: '/food',
-              },
-              { image: '/images/food2.jpeg', label: '카페라떼', group: null, link: '/food' },
-              { image: '/images/food3.jpg', label: '딸기라떼', group: null, link: '/food' },
-              { image: '/images/food4.jpg', label: '김치볶음밥', group: null, link: '/food' },
-              { image: '/images/food5.jpeg', label: '라면', group: null, link: '/food' },
-              { image: '/images/food6.png', label: '감자튀김', group: null, link: '/food' },
-              { image: '/images/food7.jpeg', label: '짜파게티', group: null, link: '/food' },
-              { image: '/images/food8.jpg', label: '스파게티', group: null, link: '/food' },
-            ]}
-          />
-        </SliderBox>
-      </FoodSection>
       <NoticeSection>
         <TitleBox>
           <h2>공지사항</h2>
@@ -290,25 +292,47 @@ const RightSection = styled.section<WithTheme>`
   }
 `;
 
-const GameSection = styled.section<WithTheme>`
+const GameFoodSection = styled.section<WithTheme>`
+  display: flex;
   width: 100%;
   padding: 30px 10px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
+  @media ${({ theme }) => theme.device.mobile} {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+`;
+
+const GameSection = styled.section<WithTheme>`
+  width: 50%;
+  padding: 20px;
   color: ${({ theme }) => theme.colors.greenColor};
+  background-color: ${({ theme }) => theme.colors.softColor};
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 100%;
+    padding: 10px;
+    border-radius: 12px;
+    //padding: 0;
+  }
+`;
+
+const FoodSection = styled.section<WithTheme>`
+  width: 50%;
+  padding: 20px;
+  color: ${({ theme }) => theme.colors.bronzeColor};
+  background-color: ${({ theme }) => theme.colors.basicColor};
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+    border-radius: 12px;
+  }
 `;
 
 const ReservationSection = styled.section<WithTheme>`
   width: 100%;
   padding: 30px 10px;
   color: ${({ theme }) => theme.colors.blueColor};
-`;
-
-const FoodSection = styled.section<WithTheme>`
-  width: 100%;
-  padding: 30px 10px;
-  color: ${({ theme }) => theme.colors.bronzeColor};
-  background-color: ${({ theme }) => theme.colors.basicColor};
-  border-radius: 12px;
 `;
 
 const NoticeSection = styled.section<WithTheme>`
