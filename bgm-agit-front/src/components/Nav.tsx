@@ -53,6 +53,7 @@ const Wrapper = styled.div<WithTheme>`
   max-width: 1500px;
   min-width: 1280px;
   padding: 0 30px;
+  margin: 0 auto;
   font-size: ${({ theme }) => theme.sizes.small};
   color: ${({ theme }) => theme.colors.navColor};
   font-weight: ${({ theme }) => theme.weight.semiBold};
