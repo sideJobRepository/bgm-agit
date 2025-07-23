@@ -74,7 +74,7 @@ export default function MainPage() {
         <GameSection>
           <TitleBox>
             <h2>게임찾기</h2>
-            <p>다양한 게임을 만나보세요!</p>
+            <p>다채롭고 색다른 게임들을 만나보세요!</p>
           </TitleBox>
           <SliderBox>
             <ImageGridSlider
