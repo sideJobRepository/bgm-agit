@@ -11,7 +11,7 @@ import java.util.List;
 
 @Getter
 @RequiredArgsConstructor
-public class UserServiceContext implements UserDetails {
+public class BgmAgitMemberContext implements UserDetails {
     
     private final BgmAgitMember bgmAgitMember;
     private final List<GrantedAuthority> authorities;

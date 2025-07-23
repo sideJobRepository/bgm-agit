@@ -1,5 +1,6 @@
 package com.bgmagitapi.service.impl;
 
+import com.bgmagitapi.entity.BgmAgitRole;
 import com.bgmagitapi.entity.BgmAgitRoleHierarchy;
 import com.bgmagitapi.repository.BgmAgitRoleHierarchyRepository;
 import com.bgmagitapi.service.BgmAgitRoleHierarchyService;
@@ -22,8 +23,10 @@ public class RoleHierarchServiceImpl implements BgmAgitRoleHierarchyService {
         StringBuilder hierarchy = new StringBuilder();
         
         for (BgmAgitRoleHierarchy relation : roleHierarchiesList) {
+            BgmAgitRoleHierarchy parent = relation.getParent();
+            if (parent == null) continue; // 부모가 없으면 스킵
             hierarchy.append("ROLE_")
-                    .append(relation.getParent().getBgmAgitRoleName())
+                    .append(relation.getParent() != null ? relation.getParent().getBgmAgitRoleName() : relation.getBgmAgitRoleName())
                     .append(" > ROLE_")
                     .append(relation.getBgmAgitRoleName())
                     .append("\n");

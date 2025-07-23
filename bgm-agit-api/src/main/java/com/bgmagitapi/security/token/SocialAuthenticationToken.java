@@ -1,5 +1,6 @@
 package com.bgmagitapi.security.token;
 
+import com.bgmagitapi.security.service.social.SocialLoginUrl;
 import lombok.Getter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -9,26 +10,23 @@ import java.util.Collection;
 @Getter
 public class SocialAuthenticationToken extends AbstractAuthenticationToken {
     
-    private final String provider;
-    private final String authorizeCode;
     private final Object principal;
+    private final SocialLoginUrl socialLoginUrl;
     private final Object credentials;
     
-    public SocialAuthenticationToken(String provider, String authorizeCode) {
+    public SocialAuthenticationToken(String principal, SocialLoginUrl socialLoginUrl) {
         super(null);
-        this.provider = provider;
-        this.authorizeCode = authorizeCode;
-        this.principal = null;
+        this.principal = principal;
+        this.socialLoginUrl = socialLoginUrl;
         this.credentials = null;
         setAuthenticated(false);
     }
     
-    public SocialAuthenticationToken(Object principal, Object credentials, String provider, Collection<? extends GrantedAuthority> authorities) {
+    public SocialAuthenticationToken(Object principal, SocialLoginUrl socialLoginUrl, Object credentials, Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
         this.principal = principal;
+        this.socialLoginUrl = socialLoginUrl;
         this.credentials = credentials;
-        this.provider = provider;
-        this.authorizeCode = null;
         setAuthenticated(true);
     }
     
@@ -41,5 +39,7 @@ public class SocialAuthenticationToken extends AbstractAuthenticationToken {
     public Object getPrincipal() {
         return this.principal;
     }
+    
+    
 }
 

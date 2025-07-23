@@ -42,8 +42,8 @@ public class BgmAgitAuthenticationFilter  extends AbstractAuthenticationProcessi
             throw new AuthenticationServiceException("code 값이 없습니다.");
         }
         SocialAuthenticationToken authRequest = new SocialAuthenticationToken(
-                socialLoginUrl.name().toLowerCase(),
-                loginRequest.getCode()
+                loginRequest.getCode(),
+                SocialLoginUrl.getSocialType(uri)
         );
         
         return this.getAuthenticationManager().authenticate(authRequest);
