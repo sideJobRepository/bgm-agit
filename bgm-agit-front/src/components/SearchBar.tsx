@@ -36,7 +36,8 @@ const Wrapper = styled.section`
 `;
 const SearchGroup = styled.form<{ color: string } & WithTheme>`
   display: flex;
-  width: 30%;
+  background-color: ${({ theme }) => theme.colors.white};
+  width: 100%;
   align-items: center;
   justify-content: space-between;
   padding: 2px 4px 2px 20px;
@@ -53,7 +54,6 @@ const FieldsWrapper = styled.div`
   display: flex;
   width: 100%;
   align-items: center;
-  gap: 20px;
   flex: 1;
   overflow-x: auto;
   flex-wrap: nowrap;
@@ -67,7 +67,7 @@ const Field = styled.div<{ color: string } & WithTheme>`
   flex-shrink: 0;
 
   label {
-    font-size: ${({ theme }) => theme.sizes.small};
+    font-size: ${({ theme }) => theme.sizes.xsmall};
     color: ${({ color }) => color};
     font-weight: bold;
     text-align: left;
@@ -78,7 +78,7 @@ const Field = styled.div<{ color: string } & WithTheme>`
     border: none;
     width: 100%;
     padding: 4px 4px;
-    font-size: ${({ theme }) => theme.sizes.medium};
+    font-size: ${({ theme }) => theme.sizes.small};
     outline: none;
     color: ${({ theme }) => theme.colors.subColor};
     background: transparent;
@@ -86,10 +86,10 @@ const Field = styled.div<{ color: string } & WithTheme>`
 
   @media ${({ theme }) => theme.device.mobile} {
     label {
-      font-size: ${({ theme }) => theme.sizes.xsmall};
+      font-size: ${({ theme }) => theme.sizes.xxsmall};
     }
     input {
-      font-size: ${({ theme }) => theme.sizes.small};
+      font-size: ${({ theme }) => theme.sizes.xsmall};
     }
   }
 `;
@@ -102,12 +102,12 @@ const SearchButton = styled.button<{ color: string }>`
   border: none;
   color: white;
   font-weight: bold;
-  padding: 10px 24px;
+  padding: 10px 18px;
   border-radius: 999px;
   cursor: pointer;
   white-space: nowrap;
 `;
 
 const SearchIcon = styled(FiSearch)`
-  margin-right: 6px;
+  margin-right: 4px;
 `;

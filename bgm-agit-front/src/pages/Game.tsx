@@ -6,7 +6,7 @@ import { Wrapper } from '../styles';
 
 export default function Game() {
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
-  const visibleCountGame = isMobile ? 2 : 5;
+  const visibleCountGame = isMobile ? 2 : 4;
   return (
     <Wrapper>
       <Nav />
@@ -15,6 +15,8 @@ export default function Game() {
           columnCount={visibleCountGame}
           labelGb={2}
           color={'#1A7D55'}
+          title={'BEST GAME'}
+          subTitle={'BGM 아지트에서 선별한 가장 사랑받는 게임들을 확인해보세요.'}
           label={'게임이름'}
           items={[
             { image: '/images/game1.jpeg', label: '게임1', group: null },
