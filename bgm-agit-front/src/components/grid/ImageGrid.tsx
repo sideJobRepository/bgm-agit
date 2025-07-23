@@ -142,11 +142,15 @@ const SearchBox = styled.div<WithTheme>`
   }
 `;
 
-const GridContainer = styled.div<{ $columnCount: number }>`
+const GridContainer = styled.div<WithTheme & { $columnCount: number }>`
   display: grid;
   padding: 40px 0;
   grid-template-columns: repeat(${props => props.$columnCount}, 1fr);
   gap: 60px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    gap: 40px;
+  }
 `;
 
 const GridItemBox = styled.div<WithTheme>`
