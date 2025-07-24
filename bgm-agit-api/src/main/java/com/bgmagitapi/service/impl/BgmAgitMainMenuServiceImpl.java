@@ -2,10 +2,7 @@ package com.bgmagitapi.service.impl;
 
 import com.bgmagitapi.controller.response.BgmAgitMainMenuImageResponse;
 import com.bgmagitapi.controller.response.BgmAgitMainMenuResponse;
-import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitMainMenu;
-import com.bgmagitapi.entity.QBgmAgitImage;
-import com.bgmagitapi.entity.QBgmAgitMainMenu;
 import com.bgmagitapi.repository.BgmAgitMainMenuRepository;
 import com.bgmagitapi.service.BgmAgitMainMenuService;
 import com.querydsl.core.types.Projections;
@@ -14,11 +11,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.bgmagitapi.entity.QBgmAgitImage.*;
-import static com.bgmagitapi.entity.QBgmAgitMainMenu.*;
+import static com.bgmagitapi.entity.QBgmAgitImage.bgmAgitImage;
+import static com.bgmagitapi.entity.QBgmAgitMainMenu.bgmAgitMainMenu;
 
 @Service
 @Transactional
@@ -75,7 +75,7 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
                         bgmAgitImage.bgmAgitMainMenu.bgmAgitMainMenuId,
                         bgmAgitImage.bgmAgitImageUrl,
                         bgmAgitImage.bgmAgitImageLabel,
-                        bgmAgitImage.bgmAgitImageLabel,
+                        bgmAgitImage.bgmAgitImageGroups,
                         bgmAgitImage.bgmAgitMenuLink
                 ))
                 .from(bgmAgitImage)

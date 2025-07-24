@@ -31,6 +31,10 @@ public class BgmAgitImage extends DateSuperClass {
     @Column(name = "BGM_AGIT_MENU_LINK")
     private String bgmAgitMenuLink;
     
+    @Column(name = "BGM_AGIT_IMAGE_GROUPS")
+    // BGM 아지트 이미지 그룹
+    private String bgmAgitImageGroups;
+    
     // BGM 아지트 이미지 URL
     @Column(name = "BGM_AGIT_IMAGE_URL")
     private String bgmAgitImageUrl;
