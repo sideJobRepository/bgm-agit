@@ -1,14 +1,24 @@
 package com.bgmagitapi.service.impl;
 
+import com.bgmagitapi.controller.response.BgmAgitMainMenuImageResponse;
 import com.bgmagitapi.controller.response.BgmAgitMainMenuResponse;
+import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitMainMenu;
+import com.bgmagitapi.entity.QBgmAgitImage;
+import com.bgmagitapi.entity.QBgmAgitMainMenu;
 import com.bgmagitapi.repository.BgmAgitMainMenuRepository;
 import com.bgmagitapi.service.BgmAgitMainMenuService;
+import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.bgmagitapi.entity.QBgmAgitImage.*;
+import static com.bgmagitapi.entity.QBgmAgitMainMenu.*;
 
 @Service
 @Transactional
@@ -16,6 +26,8 @@ import java.util.*;
 public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
 
     private final BgmAgitMainMenuRepository bgmAgitMainMenuRepository;
+    
+    private final JPAQueryFactory queryFactory;
     
     @Override
     public List<BgmAgitMainMenuResponse> getMainMenu() {
@@ -51,5 +63,26 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
             }
         });
         return roots;
+    }
+    
+    @Override
+    public Map<Long, List<BgmAgitMainMenuImageResponse>> getMainMenuImage() {
+        
+        List<BgmAgitMainMenuImageResponse> allList = queryFactory
+                .select(Projections.constructor(
+                        BgmAgitMainMenuImageResponse.class,
+                        bgmAgitImage.bgmAgitImageId,
+                        bgmAgitImage.bgmAgitMainMenu.bgmAgitMainMenuId,
+                        bgmAgitImage.bgmAgitImageUrl,
+                        bgmAgitImage.bgmAgitImageLabel,
+                        bgmAgitImage.bgmAgitImageLabel,
+                        bgmAgitImage.bgmAgitMenuLink
+                ))
+                .from(bgmAgitImage)
+                .join(bgmAgitImage.bgmAgitMainMenu, bgmAgitMainMenu)
+                .fetch();
+        
+        return allList.stream()
+                .collect(Collectors.groupingBy(BgmAgitMainMenuImageResponse::getLabelGb));
     }
 }

@@ -11,10 +11,7 @@ INSERT INTO BGM_AGIT_MAIN_MENU (BGM_AGIT_SUB_MENU_ID, BGM_AGIT_AREA_ID, BGM_AGIT
 VALUES (NULL, NULL, '커뮤니티');
 
 
-INSERT INTO BGMAGIT.BGM_AGIT_MAIN_MENU (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_SUB_MENU_ID, BGM_AGIT_AREA_ID, BGM_AGIT_MENU_NAME, BGM_AGIT_MENU_LINK) VALUES (1, null, null, '소개', null);
-INSERT INTO BGMAGIT.BGM_AGIT_MAIN_MENU (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_SUB_MENU_ID, BGM_AGIT_AREA_ID, BGM_AGIT_MENU_NAME, BGM_AGIT_MENU_LINK) VALUES (2, null, null, '예약하기', null);
-INSERT INTO BGMAGIT.BGM_AGIT_MAIN_MENU (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_SUB_MENU_ID, BGM_AGIT_AREA_ID, BGM_AGIT_MENU_NAME, BGM_AGIT_MENU_LINK) VALUES (3, null, null, '메뉴', null);
-INSERT INTO BGMAGIT.BGM_AGIT_MAIN_MENU (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_SUB_MENU_ID, BGM_AGIT_AREA_ID, BGM_AGIT_MENU_NAME, BGM_AGIT_MENU_LINK) VALUES (4, null, null, '커뮤니티', null);
+
 INSERT INTO BGMAGIT.BGM_AGIT_MAIN_MENU (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_SUB_MENU_ID, BGM_AGIT_AREA_ID, BGM_AGIT_MENU_NAME, BGM_AGIT_MENU_LINK) VALUES (5, 1, null, 'BGM아지트 소개', '/about');
 INSERT INTO BGMAGIT.BGM_AGIT_MAIN_MENU (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_SUB_MENU_ID, BGM_AGIT_AREA_ID, BGM_AGIT_MENU_NAME, BGM_AGIT_MENU_LINK) VALUES (6, 1, null, '보유게임', '/detail/game');
 INSERT INTO BGMAGIT.BGM_AGIT_MAIN_MENU (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_SUB_MENU_ID, BGM_AGIT_AREA_ID, BGM_AGIT_MENU_NAME, BGM_AGIT_MENU_LINK) VALUES (7, 2, null, '룸', '/detail/room');
@@ -41,5 +38,33 @@ VALUES ('USER', 1);
 
 INSERT INTO BGM_AGIT_ROLE_HIERARCHY( BGM_AGIT_ROLE_NAME, BGM_AGIT_PARENT_ROLE_ID)
 VALUES ('ANONYMOUS', 2);
+
+
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (1, '메인1', null, null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/main1.jpeg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (1, '메인2', null, null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/main2.jpg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (1, '메인3', null, null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/main3.png');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (1, '메인4', null, null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/main4.png');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (2, '게임1', '/detail/game', null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/game1.jpeg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (2, '게임2', '/detail/game', null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/game2.jpeg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (2, '게임3', '/detail/game', null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/game3.jpeg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (2, '게임4', '/detail/game', null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/game4.jpeg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (2, '게임5', '/detail/game', null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/game5.jpeg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (2, '게임6', '/detail/game', null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/game6.jpeg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (2, '게임7', '/detail/game', null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/game7.jpeg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (2, '게임8', '/detail/game', null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/game8.jpeg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (3, 'A Room', '/detail/room', '4', 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/room1.jpg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (3, 'B Room', '/detail/room', '6', 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/room2.jpg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (3, 'C Room', '/detail/room', '6', 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/room3.jpg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (3, 'D Room', '/detail/room', '8', 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/room4.jpg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (3, 'E Room', '/detail/room', '10', 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/room5.jpg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (3, 'F Room', '/detail/room', '12', 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/room6.jpg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (4, '아이스 아메리카노', '/detail/drink', null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/food1.jpeg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (4, '카페라떼', '/detail/drink', null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/food2.jpeg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (4, '딸기라떼', '/detail/drink', null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/food3.jpg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (4, '김치볶음밥', '/detail/food', null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/food4.jpg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (4, '라면', '/detail/food', null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/food5.jpeg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (4, '감자튀김', '/detail/food', null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/food6.png');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (4, '짜파게티', '/detail/food', null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/food7.jpeg');
+INSERT INTO BGMAGIT.BGM_AGIT_IMAGE (BGM_AGIT_MAIN_MENU_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_MENU_LINK, BGM_AGIT_IMAGE_GROUPS, BGM_AGIT_IMAGE_URL) VALUES (4, '스파게티', '/detail/food', null, 'https://bgm-agit-files.s3.ap-northeast-2.amazonaws.com/images/food8.jpg');
 
 commit;

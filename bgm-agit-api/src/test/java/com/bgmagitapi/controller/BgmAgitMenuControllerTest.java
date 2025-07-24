@@ -37,7 +37,6 @@ class BgmAgitMenuControllerTest extends ControllerTestSupport {
         mockMvc.perform(post("/bgm-agit/kakao-login"))
                 .andExpect(status().isOk())
                 .andDo(print());
-        ;
     
     }
     
