@@ -28,9 +28,10 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
         allMenus.forEach(mainMenu -> {
             BgmAgitMainMenuResponse response = new BgmAgitMainMenuResponse();
             response.setBgmAgitMainMenuId(mainMenu.getBgmAgitMainMenuId());
-            response.setBgmAgitMenuName(mainMenu.getBgmAgitMenuName());
+            response.setName(mainMenu.getBgmAgitMenuName());
             response.setBgmAgitSubMenuId(mainMenu.getParentMenuId());
             response.setBgmAgitAreaId(mainMenu.getBgmAgitAreaId());
+            response.setLink(mainMenu.getBgmAgitMenuLink());
             responseMap.put(mainMenu.getBgmAgitMainMenuId(), response);
         });
         

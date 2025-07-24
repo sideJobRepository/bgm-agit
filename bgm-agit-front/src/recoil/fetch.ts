@@ -29,7 +29,7 @@ export default function useFetchMainMenu() {
           {
             name: '예약하기',
             subMenu: [
-              { name: '룸', link: '' },
+              { name: '룸', link: '/detail/room' },
               { name: '대탁', link: '' },
               { name: '마작 강의 예약', link: '' },
             ],
@@ -44,7 +44,7 @@ export default function useFetchMainMenu() {
           {
             name: '커뮤니티',
             subMenu: [
-              { name: '공지사항', link: '' },
+              { name: '공지사항', link: '/notice' },
               { name: '게시판', link: '' },
             ],
           },
