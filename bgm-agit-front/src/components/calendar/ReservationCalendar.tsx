@@ -142,7 +142,7 @@ const TitleBox = styled.div<WithTheme>`
 const StyledCalendar = styled(Calendar)<WithTheme>`
   border: 1px solid #ccc;
   border-radius: 12px;
-  //padding: 12px;
+  padding: 10px;
 
   .react-calendar__tile--now {
     //오늘날짜 표시 제거
