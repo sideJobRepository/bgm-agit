@@ -2,6 +2,8 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { useState } from 'react';
 import styled from 'styled-components';
+import { useRecoilValue } from 'recoil';
+import { reservationState } from '../../recoil/reservationState.ts';
 
 export default function ReservationCalendar() {
   const [value, setValue] = useState<Date | null>(null);
@@ -15,6 +17,9 @@ export default function ReservationCalendar() {
   //   }
   //   return null;
   // };
+
+  const item = useRecoilValue(reservationState);
+  console.log('item', item);
 
   return (
     <Wrapper>

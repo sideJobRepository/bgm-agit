@@ -26,17 +26,16 @@ import static com.bgmagitapi.entity.QBgmAgitReservation.bgmAgitReservation;
 public class BgmAgitReservationServiceImpl implements BgmAgitReservationService {
 
     private final BgmAgitReservationRepository bgmAgitReservationRepository;
-    
+
     private final JPAQueryFactory queryFactory;
-    
+
     @Override
     public List<BgmAgitReservationResponse> getReservation(Long labelGb, String link, LocalDate date) {
-        
+
         // 오늘 날짜 기준으로 월의 마지막 날 계산
-        YearMonth yearMonth = YearMonth.from(date);
-        LocalDate today = date;
+        YearMonth yearMonth = YearMonth.from(date);LocalDate today = date;
         LocalDate endOfMonth = yearMonth.atEndOfMonth();
-        
+
         // 예약된 데이터 조회
         List<BgmAgitReservationResponse> allList = queryFactory
                 .select(Projections.constructor(
@@ -56,21 +55,21 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                         bgmAgitReservation.bgmAgitReservationStartDate.between(today, endOfMonth)
                 )
                 .fetch();
-        
+
         // 날짜별로 예약 데이터 그룹핑
         Map<LocalDate, List<BgmAgitReservationResponse>> reservationMap = allList.stream()
                 .collect(Collectors.groupingBy(BgmAgitReservationResponse::getStartDate));
-        
+
         List<BgmAgitReservationResponse> resultList = new ArrayList<>();
-        
+
         // 오늘 ~ 말일까지 반복
         for (LocalDate targetDate = today; !targetDate.isAfter(endOfMonth); targetDate = targetDate.plusDays(1)) {
             DayOfWeek dayOfWeek = targetDate.getDayOfWeek();
             boolean isWeekend = (dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY);
             int price = isWeekend ? 12000 : 10000;
-            
+
             List<BgmAgitReservationResponse> reservations = reservationMap.get(targetDate);
-            
+
             if (reservations != null && !reservations.isEmpty()) {
                 for (BgmAgitReservationResponse res : reservations) {
                     res.setMonthPrice(price);
@@ -84,7 +83,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 resultList.add(dummy);
             }
         }
-        
+
         return resultList;
     }
 }

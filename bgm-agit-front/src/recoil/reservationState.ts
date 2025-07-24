@@ -1,7 +1,11 @@
 import { atom } from 'recoil';
-import type { ImageSliderItem } from '../types/main.ts';
+import type { reservationData } from '../types/Reservation.ts';
 
-export const reservationState = atom<ImageSliderItem>({
+export const reservationState = atom<reservationData>({
   key: 'reservationState',
-  default: [],
+  default: {
+    date: '',
+    labelGb: 0,
+    link: '',
+  },
 });

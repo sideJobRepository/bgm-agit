@@ -69,6 +69,7 @@ export default function Detail() {
 
   useFetchMainData(param);
   const items = useRecoilValue(mainDataState);
+
   const fullPageData = {
     ...selectedData,
     items: items[selectedData.labelGb],

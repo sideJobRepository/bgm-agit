@@ -4,6 +4,10 @@ import type { WithTheme } from '../../styles/styled-props.ts';
 import { FaUsers } from 'react-icons/fa';
 import ImageLightbox from '../ImageLightbox.tsx';
 import SearchBar from '../SearchBar.tsx';
+import { useRequest } from '../../recoil/useRequest.ts';
+import api from '../../utils/axiosInstance.ts';
+import { useSetRecoilState } from 'recoil';
+import { reservationState } from '../../recoil/reservationState.ts';
 
 interface GridItem {
   image: string;
@@ -29,6 +33,9 @@ interface Props {
 }
 
 export default function ImageGrid({ pageData }: Props) {
+  const setReservation = useSetRecoilState(reservationState);
+  const { request } = useRequest();
+
   const [searchKeyword, setSearchKeyword] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState(-1);
 
@@ -45,7 +52,7 @@ export default function ImageGrid({ pageData }: Props) {
     ? items.filter(item => item.label?.toLowerCase().includes(searchKeyword.toLowerCase()))
     : items;
 
-  const [reservationData, setReservationData] = useState(filteredItems[0]);
+  const [reservationData, setReservationData] = useState<null | object>(null);
 
   function newItemDatas(item: GridItem) {
     const newItem = {
@@ -59,13 +66,26 @@ export default function ImageGrid({ pageData }: Props) {
 
   function reservationClickEvent(item: GridItem) {
     newItemDatas(item);
-    console.log('reservationData', reservationData);
   }
 
   useEffect(() => {
     newItemDatas(filteredItems[0]);
-    console.log('reservationData', reservationData);
   }, [filteredItems]);
+
+  useEffect(() => {
+    if (!reservationData || labelGb !== 3) return;
+    console.log('labelGb', reservationData);
+
+    request(
+      () =>
+        api
+          .get('/bgm-agit/reservation', {
+            params: reservationData,
+          })
+          .then(res => res.data),
+      setReservation
+    );
+  }, [reservationData]);
 
   return (
     <Wrapper>
