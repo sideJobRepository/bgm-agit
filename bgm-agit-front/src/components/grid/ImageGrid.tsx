@@ -8,6 +8,9 @@ import { useRequest } from '../../recoil/useRequest.ts';
 import api from '../../utils/axiosInstance.ts';
 import { useSetRecoilState } from 'recoil';
 import { reservationState } from '../../recoil/reservationState.ts';
+import type { reservationData } from '../../types/Reservation.ts';
+import ReservationCalendar from '../calendar/ReservationCalendar.tsx';
+import { useMediaQuery } from 'react-responsive';
 
 interface GridItem {
   image: string;
@@ -36,6 +39,8 @@ export default function ImageGrid({ pageData }: Props) {
   const setReservation = useSetRecoilState(reservationState);
   const { request } = useRequest();
 
+  const isTablet = useMediaQuery({ query: '(max-width: 1280px)' });
+
   const [searchKeyword, setSearchKeyword] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState(-1);
 
@@ -54,20 +59,25 @@ export default function ImageGrid({ pageData }: Props) {
       : items;
   }, [items, searchKeyword]);
 
-  const [reservationData, setReservationData] = useState<null | object>(null);
+  const [reservationData, setReservationData] = useState<null | reservationData>(null);
 
   function newItemDatas(item: GridItem) {
     const newItem = {
       labelGb: item.labelGb,
       link: item.link,
+      id: item.imageId,
       date: today,
-    } as unknown as GridItem & { date: string };
+    } as reservationData;
 
     setReservationData(newItem);
   }
 
   function reservationClickEvent(item: GridItem) {
-    newItemDatas(item);
+    if (reservationData?.id !== item.imageId) {
+      newItemDatas(item);
+    } else if (isTablet) {
+      setReservationData(null);
+    }
   }
 
   useEffect(() => {
@@ -76,7 +86,6 @@ export default function ImageGrid({ pageData }: Props) {
 
   useEffect(() => {
     if (!reservationData || labelGb !== 3) return;
-    console.log('labelGb', reservationData);
 
     request(
       () =>
@@ -124,6 +133,11 @@ export default function ImageGrid({ pageData }: Props) {
                   </TopLabel>
                 )}
               </ImageWrapper>
+              {item.imageId === reservationData?.id && isTablet && (
+                <CalendarSection>
+                  <ReservationCalendar />
+                </CalendarSection>
+              )}
               {labelGb !== 3 && <FoodLabel textColor={textColor}>{item.label}</FoodLabel>}
             </GridItemBox>
           ))}
@@ -298,4 +312,9 @@ const NoSearchBox = styled.div<WithTheme>`
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.sizes.small};
   }
+`;
+
+const CalendarSection = styled.section`
+  width: 100%;
+  margin-top: 20px;
 `;

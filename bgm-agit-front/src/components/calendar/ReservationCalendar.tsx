@@ -88,7 +88,7 @@ export default function ReservationCalendar() {
   );
 }
 
-const Wrapper = styled.div`
+const Wrapper = styled.div<WithTheme>`
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -96,6 +96,10 @@ const Wrapper = styled.div`
 
   .custom-calender {
     width: 90%;
+
+    @media ${({ theme }) => theme.device.mobile} {
+      width: 100%;
+    }
   }
 `;
 
@@ -149,6 +153,9 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
 
     abbr {
       padding: 15px 0;
+      @media ${({ theme }) => theme.device.mobile} {
+        padding: 10px 0;
+      }
     }
   }
 
@@ -156,7 +163,6 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
     background-color: transparent;
     //border-radius: 999px;
     abbr {
-      border-radius: 999px;
       background: ${({ theme }) => theme.colors.softColor};
     }
   }
@@ -167,7 +173,6 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
     //border-radius: 999px;
 
     abbr {
-      border-radius: 999px;
       color: ${({ theme }) => theme.colors.white};
       background: ${({ theme }) => theme.colors.blueColor};
     }
