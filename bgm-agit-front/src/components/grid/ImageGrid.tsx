@@ -53,6 +53,7 @@ export default function ImageGrid({ pageData }: Props) {
           <GridItemBox key={idx}>
             <ImageWrapper
               radius={labelGb === 4}
+              ratio={labelGb === 3}
               onClick={() => labelGb !== 3 && handleImageClick(idx)}
             >
               <img src={item.image} alt={`img-${idx}`} draggable={false} />
@@ -85,7 +86,9 @@ const Wrapper = styled.div`
   overflow: auto;
 `;
 
-const SearchWrapper = styled.div<{ bgColor: string } & WithTheme>`
+const SearchWrapper = styled.div.withConfig({
+  shouldForwardProp: prop => prop !== 'bgColor',
+})<{ bgColor: string } & WithTheme>`
   display: flex;
   width: 100%;
   background-color: ${({ bgColor }) => bgColor};
@@ -98,7 +101,9 @@ const SearchWrapper = styled.div<{ bgColor: string } & WithTheme>`
   }
 `;
 
-const TitleBox = styled.div<{ textColor: string } & WithTheme>`
+const TitleBox = styled.div.withConfig({
+  shouldForwardProp: prop => prop !== 'textColor',
+})<{ textColor: string } & WithTheme>`
   display: flex;
   flex-direction: column;
   width: 70%;
@@ -139,7 +144,9 @@ const SearchBox = styled.div<WithTheme>`
   }
 `;
 
-const GridContainer = styled.div<WithTheme & { $columnCount: number }>`
+const GridContainer = styled.div.withConfig({
+  shouldForwardProp: prop => prop !== '$columnCount',
+})<WithTheme & { $columnCount: number }>`
   display: grid;
   grid-template-columns: repeat(${props => props.$columnCount}, 1fr);
   gap: 40px;
@@ -156,16 +163,18 @@ const GridItemBox = styled.div`
   align-items: center;
 `;
 
-const ImageWrapper = styled.div<{ radius: boolean }>`
+const ImageWrapper = styled.div.withConfig({
+  shouldForwardProp: prop => prop !== 'radius' && prop !== 'ratio',
+})<{ radius: boolean; ratio: boolean }>`
   width: 100%;
-  aspect-ratio: 1 / 1;
-  position: relative;
+  aspect-ratio: ${({ ratio }) => (ratio ? '16 / 9' : '1 / 1')};
+  overflow: hidden;
+  border-radius: ${({ radius }) => (radius ? '999px' : '12px')};
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: ${({ radius }) => (radius ? '999px' : '12px')};
     display: block;
     cursor: pointer;
   }
@@ -184,12 +193,13 @@ const TopLabel = styled.div<WithTheme>`
   color: white;
 `;
 
-const FoodLabel = styled.div<WithTheme & { textColor: string }>`
+const FoodLabel = styled.div.withConfig({
+  shouldForwardProp: prop => prop !== 'textColor',
+})<WithTheme & { textColor: string }>`
   margin-top: 18px;
   text-align: center;
   font-family: 'Jua', sans-serif;
   font-size: ${({ theme }) => theme.sizes.bigLarge};
-  // font-weight: ${({ theme }) => theme.weight.semiBold};
   color: ${({ theme }) => theme.colors.black};
 
   @media ${({ theme }) => theme.device.mobile} {

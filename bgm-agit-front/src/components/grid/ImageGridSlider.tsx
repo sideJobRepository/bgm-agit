@@ -51,7 +51,12 @@ export default function ImageGridSlider({ items, visibleCount, labelGb, interval
     <Wrapper {...swipeHandlers}>
       <Slider $visibleCount={visibleCount} $itemCount={items.length} $index={index}>
         {items.map((item, idx) => (
-          <Slide key={idx} $visibleCount={visibleCount} radius={labelGb === 4}>
+          <Slide
+            key={idx}
+            $visibleCount={visibleCount}
+            ratio={labelGb === 3 || labelGb === 1}
+            radius={labelGb === 4}
+          >
             {labelGb !== 1 && labelGb !== 4 && (
               <div>
                 <p>{item.label}</p>
@@ -111,12 +116,14 @@ const Slider = styled.div<{
     `translateX(calc(-${$index} * (100% + 20px) / ${$itemCount}))`};
 `;
 
-const Slide = styled.div<WithTheme & { $visibleCount: number; radius: boolean }>`
+const Slide = styled.div.withConfig({
+  shouldForwardProp: prop => !['ratio', 'radius', '$visibleCount'].includes(prop),
+})<WithTheme & { $visibleCount: number; radius: boolean; ratio: boolean }>`
   width: calc(
     (100% - ${props => (props.$visibleCount - 1) * 20}px) / ${props => props.$visibleCount}
   );
   height: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: ${({ ratio }) => (ratio ? '4 / 3' : '1 / 1')};
   box-sizing: border-box;
   position: relative;
   color: ${({ theme }) => theme.colors.white};

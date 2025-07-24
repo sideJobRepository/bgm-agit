@@ -14,7 +14,7 @@ export default function MainPage() {
 
   const visibleCountMain = isMobile ? 1 : 3;
   const visibleCountGame = isMobile ? 2 : 3;
-  const visibleCountReserve = isMobile ? 2 : 2;
+  const visibleCountReserve = isMobile ? 1 : 2;
   const visibleCountFood = isMobile ? 3 : 4;
 
   return (
@@ -162,12 +162,12 @@ export default function MainPage() {
               visibleCount={visibleCountReserve}
               labelGb={3}
               items={[
-                { image: '/images/room1.jpg', label: 'A Room', group: 4, link: '/reservation' },
-                { image: '/images/room2.jpg', label: 'B Room', group: 6, link: '/reservation' },
-                { image: '/images/room3.jpg', label: 'C Room', group: 6, link: '/reservation' },
-                { image: '/images/room4.jpg', label: 'D Room', group: 8, link: '/reservation' },
-                { image: '/images/room5.jpg', label: 'E Room', group: 10, link: '/reservation' },
-                { image: '/images/room6.jpg', label: 'F Room', group: 12, link: '/reservation' },
+                { image: '/images/room1.jpg', label: 'A Room', group: 4, link: '/detail/room' },
+                { image: '/images/room2.jpg', label: 'B Room', group: 6, link: '/detail/room' },
+                { image: '/images/room3.jpg', label: 'C Room', group: 6, link: '/detail/room' },
+                { image: '/images/room4.jpg', label: 'D Room', group: 8, link: '/detail/room' },
+                { image: '/images/room5.jpg', label: 'E Room', group: 10, link: '/detail/room' },
+                { image: '/images/room6.jpg', label: 'F Room', group: 12, link: '/detail/room' },
               ]}
             />
           </SliderBox>
@@ -197,18 +197,6 @@ export default function MainPage() {
                   title: '동호회 가입하고 무료 포인트 받자!',
                   date: '2025.08.01',
                   category: '이벤트',
-                },
-                {
-                  id: 5,
-                  title: 'BGM 아지트 홈페이지 오픈 이벤트!',
-                  date: '2025.07.29',
-                  category: '이벤트',
-                },
-                {
-                  id: 6,
-                  title: 'BGM 아지트 홈페이지 오픈',
-                  date: '2025.07.22',
-                  category: '공지',
                 },
               ]}
             />

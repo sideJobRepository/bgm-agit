@@ -3,6 +3,7 @@ import ImageGrid from '../components/grid/ImageGrid.tsx';
 import { useMediaQuery } from 'react-responsive';
 import { Wrapper } from '../styles';
 import { useLocation } from 'react-router-dom';
+import type { WithTheme } from '../styles/styled-props.ts';
 
 export default function Detail() {
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
@@ -11,6 +12,7 @@ export default function Detail() {
 
   const visibleGameCount = isMobile ? 2 : 4;
   const visibleFoodCount = isMobile ? 2 : 5;
+  const visibleCountReserve = isMobile ? 1 : 1;
 
   const pageData = {
     game: {
@@ -39,6 +41,24 @@ export default function Detail() {
         { image: '/images/game6.jpeg', label: '게임6', group: null },
         { image: '/images/game7.jpeg', label: '게임7', group: null },
         { image: '/images/game8.jpeg', label: '게임8', group: null },
+      ],
+    },
+    room: {
+      labelGb: 3,
+      title: 'Your Game Starts Here',
+      subTitle: '지금 바로 원하는 방을 예약하고 특별한 아지트를 만나보세요.',
+      bgColor: '#093A6E',
+      textColor: '#ffffff',
+      searchColor: '#093A6E',
+      columnCount: visibleCountReserve,
+      label: '방이름',
+      items: [
+        { image: '/images/room1.jpg', label: 'A Room', group: 4 },
+        { image: '/images/room2.jpg', label: 'B Room', group: 6 },
+        { image: '/images/room3.jpg', label: 'C Room', group: 6 },
+        { image: '/images/room4.jpg', label: 'D Room', group: 8 },
+        { image: '/images/room5.jpg', label: 'E Room', group: 10 },
+        { image: '/images/room6.jpg', label: 'F Room', group: 12 },
       ],
     },
     drink: {
@@ -108,9 +128,18 @@ export default function Detail() {
 
   return (
     <Wrapper>
-      <GridBox>
-        <ImageGrid pageData={selectedData} columnCount={0} />
-      </GridBox>
+      {selectedData.labelGb === 3 ? (
+        <ReservationBox>
+          <ReservationGridSetion>
+            <ImageGrid pageData={selectedData} columnCount={0} />
+          </ReservationGridSetion>
+          <ReservationCalendarSetion>ff</ReservationCalendarSetion>
+        </ReservationBox>
+      ) : (
+        <GridBox>
+          <ImageGrid pageData={selectedData} columnCount={0} />
+        </GridBox>
+      )}
     </Wrapper>
   );
 }
@@ -120,4 +149,26 @@ const GridBox = styled.div`
   flex-direction: column;
   width: 100%;
   height: 100%;
+`;
+
+const ReservationBox = styled.div`
+  display: flex;
+  width: 100%;
+  height: 100%;
+`;
+
+const ReservationGridSetion = styled.section<WithTheme>`
+  width: 60%;
+  height: 100%;
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 100%;
+  }
+`;
+
+const ReservationCalendarSetion = styled.section<WithTheme>`
+  width: 40%;
+  height: 100%;
+  @media ${({ theme }) => theme.device.mobile} {
+    display: none;
+  }
 `;

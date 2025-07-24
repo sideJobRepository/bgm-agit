@@ -364,7 +364,9 @@ const Line3 = styled.div<WithTheme>`
   }
 `;
 
-const ContentSetion = styled.section<WithTheme & SectionProps>`
+const ContentSetion = styled.section.withConfig({
+  shouldForwardProp: prop => !['bgColor', 'textColor'].includes(prop),
+})<WithTheme & SectionProps>`
   display: flex;
   width: 100%;
   height: 600px;
@@ -373,6 +375,7 @@ const ContentSetion = styled.section<WithTheme & SectionProps>`
   background-color: ${({ bgColor }) => bgColor};
   margin: 60px 0;
   border-radius: 12px;
+
   @media ${({ theme }) => theme.device.mobile} {
     flex-direction: column;
     height: 500px;
@@ -457,7 +460,9 @@ const ReservationImageBox = styled.div<WithTheme>`
   }
 `;
 
-const TextBox = styled.div<WithTheme & SectionProps>`
+const TextBox = styled.div.withConfig({
+  shouldForwardProp: prop => !['bgColor', 'textColor', 'headerColor'].includes(prop),
+})<WithTheme & SectionProps>`
   display: flex;
   width: 50%;
   height: 100%;
