@@ -22,6 +22,10 @@ public class BgmAgitReservation {
     @JoinColumn(name = "BGM_AGIT_MEMBER_ID")
     private BgmAgitMember bgmAgitMember;
     
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "BGM_AGIT_IMAGE_ID")
+    private BgmAgitImage bgmAgitImage;
+    
     // BGM 아지트 예약 타입
     @Column(name = "BGM_AGIT_RESERVATION_TYPE")
     @Enumerated(EnumType.STRING)
