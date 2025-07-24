@@ -1,12 +1,9 @@
 package com.bgmagitapi.service.impl;
 
 import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
-import com.bgmagitapi.entity.QBgmAgitImage;
-import com.bgmagitapi.entity.QBgmAgitReservation;
 import com.bgmagitapi.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.service.BgmAgitReservationService;
 import com.querydsl.core.types.Projections;
-import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,11 +15,10 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.bgmagitapi.entity.QBgmAgitImage.*;
-import static com.bgmagitapi.entity.QBgmAgitReservation.*;
+import static com.bgmagitapi.entity.QBgmAgitImage.bgmAgitImage;
+import static com.bgmagitapi.entity.QBgmAgitReservation.bgmAgitReservation;
 
 @Transactional
 @Service

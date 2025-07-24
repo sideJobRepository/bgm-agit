@@ -4,10 +4,7 @@ package com.bgmagitapi.controller;
 import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.service.BgmAgitReservationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -19,13 +16,13 @@ public class BgmAgitReservationController {
     
     
     private final BgmAgitReservationService bgmAgitReservationService;
-
-    @GetMapping("/reservation")
+    
+    @GetMapping("/reservation/{labelGb}/{link}/{date}")
     public List<BgmAgitReservationResponse> getReservation(
-            @RequestParam(name = "labelGb") Long labelGb,
-            @RequestParam(name = "link") String link,
-            @RequestParam(name = "date") String dateStr) {
+            @PathVariable("labelGb") Long labelGb,
+            @PathVariable("link") String link,
+            @PathVariable("date") String dateStr) {
         LocalDate date = LocalDate.parse(dateStr.substring(0, 10));
-        return bgmAgitReservationService.getReservation(labelGb,link,date);
+        return bgmAgitReservationService.getReservation(labelGb, link, date);
     }
 }
