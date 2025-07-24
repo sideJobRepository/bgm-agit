@@ -1,7 +1,8 @@
 package com.bgmagitapi.controller;
 
 
-import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
+
+import com.bgmagitapi.controller.response.ReservationAvailabilityResponse;
 import com.bgmagitapi.service.BgmAgitReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +22,7 @@ public class BgmAgitReservationController {
     private final BgmAgitReservationService bgmAgitReservationService;
 
     @GetMapping("/reservation")
-    public List<BgmAgitReservationResponse> getReservation(
+    public ReservationAvailabilityResponse getReservation(
             @RequestParam(name = "labelGb") Long labelGb,
             @RequestParam(name = "link") String link,
             @RequestParam(name = "date") String dateStr) {
