@@ -12,12 +12,12 @@ public class BgmAgitMainMenuResponse {
     private Long bgmAgitSubMenuId;                       // BGM_AGIT_SUB_MENU_ID (상위 메뉴 ID, null이면 루트)
     private Long bgmAgitAreaId;                         // BGM_AGIT_AREA_ID (위치 구분: 중앙/하단 등)
     private String link;
-    private List<BgmAgitMainMenuResponse> subMenus;
+    private List<BgmAgitMainMenuResponse> subMenu;
     
     public List<BgmAgitMainMenuResponse> getSubMenus() {
-        if(subMenus == null) {
-            this.subMenus = new ArrayList<>();
+        if(subMenu == null) {
+            this.subMenu = new ArrayList<>();
         }
-        return this.subMenus;
+        return this.subMenu;
     }
 }
