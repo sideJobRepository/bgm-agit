@@ -144,6 +144,11 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
   border-radius: 12px;
   padding: 10px;
 
+  .react-calendar__tile abbr {
+    color: ${({ theme }) => theme.colors.black} !important;
+    text-decoration: none !important;
+  }
+
   .react-calendar__tile--now {
     //오늘날짜 표시 제거
     background: transparent !important;
