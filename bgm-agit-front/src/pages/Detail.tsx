@@ -4,6 +4,11 @@ import { useMediaQuery } from 'react-responsive';
 import { Wrapper } from '../styles';
 import { useLocation } from 'react-router-dom';
 import type { WithTheme } from '../styles/styled-props.ts';
+import ReservationCalendar from '../components/calendar/ReservationCalendar.tsx';
+import { FaUsers } from 'react-icons/fa';
+import { useFetchMainData } from '../recoil/fetch.ts';
+import { useRecoilValue } from 'recoil';
+import { mainDataState } from '../recoil';
 
 export default function Detail() {
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
@@ -24,24 +29,6 @@ export default function Detail() {
       searchColor: '#1A7D55',
       columnCount: visibleGameCount,
       label: '게임이름',
-      items: [
-        { image: '/images/game1.jpeg', label: '술래잡기', group: null },
-        { image: '/images/game2.jpeg', label: '고무줄놀이', group: null },
-        { image: '/images/game3.jpeg', label: '오징어게임', group: null },
-        { image: '/images/game4.jpeg', label: '모두의마블', group: null },
-        { image: '/images/game5.jpeg', label: '스타크래프트', group: null },
-        { image: '/images/game6.jpeg', label: '마피아', group: null },
-        { image: '/images/game7.jpeg', label: '게임7', group: null },
-        { image: '/images/game8.jpeg', label: '게임8', group: null },
-        { image: '/images/game1.jpeg', label: '게임1', group: null },
-        { image: '/images/game2.jpeg', label: '게임2', group: null },
-        { image: '/images/game3.jpeg', label: '게임3', group: null },
-        { image: '/images/game4.jpeg', label: '게임4', group: null },
-        { image: '/images/game5.jpeg', label: '게임5', group: null },
-        { image: '/images/game6.jpeg', label: '게임6', group: null },
-        { image: '/images/game7.jpeg', label: '게임7', group: null },
-        { image: '/images/game8.jpeg', label: '게임8', group: null },
-      ],
     },
     room: {
       labelGb: 3,
@@ -52,14 +39,6 @@ export default function Detail() {
       searchColor: '#093A6E',
       columnCount: visibleCountReserve,
       label: '방이름',
-      items: [
-        { image: '/images/room1.jpg', label: 'A Room', group: 4 },
-        { image: '/images/room2.jpg', label: 'B Room', group: 6 },
-        { image: '/images/room3.jpg', label: 'C Room', group: 6 },
-        { image: '/images/room4.jpg', label: 'D Room', group: 8 },
-        { image: '/images/room5.jpg', label: 'E Room', group: 10 },
-        { image: '/images/room6.jpg', label: 'F Room', group: 12 },
-      ],
     },
     drink: {
       labelGb: 4,
@@ -70,23 +49,6 @@ export default function Detail() {
       searchColor: '#5C3A21',
       columnCount: visibleFoodCount,
       label: '음료이름',
-      items: [
-        {
-          image: '/images/food1.jpeg',
-          label: '아이스 아메리카노',
-          group: null,
-        },
-        {
-          image: '/images/food2.jpeg',
-          label: '카페라떼',
-          group: null,
-        },
-        {
-          image: '/images/food3.jpg',
-          label: '딸기라떼',
-          group: null,
-        },
-      ],
     },
     food: {
       labelGb: 4,
@@ -97,48 +59,38 @@ export default function Detail() {
       searchColor: '#5C3A21',
       columnCount: visibleFoodCount,
       label: '음식이름',
-      items: [
-        {
-          image: '/images/food4.jpg',
-          label: '김치볶음밥',
-          group: null,
-        },
-        { image: '/images/food5.jpeg', label: '라면', group: null },
-        {
-          image: '/images/food6.png',
-          label: '감자튀김',
-          group: null,
-        },
-        {
-          image: '/images/food7.jpeg',
-          label: '짜파게티',
-          group: null,
-        },
-        {
-          image: '/images/food8.jpg',
-          label: '스파게티',
-          group: null,
-        },
-      ],
     },
   };
 
   const key = location.pathname.split('/').filter(Boolean).pop();
   const selectedData = pageData[key as keyof typeof pageData];
 
+  const param = { labelGb: selectedData.labelGb, link: '/detail/' + key };
+
+  useFetchMainData(param);
+  const items = useRecoilValue(mainDataState);
+  const fullPageData = {
+    ...selectedData,
+    items: items[selectedData.labelGb],
+  };
+
   return (
     <Wrapper>
       {selectedData.labelGb === 3 ? (
         <ReservationBox>
           <ReservationGridSetion>
-            <ImageGrid pageData={selectedData} columnCount={0} />
+            {fullPageData.items && <ImageGrid pageData={fullPageData} />}
           </ReservationGridSetion>
-          <ReservationCalendarSetion>ff</ReservationCalendarSetion>
+          <ReservationCalendarSetion>
+            <TitleBox>
+              <h2>A Room</h2>
+              <FaUsers /> <span> 4 </span>
+            </TitleBox>
+            <ReservationCalendar />
+          </ReservationCalendarSetion>
         </ReservationBox>
       ) : (
-        <GridBox>
-          <ImageGrid pageData={selectedData} columnCount={0} />
-        </GridBox>
+        <GridBox>{fullPageData.items && <ImageGrid pageData={fullPageData} />}</GridBox>
       )}
     </Wrapper>
   );
@@ -166,9 +118,45 @@ const ReservationGridSetion = styled.section<WithTheme>`
 `;
 
 const ReservationCalendarSetion = styled.section<WithTheme>`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   width: 40%;
   height: 100%;
+  align-items: center;
+  padding: 10px;
   @media ${({ theme }) => theme.device.mobile} {
     display: none;
+  }
+`;
+
+const TitleBox = styled.div<WithTheme>`
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  color: ${({ theme }) => theme.colors.black};
+  margin-bottom: 20px;
+
+  h2 {
+    font-size: ${({ theme }) => theme.sizes.bigLarge};
+    font-weight: ${({ theme }) => theme.weight.bold};
+  }
+
+  svg {
+    margin: 2px 4px 2px 8px;
+    font-size: ${({ theme }) => theme.sizes.medium};
+
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: ${({ theme }) => theme.sizes.xsmall};
+    }
+  }
+
+  span {
+    font-size: ${({ theme }) => theme.sizes.medium};
+
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: ${({ theme }) => theme.sizes.xxsmall};
+    }
   }
 `;

@@ -1,59 +1,31 @@
 import { useEffect } from 'react';
 import { useSetRecoilState } from 'recoil';
-import { mainMenuState } from './menuState.ts';
-import api from '../utils/axiosInstance.ts';
+import { mainDataState, mainMenuState } from './mainState';
+import api from '../utils/axiosInstance';
+import { useRequest } from './useRequest.ts';
 
-type SubMenu = { name: string; link: string };
-type MenuItem = { name: string; subMenu: SubMenu[] };
-
-export default function useFetchMainMenu() {
+export function useFetchMainMenu() {
   const setMainMenu = useSetRecoilState(mainMenuState);
+  const { request } = useRequest();
 
   useEffect(() => {
-    const fetchMainMenu = async () => {
-      try {
-        const response = await api.get<MenuItem[]>('/bgm-agit/main-menu'); // 실제 API 경로
-        setMainMenu(response.data);
-      } catch (error) {
-        console.error('메인 메뉴 불러오기 실패:', error);
+    request(() => api.get('/bgm-agit/main-menu').then(res => res.data), setMainMenu);
+  }, []);
+}
 
-        // 임시 메뉴 데이터 하드코딩
-        const fallbackMenu: MenuItem[] = [
-          {
-            name: '소개',
-            subMenu: [
-              { name: 'BGM 아지트 소개', link: '/about' },
-              { name: '보유게임', link: '/detail/game' },
-            ],
-          },
-          {
-            name: '예약하기',
-            subMenu: [
-              { name: '룸', link: '/detail/room' },
-              { name: '대탁', link: '' },
-              { name: '마작 강의 예약', link: '' },
-            ],
-          },
-          {
-            name: '메뉴',
-            subMenu: [
-              { name: '음료', link: '/detail/drink' },
-              { name: '식사', link: '/detail/food' },
-            ],
-          },
-          {
-            name: '커뮤니티',
-            subMenu: [
-              { name: '공지사항', link: '/notice' },
-              { name: '게시판', link: '' },
-            ],
-          },
-        ];
+export function useFetchMainData(param?: { labelGb?: number; link?: string }) {
+  const setMain = useSetRecoilState(mainDataState);
+  const { request } = useRequest();
 
-        setMainMenu(fallbackMenu);
-      }
-    };
-
-    fetchMainMenu();
-  }, [setMainMenu]);
+  useEffect(() => {
+    request(
+      () =>
+        api
+          .get('/bgm-agit/main-image', {
+            params: param ?? {},
+          })
+          .then(res => res.data),
+      setMain
+    );
+  }, [param?.link, param?.labelGb]);
 }

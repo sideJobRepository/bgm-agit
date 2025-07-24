@@ -6,15 +6,22 @@ import ImageGridSlider from '../components/grid/ImageGridSlider.tsx';
 import Notice from '../pages/Notice.tsx';
 import { useMediaQuery } from 'react-responsive';
 import { useNavigate } from 'react-router-dom';
+import { useRecoilValue } from 'recoil';
+import { mainDataState } from '../recoil';
+import { useFetchMainData } from '../recoil/fetch.ts';
 
 export default function MainPage() {
+  useFetchMainData();
+  const items = useRecoilValue(mainDataState);
+  console.log('tests', items);
+
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
 
   const navigate = useNavigate();
 
-  const visibleCountMain = isMobile ? 1 : 3;
+  const visibleCountMain = isMobile ? 1 : 2;
   const visibleCountGame = isMobile ? 2 : 3;
-  const visibleCountReserve = isMobile ? 1 : 2;
+  const visibleCountReserve = isMobile ? 1 : 1;
   const visibleCountFood = isMobile ? 3 : 4;
 
   return (
@@ -58,16 +65,7 @@ export default function MainPage() {
           </LogoBox>
         </LeftSection>
         <RightSection>
-          <ImageGridSlider
-            visibleCount={visibleCountMain}
-            labelGb={1}
-            items={[
-              { image: '/images/main1.jpeg', label: '메인1', group: null, link: null },
-              { image: '/images/main2.jpg', label: '메인2', group: null, link: null },
-              { image: '/images/main3.png', label: '메인3', group: null, link: null },
-              { image: '/images/main4.png', label: '메인4', group: null, link: null },
-            ]}
-          />
+          <ImageGridSlider visibleCount={visibleCountMain} labelGb={1} items={items[1]} />
         </RightSection>
       </TopSection>
       <GameFoodSection>
@@ -77,20 +75,7 @@ export default function MainPage() {
             <p>다채롭고 색다른 게임들을 만나보세요!</p>
           </TitleBox>
           <SliderBox>
-            <ImageGridSlider
-              visibleCount={visibleCountGame}
-              labelGb={2}
-              items={[
-                { image: '/images/game1.jpeg', label: '게임1', group: null, link: '/detail/game' },
-                { image: '/images/game2.jpeg', label: '게임2', group: null, link: '/detail/game' },
-                { image: '/images/game3.jpeg', label: '게임3', group: null, link: '/detail/game' },
-                { image: '/images/game4.jpeg', label: '게임4', group: null, link: '/detail/game' },
-                { image: '/images/game5.jpeg', label: '게임5', group: null, link: '/detail/game' },
-                { image: '/images/game6.jpeg', label: '게임6', group: null, link: '/detail/game' },
-                { image: '/images/game7.jpeg', label: '게임7', group: null, link: '/detail/game' },
-                { image: '/images/game8.jpeg', label: '게임8', group: null, link: '/detail/game' },
-              ]}
-            />
+            <ImageGridSlider visibleCount={visibleCountGame} labelGb={2} items={items[2]} />
           </SliderBox>
         </GameSection>
         <FoodSection>
@@ -99,55 +84,7 @@ export default function MainPage() {
             <p>게임하면서 간편하게 즐기는 먹거리를 확인해보세요!</p>
           </TitleBox>
           <SliderBox>
-            <ImageGridSlider
-              visibleCount={visibleCountFood}
-              labelGb={4}
-              items={[
-                {
-                  image: '/images/food1.jpeg',
-                  label: '아이스 아메리카노',
-                  group: null,
-                  link: '/detail/drink',
-                },
-                {
-                  image: '/images/food2.jpeg',
-                  label: '카페라떼',
-                  group: null,
-                  link: '/detail/drink',
-                },
-                {
-                  image: '/images/food3.jpg',
-                  label: '딸기라떼',
-                  group: null,
-                  link: '/detail/drink',
-                },
-                {
-                  image: '/images/food4.jpg',
-                  label: '김치볶음밥',
-                  group: null,
-                  link: '/detail/food',
-                },
-                { image: '/images/food5.jpeg', label: '라면', group: null, link: '/detail/food' },
-                {
-                  image: '/images/food6.png',
-                  label: '감자튀김',
-                  group: null,
-                  link: '/detail/food',
-                },
-                {
-                  image: '/images/food7.jpeg',
-                  label: '짜파게티',
-                  group: null,
-                  link: '/detail/food',
-                },
-                {
-                  image: '/images/food8.jpg',
-                  label: '스파게티',
-                  group: null,
-                  link: '/detail/food',
-                },
-              ]}
-            />
+            <ImageGridSlider visibleCount={visibleCountFood} labelGb={4} items={items[4]} />
           </SliderBox>
         </FoodSection>
       </GameFoodSection>
@@ -158,18 +95,7 @@ export default function MainPage() {
             <p>내가 원하는 날짜, 시간에 간편하게 예약하세요!</p>
           </TitleBox>
           <SliderBox>
-            <ImageGridSlider
-              visibleCount={visibleCountReserve}
-              labelGb={3}
-              items={[
-                { image: '/images/room1.jpg', label: 'A Room', group: 4, link: '/detail/room' },
-                { image: '/images/room2.jpg', label: 'B Room', group: 6, link: '/detail/room' },
-                { image: '/images/room3.jpg', label: 'C Room', group: 6, link: '/detail/room' },
-                { image: '/images/room4.jpg', label: 'D Room', group: 8, link: '/detail/room' },
-                { image: '/images/room5.jpg', label: 'E Room', group: 10, link: '/detail/room' },
-                { image: '/images/room6.jpg', label: 'F Room', group: 12, link: '/detail/room' },
-              ]}
-            />
+            <ImageGridSlider visibleCount={visibleCountReserve} labelGb={3} items={items[3]} />
           </SliderBox>
         </ReservationSection>
         <NoticeSection>
@@ -197,6 +123,18 @@ export default function MainPage() {
                   title: '동호회 가입하고 무료 포인트 받자!',
                   date: '2025.08.01',
                   category: '이벤트',
+                },
+                {
+                  id: 5,
+                  title: 'BGM 아지트 홈페이지 오픈 이벤트!',
+                  date: '2025.07.29',
+                  category: '이벤트',
+                },
+                {
+                  id: 6,
+                  title: 'BGM 아지트 홈페이지 오픈',
+                  date: '2025.07.22',
+                  category: '공지',
                 },
               ]}
             />

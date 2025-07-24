@@ -8,8 +8,10 @@ import { useNavigate } from 'react-router-dom';
 
 interface GridItem {
   image: string;
+  imageId: number;
+  labelGb: number;
   label: string;
-  group: null | number;
+  group: null | string;
   link: null | string;
 }
 
@@ -45,49 +47,53 @@ export default function ImageGridSlider({ items, visibleCount, labelGb, interval
       setIndex(prev => (prev + 1 > items.length - visibleCount ? 0 : prev + 1));
     }, interval);
     return () => clearInterval(timer);
-  }, [items.length, visibleCount, interval]);
+  }, [items?.length, visibleCount, interval]);
 
   return (
     <Wrapper {...swipeHandlers}>
-      <Slider $visibleCount={visibleCount} $itemCount={items.length} $index={index}>
-        {items.map((item, idx) => (
-          <Slide
-            key={idx}
-            $visibleCount={visibleCount}
-            ratio={labelGb === 3 || labelGb === 1}
-            radius={labelGb === 4}
-          >
-            {labelGb !== 1 && labelGb !== 4 && (
-              <div>
-                <p>{item.label}</p>
-                {labelGb === 3 && (
-                  <>
-                    <FaUsers /> <span> {item.group}</span>
-                  </>
+      {items && (
+        <>
+          <Slider $visibleCount={visibleCount} $itemCount={items.length} $index={index}>
+            {items.map((item, idx) => (
+              <Slide
+                key={idx}
+                $visibleCount={visibleCount}
+                ratio={labelGb === 3 || labelGb === 1}
+                radius={labelGb === 4}
+              >
+                {labelGb !== 1 && labelGb !== 4 && (
+                  <div>
+                    <p>{item.label}</p>
+                    {labelGb === 3 && (
+                      <>
+                        <FaUsers /> <span> {item.group}</span>
+                      </>
+                    )}
+                  </div>
                 )}
-              </div>
-            )}
-            <img
-              src={item.image}
-              alt={`img-${idx}`}
-              draggable={false}
-              onClick={() => {
-                if (item.link !== null) {
-                  navigate(item.link);
-                } else {
-                  handleImageClick(idx);
-                }
-              }}
-            />
-          </Slide>
-        ))}
-      </Slider>
-      <ImageLightbox
-        images={items.map(item => item.image)}
-        index={lightboxIndex}
-        onClose={() => setLightboxIndex(-1)}
-        onIndexChange={setLightboxIndex}
-      />
+                <img
+                  src={item.image}
+                  alt={`img-${idx}`}
+                  draggable={false}
+                  onClick={() => {
+                    if (item.link !== null) {
+                      navigate(item.link);
+                    } else {
+                      handleImageClick(idx);
+                    }
+                  }}
+                />
+              </Slide>
+            ))}
+          </Slider>
+          <ImageLightbox
+            images={items.map(item => item.image)}
+            index={lightboxIndex}
+            onClose={() => setLightboxIndex(-1)}
+            onIndexChange={setLightboxIndex}
+          />
+        </>
+      )}
     </Wrapper>
   );
 }
@@ -123,7 +129,7 @@ const Slide = styled.div.withConfig({
     (100% - ${props => (props.$visibleCount - 1) * 20}px) / ${props => props.$visibleCount}
   );
   height: 100%;
-  aspect-ratio: ${({ ratio }) => (ratio ? '4 / 3' : '1 / 1')};
+  aspect-ratio: ${({ ratio }) => (ratio ? '16 / 9' : '1 / 1')};
   box-sizing: border-box;
   position: relative;
   color: ${({ theme }) => theme.colors.white};

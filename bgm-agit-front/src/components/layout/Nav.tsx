@@ -1,10 +1,10 @@
 import styled from 'styled-components';
-import type { WithTheme } from '../styles/styled-props.ts';
+import type { WithTheme } from '../../styles/styled-props.ts';
 import { useRecoilValue } from 'recoil';
-import { mainMenuState } from '../recoil';
+import { mainMenuState } from '../../recoil';
 import { IoChevronForward } from 'react-icons/io5';
 import { useLocation, useNavigate } from 'react-router-dom';
-import type { MainMenu } from '../types/menu.ts';
+import type { MainMenu } from '../../types/menu.ts';
 
 export default function Nav() {
   const location = useLocation();

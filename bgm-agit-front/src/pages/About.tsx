@@ -15,6 +15,10 @@ import ImageGridSlider from '../components/grid/ImageGridSlider.tsx';
 import boradGameImage from '/images/boradGame.jpg';
 import foodAbout from '/images/foodAbout.png';
 import { useMediaQuery } from 'react-responsive';
+import { useFetchMainData } from '../recoil/fetch.ts';
+import { useRecoilValue } from 'recoil';
+import { mainDataState } from '../recoil';
+import { useNavigate } from 'react-router-dom';
 
 interface SectionProps {
   bgColor?: string;
@@ -23,9 +27,15 @@ interface SectionProps {
 }
 
 export default function About() {
+  const navigate = useNavigate();
+
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
-  const visibleCountMain = isMobile ? 2 : 3;
+  const visibleCountMain = isMobile ? 2 : 2;
   const visibleCountReserve = isMobile ? 1 : 3;
+
+  const param = { labelGb: 1, link: '' };
+  useFetchMainData(param);
+  const items = useRecoilValue(mainDataState);
 
   return (
     <Wrapper>
@@ -74,16 +84,7 @@ export default function About() {
               </LogoBox>
             </Left>
             <Right>
-              <ImageGridSlider
-                visibleCount={visibleCountMain}
-                labelGb={1}
-                items={[
-                  { image: '/images/main1.jpeg', label: '메인1', group: null, link: null },
-                  { image: '/images/main2.jpg', label: '메인2', group: null, link: null },
-                  { image: '/images/main3.png', label: '메인3', group: null, link: null },
-                  { image: '/images/main4.png', label: '메인4', group: null, link: null },
-                ]}
-              />
+              <ImageGridSlider visibleCount={visibleCountMain} labelGb={1} items={items[1]} />
             </Right>
           </ImageBox>
         </Top>
@@ -131,18 +132,24 @@ export default function About() {
             labelGb={2}
             items={[
               {
+                imageId: 1,
+                labelGb: 3,
                 image: '/images/roomAbout1.png',
                 label: 'Room 예약하기',
                 group: null,
-                link: '/reservation',
+                link: '/detail/room',
               },
               {
+                imageId: 1,
+                labelGb: 3,
                 image: '/images/roomAbout2.png',
                 label: '대탁 예약하기',
                 group: null,
                 link: '/reservation',
               },
               {
+                imageId: 1,
+                labelGb: 3,
                 image: '/images/roomAbout3.png',
                 label: '마작 강의 예약하기',
                 group: null,
@@ -167,7 +174,12 @@ export default function About() {
       <ContentSetion bgColor="#F2EDEA" textColor="#ffffff">
         <ContentImage>
           <section>
-            <img src={foodAbout} />
+            <img
+              src={foodAbout}
+              onClick={() => {
+                navigate('/detail/drink');
+              }}
+            />
           </section>
         </ContentImage>
         <TextBox headerColor="#5C3A21" bgColor="#F2EDEA" textColor="#5C3A21">

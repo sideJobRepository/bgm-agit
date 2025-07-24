@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import type { WithTheme } from '../styles/styled-props.ts';
+import type { WithTheme } from '../../styles/styled-props.ts';
 import logo from '/kakaomapLogo.png';
 
 export default function Footer() {

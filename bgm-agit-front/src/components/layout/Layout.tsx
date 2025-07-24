@@ -1,7 +1,7 @@
-import TopHeader from './TopHeader.jsx';
+import TopHeader from './TopHeader.tsx';
 import styled from 'styled-components';
 import { Outlet, useLocation } from 'react-router-dom';
-import type { WithTheme } from '../styles/styled-props.ts';
+import type { WithTheme } from '../../styles/styled-props.ts';
 import Footer from './Footer.tsx';
 import Nav from './Nav.tsx';
 

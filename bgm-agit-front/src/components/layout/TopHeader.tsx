@@ -1,24 +1,23 @@
 import styled from 'styled-components';
 import logo from '/headerLogo.png';
 import { useEffect, useRef, useState } from 'react';
-import type { WithTheme } from '../styles/styled-props.ts';
+import type { WithTheme } from '../../styles/styled-props.ts';
 import { FaPhone } from 'react-icons/fa';
 import { GiHamburgerMenu } from 'react-icons/gi';
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from 'react-icons/md';
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
-import { mainMenuState } from '../recoil';
-import useFetchMainMenu from '../recoil/fetch.ts';
+import { mainMenuState } from '../../recoil';
+import { useFetchMainMenu } from '../../recoil/fetch.ts';
 
 export default function TopHeader() {
   useFetchMainMenu();
+
   const menus = useRecoilValue(mainMenuState);
   const navigate = useNavigate();
 
   const location = useLocation();
-
-  //메인 메뉴, 서브 메뉴 추후에 서버에서 받아올 예정
 
   const [isSubOpen, setIsSubOpen] = useState(false);
 

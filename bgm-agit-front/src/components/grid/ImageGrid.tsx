@@ -7,8 +7,11 @@ import SearchBar from '../SearchBar.tsx';
 
 interface GridItem {
   image: string;
+  imageId: number;
+  labelGb: number;
   label: string;
-  group: null | number;
+  group: null | string;
+  link: null | string;
 }
 
 interface Props {
@@ -23,7 +26,6 @@ interface Props {
     title: string;
     subTitle: string;
   };
-  columnCount: number;
 }
 
 export default function ImageGrid({ pageData }: Props) {
@@ -35,6 +37,12 @@ export default function ImageGrid({ pageData }: Props) {
   const handleImageClick = (clickedIndex: number) => {
     setLightboxIndex(clickedIndex);
   };
+
+  // function reservationEvent(id: number) {
+  //   console.log(id);
+  // }
+
+  console.log('items', items);
 
   return (
     <Wrapper>
@@ -49,24 +57,31 @@ export default function ImageGrid({ pageData }: Props) {
       </SearchWrapper>
 
       <GridContainer $columnCount={columnCount}>
-        {items.map((item, idx) => (
-          <GridItemBox key={idx}>
-            <ImageWrapper
-              radius={labelGb === 4}
-              ratio={labelGb === 3}
-              onClick={() => labelGb !== 3 && handleImageClick(idx)}
-            >
-              <img src={item.image} alt={`img-${idx}`} draggable={false} />
-              {labelGb === 3 && (
-                <TopLabel>
-                  <p>{item.label}</p>
-                  <FaUsers /> <span>{item.group}</span>
-                </TopLabel>
-              )}
-            </ImageWrapper>
-            {labelGb !== 3 && <FoodLabel textColor={textColor}>{item.label}</FoodLabel>}
-          </GridItemBox>
-        ))}
+        {items &&
+          items.map((item, idx) => (
+            <GridItemBox key={idx}>
+              <ImageWrapper
+                radius={labelGb === 4}
+                ratio={labelGb === 3}
+                onClick={() => {
+                  if (labelGb !== 3) {
+                    handleImageClick(idx);
+                  } else {
+                    // reservationEvent(item.id);
+                  }
+                }}
+              >
+                <img src={item.image} alt={`img-${idx}`} draggable={false} />
+                {labelGb === 3 && (
+                  <TopLabel>
+                    <p>{item.label}</p>
+                    <FaUsers /> <span>{item.group}</span>
+                  </TopLabel>
+                )}
+              </ImageWrapper>
+              {labelGb !== 3 && <FoodLabel textColor={textColor}>{item.label}</FoodLabel>}
+            </GridItemBox>
+          ))}
       </GridContainer>
 
       <ImageLightbox
@@ -106,7 +121,7 @@ const TitleBox = styled.div.withConfig({
 })<{ textColor: string } & WithTheme>`
   display: flex;
   flex-direction: column;
-  width: 70%;
+  width: 60%;
   height: 60px;
   color: ${({ textColor }) => textColor};
 
@@ -137,7 +152,7 @@ const TitleBox = styled.div.withConfig({
 `;
 
 const SearchBox = styled.div<WithTheme>`
-  width: 30%;
+  width: 40%;
 
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
@@ -170,7 +185,7 @@ const ImageWrapper = styled.div.withConfig({
   aspect-ratio: ${({ ratio }) => (ratio ? '16 / 9' : '1 / 1')};
   overflow: hidden;
   border-radius: ${({ radius }) => (radius ? '999px' : '12px')};
-
+  position: relative;
   img {
     width: 100%;
     height: 100%;
@@ -191,6 +206,27 @@ const TopLabel = styled.div<WithTheme>`
   top: 6px;
   left: 6px;
   color: white;
+  p {
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: ${({ theme }) => theme.sizes.xsmall};
+    }
+  }
+
+  svg {
+    margin: 0 4px 2px 8px;
+
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: ${({ theme }) => theme.sizes.xsmall};
+    }
+  }
+
+  span {
+    font-size: ${({ theme }) => theme.sizes.small};
+
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: ${({ theme }) => theme.sizes.xxsmall};
+    }
+  }
 `;
 
 const FoodLabel = styled.div.withConfig({
