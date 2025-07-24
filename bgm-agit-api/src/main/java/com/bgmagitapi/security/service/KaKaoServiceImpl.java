@@ -3,6 +3,7 @@ package com.bgmagitapi.security.service;
 import com.bgmagitapi.security.service.response.AccessTokenResponse;
 import com.bgmagitapi.security.service.response.KaKaoProfileResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
@@ -15,8 +16,10 @@ import org.springframework.web.client.RestClient;
 @RequiredArgsConstructor
 public class KaKaoServiceImpl implements KaKaoService {
     
-    private String kakaoClientId = "id값 받을예정";
-    private String kakaoRedirectUri = "리다이렉트 url 받을예정";
+    @Value("${kakao.clientId}")
+    private String kakaoClientId;
+    @Value("${kakao.redirecturi}")
+    private String kakaoRedirectUri;
     
     
     @Override

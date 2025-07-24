@@ -42,3 +42,7 @@ logging:
 
 cors:
   url: https://bgmagit.co.kr
+
+kakao:
+  redirecturi: https://bgmagit.co.kr/oauth/kakao/callback
+  clientId: 1c5346963ea4efa00362b4f1f2533a4c
