@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,55 +36,56 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     @Override
     public List<BgmAgitReservationResponse> getReservation(Long labelGb, String link, LocalDate date) {
         
-        // 1. 이번 달의 오늘 ~ 말일 범위
+        // 오늘 날짜 기준으로 월의 마지막 날 계산
+        YearMonth yearMonth = YearMonth.from(date);
         LocalDate today = date;
-        LocalDate endOfMonth = date.withDayOfMonth(date.lengthOfMonth());
+        LocalDate endOfMonth = yearMonth.atEndOfMonth();
         
-        // 2. 해당 기간의 예약 데이터 조회
+        // 예약된 데이터 조회
         List<BgmAgitReservationResponse> allList = queryFactory
-                .select(
-                        Projections.constructor(
-                                BgmAgitReservationResponse.class,
-                                bgmAgitReservation.bgmAgitReservationStartTime,
-                                bgmAgitReservation.bgmAgitReservationEndTime,
-                                bgmAgitReservation.bgmAgitReservationStartDate,
-                                bgmAgitReservation.bgmAgitReservationEndDate,
-                                bgmAgitImage.bgmAgitImageLabel,
-                                bgmAgitImage.bgmAgitImageGroups
-                        )
-                )
+                .select(Projections.constructor(
+                        BgmAgitReservationResponse.class,
+                        bgmAgitReservation.bgmAgitReservationStartTime,
+                        bgmAgitReservation.bgmAgitReservationEndTime,
+                        bgmAgitReservation.bgmAgitReservationStartDate,
+                        bgmAgitReservation.bgmAgitReservationEndDate,
+                        bgmAgitImage.bgmAgitImageLabel,
+                        bgmAgitImage.bgmAgitImageGroups
+                ))
                 .from(bgmAgitReservation)
                 .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage)
                 .where(
-                        bgmAgitImage.bgmAgitMainMenu.bgmAgitMainMenuId.eq(labelGb)
-                                .and(bgmAgitImage.bgmAgitMenuLink.eq(link))
-                                .and(bgmAgitReservation.bgmAgitReservationStartDate.between(today, endOfMonth))
-                ).fetch();
+                        bgmAgitImage.bgmAgitMainMenu.bgmAgitMainMenuId.eq(labelGb),
+                        bgmAgitImage.bgmAgitMenuLink.eq(link),
+                        bgmAgitReservation.bgmAgitReservationStartDate.between(today, endOfMonth)
+                )
+                .fetch();
         
-        // 3. 빠른 조회를 위한 Map
-        Map<LocalDate, BgmAgitReservationResponse> reservationMap = allList.stream()
-                .collect(Collectors.toMap(BgmAgitReservationResponse::getStartDate, Function.identity()));
+        // 날짜별로 예약 데이터 그룹핑
+        Map<LocalDate, List<BgmAgitReservationResponse>> reservationMap = allList.stream()
+                .collect(Collectors.groupingBy(BgmAgitReservationResponse::getStartDate));
         
-        // 4. 오늘 ~ 말일까지 순회하며 price 세팅
         List<BgmAgitReservationResponse> resultList = new ArrayList<>();
         
+        // 오늘 ~ 말일까지 반복
         for (LocalDate targetDate = today; !targetDate.isAfter(endOfMonth); targetDate = targetDate.plusDays(1)) {
-            boolean isWeekend = targetDate.getDayOfWeek() == DayOfWeek.SATURDAY ||
-                    targetDate.getDayOfWeek() == DayOfWeek.SUNDAY;
-            
+            DayOfWeek dayOfWeek = targetDate.getDayOfWeek();
+            boolean isWeekend = (dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY);
             int price = isWeekend ? 12000 : 10000;
             
-            BgmAgitReservationResponse item = reservationMap.get(targetDate);
+            List<BgmAgitReservationResponse> reservations = reservationMap.get(targetDate);
             
-            if (item == null) {
-                // 예약 정보 없는 날짜 → dummy 객체로 생성
-                BgmAgitReservationResponse dummy = new BgmAgitReservationResponse();
-                dummy.setStartDate(targetDate);
-                dummy.setMonthPrice(price);
-                resultList.add(dummy);
+            if (reservations != null && !reservations.isEmpty()) {
+                for (BgmAgitReservationResponse res : reservations) {
+                    res.setMonthPrice(price);
+                    resultList.add(res);
+                }
             } else {
-                item.setMonthPrice(price);
-                resultList.add(item);
+                BgmAgitReservationResponse dummy = BgmAgitReservationResponse.builder()
+                        .startDate(targetDate)
+                        .monthPrice(price)
+                        .build();
+                resultList.add(dummy);
             }
         }
         
