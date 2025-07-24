@@ -154,6 +154,11 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
     background-color: transparent;
   }
 
+  .react-calendar__navigation button {
+    color: ${({ theme }) => theme.colors.black} !important;
+    background: transparent !important;
+  }
+
   .react-calendar__month-view__weekdays__weekday {
     //요일
     abbr {
