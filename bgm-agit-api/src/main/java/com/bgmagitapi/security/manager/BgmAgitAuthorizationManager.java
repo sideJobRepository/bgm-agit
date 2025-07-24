@@ -3,6 +3,7 @@ package com.bgmagitapi.security.manager;
 import com.bgmagitapi.service.impl.BgmAgitDynamicAuthorizationServiceImpl;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authorization.AuthorityAuthorizationManager;
 import org.springframework.security.authorization.AuthorizationDecision;
@@ -14,7 +15,6 @@ import org.springframework.security.web.access.intercept.RequestAuthorizationCon
 import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcherEntry;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
@@ -40,12 +40,18 @@ public class BgmAgitAuthorizationManager implements AuthorizationManager<Request
     }
     private void setMappings() {
         Map<String, String> urlRoleMappings = bgmAgitDynamicAuthorizationServiceImpl.getUrlRoleMappings();
-        mappings = urlRoleMappings
-                .entrySet().stream()
-                .map(e -> new RequestMatcherEntry<>(
-                        new MvcRequestMatcher(introspector, e.getKey()),
-                        bgmAgitAuthorizationManager(e.getValue())
-                )).collect(Collectors.toList());
+        mappings = urlRoleMappings.entrySet().stream()
+                .map(e -> {
+                    String[] parts = e.getKey().split(" ", 2);
+                    String method = parts[0];
+                    String path = parts[1];
+                    
+                    MvcRequestMatcher matcher = new MvcRequestMatcher(introspector, path);
+                    matcher.setMethod(HttpMethod.valueOf(method));
+                    
+                    return new RequestMatcherEntry<>(matcher, bgmAgitAuthorizationManager(e.getValue()));
+                })
+                .collect(Collectors.toList());
     }
     
     private AuthorizationManager<RequestAuthorizationContext> bgmAgitAuthorizationManager(String role) {

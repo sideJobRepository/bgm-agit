@@ -35,7 +35,8 @@ public class BgmAgitUrlRoleMapping {
                 .select(Projections.constructor(
                         RoleMapResponse.class,
                         bgmAgitUrlResources.bgmAgitUrlResourcesPath,
-                        bgmAgitRole.bgmAgitRoleName
+                        bgmAgitRole.bgmAgitRoleName,
+                        bgmAgitUrlResources.bgmAgitUrlHttpMethod
                 ))
                 .from(bgmAgitUrlResourcesRole)
                 .join(bgmAgitUrlResourcesRole.bgmAgitUrlResources, bgmAgitUrlResources)
@@ -44,9 +45,8 @@ public class BgmAgitUrlRoleMapping {
         
         resourcesList
                 .forEach(resources -> {
-                   String url = resources.getBgmAgitUrlResourcesPath();
-                   String roleName = resources.getBgmAgitRoleName();
-                    urlRoleMappings.put(url, "ROLE_" + roleName);
+                    String key = resources.getHttpMethod().toUpperCase() + " " + resources.getBgmAgitUrlResourcesPath(); // "POST /bgm-agit/notice"
+                    urlRoleMappings.put(key, "ROLE_" + resources.getBgmAgitRoleName());
                 });
         return urlRoleMappings;
         

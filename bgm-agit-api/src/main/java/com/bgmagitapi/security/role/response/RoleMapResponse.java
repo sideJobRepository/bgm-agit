@@ -11,4 +11,5 @@ public class RoleMapResponse {
     
     private String bgmAgitUrlResourcesPath;
     private String bgmAgitRoleName;
+    private String httpMethod;
 }
