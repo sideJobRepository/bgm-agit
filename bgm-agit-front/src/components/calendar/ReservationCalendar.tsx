@@ -217,8 +217,8 @@ const TimeBox = styled.div<WithTheme>`
     }
 
     &:hover {
-      background-color: ${({ theme }) => theme.colors.blueColor};
-      color: white;
+      background-color: ${({ theme }) => theme.colors.softColor};
+      color: ${({ theme }) => theme.colors.subColor};
     }
   }
 `;

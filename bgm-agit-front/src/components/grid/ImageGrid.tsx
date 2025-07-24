@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { WithTheme } from '../../styles/styled-props.ts';
 import { FaUsers } from 'react-icons/fa';
 import ImageLightbox from '../ImageLightbox.tsx';
@@ -48,9 +48,11 @@ export default function ImageGrid({ pageData }: Props) {
     setLightboxIndex(clickedIndex);
   };
 
-  const filteredItems = searchKeyword
-    ? items.filter(item => item.label?.toLowerCase().includes(searchKeyword.toLowerCase()))
-    : items;
+  const filteredItems = useMemo(() => {
+    return searchKeyword
+      ? items.filter(item => item.label?.toLowerCase().includes(searchKeyword.toLowerCase()))
+      : items;
+  }, [items, searchKeyword]);
 
   const [reservationData, setReservationData] = useState<null | object>(null);
 
@@ -69,7 +71,7 @@ export default function ImageGrid({ pageData }: Props) {
   }
 
   useEffect(() => {
-    newItemDatas(filteredItems[0]);
+    if (labelGb === 3 && filteredItems.length > 0) newItemDatas(filteredItems[0]);
   }, [filteredItems]);
 
   useEffect(() => {
@@ -125,6 +127,8 @@ export default function ImageGrid({ pageData }: Props) {
               {labelGb !== 3 && <FoodLabel textColor={textColor}>{item.label}</FoodLabel>}
             </GridItemBox>
           ))}
+
+        {filteredItems.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
       </GridContainer>
 
       <ImageLightbox
@@ -280,6 +284,16 @@ const FoodLabel = styled.div.withConfig({
   font-family: 'Jua', sans-serif;
   font-size: ${({ theme }) => theme.sizes.bigLarge};
   color: ${({ theme }) => theme.colors.black};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.small};
+  }
+`;
+
+const NoSearchBox = styled.div<WithTheme>`
+  font-size: ${({ theme }) => theme.sizes.menu};
+  font-weight: ${({ theme }) => theme.weight.semiBold};
+  font-family: 'Jua', sans-serif;
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.sizes.small};

@@ -33,7 +33,7 @@ export default function SearchBar({ color, label, onSearch }: SearchBarProps) {
             <label>{label}</label>
             <input
               type="text"
-              placeholder="원하는 검색어를 입력해주세요."
+              placeholder="검색어를 입력해주세요."
               value={keyword}
               onChange={e => setKeyword(e.target.value)}
             />
