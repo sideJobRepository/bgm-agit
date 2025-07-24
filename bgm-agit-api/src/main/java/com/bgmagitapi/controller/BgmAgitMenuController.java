@@ -20,12 +20,12 @@ public class BgmAgitMenuController {
     
     private final BgmAgitMainMenuService bgmAgitMainMenuService;
     
-    @GetMapping("/main-menu")
+    @GetMapping(value = "/main-menu")
     public List<BgmAgitMainMenuResponse> getMenu() {
         return  bgmAgitMainMenuService.getMainMenu();
     }
     
-    @GetMapping("/main-image")
+    @GetMapping(value = "/main-image")
     public Map<Long, List<BgmAgitMainMenuImageResponse>> getMenuImage(
             @RequestParam(name = "labelGb",required = false) Long labelGb,
             @RequestParam(name = "link",required = false) String link) {
