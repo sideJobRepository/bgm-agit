@@ -1,25 +1,42 @@
 import styled from 'styled-components';
 import { FiSearch } from 'react-icons/fi';
 import type { WithTheme } from '../styles/styled-props.ts';
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 interface SearchBarProps {
   color: string;
   label: string;
+  onSearch: (keyword: string) => void;
 }
 
-export default function SearchBar({ color, label }: SearchBarProps) {
+export default function SearchBar({ color, label, onSearch }: SearchBarProps) {
+  const location = useLocation();
+
+  const [keyword, setKeyword] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSearch(keyword);
+  };
+
+  useEffect(() => {
+    setKeyword('');
+    onSearch('');
+  }, [location]);
+
   return (
     <Wrapper>
-      <SearchGroup
-        color={color}
-        // onSubmit={e => {
-        //   e.preventDefault();
-        // }}
-      >
+      <SearchGroup color={color} onSubmit={handleSubmit}>
         <FieldsWrapper>
           <Field color={color}>
             <label>{label}</label>
-            <input type="text" placeholder="원하는 검색어를 입력해주세요." />
+            <input
+              type="text"
+              placeholder="원하는 검색어를 입력해주세요."
+              value={keyword}
+              onChange={e => setKeyword(e.target.value)}
+            />
           </Field>
         </FieldsWrapper>
         <SearchButton color={color} type="submit">

@@ -13,7 +13,6 @@ import { useFetchMainData } from '../recoil/fetch.ts';
 export default function MainPage() {
   useFetchMainData();
   const items = useRecoilValue(mainDataState);
-  console.log('tests', items);
 
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
 
@@ -106,38 +105,14 @@ export default function MainPage() {
           <ABox>
             <a
               onClick={() => {
-                navigate('/about');
+                navigate('/notice');
               }}
             >
               더보기
             </a>
           </ABox>
           <SliderBox>
-            <Notice
-              items={[
-                { id: 1, title: 'BGM 아지트 여름 휴가 안내', date: '2025.08.30', category: '공지' },
-                { id: 2, title: '멤버십 이벤트 안내', date: '2025.08.29', category: '이벤트' },
-                { id: 3, title: '여름맞이 음료 추가 안내', date: '2025.08.24', category: '공지' },
-                {
-                  id: 4,
-                  title: '동호회 가입하고 무료 포인트 받자!',
-                  date: '2025.08.01',
-                  category: '이벤트',
-                },
-                {
-                  id: 5,
-                  title: 'BGM 아지트 홈페이지 오픈 이벤트!',
-                  date: '2025.07.29',
-                  category: '이벤트',
-                },
-                {
-                  id: 6,
-                  title: 'BGM 아지트 홈페이지 오픈',
-                  date: '2025.07.22',
-                  category: '공지',
-                },
-              ]}
-            />
+            <Notice mainGb={false} />
           </SliderBox>
         </NoticeSection>
       </ReservationNoticeSection>

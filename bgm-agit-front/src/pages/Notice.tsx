@@ -1,42 +1,87 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { useMediaQuery } from 'react-responsive';
+import { Wrapper } from '../styles';
 
-interface NoticeIItem {
-  id: number;
-  title: string;
-  date: string;
-  category: string;
+interface NoticeProps {
+  mainGb: boolean;
 }
 
-interface Props {
-  items: NoticeIItem[];
-}
-
-export default function NoticeTable({ items }: Props) {
+export default function Notice({ mainGb }: NoticeProps) {
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
 
+  const items = [
+    { id: 1, title: 'BGM 아지트 여름 휴가 안내', date: '2025.08.30', category: '공지' },
+    { id: 2, title: '멤버십 이벤트 안내', date: '2025.08.29', category: '이벤트' },
+    { id: 3, title: '여름맞이 음료 추가 안내', date: '2025.08.24', category: '공지' },
+    {
+      id: 4,
+      title: '동호회 가입하고 무료 포인트 받자!',
+      date: '2025.08.01',
+      category: '이벤트',
+    },
+    {
+      id: 5,
+      title: 'BGM 아지트 홈페이지 오픈 이벤트!',
+      date: '2025.07.29',
+      category: '이벤트',
+    },
+    {
+      id: 6,
+      title: 'BGM 아지트 홈페이지 오픈',
+      date: '2025.07.22',
+      category: '공지',
+    },
+  ];
+
   return (
-    <Table>
-      <thead>
-        <tr>
-          <Th>번호</Th>
-          <Th>제목</Th>
-          <Th>날짜</Th>
-          {!isMobile && <Th>분류</Th>}
-        </tr>
-      </thead>
-      <tbody>
-        {items.map(notice => (
-          <tr key={notice.id}>
-            <Td>{notice.id}</Td>
-            <Td>{notice.title}</Td>
-            <Td>{notice.date}</Td>
-            {!isMobile && <Td>{notice.category}</Td>}
-          </tr>
-        ))}
-      </tbody>
-    </Table>
+    <>
+      {mainGb ? (
+        <Wrapper>
+          <Table>
+            <thead>
+              <tr>
+                <Th>번호</Th>
+                <Th>제목</Th>
+                {!isMobile && <Th>날짜</Th>}
+                <Th>분류</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map(notice => (
+                <tr key={notice.id}>
+                  <Td>{notice.id}</Td>
+                  <Td>{notice.title}</Td>
+                  <Td>{notice.date}</Td>
+                  {!isMobile && <Td>{notice.category}</Td>}
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Wrapper>
+      ) : (
+        <Table>
+          <thead>
+            <tr>
+              <Th>번호</Th>
+              <Th>제목</Th>
+              {!isMobile && <Th>날짜</Th>}
+              <Th>분류</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map(notice => (
+              <tr key={notice.id}>
+                <Td>{notice.id}</Td>
+                <Td>{notice.title}</Td>
+                <Td>{notice.date}</Td>
+                {!isMobile && <Td>{notice.category}</Td>}
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      )}
+    </>
   );
 }
 

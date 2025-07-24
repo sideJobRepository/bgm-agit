@@ -3,11 +3,23 @@ import type { WithTheme } from '../../styles/styled-props.ts';
 import logo from '/kakaomapLogo.png';
 
 export default function Footer() {
+  function kakaoMapGo() {
+    const address = '대전 서구 문정로 62';
+    const url = `https://map.kakao.com/link/search/${encodeURIComponent(address)}`;
+    window.open(url, '_blank');
+  }
+
   return (
     <Wrapper>
       <Left>
         <span>찾아오시는 길 : 찾아오시는 길 : 대전 서구 문정로 62 3층 </span>
-        <img src={logo} alt="로고" />
+        <img
+          src={logo}
+          alt="로고"
+          onClick={() => {
+            kakaoMapGo();
+          }}
+        />
       </Left>
       <Right>
         <span>금, 토 : 13:00 ~ 06:00 </span>

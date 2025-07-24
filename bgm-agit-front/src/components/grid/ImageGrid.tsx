@@ -29,6 +29,7 @@ interface Props {
 }
 
 export default function ImageGrid({ pageData }: Props) {
+  const [searchKeyword, setSearchKeyword] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState(-1);
 
   const { items, labelGb, bgColor, textColor, searchColor, label, title, subTitle, columnCount } =
@@ -38,11 +39,13 @@ export default function ImageGrid({ pageData }: Props) {
     setLightboxIndex(clickedIndex);
   };
 
+  const filteredItems = searchKeyword
+    ? items.filter(item => item.label?.toLowerCase().includes(searchKeyword.toLowerCase()))
+    : items;
+
   // function reservationEvent(id: number) {
   //   console.log(id);
   // }
-
-  console.log('items', items);
 
   return (
     <Wrapper>
@@ -52,13 +55,13 @@ export default function ImageGrid({ pageData }: Props) {
           <p>{subTitle}</p>
         </TitleBox>
         <SearchBox>
-          <SearchBar color={searchColor} label={label} />
+          <SearchBar color={searchColor} label={label} onSearch={setSearchKeyword} />
         </SearchBox>
       </SearchWrapper>
 
       <GridContainer $columnCount={columnCount}>
-        {items &&
-          items.map((item, idx) => (
+        {filteredItems &&
+          filteredItems.map((item, idx) => (
             <GridItemBox key={idx}>
               <ImageWrapper
                 radius={labelGb === 4}
@@ -85,7 +88,7 @@ export default function ImageGrid({ pageData }: Props) {
       </GridContainer>
 
       <ImageLightbox
-        images={items.map(item => item.image)}
+        images={filteredItems.map(item => item.image)}
         index={lightboxIndex}
         onClose={() => setLightboxIndex(-1)}
         onIndexChange={setLightboxIndex}
@@ -166,7 +169,7 @@ const GridContainer = styled.div.withConfig({
   grid-template-columns: repeat(${props => props.$columnCount}, 1fr);
   gap: 40px;
   padding: 40px 0;
-
+  min-width: 100%;
   @media ${({ theme }) => theme.device.mobile} {
     gap: 24px;
   }
