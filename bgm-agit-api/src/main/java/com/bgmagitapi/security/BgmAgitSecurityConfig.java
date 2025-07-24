@@ -20,6 +20,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -36,7 +38,8 @@ public class BgmAgitSecurityConfig {
     @Value("${cors.url}")
     private String corsUrl;
     
-    
+    private final AuthenticationSuccessHandler bgmAuthenticationSuccessHandler;
+    private final AuthenticationFailureHandler bgmAuthenticationFailureHandler;
     private final AuthenticationEntryPoint bgmagitAuthenticationEntryPoint;
     private final AuthorizationManager<RequestAuthorizationContext> bgmAgitAuthorizationManager;
     private final AuthenticationProvider socialAuthenticationProvider;
@@ -60,6 +63,8 @@ public class BgmAgitSecurityConfig {
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(Customizer.withDefaults()))
                 .with(new BgmAgitSecurityDsl<>(), bgmAgitSecurityDsl -> bgmAgitSecurityDsl
+                        .bgmAgitSuccessHandler(bgmAuthenticationSuccessHandler)
+                        .bgmAgitFailureHandler(bgmAuthenticationFailureHandler)
                         .bgmAgitEntryPoint(bgmagitAuthenticationEntryPoint)
                 );
         return http.build();

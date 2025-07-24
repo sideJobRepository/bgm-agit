@@ -24,10 +24,20 @@ class BgmAgitMenuControllerTest extends ControllerTestSupport {
     
     @DisplayName("")
     @Test
-    void test() throws Exception {
+    void test1() throws Exception {
         
         mockMvc.perform(get("/bgm-agit/main-menu"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andDo(print());
+        ;
+    }
+    @DisplayName("")
+    @Test
+    void test2() throws Exception {
+        mockMvc.perform(post("/bgm-agit/kakao-login"))
+                .andExpect(status().isOk())
+                .andDo(print());
+        ;
     
     }
     
