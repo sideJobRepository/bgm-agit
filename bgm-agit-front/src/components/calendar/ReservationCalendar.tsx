@@ -144,11 +144,6 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
   border-radius: 12px;
   padding: 10px;
 
-  .react-calendar__tile abbr {
-    color: ${({ theme }) => theme.colors.black} !important;
-    text-decoration: none !important;
-  }
-
   .react-calendar__tile--now {
     //오늘날짜 표시 제거
     background: transparent !important;
@@ -168,8 +163,13 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
   .react-calendar__tile {
     display: flex;
     flex-direction: column;
-
+    align-items: center !important;
+    color: ${({ theme }) => theme.colors.black};
     abbr {
+      display: block;
+      margin: 0 auto;
+      text-align: center;
+      width: 100%;
       padding: 15px 0;
       @media ${({ theme }) => theme.device.mobile} {
         padding: 10px 0;
