@@ -19,11 +19,16 @@ const dummyData = {
       date: '2025-07-26',
       timeSlots: ['16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'],
     },
+    {
+      date: '2025-07-30',
+      timeSlots: ['16:00', '17:00'],
+    },
   ],
   prices: [
     { date: '2025-07-24', price: 10000 },
     { date: '2025-07-25', price: 10000 },
-    { date: '2025-07-26', price: 10000 },
+    { date: '2025-07-26', price: 30000 },
+    { date: '2025-07-30', price: 10000 },
   ],
 };
 
@@ -37,9 +42,11 @@ export default function ReservationCalendar() {
   const matchedSlots = dummyData.timeSlots.find(d => d.date === dateStr);
 
   const handleTimeClick = (time: string) => {
+    console.log('selectedTimes', selectedTimes);
     setSelectedTimes(prev =>
       prev.includes(time) ? prev.filter(t => t !== time) : [...prev, time]
     );
+    console.log('2222', selectedTimes);
   };
 
   return (
@@ -60,9 +67,16 @@ export default function ReservationCalendar() {
           if (view === 'month') {
             const dateStr = getLocalDateStr(date);
             const priceItem = dummyData.prices.find(p => p.date === dateStr);
-            return priceItem ? (
-              <div className="date-price">{priceItem.price.toLocaleString()}</div>
-            ) : null;
+
+            const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+
+            return (
+              priceItem && (
+                <div className={`date-price ${isWeekend ? 'weekend' : ''}`}>
+                  {priceItem.price.toLocaleString()}
+                </div>
+              )
+            );
           }
           return null;
         }}
@@ -74,16 +88,16 @@ export default function ReservationCalendar() {
       />
 
       <TimeBox>
-        {matchedSlots?.timeSlots.map((time, idx) => (
-          <button
-            key={idx}
-            className={selectedTimes.includes(time) ? 'active' : ''}
-            onClick={() => handleTimeClick(time)}
-          >
-            {time}
-          </button>
-        ))}
+        {matchedSlots?.timeSlots.map((time, idx) => {
+          const isSelected = selectedTimes.includes(time);
+          return (
+            <TimeSlotButton key={idx} selected={isSelected} onClick={() => handleTimeClick(time)}>
+              {time}
+            </TimeSlotButton>
+          );
+        })}
       </TimeBox>
+      <Button>예약하기</Button>
     </Wrapper>
   );
 }
@@ -91,6 +105,7 @@ export default function ReservationCalendar() {
 const Wrapper = styled.div<WithTheme>`
   width: 100%;
   display: flex;
+  gap: 20px;
   flex-direction: column;
   align-items: center;
 
@@ -107,7 +122,6 @@ const TitleBox = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
   color: ${({ theme }) => theme.colors.black};
 
   h2 {
@@ -129,7 +143,6 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
   border: 1px solid #ccc;
   border-radius: 12px;
   //padding: 12px;
-  margin-bottom: 20px;
 
   .react-calendar__tile--now {
     //오늘날짜 표시 제거
@@ -198,6 +211,10 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
     font-size: ${({ theme }) => theme.sizes.xsmall};
     color: ${({ theme }) => theme.colors.greenColor};
   }
+
+  .date-price.weekend {
+    color: ${({ theme }) => theme.colors.redColor}; // ← 빨간색으로
+  }
 `;
 
 const TimeBox = styled.div<WithTheme>`
@@ -205,25 +222,38 @@ const TimeBox = styled.div<WithTheme>`
   flex-wrap: wrap;
   justify-content: center;
   gap: 10px;
+`;
 
-  button {
-    padding: 10px 14px;
-    font-size: ${({ theme }) => theme.sizes.small};
-    color: ${({ theme }) => theme.colors.subColor};
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    background-color: white;
-    cursor: pointer;
-    transition: all 0.2s;
+const TimeSlotButton = styled.button<WithTheme & { selected: boolean }>`
+  padding: 10px 14px;
+  font-size: ${({ theme }) => theme.sizes.small};
+  color: ${({ selected, theme }) => (selected ? theme.colors.white : theme.colors.subColor)};
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background-color: ${({ selected, theme }) => (selected ? theme.colors.blueColor : 'white')};
+  cursor: pointer;
+  transition: all 0.2s;
 
-    &.active {
-      background-color: ${({ theme }) => theme.colors.blueColor};
-      color: white;
-    }
+  &:hover {
+    background-color: ${({ selected, theme }) =>
+      selected ? theme.colors.blueColor : theme.colors.softColor};
+    color: ${({ selected, theme }) => (selected ? theme.colors.white : theme.colors.subColor)};
+  }
+`;
 
-    &:hover {
-      background-color: ${({ theme }) => theme.colors.softColor};
-      color: ${({ theme }) => theme.colors.subColor};
-    }
+const Button = styled.button<WithTheme>`
+  width: 90%;
+  padding: 12px 0;
+  background-color: ${({ theme }) => theme.colors.blueColor};
+  border: none;
+  color: ${({ theme }) => theme.colors.white};
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 100%;
   }
 `;

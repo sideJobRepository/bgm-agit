@@ -10,6 +10,7 @@ export const theme = {
     subColor: '#424548',
     purpleColor: '#482768',
     blueColor: '#093A6E',
+    redColor: '#FF5E57',
     greenColor: '#1A7D55',
     basicColor: '#F2EDEA',
     bronzeColor: '#5C3A21',
