@@ -82,11 +82,13 @@ export default function Detail() {
             {fullPageData.items && <ImageGrid pageData={fullPageData} />}
           </ReservationGridSetion>
           <ReservationCalendarSetion>
-            <TitleBox>
-              <h2>A Room</h2>
-              <FaUsers /> <span> 4 </span>
-            </TitleBox>
-            <ReservationCalendar />
+            <CalendarBox>
+              <TitleBox>
+                <h2>A Room</h2>
+                <FaUsers /> <span> 4 </span>
+              </TitleBox>
+              <ReservationCalendar />
+            </CalendarBox>
           </ReservationCalendarSetion>
         </ReservationBox>
       ) : (
@@ -113,7 +115,8 @@ const ReservationBox = styled.div`
 const ReservationGridSetion = styled.section<WithTheme>`
   width: 60%;
   height: 100%;
-  @media ${({ theme }) => theme.device.mobile} {
+
+  @media ${({ theme }) => theme.device.tablet} {
     width: 100%;
   }
 `;
@@ -126,9 +129,18 @@ const ReservationCalendarSetion = styled.section<WithTheme>`
   height: 100%;
   align-items: center;
   padding: 10px;
-  @media ${({ theme }) => theme.device.mobile} {
+  @media ${({ theme }) => theme.device.tablet} {
     display: none;
   }
+`;
+
+const CalendarBox = styled.div<WithTheme>`
+  position: fixed;
+  top: 160px;
+  right: 0;
+  width: 40%;
+  max-width: 500px;
+  z-index: 1000;
 `;
 
 const TitleBox = styled.div<WithTheme>`

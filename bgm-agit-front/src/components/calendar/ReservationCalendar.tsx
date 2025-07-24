@@ -18,7 +18,7 @@ export default function ReservationCalendar() {
 
   return (
     <Wrapper>
-      <Calendar value={value} />
+      <Calendar value={value} className="custom-calendar" />
       {value && <p>{value.toDateString()}의 예약 가능한 시간 표시</p>}
     </Wrapper>
   );
@@ -26,4 +26,10 @@ export default function ReservationCalendar() {
 
 const Wrapper = styled.div`
   width: 100%;
+  display: flex;
+  justify-content: center;
+
+  .custom-calendar {
+    width: 70%;
+  }
 `;

@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { WithTheme } from '../../styles/styled-props.ts';
 import { FaUsers } from 'react-icons/fa';
 import ImageLightbox from '../ImageLightbox.tsx';
@@ -32,6 +32,8 @@ export default function ImageGrid({ pageData }: Props) {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState(-1);
 
+  const today = new Date().toISOString();
+
   const { items, labelGb, bgColor, textColor, searchColor, label, title, subTitle, columnCount } =
     pageData;
 
@@ -43,9 +45,27 @@ export default function ImageGrid({ pageData }: Props) {
     ? items.filter(item => item.label?.toLowerCase().includes(searchKeyword.toLowerCase()))
     : items;
 
-  // function reservationEvent(id: number) {
-  //   console.log(id);
-  // }
+  const [reservationData, setReservationData] = useState(filteredItems[0]);
+
+  function newItemDatas(item: GridItem) {
+    const newItem = {
+      labelGb: item.labelGb,
+      link: item.link,
+      date: today,
+    } as unknown as GridItem & { date: string };
+
+    setReservationData(newItem);
+  }
+
+  function reservationClickEvent(item: GridItem) {
+    newItemDatas(item);
+    console.log('reservationData', reservationData);
+  }
+
+  useEffect(() => {
+    newItemDatas(filteredItems[0]);
+    console.log('reservationData', reservationData);
+  }, [filteredItems]);
 
   return (
     <Wrapper>
@@ -70,7 +90,7 @@ export default function ImageGrid({ pageData }: Props) {
                   if (labelGb !== 3) {
                     handleImageClick(idx);
                   } else {
-                    // reservationEvent(item.id);
+                    reservationClickEvent(item);
                   }
                 }}
               >
