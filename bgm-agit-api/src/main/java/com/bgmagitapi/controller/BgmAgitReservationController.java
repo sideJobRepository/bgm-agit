@@ -24,8 +24,9 @@ public class BgmAgitReservationController {
     public BgmAgitReservationResponse getReservation(
             @RequestParam(name = "labelGb") Long labelGb,
             @RequestParam(name = "link") String link,
+            @RequestParam(name = "id") Long id,
             @RequestParam(name = "date") String dateStr) {
         LocalDate date = LocalDate.parse(dateStr.substring(0, 10));
-        return bgmAgitReservationService.getReservation(labelGb,link,date);
+        return bgmAgitReservationService.getReservation(labelGb,link,id,date);
     }
 }

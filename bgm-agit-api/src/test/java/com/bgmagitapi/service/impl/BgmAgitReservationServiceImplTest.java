@@ -23,7 +23,8 @@ class BgmAgitReservationServiceImplTest extends RepositoryAndServiceTestSupport 
         BgmAgitReservationResponse reservation = bgmAgitReservationService.getReservation(
                 3L,
                 "/detail/room",
-                LocalDate.of(2025, 7, 24)
+                13L,
+                LocalDate.of(2025, 7,24)
         );
         
         String s = objectMapper.writeValueAsString(reservation);

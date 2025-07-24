@@ -3,6 +3,8 @@ package com.bgmagitapi.service.impl;
 import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.controller.response.reservation.TimeRange;
+import com.bgmagitapi.entity.BgmAgitImage;
+import com.bgmagitapi.repository.BgmAgitImageRepository;
 import com.bgmagitapi.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.service.BgmAgitReservationService;
 import com.querydsl.core.types.Projections;
@@ -24,13 +26,13 @@ import static com.bgmagitapi.entity.QBgmAgitReservation.bgmAgitReservation;
 @RequiredArgsConstructor
 public class BgmAgitReservationServiceImpl implements BgmAgitReservationService {
 
-    private final BgmAgitReservationRepository bgmAgitReservationRepository;
-
+    private final BgmAgitImageRepository  bgmAgitImageRepository;
+    
     private final JPAQueryFactory queryFactory;
 
     @Override
     @Transactional(readOnly = true)
-    public BgmAgitReservationResponse getReservation(Long labelGb, String link, LocalDate date) {
+    public BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id,LocalDate date) {
         LocalDate today = date;
         YearMonth yearMonth = YearMonth.from(today);
         LocalDate endOfMonth = yearMonth.atEndOfMonth();
@@ -50,6 +52,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .where(
                         bgmAgitImage.bgmAgitMainMenu.bgmAgitMainMenuId.eq(labelGb),
                         bgmAgitImage.bgmAgitMenuLink.eq(link),
+                        bgmAgitImage.bgmAgitImageId.eq(id),
                         bgmAgitReservation.bgmAgitReservationStartDate.eq(today)
                 )
                 .fetch();
@@ -100,10 +103,20 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             cursor = cursor.plusHours(1);
         }
         
-        // 라벨/그룹 세팅 (없으면 빈 문자열)
-        String label = reservations.isEmpty() ? "" : reservations.get(0).getLabel();
-        String group = reservations.isEmpty() ? "" : reservations.get(0).getGroup();
+        String label = "";
+        String group = "";
         
+        if (!reservations.isEmpty()) {
+            ReservedTimeDto dto = reservations.get(0);
+            label = dto.getLabel();
+            group = dto.getGroup();
+        } else {
+            BgmAgitImage image = bgmAgitImageRepository.findById(id).orElse(null);
+            if (image != null) {
+                label = image.getBgmAgitImageLabel();
+                group = image.getBgmAgitImageGroups();
+            }
+        }
         // timeSlots: 오늘 날짜만
         List<BgmAgitReservationResponse.TimeSlotByDate> timeSlots = List.of(
                 new BgmAgitReservationResponse.TimeSlotByDate(today, label, group, availableSlots)

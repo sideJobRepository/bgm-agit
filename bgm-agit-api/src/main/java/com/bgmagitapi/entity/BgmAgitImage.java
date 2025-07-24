@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "BGM_AGIT_IMAGE")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 public class BgmAgitImage extends DateSuperClass {
     
     // BGM 아지트 이미지 ID

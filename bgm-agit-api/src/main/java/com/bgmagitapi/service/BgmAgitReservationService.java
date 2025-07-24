@@ -6,5 +6,5 @@ import java.time.LocalDate;
 
 public interface BgmAgitReservationService {
     
-    BgmAgitReservationResponse getReservation(Long labelGb, String link, LocalDate date);
+    BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id,LocalDate date);
 }
