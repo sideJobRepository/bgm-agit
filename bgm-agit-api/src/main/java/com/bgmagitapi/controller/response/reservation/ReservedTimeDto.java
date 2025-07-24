@@ -1,4 +1,4 @@
-package com.bgmagitapi.controller.response;
+package com.bgmagitapi.controller.response.reservation;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

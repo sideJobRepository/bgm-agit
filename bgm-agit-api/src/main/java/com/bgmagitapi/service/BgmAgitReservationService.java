@@ -1,10 +1,10 @@
 package com.bgmagitapi.service;
 
-import com.bgmagitapi.controller.response.ReservationAvailabilityResponse;
+import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
 
 import java.time.LocalDate;
 
 public interface BgmAgitReservationService {
     
-    ReservationAvailabilityResponse getReservation(Long labelGb, String link, LocalDate date);
+    BgmAgitReservationResponse getReservation(Long labelGb, String link, LocalDate date);
 }

@@ -3,14 +3,13 @@ package com.bgmagitapi.controller.response;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ReservationAvailabilityResponse {
+public class BgmAgitReservationResponse {
     
     
     private List<TimeSlotByDate> timeSlots;

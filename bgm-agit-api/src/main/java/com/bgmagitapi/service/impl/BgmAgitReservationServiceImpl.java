@@ -1,8 +1,8 @@
 package com.bgmagitapi.service.impl;
 
-import com.bgmagitapi.controller.response.ReservationAvailabilityResponse;
-import com.bgmagitapi.controller.response.ReservedTimeDto;
-import com.bgmagitapi.controller.response.TimeRange;
+import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
+import com.bgmagitapi.controller.response.reservation.ReservedTimeDto;
+import com.bgmagitapi.controller.response.reservation.TimeRange;
 import com.bgmagitapi.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.service.BgmAgitReservationService;
 import com.querydsl.core.types.Projections;
@@ -29,7 +29,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public ReservationAvailabilityResponse getReservation(Long labelGb, String link, LocalDate date) {
+    public BgmAgitReservationResponse getReservation(Long labelGb, String link, LocalDate date) {
         LocalDate today = date;
         YearMonth yearMonth = YearMonth.from(today);
         LocalDate endOfMonth = yearMonth.atEndOfMonth();
@@ -104,17 +104,17 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         String group = reservations.isEmpty() ? "" : reservations.get(0).getGroup();
         
         // timeSlots: 오늘 날짜만
-        List<ReservationAvailabilityResponse.TimeSlotByDate> timeSlots = List.of(
-                new ReservationAvailabilityResponse.TimeSlotByDate(today, label, group, availableSlots)
+        List<BgmAgitReservationResponse.TimeSlotByDate> timeSlots = List.of(
+                new BgmAgitReservationResponse.TimeSlotByDate(today, label, group, availableSlots)
         );
         
         //prices: 오늘 ~ 말일까지
-        List<ReservationAvailabilityResponse.PriceByDate> prices = new ArrayList<>();
+        List<BgmAgitReservationResponse.PriceByDate> prices = new ArrayList<>();
         for (LocalDate d = today; !d.isAfter(endOfMonth); d = d.plusDays(1)) {
             int price = (d.getDayOfWeek() == DayOfWeek.SATURDAY || d.getDayOfWeek() == DayOfWeek.SUNDAY) ? 12000 : 10000;
-            prices.add(new ReservationAvailabilityResponse.PriceByDate(d, price));
+            prices.add(new BgmAgitReservationResponse.PriceByDate(d, price));
         }
         
-        return new ReservationAvailabilityResponse(timeSlots, prices);
+        return new BgmAgitReservationResponse(timeSlots, prices);
     }
 }
