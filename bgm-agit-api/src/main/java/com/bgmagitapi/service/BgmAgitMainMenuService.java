@@ -10,5 +10,5 @@ public interface BgmAgitMainMenuService {
     
     List<BgmAgitMainMenuResponse> getMainMenu();
     
-    Map<Long, List<BgmAgitMainMenuImageResponse>> getMainMenuImage();
+    Map<Long, List<BgmAgitMainMenuImageResponse>> getMainMenuImage(Long labelGb , String link);
 }

@@ -5,11 +5,13 @@ import com.bgmagitapi.controller.response.BgmAgitMainMenuResponse;
 import com.bgmagitapi.entity.BgmAgitMainMenu;
 import com.bgmagitapi.repository.BgmAgitMainMenuRepository;
 import com.bgmagitapi.service.BgmAgitMainMenuService;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,7 +68,8 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
     }
     
     @Override
-    public Map<Long, List<BgmAgitMainMenuImageResponse>> getMainMenuImage() {
+    public Map<Long, List<BgmAgitMainMenuImageResponse>> getMainMenuImage(Long labelGb , String link) {
+        BooleanBuilder booleanBuilder = getBooleanBuilder(labelGb, link);
         
         List<BgmAgitMainMenuImageResponse> allList = queryFactory
                 .select(Projections.constructor(
@@ -80,9 +83,22 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
                 ))
                 .from(bgmAgitImage)
                 .join(bgmAgitImage.bgmAgitMainMenu, bgmAgitMainMenu)
+                .where(booleanBuilder)
                 .fetch();
         
         return allList.stream()
                 .collect(Collectors.groupingBy(BgmAgitMainMenuImageResponse::getLabelGb));
+    }
+    
+    private BooleanBuilder getBooleanBuilder(Long labelGb, String link) {
+        BooleanBuilder booleanBuilder = new BooleanBuilder();
+        
+        if (labelGb != null) {
+            booleanBuilder.and(bgmAgitImage.bgmAgitMainMenu.bgmAgitMainMenuId.eq(labelGb));
+        }
+        if (StringUtils.hasText(link)) {
+            booleanBuilder.and(bgmAgitImage.bgmAgitMenuLink.eq(link));
+        }
+        return booleanBuilder;
     }
 }

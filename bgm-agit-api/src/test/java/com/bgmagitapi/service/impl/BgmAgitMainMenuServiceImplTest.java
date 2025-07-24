@@ -29,7 +29,7 @@ class BgmAgitMainMenuServiceImplTest extends RepositoryAndServiceTestSupport {
     @DisplayName("")
     @Test
     void test2(){
-        Map<Long, List<BgmAgitMainMenuImageResponse>> mainMenuImage = bgmAgitMainMenuService.getMainMenuImage();
+        Map<Long, List<BgmAgitMainMenuImageResponse>> mainMenuImage = bgmAgitMainMenuService.getMainMenuImage(3L,"/detail/room");
         
         System.out.println("mainMenuImage = " + mainMenuImage);
     }
