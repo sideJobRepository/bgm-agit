@@ -5,7 +5,6 @@ import { Wrapper } from '../styles';
 import { useLocation } from 'react-router-dom';
 import type { WithTheme } from '../styles/styled-props.ts';
 import ReservationCalendar from '../components/calendar/ReservationCalendar.tsx';
-import { FaUsers } from 'react-icons/fa';
 import { useFetchMainData } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { mainDataState } from '../recoil';
@@ -83,13 +82,7 @@ export default function Detail() {
             {fullPageData.items && <ImageGrid pageData={fullPageData} />}
           </ReservationGridSetion>
           <ReservationCalendarSetion>
-            <CalendarBox>
-              <TitleBox>
-                <h2>A Room</h2>
-                <FaUsers /> <span> 4 </span>
-              </TitleBox>
-              <ReservationCalendar />
-            </CalendarBox>
+            <ReservationCalendar />
           </ReservationCalendarSetion>
         </ReservationBox>
       ) : (
@@ -111,6 +104,7 @@ const ReservationBox = styled.div`
   display: flex;
   width: 100%;
   height: 100%;
+  max-width: 1280px;
 `;
 
 const ReservationGridSetion = styled.section<WithTheme>`
@@ -123,54 +117,12 @@ const ReservationGridSetion = styled.section<WithTheme>`
 `;
 
 const ReservationCalendarSetion = styled.section<WithTheme>`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  width: 40%;
-  height: 100%;
-  align-items: center;
-  padding: 10px;
-  @media ${({ theme }) => theme.device.tablet} {
-    display: none;
-  }
-`;
-
-const CalendarBox = styled.div<WithTheme>`
   position: fixed;
   top: 160px;
-  right: 0;
-  width: 40%;
+  left: calc(60vw + 20px);
   max-width: 500px;
-  z-index: 1000;
-`;
-
-const TitleBox = styled.div<WithTheme>`
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: center;
-  color: ${({ theme }) => theme.colors.black};
-  margin-bottom: 20px;
-
-  h2 {
-    font-size: ${({ theme }) => theme.sizes.bigLarge};
-    font-weight: ${({ theme }) => theme.weight.bold};
-  }
-
-  svg {
-    margin: 2px 4px 2px 8px;
-    font-size: ${({ theme }) => theme.sizes.medium};
-
-    @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.sizes.xsmall};
-    }
-  }
-
-  span {
-    font-size: ${({ theme }) => theme.sizes.medium};
-
-    @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.sizes.xxsmall};
-    }
+  z-index: 0;
+  @media ${({ theme }) => theme.device.tablet} {
+    display: none;
   }
 `;

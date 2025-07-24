@@ -256,7 +256,7 @@ const TopLabel = styled.div<WithTheme>`
   }
 
   svg {
-    margin: 0 4px 2px 8px;
+    margin: 0 4px 0 8px;
 
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.sizes.xsmall};

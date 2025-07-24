@@ -30,7 +30,7 @@ export default function About() {
   const navigate = useNavigate();
 
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
-  const visibleCountMain = isMobile ? 2 : 2;
+  const visibleCountMain = isMobile ? 1 : 2;
   const visibleCountReserve = isMobile ? 1 : 3;
 
   const param = { labelGb: 1, link: '' };
