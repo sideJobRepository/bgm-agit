@@ -20,6 +20,7 @@ public class BgmAgitDynamicAuthorizationServiceImpl implements BgmAgitDynamicAut
     
     
     @Override
+    @Transactional(readOnly = true)
     public Map<String, String> getUrlRoleMappings() {
         return bgmAgitUrlRoleMapping.getRoleMappings();
     }

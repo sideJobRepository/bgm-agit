@@ -1,6 +1,5 @@
 package com.bgmagitapi.service.impl;
 
-import com.bgmagitapi.entity.BgmAgitRole;
 import com.bgmagitapi.entity.BgmAgitRoleHierarchy;
 import com.bgmagitapi.repository.BgmAgitRoleHierarchyRepository;
 import com.bgmagitapi.service.BgmAgitRoleHierarchyService;
@@ -18,6 +17,7 @@ public class RoleHierarchServiceImpl implements BgmAgitRoleHierarchyService {
     private final BgmAgitRoleHierarchyRepository bgmAgitRoleHierarchyRepository;
     
     @Override
+    @Transactional(readOnly = true)
     public String findAllHierarchy() {
         List<BgmAgitRoleHierarchy> roleHierarchiesList = bgmAgitRoleHierarchyRepository.findAll();
         StringBuilder hierarchy = new StringBuilder();

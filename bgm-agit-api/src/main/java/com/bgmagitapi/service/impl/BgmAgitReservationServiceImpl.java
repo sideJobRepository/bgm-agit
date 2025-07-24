@@ -29,12 +29,13 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     private final JPAQueryFactory queryFactory;
 
     @Override
+    @Transactional(readOnly = true)
     public BgmAgitReservationResponse getReservation(Long labelGb, String link, LocalDate date) {
         LocalDate today = date;
         YearMonth yearMonth = YearMonth.from(today);
         LocalDate endOfMonth = yearMonth.atEndOfMonth();
         
-        // 🔹 오늘 날짜에 해당하는 예약만 조회
+        // 오늘 날짜에 해당하는 예약만 조회
         List<ReservedTimeDto> reservations = queryFactory
                 .select(Projections.constructor(
                         ReservedTimeDto.class,
@@ -53,7 +54,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 )
                 .fetch();
         
-        // 🔹 예약 시간 정리
+        // 예약 시간 정리
         Map<LocalDate, List<TimeRange>> reservedMap = reservations.stream()
                 .map(res -> {
                     LocalDateTime start = LocalDateTime.of(res.getDate(), res.getStartTime());
@@ -64,7 +65,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 })
                 .collect(Collectors.groupingBy(r -> r.getStart().toLocalDate()));
         
-        // 🔹 오늘 예약 가능한 시간 계산
+        // 오늘 예약 가능한 시간 계산
         List<String> availableSlots = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
         LocalDateTime open = LocalDateTime.of(today, LocalTime.of(13, 0));
@@ -85,7 +86,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         }
         
         while (!cursor.isAfter(close.minusHours(0))) {
-            LocalDateTime checkTime = cursor;  // ✔️ 별도 변수로 복사 (effectively final)
+            LocalDateTime checkTime = cursor;  // 별도 변수로 복사 (effectively final)
             
             boolean overlapped = reserved.stream().anyMatch(r ->
                     checkTime.equals(r.getEnd()) &&

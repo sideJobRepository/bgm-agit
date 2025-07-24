@@ -32,6 +32,7 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
     private final JPAQueryFactory queryFactory;
     
     @Override
+    @Transactional(readOnly = true)
     public List<BgmAgitMainMenuResponse> getMainMenu() {
         
         List<BgmAgitMainMenu> allMenus = bgmAgitMainMenuRepository.findAll();
@@ -68,6 +69,7 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public Map<Long, List<BgmAgitMainMenuImageResponse>> getMainMenuImage(Long labelGb , String link) {
         BooleanBuilder booleanBuilder = getBooleanBuilder(labelGb, link);
         
