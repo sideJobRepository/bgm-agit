@@ -28,14 +28,14 @@ import static com.bgmagitapi.entity.QBgmAgitReservation.bgmAgitReservation;
 @Service
 @RequiredArgsConstructor
 public class BgmAgitReservationServiceImpl implements BgmAgitReservationService {
-
-    private final BgmAgitImageRepository  bgmAgitImageRepository;
+    
+    private final BgmAgitImageRepository bgmAgitImageRepository;
     
     private final JPAQueryFactory queryFactory;
-
+    
     @Override
     @Transactional(readOnly = true)
-    public BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id,LocalDate date) {
+    public BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id, LocalDate date) {
         LocalDate today = date;
         LocalDate endOfYear = LocalDate.of(today.getYear(), 12, 31);
         String label = "", group = "";
@@ -101,13 +101,27 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 cursor = cursor.plusHours(slotIntervalHours);
             }
             
+            if (!availableSlots.isEmpty()) {
+                
+                if (!reservations.isEmpty()) {
+                    ReservedTimeDto dto = reservations.get(0);
+                    label = dto.getLabel();
+                    group = dto.getGroup();
+                } else {
+                    BgmAgitImage image = bgmAgitImageRepository.findById(id).orElse(null);
+                    if (image != null) {
+                        label = image.getBgmAgitImageLabel();
+                        group = image.getBgmAgitImageGroups();
+                    }
+                }
+            }
             timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(d, availableSlots));
         }
         
         // 공휴일 Set 준비 (형식: yyyyMMdd)
         Set<String> holidaySet = new LunarCalendar().getHolidaySet(String.valueOf(today.getYear()));
         DateTimeFormatter formatterYY = DateTimeFormatter.ofPattern("yyyyMMdd");
-
+        
         // 오늘~연말까지 날짜별 가격 계산
         List<BgmAgitReservationResponse.PriceByDate> prices = new ArrayList<>();
         for (LocalDate d = today; !d.isAfter(endOfYear); d = d.plusDays(1)) {
@@ -119,6 +133,6 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             prices.add(new BgmAgitReservationResponse.PriceByDate(d, price, isWeekend || isHoliday));
         }
         
-        return new BgmAgitReservationResponse(timeSlots, prices,label, group);
+        return new BgmAgitReservationResponse(timeSlots, prices, label, group);
     }
 }
