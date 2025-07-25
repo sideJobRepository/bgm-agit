@@ -83,9 +83,12 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             List<TimeRange> reserved = reservedMap.getOrDefault(d, Collections.emptyList())
                     .stream().sorted(Comparator.comparing(TimeRange::getStart)).toList();
             
+            // id가 18이면 G룸임 G룸은 최소 대여 시간이 3시간, 아니면 1시간
+            int slotIntervalHours = (id != null && id == 18) ? 3 : 1;
+            
             while (cursor.isBefore(close)) {
                 LocalDateTime slotStart = cursor;
-                LocalDateTime slotEnd = cursor.plusHours(1);
+                LocalDateTime slotEnd = cursor.plusHours(slotIntervalHours);
                 
                 boolean overlapped = reserved.stream().anyMatch(r ->
                         slotStart.isBefore(r.getEnd()) && slotEnd.isAfter(r.getStart())
@@ -95,26 +98,10 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     availableSlots.add(slotStart.format(formatter));
                 }
                 
-                cursor = cursor.plusHours(1);
+                cursor = cursor.plusHours(slotIntervalHours);
             }
             
-            
-            if (!availableSlots.isEmpty()) {
-              
-                if (!reservations.isEmpty()) {
-                    ReservedTimeDto dto = reservations.get(0);
-                    label = dto.getLabel();
-                    group = dto.getGroup();
-                } else {
-                    BgmAgitImage image = bgmAgitImageRepository.findById(id).orElse(null);
-                    if (image != null) {
-                        label = image.getBgmAgitImageLabel();
-                        group = image.getBgmAgitImageGroups();
-                    }
-                }
-                
-                timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(d,availableSlots));
-            }
+            timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(d, availableSlots));
         }
         
         // 공휴일 Set 준비 (형식: yyyyMMdd)

@@ -23,7 +23,7 @@ class BgmAgitReservationServiceImplTest extends RepositoryAndServiceTestSupport 
         BgmAgitReservationResponse reservation = bgmAgitReservationService.getReservation(
                 3L,
                 "/detail/room",
-                15L,
+                18L,
                 LocalDate.of(2025, 7,24)
         );
         
