@@ -36,6 +36,11 @@ export default function TopHeader() {
 
   const toggleMenu = () => setIsOpen(prev => !prev);
 
+  //가게 전화
+  function callClick() {
+    window.location.href = 'tel:050714453503';
+  }
+
   //메뉴바 닫기
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -106,9 +111,13 @@ export default function TopHeader() {
       </Center>
       <Right>
         <ul>
-          <li>
+          <li
+            onClick={() => {
+              callClick();
+            }}
+          >
             <FaPhone />
-            <a>1599-1444</a>
+            <a>0507-1445-3503</a>
           </li>
           <li>
             <img src={kakao} alt="카카오" />
@@ -150,7 +159,11 @@ export default function TopHeader() {
               ))}
             </React.Fragment>
           ))}
-          <SubMainLi onClick={() => (window.location.href = 'tel:050714453503')}>
+          <SubMainLi
+            onClick={() => {
+              callClick();
+            }}
+          >
             <FaPhone />
             <a>0507-1445-3503</a>
           </SubMainLi>
