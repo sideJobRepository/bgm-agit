@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import logo from '/headerLogo.png';
+import kakao from '/kakao.png';
 import { useEffect, useRef, useState } from 'react';
 import type { WithTheme } from '../../styles/styled-props.ts';
 import { FaPhone } from 'react-icons/fa';
@@ -110,7 +111,8 @@ export default function TopHeader() {
             <a>1599-1444</a>
           </li>
           <li>
-            <a>회원가입</a>
+            <img src={kakao} alt="카카오" />
+            로그인
           </li>
         </ul>
       </Right>
@@ -148,6 +150,14 @@ export default function TopHeader() {
               ))}
             </React.Fragment>
           ))}
+          <MobileButton>
+            <FaPhone />
+            <a>1599-1444</a>
+          </MobileButton>
+          <MobileButton>
+            <img src={kakao} alt="카카오" />
+            로그인
+          </MobileButton>
         </ul>
       </MobileMenu>
     </Wrapper>
@@ -156,6 +166,7 @@ export default function TopHeader() {
 
 const Wrapper = styled.div<WithTheme>`
   height: 100px;
+  width: 100%;
   padding: 0 20px;
   margin: 0 auto;
   display: flex;
@@ -172,15 +183,6 @@ const Wrapper = styled.div<WithTheme>`
     align-items: center;
   }
 
-  img {
-    margin-left: -20px;
-    width: 100%;
-    height: 100px;
-
-    margin-top: 20px;
-    cursor: pointer;
-  }
-
   @media ${({ theme }) => theme.device.tablet} {
     max-width: 100%;
     min-width: 100%;
@@ -191,8 +193,17 @@ const Wrapper = styled.div<WithTheme>`
 const Left = styled.div`
   display: flex;
   align-items: center;
-  width: 100%;
   height: 100%;
+  justify-content: flex-start;
+
+  img {
+    margin-left: -16px;
+    margin-top: 16px;
+    height: 100px;
+    width: auto;
+    object-fit: cover;
+    cursor: pointer;
+  }
 `;
 
 const Center = styled.nav<WithTheme>`
@@ -236,6 +247,11 @@ const Right = styled.div<WithTheme>`
       svg {
         margin-right: 8px;
         transform: rotate(-240deg);
+      }
+
+      img {
+        height: 26px;
+        margin-right: 8px;
       }
     }
   }
@@ -387,4 +403,25 @@ const AnimatedSubLiWrapper = styled.div<WithTheme & { $visible: boolean }>`
     max-height 0.3s ease,
     opacity 0.3s ease,
     transform 0.3s ease;
+`;
+
+const MobileButton = styled.button<WithTheme>`
+  width: 100%;
+  height: 50px;
+  align-items: center;
+  display: flex;
+  //padding: 20px;
+  border: none;
+  background: none;
+  justify-content: center;
+  color: ${({ theme }) => theme.colors.subMenuColor};
+  font-size: ${({ theme }) => theme.sizes.large};
+  font-weight: ${({ theme }) => theme.weight.bold};
+  svg {
+    margin-right: 8px;
+  }
+  img {
+    height: 26px;
+    margin-right: 8px;
+  }
 `;
