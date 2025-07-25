@@ -127,7 +127,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             String dateStr = d.format(formatterYY);
             boolean isWeekend = d.getDayOfWeek() == DayOfWeek.SATURDAY || d.getDayOfWeek() == DayOfWeek.SUNDAY;
             boolean isHoliday = holidaySet.contains(dateStr);
-            int price = (isWeekend || isHoliday) ? 3000 : 4000;
+            int price = (isWeekend || isHoliday) ? 4000 : 3000;
             
             prices.add(new BgmAgitReservationResponse.PriceByDate(d, price, isWeekend || isHoliday));
         }
