@@ -12,12 +12,14 @@ import Error from './pages/Error.tsx';
 import Notice from './pages/Notice.tsx';
 import ScrollToTop from './components/layout/ScrollToTop.tsx';
 import KakaoRedirectPage from './pages/KakaoRedirectPage.tsx';
+import { ToastContainer } from 'react-toastify';
 
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyle />
       <RecoilRoot>
+        <ToastContainer position="top-center" autoClose={3000} />
         <BrowserRouter>
           <ScrollToTop />
           <Routes>

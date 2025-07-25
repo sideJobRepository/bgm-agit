@@ -5,20 +5,23 @@ import type { WithTheme } from '../../styles/styled-props.ts';
 import Footer from './Footer.tsx';
 import Nav from './Nav.tsx';
 import { useEffect } from 'react';
-import { useRecoilState } from 'recoil';
+import { useRecoilState, useRecoilValue } from 'recoil';
 import { userState } from '../../recoil/state/userState.ts';
+import { loadingState } from '../../recoil';
+import Loading from '../Loading.tsx';
 
 export default function Layout() {
   const location = useLocation();
   const home = location.pathname === '/';
 
-  //로그인 상태
+  const isLoading = useRecoilValue(loadingState);
 
+  //로그인 상태
   const [user, setUser] = useRecoilState(userState);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('user');
-    if (!user) {
+    if (!user && stored) {
       setUser(JSON.parse(stored));
     }
   }, []);
@@ -53,6 +56,7 @@ export default function Layout() {
           <Nav />
         </NavArea>
         <MainArea>
+          {isLoading && <Loading />}
           <Outlet />
         </MainArea>
         <FooterBox>

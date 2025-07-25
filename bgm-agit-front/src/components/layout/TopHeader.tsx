@@ -8,16 +8,17 @@ import { GiHamburgerMenu } from 'react-icons/gi';
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from 'react-icons/md';
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useRecoilValue } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { mainMenuState } from '../../recoil';
 import { useFetchMainMenu } from '../../recoil/fetch.ts';
 import { userState } from '../../recoil/state/userState.ts';
+import { toast } from 'react-toastify';
 
 export default function TopHeader() {
   useFetchMainMenu();
 
   const user = useRecoilValue(userState);
-  console.log('user', user);
+  const resetUser = useSetRecoilState(userState);
 
   const menus = useRecoilValue(mainMenuState);
   const navigate = useNavigate();
@@ -51,9 +52,21 @@ export default function TopHeader() {
   const KAKAO_REDIRECT_URL = import.meta.env.VITE_KAKAO_REDIRECT_URL;
 
   const loginWithKakao = () => {
-    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URL}&response_type=code`;
+    if (user) {
+      const channel = new BroadcastChannel('auth');
+      channel.postMessage('logout');
+      channel.close(); // 브라우저 리소스 정리
 
-    window.location.href = kakaoAuthUrl;
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      resetUser(null);
+      setIsOpen(false);
+      toast.success('로그아웃 되었습니다.');
+    } else {
+      const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URL}&response_type=code`;
+
+      window.location.href = kakaoAuthUrl;
+    }
   };
 
   //메뉴바 닫기
