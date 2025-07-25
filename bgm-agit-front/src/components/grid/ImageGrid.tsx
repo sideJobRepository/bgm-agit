@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { WithTheme } from '../../styles/styled-props.ts';
 import { FaUsers } from 'react-icons/fa';
 import ImageLightbox from '../ImageLightbox.tsx';
@@ -98,6 +98,22 @@ export default function ImageGrid({ pageData }: Props) {
     );
   }, [reservationData]);
 
+  //스크롤 드롭다운시 포커스
+  const calendarRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    if (isTablet && reservationData) {
+      const el = calendarRefs.current[reservationData.id];
+      if (el) {
+        const onTransitionEnd = () => {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          el.removeEventListener('transitionend', onTransitionEnd);
+        };
+        el.addEventListener('transitionend', onTransitionEnd);
+      }
+    }
+  }, [reservationData, isTablet]);
+
   return (
     <Wrapper>
       <SearchWrapper bgColor={bgColor}>
@@ -133,11 +149,14 @@ export default function ImageGrid({ pageData }: Props) {
                   </TopLabel>
                 )}
               </ImageWrapper>
-              {item.imageId === reservationData?.id && isTablet && (
-                <CalendarSection>
-                  <ReservationCalendar />
-                </CalendarSection>
-              )}
+              <CalendarSection
+                ref={el => {
+                  calendarRefs.current[item.imageId] = el as HTMLDivElement | null;
+                }}
+                $visible={item.imageId === reservationData?.id && isTablet}
+              >
+                <ReservationCalendar />
+              </CalendarSection>
               {labelGb !== 3 && <FoodLabel textColor={textColor}>{item.label}</FoodLabel>}
             </GridItemBox>
           ))}
@@ -314,7 +333,11 @@ const NoSearchBox = styled.div<WithTheme>`
   }
 `;
 
-const CalendarSection = styled.section`
+const CalendarSection = styled.section<{ $visible: boolean }>`
   width: 100%;
-  margin-top: 20px;
+  overflow: hidden;
+  transition: all 0.6s ease;
+  max-height: ${({ $visible }) => ($visible ? '1000px' : '0')};
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  margin-top: ${({ $visible }) => ($visible ? '20px' : '0')};
 `;

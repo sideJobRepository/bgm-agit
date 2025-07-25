@@ -10,6 +10,7 @@ import About from './pages/About.tsx';
 import Detail from './pages/Detail.tsx';
 import Error from './pages/Error.tsx';
 import Notice from './pages/Notice.tsx';
+import ScrollToTop from './components/layout/ScrollToTop.tsx';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
       <GlobalStyle />
       <RecoilRoot>
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/error" element={<Error />} />
             <Route path="/" element={<Layout />}>
