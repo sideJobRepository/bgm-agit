@@ -29,10 +29,12 @@ spring:
       resourceserver:
         jwt:
           jws-algorithms: HS256
-
 cors:
   url: http://localhost:5173
 
 kakao:
   redirecturi: http://localhost:5173/oauth/kakao/callback
   clientId: 1c5346963ea4efa00362b4f1f2533a4c
+
+jwt:
+  secret: ${JWT_SECRET}
