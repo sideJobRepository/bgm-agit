@@ -30,7 +30,6 @@ class BgmAgitNoticeControllerTest extends ControllerTestSupport {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andDo(print());
-    
     }
     
     

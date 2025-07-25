@@ -152,7 +152,19 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         Long bgmAgitImageId = request.getBgmAgitImageId();
         BgmAgitMember member = bgmAgitMemberRepository.findById(userId).orElseThrow(() -> new RuntimeException("User Not Found"));
         BgmAgitImage image = bgmAgitImageRepository.findById(bgmAgitImageId).orElseThrow(() -> new RuntimeException("Not Found Image Id"));
-        BgmAgitReservation reservation = new BgmAgitReservation(member,image,request);
+        
+        List<String> startTimeEndTime = request.getStartTimeEndTime();
+        LocalTime minTime = startTimeEndTime.stream()
+                .map(LocalTime::parse)
+                .min(Comparator.naturalOrder())
+                .orElseThrow(() -> new IllegalArgumentException("시간 리스트가 비어 있습니다."));
+        
+        LocalTime maxTime = startTimeEndTime.stream()
+                .map(LocalTime::parse)
+                .max(Comparator.naturalOrder())
+                .orElseThrow(() -> new IllegalArgumentException("시간 리스트가 비어 있습니다."));
+        
+        BgmAgitReservation reservation = new BgmAgitReservation(member,image,request,maxTime,minTime);
         bgmAgitReservationRepository.save(reservation);
         return new ApiResponse(200,true,"예약 되었습니다.");
     }
