@@ -174,8 +174,9 @@ const Wrapper = styled.div<WithTheme>`
 
   img {
     margin-left: -20px;
+    width: 100%;
     height: 100px;
-    width: auto;
+
     margin-top: 20px;
     cursor: pointer;
   }
@@ -190,6 +191,8 @@ const Wrapper = styled.div<WithTheme>`
 const Left = styled.div`
   display: flex;
   align-items: center;
+  width: 100%;
+  height: 100%;
 `;
 
 const Center = styled.nav<WithTheme>`
