@@ -39,7 +39,7 @@ export function showConfirmModal({ message, onConfirm, onCancel }: Props) {
 const AlertWrapper = styled.div`
   background: #fff;
   padding: 18px 50px;
-
+  border-radius: 12px;
   width: 100%;
   max-width: 360px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
