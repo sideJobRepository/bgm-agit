@@ -1,15 +1,22 @@
 package com.bgmagitapi.service.impl;
 
+import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
+import com.bgmagitapi.controller.response.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.controller.response.reservation.TimeRange;
 import com.bgmagitapi.entity.BgmAgitImage;
+import com.bgmagitapi.entity.BgmAgitMember;
+import com.bgmagitapi.entity.BgmAgitReservation;
 import com.bgmagitapi.repository.BgmAgitImageRepository;
+import com.bgmagitapi.repository.BgmAgitMemberRepository;
+import com.bgmagitapi.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.service.BgmAgitReservationService;
 import com.bgmagitapi.util.LunarCalendar;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +38,10 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     
     private final BgmAgitImageRepository bgmAgitImageRepository;
     
+    private final BgmAgitMemberRepository bgmAgitMemberRepository;
+    
     private final JPAQueryFactory queryFactory;
+    private final BgmAgitReservationRepository bgmAgitReservationRepository;
     
     @Override
     @Transactional(readOnly = true)
@@ -134,5 +144,16 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         }
         
         return new BgmAgitReservationResponse(timeSlots, prices, label, group);
+    }
+    
+    @Override
+    public ApiResponse createReservation(BgmAgitReservationCreateRequest request, Jwt jwt) {
+        Long userId = jwt.getClaim("id");
+        Long bgmAgitImageId = request.getBgmAgitImageId();
+        BgmAgitMember member = bgmAgitMemberRepository.findById(userId).orElseThrow(() -> new RuntimeException("User Not Found"));
+        BgmAgitImage image = bgmAgitImageRepository.findById(bgmAgitImageId).orElseThrow(() -> new RuntimeException("Not Found Image Id"));
+        BgmAgitReservation reservation = new BgmAgitReservation(member,image,request);
+        bgmAgitReservationRepository.save(reservation);
+        return new ApiResponse(200,true,"예약 되었습니다.");
     }
 }

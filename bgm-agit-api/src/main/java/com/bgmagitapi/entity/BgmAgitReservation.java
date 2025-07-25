@@ -1,8 +1,11 @@
 package com.bgmagitapi.entity;
 
+import com.bgmagitapi.controller.response.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.entity.enumeration.Reservation;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -10,6 +13,7 @@ import java.time.LocalTime;
 @Entity
 @Table(name = "BGM_AGIT_RESERVATION")
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BgmAgitReservation {
     // BGM 아지트 예약 ID
     @Id
@@ -50,4 +54,13 @@ public class BgmAgitReservation {
     // BGM 아지트 예약 승인 여부 'N'
     @Column(name = "BGM_AGIT_RESERVATION_APPROVAL_STATUS")
     private String bgmAgitReservationApprovalStatus;
+    
+    public BgmAgitReservation(BgmAgitMember member, BgmAgitImage image, BgmAgitReservationCreateRequest request) {
+        this.bgmAgitMember = member;
+        this.bgmAgitImage = image;
+        this.reservation = Reservation.valueOf(request.getBgmAgitReservationType());
+        this.bgmAgitReservationStartDate = request.getBgmAgitReservationStartDate();
+        this.bgmAgitReservationStartTime = request.getBgmAgitReservationStartTime();
+        this.bgmAgitReservationEndTime = request.getBgmAgitReservationEndTime();
+    }
 }

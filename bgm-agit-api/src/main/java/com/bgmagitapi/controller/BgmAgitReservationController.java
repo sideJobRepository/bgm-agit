@@ -2,13 +2,14 @@ package com.bgmagitapi.controller;
 
 
 
+import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
+import com.bgmagitapi.controller.response.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.service.BgmAgitReservationService;
+import org.springframework.security.oauth2.jwt.Jwt;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
@@ -28,5 +29,10 @@ public class BgmAgitReservationController {
             @RequestParam(name = "date") String dateStr) {
         LocalDate date = LocalDate.parse(dateStr.substring(0, 10));
         return bgmAgitReservationService.getReservation(labelGb,link,id,date);
+    }
+    
+    @PostMapping("/reservation")
+    public ApiResponse createReservation(@RequestBody BgmAgitReservationCreateRequest request, @AuthenticationPrincipal Jwt jwt) {
+        return bgmAgitReservationService.createReservation(request,jwt);
     }
 }
