@@ -428,6 +428,7 @@ const AnimatedSubLiWrapper = styled.div<WithTheme & { $visible: boolean }>`
 `;
 
 const SubMainLi = styled.li<WithTheme>`
+  justify-content: center !important;
   svg {
     margin-left: 0 !important;
     margin-right: 8px;
