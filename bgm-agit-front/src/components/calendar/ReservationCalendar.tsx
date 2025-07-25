@@ -209,13 +209,14 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
 `;
 
 const TimeBox = styled.div<WithTheme>`
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  width: 50%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); // 너비 반응형
   gap: 10px;
+  width: 50%;
   margin-top: 10px;
+
   @media ${({ theme }) => theme.device.mobile} {
+    grid-template-columns: repeat(2, 1fr); // 모바일에서는 2열 고정 (선택사항)
     width: 100%;
   }
 `;
