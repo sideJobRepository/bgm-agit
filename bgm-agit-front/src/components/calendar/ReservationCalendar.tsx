@@ -168,6 +168,7 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
     flex-direction: column;
     align-items: center !important;
     color: ${({ theme }) => theme.colors.black};
+    -webkit-tap-highlight-color: transparent;
     abbr {
       display: block;
       margin: 0 auto;
