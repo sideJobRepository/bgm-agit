@@ -7,6 +7,8 @@ import SearchBar from '../SearchBar.tsx';
 import type { reservationData } from '../../types/Reservation.ts';
 import ReservationCalendar from '../calendar/ReservationCalendar.tsx';
 import { useReservationFetch } from '../../recoil/fetch.ts';
+import { useRecoilState } from 'recoil';
+import { reservationDataState } from '../../recoil/state/reservationState.ts';
 
 interface GridItem {
   image: string;
@@ -52,7 +54,7 @@ export default function ImageGrid({ pageData }: Props) {
       : items;
   }, [items, searchKeyword]);
 
-  const [reservationData, setReservationData] = useState<null | reservationData>(null);
+  const [reservationData, setReservationData] = useRecoilState(reservationDataState);
 
   function newItemDatas(item: GridItem) {
     const newItem = {

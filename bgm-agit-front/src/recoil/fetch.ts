@@ -7,6 +7,16 @@ import type { reservationData } from '../types/Reservation.ts';
 import { reservationState } from './state/reservationState.ts';
 import { userState } from './state/userState.ts';
 import { jwtDecode } from 'jwt-decode';
+import { toast } from 'react-toastify';
+import type { AxiosRequestHeaders } from 'axios';
+
+interface InsertOptions<T> {
+  url: string;
+  headers?: AxiosRequestHeaders;
+  body: any;
+  onSuccess?: (data: T) => void;
+  ignoreHttpError?: boolean; // 이거 추가
+}
 
 export function useFetchMainMenu() {
   const setMainMenu = useSetRecoilState(mainMenuState);
@@ -63,10 +73,31 @@ export function useLoginPost() {
         }),
       decodedUser => {
         setUser(decodedUser);
-        if (onSuccess) onSuccess();
+        if (onSuccess) {
+          onSuccess();
+          toast.success('로그인에 성공하였습니다.');
+        }
       }
     );
   };
 
   return { postUser };
+}
+
+export function useInsertPost() {
+  const { request } = useRequest();
+
+  const insert = <T>({ url, body, onSuccess, ignoreHttpError, headers }: InsertOptions<T>) => {
+    request(
+      () => api.post<T>(url, body, { headers }).then(res => res.data),
+      data => {
+        if (onSuccess) {
+          onSuccess(data);
+        }
+      },
+      { ignoreHttpError }
+    );
+  };
+
+  return { insert };
 }

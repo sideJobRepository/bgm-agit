@@ -29,6 +29,9 @@ spring:
       resourceserver:
         jwt:
           jws-algorithms: HS256
+
+  jackson:
+        time-zone: Asia/Seoul
 cors:
   url: http://localhost:5173
 

@@ -5,16 +5,24 @@ import styled from 'styled-components';
 import { FaUsers } from 'react-icons/fa';
 import type { WithTheme } from '../../styles/styled-props';
 import { useRecoilValue } from 'recoil';
-import { reservationState } from '../../recoil/state/reservationState.ts';
+import { reservationDataState, reservationState } from '../../recoil/state/reservationState.ts';
 import type { reservationDatas } from '../../types/Reservation.ts';
 
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import { userState } from '../../recoil/state/userState.ts';
 import { showConfirmModal } from '../confirmAlert.tsx';
+import { useInsertPost, useReservationFetch } from '../../recoil/fetch.ts';
+import type { AxiosRequestHeaders } from 'axios';
+import { toast } from 'react-toastify';
 
 export default function ReservationCalendar({ id }: { id?: number }) {
   const reservation = useRecoilValue<reservationDatas>(reservationState);
+  const fetchReservation = useReservationFetch();
+  const reservationData = useRecoilValue(reservationDataState);
   const today = new Date();
+
+  //insert
+  const { insert } = useInsertPost();
 
   //useer 정보
   const user = useRecoilValue(userState);
@@ -70,6 +78,36 @@ export default function ReservationCalendar({ id }: { id?: number }) {
           window.location.href = kakaoAuthUrl;
         } else {
           // 예약 전송 예정
+          const token = sessionStorage.getItem('token');
+
+          const test = {
+            bgmAgitImageId: id,
+            bgmAgitReservationType: 'ROOM',
+            bgmAgitReservationStartDate: value.toLocaleDateString('sv-SE'),
+            startTimeEndTime: selectedTimes,
+          };
+
+          console.log('=------------rPTks', test);
+
+          insert({
+            headers: {
+              Authorization: `Bearer ${token}`,
+            } as AxiosRequestHeaders,
+            url: '/bgm-agit/reservation',
+            body: {
+              bgmAgitImageId: id,
+              bgmAgitReservationType: 'ROOM',
+              bgmAgitReservationStartDate: value,
+              startTimeEndTime: selectedTimes,
+            },
+            ignoreHttpError: true,
+            onSuccess: data => {
+              console.log('data', data);
+              toast.success('예약이 성공하였습니다.');
+
+              if (reservationData) fetchReservation(reservationData);
+            },
+          });
         }
       },
     });
