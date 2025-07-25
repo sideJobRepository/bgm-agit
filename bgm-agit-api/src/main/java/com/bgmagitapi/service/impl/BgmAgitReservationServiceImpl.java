@@ -6,6 +6,7 @@ import com.bgmagitapi.controller.response.reservation.TimeRange;
 import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.repository.BgmAgitImageRepository;
 import com.bgmagitapi.service.BgmAgitReservationService;
+import com.bgmagitapi.util.LunarCalendar;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -116,11 +117,19 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             }
         }
         
-        // 4. 가격 생성 (오늘~연말까지)
+        // 공휴일 Set 준비 (형식: yyyyMMdd)
+        Set<String> holidaySet = new LunarCalendar().getHolidaySet(String.valueOf(today.getYear()));
+        DateTimeFormatter formatterYY = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+        // 오늘~연말까지 날짜별 가격 계산
         List<BgmAgitReservationResponse.PriceByDate> prices = new ArrayList<>();
         for (LocalDate d = today; !d.isAfter(endOfYear); d = d.plusDays(1)) {
-            int price = (d.getDayOfWeek() == DayOfWeek.SATURDAY || d.getDayOfWeek() == DayOfWeek.SUNDAY) ? 12000 : 10000;
-            prices.add(new BgmAgitReservationResponse.PriceByDate(d, price));
+            String dateStr = d.format(formatterYY);
+            boolean isWeekend = d.getDayOfWeek() == DayOfWeek.SATURDAY || d.getDayOfWeek() == DayOfWeek.SUNDAY;
+            boolean isHoliday = holidaySet.contains(dateStr);
+            int price = (isWeekend || isHoliday) ? 3000 : 4000;
+            
+            prices.add(new BgmAgitReservationResponse.PriceByDate(d, price, isWeekend || isHoliday));
         }
         
         return new BgmAgitReservationResponse(timeSlots, prices,label, group);

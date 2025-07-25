@@ -29,5 +29,6 @@ public class BgmAgitReservationResponse {
     public static class PriceByDate {
         private LocalDate date;
         private Integer price;
+        private boolean colorGb;
     }
 }

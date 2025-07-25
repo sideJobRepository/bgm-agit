@@ -60,6 +60,8 @@ dependencies {
 	//S3
 	implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
 	implementation platform("io.awspring.cloud:spring-cloud-aws-dependencies:3.0.0")
+	//음력변환 라이브러리
+	implementation 'com.ibm.icu:icu4j:74.2'
 }
 
 
