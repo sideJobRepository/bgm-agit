@@ -8,9 +8,18 @@ import { useRecoilValue } from 'recoil';
 import { reservationState } from '../../recoil/state/reservationState.ts';
 import type { reservationDatas } from '../../types/Reservation.ts';
 
+import 'react-confirm-alert/src/react-confirm-alert.css';
+import { userState } from '../../recoil/state/userState.ts';
+import { showConfirmModal } from '../confirmAlert.tsx';
+
 export default function ReservationCalendar({ id }: { id?: number }) {
   const reservation = useRecoilValue<reservationDatas>(reservationState);
   const today = new Date();
+
+  //useer 정보
+  const user = useRecoilValue(userState);
+  const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID;
+  const KAKAO_REDIRECT_URL = import.meta.env.VITE_KAKAO_REDIRECT_URL;
 
   //G룸인 경우 3시간 간격이고 마지막은 2시간 단위로 끊음
   const allTime =
@@ -30,6 +39,41 @@ export default function ReservationCalendar({ id }: { id?: number }) {
       prev.includes(time) ? prev.filter(t => t !== time) : [...prev, time]
     );
   };
+
+  function reservationSave() {
+    const messageGb = user
+      ? {
+          message: (
+            <>
+              해당 일자로 예약하시겠습니까?
+              <br />
+              입금 확인 후 예약 확정이 완료됩니다.
+            </>
+          ),
+          gb: 2,
+        }
+      : {
+          message: (
+            <>
+              로그인 후 예약 가능합니다.
+              <br />
+              로그인을 하시겠습니까?
+            </>
+          ),
+          gb: 1,
+        };
+    showConfirmModal({
+      message: messageGb.message,
+      onConfirm: () => {
+        if (messageGb.gb === 1) {
+          const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URL}&response_type=code`;
+          window.location.href = kakaoAuthUrl;
+        } else {
+          // 예약 전송 예정
+        }
+      },
+    });
+  }
 
   return (
     <Wrapper>
@@ -90,7 +134,12 @@ export default function ReservationCalendar({ id }: { id?: number }) {
           );
         })}
       </TimeBox>
-      <Button disabled={!matchedSlots?.timeSlots.length || !selectedTimes.length}>예약하기</Button>
+      <Button
+        disabled={!matchedSlots?.timeSlots.length || !selectedTimes.length}
+        onClick={reservationSave}
+      >
+        예약하기
+      </Button>
     </Wrapper>
   );
 }
