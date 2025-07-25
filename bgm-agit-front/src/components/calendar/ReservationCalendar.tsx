@@ -234,6 +234,7 @@ const TimeBox = styled.div<WithTheme>`
 `;
 
 const TimeSlotButton = styled.button<WithTheme & { selected: boolean }>`
+  -webkit-tap-highlight-color: transparent;
   padding: 10px 14px;
   font-size: ${({ theme }) => theme.sizes.small};
   color: ${({ selected, theme }) => (selected ? theme.colors.white : theme.colors.subColor)};
