@@ -10,7 +10,7 @@ import type { reservationDatas } from '../../types/Reservation.ts';
 
 export default function ReservationCalendar() {
   const [reservation, setReservation] = useRecoilState<reservationDatas>(reservationState);
-  console.log('예약데이터', reservation);
+
   const today = new Date();
   const allTime = Array.from({ length: 11 }, (_, i) => `${i + 13}:00`);
 
@@ -31,7 +31,7 @@ export default function ReservationCalendar() {
     <Wrapper>
       <TitleBox>
         <h2>{reservation.label}</h2>
-        <FaUsers /> <span> {reservation.gruop} </span>
+        <FaUsers /> <span> {reservation.group} </span>
       </TitleBox>
 
       <StyledCalendar
@@ -46,11 +46,9 @@ export default function ReservationCalendar() {
             const dateStr = getLocalDateStr(date);
             const priceItem = reservation.prices?.find(p => p.date === dateStr);
 
-            const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-
             return (
               priceItem && (
-                <div className={`date-price ${isWeekend ? 'weekend' : ''}`}>
+                <div className={`date-price ${priceItem.colorGb ? 'weekend' : ''}`}>
                   {priceItem.price.toLocaleString()}
                 </div>
               )
@@ -69,15 +67,17 @@ export default function ReservationCalendar() {
         {allTime.map((time, idx) => {
           const isAvailable = matchedSlots?.timeSlots.includes(time) ?? false;
           const isSelected = selectedTimes.includes(time);
+          const hour = parseInt(time.split(':')[0], 10);
+          const label = `${hour}:00 ~ ${hour + 1}:00`;
+
           return (
             <TimeSlotButton
               key={idx}
               selected={isSelected}
-              isAvailable={isAvailable}
               onClick={() => isAvailable && handleTimeClick(time)}
               disabled={!isAvailable}
             >
-              {time}
+              {label}
             </TimeSlotButton>
           );
         })}
@@ -95,7 +95,7 @@ const Wrapper = styled.div<WithTheme>`
   align-items: center;
 
   .custom-calender {
-    width: 90%;
+    width: 50%;
 
     @media ${({ theme }) => theme.device.mobile} {
       width: 100%;
@@ -208,11 +208,16 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
 const TimeBox = styled.div<WithTheme>`
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: left;
+  width: 50%;
   gap: 10px;
+  margin-top: 10px;
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 100%;
+  }
 `;
 
-const TimeSlotButton = styled.button<WithTheme & { selected: boolean; isAvailable: boolean }>`
+const TimeSlotButton = styled.button<WithTheme & { selected: boolean }>`
   -webkit-tap-highlight-color: transparent;
   padding: 10px 14px;
   font-size: ${({ theme }) => theme.sizes.small};
@@ -239,11 +244,12 @@ const TimeSlotButton = styled.button<WithTheme & { selected: boolean; isAvailabl
 
 const Button = styled.button<WithTheme>`
   padding: 12px 0;
-  width: 90%;
+  width: 50%;
   background-color: ${({ theme }) => theme.colors.blueColor};
   border: none;
   color: ${({ theme }) => theme.colors.white};
   cursor: pointer;
+  margin-top: 10px;
 
   &:disabled {
     cursor: not-allowed;

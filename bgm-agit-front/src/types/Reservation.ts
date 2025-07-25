@@ -13,15 +13,12 @@ export type ReservedTimeDto = {
 export type ReservationPriceDto = {
   date: string;
   price: number;
+  colorGb: boolean;
 };
 
 export type reservationDatas = {
-  date: string;
-  labelGb: number;
-  id: number;
-  link: string;
   label?: string;
-  gruop?: number;
+  group?: number;
   timeSlots?: ReservedTimeDto[];
   prices?: ReservationPriceDto[];
 };

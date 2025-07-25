@@ -134,14 +134,17 @@ export default function ImageGrid({ pageData }: Props) {
                   </TopLabel>
                 )}
               </ImageWrapper>
-              <CalendarSection
-                ref={el => {
-                  calendarRefs.current[item.imageId] = el as HTMLDivElement | null;
-                }}
-                $visible={item.imageId === reservationData?.id}
-              >
-                <ReservationCalendar />
-              </CalendarSection>
+              {item.labelGb === 3 && (
+                <CalendarSection
+                  ref={el => {
+                    calendarRefs.current[item.imageId] = el as HTMLDivElement | null;
+                  }}
+                  $visible={item.imageId === reservationData?.id}
+                >
+                  <ReservationCalendar />
+                </CalendarSection>
+              )}
+
               {labelGb !== 3 && <FoodLabel textColor={textColor}>{item.label}</FoodLabel>}
             </GridItemBox>
           ))}
@@ -319,7 +322,7 @@ const NoSearchBox = styled.div<WithTheme>`
 `;
 
 const CalendarSection = styled.section<{ $visible: boolean }>`
-  width: ${({ $visible }) => ($visible ? '100%' : '0px')};
+  width: 100%;
   overflow: hidden;
   transition: all 0.6s ease;
   max-height: ${({ $visible }) => ($visible ? '1000px' : '0')};
