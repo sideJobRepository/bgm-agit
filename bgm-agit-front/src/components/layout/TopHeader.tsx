@@ -117,7 +117,7 @@ export default function TopHeader() {
             }}
           >
             <FaPhone />
-            <a>0507-1445-3503</a>
+            <a>문의하기</a>
           </li>
           <li>
             <img src={kakao} alt="카카오" />
@@ -165,7 +165,7 @@ export default function TopHeader() {
             }}
           >
             <FaPhone />
-            <a>0507-1445-3503</a>
+            <a>문의하기</a>
           </SubMainLi>
           <SubMainLi>
             <img src={kakao} alt="카카오" />
