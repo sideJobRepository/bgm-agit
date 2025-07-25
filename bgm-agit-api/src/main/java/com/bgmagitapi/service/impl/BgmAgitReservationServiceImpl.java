@@ -5,7 +5,6 @@ import com.bgmagitapi.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.controller.response.reservation.TimeRange;
 import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.repository.BgmAgitImageRepository;
-import com.bgmagitapi.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.service.BgmAgitReservationService;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -13,7 +12,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -34,10 +36,9 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     @Transactional(readOnly = true)
     public BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id,LocalDate date) {
         LocalDate today = date;
-        YearMonth yearMonth = YearMonth.from(today);
-        LocalDate endOfMonth = yearMonth.atEndOfMonth();
+        LocalDate endOfYear = LocalDate.of(today.getYear(), 12, 31);
         
-        // 오늘 날짜에 해당하는 예약만 조회
+        // 1. 예약 정보 조회
         List<ReservedTimeDto> reservations = queryFactory
                 .select(Projections.constructor(
                         ReservedTimeDto.class,
@@ -53,11 +54,11 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                         bgmAgitImage.bgmAgitMainMenu.bgmAgitMainMenuId.eq(labelGb),
                         bgmAgitImage.bgmAgitMenuLink.eq(link),
                         bgmAgitImage.bgmAgitImageId.eq(id),
-                        bgmAgitReservation.bgmAgitReservationStartDate.eq(today)
+                        bgmAgitReservation.bgmAgitReservationStartDate.between(today, endOfYear)
                 )
                 .fetch();
         
-        // 예약 시간 정리
+        // 2. 예약 시간 Map<날짜, List<TimeRange>> 으로 변환
         Map<LocalDate, List<TimeRange>> reservedMap = reservations.stream()
                 .map(res -> {
                     LocalDateTime start = LocalDateTime.of(res.getDate(), res.getStartTime());
@@ -68,63 +69,56 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 })
                 .collect(Collectors.groupingBy(r -> r.getStart().toLocalDate()));
         
-        // 오늘 예약 가능한 시간 계산
-        List<String> availableSlots = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
-        LocalDateTime open = LocalDateTime.of(today, LocalTime.of(13, 0));
-        LocalDateTime close = LocalDateTime.of(today.plusDays(1), LocalTime.of(1, 0));
-        LocalDateTime cursor = open;
         
-        List<TimeRange> reserved = reservedMap.getOrDefault(today, Collections.emptyList())
-                .stream().sorted(Comparator.comparing(TimeRange::getStart)).toList();
-        
-        for (TimeRange r : reserved) {
-            while (!cursor.plusHours(1).isAfter(r.getStart())) {
-                availableSlots.add(cursor.format(formatter));
+        // 3. 날짜별 시간 슬롯 생성 (오늘~연말까지)
+        List<BgmAgitReservationResponse.TimeSlotByDate> timeSlots = new ArrayList<>();
+        for (LocalDate d = today; !d.isAfter(endOfYear); d = d.plusDays(1)) {
+            LocalDateTime open = LocalDateTime.of(d, LocalTime.of(13, 0));
+            LocalDateTime close = LocalDateTime.of(d.plusDays(1), LocalTime.of(1, 0));
+            LocalDateTime cursor = open;
+            
+            List<String> availableSlots = new ArrayList<>();
+            List<TimeRange> reserved = reservedMap.getOrDefault(d, Collections.emptyList())
+                    .stream().sorted(Comparator.comparing(TimeRange::getStart)).toList();
+            
+            while (cursor.isBefore(close)) {
+                LocalDateTime slotStart = cursor;
+                LocalDateTime slotEnd = cursor.plusHours(1);
+                
+                boolean overlapped = reserved.stream().anyMatch(r ->
+                        slotStart.isBefore(r.getEnd()) && slotEnd.isAfter(r.getStart())
+                );
+                
+                if (!overlapped) {
+                    availableSlots.add(slotStart.format(formatter));
+                }
+                
                 cursor = cursor.plusHours(1);
             }
-            if (cursor.isBefore(r.getEnd())) {
-                cursor = r.getEnd();
+            
+            
+            if (!availableSlots.isEmpty()) {
+                String label = "", group = "";
+                if (!reservations.isEmpty()) {
+                    ReservedTimeDto dto = reservations.get(0);
+                    label = dto.getLabel();
+                    group = dto.getGroup();
+                } else {
+                    BgmAgitImage image = bgmAgitImageRepository.findById(id).orElse(null);
+                    if (image != null) {
+                        label = image.getBgmAgitImageLabel();
+                        group = image.getBgmAgitImageGroups();
+                    }
+                }
+                
+                timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(d, label, group, availableSlots));
             }
         }
         
-        while (!cursor.isAfter(close.minusHours(0))) {
-            LocalDateTime checkTime = cursor;  // 별도 변수로 복사 (effectively final)
-            
-            boolean overlapped = reserved.stream().anyMatch(r ->
-                    checkTime.equals(r.getEnd()) &&
-                            checkTime.plusHours(1).isAfter(r.getStart())
-            );
-            
-            if (!overlapped) {
-                availableSlots.add(checkTime.format(formatter));
-            }
-            
-            cursor = cursor.plusHours(1);
-        }
-        
-        String label = "";
-        String group = "";
-        
-        if (!reservations.isEmpty()) {
-            ReservedTimeDto dto = reservations.get(0);
-            label = dto.getLabel();
-            group = dto.getGroup();
-        } else {
-            BgmAgitImage image = bgmAgitImageRepository.findById(id).orElse(null);
-            if (image != null) {
-                label = image.getBgmAgitImageLabel();
-                group = image.getBgmAgitImageGroups();
-            }
-        }
-        // timeSlots: 오늘 날짜만
-        List<BgmAgitReservationResponse.TimeSlotByDate> timeSlots = List.of(
-                new BgmAgitReservationResponse.TimeSlotByDate(today, label, group, availableSlots)
-        );
-        
-        //prices: 오늘 ~ 말일까지
+        // 4. 가격 생성 (오늘~연말까지)
         List<BgmAgitReservationResponse.PriceByDate> prices = new ArrayList<>();
-        for (LocalDate d = today; !d.isAfter(endOfMonth); d = d.plusDays(1)) {
+        for (LocalDate d = today; !d.isAfter(endOfYear); d = d.plusDays(1)) {
             int price = (d.getDayOfWeek() == DayOfWeek.SATURDAY || d.getDayOfWeek() == DayOfWeek.SUNDAY) ? 12000 : 10000;
             prices.add(new BgmAgitReservationResponse.PriceByDate(d, price));
         }
