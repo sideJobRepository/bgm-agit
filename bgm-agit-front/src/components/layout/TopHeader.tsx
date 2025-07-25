@@ -190,19 +190,22 @@ const Wrapper = styled.div<WithTheme>`
   }
 `;
 
-const Left = styled.div`
+const Left = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   height: 100%;
   justify-content: flex-start;
 
   img {
-    margin-left: -16px;
     margin-top: 16px;
     height: 100px;
     width: auto;
     object-fit: cover;
     cursor: pointer;
+
+    @media ${({ theme }) => theme.device.tablet} {
+      margin-left: -16px;
+    }
   }
 `;
 
