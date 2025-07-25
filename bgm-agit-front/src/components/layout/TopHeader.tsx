@@ -94,7 +94,7 @@ export default function TopHeader() {
                   $active={location.pathname === sub.link}
                   onClick={() => {
                     navigate(sub.link);
-                    setIsSubOpen(false);
+                    // setIsSubOpen(false);
                   }}
                 >
                   <a>{sub.name}</a>
