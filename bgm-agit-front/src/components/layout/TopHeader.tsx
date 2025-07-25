@@ -141,7 +141,7 @@ export default function TopHeader() {
                     $active={location.pathname === sub.link}
                     onClick={() => {
                       navigate(sub.link);
-                      toggleMenu();
+                      // toggleMenu();
                     }}
                   >
                     <a>{sub.name}</a>
@@ -150,14 +150,14 @@ export default function TopHeader() {
               ))}
             </React.Fragment>
           ))}
-          <MobileButton>
-            <FaPhone />
+          <li>
             <a>1599-1444</a>
-          </MobileButton>
-          <MobileButton>
+            <FaPhone />
+          </li>
+          <li>
             <img src={kakao} alt="카카오" />
             로그인
-          </MobileButton>
+          </li>
         </ul>
       </MobileMenu>
     </Wrapper>
@@ -377,6 +377,11 @@ const MobileMenu = styled.div<WithTheme & { $open: boolean }>`
       justify-content: left;
       padding: 0 20px;
 
+      img {
+        height: 26px;
+        margin-right: 8px;
+      }
+
       svg {
         margin-left: auto;
       }
@@ -406,25 +411,4 @@ const AnimatedSubLiWrapper = styled.div<WithTheme & { $visible: boolean }>`
     max-height 0.3s ease,
     opacity 0.3s ease,
     transform 0.3s ease;
-`;
-
-const MobileButton = styled.button<WithTheme>`
-  width: 100%;
-  height: 50px;
-  align-items: center;
-  display: flex;
-  //padding: 20px;
-  border: none;
-  background: none;
-  justify-content: center;
-  color: ${({ theme }) => theme.colors.subMenuColor};
-  font-size: ${({ theme }) => theme.sizes.large};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  svg {
-    margin-right: 8px;
-  }
-  img {
-    height: 26px;
-    margin-right: 8px;
-  }
 `;
