@@ -14,14 +14,13 @@ public class BgmAgitReservationResponse {
     
     private List<TimeSlotByDate> timeSlots;
     private List<PriceByDate> prices;
- 
+    private String label;
+    private String group;
     
     @Getter
     @AllArgsConstructor
     public static class TimeSlotByDate {
         private LocalDate date;
-        private String label;
-        private String group;
         private List<String> timeSlots;
     }
     

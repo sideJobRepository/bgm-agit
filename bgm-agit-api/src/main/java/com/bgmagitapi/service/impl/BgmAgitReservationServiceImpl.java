@@ -37,7 +37,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     public BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id,LocalDate date) {
         LocalDate today = date;
         LocalDate endOfYear = LocalDate.of(today.getYear(), 12, 31);
-        
+        String label = "", group = "";
         // 1. 예약 정보 조회
         List<ReservedTimeDto> reservations = queryFactory
                 .select(Projections.constructor(
@@ -99,7 +99,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             
             
             if (!availableSlots.isEmpty()) {
-                String label = "", group = "";
+              
                 if (!reservations.isEmpty()) {
                     ReservedTimeDto dto = reservations.get(0);
                     label = dto.getLabel();
@@ -112,7 +112,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     }
                 }
                 
-                timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(d, label, group, availableSlots));
+                timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(d,availableSlots));
             }
         }
         
@@ -123,6 +123,6 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             prices.add(new BgmAgitReservationResponse.PriceByDate(d, price));
         }
         
-        return new BgmAgitReservationResponse(timeSlots, prices);
+        return new BgmAgitReservationResponse(timeSlots, prices,label, group);
     }
 }
