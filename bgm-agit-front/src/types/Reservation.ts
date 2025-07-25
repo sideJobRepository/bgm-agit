@@ -17,6 +17,10 @@ export type ReservationPriceDto = {
 };
 
 export type reservationDatas = {
+  date: string;
+  labelGb: number;
+  id: number;
+  link: string;
   label?: string;
   group?: number;
   timeSlots?: ReservedTimeDto[];

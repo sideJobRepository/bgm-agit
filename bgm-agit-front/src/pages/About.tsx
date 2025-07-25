@@ -111,7 +111,12 @@ export default function About() {
       <ContentSetion bgColor="#1A7D55" textColor="#D9D9D9">
         <ContentImage>
           <section>
-            <img src={boradGameImage} />
+            <img
+              src={boradGameImage}
+              onClick={() => {
+                navigate('/detail/game');
+              }}
+            />
           </section>
         </ContentImage>
         <TextBox headerColor="#ffffff" bgColor="#1A7D55" textColor="#ffffff">
@@ -441,6 +446,7 @@ const ContentImage = styled.div<WithTheme & SectionProps>`
       height: 80%;
       width: auto;
       object-fit: cover;
+      cursor: pointer;
     }
   }
 

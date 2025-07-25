@@ -4,12 +4,12 @@ import { useState } from 'react';
 import styled from 'styled-components';
 import { FaUsers } from 'react-icons/fa';
 import type { WithTheme } from '../../styles/styled-props';
-import { useRecoilState } from 'recoil';
+import { useRecoilValue } from 'recoil';
 import { reservationState } from '../../recoil/reservationState.ts';
 import type { reservationDatas } from '../../types/Reservation.ts';
 
 export default function ReservationCalendar() {
-  const [reservation, setReservation] = useRecoilState<reservationDatas>(reservationState);
+  const reservation = useRecoilValue<reservationDatas>(reservationState);
 
   const today = new Date();
   const allTime = Array.from({ length: 11 }, (_, i) => `${i + 13}:00`);
@@ -107,19 +107,22 @@ const TitleBox = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: ${({ theme }) => theme.colors.black};
+  color: ${({ theme }) => theme.colors.subColor};
 
   h2 {
+    color: ${({ theme }) => theme.colors.menuColor};
     font-size: ${({ theme }) => theme.sizes.bigLarge};
     font-weight: ${({ theme }) => theme.weight.bold};
+    margin-right: 10px;
   }
 
   svg {
-    margin: 0 6px;
+    margin: 3px 4px 0 0;
     font-size: ${({ theme }) => theme.sizes.medium};
   }
 
   span {
+    margin-top: 3px;
     font-size: ${({ theme }) => theme.sizes.medium};
   }
 `;
@@ -208,7 +211,7 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
 const TimeBox = styled.div<WithTheme>`
   display: flex;
   flex-wrap: wrap;
-  justify-content: left;
+  justify-content: center;
   width: 50%;
   gap: 10px;
   margin-top: 10px;
