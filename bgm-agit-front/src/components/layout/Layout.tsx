@@ -77,4 +77,5 @@ const FooterBox = styled.footer<WithTheme>`
   font-size: ${({ theme }) => theme.sizes.medium};
   line-height: 1.5;
   justify-content: center;
+  z-index: 1000;
 `;

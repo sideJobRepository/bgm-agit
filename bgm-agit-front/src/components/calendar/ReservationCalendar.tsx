@@ -4,42 +4,22 @@ import { useState } from 'react';
 import styled from 'styled-components';
 import { FaUsers } from 'react-icons/fa';
 import type { WithTheme } from '../../styles/styled-props';
-
-const dummyData = {
-  timeSlots: [
-    {
-      date: '2025-07-24',
-      timeSlots: ['13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'],
-    },
-    {
-      date: '2025-07-25',
-      timeSlots: ['16:00', '17:00', '18:00', '19:00', '20:00', '21:00'],
-    },
-    {
-      date: '2025-07-26',
-      timeSlots: ['16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'],
-    },
-    {
-      date: '2025-07-30',
-      timeSlots: ['16:00', '17:00'],
-    },
-  ],
-  prices: [
-    { date: '2025-07-24', price: 10000 },
-    { date: '2025-07-25', price: 10000 },
-    { date: '2025-07-26', price: 30000 },
-    { date: '2025-07-30', price: 10000 },
-  ],
-};
+import { useRecoilState } from 'recoil';
+import { reservationState } from '../../recoil/reservationState.ts';
+import type { reservationDatas } from '../../types/Reservation.ts';
 
 export default function ReservationCalendar() {
+  const [reservation, setReservation] = useRecoilState<reservationDatas>(reservationState);
+  console.log('예약데이터', reservation);
   const today = new Date();
+  const allTime = Array.from({ length: 11 }, (_, i) => `${i + 13}:00`);
+
   const [value, setValue] = useState<Date>(today);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const getLocalDateStr = (date: Date) => date.toLocaleDateString('sv-SE');
   const dateStr = getLocalDateStr(value);
 
-  const matchedSlots = dummyData.timeSlots.find(d => d.date === dateStr);
+  const matchedSlots = reservation.timeSlots?.find(d => d.date === dateStr);
 
   const handleTimeClick = (time: string) => {
     setSelectedTimes(prev =>
@@ -50,8 +30,8 @@ export default function ReservationCalendar() {
   return (
     <Wrapper>
       <TitleBox>
-        <h2>A Room</h2>
-        <FaUsers /> <span> 4 </span>
+        <h2>{reservation.label}</h2>
+        <FaUsers /> <span> {reservation.gruop} </span>
       </TitleBox>
 
       <StyledCalendar
@@ -64,7 +44,7 @@ export default function ReservationCalendar() {
         tileContent={({ date, view }) => {
           if (view === 'month') {
             const dateStr = getLocalDateStr(date);
-            const priceItem = dummyData.prices.find(p => p.date === dateStr);
+            const priceItem = reservation.prices?.find(p => p.date === dateStr);
 
             const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 
@@ -86,16 +66,23 @@ export default function ReservationCalendar() {
       />
 
       <TimeBox>
-        {matchedSlots?.timeSlots.map((time, idx) => {
+        {allTime.map((time, idx) => {
+          const isAvailable = matchedSlots?.timeSlots.includes(time) ?? false;
           const isSelected = selectedTimes.includes(time);
           return (
-            <TimeSlotButton key={idx} selected={isSelected} onClick={() => handleTimeClick(time)}>
+            <TimeSlotButton
+              key={idx}
+              selected={isSelected}
+              isAvailable={isAvailable}
+              onClick={() => isAvailable && handleTimeClick(time)}
+              disabled={!isAvailable}
+            >
               {time}
             </TimeSlotButton>
           );
         })}
       </TimeBox>
-      <Button>예약하기</Button>
+      <Button disabled={!matchedSlots?.timeSlots.length || !selectedTimes.length}>예약하기</Button>
     </Wrapper>
   );
 }
@@ -103,7 +90,7 @@ export default function ReservationCalendar() {
 const Wrapper = styled.div<WithTheme>`
   width: 100%;
   display: flex;
-  gap: 20px;
+  gap: 16px;
   flex-direction: column;
   align-items: center;
 
@@ -174,7 +161,7 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
       margin: 0 auto;
       text-align: center;
       width: 100%;
-      padding: 15px 0;
+      padding: 10px 0;
       @media ${({ theme }) => theme.device.mobile} {
         padding: 10px 0;
       }
@@ -183,17 +170,12 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
 
   .react-calendar__tile:hover {
     background-color: transparent;
-    //border-radius: 999px;
     abbr {
       background: ${({ theme }) => theme.colors.softColor};
     }
   }
 
   .react-calendar__tile.selected {
-    // background: ${({ theme }) => theme.colors.blueColor};
-    // color: ${({ theme }) => theme.colors.white};
-    //border-radius: 999px;
-
     abbr {
       color: ${({ theme }) => theme.colors.white};
       background: ${({ theme }) => theme.colors.blueColor};
@@ -212,9 +194,6 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
   .date-price {
     display: flex;
     width: 100%;
-
-    //align-items: center;
-    ////justify-items: center;
     justify-content: center;
     font-weight: ${({ theme }) => theme.weight.semiBold};
     font-size: ${({ theme }) => theme.sizes.xsmall};
@@ -233,7 +212,7 @@ const TimeBox = styled.div<WithTheme>`
   gap: 10px;
 `;
 
-const TimeSlotButton = styled.button<WithTheme & { selected: boolean }>`
+const TimeSlotButton = styled.button<WithTheme & { selected: boolean; isAvailable: boolean }>`
   -webkit-tap-highlight-color: transparent;
   padding: 10px 14px;
   font-size: ${({ theme }) => theme.sizes.small};
@@ -249,15 +228,27 @@ const TimeSlotButton = styled.button<WithTheme & { selected: boolean }>`
       selected ? theme.colors.blueColor : theme.colors.softColor};
     color: ${({ selected, theme }) => (selected ? theme.colors.white : theme.colors.subColor)};
   }
+
+  &:disabled {
+    // background-color: ${({ theme }) => theme.colors.subColor}; // 예약 불가한 회색 배경
+    // color: ${({ theme }) => theme.colors.lineColor}; // 글자색도 흐리게
+    cursor: not-allowed;
+    opacity: 0.3;
+  }
 `;
 
 const Button = styled.button<WithTheme>`
-  width: 90%;
   padding: 12px 0;
+  width: 90%;
   background-color: ${({ theme }) => theme.colors.blueColor};
   border: none;
   color: ${({ theme }) => theme.colors.white};
   cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
 
   &:hover {
     opacity: 0.8;

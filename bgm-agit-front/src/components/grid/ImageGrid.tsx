@@ -6,7 +6,6 @@ import ImageLightbox from '../ImageLightbox.tsx';
 import SearchBar from '../SearchBar.tsx';
 import type { reservationData } from '../../types/Reservation.ts';
 import ReservationCalendar from '../calendar/ReservationCalendar.tsx';
-import { useMediaQuery } from 'react-responsive';
 import useReservationFetch from '../../recoil/fetch.ts';
 
 interface GridItem {
@@ -33,8 +32,6 @@ interface Props {
 }
 
 export default function ImageGrid({ pageData }: Props) {
-  const isTablet = useMediaQuery({ query: '(max-width: 1280px)' });
-
   const [searchKeyword, setSearchKeyword] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState(-1);
 
@@ -71,7 +68,7 @@ export default function ImageGrid({ pageData }: Props) {
   function reservationClickEvent(item: GridItem) {
     if (reservationData?.id !== item.imageId) {
       newItemDatas(item);
-    } else if (isTablet) {
+    } else {
       setReservationData(null);
     }
   }
@@ -90,17 +87,17 @@ export default function ImageGrid({ pageData }: Props) {
   const calendarRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   useEffect(() => {
-    if (isTablet && reservationData) {
+    if (reservationData) {
       const el = calendarRefs.current[reservationData.id];
       if (el) {
         const onTransitionEnd = () => {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
           el.removeEventListener('transitionend', onTransitionEnd);
         };
         el.addEventListener('transitionend', onTransitionEnd);
       }
     }
-  }, [reservationData, isTablet]);
+  }, [reservationData]);
 
   return (
     <Wrapper>
@@ -141,7 +138,7 @@ export default function ImageGrid({ pageData }: Props) {
                 ref={el => {
                   calendarRefs.current[item.imageId] = el as HTMLDivElement | null;
                 }}
-                $visible={item.imageId === reservationData?.id && isTablet}
+                $visible={item.imageId === reservationData?.id}
               >
                 <ReservationCalendar />
               </CalendarSection>

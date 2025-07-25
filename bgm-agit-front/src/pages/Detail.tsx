@@ -3,8 +3,6 @@ import ImageGrid from '../components/grid/ImageGrid.tsx';
 import { useMediaQuery } from 'react-responsive';
 import { Wrapper } from '../styles';
 import { useLocation } from 'react-router-dom';
-import type { WithTheme } from '../styles/styled-props.ts';
-import ReservationCalendar from '../components/calendar/ReservationCalendar.tsx';
 import { useFetchMainData } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { mainDataState } from '../recoil';
@@ -76,18 +74,7 @@ export default function Detail() {
 
   return (
     <Wrapper>
-      {selectedData.labelGb === 3 ? (
-        <ReservationBox>
-          <ReservationGridSetion>
-            {fullPageData.items && <ImageGrid pageData={fullPageData} />}
-          </ReservationGridSetion>
-          <ReservationCalendarSetion>
-            <ReservationCalendar />
-          </ReservationCalendarSetion>
-        </ReservationBox>
-      ) : (
-        <GridBox>{fullPageData.items && <ImageGrid pageData={fullPageData} />}</GridBox>
-      )}
+      <GridBox>{fullPageData.items && <ImageGrid pageData={fullPageData} />}</GridBox>
     </Wrapper>
   );
 }
@@ -98,31 +85,4 @@ const GridBox = styled.div`
   width: 100%;
   height: 100%;
   max-width: 1280px;
-`;
-
-const ReservationBox = styled.div`
-  display: flex;
-  width: 100%;
-  height: 100%;
-  max-width: 1280px;
-`;
-
-const ReservationGridSetion = styled.section<WithTheme>`
-  width: 60%;
-  height: 100%;
-
-  @media ${({ theme }) => theme.device.tablet} {
-    width: 100%;
-  }
-`;
-
-const ReservationCalendarSetion = styled.section<WithTheme>`
-  position: fixed;
-  top: 160px;
-  left: calc(60vw + 20px);
-  max-width: 500px;
-  z-index: 0;
-  @media ${({ theme }) => theme.device.tablet} {
-    display: none;
-  }
 `;
