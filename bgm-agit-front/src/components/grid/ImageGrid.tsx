@@ -322,7 +322,7 @@ const NoSearchBox = styled.div<WithTheme>`
 `;
 
 const CalendarSection = styled.section<{ $visible: boolean }>`
-  width: 100%;
+  width: ${({ $visible }) => ($visible ? '100%' : '0px')};
   overflow: hidden;
   transition: all 0.6s ease;
   max-height: ${({ $visible }) => ($visible ? '1000px' : '0')};
