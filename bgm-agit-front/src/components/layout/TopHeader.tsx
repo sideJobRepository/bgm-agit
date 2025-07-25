@@ -428,8 +428,6 @@ const AnimatedSubLiWrapper = styled.div<WithTheme & { $visible: boolean }>`
 `;
 
 const SubMainLi = styled.li<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.small};
-
   svg {
     margin-left: 0 !important;
     margin-right: 8px;
