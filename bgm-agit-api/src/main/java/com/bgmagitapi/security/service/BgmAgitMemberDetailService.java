@@ -50,7 +50,7 @@ public class BgmAgitMemberDetailService implements UserDetailsService {
                     
                     BgmAgitRole findbyBgmAgitRole = bgmAgitRoleRepository.findByBgmAgitRoleName("USER");
                     
-                    BgmAgitMemberRole bgmAgitMemberRole = new BgmAgitMemberRole(saveMember.getBgmAgitMemberId(), findbyBgmAgitRole.getBgmAgitRoleId());
+                    BgmAgitMemberRole bgmAgitMemberRole = new BgmAgitMemberRole(saveMember, findbyBgmAgitRole);
                     
                     bgmAgitMemberRoleRepository.save(bgmAgitMemberRole);
                     return saveMember;

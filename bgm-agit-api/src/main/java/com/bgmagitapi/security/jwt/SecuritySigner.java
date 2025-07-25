@@ -7,27 +7,36 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import org.springframework.security.core.GrantedAuthority;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class SecuritySigner {
     /**
-     *
      * @param jwsSigner
      * @param user
      * @param jwk
+     * @param authorities
      * @return
      */
-    protected String getJwtTokenInternal(MACSigner jwsSigner, BgmAgitMember user, JWK jwk) throws JOSEException {
+    protected String getJwtTokenInternal(MACSigner jwsSigner, BgmAgitMember user, JWK jwk, List<GrantedAuthority> authorities) throws JOSEException {
         JWSHeader header = new JWSHeader.Builder((JWSAlgorithm) jwk.getAlgorithm()).keyID(jwk.getKeyID()).build();
         
+        List<String> roleList = new ArrayList<>();
+        if (authorities != null && !authorities.isEmpty()) {
+            for (GrantedAuthority auth : authorities) {
+                roleList.add("ROLE_" + auth.getAuthority());
+            }
+        }
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
                 .subject("user")
-                //.claim("id",user.getId())
-                //.claim("username",user.getUsername())
-                //.claim("memberName",user.getMemberName())
-                //.claim("memberLoginType",user.getLoginType())
-                //.claim("authority",user.getMemberRoles())
+                .claim("id",user.getBgmAgitMemberId())
+                .claim("name",user.getBgmAgitMemberName())
+                .claim("socialId",user.getBgmAgitMemberSocialId())
+                .claim("roles",roleList)
                 .expirationTime(new Date(new Date().getTime() + 24 * 60 * 60 * 1000)) // 1일 (24시간) 유효 시간 설정
                 .build();
         
@@ -35,5 +44,5 @@ public abstract class SecuritySigner {
         signedJWT.sign(jwsSigner);
         return signedJWT.serialize();
     }
-    public abstract String getToken(BgmAgitMember user , JWK jwk) throws JOSEException;
+    public abstract String getToken(BgmAgitMember user , JWK jwk, List<GrantedAuthority> authorities) throws JOSEException;
 }

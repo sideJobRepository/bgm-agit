@@ -25,11 +25,8 @@ public class BgmAgitMemberRole extends DateSuperClass {
     @JoinColumn(name = "BGM_AGIT_ROLE_ID")
     private BgmAgitRole bgmAgitRole;
     
-    public BgmAgitMemberRole(Long bgmAgitMemberId, Long roleUserId) {
-        BgmAgitMemberRole bgmAgitMemberRole = new BgmAgitMemberRole();
-        BgmAgitMember memberId = new BgmAgitMember(bgmAgitMemberId);
-        BgmAgitRole roleId = new BgmAgitRole(roleUserId);
-        bgmAgitMemberRole.bgmAgitMember = memberId;
-        bgmAgitMemberRole.bgmAgitRole = roleId;
+    public BgmAgitMemberRole(BgmAgitMember bgmAgitMember, BgmAgitRole bgmAgitRole) {
+        this.bgmAgitMember = bgmAgitMember;
+        this.bgmAgitRole = bgmAgitRole;
     }
 }

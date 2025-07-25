@@ -20,7 +20,5 @@ public class BgmAgitRole extends DateSuperClass {
     @Column(name = "BGM_AGIT_ROLE_NAME")
     private String bgmAgitRoleName;
     
-    public BgmAgitRole(Long bgmAgitRoleId) {
-        this.bgmAgitRoleId =bgmAgitRoleId;
-    }
+  
 }

@@ -36,9 +36,6 @@ public class BgmAgitMember extends DateSuperClass {
     private String bgmAgitMemberSocialId;
     
     
-    public BgmAgitMember(Long bgmAgitMemberId) {
-        this.bgmAgitMemberId = bgmAgitMemberId;
-    }
     
     public BgmAgitMember(KaKaoProfileResponse kaKaoProfileResponse) {
         this.bgmAgitMemberEmail = kaKaoProfileResponse.getKakaoAccount().getEmail();
