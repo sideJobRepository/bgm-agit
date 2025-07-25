@@ -200,7 +200,7 @@ export default function TopHeader() {
           </SubMainLi>
           <SubMainLi onClick={loginWithKakao}>
             <img src={kakao} alt="카카오" />
-            로그인
+            {user ? '로그아웃' : '로그인'}
           </SubMainLi>
         </ul>
       </MobileMenu>
