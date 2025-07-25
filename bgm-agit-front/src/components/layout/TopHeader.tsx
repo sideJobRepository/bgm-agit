@@ -151,8 +151,8 @@ export default function TopHeader() {
             </React.Fragment>
           ))}
           <SubMainLi>
-            <a href="tel:15991444">1599-1444</a>
             <FaPhone />
+            <a href="tel:15991444">1599-1444</a>
           </SubMainLi>
           <SubMainLi>
             <img src={kakao} alt="카카오" />
@@ -348,7 +348,7 @@ const MobileMenu = styled.div<WithTheme & { $open: boolean }>`
   top: 100%;
   right: 0;
   width: 50%;
-  max-width: 500px;
+  max-width: 300px;
   height: calc(100vh - 100px);
   background-color: ${({ theme }) => theme.colors.subBgColor};
 
@@ -415,5 +415,11 @@ const AnimatedSubLiWrapper = styled.div<WithTheme & { $visible: boolean }>`
 `;
 
 const SubMainLi = styled.li<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.medium};
+  font-size: ${({ theme }) => theme.sizes.small};
+
+  svg {
+    margin-left: 0 !important;
+    margin-right: 8px;
+    transform: rotate(-240deg);
+  }
 `;
