@@ -11,6 +11,7 @@ import Detail from './pages/Detail.tsx';
 import Error from './pages/Error.tsx';
 import Notice from './pages/Notice.tsx';
 import ScrollToTop from './components/layout/ScrollToTop.tsx';
+import KakaoRedirectPage from './pages/KakaoRedirectPage.tsx';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <BrowserRouter>
           <ScrollToTop />
           <Routes>
+            <Route path="/oauth/kakao/callback" element={<KakaoRedirectPage />} />
             <Route path="/error" element={<Error />} />
             <Route path="/" element={<Layout />}>
               <Route index element={<MainPage />} />

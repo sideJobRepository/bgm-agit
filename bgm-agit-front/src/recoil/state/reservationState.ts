@@ -1,5 +1,5 @@
 import { atom } from 'recoil';
-import type { reservationData } from '../types/Reservation.ts';
+import type { reservationData } from '../../types/Reservation.ts';
 
 export const reservationState = atom<reservationData>({
   key: 'reservationState',

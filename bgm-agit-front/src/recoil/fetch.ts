@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { useSetRecoilState } from 'recoil';
-import { mainDataState, mainMenuState } from './mainState';
+import { mainDataState, mainMenuState } from './state/mainState.ts';
 import api from '../utils/axiosInstance';
 import { useRequest } from './useRequest.ts';
 import type { reservationData } from '../types/Reservation.ts';
-import { reservationState } from './reservationState.ts';
+import { reservationState } from './state/reservationState.ts';
 
 export function useFetchMainMenu() {
   const setMainMenu = useSetRecoilState(mainMenuState);

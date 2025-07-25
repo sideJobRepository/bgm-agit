@@ -1,6 +1,6 @@
 // hooks/useRequest.ts
 import { useSetRecoilState } from 'recoil';
-import { loadingState, errorState } from './mainState';
+import { loadingState, errorState } from './state/mainState.ts';
 import { useNavigate } from 'react-router-dom';
 
 export function useRequest() {

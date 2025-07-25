@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { FaUsers } from 'react-icons/fa';
 import type { WithTheme } from '../../styles/styled-props';
 import { useRecoilValue } from 'recoil';
-import { reservationState } from '../../recoil/reservationState.ts';
+import { reservationState } from '../../recoil/state/reservationState.ts';
 import type { reservationDatas } from '../../types/Reservation.ts';
 
 export default function ReservationCalendar() {

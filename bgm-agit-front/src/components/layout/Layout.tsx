@@ -4,10 +4,44 @@ import { Outlet, useLocation } from 'react-router-dom';
 import type { WithTheme } from '../../styles/styled-props.ts';
 import Footer from './Footer.tsx';
 import Nav from './Nav.tsx';
+import { useEffect } from 'react';
+import { useRecoilState } from 'recoil';
+import { userState } from '../../recoil/state/userState.ts';
 
 export default function Layout() {
   const location = useLocation();
   const home = location.pathname === '/';
+
+  //로그인 상태
+
+  const [user, setUser] = useRecoilState(userState);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem('user');
+    if (!user) {
+      setUser(JSON.parse(stored));
+    }
+  }, []);
+
+  useEffect(() => {
+    const channel = new BroadcastChannel('auth');
+
+    channel.onmessage = event => {
+      if (event.data === 'logout') {
+        sessionStorage.clear();
+        setUser(null);
+      }
+
+      if (event.data.type === 'login') {
+        sessionStorage.setItem('user', JSON.stringify(event.data.user));
+        setUser(event.data.user);
+      }
+    };
+
+    return () => {
+      channel.close();
+    };
+  }, []);
 
   return (
     <Wrapper>

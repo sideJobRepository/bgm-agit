@@ -1,6 +1,6 @@
 import { atom } from 'recoil';
-import type { MainMenu } from '../types/menu.ts';
-import type { ImageSliderItem } from '../types/main.ts';
+import type { MainMenu } from '../../types/menu.ts';
+import type { ImageSliderItem } from '../../types/main.ts';
 
 export const mainMenuState = atom<MainMenu[]>({
   key: 'mainMenuState',

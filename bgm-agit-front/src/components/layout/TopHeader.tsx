@@ -11,9 +11,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import { mainMenuState } from '../../recoil';
 import { useFetchMainMenu } from '../../recoil/fetch.ts';
+import { userState } from '../../recoil/state/userState.ts';
 
 export default function TopHeader() {
   useFetchMainMenu();
+
+  const user = useRecoilValue(userState);
+  console.log('user', user);
 
   const menus = useRecoilValue(mainMenuState);
   const navigate = useNavigate();
@@ -40,6 +44,17 @@ export default function TopHeader() {
   function callClick() {
     window.location.href = 'tel:050714453503';
   }
+
+  //카카오 로그인
+  const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID;
+  console.log('KAKAO_CLIENT_ID', KAKAO_CLIENT_ID);
+  const KAKAO_REDIRECT_URL = import.meta.env.VITE_KAKAO_REDIRECT_URL;
+
+  const loginWithKakao = () => {
+    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URL}&response_type=code`;
+
+    window.location.href = kakaoAuthUrl;
+  };
 
   //메뉴바 닫기
   useEffect(() => {
@@ -119,9 +134,9 @@ export default function TopHeader() {
             <FaPhone />
             <a>문의하기</a>
           </li>
-          <li>
+          <li onClick={loginWithKakao}>
             <img src={kakao} alt="카카오" />
-            로그인
+            {user ? '로그아웃' : '로그인'}
           </li>
         </ul>
       </Right>
@@ -167,7 +182,7 @@ export default function TopHeader() {
             <FaPhone />
             <a>문의하기</a>
           </SubMainLi>
-          <SubMainLi>
+          <SubMainLi onClick={loginWithKakao}>
             <img src={kakao} alt="카카오" />
             로그인
           </SubMainLi>
