@@ -48,7 +48,6 @@ export default function TopHeader() {
 
   //카카오 로그인
   const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID;
-  console.log('KAKAO_CLIENT_ID', KAKAO_CLIENT_ID);
   const KAKAO_REDIRECT_URL = import.meta.env.VITE_KAKAO_REDIRECT_URL;
 
   const loginWithKakao = () => {
@@ -126,8 +125,10 @@ export default function TopHeader() {
                   key={j}
                   $active={location.pathname === sub.link}
                   onClick={() => {
-                    navigate(sub.link);
-                    // setIsSubOpen(false);
+                    setIsSubOpen(false);
+                    setTimeout(() => {
+                      navigate(sub.link);
+                    }, 300);
                   }}
                 >
                   <a>{sub.name}</a>
@@ -177,8 +178,10 @@ export default function TopHeader() {
                   <MobileSubLi
                     $active={location.pathname === sub.link}
                     onClick={() => {
-                      navigate(sub.link);
-                      // toggleMenu();
+                      toggleMenu();
+                      setTimeout(() => {
+                        navigate(sub.link);
+                      }, 300);
                     }}
                   >
                     <a>{sub.name}</a>

@@ -5,6 +5,8 @@ import api from '../utils/axiosInstance';
 import { useRequest } from './useRequest.ts';
 import type { reservationData } from '../types/Reservation.ts';
 import { reservationState } from './state/reservationState.ts';
+import { userState } from './state/userState.ts';
+import { jwtDecode } from 'jwt-decode';
 
 export function useFetchMainMenu() {
   const setMainMenu = useSetRecoilState(mainMenuState);
@@ -32,7 +34,7 @@ export function useFetchMainData(param?: { labelGb?: number; link?: string }) {
   }, [param?.link, param?.labelGb]);
 }
 
-export default function useReservationFetch() {
+export function useReservationFetch() {
   const { request } = useRequest();
   const setReservation = useSetRecoilState(reservationState);
 
@@ -44,4 +46,27 @@ export default function useReservationFetch() {
   };
 
   return fetchReservation;
+}
+
+export function useLoginPost() {
+  const { request } = useRequest();
+  const setUser = useSetRecoilState(userState);
+
+  const postUser = (code: string, onSuccess?: () => void) => {
+    request(
+      () =>
+        api.post('/bgm-agit/kakao-login', { code }).then(res => {
+          const decoded = jwtDecode(res.data.token);
+          sessionStorage.setItem('user', JSON.stringify(decoded));
+          sessionStorage.setItem('token', res.data.token);
+          return decoded;
+        }),
+      decodedUser => {
+        setUser(decodedUser);
+        if (onSuccess) onSuccess();
+      }
+    );
+  };
+
+  return { postUser };
 }

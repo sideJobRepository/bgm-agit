@@ -6,7 +6,7 @@ import ImageLightbox from '../ImageLightbox.tsx';
 import SearchBar from '../SearchBar.tsx';
 import type { reservationData } from '../../types/Reservation.ts';
 import ReservationCalendar from '../calendar/ReservationCalendar.tsx';
-import useReservationFetch from '../../recoil/fetch.ts';
+import { useReservationFetch } from '../../recoil/fetch.ts';
 
 interface GridItem {
   image: string;
