@@ -8,11 +8,15 @@ import { useRecoilValue } from 'recoil';
 import { reservationState } from '../../recoil/state/reservationState.ts';
 import type { reservationDatas } from '../../types/Reservation.ts';
 
-export default function ReservationCalendar() {
+export default function ReservationCalendar({ id }: { id?: number }) {
   const reservation = useRecoilValue<reservationDatas>(reservationState);
-
   const today = new Date();
-  const allTime = Array.from({ length: 11 }, (_, i) => `${i + 13}:00`);
+
+  //G룸인 경우 3시간 간격이고 마지막은 2시간 단위로 끊음
+  const allTime =
+    id === 18
+      ? ['13:00', '16:00', '19:00', '22:00']
+      : Array.from({ length: 11 }, (_, i) => `${i + 13}:00`);
 
   const [value, setValue] = useState<Date>(today);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
@@ -68,7 +72,11 @@ export default function ReservationCalendar() {
           const isAvailable = matchedSlots?.timeSlots.includes(time) ?? false;
           const isSelected = selectedTimes.includes(time);
           const hour = parseInt(time.split(':')[0], 10);
-          const label = `${hour}:00 ~ ${hour + 1}:00`;
+
+          const label =
+            id === 18
+              ? `${hour}:00 ~ ${hour + 3 > 24 ? '24:00' : `${hour + 3}:00`}`
+              : `${hour}:00 ~ ${hour + 1}:00`;
 
           return (
             <TimeSlotButton

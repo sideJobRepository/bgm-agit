@@ -141,7 +141,7 @@ export default function ImageGrid({ pageData }: Props) {
                   }}
                   $visible={item.imageId === reservationData?.id}
                 >
-                  <ReservationCalendar />
+                  <ReservationCalendar id={reservationData?.id} />
                 </CalendarSection>
               )}
 
