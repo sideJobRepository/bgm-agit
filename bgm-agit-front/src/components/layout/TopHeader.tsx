@@ -150,9 +150,9 @@ export default function TopHeader() {
               ))}
             </React.Fragment>
           ))}
-          <SubMainLi>
+          <SubMainLi onClick={() => (window.location.href = 'tel:15991444')}>
             <FaPhone />
-            <a href="tel:15991444">1599-1444</a>
+            <a>1599-1444</a>
           </SubMainLi>
           <SubMainLi>
             <img src={kakao} alt="카카오" />
