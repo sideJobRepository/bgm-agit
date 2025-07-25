@@ -42,11 +42,9 @@ export default function ReservationCalendar() {
   const matchedSlots = dummyData.timeSlots.find(d => d.date === dateStr);
 
   const handleTimeClick = (time: string) => {
-    console.log('selectedTimes', selectedTimes);
     setSelectedTimes(prev =>
       prev.includes(time) ? prev.filter(t => t !== time) : [...prev, time]
     );
-    console.log('2222', selectedTimes);
   };
 
   return (

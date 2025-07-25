@@ -6,6 +6,7 @@ export const reservationState = atom<reservationData>({
   default: {
     date: '',
     labelGb: 0,
+    id: 0,
     link: '',
   },
 });

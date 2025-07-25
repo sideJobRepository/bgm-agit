@@ -4,13 +4,10 @@ import type { WithTheme } from '../../styles/styled-props.ts';
 import { FaUsers } from 'react-icons/fa';
 import ImageLightbox from '../ImageLightbox.tsx';
 import SearchBar from '../SearchBar.tsx';
-import { useRequest } from '../../recoil/useRequest.ts';
-import api from '../../utils/axiosInstance.ts';
-import { useSetRecoilState } from 'recoil';
-import { reservationState } from '../../recoil/reservationState.ts';
 import type { reservationData } from '../../types/Reservation.ts';
 import ReservationCalendar from '../calendar/ReservationCalendar.tsx';
 import { useMediaQuery } from 'react-responsive';
+import useReservationFetch from '../../recoil/fetch.ts';
 
 interface GridItem {
   image: string;
@@ -36,9 +33,6 @@ interface Props {
 }
 
 export default function ImageGrid({ pageData }: Props) {
-  const setReservation = useSetRecoilState(reservationState);
-  const { request } = useRequest();
-
   const isTablet = useMediaQuery({ query: '(max-width: 1280px)' });
 
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -48,6 +42,8 @@ export default function ImageGrid({ pageData }: Props) {
 
   const { items, labelGb, bgColor, textColor, searchColor, label, title, subTitle, columnCount } =
     pageData;
+
+  const fetchReservation = useReservationFetch();
 
   const handleImageClick = (clickedIndex: number) => {
     setLightboxIndex(clickedIndex);
@@ -85,17 +81,9 @@ export default function ImageGrid({ pageData }: Props) {
   }, [filteredItems]);
 
   useEffect(() => {
-    if (!reservationData || labelGb !== 3) return;
-
-    request(
-      () =>
-        api
-          .get('/bgm-agit/reservation', {
-            params: reservationData,
-          })
-          .then(res => res.data),
-      setReservation
-    );
+    if (reservationData && reservationData.id && reservationData.labelGb === 3) {
+      fetchReservation(reservationData);
+    }
   }, [reservationData]);
 
   //스크롤 드롭다운시 포커스
