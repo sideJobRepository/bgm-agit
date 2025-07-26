@@ -13,6 +13,7 @@ import { mainMenuState } from '../../recoil';
 import { useFetchMainMenu } from '../../recoil/fetch.ts';
 import { userState } from '../../recoil/state/userState.ts';
 import { toast } from 'react-toastify';
+import type { SubMenu } from '../../types/menu.ts';
 
 export default function TopHeader() {
   useFetchMainMenu();
@@ -21,6 +22,8 @@ export default function TopHeader() {
   const resetUser = useSetRecoilState(userState);
 
   const menus = useRecoilValue(mainMenuState);
+
+  console.log('menus', menus);
   const navigate = useNavigate();
 
   const location = useLocation();
@@ -40,6 +43,17 @@ export default function TopHeader() {
   const [isMobileSubOpen, setIsMobileSubOpen] = useState<string | null>(null);
 
   const toggleMenu = () => setIsOpen(prev => !prev);
+
+  //메뉴 이동 이벤트
+  function subMoveEnvent(item: SubMenu) {
+    //오픈 채팅방 링크로 이동
+    if (item.bgmAgitMainMenuId === 13) {
+      console.log('dkdlxpa fldzmfm', item.link);
+      window.open(item.link, '_blank');
+    } else {
+      navigate(item.link);
+    }
+  }
 
   //가게 전화
   function callClick() {
@@ -127,7 +141,7 @@ export default function TopHeader() {
                   onClick={() => {
                     setIsSubOpen(false);
                     setTimeout(() => {
-                      navigate(sub.link);
+                      subMoveEnvent(sub);
                     }, 300);
                   }}
                 >
@@ -180,7 +194,7 @@ export default function TopHeader() {
                     onClick={() => {
                       toggleMenu();
                       setTimeout(() => {
-                        navigate(sub.link);
+                        subMoveEnvent(sub);
                       }, 300);
                     }}
                   >

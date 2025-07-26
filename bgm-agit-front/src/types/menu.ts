@@ -1,6 +1,7 @@
 export type SubMenu = {
   name: string;
   link: string;
+  bgmAgitMainMenuId: number;
 };
 
 export type MainMenu = {
