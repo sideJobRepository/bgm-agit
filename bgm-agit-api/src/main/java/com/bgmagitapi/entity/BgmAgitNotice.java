@@ -1,6 +1,7 @@
 package com.bgmagitapi.entity;
 
 
+import com.bgmagitapi.controller.request.BgmAgitNoticeModifyRequest;
 import com.bgmagitapi.entity.enumeration.BgmAgitNoticeType;
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
@@ -36,5 +37,11 @@ public class BgmAgitNotice extends DateSuperClass {
         this.bgmAgitNoticeTitle = bgmAgitNoticeTitle;
         this.bgmAgitNoticeCont = bgmAgitNoticeCont;
         this.bgmAgitNoticeType = bgmAgitNoticeType;
+    }
+    
+    public void modifyNotice(BgmAgitNoticeModifyRequest request) {
+        this.bgmAgitNoticeTitle = request.getBgmAgitNoticeTitle();
+        this.bgmAgitNoticeCont = request.getBgmAgitNoticeCont();
+        this.bgmAgitNoticeType = request.getBgmAgitNoticeType();
     }
 }

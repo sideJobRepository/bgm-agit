@@ -43,8 +43,10 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
     
     @Override
     public ApiResponse modifyNotice(BgmAgitNoticeModifyRequest request) {
-        
-        return null;
+        Long bgmAgitNoticeId = request.getBgmAgitNoticeId();
+        BgmAgitNotice bgmAgitNotice = bgmAgitNoticeRepository.findById(bgmAgitNoticeId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 공지사항 ID 입니다."));
+        bgmAgitNotice.modifyNotice(request);
+        return new  ApiResponse(200, true, "수정 되었습니다.");
     }
     
     @Override
