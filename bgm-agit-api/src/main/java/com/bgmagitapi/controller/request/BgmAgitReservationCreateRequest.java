@@ -1,4 +1,4 @@
-package com.bgmagitapi.controller.response.request;
+package com.bgmagitapi.controller.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;

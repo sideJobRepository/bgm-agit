@@ -1,6 +1,6 @@
 package com.bgmagitapi.entity;
 
-import com.bgmagitapi.controller.response.request.BgmAgitReservationCreateRequest;
+import com.bgmagitapi.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.entity.enumeration.Reservation;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

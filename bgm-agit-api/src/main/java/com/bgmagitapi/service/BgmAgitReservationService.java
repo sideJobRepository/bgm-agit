@@ -2,7 +2,7 @@ package com.bgmagitapi.service;
 
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
-import com.bgmagitapi.controller.response.request.BgmAgitReservationCreateRequest;
+import com.bgmagitapi.controller.request.BgmAgitReservationCreateRequest;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.time.LocalDate;
