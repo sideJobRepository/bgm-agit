@@ -31,4 +31,10 @@ public class BgmAgitNotice extends DateSuperClass {
     @Column(name = "BGM_AGIT_NOTICE_TYPE")
     @Enumerated(EnumType.STRING)
     private BgmAgitNoticeType bgmAgitNoticeType;
+    
+    public BgmAgitNotice(String bgmAgitNoticeTitle, String bgmAgitNoticeCont, BgmAgitNoticeType bgmAgitNoticeType) {
+        this.bgmAgitNoticeTitle = bgmAgitNoticeTitle;
+        this.bgmAgitNoticeCont = bgmAgitNoticeCont;
+        this.bgmAgitNoticeType = bgmAgitNoticeType;
+    }
 }
