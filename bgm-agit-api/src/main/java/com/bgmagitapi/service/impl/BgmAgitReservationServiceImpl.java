@@ -20,10 +20,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -148,24 +145,39 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     
     @Override
     public ApiResponse createReservation(BgmAgitReservationCreateRequest request, Jwt jwt) {
+        List<String> timeList = request.getStartTimeEndTime();
+        
+        if (timeList.size() < 2) {
+            throw new IllegalArgumentException("예약 시간은 최소 2개 이상이어야 합니다.");
+        }
+
+        // 날짜 보정
+        String dateStr = request.getBgmAgitReservationStartDate(); // "2025-07-27T15:00:00.000Z"
+        Instant instant = Instant.parse(dateStr);
+        LocalDate kstDate = instant.atZone(ZoneId.of("Asia/Seoul")).toLocalDate();
+
+        // 예약 타입 등 기본 정보
         Long userId = jwt.getClaim("id");
-        Long bgmAgitImageId = request.getBgmAgitImageId();
         BgmAgitMember member = bgmAgitMemberRepository.findById(userId).orElseThrow(() -> new RuntimeException("User Not Found"));
-        BgmAgitImage image = bgmAgitImageRepository.findById(bgmAgitImageId).orElseThrow(() -> new RuntimeException("Not Found Image Id"));
-        
-        List<String> startTimeEndTime = request.getStartTimeEndTime();
-        LocalTime minTime = startTimeEndTime.stream()
-                .map(LocalTime::parse)
-                .min(Comparator.naturalOrder())
-                .orElseThrow(() -> new IllegalArgumentException("시간 리스트가 비어 있습니다."));
-        
-        LocalTime maxTime = startTimeEndTime.stream()
-                .map(LocalTime::parse)
-                .max(Comparator.naturalOrder())
-                .orElseThrow(() -> new IllegalArgumentException("시간 리스트가 비어 있습니다."));
-        
-        BgmAgitReservation reservation = new BgmAgitReservation(member,image,request,maxTime,minTime);
-        bgmAgitReservationRepository.save(reservation);
-        return new ApiResponse(200,true,"예약 되었습니다.");
+        BgmAgitImage image = bgmAgitImageRepository.findById(request.getBgmAgitImageId()).orElseThrow(() -> new RuntimeException("Not Found Image Id"));
+        String reservationType = request.getBgmAgitReservationType();
+
+        // 여러 예약 insert
+        for (int i = 0; i < timeList.size() - 1; i++) {
+            LocalTime startTime = LocalTime.parse(timeList.get(i));
+            LocalTime endTime = LocalTime.parse(timeList.get(i + 1));
+            
+            BgmAgitReservation reservation = new BgmAgitReservation(
+                    member,
+                    image,
+                    reservationType,
+                    startTime,
+                    endTime,
+                    kstDate
+            );
+            
+            bgmAgitReservationRepository.save(reservation);
+        }
+        return new ApiResponse(200,true,"예약이 완료되었습니다.");
     }
 }

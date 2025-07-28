@@ -24,7 +24,7 @@ public class BgmAgitReservationCreateRequest {
     private String bgmAgitReservationType;
     // 시작일
     @NotEmpty(message = "예약 시작일은 필수입니다.")
-    private LocalDate bgmAgitReservationStartDate;
+    private String bgmAgitReservationStartDate; //
     
     // 시작 시간
     private LocalTime bgmAgitReservationStartTime;

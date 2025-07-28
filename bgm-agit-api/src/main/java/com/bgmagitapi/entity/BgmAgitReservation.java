@@ -55,13 +55,19 @@ public class BgmAgitReservation {
     @Column(name = "BGM_AGIT_RESERVATION_APPROVAL_STATUS")
     private String bgmAgitReservationApprovalStatus;
     
-    public BgmAgitReservation(BgmAgitMember member, BgmAgitImage image, BgmAgitReservationCreateRequest request, LocalTime maxTime, LocalTime minTime) {
+    public BgmAgitReservation(BgmAgitMember member,
+                              BgmAgitImage image,
+                              String reservationType,         // request 대신 필요한 값만 받자
+                              LocalTime startTime,
+                              LocalTime endTime,
+                              LocalDate reservationDate) {   // String → 파싱된 LocalDate
+        
         this.bgmAgitMember = member;
         this.bgmAgitImage = image;
-        this.reservation = Reservation.valueOf(request.getBgmAgitReservationType());
-        this.bgmAgitReservationStartDate = request.getBgmAgitReservationStartDate();
-        this.bgmAgitReservationStartTime = minTime;
-        this.bgmAgitReservationEndTime = maxTime;
+        this.reservation = Reservation.valueOf(reservationType);
+        this.bgmAgitReservationStartDate = reservationDate;
+        this.bgmAgitReservationStartTime = startTime;
+        this.bgmAgitReservationEndTime = endTime;
         this.bgmAgitReservationApprovalStatus = "N";
     }
 }
