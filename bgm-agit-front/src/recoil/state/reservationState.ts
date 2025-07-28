@@ -1,7 +1,7 @@
 import { atom } from 'recoil';
-import type { reservationData } from '../../types/Reservation.ts';
+import type { ReservationData } from '../../types/reservation.ts';
 
-export const reservationState = atom<reservationData>({
+export const reservationState = atom<ReservationData>({
   key: 'reservationState',
   default: {
     date: '',
@@ -11,7 +11,7 @@ export const reservationState = atom<reservationData>({
   },
 });
 
-export const reservationDataState = atom<reservationData | null>({
+export const reservationDataState = atom<ReservationData | null>({
   key: 'reservationDataState',
   default: null,
 });

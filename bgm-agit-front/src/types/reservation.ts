@@ -1,4 +1,4 @@
-export type reservationData = {
+export type ReservationData = {
   date: string;
   labelGb: number;
   link: string;
@@ -16,7 +16,7 @@ export type ReservationPriceDto = {
   colorGb: boolean;
 };
 
-export type reservationDatas = {
+export type ReservationDatas = {
   date: string;
   labelGb: number;
   id: number;

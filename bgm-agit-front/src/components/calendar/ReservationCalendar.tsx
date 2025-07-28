@@ -6,7 +6,7 @@ import { FaUsers } from 'react-icons/fa';
 import type { WithTheme } from '../../styles/styled-props';
 import { useRecoilValue } from 'recoil';
 import { reservationDataState, reservationState } from '../../recoil/state/reservationState.ts';
-import type { reservationDatas } from '../../types/Reservation.ts';
+import type { ReservationDatas } from '../../types/reservation.ts';
 
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import { userState } from '../../recoil/state/userState.ts';
@@ -16,7 +16,7 @@ import type { AxiosRequestHeaders } from 'axios';
 import { toast } from 'react-toastify';
 
 export default function ReservationCalendar({ id }: { id?: number }) {
-  const reservation = useRecoilValue<reservationDatas>(reservationState);
+  const reservation = useRecoilValue<ReservationDatas>(reservationState);
   const fetchReservation = useReservationFetch();
   const reservationData = useRecoilValue(reservationDataState);
   const today = new Date();
@@ -78,7 +78,7 @@ export default function ReservationCalendar({ id }: { id?: number }) {
           window.location.href = kakaoAuthUrl;
         } else {
           const token = sessionStorage.getItem('token');
-
+          console.log('valu1231231231312e', selectedTimes);
           insert({
             headers: {
               Authorization: `Bearer ${token}`,

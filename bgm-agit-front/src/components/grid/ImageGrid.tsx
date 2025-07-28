@@ -4,7 +4,7 @@ import type { WithTheme } from '../../styles/styled-props.ts';
 import { FaUsers } from 'react-icons/fa';
 import ImageLightbox from '../ImageLightbox.tsx';
 import SearchBar from '../SearchBar.tsx';
-import type { reservationData } from '../../types/Reservation.ts';
+import type { ReservationData } from '../../types/reservation.ts';
 import ReservationCalendar from '../calendar/ReservationCalendar.tsx';
 import { useReservationFetch } from '../../recoil/fetch.ts';
 import { useRecoilState } from 'recoil';
@@ -76,7 +76,7 @@ export default function ImageGrid({ pageData }: Props) {
       link: item.link,
       id: item.imageId,
       date: today,
-    } as reservationData;
+    } as ReservationData;
 
     setReservationData(newItem);
   }
@@ -95,7 +95,6 @@ export default function ImageGrid({ pageData }: Props) {
 
   useEffect(() => {
     if (reservationData && reservationData.id && reservationData.labelGb === 3) {
-      console.log('reservationData', reservationData);
       fetchReservation(reservationData);
     }
   }, [reservationData]);

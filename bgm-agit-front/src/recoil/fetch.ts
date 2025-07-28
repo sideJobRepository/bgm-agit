@@ -3,12 +3,14 @@ import { useSetRecoilState } from 'recoil';
 import { mainDataState, mainMenuState } from './state/mainState.ts';
 import api from '../utils/axiosInstance';
 import { useRequest } from './useRequest.ts';
-import type { reservationData } from '../types/Reservation.ts';
+import type { ReservationData } from '../types/reservation.ts';
 import { reservationState } from './state/reservationState.ts';
 import { userState } from './state/userState.ts';
 import { jwtDecode } from 'jwt-decode';
 import { toast } from 'react-toastify';
 import type { AxiosRequestHeaders } from 'axios';
+import { noticeState } from './state/noticeState.ts';
+import type { params } from '../types/notice.ts';
 
 interface InsertOptions<T> {
   url: string;
@@ -48,7 +50,7 @@ export function useReservationFetch() {
   const { request } = useRequest();
   const setReservation = useSetRecoilState(reservationState);
 
-  const fetchReservation = (params: reservationData) => {
+  const fetchReservation = (params: ReservationData) => {
     request(
       () => api.get('/bgm-agit/reservation', { params }).then(res => res.data),
       setReservation
@@ -56,6 +58,17 @@ export function useReservationFetch() {
   };
 
   return fetchReservation;
+}
+
+export function useNoticeFetch() {
+  const { request } = useRequest();
+  const setNotice = useSetRecoilState(noticeState);
+
+  const fetchNotice = (params: params) => {
+    request(() => api.get('/bgm-agit/notice', { params }).then(res => res.data), setNotice);
+  };
+
+  return fetchNotice;
 }
 
 export function useLoginPost() {

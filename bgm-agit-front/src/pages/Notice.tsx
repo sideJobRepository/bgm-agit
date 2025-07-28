@@ -2,62 +2,75 @@ import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { useMediaQuery } from 'react-responsive';
 import { Wrapper } from '../styles';
+import SearchBar from '../components/SearchBar.tsx';
+import { useEffect, useState } from 'react';
+import { useNoticeFetch } from '../recoil/fetch.ts';
+import { useRecoilValue } from 'recoil';
+import { noticeState } from '../recoil/state/noticeState.ts';
 
 interface NoticeProps {
   mainGb: boolean;
 }
 
 export default function Notice({ mainGb }: NoticeProps) {
+  const fetchNotice = useNoticeFetch();
+  const items = useRecoilValue(noticeState);
+  console.log('items', items);
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
 
-  const items = [
-    { id: 1, title: 'BGM 아지트 여름 휴가 안내', date: '2025.08.30', category: '공지' },
-    { id: 2, title: '멤버십 이벤트 안내', date: '2025.08.29', category: '이벤트' },
-    { id: 3, title: '여름맞이 음료 추가 안내', date: '2025.08.24', category: '공지' },
-    {
-      id: 4,
-      title: '동호회 가입하고 무료 포인트 받자!',
-      date: '2025.08.01',
-      category: '이벤트',
-    },
-    {
-      id: 5,
-      title: 'BGM 아지트 홈페이지 오픈 이벤트!',
-      date: '2025.07.29',
-      category: '이벤트',
-    },
-    {
-      id: 6,
-      title: 'BGM 아지트 홈페이지 오픈',
-      date: '2025.07.22',
-      category: '공지',
-    },
-  ];
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [page, setPage] = useState(0);
+
+  useEffect(() => {
+    fetchNotice({ page, titleOrCont: searchKeyword });
+  }, [page, searchKeyword]);
+
+  const handlePageClick = (pageNum: number) => {
+    setPage(pageNum);
+  };
 
   return (
     <>
       {mainGb ? (
         <Wrapper>
-          <Table>
-            <thead>
-              <tr>
-                <Th>번호</Th>
-                <Th>제목</Th>
-                {!isMobile && <Th>날짜</Th>}
-                <Th>분류</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map(notice => (
-                <tr key={notice.id}>
-                  <Td>{notice.id}</Td>
-                  <Td>{notice.title}</Td>
-                  <Td>{notice.date}</Td>
-                  {!isMobile && <Td>{notice.category}</Td>}
+          <NoticeBox>
+            <SearchWrapper bgColor="#988271">
+              <TitleBox textColor="#ffffff">
+                <h2>News & Updates</h2>
+                <p>공지사항 및 이벤트를 빠르게 확인해보세요.</p>
+              </TitleBox>
+              <SearchBox>
+                <SearchBar color="#988271" label="제목 및 내용" onSearch={setSearchKeyword} />
+              </SearchBox>
+            </SearchWrapper>
+            <Table>
+              <thead>
+                <tr>
+                  <Th>번호</Th>
+                  <Th>제목</Th>
+                  {!isMobile && <Th>날짜</Th>}
+                  <Th>분류</Th>
                 </tr>
+              </thead>
+              <tbody>
+                {items?.content?.map(notice => (
+                  <tr key={notice.bgmAgitNoticeId}>
+                    <Td>{notice.bgmAgitNoticeId}</Td>
+                    <Td>{notice.bgmAgitNoticeTitle}</Td>
+                    {!isMobile && <Td>{notice.bgmAgitNoticeRegdate?.substring(0, 10)}</Td>}
+                    <Td>{notice.bgmAgitNoticeType === 'NOTICE' ? '공지' : '이벤트'}</Td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+            <PaginationWrapper>
+              {[...Array(items?.totalPages ?? 0)].map((_, idx) => (
+                <PageButton key={idx} active={idx === page} onClick={() => handlePageClick(idx)}>
+                  {idx + 1}
+                </PageButton>
               ))}
-            </tbody>
-          </Table>
+            </PaginationWrapper>
+          </NoticeBox>
         </Wrapper>
       ) : (
         <Table>
@@ -70,12 +83,11 @@ export default function Notice({ mainGb }: NoticeProps) {
             </tr>
           </thead>
           <tbody>
-            {items.map(notice => (
-              <tr key={notice.id}>
-                <Td>{notice.id}</Td>
-                <Td>{notice.title}</Td>
-                <Td>{notice.date}</Td>
-                {!isMobile && <Td>{notice.category}</Td>}
+            {items?.content.slice(0, 6).map(notice => (
+              <tr key={notice.bgmAgitNoticeId}>
+                <Td>{notice.bgmAgitNoticeId}</Td>
+                <Td>{notice.bgmAgitNoticeTitle}</Td>
+                <Td>{notice.bgmAgitNoticeType === 'NOTICE' ? '공지' : '이벤트'}</Td>
               </tr>
             ))}
           </tbody>
@@ -84,6 +96,10 @@ export default function Notice({ mainGb }: NoticeProps) {
     </>
   );
 }
+
+const NoticeBox = styled.div`
+  padding: 10px;
+`;
 
 const Table = styled.table<WithTheme>`
   width: 100%;
@@ -124,3 +140,81 @@ const Th = styled.th<WithTheme>`
 `;
 
 const Td = styled.td``;
+
+const SearchWrapper = styled.div.withConfig({
+  shouldForwardProp: prop => prop !== 'bgColor',
+})<{ bgColor: string } & WithTheme>`
+  display: flex;
+  width: 100%;
+  background-color: ${({ bgColor }) => bgColor};
+  padding: 20px;
+  align-items: center;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    flex-direction: column;
+    padding: 10px;
+  }
+`;
+
+const TitleBox = styled.div.withConfig({
+  shouldForwardProp: prop => prop !== 'textColor',
+})<{ textColor: string } & WithTheme>`
+  display: flex;
+  flex-direction: column;
+  width: 60%;
+  height: 60px;
+  color: ${({ textColor }) => textColor};
+
+  h2 {
+    font-family: 'Bungee', sans-serif;
+    font-weight: ${({ theme }) => theme.weight.bold};
+    font-size: ${({ theme }) => theme.sizes.xxlarge};
+  }
+  p {
+    margin-top: auto;
+    font-weight: ${({ theme }) => theme.weight.semiBold};
+    font-size: ${({ theme }) => theme.sizes.medium};
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 100%;
+    height: 40px;
+    text-align: center;
+    margin-bottom: 10px;
+
+    h2 {
+      font-size: ${({ theme }) => theme.sizes.large};
+    }
+    p {
+      font-size: ${({ theme }) => theme.sizes.xsmall};
+    }
+  }
+`;
+
+const SearchBox = styled.div<WithTheme>`
+  width: 40%;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 100%;
+  }
+`;
+
+const PaginationWrapper = styled.div`
+  text-align: center;
+  margin-top: 20px;
+`;
+
+const PageButton = styled.button<{ active: boolean } & WithTheme>`
+  margin: 0 5px;
+  padding: 4px 8px;
+  border: 1px solid ${({ theme }) => theme.colors.basicColor};
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: ${({ active, theme }) =>
+    active ? theme.colors.noticeColor : theme.colors.white};
+  color: ${({ active, theme }) => (active ? theme.colors.white : theme.colors.subColor)};
+
+  &:hover {
+    opacity: 0.8;
+  }
+`;
