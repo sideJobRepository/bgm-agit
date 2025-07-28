@@ -99,11 +99,11 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
         );
         bgmAgitNoticeRepository.save(notice);
 
-// 2. S3 업로드
+        // 2. S3 업로드
         List<MultipartFile> files = request.getFiles();
         List<UploadResult> uploadResults = s3FileUtils.storeFiles(files);
 
-// 3. 파일 테이블 저장
+        // 3. 파일 테이블 저장
         List<BgmAgitNoticeFile> noticeFileEntities = new ArrayList<>();
         for (int i = 0; i < files.size(); i++) {
             MultipartFile multipartFile = files.get(i);

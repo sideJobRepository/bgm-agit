@@ -154,7 +154,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     
     @Override
     public ApiResponse createReservation(BgmAgitReservationCreateRequest request, Long userId) {
-        List<String> timeList = request.getStartTimeEndTime();
+        List<String> timeList = request.getReservationExpandedTimeSlots();
 
         // 날짜 보정
         String dateStr = request.getBgmAgitReservationStartDate(); // "2025-07-27T15:00:00.000Z"
@@ -178,25 +178,27 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .collect(Collectors.toSet());
         
         // 신규 예약 생성
-        for (int i = 0; i < timeList.size() - 1; i++) {
-            String startRaw = timeList.get(i);
-            String endRaw = timeList.get(i + 1);
+        for (String timeSlot : timeList) {
+            // "14:00 ~ 15:00" → ["14:00", "15:00"]
+            String[] times = timeSlot.split(" ~ ");
+            if (times.length != 2) {
+                throw new IllegalArgumentException("잘못된 시간 슬롯 형식입니다: " + timeSlot);
+            }
             
-            LocalTime startTime = LocalTime.parse(startRaw);
-            LocalTime endTime = LocalTime.parse(endRaw);
+            LocalTime startTime = LocalTime.parse(times[0]);
+            LocalTime endTime = LocalTime.parse(times[1]);
             
             String slotKey = startTime + "-" + endTime;
-            
             if (existingTimeSlots.contains(slotKey)) {
                 throw new ReservationConflictException("이미 예약된 시간대입니다: " + slotKey);
             }
-            
             
             BgmAgitReservation reservation = new BgmAgitReservation(
                     member, image, reservationType, startTime, endTime, kstDate
             );
             bgmAgitReservationRepository.save(reservation);
         }
+        
         
         return new ApiResponse(200, true, "예약이 완료되었습니다.");
     }
