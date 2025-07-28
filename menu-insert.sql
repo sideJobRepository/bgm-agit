@@ -84,4 +84,29 @@ INSERT INTO BGMAGIT.BGM_AGIT_URL_RESOURCES_ROLE (BGM_AGIT_ROLE_ID, BGM_AGIT_URL_
 INSERT INTO BGMAGIT.BGM_AGIT_URL_RESOURCES_ROLE (BGM_AGIT_ROLE_ID, BGM_AGIT_URL_RESOURCES_ID) VALUES (1, 3);
 INSERT INTO BGMAGIT.BGM_AGIT_URL_RESOURCES_ROLE (BGM_AGIT_ROLE_ID, BGM_AGIT_URL_RESOURCES_ID) VALUES (2, 4);
 
+
+
+INSERT INTO BGM_AGIT_NOTICE (BGM_AGIT_NOTICE_TITLE, BGM_AGIT_NOTICE_CONT, BGM_AGIT_NOTICE_TYPE)
+VALUES
+    ('테스트 제목 1', '테스트 내용 1', 'EVENT'),
+    ('테스트 제목 2', '테스트 내용 2', 'NOTICE'),
+    ('테스트 제목 3', '테스트 내용 3', 'EVENT'),
+    ('테스트 제목 4', '테스트 내용 4', 'NOTICE'),
+    ('테스트 제목 5', '테스트 내용 5', 'EVENT'),
+    ('테스트 제목 6', '테스트 내용 6', 'NOTICE'),
+    ('테스트 제목 7', '테스트 내용 7', 'EVENT'),
+    ('테스트 제목 8', '테스트 내용 8', 'NOTICE'),
+    ('테스트 제목 9', '테스트 내용 9', 'EVENT'),
+    ('테스트 제목 10', '테스트 내용 10', 'NOTICE'),
+    ('테스트 제목 11', '테스트 내용 11', 'EVENT'),
+    ('테스트 제목 12', '테스트 내용 12', 'NOTICE'),
+    ('테스트 제목 13', '테스트 내용 13', 'EVENT'),
+    ('테스트 제목 14', '테스트 내용 14', 'NOTICE'),
+    ('테스트 제목 15', '테스트 내용 15', 'EVENT'),
+    ('테스트 제목 16', '테스트 내용 16', 'NOTICE'),
+    ('테스트 제목 17', '테스트 내용 17', 'EVENT'),
+    ('테스트 제목 18', '테스트 내용 18', 'NOTICE'),
+    ('테스트 제목 19', '테스트 내용 19', 'EVENT'),
+    ('테스트 제목 20', '테스트 내용 20', 'NOTICE');
+
 commit;
