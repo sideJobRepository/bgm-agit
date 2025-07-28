@@ -156,7 +156,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     public ApiResponse createReservation(BgmAgitReservationCreateRequest request, Long userId) {
         List<String> timeList = request.getStartTimeEndTime();
 
-// 날짜 보정
+        // 날짜 보정
         String dateStr = request.getBgmAgitReservationStartDate(); // "2025-07-27T15:00:00.000Z"
         Instant instant = Instant.parse(dateStr);
         LocalDate kstDate = instant.atZone(ZoneId.of("Asia/Seoul")).toLocalDate();

@@ -69,7 +69,14 @@ class BgmAgitReservationServiceImplTest extends RepositoryAndServiceTestSupport 
                 request,
                 userId
         );
-        
+    }
     
+    @DisplayName("")
+    @Test
+    void test(){
+        Long userId = 6L;
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "bgmAgitReservationId"));
+        Page<BgmAgitReservationDetailResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(userId, pageable);
+        System.out.println("reservationDetail = " + reservationDetail);
     }
 }
