@@ -11,8 +11,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class BgmAgitNoticeServiceImplTest extends RepositoryAndServiceTestSupport {
     
     
@@ -24,7 +22,10 @@ class BgmAgitNoticeServiceImplTest extends RepositoryAndServiceTestSupport {
     void test(){
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "bgmAgitNoticeId"));
         
-        Page<BgmAgitNoticeResponse> result = bgmAgitNoticeService.getNotice(pageable);
+        String title = "테스트 제목";
+        String cont = "테스트 내용 2";
+        
+        Page<BgmAgitNoticeResponse> result = bgmAgitNoticeService.getNotice(pageable, title, cont);
         System.out.println("result = " + result);
     
     }

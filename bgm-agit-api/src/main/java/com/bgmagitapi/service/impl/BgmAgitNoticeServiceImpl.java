@@ -14,6 +14,7 @@ import com.bgmagitapi.entity.QBgmAgitNoticeFile;
 import com.bgmagitapi.repository.BgmAgitNoticeFileRepository;
 import com.bgmagitapi.repository.BgmAgitNoticeRepository;
 import com.bgmagitapi.service.BgmAgitNoticeService;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -22,13 +23,14 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.bgmagitapi.entity.QBgmAgitNotice.bgmAgitNotice;
-import static com.bgmagitapi.entity.QBgmAgitNoticeFile.bgmAgitNoticeFile;
 
 @Transactional
 @Service
@@ -45,11 +47,15 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
     
     @Override
     @Transactional(readOnly = true)
-    public Page<BgmAgitNoticeResponse> getNotice(Pageable pageable) {
+    public Page<BgmAgitNoticeResponse> getNotice(Pageable pageable, String title, String cont) {
+        BooleanBuilder booleanBuilder = getBooleanBuilder(title, cont);
+        
+        
         // 전체 개수 쿼리
         JPAQuery<Long> countQuery = queryFactory
                 .select(bgmAgitNotice.count())
-                .from(bgmAgitNotice);
+                .from(bgmAgitNotice)
+                .where(booleanBuilder);
         Long total = countQuery.fetchOne();
         if (total == null) {
             total = 0L;
@@ -64,14 +70,19 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
                 .leftJoin(bgmAgitNotice.bgmAgitNoticeFiles, bgmAgitNoticeFile).fetchJoin()
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
+                .where(booleanBuilder)
                 .orderBy(bgmAgitNotice.bgmAgitNoticeId.desc())
                 .fetch();
         // DTO 변환
+        
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        
         List<BgmAgitNoticeResponse> content = result.stream()
                 .map(n -> new BgmAgitNoticeResponse(
                         n.getBgmAgitNoticeId(),
                         n.getBgmAgitNoticeTitle(),
                         n.getBgmAgitNoticeCont(),
+                        n.getRegistDate().format(dateFormatter), // 날짜 포맷 적용!
                         n.getBgmAgitNoticeType().name(),
                         n.getBgmAgitNoticeFiles().stream()
                                 .map(f -> new BgmAgitNoticeFileResponse(
@@ -86,6 +97,18 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
         
         // Page 반환
         return new PageImpl<>(content, pageable, total);
+    }
+    
+    private BooleanBuilder getBooleanBuilder(String title, String cont) {
+        BooleanBuilder booleanBuilder = new  BooleanBuilder();
+        if(StringUtils.hasText(title)){
+            booleanBuilder.and(bgmAgitNotice.bgmAgitNoticeTitle.like("%"+ title +"%"));
+        }
+        
+        if(StringUtils.hasText(cont)){
+            booleanBuilder.and(bgmAgitNotice.bgmAgitNoticeCont.like("%"+ cont +"%"));
+        }
+        return booleanBuilder;
     }
     
     @Override
