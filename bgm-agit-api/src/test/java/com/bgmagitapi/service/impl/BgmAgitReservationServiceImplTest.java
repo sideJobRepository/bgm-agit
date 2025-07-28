@@ -17,7 +17,7 @@ class BgmAgitReservationServiceImplTest extends RepositoryAndServiceTestSupport 
     
     @DisplayName("")
     @Test
-    void test() throws JsonProcessingException {
+    void test1() throws JsonProcessingException {
         
         
         BgmAgitReservationResponse reservation = bgmAgitReservationService.getReservation(
@@ -29,6 +29,16 @@ class BgmAgitReservationServiceImplTest extends RepositoryAndServiceTestSupport 
         
         String s = objectMapper.writeValueAsString(reservation);
         System.out.println(s);
+    }
+    
+    @DisplayName("")
+    @Test
+    void test2(){
+        //given
         
+        //when
+        
+        //then
+    
     }
 }

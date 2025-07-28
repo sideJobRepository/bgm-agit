@@ -22,7 +22,7 @@ class BgmAgitNoticeServiceImplTest extends RepositoryAndServiceTestSupport {
     @DisplayName("")
     @Test
     void test(){
-        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "bgmAgitNoticeId"));
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "bgmAgitNoticeId"));
         
         Page<BgmAgitNoticeResponse> result = bgmAgitNoticeService.getNotice(pageable);
         System.out.println("result = " + result);

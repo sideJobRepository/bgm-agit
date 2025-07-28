@@ -1,6 +1,7 @@
 package com.bgmagitapi.service.impl;
 
 import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.controller.response.BgmAgitReservationDetailResponse;
 import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.controller.response.reservation.ReservedTimeDto;
@@ -14,8 +15,12 @@ import com.bgmagitapi.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.service.BgmAgitReservationService;
 import com.bgmagitapi.util.LunarCalendar;
 import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +31,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.bgmagitapi.entity.QBgmAgitImage.bgmAgitImage;
+import static com.bgmagitapi.entity.QBgmAgitNotice.bgmAgitNotice;
 import static com.bgmagitapi.entity.QBgmAgitReservation.bgmAgitReservation;
 
 @Transactional
@@ -179,5 +185,39 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             bgmAgitReservationRepository.save(reservation);
         }
         return new ApiResponse(200,true,"예약이 완료되었습니다.");
+    }
+    
+    @Override
+    public Page<BgmAgitReservationDetailResponse> getReservationDetail(Jwt jwt, Pageable pageable) {
+        Long memberId = jwt.getClaim("id");
+        BgmAgitMember bgmAgitMember = bgmAgitMemberRepository.findById(memberId).orElseThrow(() -> new RuntimeException("Member Not Found"));
+        JPAQuery<Long> countQuery = queryFactory
+                .select(bgmAgitReservation.count())
+                .from(bgmAgitReservation)
+                .where(bgmAgitReservation.bgmAgitMember.bgmAgitMemberId.eq(bgmAgitMember.getBgmAgitMemberId()));
+        Long total = countQuery.fetchOne();
+        if (total == null) {
+            total = 0L;
+        }
+        
+        List<BgmAgitReservationDetailResponse> content = queryFactory
+                .select(Projections.constructor(
+                        BgmAgitReservationDetailResponse.class,
+                        bgmAgitReservation.bgmAgitReservationId,
+                        bgmAgitReservation.bgmAgitMember.bgmAgitMemberId,
+                        bgmAgitReservation.bgmAgitImage.bgmAgitImageId,
+                        bgmAgitReservation.reservation,
+                        bgmAgitReservation.bgmAgitReservationStartDate,
+                        bgmAgitReservation.bgmAgitReservationStartTime,
+                        bgmAgitReservation.bgmAgitReservationEndTime
+                ))
+                .from(bgmAgitReservation)
+                .where(bgmAgitReservation.bgmAgitMember.bgmAgitMemberId.eq(bgmAgitMember.getBgmAgitMemberId()))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+        
+        
+        return new PageImpl<>(content, pageable, total);
     }
 }
