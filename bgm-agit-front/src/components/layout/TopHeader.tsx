@@ -23,7 +23,6 @@ export default function TopHeader() {
 
   const menus = useRecoilValue(mainMenuState);
 
-  console.log('menus', menus);
   const navigate = useNavigate();
 
   const location = useLocation();
@@ -124,7 +123,7 @@ export default function TopHeader() {
       </Left>
       <Center onMouseEnter={() => setIsSubOpen(true)}>
         <ul>
-          {menus.map((menu, i) => (
+          {menus?.map((menu, i) => (
             <li key={i}>
               <a>{menu.name}</a>
             </li>

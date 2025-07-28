@@ -37,7 +37,21 @@ export default function ImageGrid({ pageData }: Props) {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState(-1);
 
-  const today = new Date().toISOString();
+  function getKoreanDateString(): string {
+    const now = new Date();
+
+    const offsetDate = new Date(now.getTime() + 9 * 60 * 60 * 1000); // 9시간 더함
+
+    const year = offsetDate.getUTCFullYear();
+    const month = String(offsetDate.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(offsetDate.getUTCDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
+  // 사용 예시
+  const today = getKoreanDateString();
+  console.log('today', today);
 
   const { items, labelGb, bgColor, textColor, searchColor, label, title, subTitle, columnCount } =
     pageData;
@@ -81,6 +95,7 @@ export default function ImageGrid({ pageData }: Props) {
 
   useEffect(() => {
     if (reservationData && reservationData.id && reservationData.labelGb === 3) {
+      console.log('reservationData', reservationData);
       fetchReservation(reservationData);
     }
   }, [reservationData]);

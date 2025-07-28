@@ -77,17 +77,7 @@ export default function ReservationCalendar({ id }: { id?: number }) {
           const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URL}&response_type=code`;
           window.location.href = kakaoAuthUrl;
         } else {
-          // 예약 전송 예정
           const token = sessionStorage.getItem('token');
-
-          const test = {
-            bgmAgitImageId: id,
-            bgmAgitReservationType: 'ROOM',
-            bgmAgitReservationStartDate: value.toLocaleDateString('sv-SE'),
-            startTimeEndTime: selectedTimes,
-          };
-
-          console.log('=------------rPTks', test);
 
           insert({
             headers: {
@@ -105,7 +95,10 @@ export default function ReservationCalendar({ id }: { id?: number }) {
               console.log('data', data);
               toast.success('예약이 성공하였습니다.');
 
-              if (reservationData) fetchReservation(reservationData);
+              if (reservationData) {
+                setSelectedTimes([]);
+                fetchReservation(reservationData);
+              }
             },
           });
         }
