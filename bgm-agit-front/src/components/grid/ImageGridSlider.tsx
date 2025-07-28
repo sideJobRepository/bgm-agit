@@ -76,8 +76,11 @@ export default function ImageGridSlider({ items, visibleCount, labelGb, interval
                   alt={`img-${idx}`}
                   draggable={false}
                   onClick={() => {
-                    if (item.link !== null) {
+                    if (item.link !== null && item.link !== 'kakao') {
                       navigate(item.link);
+                    } else if (item.link === 'kakao') {
+                      //카카오 링크 이동 마작 강의
+                      window.open('https://open.kakao.com/o/snQNUPre', '_blank');
                     } else {
                       handleImageClick(idx);
                     }

@@ -23,8 +23,6 @@ export default function TopHeader() {
 
   const menus = useRecoilValue(mainMenuState);
 
-  console.log('menus', menus);
-
   const navigate = useNavigate();
 
   const location = useLocation();

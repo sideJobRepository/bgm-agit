@@ -150,7 +150,7 @@ export default function About() {
                 image: '/images/roomAbout2.png',
                 label: '대탁 예약하기',
                 group: null,
-                link: '/reservation',
+                link: '',
               },
               {
                 imageId: 1,
@@ -158,7 +158,7 @@ export default function About() {
                 image: '/images/roomAbout3.png',
                 label: '마작 강의 예약하기',
                 group: null,
-                link: '/reservation',
+                link: 'kakao',
               },
             ]}
           />
