@@ -158,7 +158,6 @@ CREATE TABLE BGM_AGIT_RESERVATION
     `BGM_AGIT_IMAGE_ID`                     BIGINT          NULL        COMMENT 'BGM 아지트 이미지 ID',
     `BGM_AGIT_RESERVATION_TYPE`             VARCHAR(100)    NULL        COMMENT 'BGM 아지트 예약 타입',
     `BGM_AGIT_RESERVATION_START_DATE`       DATE            NULL        COMMENT 'BGM 아지트 예약 시작 일시',
-    `BGM_AGIT_RESERVATION_END_DATE`         DATE            NULL        COMMENT 'BGM 아지트 예약 종료 일시',
     `BGM_AGIT_RESERVATION_START_TIME`       TIME            NULL        COMMENT 'BGM 아지트 예약 시작 시간',
     `BGM_AGIT_RESERVATION_END_TIME`         TIME            NULL        COMMENT 'BGM 아지트 예약 종료 시간',
     `BGM_AGIT_RESERVATION_APPROVAL_STATUS`  VARCHAR(1)      NULL        DEFAULT 'N' COMMENT 'BGM 아지트 예약 승인 여부. ''N''',
