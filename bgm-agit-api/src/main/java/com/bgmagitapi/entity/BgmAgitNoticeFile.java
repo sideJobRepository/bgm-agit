@@ -4,12 +4,14 @@ import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 
 @Entity
 @Getter
-@Table(name = "BGM_AGIT_NOTICE")
+@Table(name = "BGM_AGIT_NOTICE_FILE")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BgmAgitNoticeFile extends DateSuperClass {
     
     
@@ -22,7 +24,6 @@ public class BgmAgitNoticeFile extends DateSuperClass {
     // BGM 아지트 공지사항 ID
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "BGM_AGIT_NOTICE_ID")
-    @Setter(AccessLevel.PACKAGE) // 또는 AccessLevel.PRIVATE
     private BgmAgitNotice bgmAgitNotice;
     
     // BGM 아지트 공지사항 파일 이름

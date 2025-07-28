@@ -7,6 +7,10 @@ import com.bgmagitapi.controller.request.BgmAgitNoticeModifyRequest;
 import com.bgmagitapi.controller.response.notice.BgmAgitNoticeResponse;
 import com.bgmagitapi.service.BgmAgitNoticeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,10 +23,9 @@ public class BgmAgitNoticeController {
     private final BgmAgitNoticeService bgmAgitNoticeService;
     
     @GetMapping("/notice")
-    public List<BgmAgitNoticeResponse> getNotice() {
-        return bgmAgitNoticeService.getNotice();
+    public Page<BgmAgitNoticeResponse> getNotice(@PageableDefault(size = 10, sort = "bgmAgitNoticeId", direction = Sort.Direction.DESC) Pageable pageable) {
+        return bgmAgitNoticeService.getNotice(pageable);
     }
-    
     @PostMapping("/notice")
     public ApiResponse createNotice(@RequestBody BgmAgitNoticeCreateRequest request) {
         return bgmAgitNoticeService.createNotice(request);

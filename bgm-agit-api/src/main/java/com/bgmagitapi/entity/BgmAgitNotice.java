@@ -39,7 +39,8 @@ public class BgmAgitNotice extends DateSuperClass {
     @Enumerated(EnumType.STRING)
     private BgmAgitNoticeType bgmAgitNoticeType;
     
-    @OneToMany(mappedBy = "bgmAgitNotice", cascade = CascadeType.ALL, orphanRemoval = true)
+    
+    @OneToMany(mappedBy = "bgmAgitNotice", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.LAZY)
     private List<BgmAgitNoticeFile> bgmAgitNoticeFiles = new ArrayList<>();
     
     

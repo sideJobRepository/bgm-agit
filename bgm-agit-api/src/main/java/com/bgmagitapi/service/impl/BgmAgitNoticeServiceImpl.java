@@ -9,11 +9,17 @@ import com.bgmagitapi.controller.response.notice.BgmAgitNoticeFileResponse;
 import com.bgmagitapi.controller.response.notice.BgmAgitNoticeResponse;
 import com.bgmagitapi.entity.BgmAgitNotice;
 import com.bgmagitapi.entity.BgmAgitNoticeFile;
+import com.bgmagitapi.entity.QBgmAgitNotice;
+import com.bgmagitapi.entity.QBgmAgitNoticeFile;
 import com.bgmagitapi.repository.BgmAgitNoticeFileRepository;
 import com.bgmagitapi.repository.BgmAgitNoticeRepository;
 import com.bgmagitapi.service.BgmAgitNoticeService;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,13 +45,29 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<BgmAgitNoticeResponse> getNotice() {
+    public Page<BgmAgitNoticeResponse> getNotice(Pageable pageable) {
+        // 전체 개수 쿼리
+        JPAQuery<Long> countQuery = queryFactory
+                .select(bgmAgitNotice.count())
+                .from(bgmAgitNotice);
+        Long total = countQuery.fetchOne();
+        if (total == null) {
+            total = 0L;
+        }
+        
+        // 데이터 쿼리
+        QBgmAgitNotice bgmAgitNotice = QBgmAgitNotice.bgmAgitNotice;
+        QBgmAgitNoticeFile bgmAgitNoticeFile = QBgmAgitNoticeFile.bgmAgitNoticeFile;
+        
         List<BgmAgitNotice> result = queryFactory
                 .selectFrom(bgmAgitNotice)
                 .leftJoin(bgmAgitNotice.bgmAgitNoticeFiles, bgmAgitNoticeFile).fetchJoin()
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .orderBy(bgmAgitNotice.bgmAgitNoticeId.desc())
                 .fetch();
-        
-        return result.stream()
+        // DTO 변환
+        List<BgmAgitNoticeResponse> content = result.stream()
                 .map(n -> new BgmAgitNoticeResponse(
                         n.getBgmAgitNoticeId(),
                         n.getBgmAgitNoticeTitle(),
@@ -61,6 +83,9 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
                                 .toList()
                 ))
                 .toList();
+        
+        // Page 반환
+        return new PageImpl<>(content, pageable, total);
     }
     
     @Override
