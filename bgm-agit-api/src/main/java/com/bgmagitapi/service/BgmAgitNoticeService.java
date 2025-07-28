@@ -3,7 +3,7 @@ package com.bgmagitapi.service;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.controller.request.BgmAgitNoticeCreateRequest;
 import com.bgmagitapi.controller.request.BgmAgitNoticeModifyRequest;
-import com.bgmagitapi.controller.response.BgmAgitNoticeResponse;
+import com.bgmagitapi.controller.response.notice.BgmAgitNoticeResponse;
 
 import java.util.List;
 
@@ -16,5 +16,5 @@ public interface BgmAgitNoticeService {
     
     ApiResponse modifyNotice(BgmAgitNoticeModifyRequest request);
     
-    ApiResponse deleteNotice(Integer noticeId);
+    ApiResponse deleteNotice(Long noticeId);
 }

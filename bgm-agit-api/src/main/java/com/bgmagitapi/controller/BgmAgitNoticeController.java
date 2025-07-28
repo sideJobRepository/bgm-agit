@@ -1,12 +1,15 @@
 package com.bgmagitapi.controller;
 
+import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.controller.request.BgmAgitDeleteRequest;
+import com.bgmagitapi.controller.request.BgmAgitNoticeCreateRequest;
+import com.bgmagitapi.controller.request.BgmAgitNoticeModifyRequest;
+import com.bgmagitapi.controller.response.notice.BgmAgitNoticeResponse;
 import com.bgmagitapi.service.BgmAgitNoticeService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -16,26 +19,24 @@ public class BgmAgitNoticeController {
     private final BgmAgitNoticeService bgmAgitNoticeService;
     
     @GetMapping("/notice")
-    public String getNotice() {
-        return null;
+    public List<BgmAgitNoticeResponse> getNotice() {
+        return bgmAgitNoticeService.getNotice();
     }
     
     @PostMapping("/notice")
-    public String createNotice(@AuthenticationPrincipal Jwt jwt) {
-        Object id = jwt.getClaim("id");
-        System.out.println("jwt = " + jwt);
-        return null;
+    public ApiResponse createNotice(@RequestBody BgmAgitNoticeCreateRequest request) {
+        return bgmAgitNoticeService.createNotice(request);
     }
     
     
     @PutMapping("/notice")
-    public String modifyNotice() {
-        return null;
+    public ApiResponse modifyNotice(@RequestBody BgmAgitNoticeModifyRequest request) {
+        return bgmAgitNoticeService.modifyNotice(request);
     }
     
     
     @DeleteMapping("/notice")
-    public String deleteNotice() {
-        return null;
+    public ApiResponse deleteNotice(@RequestBody BgmAgitDeleteRequest request) {
+        return bgmAgitNoticeService.deleteNotice(request.getBgmAgitNoticeId());
     }
 }

@@ -2,7 +2,9 @@ package com.bgmagitapi.entity;
 
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
 
 
 @Entity
@@ -20,6 +22,7 @@ public class BgmAgitNoticeFile extends DateSuperClass {
     // BGM 아지트 공지사항 ID
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "BGM_AGIT_NOTICE_ID")
+    @Setter(AccessLevel.PACKAGE) // 또는 AccessLevel.PRIVATE
     private BgmAgitNotice bgmAgitNotice;
     
     // BGM 아지트 공지사항 파일 이름
@@ -34,4 +37,15 @@ public class BgmAgitNoticeFile extends DateSuperClass {
     @Column(name = "BGM_AGIT_NOTICE_FILE_URL")
     private String bgmAgitNoticeFileUrl;
     
+    
+    public void setNoticeInternal(BgmAgitNotice notice) {
+        this.bgmAgitNotice = notice;
+    }
+    
+    public BgmAgitNoticeFile(BgmAgitNotice notice, String fileName, String uuidName, String url) {
+        this.bgmAgitNotice = notice;
+        this.bgmAgitNoticeFileName = fileName;
+        this.bgmAgitNoticeFileUuidName = uuidName;
+        this.bgmAgitNoticeFileUrl = url;
+    }
 }

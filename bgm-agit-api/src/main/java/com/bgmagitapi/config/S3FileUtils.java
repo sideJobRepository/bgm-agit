@@ -73,7 +73,7 @@ public class S3FileUtils {
         s3Client.deleteObject(deleteObjectRequest);
     }
     
-    private String getFileNameFromUrl(String fileUrl) {
+    public String getFileNameFromUrl(String fileUrl) {
         try {
             URL url = new URL(fileUrl);
             String path = url.getPath(); // e.g. /images/filename.jpg
