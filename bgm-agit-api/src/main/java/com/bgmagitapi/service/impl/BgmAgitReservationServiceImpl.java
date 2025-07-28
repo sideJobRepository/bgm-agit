@@ -188,8 +188,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     }
     
     @Override
-    public Page<BgmAgitReservationDetailResponse> getReservationDetail(Jwt jwt, Pageable pageable) {
-        Long memberId = jwt.getClaim("id");
+    public Page<BgmAgitReservationDetailResponse> getReservationDetail(Long memberId, Pageable pageable) {
         BgmAgitMember bgmAgitMember = bgmAgitMemberRepository.findById(memberId).orElseThrow(() -> new RuntimeException("Member Not Found"));
         JPAQuery<Long> countQuery = queryFactory
                 .select(bgmAgitReservation.count())
@@ -201,12 +200,11 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         }
         
         List<BgmAgitReservationDetailResponse> content = queryFactory
-                .select(Projections.constructor(
-                        BgmAgitReservationDetailResponse.class,
+                .select(Projections.constructor(BgmAgitReservationDetailResponse.class,
                         bgmAgitReservation.bgmAgitReservationId,
                         bgmAgitReservation.bgmAgitMember.bgmAgitMemberId,
                         bgmAgitReservation.bgmAgitImage.bgmAgitImageId,
-                        bgmAgitReservation.reservation,
+                        bgmAgitReservation.reservation.stringValue(),
                         bgmAgitReservation.bgmAgitReservationStartDate,
                         bgmAgitReservation.bgmAgitReservationStartTime,
                         bgmAgitReservation.bgmAgitReservationEndTime

@@ -43,7 +43,8 @@ public class BgmAgitReservationController {
     }
     
     @GetMapping("/reservationDetail")
-    public Page<BgmAgitReservationDetailResponse> getReservationDetail(@AuthenticationPrincipal Jwt jwt, @PageableDefault(size = 10, sort = "bgmAgitNoticeId", direction = Sort.Direction.DESC) Pageable pageable) {
-        return bgmAgitReservationService.getReservationDetail(jwt, pageable);
+    public Page<BgmAgitReservationDetailResponse> getReservatinDetail(@AuthenticationPrincipal Jwt jwt, @PageableDefault(size = 10, sort = "bgmAgitNoticeId", direction = Sort.Direction.DESC) Pageable pageable) {
+        Long id = jwt.getClaim("id");
+        return bgmAgitReservationService.getReservationDetail(id, pageable);
     }
 }

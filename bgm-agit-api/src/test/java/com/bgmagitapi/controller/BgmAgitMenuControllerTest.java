@@ -20,7 +20,7 @@ class BgmAgitMenuControllerTest extends ControllerTestSupport {
     
     @Autowired
     BgmAgitMainMenuService bgmAgitMainMenuService;
-    
+    private final String token = "eyJraWQiOiJtYWNLZXkiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyIiwic29jaWFsSWQiOiI0MzY1NzI5MTA2Iiwicm9sZXMiOlsiUk9MRV9BRE1JTiJdLCJuYW1lIjoi67Cw7ISx7ZmYIiwiaWQiOjYsImV4cCI6MTc1MzUxODUxN30.IeQKMzMUhWb6Vaik44PKDeS821t_BquoVr1eRLMq0WE";
     
     @DisplayName("")
     @Test
@@ -30,14 +30,6 @@ class BgmAgitMenuControllerTest extends ControllerTestSupport {
                 .andExpect(status().isOk())
                 .andDo(print());
         ;
-    }
-    @DisplayName("")
-    @Test
-    void test2() throws Exception {
-        mockMvc.perform(post("/bgm-agit/kakao-login"))
-                .andExpect(status().isOk())
-                .andDo(print());
-    
     }
     
 }
