@@ -2,6 +2,7 @@ package com.bgmagitapi.service.impl;
 
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.config.S3FileUtils;
+import com.bgmagitapi.config.UploadResult;
 import com.bgmagitapi.controller.request.BgmAgitNoticeCreateRequest;
 import com.bgmagitapi.controller.request.BgmAgitNoticeModifyRequest;
 import com.bgmagitapi.controller.response.notice.BgmAgitNoticeFileResponse;
@@ -72,22 +73,22 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
                 request.getBgmAgitNoticeType()
         );
         bgmAgitNoticeRepository.save(notice);
-        
-        // 2. S3 업로드
+
+// 2. S3 업로드
         List<MultipartFile> files = request.getFiles();
-        List<String> fileUrls = s3FileUtils.storeFiles(files);
-        
-        // 3. 파일 테이블 저장
+        List<UploadResult> uploadResults = s3FileUtils.storeFiles(files);
+
+// 3. 파일 테이블 저장
         List<BgmAgitNoticeFile> noticeFileEntities = new ArrayList<>();
         for (int i = 0; i < files.size(); i++) {
             MultipartFile multipartFile = files.get(i);
-            String fileUrl = fileUrls.get(i);
-            
-            String originalFilename = multipartFile.getOriginalFilename();
-            String uuidName = s3FileUtils.getFileNameFromUrl(fileUrl);
+            UploadResult result = uploadResults.get(i);
             
             BgmAgitNoticeFile fileEntity = new BgmAgitNoticeFile(
-                    notice, originalFilename, uuidName, fileUrl
+                    notice,
+                    multipartFile.getOriginalFilename(),
+                    result.getUuid(),
+                    result.getUrl()
             );
             noticeFileEntities.add(fileEntity);
         }
@@ -103,31 +104,35 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
         BgmAgitNotice notice = bgmAgitNoticeRepository.findById(bgmAgitNoticeId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 공지사항 ID 입니다."));
         
-        // 기존 파일 삭제
+        // 1. 기존 파일 삭제
         List<BgmAgitNoticeFile> oldFiles = notice.getBgmAgitNoticeFiles();
         for (BgmAgitNoticeFile file : oldFiles) {
             s3FileUtils.deleteFile(file.getBgmAgitNoticeFileUrl());
         }
         bgmAgitNoticeFileRepository.deleteAll(oldFiles);
         
-        // 공지사항 내용 수정
+        // 2. 공지사항 내용 수정
         notice.modifyNotice(request);
         
-        // 새 파일 처리
+        // 3. 새 파일 처리
         List<MultipartFile> multipartFiles = request.getMultipartFiles();
         if (multipartFiles != null && !multipartFiles.isEmpty()) {
-            List<String> fileUrls = s3FileUtils.storeFiles(multipartFiles);
+            List<UploadResult> uploadResults = s3FileUtils.storeFiles(multipartFiles);
             List<BgmAgitNoticeFile> newEntities = new ArrayList<>();
             
             for (int i = 0; i < multipartFiles.size(); i++) {
                 MultipartFile multipartFile = multipartFiles.get(i);
-                String url = fileUrls.get(i);
-                String originalFilename = multipartFile.getOriginalFilename();
-                String uuid = s3FileUtils.getFileNameFromUrl(url);
+                UploadResult result = uploadResults.get(i);
                 
-                BgmAgitNoticeFile entity = new BgmAgitNoticeFile(notice, originalFilename, uuid, url);
+                BgmAgitNoticeFile entity = new BgmAgitNoticeFile(
+                        notice,
+                        multipartFile.getOriginalFilename(),
+                        result.getUuid(),
+                        result.getUrl()
+                );
                 newEntities.add(entity);
             }
+            
             bgmAgitNoticeFileRepository.saveAll(newEntities);
         }
         

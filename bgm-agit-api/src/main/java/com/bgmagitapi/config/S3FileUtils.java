@@ -22,8 +22,8 @@ public class S3FileUtils {
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
     
-    public List<String> storeFiles(List<MultipartFile> multipartFiles) {
-        List<String> uploadFiles = new ArrayList<>();
+    public List<UploadResult> storeFiles(List<MultipartFile> multipartFiles) {
+        List<UploadResult> uploadFiles = new ArrayList<>();
         for (MultipartFile multipartFile : multipartFiles) {
             if (!multipartFile.isEmpty()) {
                 uploadFiles.add(storeFile(multipartFile));
@@ -33,14 +33,14 @@ public class S3FileUtils {
     }
     
     
-    public String storeFile(MultipartFile multipartFile) {
+    public UploadResult storeFile(MultipartFile multipartFile) {
         
-        if (multipartFile.isEmpty()) {
-            return null;
-        }
+        if (multipartFile.isEmpty()) return null;
         
         String originalFilename = multipartFile.getOriginalFilename();
-        String storeFileName = createStoreFileName(originalFilename);
+        String uuid = UUID.randomUUID().toString();
+        String ext = extractExt(originalFilename);
+        String storeFileName = uuid + "." + ext;
         
         try {
             Map<String, String> metadata = new HashMap<>();
@@ -55,9 +55,11 @@ public class S3FileUtils {
                     RequestBody.fromBytes(multipartFile.getBytes())
             );
             
-            return s3Client.utilities()
+            String url = s3Client.utilities()
                     .getUrl(b -> b.bucket(bucketName).key(storeFileName))
                     .toExternalForm();
+            
+            return new UploadResult(url, uuid);
             
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -94,4 +96,15 @@ public class S3FileUtils {
         return originalFilename.substring(pos + 1);
     }
     
+    public String extractUuidFromUrl(String fileUrl) {
+        try {
+            URL url = new URL(fileUrl);
+            String path = url.getPath(); // /e30b8b76-1f1d-4111-9b97-5fe1344cf423.png
+            String fileName = path.startsWith("/") ? path.substring(1) : path;
+            int dotIndex = fileName.lastIndexOf(".");
+            return (dotIndex != -1) ? fileName.substring(0, dotIndex) : fileName;
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("Invalid S3 file URL", e);
+        }
+    }
 }
