@@ -10,7 +10,7 @@ import org.springframework.data.domain.Pageable;
 public interface BgmAgitNoticeService {
     
     
-    Page<BgmAgitNoticeResponse> getNotice(Pageable pageable, String title, String cont);
+    Page<BgmAgitNoticeResponse> getNotice(Pageable pageable, String title);
     
     ApiResponse createNotice(BgmAgitNoticeCreateRequest request);
     

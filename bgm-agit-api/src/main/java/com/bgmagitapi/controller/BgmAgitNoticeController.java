@@ -24,11 +24,10 @@ public class BgmAgitNoticeController {
     
     @GetMapping("/notice")
     public Page<BgmAgitNoticeResponse> getNotice(@PageableDefault(size = 10, sort = "bgmAgitNoticeId", direction = Sort.Direction.DESC) Pageable pageable,
-                                                 @RequestParam(name = "title" , required = false) String title,
-                                                 @RequestParam(name = "cont" , required = false) String cont
+                                                 @RequestParam(name = "titleOrCont" , required = false) String titleOrCont
                                                  ) {
         
-        return bgmAgitNoticeService.getNotice(pageable,title,cont);
+        return bgmAgitNoticeService.getNotice(pageable,titleOrCont);
     }
     @PostMapping("/notice")
     public ApiResponse createNotice(@RequestBody BgmAgitNoticeCreateRequest request) {

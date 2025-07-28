@@ -15,6 +15,7 @@ import com.bgmagitapi.repository.BgmAgitNoticeFileRepository;
 import com.bgmagitapi.repository.BgmAgitNoticeRepository;
 import com.bgmagitapi.service.BgmAgitNoticeService;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -47,8 +48,8 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
     
     @Override
     @Transactional(readOnly = true)
-    public Page<BgmAgitNoticeResponse> getNotice(Pageable pageable, String title, String cont) {
-        BooleanBuilder booleanBuilder = getBooleanBuilder(title, cont);
+    public Page<BgmAgitNoticeResponse> getNotice(Pageable pageable, String titleOrCont) {
+        BooleanBuilder booleanBuilder = getBooleanBuilder(titleOrCont);
         
         
         // 전체 개수 쿼리
@@ -96,14 +97,20 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
         return new PageImpl<>(content, pageable, total);
     }
     
-    private BooleanBuilder getBooleanBuilder(String title, String cont) {
+    private BooleanBuilder getBooleanBuilder(String titleOrCont) {
         BooleanBuilder booleanBuilder = new  BooleanBuilder();
-        if(StringUtils.hasText(title)){
-            booleanBuilder.and(bgmAgitNotice.bgmAgitNoticeTitle.like("%"+ title +"%"));
-        }
         
-        if(StringUtils.hasText(cont)){
-            booleanBuilder.and(bgmAgitNotice.bgmAgitNoticeCont.like("%"+ cont +"%"));
+        
+        if (StringUtils.hasText(titleOrCont)) {
+            String keyword = titleOrCont.replaceAll("\\s+", ""); // 검색어에서 공백 제거
+            
+            booleanBuilder.or(
+                    Expressions.stringTemplate("REPLACE({0}, ' ', '')", bgmAgitNotice.bgmAgitNoticeTitle)
+                            .like("%" + keyword + "%")
+            ).or(
+                    Expressions.stringTemplate("REPLACE({0}, ' ', '')", bgmAgitNotice.bgmAgitNoticeCont)
+                            .like("%" + keyword + "%")
+            );
         }
         return booleanBuilder;
     }
