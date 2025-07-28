@@ -57,7 +57,7 @@ export default function Notice({ mainGb }: NoticeProps) {
                   <tr key={notice.bgmAgitNoticeId}>
                     <Td>{notice.bgmAgitNoticeId}</Td>
                     <Td>{notice.bgmAgitNoticeTitle}</Td>
-                    {!isMobile && <Td>{notice.bgmAgitNoticeRegdate?.substring(0, 10)}</Td>}
+                    {!isMobile && <Td>{notice.registDate}</Td>}
                     <Td>{notice.bgmAgitNoticeType === 'NOTICE' ? '공지' : '이벤트'}</Td>
                   </tr>
                 ))}
@@ -87,6 +87,7 @@ export default function Notice({ mainGb }: NoticeProps) {
               <tr key={notice.bgmAgitNoticeId}>
                 <Td>{notice.bgmAgitNoticeId}</Td>
                 <Td>{notice.bgmAgitNoticeTitle}</Td>
+                {!isMobile && <Td>{notice.registDate}</Td>}
                 <Td>{notice.bgmAgitNoticeType === 'NOTICE' ? '공지' : '이벤트'}</Td>
               </tr>
             ))}

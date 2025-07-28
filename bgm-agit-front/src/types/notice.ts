@@ -5,7 +5,7 @@ export type Notice = {
   bgmAgitNoticeCont: string;
   bgmAgitNoticeType: 'NOTICE' | 'EVENT';
   bgmAgitNoticeFileList: any[];
-  bgmAgitNoticeRegdate?: string;
+  registDate?: string;
 };
 
 // 공지사항 페이징 응답
