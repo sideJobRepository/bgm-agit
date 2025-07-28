@@ -1,5 +1,6 @@
 package com.bgmagitapi.advice;
 
+import com.bgmagitapi.advice.exception.CustomException;
 import com.bgmagitapi.advice.response.ErrorMessageResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -55,6 +56,15 @@ public class ExceptionController {
         return new ErrorMessageResponse(
                 String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()),
                 "잠시후 다시 시도해 주세요"
+        );
+    }
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(CustomException.class)
+    public ErrorMessageResponse handleReservationConflictException(CustomException e) {
+        log.warn("공통 예외: {}", e.getMessage());
+        return new ErrorMessageResponse(
+                String.valueOf(HttpStatus.CONFLICT.value()),
+                e.getMessage()
         );
     }
 }

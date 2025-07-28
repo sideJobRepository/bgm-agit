@@ -1,6 +1,5 @@
 package com.bgmagitapi.entity;
 
-import com.bgmagitapi.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.entity.enumeration.Reservation;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -38,10 +37,6 @@ public class BgmAgitReservation {
     // BGM 아지트 예약 시작 일시
     @Column(name = "BGM_AGIT_RESERVATION_START_DATE")
     private LocalDate bgmAgitReservationStartDate;
-    
-    // BGM 아지트 예약 종료 일시
-    @Column(name = "BGM_AGIT_RESERVATION_END_DATE")
-    private LocalDate bgmAgitReservationEndDate;
     
     // BGM 아지트 예약 시작 시간
     @Column(name = "BGM_AGIT_RESERVATION_START_TIME")

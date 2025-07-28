@@ -1,8 +1,11 @@
 package com.bgmagitapi.service.impl;
 
 import com.bgmagitapi.RepositoryAndServiceTestSupport;
+import com.bgmagitapi.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.controller.response.BgmAgitReservationDetailResponse;
 import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
+import com.bgmagitapi.entity.BgmAgitImage;
+import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.service.BgmAgitReservationService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.DisplayName;
@@ -14,11 +17,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 class BgmAgitReservationServiceImplTest extends RepositoryAndServiceTestSupport {
     
     @Autowired
     private BgmAgitReservationService bgmAgitReservationService;
+    
+    
     
     @DisplayName("")
     @Test
@@ -42,6 +49,27 @@ class BgmAgitReservationServiceImplTest extends RepositoryAndServiceTestSupport 
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "bgmAgitReservationId"));
         Page<BgmAgitReservationDetailResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(6L, pageable);
         System.out.println("reservationDetail = " + reservationDetail);
+    }
+    @DisplayName("")
+    @Test
+    void test3(){
+        Long userId = 6L;
+        Long imageId = 14L;
+        String dateString = "2025-07-27T15:00:00.000Z";
+        //List<String> times = List.of("13:00", "14:00", "15:00","16:00");
+        List<String> times = List.of("15:00","16:00");
         
+        BgmAgitReservationCreateRequest request = new BgmAgitReservationCreateRequest();
+        request.setBgmAgitReservationStartDate(dateString);
+        request.setStartTimeEndTime(times);
+        request.setBgmAgitReservationType("ROOM");
+        request.setBgmAgitImageId(imageId);
+        
+        bgmAgitReservationService.createReservation(
+                request,
+                userId
+        );
+        
+    
     }
 }

@@ -39,7 +39,8 @@ public class BgmAgitReservationController {
     
     @PostMapping("/reservation")
     public ApiResponse createReservation(@RequestBody BgmAgitReservationCreateRequest request, @AuthenticationPrincipal Jwt jwt) {
-        return bgmAgitReservationService.createReservation(request, jwt);
+        Long userId = jwt.getClaim("id");
+        return bgmAgitReservationService.createReservation(request, userId);
     }
     
     @GetMapping("/reservationDetail")

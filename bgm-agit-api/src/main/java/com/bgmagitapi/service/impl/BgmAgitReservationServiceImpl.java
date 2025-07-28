@@ -1,5 +1,7 @@
 package com.bgmagitapi.service.impl;
 
+import com.bgmagitapi.advice.exception.CustomException;
+import com.bgmagitapi.advice.exception.ReservationConflictException;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.controller.response.BgmAgitReservationDetailResponse;
 import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
@@ -21,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +33,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.bgmagitapi.entity.QBgmAgitImage.bgmAgitImage;
-import static com.bgmagitapi.entity.QBgmAgitNotice.bgmAgitNotice;
 import static com.bgmagitapi.entity.QBgmAgitReservation.bgmAgitReservation;
 
 @Transactional
@@ -43,8 +44,10 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     
     private final BgmAgitMemberRepository bgmAgitMemberRepository;
     
-    private final JPAQueryFactory queryFactory;
     private final BgmAgitReservationRepository bgmAgitReservationRepository;
+    
+    private final JPAQueryFactory queryFactory;
+    
     
     @Override
     @Transactional(readOnly = true)
@@ -150,41 +153,52 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     }
     
     @Override
-    public ApiResponse createReservation(BgmAgitReservationCreateRequest request, Jwt jwt) {
+    public ApiResponse createReservation(BgmAgitReservationCreateRequest request, Long userId) {
         List<String> timeList = request.getStartTimeEndTime();
-        
-        if (timeList.size() < 2) {
-            throw new IllegalArgumentException("예약 시간은 최소 2개 이상이어야 합니다.");
-        }
 
-        // 날짜 보정
+// 날짜 보정
         String dateStr = request.getBgmAgitReservationStartDate(); // "2025-07-27T15:00:00.000Z"
         Instant instant = Instant.parse(dateStr);
         LocalDate kstDate = instant.atZone(ZoneId.of("Asia/Seoul")).toLocalDate();
-
-        // 예약 타입 등 기본 정보
-        Long userId = jwt.getClaim("id");
-        BgmAgitMember member = bgmAgitMemberRepository.findById(userId).orElseThrow(() -> new RuntimeException("User Not Found"));
-        BgmAgitImage image = bgmAgitImageRepository.findById(request.getBgmAgitImageId()).orElseThrow(() -> new RuntimeException("Not Found Image Id"));
+        
+        // 예약 기본 정보 조회
+        BgmAgitMember member = bgmAgitMemberRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User Not Found"));
+        BgmAgitImage image = bgmAgitImageRepository.findById(request.getBgmAgitImageId())
+                .orElseThrow(() -> new RuntimeException("Not Found Image Id"));
         String reservationType = request.getBgmAgitReservationType();
-
-        // 여러 예약 insert
+        
+        // 기존 예약 조회
+        List<BgmAgitReservation> existingReservations = bgmAgitReservationRepository
+                .findByBgmAgitImageAndBgmAgitReservationStartDate(image, kstDate);
+        
+        // 중복된 시간대 구성 (Set으로 빠르게 비교)
+        Set<String> existingTimeSlots = existingReservations.stream()
+                .map(r -> r.getBgmAgitReservationStartTime() + "-" + r.getBgmAgitReservationEndTime())
+                .collect(Collectors.toSet());
+        
+        // 신규 예약 생성
         for (int i = 0; i < timeList.size() - 1; i++) {
-            LocalTime startTime = LocalTime.parse(timeList.get(i));
-            LocalTime endTime = LocalTime.parse(timeList.get(i + 1));
+            String startRaw = timeList.get(i);
+            String endRaw = timeList.get(i + 1);
+            
+            LocalTime startTime = LocalTime.parse(startRaw);
+            LocalTime endTime = LocalTime.parse(endRaw);
+            
+            String slotKey = startTime + "-" + endTime;
+            
+            if (existingTimeSlots.contains(slotKey)) {
+                throw new ReservationConflictException("이미 예약된 시간대입니다: " + slotKey);
+            }
+            
             
             BgmAgitReservation reservation = new BgmAgitReservation(
-                    member,
-                    image,
-                    reservationType,
-                    startTime,
-                    endTime,
-                    kstDate
+                    member, image, reservationType, startTime, endTime, kstDate
             );
-            
             bgmAgitReservationRepository.save(reservation);
         }
-        return new ApiResponse(200,true,"예약이 완료되었습니다.");
+        
+        return new ApiResponse(200, true, "예약이 완료되었습니다.");
     }
     
     @Override
