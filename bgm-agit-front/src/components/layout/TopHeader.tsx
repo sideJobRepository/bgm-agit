@@ -47,8 +47,7 @@ export default function TopHeader() {
   //메뉴 이동 이벤트
   function subMoveEnvent(item: SubMenu) {
     //오픈 채팅방 링크로 이동
-    if (item.bgmAgitMainMenuId === 13) {
-      console.log('dkdlxpa fldzmfm', item.link);
+    if ([9, 13].includes(item.bgmAgitMainMenuId)) {
       window.open(item.link, '_blank');
     } else {
       navigate(item.link);
