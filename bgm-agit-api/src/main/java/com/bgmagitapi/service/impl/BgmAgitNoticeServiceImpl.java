@@ -56,10 +56,7 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
                 .select(bgmAgitNotice.count())
                 .from(bgmAgitNotice)
                 .where(booleanBuilder);
-        Long total = countQuery.fetchOne();
-        if (total == null) {
-            total = 0L;
-        }
+        Long total = countQuery.fetchOne() == null ? Long.valueOf(0L) : countQuery.fetchOne();
         
         // 데이터 쿼리
         QBgmAgitNotice bgmAgitNotice = QBgmAgitNotice.bgmAgitNotice;

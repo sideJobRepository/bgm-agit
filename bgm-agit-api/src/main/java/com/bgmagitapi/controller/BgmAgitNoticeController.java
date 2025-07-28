@@ -24,8 +24,8 @@ public class BgmAgitNoticeController {
     
     @GetMapping("/notice")
     public Page<BgmAgitNoticeResponse> getNotice(@PageableDefault(size = 10, sort = "bgmAgitNoticeId", direction = Sort.Direction.DESC) Pageable pageable,
-                                                 @RequestParam String title,
-                                                 @RequestParam String cont
+                                                 @RequestParam(name = "title" , required = false) String title,
+                                                 @RequestParam(name = "cont" , required = false) String cont
                                                  ) {
         
         return bgmAgitNoticeService.getNotice(pageable,title,cont);
