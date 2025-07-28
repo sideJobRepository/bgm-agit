@@ -49,42 +49,44 @@ export default function Notice({ mainGb }: NoticeProps) {
                 <SearchBar color="#988271" label="제목 및 내용" onSearch={setSearchKeyword} />
               </SearchBox>
             </SearchWrapper>
-            <Table>
-              <thead>
-                <tr>
-                  <Th>번호</Th>
-                  <Th>제목</Th>
-                  {!isMobile && <Th>날짜</Th>}
-                  <Th>분류</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {items?.content?.map(notice => (
-                  <tr
-                    key={notice.bgmAgitNoticeId}
-                    onClick={() => {
-                      setSelectedNotice({
-                        title: notice.bgmAgitNoticeTitle,
-                        content: notice.bgmAgitNoticeCont,
-                      });
-                      setModalOpen(true);
-                    }}
-                  >
-                    <Td>{notice.bgmAgitNoticeId}</Td>
-                    <Td>{notice.bgmAgitNoticeTitle}</Td>
-                    {!isMobile && <Td>{notice.registDate}</Td>}
-                    <Td>{notice.bgmAgitNoticeType === 'NOTICE' ? '공지' : '이벤트'}</Td>
+            <TableBox>
+              <Table>
+                <thead>
+                  <tr>
+                    <Th>번호</Th>
+                    <Th>제목</Th>
+                    {!isMobile && <Th>날짜</Th>}
+                    <Th>분류</Th>
                   </tr>
+                </thead>
+                <tbody>
+                  {items?.content?.map(notice => (
+                    <tr
+                      key={notice.bgmAgitNoticeId}
+                      onClick={() => {
+                        setSelectedNotice({
+                          title: notice.bgmAgitNoticeTitle,
+                          content: notice.bgmAgitNoticeCont,
+                        });
+                        setModalOpen(true);
+                      }}
+                    >
+                      <Td>{notice.bgmAgitNoticeId}</Td>
+                      <Td>{notice.bgmAgitNoticeTitle}</Td>
+                      {!isMobile && <Td>{notice.registDate}</Td>}
+                      <Td>{notice.bgmAgitNoticeType === 'NOTICE' ? '공지' : '이벤트'}</Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+              <PaginationWrapper>
+                {[...Array(items?.totalPages ?? 0)].map((_, idx) => (
+                  <PageButton key={idx} active={idx === page} onClick={() => handlePageClick(idx)}>
+                    {idx + 1}
+                  </PageButton>
                 ))}
-              </tbody>
-            </Table>
-            <PaginationWrapper>
-              {[...Array(items?.totalPages ?? 0)].map((_, idx) => (
-                <PageButton key={idx} active={idx === page} onClick={() => handlePageClick(idx)}>
-                  {idx + 1}
-                </PageButton>
-              ))}
-            </PaginationWrapper>
+              </PaginationWrapper>
+            </TableBox>
           </NoticeBox>
         </Wrapper>
       ) : (
@@ -133,6 +135,10 @@ export default function Notice({ mainGb }: NoticeProps) {
 
 const NoticeBox = styled.div`
   padding: 10px;
+`;
+
+const TableBox = styled.div`
+  padding: 40px 0;
 `;
 
 const Table = styled.table<WithTheme>`
