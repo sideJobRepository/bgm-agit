@@ -122,4 +122,4 @@ jobs:
           script: |
             sudo rm -rf /usr/share/nginx/bgm-agit-front
             sudo mv /home/bae/deploy/front-dist-temp/* /usr/share/nginx/bgm-agit-front/
-            sudo systemctl restart nginx
+            sudo nginx -t && sudo systemctl reload nginx
