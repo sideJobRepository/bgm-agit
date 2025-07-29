@@ -4,12 +4,13 @@ import { useMediaQuery } from 'react-responsive';
 import { Wrapper } from '../styles';
 import SearchBar from '../components/SearchBar.tsx';
 import { useEffect, useState } from 'react';
-import { useInsertPost, useNoticeFetch, useUpdatePost } from '../recoil/fetch.ts';
+import { useDeletePost, useInsertPost, useNoticeFetch, useUpdatePost } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { noticeState } from '../recoil/state/noticeState.ts';
 import { userState } from '../recoil/state/userState.ts';
 import type { AxiosRequestHeaders } from 'axios';
 import { toast } from 'react-toastify';
+import { showConfirmModal } from '../components/confirmAlert.tsx';
 
 interface NoticeProps {
   mainGb: boolean;
@@ -26,6 +27,7 @@ export default function Notice({ mainGb }: NoticeProps) {
   const fetchNotice = useNoticeFetch();
   const { insert } = useInsertPost();
   const { update } = useUpdatePost();
+  const { remove } = useDeletePost();
   const items = useRecoilValue(noticeState);
   console.log('items', items);
 
@@ -77,59 +79,100 @@ export default function Notice({ mainGb }: NoticeProps) {
     });
     const token = sessionStorage.getItem('token');
 
-    insert({
-      headers: {
-        Authorization: `Bearer ${token}`,
-      } as AxiosRequestHeaders,
-      url: '/bgm-agit/notice',
-      body: formData,
-      ignoreHttpError: true,
-      onSuccess: () => {
-        toast.success('공지사항이 작성되었습니다.');
-        setWriteModalOpen(false);
-        setNewNotice({ id: null, title: '', content: '', type: 'NOTICE' });
-        setFiles([]);
-        setAttachedFiles([]);
-        fetchNotice({ page, titleOrCont: searchKeyword });
+    showConfirmModal({
+      message: '저장하시겠습니까?',
+      onConfirm: () => {
+        insert({
+          headers: {
+            Authorization: `Bearer ${token}`,
+          } as AxiosRequestHeaders,
+          url: '/bgm-agit/notice',
+          body: formData,
+          ignoreHttpError: true,
+          onSuccess: () => {
+            toast.success('공지사항이 작성되었습니다.');
+            setWriteModalOpen(false);
+            setNewNotice({ id: null, title: '', content: '', type: 'NOTICE' });
+            setFiles([]);
+            setAttachedFiles([]);
+            fetchNotice({ page, titleOrCont: searchKeyword });
+          },
+        });
       },
     });
   }
 
   //업데이트
-  function updateData() {
+  async function updateData() {
     const formData = new FormData();
     formData.append('bgmAgitNoticeId', newNotice.id!.toString());
     formData.append('bgmAgitNoticeTitle', newNotice.title);
     formData.append('bgmAgitNoticeCont', newNotice.content);
     formData.append('bgmAgitNoticeType', newNotice.type);
 
-    files.forEach(file => {
-      formData.append('files', file);
-    });
-
+    // 삭제파일
     deletedFileNames.forEach(name => {
       formData.append('deletedFileNames', name);
     });
 
-    const token = sessionStorage.getItem('token');
+    // 새로 선택한 파일도 추가
+    files.forEach(file => {
+      formData.append('multipartFiles', file);
+    });
 
-    update({
-      headers: {
-        Authorization: `Bearer ${token}`,
-      } as AxiosRequestHeaders,
-      url: `/bgm-agit/notice`,
-      body: formData,
-      ignoreHttpError: true,
-      onSuccess: () => {
-        toast.success('공지사항이 수정되었습니다.');
-        setWriteModalOpen(false);
-        setIsEditMode(false);
-        setIsDetailMode(false);
-        setNewNotice({ id: null, title: '', content: '', type: 'NOTICE' });
-        setFiles([]);
-        setAttachedFiles([]);
-        setDeletedFileNames([]);
-        fetchNotice({ page, titleOrCont: searchKeyword });
+    const token = sessionStorage.getItem('token');
+    showConfirmModal({
+      message: '수정하시겠습니까?',
+      onConfirm: () => {
+        update({
+          headers: {
+            Authorization: `Bearer ${token}`,
+          } as AxiosRequestHeaders,
+          url: `/bgm-agit/notice`,
+          body: formData,
+          ignoreHttpError: true,
+          onSuccess: () => {
+            toast.success('공지사항이 수정되었습니다.');
+            setWriteModalOpen(false);
+            setIsEditMode(false);
+            setIsDetailMode(false);
+            setNewNotice({ id: null, title: '', content: '', type: 'NOTICE' });
+            setFiles([]);
+            setAttachedFiles([]);
+            setDeletedFileNames([]);
+            fetchNotice({ page, titleOrCont: searchKeyword });
+          },
+        });
+      },
+    });
+  }
+
+  //업데이트
+  async function deleteData() {
+    const deleteId = newNotice.id!.toString();
+
+    const token = sessionStorage.getItem('token');
+    showConfirmModal({
+      message: '삭제하시겠습니까?',
+      onConfirm: () => {
+        remove({
+          headers: {
+            Authorization: `Bearer ${token}`,
+          } as AxiosRequestHeaders,
+          url: `/bgm-agit/notice/${deleteId}`,
+          ignoreHttpError: true,
+          onSuccess: () => {
+            toast.success('공지사항이 삭제되었습니다.');
+            setWriteModalOpen(false);
+            setIsEditMode(false);
+            setIsDetailMode(false);
+            setNewNotice({ id: null, title: '', content: '', type: 'NOTICE' });
+            setFiles([]);
+            setAttachedFiles([]);
+            setDeletedFileNames([]);
+            fetchNotice({ page, titleOrCont: searchKeyword });
+          },
+        });
       },
     });
   }
@@ -353,7 +396,9 @@ export default function Notice({ mainGb }: NoticeProps) {
                   >
                     수정
                   </Button>
-                  <Button color="#FF5E57">삭제</Button>
+                  <Button onClick={deleteData} color="#FF5E57">
+                    삭제
+                  </Button>
                 </>
               )}
               <Button
@@ -510,7 +555,7 @@ const ModalBackdrop = styled.div`
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
+  z-index: 2;
   display: flex;
   justify-content: center;
   align-items: center;
