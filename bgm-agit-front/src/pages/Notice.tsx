@@ -696,7 +696,6 @@ const DetailCont = styled.div<WithTheme>`
     font-size: ${({ theme }) => theme.sizes.large};
     color: ${({ theme }) => theme.colors.subColor};
     font-weight: ${({ theme }) => theme.weight.semiBold};
-    border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
   }
 
   p {
@@ -725,6 +724,7 @@ const StyledFileUl = styled.ul<WithTheme>`
   text-align: left;
   width: 100%;
   color: ${({ theme }) => theme.colors.subColor};
+  border-top: 1px solid ${({ theme }) => theme.colors.lineColor};
 
   li {
     display: flex;
