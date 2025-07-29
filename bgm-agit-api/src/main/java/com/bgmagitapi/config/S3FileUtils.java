@@ -22,8 +22,6 @@ import java.util.*;
 public class S3FileUtils {
     private final S3Client s3Client;
     
-    private final S3Presigner s3Presigner;
-    
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
     
