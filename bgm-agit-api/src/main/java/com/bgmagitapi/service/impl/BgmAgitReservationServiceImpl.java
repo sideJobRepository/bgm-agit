@@ -1,11 +1,10 @@
 package com.bgmagitapi.service.impl;
 
-import com.bgmagitapi.advice.exception.CustomException;
 import com.bgmagitapi.advice.exception.ReservationConflictException;
 import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.controller.response.BgmAgitReservationDetailResponse;
 import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
-import com.bgmagitapi.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.controller.response.reservation.TimeRange;
 import com.bgmagitapi.entity.BgmAgitImage;
@@ -23,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
