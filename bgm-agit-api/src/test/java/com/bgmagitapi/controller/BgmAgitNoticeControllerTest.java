@@ -5,6 +5,16 @@ import com.bgmagitapi.service.BgmAgitNoticeService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.web.util.UriUtils;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.http.AbortableInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -24,12 +34,27 @@ class BgmAgitNoticeControllerTest extends ControllerTestSupport {
     
     @DisplayName("")
     @Test
-    void test() throws Exception {
+    void test1() throws Exception {
         
         mockMvc.perform(post("/bgm-agit/notice")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andDo(print());
+    }
+    
+    @DisplayName("")
+    @Test
+    void test2() throws Exception {
+        // given
+        String fileName = "73aa3ab5-9c1e-44ee-aa74-daf76ba360b7.xlsx";
+        byte[] content = "파일 내용입니다.".getBytes(StandardCharsets.UTF_8);
+        
+        
+        // when & then
+        mockMvc.perform(get("/bgm-agit/notice/download/{fileName}", fileName))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
+                .andExpect(content().bytes(content));
     }
     
     

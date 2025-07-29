@@ -8,6 +8,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -20,6 +21,8 @@ import java.util.*;
 @RequiredArgsConstructor
 public class S3FileUtils {
     private final S3Client s3Client;
+    
+    private final S3Presigner s3Presigner;
     
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
@@ -42,8 +45,8 @@ public class S3FileUtils {
         String originalFilename = multipartFile.getOriginalFilename();
         String uuid = UUID.randomUUID().toString();
         String ext = extractExt(originalFilename);
-        String baseName = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
-        String saveFile = baseName + "_" + uuid + "." + ext;
+        String storeFileName = uuid + "." + ext;
+        
         try {
             String encodedFilename = URLEncoder.encode(originalFilename, StandardCharsets.UTF_8);
             Map<String, String> metadata = new HashMap<>();
@@ -53,14 +56,14 @@ public class S3FileUtils {
             
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName)
-                    .key(saveFile)
+                    .key(storeFileName)
                     .metadata(metadata)
                     .build();
             
             s3Client.putObject(putObjectRequest, RequestBody.fromBytes(multipartFile.getBytes()));
             
             String url = s3Client.utilities()
-                    .getUrl(b -> b.bucket(bucketName).key(saveFile)) // 바뀐 key로 변경
+                    .getUrl(b -> b.bucket(bucketName).key(storeFileName))
                     .toExternalForm();
             
             return new UploadResult(url, uuid);
