@@ -45,26 +45,14 @@ public class BgmAgitReservationCreateRequest {
      */
     public List<String> getReservationExpandedTimeSlots() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
-        Set<LocalTime> timeSet = new TreeSet<>();
+        List<String> result = new ArrayList<>();
         
-        // 시간들 모으기 (중복 제거 + 정렬)
         for (String timeStr : startTimeEndTime) {
             LocalTime start = LocalTime.parse(timeStr, formatter);
             LocalTime end = start.plusHours(1);
-            timeSet.add(start);
-            timeSet.add(end);
+            
+            result.add(start.format(formatter) + " ~ " + end.format(formatter));
         }
-        
-        List<LocalTime> timeList = new ArrayList<>(timeSet);
-        List<String> timeRanges = new ArrayList<>();
-        
-        // ["14:00", "15:00", "16:00"] → "14:00 ~ 15:00", "15:00 ~ 16:00"
-        for (int i = 0; i < timeList.size() - 1; i++) {
-            String from = timeList.get(i).format(formatter);
-            String to = timeList.get(i + 1).format(formatter);
-            timeRanges.add(from + " ~ " + to);
-        }
-        
-        return timeRanges;
+        return result;
     }
 }
