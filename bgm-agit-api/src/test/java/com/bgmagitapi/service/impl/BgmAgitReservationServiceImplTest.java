@@ -4,6 +4,7 @@ import com.bgmagitapi.RepositoryAndServiceTestSupport;
 import com.bgmagitapi.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.controller.response.BgmAgitReservationDetailResponse;
 import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
+import com.bgmagitapi.controller.response.reservation.GroupedReservationResponse;
 import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.service.BgmAgitReservationService;
@@ -47,7 +48,7 @@ class BgmAgitReservationServiceImplTest extends RepositoryAndServiceTestSupport 
     @Test
     void test2(){
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "bgmAgitReservationId"));
-        Page<BgmAgitReservationDetailResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(6L, pageable);
+        Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(6L, pageable);
         System.out.println("reservationDetail = " + reservationDetail);
     }
     @DisplayName("")
@@ -74,9 +75,9 @@ class BgmAgitReservationServiceImplTest extends RepositoryAndServiceTestSupport 
     @DisplayName("")
     @Test
     void test(){
-        Long userId = 6L;
+        Long userId = 2L;
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "bgmAgitReservationId"));
-        Page<BgmAgitReservationDetailResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(userId, pageable);
+        Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(userId, pageable);
         System.out.println("reservationDetail = " + reservationDetail);
     }
 }

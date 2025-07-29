@@ -1,9 +1,10 @@
 package com.bgmagitapi.service;
 
 import com.bgmagitapi.apiresponse.ApiResponse;
-import com.bgmagitapi.controller.response.BgmAgitReservationDetailResponse;
-import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.controller.request.BgmAgitReservationCreateRequest;
+import com.bgmagitapi.controller.request.BgmAgitReservationModifyRequest;
+import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
+import com.bgmagitapi.controller.response.reservation.GroupedReservationResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -15,5 +16,7 @@ public interface BgmAgitReservationService {
     
     ApiResponse createReservation(BgmAgitReservationCreateRequest request, Long jwt);
     
-    Page<BgmAgitReservationDetailResponse> getReservationDetail(Long memberId, Pageable pageable);
+    Page<GroupedReservationResponse> getReservationDetail(Long memberId, Pageable pageable);
+    
+    ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request);
 }

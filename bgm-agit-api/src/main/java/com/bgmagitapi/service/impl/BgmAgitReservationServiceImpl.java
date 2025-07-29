@@ -3,8 +3,10 @@ package com.bgmagitapi.service.impl;
 import com.bgmagitapi.advice.exception.ReservationConflictException;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.controller.request.BgmAgitReservationCreateRequest;
+import com.bgmagitapi.controller.request.BgmAgitReservationModifyRequest;
 import com.bgmagitapi.controller.response.BgmAgitReservationDetailResponse;
 import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
+import com.bgmagitapi.controller.response.reservation.GroupedReservationResponse;
 import com.bgmagitapi.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.controller.response.reservation.TimeRange;
 import com.bgmagitapi.entity.BgmAgitImage;
@@ -69,6 +71,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                         bgmAgitImage.bgmAgitMainMenu.bgmAgitMainMenuId.eq(labelGb),
                         bgmAgitImage.bgmAgitMenuLink.eq(link),
                         bgmAgitImage.bgmAgitImageId.eq(id),
+                        bgmAgitReservation.bgmAgitReservationCancelStatus.eq("N"),
                         bgmAgitReservation.bgmAgitReservationStartDate.between(today, endOfYear)
                 )
                 .fetch();
@@ -174,7 +177,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         Set<String> existingTimeSlots = existingReservations.stream()
                 .map(r -> r.getBgmAgitReservationStartTime() + "-" + r.getBgmAgitReservationEndTime())
                 .collect(Collectors.toSet());
-        
+        Long maxReservationNo = bgmAgitReservationRepository.findMaxReservationNo();
+        maxReservationNo = (maxReservationNo == null) ? 1L : maxReservationNo + 1L;
         // 신규 예약 생성
         for (String timeSlot : timeList) {
             // "14:00 ~ 15:00" → ["14:00", "15:00"]
@@ -192,7 +196,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             }
             
             BgmAgitReservation reservation = new BgmAgitReservation(
-                    member, image, reservationType, startTime, endTime, kstDate
+                    member, image, reservationType, startTime, endTime, kstDate,maxReservationNo
             );
             bgmAgitReservationRepository.save(reservation);
         }
@@ -202,34 +206,64 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     }
     
     @Override
-    public Page<BgmAgitReservationDetailResponse> getReservationDetail(Long memberId, Pageable pageable) {
-        BgmAgitMember bgmAgitMember = bgmAgitMemberRepository.findById(memberId).orElseThrow(() -> new RuntimeException("Member Not Found"));
-        JPAQuery<Long> countQuery = queryFactory
-                .select(bgmAgitReservation.count())
-                .from(bgmAgitReservation)
-                .where(bgmAgitReservation.bgmAgitMember.bgmAgitMemberId.eq(bgmAgitMember.getBgmAgitMemberId()));
-        Long total = countQuery.fetchOne();
-        if (total == null) {
-            total = 0L;
-        }
+    public Page<GroupedReservationResponse> getReservationDetail(Long memberId, Pageable pageable) {
+        BgmAgitMember bgmAgitMember = bgmAgitMemberRepository.findById(memberId)
+                .orElseThrow(() -> new RuntimeException("Member Not Found"));
         
-        List<BgmAgitReservationDetailResponse> content = queryFactory
-                .select(Projections.constructor(BgmAgitReservationDetailResponse.class,
-                        bgmAgitReservation.bgmAgitReservationId,
-                        bgmAgitReservation.bgmAgitMember.bgmAgitMemberId,
-                        bgmAgitReservation.bgmAgitImage.bgmAgitImageId,
-                        bgmAgitReservation.reservation.stringValue(),
-                        bgmAgitReservation.bgmAgitReservationStartDate,
-                        bgmAgitReservation.bgmAgitReservationStartTime,
-                        bgmAgitReservation.bgmAgitReservationEndTime
-                ))
-                .from(bgmAgitReservation)
+        // 1. 실제 데이터 가져오기 (QueryDSL)
+        List<BgmAgitReservation> reservations = queryFactory
+                .selectFrom(bgmAgitReservation)
                 .where(bgmAgitReservation.bgmAgitMember.bgmAgitMemberId.eq(bgmAgitMember.getBgmAgitMemberId()))
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
+                .orderBy(bgmAgitReservation.bgmAgitReservationNo.asc()) // 예약 번호 기준 정렬
                 .fetch();
         
+        // 2. 총 개수
+        Long total = queryFactory
+                .select(bgmAgitReservation.bgmAgitReservationNo.countDistinct())
+                .from(bgmAgitReservation)
+                .where(bgmAgitReservation.bgmAgitMember.bgmAgitMemberId.eq(bgmAgitMember.getBgmAgitMemberId()))
+                .fetchOne();
+        if (total == null) total = 0L;
         
-        return new PageImpl<>(content, pageable, total);
+        // 3. 그룹핑
+        Map<Long, List<BgmAgitReservation>> grouped = reservations.stream()
+                .collect(Collectors.groupingBy(BgmAgitReservation::getBgmAgitReservationNo));
+        
+        // 4. 그룹을 응답용 DTO로 변환
+        List<GroupedReservationResponse> groupedResponses = grouped.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey()) // reservationNo 기준 정렬
+                .map(entry -> {
+                    GroupedReservationResponse dto = new GroupedReservationResponse();
+                    dto.setReservationNo(entry.getKey());
+                    
+                    List<GroupedReservationResponse.TimeSlot> slots = entry.getValue().stream()
+                            .map(r -> new GroupedReservationResponse.TimeSlot(
+                                    r.getBgmAgitReservationStartTime().toString(),
+                                    r.getBgmAgitReservationEndTime().toString()
+                            ))
+                            .collect(Collectors.toList());
+                    
+                    dto.setTimeSlots(slots);
+                    dto.setReservationDate(entry.getValue().get(0).getBgmAgitReservationStartDate());
+                    
+                    return dto;
+                })
+                .collect(Collectors.toList());
+        
+        // 5. 페이지네이션
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), groupedResponses.size());
+        List<GroupedReservationResponse> pageContent = groupedResponses.subList(start, end);
+        
+        return new PageImpl<>(pageContent, pageable, total);
+    }
+    
+    @Override
+    public ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request) {
+        
+        
+        BgmAgitMember bgmAgitMember = bgmAgitMemberRepository.findById(id).orElseThrow(() -> new RuntimeException("존재하지 않는 회원입니다."));
+        
+        return null;
     }
 }

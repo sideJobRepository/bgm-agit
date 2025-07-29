@@ -2,9 +2,11 @@ package com.bgmagitapi.controller;
 
 
 import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.controller.request.BgmAgitReservationModifyRequest;
 import com.bgmagitapi.controller.response.BgmAgitReservationDetailResponse;
 import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.controller.request.BgmAgitReservationCreateRequest;
+import com.bgmagitapi.controller.response.reservation.GroupedReservationResponse;
 import com.bgmagitapi.service.BgmAgitReservationService;
 import lombok.Getter;
 import org.springframework.data.domain.Page;
@@ -44,8 +46,18 @@ public class BgmAgitReservationController {
     }
     
     @GetMapping("/reservation/detail")
-    public Page<BgmAgitReservationDetailResponse> getReservationDetail(@AuthenticationPrincipal Jwt jwt, @PageableDefault(size = 10, sort = "bgmAgitReservationId", direction = Sort.Direction.DESC) Pageable pageable) {
+    public Page<GroupedReservationResponse> getReservationDetail(@AuthenticationPrincipal Jwt jwt, @PageableDefault(size = 10, sort = "bgmAgitReservationId", direction = Sort.Direction.DESC) Pageable pageable) {
         Long id = jwt.getClaim("id");
         return bgmAgitReservationService.getReservationDetail(id, pageable);
     }
+    
+    
+    
+    @PutMapping("/reservation")
+    public ApiResponse modifyReservation(@AuthenticationPrincipal Jwt jwt , @RequestBody BgmAgitReservationModifyRequest request) {
+        Long id = jwt.getClaim("id");
+        return bgmAgitReservationService.modifyReservation(id,request);
+    }
+    
+    
 }

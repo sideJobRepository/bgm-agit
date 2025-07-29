@@ -20,6 +20,8 @@ public class BgmAgitReservationDetailResponse {
     private LocalTime bgmAgitReservationStartTime;
     private LocalTime bgmAgitReservationEndTime;
     
+    private String bgmAgitReservationCancelStatus;
     
-
+    private Long bgmAgitReservationNo;
+    
 }
