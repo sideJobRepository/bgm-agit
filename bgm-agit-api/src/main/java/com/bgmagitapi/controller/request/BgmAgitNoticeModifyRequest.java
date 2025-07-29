@@ -1,6 +1,8 @@
 package com.bgmagitapi.controller.request;
 
 import com.bgmagitapi.entity.enumeration.BgmAgitNoticeType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,15 +16,19 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BgmAgitNoticeModifyRequest {
+    @NotNull(message = "공지사항 ID는 필수입니다.")
     private Long bgmAgitNoticeId;
     
     // BGM 아지트 공지사항 제목
+    @NotBlank(message = "제목을 입력해 주세요")
     private String bgmAgitNoticeTitle;
     
     // BGM 아지트 공지사항 내용
+    @NotBlank(message = "내용을 입력해주세요")
     private String bgmAgitNoticeCont;
     
     // BGM 아지트 공지사항 타입
+    @NotNull(message = "공지 유형을 선택해주세요.")
     private BgmAgitNoticeType bgmAgitNoticeType;
     
     private List<MultipartFile> multipartFiles;
