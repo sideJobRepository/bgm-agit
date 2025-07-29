@@ -1,7 +1,6 @@
 package com.bgmagitapi.controller;
 
 import com.bgmagitapi.apiresponse.ApiResponse;
-import com.bgmagitapi.controller.request.BgmAgitDeleteRequest;
 import com.bgmagitapi.controller.request.BgmAgitNoticeCreateRequest;
 import com.bgmagitapi.controller.request.BgmAgitNoticeModifyRequest;
 import com.bgmagitapi.controller.response.notice.BgmAgitNoticeResponse;
@@ -12,8 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -41,8 +38,8 @@ public class BgmAgitNoticeController {
     }
     
     
-    @DeleteMapping("/notice")
-    public ApiResponse deleteNotice(@RequestBody BgmAgitDeleteRequest request) {
-        return bgmAgitNoticeService.deleteNotice(request.getBgmAgitNoticeId());
+    @DeleteMapping("/notice/{id}")
+    public ApiResponse deleteNotice(@PathVariable Long id) {
+        return bgmAgitNoticeService.deleteNotice(id);
     }
 }
