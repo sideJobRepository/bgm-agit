@@ -11,6 +11,7 @@ import { userState } from '../recoil/state/userState.ts';
 import type { AxiosRequestHeaders } from 'axios';
 import { toast } from 'react-toastify';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
+import { FaTrash } from 'react-icons/fa';
 
 interface NoticeProps {
   mainGb: boolean;
@@ -342,11 +343,9 @@ export default function Notice({ mainGb }: NoticeProps) {
                           <a href={file.url} target="_blank" rel="noopener noreferrer">
                             {file.fileName}
                           </a>
-                          <button
+                          <FaTrash
                             onClick={() => setDeletedFileNames(prev => [...prev, file.fileName])}
-                          >
-                            삭제
-                          </button>
+                          />
                         </li>
                       ))}
                   </StyledFileUl>
@@ -638,7 +637,7 @@ const StyledTextarea = styled.textarea<WithTheme>`
 const StyledFileInput = styled.input<WithTheme>`
   margin-bottom: 10px;
   width: 100%;
-  padding-bottom: 10px;
+  padding: 10px 0;
   border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
 
   &::-webkit-file-upload-button {
@@ -703,7 +702,7 @@ const DetailCont = styled.div<WithTheme>`
 
   p {
     width: 100%;
-    margin-top: 40px;
+    margin-top: 20px;
     min-height: 100px;
     padding: 10px;
     text-align: left;
@@ -737,13 +736,8 @@ const StyledFileUl = styled.ul<WithTheme>`
     padding: 10px;
     font-size: ${({ theme }) => theme.sizes.xsmall};
 
-    button {
-      padding: 2px 6px;
-      background-color: ${({ theme }) => theme.colors.lineColor};
-      border: none;
+    svg {
       cursor: pointer;
-      font-size: ${({ theme }) => theme.sizes.xsmall};
-      color: ${({ theme }) => theme.colors.subColor};
     }
   }
 `;
