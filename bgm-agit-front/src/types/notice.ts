@@ -1,6 +1,6 @@
 // 개별 공지사항 타입
 export type Notice = {
-  bgmAgitNoticeId: number;
+  bgmAgitNoticeId: number | null;
   bgmAgitNoticeTitle: string;
   bgmAgitNoticeCont: string;
   bgmAgitNoticeType: 'NOTICE' | 'EVENT';

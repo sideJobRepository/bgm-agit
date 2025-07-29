@@ -4,7 +4,7 @@ import { useMediaQuery } from 'react-responsive';
 import { Wrapper } from '../styles';
 import SearchBar from '../components/SearchBar.tsx';
 import { useEffect, useState } from 'react';
-import { useInsertPost, useNoticeFetch } from '../recoil/fetch.ts';
+import { useInsertPost, useNoticeFetch, useUpdatePost } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { noticeState } from '../recoil/state/noticeState.ts';
 import { userState } from '../recoil/state/userState.ts';
@@ -15,10 +15,19 @@ interface NoticeProps {
   mainGb: boolean;
 }
 
+type NewNoticeState = {
+  id: number | null;
+  title: string;
+  content: string;
+  type: 'NOTICE' | 'EVENT';
+};
+
 export default function Notice({ mainGb }: NoticeProps) {
   const fetchNotice = useNoticeFetch();
   const { insert } = useInsertPost();
+  const { update } = useUpdatePost();
   const items = useRecoilValue(noticeState);
+  console.log('items', items);
 
   const user = useRecoilValue(userState);
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
@@ -37,9 +46,18 @@ export default function Notice({ mainGb }: NoticeProps) {
   const [isDetailMode, setIsDetailMode] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [writeModalOpen, setWriteModalOpen] = useState(false);
-  const [newNotice, setNewNotice] = useState({ title: '', content: '', type: 'NOTICE' });
+  const [newNotice, setNewNotice] = useState<NewNoticeState>({
+    id: null,
+    title: '',
+    content: '',
+    type: 'NOTICE',
+  });
   const [files, setFiles] = useState<File[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<{ fileName: string; url: string }[]>([]);
+
+  //파일 삭제
+  const [originalDeletedFileNames, setOriginalDeletedFileNames] = useState<string[]>([]);
+  const [deletedFileNames, setDeletedFileNames] = useState<string[]>([]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -47,6 +65,7 @@ export default function Notice({ mainGb }: NoticeProps) {
     }
   };
 
+  //신규 저장
   function insertData() {
     const formData = new FormData();
     formData.append('bgmAgitNoticeTitle', newNotice.title);
@@ -68,9 +87,48 @@ export default function Notice({ mainGb }: NoticeProps) {
       onSuccess: () => {
         toast.success('공지사항이 작성되었습니다.');
         setWriteModalOpen(false);
-        setNewNotice({ title: '', content: '', type: 'NOTICE' });
+        setNewNotice({ id: null, title: '', content: '', type: 'NOTICE' });
         setFiles([]);
         setAttachedFiles([]);
+        fetchNotice({ page, titleOrCont: searchKeyword });
+      },
+    });
+  }
+
+  //업데이트
+  function updateData() {
+    const formData = new FormData();
+    formData.append('bgmAgitNoticeId', newNotice.id!.toString());
+    formData.append('bgmAgitNoticeTitle', newNotice.title);
+    formData.append('bgmAgitNoticeCont', newNotice.content);
+    formData.append('bgmAgitNoticeType', newNotice.type);
+
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+
+    deletedFileNames.forEach(name => {
+      formData.append('deletedFileNames', name);
+    });
+
+    const token = sessionStorage.getItem('token');
+
+    update({
+      headers: {
+        Authorization: `Bearer ${token}`,
+      } as AxiosRequestHeaders,
+      url: `/bgm-agit/notice`,
+      body: formData,
+      ignoreHttpError: true,
+      onSuccess: () => {
+        toast.success('공지사항이 수정되었습니다.');
+        setWriteModalOpen(false);
+        setIsEditMode(false);
+        setIsDetailMode(false);
+        setNewNotice({ id: null, title: '', content: '', type: 'NOTICE' });
+        setFiles([]);
+        setAttachedFiles([]);
+        setDeletedFileNames([]);
         fetchNotice({ page, titleOrCont: searchKeyword });
       },
     });
@@ -97,7 +155,7 @@ export default function Notice({ mainGb }: NoticeProps) {
                     color="#988271"
                     onClick={() => {
                       setIsDetailMode(false);
-                      setNewNotice({ title: '', content: '', type: 'NOTICE' });
+                      setNewNotice({ id: null, title: '', content: '', type: 'NOTICE' });
                       setFiles([]);
                       setAttachedFiles([]);
                       setWriteModalOpen(true);
@@ -122,6 +180,7 @@ export default function Notice({ mainGb }: NoticeProps) {
                       key={notice.bgmAgitNoticeId}
                       onClick={() => {
                         setNewNotice({
+                          id: notice.bgmAgitNoticeId,
                           title: notice.bgmAgitNoticeTitle,
                           content: notice.bgmAgitNoticeCont,
                           type: notice.bgmAgitNoticeType,
@@ -129,12 +188,14 @@ export default function Notice({ mainGb }: NoticeProps) {
                         setAttachedFiles(notice.bgmAgitNoticeFileList ?? []);
                         setIsDetailMode(true);
                         setWriteModalOpen(true);
+                        setDeletedFileNames([]);
+                        setOriginalDeletedFileNames([]);
                       }}
                     >
                       <Td>{notice.bgmAgitNoticeId}</Td>
                       <Td>{notice.bgmAgitNoticeTitle}</Td>
                       {!isMobile && <Td>{notice.registDate}</Td>}
-                      <Td>{notice.bgmAgitNoticeType === 'NOTICE' ? '공지' : '이벤트'}</Td>
+                      <Td>{notice.bgmAgitNoticeType === 'NOTICE' ? '공지사항' : '이벤트'}</Td>
                     </tr>
                   ))}
                 </tbody>
@@ -165,6 +226,7 @@ export default function Notice({ mainGb }: NoticeProps) {
                 key={notice.bgmAgitNoticeId}
                 onClick={() => {
                   setNewNotice({
+                    id: notice?.bgmAgitNoticeId,
                     title: notice.bgmAgitNoticeTitle,
                     content: notice.bgmAgitNoticeCont,
                     type: notice.bgmAgitNoticeType,
@@ -172,12 +234,14 @@ export default function Notice({ mainGb }: NoticeProps) {
                   setAttachedFiles(notice.bgmAgitNoticeFileList ?? []);
                   setIsDetailMode(true);
                   setWriteModalOpen(true);
+                  setDeletedFileNames([]); // 삭제 초기화
+                  setOriginalDeletedFileNames([]);
                 }}
               >
                 <Td>{notice.bgmAgitNoticeId}</Td>
                 <Td>{notice.bgmAgitNoticeTitle}</Td>
                 {!isMobile && <Td>{notice.registDate}</Td>}
-                <Td>{notice.bgmAgitNoticeType === 'NOTICE' ? '공지' : '이벤트'}</Td>
+                <Td>{notice.bgmAgitNoticeType === 'NOTICE' ? '공지사항' : '이벤트'}</Td>
               </tr>
             ))}
           </tbody>
@@ -195,7 +259,12 @@ export default function Notice({ mainGb }: NoticeProps) {
                       name="bgmAgitNoticeType"
                       value="NOTICE"
                       checked={newNotice.type === 'NOTICE'}
-                      onChange={e => setNewNotice(prev => ({ ...prev, type: e.target.value }))}
+                      onChange={e =>
+                        setNewNotice(prev => ({
+                          ...prev,
+                          type: e.target.value as 'NOTICE' | 'EVENT',
+                        }))
+                      }
                     />
                     공지
                   </StyledRadioLabel>
@@ -205,7 +274,12 @@ export default function Notice({ mainGb }: NoticeProps) {
                       name="bgmAgitNoticeType"
                       value="EVENT"
                       checked={newNotice.type === 'EVENT'}
-                      onChange={e => setNewNotice(prev => ({ ...prev, type: e.target.value }))}
+                      onChange={e =>
+                        setNewNotice(prev => ({
+                          ...prev,
+                          type: e.target.value as 'NOTICE' | 'EVENT',
+                        }))
+                      }
                     />
                     이벤트
                   </StyledRadioLabel>
@@ -216,6 +290,24 @@ export default function Notice({ mainGb }: NoticeProps) {
                   value={newNotice.title}
                   onChange={e => setNewNotice(prev => ({ ...prev, title: e.target.value }))}
                 />
+                {attachedFiles?.length > 0 && (
+                  <StyledFileUl>
+                    {attachedFiles
+                      .filter(file => !deletedFileNames.includes(file.fileName))
+                      .map((file, idx) => (
+                        <li key={idx}>
+                          <a href={file.url} target="_blank" rel="noopener noreferrer">
+                            {file.fileName}
+                          </a>
+                          <button
+                            onClick={() => setDeletedFileNames(prev => [...prev, file.fileName])}
+                          >
+                            삭제
+                          </button>
+                        </li>
+                      ))}
+                  </StyledFileUl>
+                )}
                 <StyledFileInput type="file" multiple onChange={handleFileChange} />
                 <StyledTextarea
                   placeholder="내용"
@@ -226,7 +318,7 @@ export default function Notice({ mainGb }: NoticeProps) {
             )}
             {isDetailMode && (
               <>
-                <DetailTop>{newNotice.type === 'NOTICE' ? '공지' : '이벤트'}</DetailTop>
+                <DetailTop>{newNotice.type === 'NOTICE' ? '공지사항' : '이벤트'}</DetailTop>
                 <DetailCont>
                   <h2>{newNotice.title}</h2>
                   {attachedFiles?.length > 0 && (
@@ -236,7 +328,6 @@ export default function Notice({ mainGb }: NoticeProps) {
                           <a href={file.url} target="_blank" rel="noopener noreferrer">
                             {file.fileName}
                           </a>
-                          <Button color="#093A6E">저장</Button>
                         </li>
                       ))}
                     </StyledFileUl>
@@ -245,9 +336,9 @@ export default function Notice({ mainGb }: NoticeProps) {
                 </DetailCont>
               </>
             )}
-            <div>
+            <ButtonBox2>
               {!isDetailMode && (
-                <Button color="#1A7D55" onClick={insertData}>
+                <Button color="#1A7D55" onClick={isEditMode ? updateData : insertData}>
                   저장
                 </Button>
               )}
@@ -271,19 +362,18 @@ export default function Notice({ mainGb }: NoticeProps) {
                   setWriteModalOpen(false);
                   setIsEditMode(false);
                   setIsDetailMode(false);
+                  setDeletedFileNames(originalDeletedFileNames);
                 }}
               >
                 닫기
               </Button>
-            </div>
+            </ButtonBox2>
           </ModalBox>
         </ModalBackdrop>
       )}
     </>
   );
 }
-
-// styled-components들은 이전과 동일하게 유지
 
 const NoticeBox = styled.div`
   padding: 10px;
@@ -436,13 +526,6 @@ const ModalBox = styled.div<WithTheme>`
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   text-align: center;
 
-  div {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-  }
-
   @media ${({ theme }) => theme.device.mobile} {
     h2 {
       font-size: ${({ theme }) => theme.sizes.medium};
@@ -543,13 +626,16 @@ const StyledRadioLabel = styled.label<WithTheme>`
 
 const DetailTop = styled.div<WithTheme>`
   position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   top: 0;
   left: 0;
   width: 100%;
   height: 50px;
   border-radius: 12px 12px 0 0;
-  background-color: ${({ theme }) => theme.colors.bronzeColor};
-  color: ${({ theme }) => theme.colors.white};
+  background-color: ${({ theme }) => theme.colors.basicColor};
+  color: ${({ theme }) => theme.colors.menuColor};
   font-family: 'Jua', sans-serif;
   font-size: ${({ theme }) => theme.sizes.bigLarge};
 `;
@@ -557,24 +643,25 @@ const DetailTop = styled.div<WithTheme>`
 const DetailCont = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
-  margin: 50px 0 50px 0;
+  margin: 50px 0 30px 0;
 
   h2 {
-    font-family: 'Jua', sans-serif;
-    font-size: ${({ theme }) => theme.sizes.bigLarge};
-    color: ${({ theme }) => theme.colors.menuColor};
-    font-weight: ${({ theme }) => theme.weight.bold};
-    margin-bottom: 20px;
+    width: 100%;
+    padding: 10px;
+    font-size: ${({ theme }) => theme.sizes.large};
+    color: ${({ theme }) => theme.colors.subColor};
+    font-weight: ${({ theme }) => theme.weight.semiBold};
+    border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
   }
 
   p {
     width: 100%;
-    padding: 20px;
+    min-height: 100px;
+    padding: 10px;
     text-align: left;
-    background-color: ${({ theme }) => theme.colors.noticeColor};
-    color: ${({ theme }) => theme.colors.white};
-    font-size: ${({ theme }) => theme.sizes.medium};
-    font-weight: ${({ theme }) => theme.weight.semiBold};
+    border: 1px solid ${({ theme }) => theme.colors.lineColor};
+    color: ${({ theme }) => theme.colors.subColor};
+    font-size: ${({ theme }) => theme.sizes.small};
   }
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -592,18 +679,29 @@ const StyledFileUl = styled.ul<WithTheme>`
   flex-direction: column;
   text-align: left;
   width: 100%;
-  gap: 10px;
-  margin-bottom: 10px;
   color: ${({ theme }) => theme.colors.subColor};
 
   li {
     display: flex;
     align-items: center;
     gap: 8px;
+    padding: 10px;
     font-size: ${({ theme }) => theme.sizes.xsmall};
 
     button {
-      font-size: ${({ theme }) => theme.sizes.xsmall} !important;
+      padding: 2px 6px;
+      background-color: ${({ theme }) => theme.colors.lineColor};
+      border: none;
+      cursor: pointer;
+      font-size: ${({ theme }) => theme.sizes.xsmall};
+      color: ${({ theme }) => theme.colors.subColor};
     }
   }
+`;
+
+const ButtonBox2 = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
 `;

@@ -11,11 +11,12 @@ import { toast } from 'react-toastify';
 import type { AxiosRequestHeaders } from 'axios';
 import { noticeState } from './state/noticeState.ts';
 import type { params } from '../types/notice.ts';
+import type { CustomUser } from '../types/user.ts';
 
 interface InsertOptions<T> {
   url: string;
   headers?: AxiosRequestHeaders;
-  body: any;
+  body: T;
   onSuccess?: (data: T) => void;
   ignoreHttpError?: boolean; // 이거 추가
 }
@@ -79,7 +80,7 @@ export function useLoginPost() {
     request(
       () =>
         api.post('/bgm-agit/kakao-login', { code }).then(res => {
-          const decoded = jwtDecode(res.data.token);
+          const decoded = jwtDecode<CustomUser>(res.data.token);
           sessionStorage.setItem('user', JSON.stringify(decoded));
           sessionStorage.setItem('token', res.data.token);
           return decoded;
@@ -113,4 +114,45 @@ export function useInsertPost() {
   };
 
   return { insert };
+}
+
+export function useUpdatePost() {
+  const { request } = useRequest();
+
+  const update = <T>({ url, body, onSuccess, ignoreHttpError, headers }: InsertOptions<T>) => {
+    request(
+      () => api.put<T>(url, body, { headers }).then(res => res.data),
+      data => {
+        if (onSuccess) {
+          onSuccess(data);
+        }
+      },
+      { ignoreHttpError }
+    );
+  };
+
+  return { update };
+}
+
+export function useDeletePost() {
+  const { request } = useRequest();
+
+  const remove = <T>({
+    url,
+    onSuccess,
+    ignoreHttpError,
+    headers,
+  }: Omit<InsertOptions<T>, 'body'>) => {
+    request(
+      () => api.delete<T>(url, { headers }).then(res => res.data),
+      data => {
+        if (onSuccess) {
+          onSuccess(data);
+        }
+      },
+      { ignoreHttpError }
+    );
+  };
+
+  return { remove };
 }
