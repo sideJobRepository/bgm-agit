@@ -46,14 +46,15 @@ public class S3FileUtils {
             Map<String, String> metadata = new HashMap<>();
             metadata.put("Content-Type", multipartFile.getContentType());
             metadata.put("Content-Disposition", "inline");
+            metadata.put("original-filename", originalFilename); //원래 파일명 메타데이터에 저장
             
-            s3Client.putObject(PutObjectRequest.builder()
-                            .bucket(bucketName)
-                            .key(storeFileName)
-                            .metadata(metadata)
-                            .build(),
-                    RequestBody.fromBytes(multipartFile.getBytes())
-            );
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(storeFileName)
+                    .metadata(metadata)
+                    .build();
+            
+            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(multipartFile.getBytes()));
             
             String url = s3Client.utilities()
                     .getUrl(b -> b.bucket(bucketName).key(storeFileName))
