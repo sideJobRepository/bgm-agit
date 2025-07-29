@@ -1,13 +1,8 @@
 package com.bgmagitapi.controller.request;
 
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalTime;
-import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -15,18 +10,9 @@ import java.util.List;
 public class BgmAgitReservationModifyRequest {
     
     
-    private Long bgmAgitReservationId;
+    private Long bgmAgitReservationNo;
     
-    @NotEmpty(message = "예약 시작일은 필수입니다.")
-    private String bgmAgitReservationStartDate; //
+    private String bgmAgitReservationCancelStatus;
     
-    // 시작 시간
-    private LocalTime bgmAgitReservationStartTime;
-    
-    // 종료 시간
-    private LocalTime bgmAgitReservationEndTime;
-    
-    @NotNull(message = "예약 시작 시간은 필수입니다.")
-    private List<String> startTimeEndTime;
 
 }

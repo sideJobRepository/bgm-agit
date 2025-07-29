@@ -260,10 +260,20 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     
     @Override
     public ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request) {
+        Long bgmAgitReservationNo = request.getBgmAgitReservationNo();
+        String bgmAgitReservationCancelStatus = request.getBgmAgitReservationCancelStatus();
+        List<BgmAgitReservation> list = queryFactory
+                .selectFrom(bgmAgitReservation)
+                .where(bgmAgitReservation.bgmAgitReservationNo.eq(bgmAgitReservationNo))
+                .fetch();
         
+        List<Long> idList = list.stream()
+                .map(BgmAgitReservation::getBgmAgitReservationId)
+                .toList();
         
-        BgmAgitMember bgmAgitMember = bgmAgitMemberRepository.findById(id).orElseThrow(() -> new RuntimeException("존재하지 않는 회원입니다."));
-        
-        return null;
+        if (!idList.isEmpty()) {
+            bgmAgitReservationRepository.bulkUpdateCancelStatus(bgmAgitReservationCancelStatus, idList);
+        }
+        return new ApiResponse(200,true,"수정 되었습니다.");
     }
 }
