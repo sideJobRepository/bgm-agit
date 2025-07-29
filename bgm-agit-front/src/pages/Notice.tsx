@@ -692,6 +692,7 @@ const DetailCont = styled.div<WithTheme>`
 
   h2 {
     width: 100%;
+    text-align: left;
     padding: 10px;
     font-size: ${({ theme }) => theme.sizes.large};
     color: ${({ theme }) => theme.colors.subColor};
@@ -700,6 +701,7 @@ const DetailCont = styled.div<WithTheme>`
 
   p {
     width: 100%;
+    margin-top: 40px;
     min-height: 100px;
     padding: 10px;
     text-align: left;
