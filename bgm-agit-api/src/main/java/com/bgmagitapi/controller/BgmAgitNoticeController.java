@@ -30,13 +30,13 @@ public class BgmAgitNoticeController {
         return bgmAgitNoticeService.getNotice(pageable,titleOrCont);
     }
     @PostMapping("/notice")
-    public ApiResponse createNotice(@RequestBody BgmAgitNoticeCreateRequest request) {
+    public ApiResponse createNotice(@ModelAttribute BgmAgitNoticeCreateRequest request) {
         return bgmAgitNoticeService.createNotice(request);
     }
     
     
     @PutMapping("/notice")
-    public ApiResponse modifyNotice(@RequestBody BgmAgitNoticeModifyRequest request) {
+    public ApiResponse modifyNotice(@ModelAttribute BgmAgitNoticeModifyRequest request) {
         return bgmAgitNoticeService.modifyNotice(request);
     }
     
