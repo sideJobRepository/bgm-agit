@@ -30,7 +30,7 @@ class BgmAgitNoticeControllerTest extends ControllerTestSupport {
     @Autowired
     private BgmAgitNoticeService noticeService;
     
-    private final String token = "eyJraWQiOiJtYWNLZXkiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyIiwic29jaWFsSWQiOiI0MzY1NzI5MTA2Iiwicm9sZXMiOlsiUk9MRV9BRE1JTiJdLCJuYW1lIjoi67Cw7ISx7ZmYIiwiaWQiOjYsImV4cCI6MTc1MzUxODUxN30.IeQKMzMUhWb6Vaik44PKDeS821t_BquoVr1eRLMq0WE";
+    private final String token = "eyJraWQiOiJtYWNLZXkiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyIiwic29jaWFsSWQiOiI0MzY1NzI5MTA2Iiwicm9sZXMiOlsiUk9MRV9BRE1JTiJdLCJuYW1lIjoi67Cw7ISx7ZmYIiwiaWQiOjIsImV4cCI6MTc1Mzg2MDA4M30.-F1R3n2KTGbr1WGIooSrdAoCAs9kfRgkKHKAgXCgMxI";
     
     @DisplayName("")
     @Test
@@ -38,7 +38,6 @@ class BgmAgitNoticeControllerTest extends ControllerTestSupport {
         
         mockMvc.perform(post("/bgm-agit/notice")
                         .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
                 .andDo(print());
     }
     

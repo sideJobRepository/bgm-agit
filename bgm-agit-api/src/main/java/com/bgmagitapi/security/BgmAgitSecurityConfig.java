@@ -21,6 +21,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -45,6 +46,7 @@ public class BgmAgitSecurityConfig {
     private final AuthenticationEntryPoint bgmagitAuthenticationEntryPoint;
     private final AuthorizationManager<RequestAuthorizationContext> bgmAgitAuthorizationManager;
     private final AuthenticationProvider socialAuthenticationProvider;
+    private final AccessDeniedHandler bgmAgitAccessDeniedHandler;
     
     
     @Bean
@@ -64,10 +66,12 @@ public class BgmAgitSecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                .exceptionHandling(e ->
+                        e.authenticationEntryPoint(bgmagitAuthenticationEntryPoint).
+                    accessDeniedHandler(bgmAgitAccessDeniedHandler))
                 .with(new BgmAgitSecurityDsl<>(), bgmAgitSecurityDsl -> bgmAgitSecurityDsl
                         .bgmAgitSuccessHandler(bgmAuthenticationSuccessHandler)
                         .bgmAgitFailureHandler(bgmAuthenticationFailureHandler)
-                        .bgmAgitEntryPoint(bgmagitAuthenticationEntryPoint)
                 );
         return http.build();
     }

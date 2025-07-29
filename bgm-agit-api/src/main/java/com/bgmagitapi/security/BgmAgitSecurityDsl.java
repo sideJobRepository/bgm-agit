@@ -6,6 +6,7 @@ import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractAuthenticationFilterConfigurer;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -19,7 +20,6 @@ public class BgmAgitSecurityDsl<H extends HttpSecurityBuilder<H>> extends Abstra
     
     private AuthenticationSuccessHandler successHandler;
     private AuthenticationFailureHandler failureHandler;
-    private AuthenticationEntryPoint entryPoint;
     
     private static final RequestMatcher LOGIN_MATCHER = new OrRequestMatcher(
             new AntPathRequestMatcher("/bgm-agit/kakao-login", "POST"),
@@ -47,8 +47,6 @@ public class BgmAgitSecurityDsl<H extends HttpSecurityBuilder<H>> extends Abstra
         getAuthenticationFilter().setAuthenticationManager(authenticationManager);
         getAuthenticationFilter().setAuthenticationSuccessHandler(successHandler);
         getAuthenticationFilter().setAuthenticationFailureHandler(failureHandler);
-        //getAuthenticationFilter().setSecurityContextRepository(getAuthenticationFilter().getSecurityRepository((HttpSecurity) http)); 세션을 사용하지 않음
-        ((HttpSecurity) http).exceptionHandling(exception -> exception.authenticationEntryPoint(entryPoint));
         SessionAuthenticationStrategy sessionAuthenticationStrategy = http.getSharedObject(SessionAuthenticationStrategy.class);
         if(sessionAuthenticationStrategy != null) {
             getAuthenticationFilter().setSessionAuthenticationStrategy(sessionAuthenticationStrategy);
@@ -66,12 +64,6 @@ public class BgmAgitSecurityDsl<H extends HttpSecurityBuilder<H>> extends Abstra
         this.failureHandler = authenticationFailureHandler;
         return this;
     }
-    
-    public BgmAgitSecurityDsl<H> bgmAgitEntryPoint(AuthenticationEntryPoint authenticationEntryPoint) {
-        this.entryPoint = authenticationEntryPoint;
-        return this;
-    }
-    
     /**
      * 세션을 사용하지않음
      * @param loginProcessingUrl creates the {@link RequestMatcher} based upon the
@@ -85,4 +77,5 @@ public class BgmAgitSecurityDsl<H extends HttpSecurityBuilder<H>> extends Abstra
     protected RequestMatcher createLoginProcessingUrlMatcher(String loginProcessingUrl) {
         return LOGIN_MATCHER;
     }
+    
 }
