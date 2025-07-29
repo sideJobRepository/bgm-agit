@@ -12,6 +12,8 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Component
@@ -40,24 +42,25 @@ public class S3FileUtils {
         String originalFilename = multipartFile.getOriginalFilename();
         String uuid = UUID.randomUUID().toString();
         String ext = extractExt(originalFilename);
-        String storeFileName = uuid + "." + ext;
-        
+        String baseName = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
+        String saveFile = baseName + "_" + uuid + "." + ext;
         try {
+            String encodedFilename = URLEncoder.encode(originalFilename, StandardCharsets.UTF_8);
             Map<String, String> metadata = new HashMap<>();
             metadata.put("Content-Type", multipartFile.getContentType());
             metadata.put("Content-Disposition", "inline");
-            metadata.put("original-filename", originalFilename); //원래 파일명 메타데이터에 저장
+            metadata.put("original-filename", encodedFilename); //원래 파일명 메타데이터에 저장
             
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName)
-                    .key(storeFileName)
+                    .key(saveFile)
                     .metadata(metadata)
                     .build();
             
             s3Client.putObject(putObjectRequest, RequestBody.fromBytes(multipartFile.getBytes()));
             
             String url = s3Client.utilities()
-                    .getUrl(b -> b.bucket(bucketName).key(storeFileName))
+                    .getUrl(b -> b.bucket(bucketName).key(saveFile)) // 바뀐 key로 변경
                     .toExternalForm();
             
             return new UploadResult(url, uuid);
