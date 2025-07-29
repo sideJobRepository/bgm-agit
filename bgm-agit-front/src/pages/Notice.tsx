@@ -35,6 +35,7 @@ export default function Notice({ mainGb }: NoticeProps) {
   };
 
   const [isDetailMode, setIsDetailMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [writeModalOpen, setWriteModalOpen] = useState(false);
   const [newNotice, setNewNotice] = useState({ title: '', content: '', type: 'NOTICE' });
   const [files, setFiles] = useState<File[]>([]);
@@ -93,6 +94,7 @@ export default function Notice({ mainGb }: NoticeProps) {
               {user?.roles.includes('ROLE_ADMIN') && (
                 <ButtonBox>
                   <Button
+                    color="#988271"
                     onClick={() => {
                       setIsDetailMode(false);
                       setNewNotice({ title: '', content: '', type: 'NOTICE' });
@@ -184,57 +186,96 @@ export default function Notice({ mainGb }: NoticeProps) {
       {writeModalOpen && (
         <ModalBackdrop onClick={() => setWriteModalOpen(false)}>
           <ModalBox onClick={e => e.stopPropagation()}>
-            <StyledRadioGroup>
-              <StyledRadioLabel>
-                <input
-                  type="radio"
-                  name="bgmAgitNoticeType"
-                  value="NOTICE"
-                  disabled={isDetailMode}
-                  checked={newNotice.type === 'NOTICE'}
-                  onChange={e => setNewNotice(prev => ({ ...prev, type: e.target.value }))}
+            {!isDetailMode && (
+              <>
+                <StyledRadioGroup>
+                  <StyledRadioLabel>
+                    <input
+                      type="radio"
+                      name="bgmAgitNoticeType"
+                      value="NOTICE"
+                      checked={newNotice.type === 'NOTICE'}
+                      onChange={e => setNewNotice(prev => ({ ...prev, type: e.target.value }))}
+                    />
+                    공지
+                  </StyledRadioLabel>
+                  <StyledRadioLabel>
+                    <input
+                      type="radio"
+                      name="bgmAgitNoticeType"
+                      value="EVENT"
+                      checked={newNotice.type === 'EVENT'}
+                      onChange={e => setNewNotice(prev => ({ ...prev, type: e.target.value }))}
+                    />
+                    이벤트
+                  </StyledRadioLabel>
+                </StyledRadioGroup>
+                <StyledInput
+                  type="text"
+                  placeholder="제목"
+                  value={newNotice.title}
+                  onChange={e => setNewNotice(prev => ({ ...prev, title: e.target.value }))}
                 />
-                공지
-              </StyledRadioLabel>
-              <StyledRadioLabel>
-                <input
-                  type="radio"
-                  name="bgmAgitNoticeType"
-                  value="EVENT"
-                  disabled={isDetailMode}
-                  checked={newNotice.type === 'EVENT'}
-                  onChange={e => setNewNotice(prev => ({ ...prev, type: e.target.value }))}
+                <StyledFileInput type="file" multiple onChange={handleFileChange} />
+                <StyledTextarea
+                  placeholder="내용"
+                  value={newNotice.content}
+                  onChange={e => setNewNotice(prev => ({ ...prev, content: e.target.value }))}
                 />
-                이벤트
-              </StyledRadioLabel>
-            </StyledRadioGroup>
-            <StyledInput
-              type="text"
-              placeholder="제목"
-              value={newNotice.title}
-              readOnly={isDetailMode}
-              onChange={e => setNewNotice(prev => ({ ...prev, title: e.target.value }))}
-            />
-            {!isDetailMode && <StyledFileInput type="file" multiple onChange={handleFileChange} />}
-            {attachedFiles?.length > 0 && (
-              <StyledFileUl>
-                {attachedFiles.map((file, idx) => (
-                  <li key={idx}>
-                    <a href={file.url} target="_blank" rel="noopener noreferrer">
-                      {file.fileName}
-                    </a>
-                  </li>
-                ))}
-              </StyledFileUl>
+              </>
             )}
-            <StyledTextarea
-              placeholder="내용"
-              value={newNotice.content}
-              readOnly={isDetailMode}
-              onChange={e => setNewNotice(prev => ({ ...prev, content: e.target.value }))}
-            />
-            {!isDetailMode && <Button onClick={insertData}>제출</Button>}
-            <Button onClick={() => setWriteModalOpen(false)}>닫기</Button>
+            {isDetailMode && (
+              <>
+                <DetailTop>{newNotice.type === 'NOTICE' ? '공지' : '이벤트'}</DetailTop>
+                <DetailCont>
+                  <h2>{newNotice.title}</h2>
+                  {attachedFiles?.length > 0 && (
+                    <StyledFileUl>
+                      {attachedFiles.map((file, idx) => (
+                        <li key={idx}>
+                          <a href={file.url} target="_blank" rel="noopener noreferrer">
+                            {file.fileName}
+                          </a>
+                          <Button color="#093A6E">저장</Button>
+                        </li>
+                      ))}
+                    </StyledFileUl>
+                  )}
+                  <p>{newNotice.content}</p>
+                </DetailCont>
+              </>
+            )}
+            <div>
+              {!isDetailMode && (
+                <Button color="#1A7D55" onClick={insertData}>
+                  저장
+                </Button>
+              )}
+              {isDetailMode && user?.roles.includes('ROLE_ADMIN') && (
+                <>
+                  <Button
+                    color="#093A6E"
+                    onClick={() => {
+                      setIsEditMode(true);
+                      setIsDetailMode(false);
+                    }}
+                  >
+                    수정
+                  </Button>
+                  <Button color="#FF5E57">삭제</Button>
+                </>
+              )}
+              <Button
+                color="#988271"
+                onClick={() => {
+                  setWriteModalOpen(false);
+                  setIsEditMode(false);
+                  setIsDetailMode(false);
+                }}
+              >
+                닫기
+              </Button>
+            </div>
           </ModalBox>
         </ModalBackdrop>
       )}
@@ -387,6 +428,7 @@ const ModalBackdrop = styled.div`
 
 const ModalBox = styled.div<WithTheme>`
   background: ${({ theme }) => theme.colors.white};
+  position: relative;
   padding: 24px;
   width: 90%;
   max-width: 480px;
@@ -394,17 +436,11 @@ const ModalBox = styled.div<WithTheme>`
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   text-align: center;
 
-  h2 {
-    font-size: ${({ theme }) => theme.sizes.large};
-    color: ${({ theme }) => theme.colors.menuColor};
-    margin-bottom: 40px;
-  }
-
-  p {
-    font-size: ${({ theme }) => theme.sizes.medium};
-    color: ${({ theme }) => theme.colors.subColor};
-    white-space: pre-wrap;
-    margin-bottom: 60px;
+  div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
   }
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -417,9 +453,9 @@ const ModalBox = styled.div<WithTheme>`
   }
 `;
 
-const Button = styled.button<WithTheme>`
+const Button = styled.button<WithTheme & { color: string }>`
   padding: 6px 16px;
-  background-color: ${({ theme }) => theme.colors.noticeColor};
+  background-color: ${({ color }) => color};
   color: ${({ theme }) => theme.colors.white};
   font-size: ${({ theme }) => theme.sizes.medium};
   border: none;
@@ -448,7 +484,7 @@ const StyledInput = styled.input<WithTheme>`
   color: ${({ theme }) => theme.colors.subColor};
 
   &:focus {
-    border-bottom: 1px solid ${({ theme }) => theme.colors.noticeColor};
+    border: 1px solid ${({ theme }) => theme.colors.noticeColor};
     background-color: transparent;
   }
 `;
@@ -466,7 +502,7 @@ const StyledTextarea = styled.textarea<WithTheme>`
   resize: none;
 
   &:focus {
-    border-bottom: 1px solid ${({ theme }) => theme.colors.noticeColor};
+    border: 1px solid ${({ theme }) => theme.colors.noticeColor};
     background-color: transparent;
   }
 `;
@@ -505,9 +541,69 @@ const StyledRadioLabel = styled.label<WithTheme>`
   }
 `;
 
+const DetailTop = styled.div<WithTheme>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50px;
+  border-radius: 12px 12px 0 0;
+  background-color: ${({ theme }) => theme.colors.bronzeColor};
+  color: ${({ theme }) => theme.colors.white};
+  font-family: 'Jua', sans-serif;
+  font-size: ${({ theme }) => theme.sizes.bigLarge};
+`;
+
+const DetailCont = styled.div<WithTheme>`
+  display: flex;
+  flex-direction: column;
+  margin: 50px 0 50px 0;
+
+  h2 {
+    font-family: 'Jua', sans-serif;
+    font-size: ${({ theme }) => theme.sizes.bigLarge};
+    color: ${({ theme }) => theme.colors.menuColor};
+    font-weight: ${({ theme }) => theme.weight.bold};
+    margin-bottom: 20px;
+  }
+
+  p {
+    width: 100%;
+    padding: 20px;
+    text-align: left;
+    background-color: ${({ theme }) => theme.colors.noticeColor};
+    color: ${({ theme }) => theme.colors.white};
+    font-size: ${({ theme }) => theme.sizes.medium};
+    font-weight: ${({ theme }) => theme.weight.semiBold};
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    h2 {
+      font-size: ${({ theme }) => theme.sizes.menu};
+    }
+    p {
+      font-size: ${({ theme }) => theme.sizes.small};
+    }
+  }
+`;
+
 const StyledFileUl = styled.ul<WithTheme>`
   display: flex;
+  flex-direction: column;
+  text-align: left;
+  width: 100%;
   gap: 10px;
   margin-bottom: 10px;
   color: ${({ theme }) => theme.colors.subColor};
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: ${({ theme }) => theme.sizes.xsmall};
+
+    button {
+      font-size: ${({ theme }) => theme.sizes.xsmall} !important;
+    }
+  }
 `;
