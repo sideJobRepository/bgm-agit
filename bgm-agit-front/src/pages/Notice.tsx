@@ -638,6 +638,8 @@ const StyledTextarea = styled.textarea<WithTheme>`
 const StyledFileInput = styled.input<WithTheme>`
   margin-bottom: 10px;
   width: 100%;
+  padding-bottom: 10px;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
 
   &::-webkit-file-upload-button {
     background: ${({ theme }) => theme.colors.noticeColor};
