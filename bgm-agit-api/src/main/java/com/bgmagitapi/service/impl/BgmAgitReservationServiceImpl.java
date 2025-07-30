@@ -243,6 +243,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .select(bgmAgitReservation)
                 .from(bgmAgitReservation)
                 .join(bgmAgitReservation.bgmAgitMember , qBgmAgitMember).fetchJoin()
+                .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage).fetchJoin()
                 .where(booleanBuilder)
                 .orderBy(bgmAgitReservation.bgmAgitReservationNo.asc()) // 예약 번호 기준 정렬
                 .fetch();
@@ -252,6 +253,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .select(bgmAgitReservation.bgmAgitReservationNo.countDistinct())
                 .from(bgmAgitReservation)
                 .join(bgmAgitReservation.bgmAgitMember, qBgmAgitMember)
+                .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage)
                 .where(booleanBuilder)
                 .fetchOne();
         if (total == null) total = 0L;
@@ -279,7 +281,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     dto.setApprovalStatus(entry.getValue().get(0).getBgmAgitReservationApprovalStatus());
                     dto.setCancelStatus(entry.getValue().get(0).getBgmAgitReservationCancelStatus());
                     dto.setReservationMemberName(entry.getValue().get(0).getBgmAgitMember().getBgmAgitMemberName());
-                    
+                    dto.setReservationAddr(entry.getValue().get(0).getBgmAgitImage().getBgmAgitImageLabel());
                     return dto;
                 })
                 .collect(Collectors.toList());
