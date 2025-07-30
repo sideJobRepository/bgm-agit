@@ -26,6 +26,7 @@ function App() {
           <ScrollToTop />
           <Routes>
             <Route path="/oauth/kakao/callback" element={<KakaoRedirectPage />} />
+            <Route path="/oauth/kakao/logout" element={<KakaoRedirectPage />} />
             <Route path="/error" element={<Error />} />
             <Route path="/" element={<Layout />}>
               <Route index element={<MainPage />} />

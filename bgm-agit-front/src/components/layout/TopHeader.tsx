@@ -61,6 +61,7 @@ export default function TopHeader() {
   //카카오 로그인
   const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID;
   const KAKAO_REDIRECT_URL = import.meta.env.VITE_KAKAO_REDIRECT_URL;
+  const KAKAO_LOGOUT_URL = import.meta.env.VITE_KAKAO_LOGOUT_URL;
 
   const loginWithKakao = () => {
     if (user) {
@@ -72,6 +73,9 @@ export default function TopHeader() {
       sessionStorage.removeItem('user');
       resetUser(null);
       setIsOpen(false);
+
+      window.location.href = `https://kauth.kakao.com/oauth/logout?client_id=${KAKAO_CLIENT_ID}&logout_redirect_uri=${KAKAO_LOGOUT_URL}`;
+
       toast.success('로그아웃 되었습니다.');
     } else {
       const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URL}&response_type=code`;
