@@ -684,6 +684,10 @@ const DetailTop = styled.div<WithTheme>`
   color: ${({ theme }) => theme.colors.menuColor};
   font-family: 'Jua', sans-serif;
   font-size: ${({ theme }) => theme.sizes.bigLarge};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.large};
+  }
 `;
 
 const DetailCont = styled.div<WithTheme>`
@@ -713,10 +717,10 @@ const DetailCont = styled.div<WithTheme>`
 
   @media ${({ theme }) => theme.device.mobile} {
     h2 {
-      font-size: ${({ theme }) => theme.sizes.menu};
+      font-size: ${({ theme }) => theme.sizes.medium};
     }
     p {
-      font-size: ${({ theme }) => theme.sizes.small};
+      font-size: ${({ theme }) => theme.sizes.xsmall};
     }
   }
 `;
