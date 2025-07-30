@@ -11,6 +11,7 @@ import com.bgmagitapi.controller.response.reservation.TimeRange;
 import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitReservation;
+import com.bgmagitapi.entity.QBgmAgitMember;
 import com.bgmagitapi.repository.BgmAgitImageRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.repository.BgmAgitReservationRepository;
@@ -33,6 +34,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.bgmagitapi.entity.QBgmAgitImage.bgmAgitImage;
+import static com.bgmagitapi.entity.QBgmAgitMember.*;
 import static com.bgmagitapi.entity.QBgmAgitReservation.bgmAgitReservation;
 
 @Transactional
@@ -236,9 +238,11 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         }
         
         // 1. 실제 데이터 가져오기
-        
+        QBgmAgitMember qBgmAgitMember = QBgmAgitMember.bgmAgitMember;
         List<BgmAgitReservation> reservations = queryFactory
-                .selectFrom(bgmAgitReservation)
+                .select(bgmAgitReservation)
+                .from(bgmAgitReservation)
+                .join(bgmAgitReservation.bgmAgitMember , qBgmAgitMember).fetchJoin()
                 .where(booleanBuilder)
                 .orderBy(bgmAgitReservation.bgmAgitReservationNo.asc()) // 예약 번호 기준 정렬
                 .fetch();
@@ -247,6 +251,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         Long total = queryFactory
                 .select(bgmAgitReservation.bgmAgitReservationNo.countDistinct())
                 .from(bgmAgitReservation)
+                .join(bgmAgitReservation.bgmAgitMember, qBgmAgitMember)
                 .where(booleanBuilder)
                 .fetchOne();
         if (total == null) total = 0L;
@@ -273,6 +278,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     dto.setReservationDate(entry.getValue().get(0).getBgmAgitReservationStartDate());
                     dto.setApprovalStatus(entry.getValue().get(0).getBgmAgitReservationApprovalStatus());
                     dto.setCancelStatus(entry.getValue().get(0).getBgmAgitReservationCancelStatus());
+                    dto.setReservationMemberName(entry.getValue().get(0).getBgmAgitMember().getBgmAgitMemberName());
+                    
                     return dto;
                 })
                 .collect(Collectors.toList());
