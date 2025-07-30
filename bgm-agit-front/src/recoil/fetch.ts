@@ -77,9 +77,41 @@ export function useNoticeDownloadFetch() {
 
   const fetchNoticeDownload = (id: string) => {
     request(
-      () => api.get(`/bgm-agit/notice/download/notice/${id}`).then(res => res.data),
-      () => {},
-      { ignoreHttpError: true } // 상태 업데이트 없이 그냥 요청만
+        () =>
+            api
+                .get(`/bgm-agit/notice/download/notice/${id}`, {
+                  responseType: 'blob', // 👈 중요
+                })
+                .then((res) => {
+                  const blob = new Blob([res.data], {
+                    type: res.headers['content-type'],
+                  });
+                  const url = window.URL.createObjectURL(blob);
+
+                  const a = document.createElement('a');
+                  a.href = url;
+
+                  // 👇 파일명 파싱
+                  let fileName = 'download.png';
+                  const disposition = res.headers['content-disposition'];
+                  console.log("res.headers", res.headers)
+                  console.log("disposition", disposition)
+                  if (disposition) {
+                    // 1. 올바른 RFC5987 형식 처리
+                    const matchRfc = disposition.match(/filename\*=UTF-8''(.+)/);
+                    console.log("matchRfc", matchRfc)
+                    if (matchRfc && matchRfc[1]) {
+                      fileName = decodeURIComponent(matchRfc[1]);
+                    }
+                  }
+
+                  a.download = fileName;
+                  a.click();
+                  a.remove();
+                  URL.revokeObjectURL(url);
+                }),
+        () => {},
+        { ignoreHttpError: true }
     );
   };
 
