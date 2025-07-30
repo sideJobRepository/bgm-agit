@@ -3,8 +3,10 @@ package com.bgmagitapi.controller;
 
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.controller.request.BgmAgitImageCreateRequest;
+import com.bgmagitapi.controller.request.BgmAgitImageModifyRequest;
 import com.bgmagitapi.service.BgmAgitImageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,12 +22,12 @@ public class BgmAgitImageController {
     }
     
     @PutMapping("/image")
-    public ApiResponse modifyBgmAgitImage(@RequestBody BgmAgitImageCreateRequest request){
-        return bgmAgitImageService.createBgmAgitImage(request);
+    public ApiResponse modifyBgmAgitImage(@Validated @RequestBody BgmAgitImageModifyRequest request){
+        return bgmAgitImageService.modifyBgmAgitImage(request);
     }
     
-    @DeleteMapping("/image")
-    public ApiResponse deleteBgmAgitImage(@RequestBody BgmAgitImageCreateRequest request){
-    
+    @DeleteMapping("/image/{imageId}")
+    public ApiResponse deleteBgmAgitImage(@PathVariable Long imageId ){
+        return bgmAgitImageService.deleteBgmAgitImage(imageId);
     }
 }

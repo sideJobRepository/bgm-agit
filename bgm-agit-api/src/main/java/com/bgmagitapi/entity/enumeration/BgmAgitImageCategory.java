@@ -13,6 +13,7 @@ public enum BgmAgitImageCategory {
     DRINK("음료수"),
     FOOD("음식"),
     ROOM("방"),
-    MAIN("메인 이미지");
+    MAIN("메인 이미지"),
+    MAHJONG("마작");
     private final String categoryValue;
 }

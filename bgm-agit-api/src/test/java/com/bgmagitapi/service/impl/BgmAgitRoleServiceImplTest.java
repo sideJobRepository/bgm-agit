@@ -3,7 +3,6 @@ package com.bgmagitapi.service.impl;
 import com.bgmagitapi.RepositoryAndServiceTestSupport;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.controller.request.BgmAgitRoleModifyRequest;
-import com.bgmagitapi.controller.request.BgmAgitRoleRequest;
 import com.bgmagitapi.controller.response.BgmAgitRoleResponse;
 import com.bgmagitapi.service.BgmAgitRoleService;
 import org.junit.jupiter.api.DisplayName;

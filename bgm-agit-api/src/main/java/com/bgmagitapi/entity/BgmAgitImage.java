@@ -1,15 +1,21 @@
 package com.bgmagitapi.entity;
 
+import com.bgmagitapi.config.UploadResult;
+import com.bgmagitapi.controller.request.BgmAgitImageCreateRequest;
+import com.bgmagitapi.controller.request.BgmAgitImageModifyRequest;
 import com.bgmagitapi.entity.enumeration.BgmAgitImageCategory;
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.util.StringUtils;
 
 @Entity
 @Table(name = "BGM_AGIT_IMAGE")
 @Getter
 @NoArgsConstructor
+@DynamicUpdate
 public class BgmAgitImage extends DateSuperClass {
     
     // BGM 아지트 이미지 ID
@@ -44,4 +50,31 @@ public class BgmAgitImage extends DateSuperClass {
     @Column(name = "BGM_AGIT_IMAGE_URL")
     private String bgmAgitImageUrl;
     
+    
+    public BgmAgitImage(BgmAgitMainMenu bgmAgitMainMenu, BgmAgitImageCreateRequest request, UploadResult image) {
+        this.bgmAgitMainMenu = bgmAgitMainMenu;
+        this.bgmAgitImageLabel = request.getBgmAgitImageLabel();
+        this.bgmAgitImageGroups = request.getBgmAgitImageGroups();
+        this.bgmAgitImageCategory = request.getBgmAgitImageCategory();
+        this.bgmAgitMenuLink = request.getBgmAgitMenuLink();
+        this.bgmAgitImageUrl = image.getUrl();
+    }
+    
+    public void modifyBgmAgitImage(BgmAgitImageModifyRequest request, UploadResult image) {
+        if (request.getBgmAgitImageCategory() != null) {
+            this.bgmAgitImageCategory = request.getBgmAgitImageCategory();
+        }
+        if (StringUtils.hasText(request.getBgmAgitMenuLink())) {
+            this.bgmAgitMenuLink = request.getBgmAgitMenuLink();
+        }
+        if (StringUtils.hasText(request.getBgmAgitImageGroups())) {
+            this.bgmAgitImageGroups = request.getBgmAgitImageGroups();
+        }
+        if (image != null && StringUtils.hasText(image.getUrl())) {
+            this.bgmAgitImageUrl = image.getUrl();
+        }
+        if (StringUtils.hasText(request.getBgmAgitImageLabel())) {
+            this.bgmAgitImageLabel = request.getBgmAgitImageLabel();
+        }
+    }
 }
