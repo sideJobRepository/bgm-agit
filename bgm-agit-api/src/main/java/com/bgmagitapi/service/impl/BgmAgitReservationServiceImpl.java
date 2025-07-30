@@ -253,7 +253,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .join(bgmAgitReservation.bgmAgitMember , qBgmAgitMember).fetchJoin()
                 .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage).fetchJoin()
                 .where(booleanBuilder)
-                .orderBy(bgmAgitReservation.bgmAgitReservationNo.asc()) // 예약 번호 기준 정렬
+                .orderBy(bgmAgitReservation.bgmAgitReservationNo.desc()) // 예약 번호 기준 정렬
                 .fetch();
         
         // 2. 총 개수
@@ -272,7 +272,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         
         // 4. 그룹을 응답용 DTO로 변환
         List<GroupedReservationResponse> groupedResponses = grouped.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey()) // reservationNo 기준 정렬
+                .sorted(Map.Entry.<Long, List<BgmAgitReservation>>comparingByKey().reversed())// reservationNo 기준 정렬
                 .map(entry -> {
                     GroupedReservationResponse dto = new GroupedReservationResponse();
                     dto.setReservationNo(entry.getKey());
