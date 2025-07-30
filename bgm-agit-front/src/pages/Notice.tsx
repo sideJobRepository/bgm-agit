@@ -4,7 +4,13 @@ import { useMediaQuery } from 'react-responsive';
 import { Wrapper } from '../styles';
 import SearchBar from '../components/SearchBar.tsx';
 import { useEffect, useState } from 'react';
-import { useDeletePost, useInsertPost, useNoticeFetch, useUpdatePost } from '../recoil/fetch.ts';
+import {
+  useDeletePost,
+  useInsertPost,
+  useNoticeDownloadFetch,
+  useNoticeFetch,
+  useUpdatePost,
+} from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { noticeState } from '../recoil/state/noticeState.ts';
 import { userState } from '../recoil/state/userState.ts';
@@ -29,6 +35,7 @@ export default function Notice({ mainGb }: NoticeProps) {
   const { insert } = useInsertPost();
   const { update } = useUpdatePost();
   const { remove } = useDeletePost();
+  const fetchNoticeDownload = useNoticeDownloadFetch();
   const items = useRecoilValue(noticeState);
   console.log('items', items);
 
@@ -176,6 +183,12 @@ export default function Notice({ mainGb }: NoticeProps) {
         });
       },
     });
+  }
+
+  function fileDownload(id: string) {
+    const sliceId = id.split('/').pop()!; // 마지막 슬래시 이후 값만 추출
+    console.log(sliceId);
+    fetchNoticeDownload(sliceId);
   }
 
   return (
@@ -340,7 +353,11 @@ export default function Notice({ mainGb }: NoticeProps) {
                       .filter(file => !deletedFileNames.includes(file.fileName))
                       .map((file, idx) => (
                         <li key={idx}>
-                          <a href={file.url} target="_blank" rel="noopener noreferrer">
+                          <a
+                            onClick={() => {
+                              console.log('file', file);
+                            }}
+                          >
                             {file.fileName}
                           </a>
                           <FaTrash
@@ -367,7 +384,11 @@ export default function Notice({ mainGb }: NoticeProps) {
                     <StyledFileUl>
                       {attachedFiles.map((file, idx) => (
                         <li key={idx}>
-                          <a href={file.url} target="_blank" rel="noopener noreferrer">
+                          <a
+                            onClick={() => {
+                              fileDownload(file.url);
+                            }}
+                          >
                             {file.fileName}
                           </a>
                         </li>

@@ -72,6 +72,20 @@ export function useNoticeFetch() {
   return fetchNotice;
 }
 
+export function useNoticeDownloadFetch() {
+  const { request } = useRequest();
+
+  const fetchNoticeDownload = (id: string) => {
+    request(
+      () => api.get(`/bgm-agit/notice/download/notice/${id}`).then(res => res.data),
+      () => {},
+      { ignoreHttpError: true } // 상태 업데이트 없이 그냥 요청만
+    );
+  };
+
+  return fetchNoticeDownload;
+}
+
 export function useLoginPost() {
   const { request } = useRequest();
   const setUser = useSetRecoilState(userState);
