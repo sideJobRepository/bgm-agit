@@ -8,7 +8,6 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -25,25 +24,25 @@ public class S3FileUtils {
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
     
-    public List<UploadResult> storeFiles(List<MultipartFile> multipartFiles) {
+    public List<UploadResult> storeFiles(List<MultipartFile> multipartFiles, String folder) {
         List<UploadResult> uploadFiles = new ArrayList<>();
         for (MultipartFile multipartFile : multipartFiles) {
             if (!multipartFile.isEmpty()) {
-                uploadFiles.add(storeFile(multipartFile));
+                uploadFiles.add(storeFile(multipartFile,folder));
             }
         }
         return uploadFiles;
     }
     
     
-    public UploadResult storeFile(MultipartFile multipartFile) {
+    public UploadResult storeFile(MultipartFile multipartFile, String folder) {
         
         if (multipartFile.isEmpty()) return null;
         
         String originalFilename = multipartFile.getOriginalFilename();
         String uuid = UUID.randomUUID().toString();
         String ext = extractExt(originalFilename);
-        String storeFileName = uuid + "." + ext;
+        String storeFileName = folder + "/" + uuid + "." + ext;
         
         try {
             String encodedFilename = URLEncoder.encode(originalFilename, StandardCharsets.UTF_8);

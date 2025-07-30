@@ -128,7 +128,7 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
 
         // 2. S3 업로드
         List<MultipartFile> files = request.getFiles();
-        List<UploadResult> uploadResults = s3FileUtils.storeFiles(files);
+        List<UploadResult> uploadResults = s3FileUtils.storeFiles(files,"notice");
 
         // 3. 파일 테이블 저장
         List<BgmAgitNoticeFile> noticeFileEntities = new ArrayList<>();
@@ -169,7 +169,7 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
         // 3. 새 파일 처리
         List<MultipartFile> multipartFiles = request.getMultipartFiles();
         if (multipartFiles != null && !multipartFiles.isEmpty()) {
-            List<UploadResult> uploadResults = s3FileUtils.storeFiles(multipartFiles);
+            List<UploadResult> uploadResults = s3FileUtils.storeFiles(multipartFiles, "/notice");
             List<BgmAgitNoticeFile> newEntities = new ArrayList<>();
             
             for (int i = 0; i < multipartFiles.size(); i++) {

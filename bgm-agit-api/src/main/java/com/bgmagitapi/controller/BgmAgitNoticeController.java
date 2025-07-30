@@ -62,12 +62,16 @@ public class BgmAgitNoticeController {
         return bgmAgitNoticeService.deleteNotice(id);
     }
     
-    @GetMapping("/notice/download/{fileName}")
-    public ResponseEntity<Resource> download(@PathVariable String fileName) {
+    @GetMapping("/notice/download/{folder}/{fileName}")
+    public ResponseEntity<Resource> download(
+            @PathVariable String fileName,
+            @PathVariable String folder
+    ) {
+        String key = folder + "/" + fileName;
         ResponseInputStream<GetObjectResponse> object = s3Client.getObject(
                 GetObjectRequest.builder()
                         .bucket(bucketName)
-                        .key(fileName)
+                        .key(key)
                         .build()
         );
         
