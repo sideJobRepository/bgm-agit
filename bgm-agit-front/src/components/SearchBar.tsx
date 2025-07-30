@@ -15,7 +15,7 @@ interface SearchBarProps<T> {
 export default function SearchBar<T = string>({ color, label, onSearch }: SearchBarProps<T>) {
   const location = useLocation();
   const key = location.pathname.split('/').filter(Boolean).pop();
-  console.log('key', key);
+
   const today = new Date();
   const oneMonthLater = new Date();
   oneMonthLater.setMonth(today.getMonth() + 1);

@@ -13,9 +13,10 @@ import { userState } from '../../recoil/state/userState.ts';
 import { showConfirmModal } from '../confirmAlert.tsx';
 import { useInsertPost, useReservationFetch } from '../../recoil/fetch.ts';
 import type { AxiosRequestHeaders } from 'axios';
-import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 export default function ReservationCalendar({ id }: { id?: number }) {
+  const navigate = useNavigate();
   const reservation = useRecoilValue<ReservationDatas>(reservationState);
   const fetchReservation = useReservationFetch();
   const reservationData = useRecoilValue(reservationDataState);
@@ -55,7 +56,7 @@ export default function ReservationCalendar({ id }: { id?: number }) {
             <>
               해당 일자로 예약하시겠습니까?
               <br />
-              입금 확인 후 예약 확정이 완료됩니다.
+              예약금 입금 후 예약 확정이 완료됩니다.
             </>
           ),
           gb: 2,
@@ -92,7 +93,21 @@ export default function ReservationCalendar({ id }: { id?: number }) {
             ignoreHttpError: true,
             onSuccess: data => {
               console.log('data', data);
-              toast.success('예약이 성공하였습니다.');
+
+              showConfirmModal({
+                message: (
+                  <>
+                    예약이 완료되었습니다.
+                    <br />
+                    예약금 입금 계좌번호 및 예약 상태는 예약내역에서 확인 가능합니다.
+                    <br />
+                    예약내역으로 이동하시겠습니까?
+                  </>
+                ),
+                onConfirm: () => {
+                  navigate('/reservationList');
+                },
+              });
 
               if (reservationData) {
                 setSelectedTimes([]);

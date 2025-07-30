@@ -3,13 +3,24 @@ import SearchBar from '../components/SearchBar.tsx';
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { useEffect, useState } from 'react';
-import { useReservationListFetch } from '../recoil/fetch.ts';
+import { useReservationListFetch, useUpdatePost } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { reservationListDataState } from '../recoil/state/reservationState.ts';
+import { userState } from '../recoil/state/userState.ts';
+import { showConfirmModal } from '../components/confirmAlert.tsx';
+import type { AxiosRequestHeaders } from 'axios';
+import { toast } from 'react-toastify';
+import type { Reservation } from '../types/reservation.ts';
 
 export default function ReservationList() {
+  const user = useRecoilValue(userState);
+
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
+  const start = dateRange[0]?.toISOString().slice(0, 10) ?? null;
+  const end = dateRange[1]?.toISOString().slice(0, 10) ?? null;
+
   const fetchReservationList = useReservationListFetch();
+  const { update } = useUpdatePost();
   const items = useRecoilValue(reservationListDataState);
   const [page, setPage] = useState(0);
 
@@ -18,10 +29,39 @@ export default function ReservationList() {
   };
 
   useEffect(() => {
-    const start = dateRange[0]?.toISOString().slice(0, 10) ?? null;
-    const end = dateRange[1]?.toISOString().slice(0, 10) ?? null;
     fetchReservationList(page, { startDate: start, endDate: end });
   }, [dateRange, page]);
+
+  //업데이트
+  async function updateData(item: Reservation, role: boolean, cancel: string, approval: string) {
+    const param = {
+      reservationNo: item.reservationNo,
+      cancelStatus: cancel,
+      approvalStatus: approval,
+    };
+
+    const url = role ? `/bgm-agit/reservation/admin` : `/bgm-agit/reservation`;
+    const message =
+      approval === 'Y' ? '해당 예약을 확정하시겠습니까?' : '해당 예약을 취소하시겠습니까?';
+    const token = sessionStorage.getItem('token');
+    showConfirmModal({
+      message: message,
+      onConfirm: () => {
+        update({
+          headers: {
+            Authorization: `Bearer ${token}`,
+          } as AxiosRequestHeaders,
+          url: url,
+          body: param,
+          ignoreHttpError: true,
+          onSuccess: () => {
+            toast.success('예약이 취소되었습니다.');
+            fetchReservationList(page, { startDate: start, endDate: end });
+          },
+        });
+      },
+    });
+  }
 
   return (
     <Wrapper>
@@ -41,6 +81,15 @@ export default function ReservationList() {
         </SearchWrapper>
 
         <TableBox>
+          <TextBox>
+            <p>
+              • 계좌 : 하나은행 60891052636607 <br />• 예금주 : 박범후
+            </p>
+            <span>
+              ※ 예약금은 10,000원이며, 반드시 예약자명으로 입금해주시기 바랍니다.
+              <br />※ 확정 후 취소의 경우 0507-1445-3503로 문의 주시기 바랍니다.
+            </span>
+          </TextBox>
           <TableWrapper>
             <Table>
               <thead>
@@ -68,11 +117,57 @@ export default function ReservationList() {
                     </Td>
                     <Td>{item.reservationMemberName}</Td>
                     <Td>
-                      {item.cancelStatus === 'Y'
-                        ? '취소'
-                        : item.approvalStatus === 'Y'
-                          ? '확정'
-                          : '대기'}
+                      <StatusBox>
+                        {item.cancelStatus === 'Y'
+                          ? '취소'
+                          : item.approvalStatus === 'Y'
+                            ? '확정'
+                            : '대기'}
+
+                        <ButtonBox2>
+                          {/* 어드민인 경우 */}
+                          {user?.roles.includes('ROLE_ADMIN') && (
+                            <>
+                              {item.approvalStatus === 'Y' && item.cancelStatus !== 'Y' && (
+                                <Button
+                                  color="#FF5E57"
+                                  onClick={() => updateData(item, true, 'Y', 'N')}
+                                >
+                                  취소
+                                </Button>
+                              )}
+
+                              {item.approvalStatus !== 'Y' && item.cancelStatus !== 'Y' && (
+                                <>
+                                  <Button
+                                    color="#FF5E57"
+                                    onClick={() => updateData(item, true, 'Y', 'N')}
+                                  >
+                                    취소
+                                  </Button>
+                                  <Button
+                                    color="#1A7D55"
+                                    onClick={() => updateData(item, true, 'N', 'Y')}
+                                  >
+                                    확정
+                                  </Button>
+                                </>
+                              )}
+                            </>
+                          )}
+
+                          {!user?.roles.includes('ROLE_ADMIN') &&
+                            item.approvalStatus !== 'Y' &&
+                            item.cancelStatus !== 'Y' && (
+                              <Button
+                                color="#FF5E57"
+                                onClick={() => updateData(item, false, 'Y', 'N')}
+                              >
+                                취소
+                              </Button>
+                            )}
+                        </ButtonBox2>
+                      </StatusBox>
                     </Td>
                   </tr>
                 ))}
@@ -139,10 +234,6 @@ const Table = styled.table<WithTheme>`
 
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.sizes.xxsmall};
-    }
-
-    &:hover {
-      opacity: 0.6;
     }
   }
 
@@ -252,4 +343,54 @@ const NoSearchBox = styled.div<WithTheme>`
 
 const TimeText = styled.div`
   font-variant-numeric: tabular-nums;
+`;
+
+const StatusBox = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+`;
+
+const ButtonBox2 = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
+`;
+
+const Button = styled.button<WithTheme & { color: string }>`
+  padding: 6px 16px;
+  background-color: ${({ color }) => color};
+  color: ${({ theme }) => theme.colors.white};
+  font-size: ${({ theme }) => theme.sizes.medium};
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.xxsmall};
+  }
+`;
+
+const TextBox = styled.div<WithTheme>`
+  display: flex;
+  flex-direction: column;
+  justify-content: right;
+  margin-bottom: 10px;
+  width: 100%;
+  font-size: ${({ theme }) => theme.sizes.medium};
+  line-height: 1.4;
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.xxsmall};
+  }
+
+  p {
+    color: ${({ theme }) => theme.colors.subColor};
+  }
+
+  span {
+    color: ${({ theme }) => theme.colors.redColor};
+    font-weight: ${({ theme }) => theme.weight.semiBold};
+  }
 `;

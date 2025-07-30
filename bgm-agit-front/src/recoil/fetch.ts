@@ -70,7 +70,6 @@ export function useReservationListFetch() {
     dateRange: { startDate: string | null; endDate: string | null }
   ) => {
     const token = sessionStorage.getItem('token');
-    console.log('token', token);
 
     request(
       () =>

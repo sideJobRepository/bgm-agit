@@ -37,7 +37,7 @@ export default function Notice({ mainGb }: NoticeProps) {
   const { remove } = useDeletePost();
   const fetchNoticeDownload = useNoticeDownloadFetch();
   const items = useRecoilValue(noticeState);
-  console.log('item', items);
+
   const user = useRecoilValue(userState);
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
 

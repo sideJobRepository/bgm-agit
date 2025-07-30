@@ -22,7 +22,6 @@ export default function TopHeader() {
   const resetUser = useSetRecoilState(userState);
 
   const menus = useRecoilValue(mainMenuState);
-  console.log('menus', menus);
 
   const navigate = useNavigate();
 
