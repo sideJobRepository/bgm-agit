@@ -87,7 +87,7 @@ const TopArea = styled.header<WithTheme>`
   right: 0;
   height: 100px;
   background-color: ${({ theme }) => theme.colors.topBg};
-  z-index: 1000;
+  z-index: 2;
 `;
 
 const NavArea = styled.nav<WithTheme & { $home: boolean }>`
@@ -115,5 +115,5 @@ const FooterBox = styled.footer<WithTheme>`
   font-size: ${({ theme }) => theme.sizes.medium};
   line-height: 1.5;
   justify-content: center;
-  z-index: 1000;
+  z-index: 2;
 `;

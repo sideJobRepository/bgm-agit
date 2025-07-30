@@ -349,7 +349,7 @@ const SubMenuWrapper = styled.nav<WithTheme>`
   width: 100%;
   display: flex;
   justify-content: space-around;
-  z-index: 1000;
+  z-index: 2;
 
   opacity: 0;
   transform: translateY(-10px);

@@ -554,7 +554,7 @@ const ModalBackdrop = styled.div`
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 2;
+  z-index: 3;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -618,7 +618,7 @@ const StyledInput = styled.input<WithTheme>`
 
 const StyledTextarea = styled.textarea<WithTheme>`
   width: 100%;
-  height: 100px;
+  min-height: 200px;
   margin-bottom: 10px;
   border: 1px solid ${({ theme }) => theme.colors.lineColor};
   outline: none;
