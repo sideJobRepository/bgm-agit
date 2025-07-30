@@ -14,6 +14,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import java.util.ArrayList;
+import java.util.List;
+
 class BgmAgitRoleServiceImplTest extends RepositoryAndServiceTestSupport {
     
     @Autowired
@@ -32,14 +35,23 @@ class BgmAgitRoleServiceImplTest extends RepositoryAndServiceTestSupport {
     @DisplayName("")
     @Test
     void test2(){
-        Long memberId = 3L; // '밤'의 MEMBER_ID
-        Long adminRoleId = 1L; // ADMIN ROLE_ID
-        BgmAgitRoleModifyRequest request = new BgmAgitRoleModifyRequest();
-        request.setMemberId(memberId);
-        request.setRoleId(adminRoleId);
+        // given
+        Long userRoleId = 1L; // USER 권한 ID
+        List<BgmAgitRoleModifyRequest> requestList = new ArrayList<>();
+        
+        BgmAgitRoleModifyRequest request1 = new BgmAgitRoleModifyRequest();
+        request1.setMemberId(1L); // 지수
+        request1.setRoleId(userRoleId);
+        
+        BgmAgitRoleModifyRequest request2 = new BgmAgitRoleModifyRequest();
+        request2.setMemberId(3L); // 밤
+        request2.setRoleId(userRoleId);
+        
+        requestList.add(request1);
+        requestList.add(request2);
         
         // when
-        ApiResponse response = bgmAgitRoleService.modifyRole(request);
+        ApiResponse response = bgmAgitRoleService.modifyRole(requestList);
     
     }
 }

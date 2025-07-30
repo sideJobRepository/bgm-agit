@@ -32,7 +32,7 @@ public class BgmAgitRoleController {
     }
     
     @PutMapping("/role")
-    public ApiResponse modifyRole(@Validated @RequestBody BgmAgitRoleModifyRequest request) {
+    public ApiResponse modifyRole(@Validated @RequestBody List<BgmAgitRoleModifyRequest> request) {
         return bgmAgitRoleService.modifyRole(request);
     }
 }

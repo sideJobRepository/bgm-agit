@@ -88,22 +88,23 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
     }
     
     @Override
-    public ApiResponse modifyRole(BgmAgitRoleModifyRequest request) {
-        Long memberId = request.getMemberId();
-        Long newRoleId = request.getRoleId();
-        
-        // 1. 기존 memberId로 role 데이터 찾기
-        BgmAgitMemberRole memberRole = bgmAgitMemberRoleRepository.findByBgmAgitMember_BgmAgitMemberId(memberId)
-                .orElseThrow(() -> new RuntimeException("해당 회원의 권한 정보가 없습니다."));
-        
-        // 2. 새로운 Role 엔티티 조회
-        BgmAgitRole newRole = bgmAgitRoleRepository.findById(newRoleId)
-                .orElseThrow(() -> new RuntimeException("해당 ROLE_ID가 존재하지 않습니다."));
-        
-        // 3. Role 정보 변경
-        memberRole.modifyRole(newRole);
-        
-        
+    public ApiResponse modifyRole(List<BgmAgitRoleModifyRequest> requestList) {
+        for (BgmAgitRoleModifyRequest request : requestList) {
+            Long memberId = request.getMemberId();
+            Long newRoleId = request.getRoleId();
+            
+            // 1. 기존 memberId로 role 데이터 찾기
+            BgmAgitMemberRole memberRole = bgmAgitMemberRoleRepository
+                    .findByBgmAgitMember_BgmAgitMemberId(memberId)
+                    .orElseThrow(() -> new RuntimeException("해당 회원의 권한 정보가 없습니다."));
+            
+            // 2. 새로운 Role 엔티티 조회
+            BgmAgitRole newRole = bgmAgitRoleRepository.findById(newRoleId)
+                    .orElseThrow(() -> new RuntimeException("해당 ROLE_ID가 존재하지 않습니다."));
+            
+            // 3. Role 정보 변경
+            memberRole.modifyRole(newRole);
+        }
         bgmAgitAuthorizationManager.reload();
         // 4. 저장
         return new ApiResponse(200,true,"권한이 성공적으로 변경되었습니다.");
