@@ -66,7 +66,7 @@ export function useReservationListFetch() {
   const setReservationList = useSetRecoilState(reservationListDataState);
 
   const fetchReservationList = () => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     console.log('token', token);
 
     request(
