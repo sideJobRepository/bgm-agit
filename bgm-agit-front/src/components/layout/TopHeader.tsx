@@ -22,6 +22,7 @@ export default function TopHeader() {
   const resetUser = useSetRecoilState(userState);
 
   const menus = useRecoilValue(mainMenuState);
+  console.log('menus', menus);
 
   const navigate = useNavigate();
 
@@ -123,44 +124,45 @@ export default function TopHeader() {
       </Left>
       <Center onMouseEnter={() => setIsSubOpen(true)}>
         <ul>
-          {menus?.map((menu, i) => (
-            <li key={i}>
-              <a>{menu.name}</a>
-            </li>
-          ))}
+          {menus?.map((menu, i) => {
+            if (menu.bgmAgitMainMenuId === 14 && !user) return null; // user가 없는데 id가 14면 안 보이게
+            return (
+              <li key={i}>
+                <a>{menu.name}</a>
+              </li>
+            );
+          })}
         </ul>
         <SubMenuWrapper ref={subMenuRef} className={isSubOpen ? 'show' : ''}>
           {menus.map((menu, i) => (
             <ul key={i}>
-              {menu.subMenu.map((sub, j) => (
-                <SubLi
-                  key={j}
-                  $active={location.pathname === sub.link}
-                  onClick={() => {
-                    setIsSubOpen(false);
-                    setTimeout(() => {
-                      subMoveEnvent(sub);
-                    }, 300);
-                  }}
-                >
-                  <a>{sub.name}</a>
-                </SubLi>
-              ))}
+              {menu.subMenu
+                .filter(sub => {
+                  if (sub.bgmAgitSubMenuId === 14 && !user) return false;
+                  if (sub.bgmAgitMainMenuId === 16 && !user?.roles?.includes('ROLE_ADMIN'))
+                    return false;
+                  return true;
+                })
+                .map((sub, j) => (
+                  <SubLi
+                    key={j}
+                    $active={location.pathname === sub.link}
+                    onClick={() => {
+                      setIsSubOpen(false);
+                      setTimeout(() => {
+                        subMoveEnvent(sub);
+                      }, 300);
+                    }}
+                  >
+                    <a>{sub.name}</a>
+                  </SubLi>
+                ))}
             </ul>
           ))}
         </SubMenuWrapper>
       </Center>
       <Right>
         <ul>
-          {user && (
-            <li
-              onClick={() => {
-                navigate('ReservationList');
-              }}
-            >
-              <a>예약내역</a>
-            </li>
-          )}
           <li
             onClick={() => {
               callClick();
@@ -180,46 +182,49 @@ export default function TopHeader() {
       </div>
       <MobileMenu ref={menuRef} $open={isOpen} className={isSubOpen ? 'show' : ''}>
         <ul>
-          {menus.map((menu, i) => (
-            <React.Fragment key={i}>
-              <li
-                onClick={() => {
-                  if (isMobileSubOpen === menu.name) {
-                    setIsMobileSubOpen(null);
-                  } else {
-                    setIsMobileSubOpen(menu.name);
-                  }
-                }}
-              >
-                <a>{menu.name}</a>
-                {isMobileSubOpen === menu.name ? <MdKeyboardArrowUp /> : <MdKeyboardArrowDown />}
-              </li>
-              {menu.subMenu.map((sub, j) => (
-                <AnimatedSubLiWrapper key={j} $visible={isMobileSubOpen === menu.name}>
-                  <MobileSubLi
-                    $active={location.pathname === sub.link}
-                    onClick={() => {
-                      toggleMenu();
-                      setTimeout(() => {
-                        subMoveEnvent(sub);
-                      }, 300);
-                    }}
-                  >
-                    <a>{sub.name}</a>
-                  </MobileSubLi>
-                </AnimatedSubLiWrapper>
-              ))}
-            </React.Fragment>
-          ))}
-          {user && (
-            <SubMainLi
-              onClick={() => {
-                navigate('ReservationList');
-              }}
-            >
-              <a>예약내역</a>
-            </SubMainLi>
-          )}
+          {menus
+            .filter(menu => {
+              // 메인메뉴 ID가 14번인데 user가 없으면 안보이게
+              if (menu.bgmAgitMainMenuId === 14 && !user) return false;
+              return true;
+            })
+            .map((menu, i) => (
+              <React.Fragment key={i}>
+                <li
+                  onClick={() => {
+                    if (isMobileSubOpen === menu.name) {
+                      setIsMobileSubOpen(null);
+                    } else {
+                      setIsMobileSubOpen(menu.name);
+                    }
+                  }}
+                >
+                  <a>{menu.name}</a>
+                  {isMobileSubOpen === menu.name ? <MdKeyboardArrowUp /> : <MdKeyboardArrowDown />}
+                </li>
+                {menu.subMenu
+                  .filter(sub => {
+                    if (sub.bgmAgitMainMenuId === 16 && !user?.roles?.includes('ROLE_ADMIN'))
+                      return false;
+                    return true;
+                  })
+                  .map((sub, j) => (
+                    <AnimatedSubLiWrapper key={j} $visible={isMobileSubOpen === menu.name}>
+                      <MobileSubLi
+                        $active={location.pathname === sub.link}
+                        onClick={() => {
+                          toggleMenu();
+                          setTimeout(() => {
+                            subMoveEnvent(sub);
+                          }, 300);
+                        }}
+                      >
+                        <a>{sub.name}</a>
+                      </MobileSubLi>
+                    </AnimatedSubLiWrapper>
+                  ))}
+              </React.Fragment>
+            ))}
           <SubMainLi
             onClick={() => {
               callClick();
@@ -288,6 +293,7 @@ const Center = styled.nav<WithTheme>`
   align-items: center;
   height: 100%;
   position: relative;
+  margin-left: auto;
 
   ul {
     color: ${({ theme }) => theme.colors.menuColor};
@@ -295,7 +301,7 @@ const Center = styled.nav<WithTheme>`
     font-weight: ${({ theme }) => theme.weight.bold};
 
     li {
-      width: 200px;
+      width: 170px;
       text-align: center;
     }
   }
@@ -309,6 +315,7 @@ const Right = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   justify-content: right;
+  margin-left: auto;
 
   ul {
     color: ${({ theme }) => theme.colors.subMenuColor};

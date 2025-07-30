@@ -31,7 +31,7 @@ function App() {
               <Route path="about" element={<About />} />
               <Route path="detail/*" element={<Detail />} />
               <Route path="notice" element={<Notice mainGb={true} />} />
-              <Route path="ReservationList" element={<ReservationList />} />
+              <Route path="reservationList" element={<ReservationList />} />
             </Route>
           </Routes>
         </BrowserRouter>
