@@ -178,7 +178,7 @@ const DateRange = styled.div<WithTheme>`
   input {
     width: 80px !important;
     @media ${({ theme }) => theme.device.mobile} {
-      width: 70px !important;
+      width: 72px !important;
     }
   }
 
@@ -191,4 +191,5 @@ const DateRange = styled.div<WithTheme>`
 
 const DateCenter = styled.div`
   display: flex;
+  margin: 0 auto;
 `;
