@@ -177,6 +177,9 @@ const DateRange = styled.div<WithTheme>`
 
   input {
     width: 80px !important;
+    @media ${({ theme }) => theme.device.mobile} {
+      width: 70px !important;
+    }
   }
 
   span {

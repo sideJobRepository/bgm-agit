@@ -9,10 +9,8 @@ import { reservationListDataState } from '../recoil/state/reservationState.ts';
 
 export default function ReservationList() {
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
-
   const fetchReservationList = useReservationListFetch();
   const items = useRecoilValue(reservationListDataState);
-
   const [page, setPage] = useState(0);
 
   const handlePageClick = (pageNum: number) => {
@@ -22,7 +20,6 @@ export default function ReservationList() {
   useEffect(() => {
     const start = dateRange[0]?.toISOString().slice(0, 10) ?? null;
     const end = dateRange[1]?.toISOString().slice(0, 10) ?? null;
-
     fetchReservationList(page, { startDate: start, endDate: end });
   }, [dateRange, page]);
 
@@ -42,51 +39,56 @@ export default function ReservationList() {
             />
           </SearchBox>
         </SearchWrapper>
+
         <TableBox>
-          <Table>
-            <thead>
-              <tr>
-                <Th>번호</Th>
-                <Th>예약 장소</Th>
-                <Th>날짜</Th>
-                <Th>시간</Th>
-                <Th>예약자</Th>
-                <Th>상태</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {items?.content.map((item, index) => (
-                <tr key={item.reservationNo}>
-                  <Td>{index + 1}</Td>
-                  <Td>{item.bgmAgitNoticeTitle}</Td>
-                  <Td>{item.reservationDate}</Td>
-                  <Td>
-                    {item.timeSlots.map((slot, idx) => (
-                      <TimeText key={idx}>
-                        {slot.startTime} ~ {slot.endTime}
-                      </TimeText>
-                    ))}
-                  </Td>
-                  <Td>{item.reservationMemberName}</Td>
-                  <Td>
-                    {item.cancelStatus === 'Y'
-                      ? '취소'
-                      : item.approvalStatus === 'Y'
-                        ? '확정'
-                        : '대기'}
-                  </Td>
+          <TableWrapper>
+            <Table>
+              <thead>
+                <tr>
+                  <Th>번호</Th>
+                  <Th>예약 장소</Th>
+                  <Th>날짜</Th>
+                  <Th>시간</Th>
+                  <Th>예약자</Th>
+                  <Th>상태</Th>
                 </tr>
-              ))}
-            </tbody>
+              </thead>
+              <tbody>
+                {items?.content.map((item, index) => (
+                  <tr key={item.reservationNo}>
+                    <Td>{index + 1}</Td>
+                    <Td>{item.reservationAddr}</Td>
+                    <Td>{item.reservationDate}</Td>
+                    <Td>
+                      {item.timeSlots.map((slot, idx) => (
+                        <TimeText key={idx}>
+                          {slot.startTime} ~ {slot.endTime}
+                        </TimeText>
+                      ))}
+                    </Td>
+                    <Td>{item.reservationMemberName}</Td>
+                    <Td>
+                      {item.cancelStatus === 'Y'
+                        ? '취소'
+                        : item.approvalStatus === 'Y'
+                          ? '확정'
+                          : '대기'}
+                    </Td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+
             {items?.content.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
-          </Table>
-          <PaginationWrapper>
-            {[...Array(items?.totalPages ?? 0)].map((_, idx) => (
-              <PageButton key={idx} active={idx === page} onClick={() => handlePageClick(idx)}>
-                {idx + 1}
-              </PageButton>
-            ))}
-          </PaginationWrapper>
+
+            <PaginationWrapper>
+              {[...Array(items?.totalPages ?? 0)].map((_, idx) => (
+                <PageButton key={idx} active={idx === page} onClick={() => handlePageClick(idx)}>
+                  {idx + 1}
+                </PageButton>
+              ))}
+            </PaginationWrapper>
+          </TableWrapper>
         </TableBox>
       </NoticeBox>
     </Wrapper>
@@ -94,11 +96,23 @@ export default function ReservationList() {
 }
 
 const NoticeBox = styled.div`
+  width: 100%;
   padding: 10px;
 `;
 
 const TableBox = styled.div`
   padding: 40px 0;
+  overflow-x: auto;
+  width: 100%;
+  white-space: nowrap;
+`;
+
+const TableWrapper = styled.div<WithTheme>`
+  display: inline-block;
+  width: 100%;
+  @media ${({ theme }) => theme.device.mobile} {
+    width: unset;
+  }
 `;
 
 const Table = styled.table<WithTheme>`
@@ -115,6 +129,9 @@ const Table = styled.table<WithTheme>`
   td {
     padding: 14px;
     text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   tbody tr {
@@ -200,7 +217,8 @@ const SearchBox = styled.div<WithTheme>`
 `;
 
 const PaginationWrapper = styled.div`
-  text-align: center;
+  display: flex;
+  justify-content: center;
   margin-top: 20px;
 `;
 
@@ -224,13 +242,14 @@ const PageButton = styled.button.withConfig({
 const NoSearchBox = styled.div<WithTheme>`
   font-size: ${({ theme }) => theme.sizes.menu};
   font-weight: ${({ theme }) => theme.weight.semiBold};
-  font-family: 'Jua', sans-serif;\
-    margin-top: 20px;
+  font-family: 'Jua', sans-serif;
+  margin-top: 20px;
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.sizes.small};
   }
 `;
+
 const TimeText = styled.div`
   font-variant-numeric: tabular-nums;
 `;

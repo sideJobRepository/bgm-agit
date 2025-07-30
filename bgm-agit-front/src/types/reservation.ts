@@ -32,9 +32,9 @@ export type Reservation = {
   reservationNo: number;
   reservationDate: string;
   reservationMemberName: string;
+  reservationAddr: string;
   approvalStatus: 'Y' | 'N';
   cancelStatus: 'Y' | 'N';
-  bgmAgitNoticeTitle?: string;
   timeSlots: {
     startTime: string;
     endTime: string;
