@@ -29,4 +29,8 @@ public class BgmAgitMemberRole extends DateSuperClass {
         this.bgmAgitMember = bgmAgitMember;
         this.bgmAgitRole = bgmAgitRole;
     }
+    
+    public void modifyRole(BgmAgitRole bgmAgitRole) {
+        this.bgmAgitRole = bgmAgitRole;
+    }
 }
