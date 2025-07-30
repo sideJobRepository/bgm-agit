@@ -49,9 +49,7 @@ export default function ImageGrid({ pageData }: Props) {
     return `${year}-${month}-${day}`;
   }
 
-  // 사용 예시
   const today = getKoreanDateString();
-  console.log('today', today);
 
   const { items, labelGb, bgColor, textColor, searchColor, label, title, subTitle, columnCount } =
     pageData;

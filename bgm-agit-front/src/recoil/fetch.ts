@@ -65,9 +65,22 @@ export function useReservationListFetch() {
   const { request } = useRequest();
   const setReservationList = useSetRecoilState(reservationListDataState);
 
-  const fetchReservationList = (params: params) => {
+  const fetchReservationList = () => {
+    const token = localStorage.getItem('token');
+    console.log('token', token);
+
     request(
-      () => api.get('/bgm-agit/notice', { params }).then(res => res.data),
+      () =>
+        api
+          .get('/bgm-agit/reservation/detail', {
+            params: {
+              page: 0,
+            },
+            headers: {
+              Authorization: `Bearer ${token}`,
+            } as AxiosRequestHeaders,
+          })
+          .then(res => res.data),
       setReservationList
     );
   };

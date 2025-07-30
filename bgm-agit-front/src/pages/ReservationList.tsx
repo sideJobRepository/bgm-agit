@@ -2,10 +2,22 @@ import { Wrapper } from '../styles';
 import SearchBar from '../components/SearchBar.tsx';
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useReservationFetch, useReservationListFetch } from '../recoil/fetch.ts';
+import { useRecoilValue } from 'recoil';
+import { reservationListDataState } from '../recoil/state/reservationState.ts';
 
 export default function ReservationList() {
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
+
+  const fetchReservationList = useReservationListFetch();
+  const items = useRecoilValue(reservationListDataState);
+  console.log('items', items);
+
+  useEffect(() => {
+    fetchReservationList();
+  }, [dateRange]);
+
   return (
     <Wrapper>
       <NoticeBox>

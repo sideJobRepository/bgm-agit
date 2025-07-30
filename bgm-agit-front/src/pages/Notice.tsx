@@ -37,7 +37,6 @@ export default function Notice({ mainGb }: NoticeProps) {
   const { remove } = useDeletePost();
   const fetchNoticeDownload = useNoticeDownloadFetch();
   const items = useRecoilValue(noticeState);
-  console.log('items', items);
 
   const user = useRecoilValue(userState);
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
@@ -123,7 +122,6 @@ export default function Notice({ mainGb }: NoticeProps) {
     formData.append('bgmAgitNoticeCont', newNotice.content);
     formData.append('bgmAgitNoticeType', newNotice.type);
 
-    console.log('deletedFileNames', deletedFileNames);
     // 삭제파일
     deletedFileUuid.forEach(uuid => {
       formData.append('deletedFiles', uuid);
@@ -197,7 +195,6 @@ export default function Notice({ mainGb }: NoticeProps) {
 
   function fileDownload(id: string) {
     const sliceId = id.split('/').pop()!; // 마지막 슬래시 이후 값만 추출
-    console.log(sliceId);
     fetchNoticeDownload(sliceId);
   }
 

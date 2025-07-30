@@ -78,7 +78,6 @@ export default function ReservationCalendar({ id }: { id?: number }) {
           window.location.href = kakaoAuthUrl;
         } else {
           const token = sessionStorage.getItem('token');
-          console.log('valu1231231231312e', selectedTimes);
           insert({
             headers: {
               Authorization: `Bearer ${token}`,
