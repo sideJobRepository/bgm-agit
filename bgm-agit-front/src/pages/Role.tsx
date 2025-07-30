@@ -2,14 +2,72 @@ import { Wrapper } from '../styles';
 import SearchBar from '../components/SearchBar.tsx';
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRoletFetch, useUpdatePost } from '../recoil/fetch.ts';
+import { useRecoilValue } from 'recoil';
+import { roleState } from '../recoil/state/roleState.ts';
+import { showConfirmModal } from '../components/confirmAlert.tsx';
+import type { AxiosRequestHeaders } from 'axios';
+import { toast } from 'react-toastify';
 
 export default function Role() {
+  const fetchRole = useRoletFetch();
+  const { update } = useUpdatePost();
+
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);
+  // 체크된 memberId만 저장
+  const [checkedIds, setCheckedIds] = useState<number[]>([]);
+
+  // 전체 라디오 선택값 저장 (memberId → roleId)
+  const [roleMap, setRoleMap] = useState<Record<number, number>>({});
+
+  const items = useRecoilValue(roleState);
+  console.log('items', items);
+
   const handlePageClick = (pageNum: number) => {
     setPage(pageNum);
   };
+
+  //업데이트
+  async function updateData() {
+    const selected = checkedIds.map(id => ({
+      memberId: id,
+      roleId: roleMap[id] ?? items.content.find(i => i.memberId === id)?.roleId,
+    }));
+
+    if (selected.length === 0) {
+      toast.error('선택된 행이 없습니다.');
+      return;
+    }
+
+    const token = sessionStorage.getItem('token');
+    showConfirmModal({
+      message: '권한을 변경하시겠습니까?',
+      onConfirm: () => {
+        update({
+          headers: {
+            Authorization: `Bearer ${token}`,
+          } as AxiosRequestHeaders,
+          url: 'bgm-agit/role',
+          body: selected,
+          ignoreHttpError: true,
+          onSuccess: () => {
+            toast.success('권한이 변경되었습니다.');
+            setCheckedIds([]);
+            setRoleMap([]);
+
+            fetchRole(page, searchKeyword);
+          },
+        });
+      },
+    });
+  }
+
+  useEffect(() => {
+    console.log('searchKeyword', searchKeyword);
+    fetchRole(page, searchKeyword);
+  }, [searchKeyword, page]);
 
   return (
     <Wrapper>
@@ -24,29 +82,79 @@ export default function Role() {
           </SearchBox>
         </SearchWrapper>
         <TableBox>
-          <Table>
-            <thead>
-              <tr>
-                <Th>번호</Th>
-                <Th>아이디</Th>
-                <Th>권한</Th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <Td></Td>
-                <Td></Td>
-                <Td></Td>
-              </tr>
-            </tbody>
-          </Table>
-          {/*<PaginationWrapper>*/}
-          {/*  {[...Array(items?.totalPages ?? 0)].map((_, idx) => (*/}
-          {/*    <PageButton key={idx} active={idx === page} onClick={() => handlePageClick(idx)}>*/}
-          {/*      {idx + 1}*/}
-          {/*    </PageButton>*/}
-          {/*  ))}*/}
-          {/*</PaginationWrapper>*/}
+          <ButtonBox>
+            <Button color="#988271" onClick={() => updateData()}>
+              저장
+            </Button>
+          </ButtonBox>
+          <TableWrapper>
+            <Table>
+              <thead>
+                <tr>
+                  <Th> </Th>
+                  <Th>번호</Th>
+                  <Th>아이디</Th>
+                  <Th>이름</Th>
+                  <Th>권한</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {items?.content.map((item, index) => (
+                  <tr key={item.memberId}>
+                    <Td>
+                      <input
+                        type="checkbox"
+                        checked={checkedIds.includes(item.memberId)}
+                        onChange={e => {
+                          const isChecked = e.target.checked;
+                          setCheckedIds(prev =>
+                            isChecked
+                              ? [...prev, item.memberId]
+                              : prev.filter(id => id !== item.memberId)
+                          );
+                        }}
+                      />
+                    </Td>
+                    <Td>{index + 1}</Td>
+                    <Td>{item.memberEmail}</Td>
+                    <Td>{item.memberName}</Td>
+                    <Td>
+                      <div>
+                        <label>
+                          <input
+                            type="radio"
+                            name={`role-${item.memberId}`}
+                            value="1"
+                            checked={(roleMap[item.memberId] ?? item.roleId) === 1}
+                            onChange={() => setRoleMap(prev => ({ ...prev, [item.memberId]: 1 }))}
+                          />
+                          관리자
+                        </label>
+                        <label style={{ marginLeft: '12px' }}>
+                          <input
+                            type="radio"
+                            name={`role-${item.memberId}`}
+                            value="2"
+                            checked={(roleMap[item.memberId] ?? item.roleId) === 2}
+                            onChange={() => setRoleMap(prev => ({ ...prev, [item.memberId]: 2 }))}
+                          />
+                          일반
+                        </label>
+                      </div>
+                    </Td>
+                  </tr>
+                ))}
+              </tbody>
+              {items?.content.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
+            </Table>
+            <PaginationWrapper>
+              {[...Array(items?.totalPages ?? 0)].map((_, idx) => (
+                <PageButton key={idx} active={idx === page} onClick={() => handlePageClick(idx)}>
+                  {idx + 1}
+                </PageButton>
+              ))}
+            </PaginationWrapper>
+          </TableWrapper>
         </TableBox>
       </NoticeBox>
     </Wrapper>
@@ -59,6 +167,17 @@ const NoticeBox = styled.div`
 
 const TableBox = styled.div`
   padding: 40px 0;
+  overflow-x: auto;
+  width: 100%;
+  white-space: nowrap;
+`;
+
+const TableWrapper = styled.div<WithTheme>`
+  display: inline-block;
+  width: 100%;
+  @media ${({ theme }) => theme.device.mobile} {
+    width: unset;
+  }
 `;
 
 const Table = styled.table<WithTheme>`
@@ -83,10 +202,6 @@ const Table = styled.table<WithTheme>`
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.sizes.xxsmall};
     }
-
-    &:hover {
-      opacity: 0.6;
-    }
   }
 
   td {
@@ -99,7 +214,28 @@ const Th = styled.th<WithTheme>`
   font-weight: ${({ theme }) => theme.weight.semiBold};
 `;
 
-const Td = styled.td``;
+const Td = styled.td<WithTheme>`
+  input[type='checkbox'] {
+    accent-color: ${({ theme }) => theme.colors.noticeColor};
+    cursor: pointer;
+  }
+
+  div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    label {
+      display: flex;
+      gap: 4px;
+
+      input {
+        margin-right: 6px;
+        accent-color: ${({ theme }) => theme.colors.noticeColor};
+        cursor: pointer;
+      }
+    }
+  }
+`;
 
 const SearchWrapper = styled.div.withConfig({
   shouldForwardProp: prop => prop !== 'bgColor',
@@ -178,5 +314,36 @@ const PageButton = styled.button.withConfig({
 
   &:hover {
     opacity: 0.8;
+  }
+`;
+
+const NoSearchBox = styled.div<WithTheme>`
+  font-size: ${({ theme }) => theme.sizes.menu};
+  font-weight: ${({ theme }) => theme.weight.semiBold};
+  font-family: 'Jua', sans-serif;\
+    margin-top: 20px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.small};
+  }
+`;
+
+const ButtonBox = styled.div`
+  display: flex;
+  justify-content: right;
+  margin-bottom: 10px;
+`;
+
+const Button = styled.button<WithTheme & { color: string }>`
+  padding: 6px 16px;
+  background-color: ${({ color }) => color};
+  color: ${({ theme }) => theme.colors.white};
+  font-size: ${({ theme }) => theme.sizes.medium};
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.small};
   }
 `;

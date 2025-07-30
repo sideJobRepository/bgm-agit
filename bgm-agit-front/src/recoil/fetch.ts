@@ -97,7 +97,7 @@ export function useRoletFetch() {
   const { request } = useRequest();
   const setRole = useSetRecoilState(roleState);
 
-  const fetchRole = (page: number, memberEmail: { memberEmail: string | null }) => {
+  const fetchRole = (page: number, memberEmail: string) => {
     const token = sessionStorage.getItem('token');
 
     request(
@@ -106,7 +106,7 @@ export function useRoletFetch() {
           .get('/bgm-agit/role', {
             params: {
               page,
-              memberEmail: memberEmail,
+              email: memberEmail,
             },
             headers: {
               Authorization: `Bearer ${token}`,
