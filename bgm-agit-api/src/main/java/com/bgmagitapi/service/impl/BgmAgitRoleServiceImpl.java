@@ -76,12 +76,6 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
                 .limit(pageable.getPageSize())
                 .fetch();
         
-        content.forEach(item -> {
-            switch (item.getRoleName()) {
-                case "ADMIN" -> item.setRoleName("관리자");
-                default -> item.setRoleName("회원");
-            }
-        });
         
         // 2. 전체 개수 조회
         Long total = queryFactory
