@@ -781,16 +781,24 @@ const StyledFileUl = styled.ul<WithTheme>`
   width: 100%;
   color: ${({ theme }) => theme.colors.subColor};
   border-top: 1px solid ${({ theme }) => theme.colors.lineColor};
+  padding-top: 10px;
+  gap: 4px;
 
   li {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px;
     font-size: ${({ theme }) => theme.sizes.xsmall};
 
     a {
+      padding: 4px 8px;
+      background-color: ${({ theme }) => theme.colors.lineColor};
+      border-radius: 4px;
       cursor: pointer;
+
+      &:hover {
+        opacity: 0.7;
+      }
     }
 
     svg {
