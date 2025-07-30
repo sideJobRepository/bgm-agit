@@ -16,6 +16,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriUtils;
 import software.amazon.awssdk.core.ResponseInputStream;
@@ -46,13 +47,13 @@ public class BgmAgitNoticeController {
         return bgmAgitNoticeService.getNotice(pageable,titleOrCont);
     }
     @PostMapping("/notice")
-    public ApiResponse createNotice(@ModelAttribute BgmAgitNoticeCreateRequest request) {
+    public ApiResponse createNotice(@Validated @ModelAttribute BgmAgitNoticeCreateRequest request) {
         return bgmAgitNoticeService.createNotice(request);
     }
     
     
     @PutMapping("/notice")
-    public ApiResponse modifyNotice(@ModelAttribute BgmAgitNoticeModifyRequest request) {
+    public ApiResponse modifyNotice(@Validated @ModelAttribute BgmAgitNoticeModifyRequest request) {
         return bgmAgitNoticeService.modifyNotice(request);
     }
     

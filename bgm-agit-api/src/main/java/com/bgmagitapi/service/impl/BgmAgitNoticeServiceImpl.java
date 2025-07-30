@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.bgmagitapi.entity.QBgmAgitNotice.bgmAgitNotice;
+import static com.bgmagitapi.entity.QBgmAgitNoticeFile.*;
 
 @Transactional
 @Service
@@ -98,7 +99,7 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
     }
     
     private BooleanBuilder getBooleanBuilder(String titleOrCont) {
-        BooleanBuilder booleanBuilder = new  BooleanBuilder();
+        BooleanBuilder booleanBuilder = new BooleanBuilder();
         
         
         if (StringUtils.hasText(titleOrCont)) {
@@ -125,11 +126,11 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
                 request.getBgmAgitNoticeType()
         );
         bgmAgitNoticeRepository.save(notice);
-
+        
         // 2. S3 업로드
         List<MultipartFile> files = request.getFiles();
-        List<UploadResult> uploadResults = s3FileUtils.storeFiles(files,"notice");
-
+        List<UploadResult> uploadResults = s3FileUtils.storeFiles(files, "notice");
+        
         // 3. 파일 테이블 저장
         List<BgmAgitNoticeFile> noticeFileEntities = new ArrayList<>();
         for (int i = 0; i < files.size(); i++) {
@@ -156,20 +157,23 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
         BgmAgitNotice notice = bgmAgitNoticeRepository.findById(bgmAgitNoticeId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 공지사항 ID 입니다."));
         
-        // 1. 기존 파일 삭제
-        List<BgmAgitNoticeFile> oldFiles = notice.getBgmAgitNoticeFiles();
-        for (BgmAgitNoticeFile file : oldFiles) {
-            s3FileUtils.deleteFile(file.getBgmAgitNoticeFileUrl());
-        }
-        bgmAgitNoticeFileRepository.deleteAll(oldFiles);
-        
-        // 2. 공지사항 내용 수정
+        //  공지사항 내용 수정
         notice.modifyNotice(request);
         
-        // 3. 새 파일 처리
+        List<String> deletedFileNames = request.getDeletedFiles();
+        if (!deletedFileNames.isEmpty()) {
+            List<BgmAgitNoticeFile> byUUID = bgmAgitNoticeFileRepository.findByUUID(deletedFileNames);
+            //  기존 파일 삭제
+            for (BgmAgitNoticeFile file : byUUID) {
+                s3FileUtils.deleteFile(file.getBgmAgitNoticeFileUrl());
+            }
+            bgmAgitNoticeFileRepository.removeFiles(deletedFileNames);
+        }
+        
+        // 새 파일 처리
         List<MultipartFile> multipartFiles = request.getMultipartFiles();
         if (multipartFiles != null && !multipartFiles.isEmpty()) {
-            List<UploadResult> uploadResults = s3FileUtils.storeFiles(multipartFiles, "/notice");
+            List<UploadResult> uploadResults = s3FileUtils.storeFiles(multipartFiles, "notice");
             List<BgmAgitNoticeFile> newEntities = new ArrayList<>();
             
             for (int i = 0; i < multipartFiles.size(); i++) {

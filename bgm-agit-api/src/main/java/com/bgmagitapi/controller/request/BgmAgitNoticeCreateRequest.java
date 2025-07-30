@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @NoArgsConstructor
@@ -22,4 +23,11 @@ public class BgmAgitNoticeCreateRequest {
     @NotNull(message = "공지 유형을 선택해주세요.")
     private BgmAgitNoticeType  bgmAgitNoticeType;
     private List<MultipartFile> files;
+    
+    public List<MultipartFile> getFiles() {
+        if (this.files == null) {
+            this.files = new ArrayList<>();
+        }
+        return this.files;
+    }
 }

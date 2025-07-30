@@ -31,6 +31,8 @@ public class BgmAgitNoticeModifyRequest {
     @NotNull(message = "공지 유형을 선택해주세요.")
     private BgmAgitNoticeType bgmAgitNoticeType;
     
+    private List<String> deletedFiles;
+    
     private List<MultipartFile> multipartFiles;
     
     public List<MultipartFile> getMultipartFiles() {
@@ -38,5 +40,12 @@ public class BgmAgitNoticeModifyRequest {
             this.multipartFiles = new ArrayList<>();
         }
         return this.multipartFiles;
+    }
+    
+    public List<String> getDeletedFiles() {
+        if(this.deletedFiles == null) {
+            this.deletedFiles = new ArrayList<>();
+        }
+        return this.deletedFiles;
     }
 }
