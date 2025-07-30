@@ -791,6 +791,10 @@ const StyledFileUl = styled.ul<WithTheme>`
     padding: 10px;
     font-size: ${({ theme }) => theme.sizes.xsmall};
 
+    a {
+      cursor: pointer;
+    }
+
     svg {
       cursor: pointer;
     }
