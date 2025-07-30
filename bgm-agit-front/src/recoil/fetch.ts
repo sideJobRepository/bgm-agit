@@ -65,7 +65,10 @@ export function useReservationListFetch() {
   const { request } = useRequest();
   const setReservationList = useSetRecoilState(reservationListDataState);
 
-  const fetchReservationList = () => {
+  const fetchReservationList = (
+    page: number,
+    dateRange: { startDate: string | null; endDate: string | null }
+  ) => {
     const token = sessionStorage.getItem('token');
     console.log('token', token);
 
@@ -74,7 +77,9 @@ export function useReservationListFetch() {
         api
           .get('/bgm-agit/reservation/detail', {
             params: {
-              page: 0,
+              page,
+              startDate: dateRange.startDate,
+              endDate: dateRange.endDate,
             },
             headers: {
               Authorization: `Bearer ${token}`,

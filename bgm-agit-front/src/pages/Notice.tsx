@@ -37,7 +37,7 @@ export default function Notice({ mainGb }: NoticeProps) {
   const { remove } = useDeletePost();
   const fetchNoticeDownload = useNoticeDownloadFetch();
   const items = useRecoilValue(noticeState);
-
+  console.log('item', items);
   const user = useRecoilValue(userState);
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
 
@@ -279,6 +279,7 @@ export default function Notice({ mainGb }: NoticeProps) {
                     </tr>
                   ))}
                 </tbody>
+                {items?.content.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
               </Table>
               <PaginationWrapper>
                 {[...Array(items?.totalPages ?? 0)].map((_, idx) => (
@@ -803,4 +804,15 @@ const ButtonBox2 = styled.div`
   align-items: center;
   gap: 4px;
   justify-content: center;
+`;
+
+const NoSearchBox = styled.div<WithTheme>`
+  font-size: ${({ theme }) => theme.sizes.menu};
+  font-weight: ${({ theme }) => theme.weight.semiBold};
+  font-family: 'Jua', sans-serif;\
+    margin-top: 20px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.small};
+  }
 `;

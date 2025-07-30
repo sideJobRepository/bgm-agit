@@ -3,7 +3,7 @@ import SearchBar from '../components/SearchBar.tsx';
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { useEffect, useState } from 'react';
-import { useReservationFetch, useReservationListFetch } from '../recoil/fetch.ts';
+import { useReservationListFetch } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { reservationListDataState } from '../recoil/state/reservationState.ts';
 
@@ -12,11 +12,19 @@ export default function ReservationList() {
 
   const fetchReservationList = useReservationListFetch();
   const items = useRecoilValue(reservationListDataState);
-  console.log('items', items);
+
+  const [page, setPage] = useState(0);
+
+  const handlePageClick = (pageNum: number) => {
+    setPage(pageNum);
+  };
 
   useEffect(() => {
-    fetchReservationList();
-  }, [dateRange]);
+    const start = dateRange[0]?.toISOString().slice(0, 10) ?? null;
+    const end = dateRange[1]?.toISOString().slice(0, 10) ?? null;
+
+    fetchReservationList(page, { startDate: start, endDate: end });
+  }, [dateRange, page]);
 
   return (
     <Wrapper>
@@ -41,27 +49,44 @@ export default function ReservationList() {
                 <Th>번호</Th>
                 <Th>예약 장소</Th>
                 <Th>날짜</Th>
+                <Th>시간</Th>
                 <Th>예약자</Th>
                 <Th>상태</Th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <Td></Td>
-                <Td></Td>
-                <Td></Td>
-                <Td></Td>
-                <Td></Td>
-              </tr>
+              {items?.content.map((item, index) => (
+                <tr key={item.reservationNo}>
+                  <Td>{index + 1}</Td>
+                  <Td>{item.bgmAgitNoticeTitle}</Td>
+                  <Td>{item.reservationDate}</Td>
+                  <Td>
+                    {item.timeSlots.map((slot, idx) => (
+                      <TimeText key={idx}>
+                        {slot.startTime} ~ {slot.endTime}
+                      </TimeText>
+                    ))}
+                  </Td>
+                  <Td>{item.reservationMemberName}</Td>
+                  <Td>
+                    {item.cancelStatus === 'Y'
+                      ? '취소'
+                      : item.approvalStatus === 'Y'
+                        ? '확정'
+                        : '대기'}
+                  </Td>
+                </tr>
+              ))}
             </tbody>
+            {items?.content.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
           </Table>
-          {/*<PaginationWrapper>*/}
-          {/*  {[...Array(items?.totalPages ?? 0)].map((_, idx) => (*/}
-          {/*    <PageButton>*/}
-          {/*      {idx + 1}*/}
-          {/*    </PageButton>*/}
-          {/*  ))}*/}
-          {/*</PaginationWrapper>*/}
+          <PaginationWrapper>
+            {[...Array(items?.totalPages ?? 0)].map((_, idx) => (
+              <PageButton key={idx} active={idx === page} onClick={() => handlePageClick(idx)}>
+                {idx + 1}
+              </PageButton>
+            ))}
+          </PaginationWrapper>
         </TableBox>
       </NoticeBox>
     </Wrapper>
@@ -194,4 +219,18 @@ const PageButton = styled.button.withConfig({
   &:hover {
     opacity: 0.8;
   }
+`;
+
+const NoSearchBox = styled.div<WithTheme>`
+  font-size: ${({ theme }) => theme.sizes.menu};
+  font-weight: ${({ theme }) => theme.weight.semiBold};
+  font-family: 'Jua', sans-serif;\
+    margin-top: 20px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.small};
+  }
+`;
+const TimeText = styled.div`
+  font-variant-numeric: tabular-nums;
 `;

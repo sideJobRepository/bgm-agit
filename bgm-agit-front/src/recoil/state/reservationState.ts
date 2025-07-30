@@ -1,5 +1,5 @@
 import { atom } from 'recoil';
-import type { ReservationData } from '../../types/reservation.ts';
+import type { PagedReservation, ReservationData } from '../../types/reservation.ts';
 
 export const reservationState = atom<ReservationData>({
   key: 'reservationState',
@@ -16,7 +16,16 @@ export const reservationDataState = atom<ReservationData | null>({
   default: null,
 });
 
-export const reservationListDataState = atom({
+export const reservationListDataState = atom<PagedReservation>({
   key: 'reservationListDataState',
-  default: null,
+  default: {
+    content: [],
+    totalPages: 0,
+    totalElements: 0,
+    number: 0,
+    size: 10,
+    first: true,
+    last: true,
+    empty: true,
+  },
 });

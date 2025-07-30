@@ -15,6 +15,7 @@ interface SearchBarProps<T> {
 export default function SearchBar<T = string>({ color, label, onSearch }: SearchBarProps<T>) {
   const location = useLocation();
   const key = location.pathname.split('/').filter(Boolean).pop();
+  console.log('key', key);
   const today = new Date();
   const oneMonthLater = new Date();
   oneMonthLater.setMonth(today.getMonth() + 1);
@@ -26,7 +27,7 @@ export default function SearchBar<T = string>({ color, label, onSearch }: Search
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (key === 'ReservationList') {
+    if (key === 'reservationList') {
       onSearch([startDate, endDate] as T);
     } else {
       onSearch(keyword as T);
@@ -37,7 +38,7 @@ export default function SearchBar<T = string>({ color, label, onSearch }: Search
     setKeyword('');
 
     // 현재 페이지에 따라 초기 검색값 분기
-    if (key === 'ReservationList') {
+    if (key === 'reservationList') {
       onSearch([null, null] as T);
     } else {
       onSearch('' as T);
@@ -48,7 +49,7 @@ export default function SearchBar<T = string>({ color, label, onSearch }: Search
     <Wrapper>
       <SearchGroup color={color} onSubmit={handleSubmit}>
         <FieldsWrapper>
-          {key !== 'ReservationList' ? (
+          {key !== 'reservationList' ? (
             <Field color={color}>
               <label>{label}</label>
               <input

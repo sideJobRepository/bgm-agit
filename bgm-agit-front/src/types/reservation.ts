@@ -26,3 +26,28 @@ export type ReservationDatas = {
   timeSlots?: ReservedTimeDto[];
   prices?: ReservationPriceDto[];
 };
+
+// 예약 내역
+export type Reservation = {
+  reservationNo: number;
+  reservationDate: string;
+  reservationMemberName: string;
+  approvalStatus: 'Y' | 'N';
+  cancelStatus: 'Y' | 'N';
+  bgmAgitNoticeTitle?: string;
+  timeSlots: {
+    startTime: string;
+    endTime: string;
+  }[];
+};
+
+export type PagedReservation = {
+  content: Reservation[];
+  totalPages: number;
+  totalElements: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+};
