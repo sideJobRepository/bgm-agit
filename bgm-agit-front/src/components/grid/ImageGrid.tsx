@@ -12,6 +12,7 @@ import { reservationDataState } from '../../recoil/state/reservationState.ts';
 import { userState } from '../../recoil/state/userState.ts';
 import { FaTrash } from 'react-icons/fa';
 import { FiPlus } from 'react-icons/fi';
+import Modal from '../Modal.tsx';
 
 interface GridItem {
   image: string;
@@ -211,41 +212,34 @@ export default function ImageGrid({ pageData }: Props) {
         onIndexChange={setLightboxIndex}
       />
       {writeModalOpen && (
-        <ModalBackdrop onClick={() => setWriteModalOpen(false)}>
-          <ModalBox onClick={e => e.stopPropagation()}>
-            <ImageUploadWrapper>
-              {selectedImage && <PreviewImage src={selectedImage} alt="preview" />}
-              <UploadLabel htmlFor="imageUpload">
-                <FiPlus />
-              </UploadLabel>
-              <HiddenInput
-                type="file"
-                accept="image/*"
-                id="imageUpload"
-                onChange={handleImageUpload}
-              />
-            </ImageUploadWrapper>
-
-            <TextArea
-              placeholder="타이틀을 입력하세요."
-              value={text}
-              onChange={e => setText(e.target.value)}
+        <Modal onClose={() => setWriteModalOpen(false)}>
+          <ImageUploadWrapper>
+            {selectedImage && <PreviewImage src={selectedImage} alt="preview" />}
+            <UploadLabel htmlFor="imageUpload">
+              <FiPlus />
+            </UploadLabel>
+            <HiddenInput
+              type="file"
+              accept="image/*"
+              id="imageUpload"
+              onChange={handleImageUpload}
             />
-            <ButtonBox2>
-              <Button color="#093A6E" onClick={() => {}}>
-                저장
-              </Button>
-              <Button
-                color="#FF5E57"
-                onClick={() => {
-                  setWriteModalOpen(false);
-                }}
-              >
-                닫기
-              </Button>
-            </ButtonBox2>
-          </ModalBox>
-        </ModalBackdrop>
+          </ImageUploadWrapper>
+
+          <TextArea
+            placeholder="타이틀을 입력하세요."
+            value={text}
+            onChange={e => setText(e.target.value)}
+          />
+          <ButtonBox2>
+            <Button color="#093A6E" onClick={() => {}}>
+              저장
+            </Button>
+            <Button color="#FF5E57" onClick={() => setWriteModalOpen(false)}>
+              닫기
+            </Button>
+          </ButtonBox2>
+        </Modal>
       )}
     </Wrapper>
   );
@@ -467,40 +461,6 @@ const Button = styled.button<WithTheme & { color: string }>`
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.sizes.small};
-  }
-`;
-
-const ModalBackdrop = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 9999;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-
-const ModalBox = styled.div<WithTheme>`
-  background: ${({ theme }) => theme.colors.white};
-  position: relative;
-  padding: 24px;
-  width: 90%;
-  max-width: 480px;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  text-align: center;
-  z-index: 10000;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    h2 {
-      font-size: ${({ theme }) => theme.sizes.medium};
-    }
-    p {
-      font-size: ${({ theme }) => theme.sizes.small};
-    }
   }
 `;
 
