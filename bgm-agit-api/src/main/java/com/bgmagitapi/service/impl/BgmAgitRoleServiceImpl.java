@@ -8,6 +8,7 @@ import com.bgmagitapi.entity.*;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRoleRepository;
 import com.bgmagitapi.repository.BgmAgitRoleRepository;
+import com.bgmagitapi.security.manager.BgmAgitAuthorizationManager;
 import com.bgmagitapi.service.BgmAgitRoleService;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -34,6 +36,8 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
     private final BgmAgitMemberRoleRepository bgmAgitMemberRoleRepository;
     
     private final BgmAgitMemberRepository bgmAgitMemberRepository;
+    
+    private final BgmAgitAuthorizationManager bgmAgitAuthorizationManager;
     
     
     private final JPAQueryFactory queryFactory;
@@ -101,6 +105,8 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
         // 3. Role 정보 변경
         memberRole.modifyRole(newRole);
         
+        
+        bgmAgitAuthorizationManager.reload();
         // 4. 저장
         return new ApiResponse(200,true,"권한이 성공적으로 변경되었습니다.");
     }
