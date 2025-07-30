@@ -5,7 +5,7 @@ import type { WithTheme } from '../styles/styled-props.ts';
 import { useState } from 'react';
 
 export default function ReservationList() {
-  const [searchKeyword, setSearchKeyword] = useState('');
+  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
   return (
     <Wrapper>
       <NoticeBox>
@@ -15,7 +15,11 @@ export default function ReservationList() {
             <p>예약내역을 확인해보세요.</p>
           </TitleBox>
           <SearchBox>
-            <SearchBar color="#988271" label="예약자 및 날짜" onSearch={setSearchKeyword} />
+            <SearchBar<[Date | null, Date | null]>
+              color="#988271"
+              label="예약자 및 날짜"
+              onSearch={setDateRange}
+            />
           </SearchBox>
         </SearchWrapper>
         <TableBox>

@@ -93,6 +93,8 @@ export default function Notice({ mainGb }: NoticeProps) {
     showConfirmModal({
       message: '저장하시겠습니까?',
       onConfirm: () => {
+        if (!validation()) return;
+
         insert({
           headers: {
             Authorization: `Bearer ${token}`,
@@ -136,6 +138,8 @@ export default function Notice({ mainGb }: NoticeProps) {
     showConfirmModal({
       message: '수정하시겠습니까?',
       onConfirm: () => {
+        if (!validation()) return;
+
         update({
           headers: {
             Authorization: `Bearer ${token}`,
@@ -197,6 +201,17 @@ export default function Notice({ mainGb }: NoticeProps) {
     fetchNoticeDownload(sliceId);
   }
 
+  function validation() {
+    if (!newNotice.title) {
+      toast.error('타이틀을 입력해주세요.');
+      return false;
+    } else if (!newNotice.content) {
+      toast.error('내용을 입력해주세요.');
+      return false;
+    }
+    return true;
+  }
+
   return (
     <>
       {mainGb ? (
@@ -208,7 +223,11 @@ export default function Notice({ mainGb }: NoticeProps) {
                 <p>공지사항 및 이벤트를 빠르게 확인해보세요.</p>
               </TitleBox>
               <SearchBox>
-                <SearchBar color="#988271" label="제목 및 내용" onSearch={setSearchKeyword} />
+                <SearchBar<string>
+                  color="#988271"
+                  label="제목 및 내용"
+                  onSearch={setSearchKeyword}
+                />
               </SearchBox>
             </SearchWrapper>
             <TableBox>

@@ -153,7 +153,11 @@ export default function TopHeader() {
       <Right>
         <ul>
           {user && (
-            <li>
+            <li
+              onClick={() => {
+                navigate('ReservationList');
+              }}
+            >
               <a>예약내역</a>
             </li>
           )}

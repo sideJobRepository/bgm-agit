@@ -123,7 +123,7 @@ export default function ImageGrid({ pageData }: Props) {
           <p>{subTitle}</p>
         </TitleBox>
         <SearchBox>
-          <SearchBar color={searchColor} label={label} onSearch={setSearchKeyword} />
+          <SearchBar<string> color={searchColor} label={label} onSearch={setSearchKeyword} />
         </SearchBox>
       </SearchWrapper>
 

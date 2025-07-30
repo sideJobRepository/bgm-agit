@@ -6,32 +6,42 @@ import { useLocation } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
-interface SearchBarProps {
+interface SearchBarProps<T> {
   color: string;
   label: string;
-  onSearch: (keyword: string) => void;
+  onSearch: (keyword: T) => void;
 }
 
-export default function SearchBar({ color, label, onSearch }: SearchBarProps) {
+export default function SearchBar<T = string>({ color, label, onSearch }: SearchBarProps<T>) {
   const location = useLocation();
   const key = location.pathname.split('/').filter(Boolean).pop();
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const today = new Date();
+  const oneMonthLater = new Date();
+  oneMonthLater.setMonth(today.getMonth() + 1);
+
+  const [startDate, setStartDate] = useState<Date | null>(today);
+  const [endDate, setEndDate] = useState<Date | null>(oneMonthLater);
 
   const [keyword, setKeyword] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (key === 'ReservationList') {
-      onSearch([startDate, endDate]); // 배열 또는 객체 전달
+      onSearch([startDate, endDate] as T);
     } else {
-      onSearch(keyword);
+      onSearch(keyword as T);
     }
   };
 
   useEffect(() => {
     setKeyword('');
-    onSearch('');
+
+    // 현재 페이지에 따라 초기 검색값 분기
+    if (key === 'ReservationList') {
+      onSearch([null, null] as T);
+    } else {
+      onSearch('' as T);
+    }
   }, [location]);
 
   return (
@@ -164,6 +174,10 @@ const DateRange = styled.div<WithTheme>`
   align-items: center;
   gap: 6px;
 
+  input {
+    width: 100px !important;
+  }
+
   span {
     font-size: 14px;
     font-weight: bold;
@@ -173,5 +187,4 @@ const DateRange = styled.div<WithTheme>`
 
 const DateCenter = styled.div`
   display: flex;
-  margin-right: 12px;
 `;
