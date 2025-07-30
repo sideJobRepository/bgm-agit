@@ -63,6 +63,14 @@ public class BgmAgitReservationController {
         return bgmAgitReservationService.modifyReservation(id,request);
     }
     
+    @PutMapping("/reservation/admin")
+    public ApiResponse modifyAdminReservation(@AuthenticationPrincipal Jwt jwt , @RequestBody BgmAgitReservationModifyRequest request) {
+        Long id = jwt.getClaim("id");
+        return bgmAgitReservationService.modifyReservation(id,request);
+    }
+    
+    
+    
     
     private Long extractMemberId(Jwt jwt) {
         return jwt.getClaim("id");
