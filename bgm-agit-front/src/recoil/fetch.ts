@@ -77,41 +77,46 @@ export function useNoticeDownloadFetch() {
 
   const fetchNoticeDownload = (id: string) => {
     request(
-        () =>
-            api
-                .get(`/bgm-agit/notice/download/notice/${id}`, {
-                  responseType: 'blob', // 👈 중요
-                })
-                .then((res) => {
-                  const blob = new Blob([res.data], {
-                    type: res.headers['content-type'],
-                  });
-                  const url = window.URL.createObjectURL(blob);
+      () =>
+        api
+          .get(`/bgm-agit/notice/download/notice/${id}`, {
+            responseType: 'blob', // 👈 중요
+          })
+          .then(res => {
+            const blob = new Blob([res.data], {
+              type: res.headers['content-type'],
+            });
 
-                  const a = document.createElement('a');
-                  a.href = url;
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const base64data = reader.result as string;
 
-                  // 👇 파일명 파싱
-                  let fileName = 'download.png';
-                  const disposition = res.headers['content-disposition'];
-                  console.log("res.headers", res.headers)
-                  console.log("disposition", disposition)
-                  if (disposition) {
-                    // 1. 올바른 RFC5987 형식 처리
-                    const matchRfc = disposition.match(/filename\*=UTF-8''(.+)/);
-                    console.log("matchRfc", matchRfc)
-                    if (matchRfc && matchRfc[1]) {
-                      fileName = decodeURIComponent(matchRfc[1]);
-                    }
-                  }
+              const a = document.createElement('a');
+              a.href = base64data;
 
-                  a.download = fileName;
-                  a.click();
-                  a.remove();
-                  URL.revokeObjectURL(url);
-                }),
-        () => {},
-        { ignoreHttpError: true }
+              let fileName = 'download.png';
+              const disposition = res.headers['content-disposition'];
+              if (disposition) {
+                const matchRfc = disposition.match(/filename\*=UTF-8''(.+)/);
+                if (matchRfc && matchRfc[1]) {
+                  fileName = decodeURIComponent(matchRfc[1]);
+                }
+              }
+
+              a.download = fileName;
+
+              // iOS에서는 새 창으로 열어야 동작
+              if (/(iPhone|iPad|iPod)/i.test(navigator.userAgent)) {
+                window.open(base64data, '_blank');
+              } else {
+                a.click();
+              }
+              a.remove();
+            };
+            reader.readAsDataURL(blob);
+          }),
+      () => {},
+      { ignoreHttpError: true }
     );
   };
 
