@@ -477,7 +477,7 @@ const ModalBackdrop = styled.div`
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 5;
+  z-index: 3;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -492,6 +492,7 @@ const ModalBox = styled.div<WithTheme>`
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   text-align: center;
+  z-index: 4;
 
   @media ${({ theme }) => theme.device.mobile} {
     h2 {
