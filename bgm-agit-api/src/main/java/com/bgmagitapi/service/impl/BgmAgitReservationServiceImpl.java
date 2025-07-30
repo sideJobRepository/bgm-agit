@@ -179,7 +179,9 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         
         // 기존 예약 조회
         List<BgmAgitReservation> existingReservations = bgmAgitReservationRepository
-                .findByBgmAgitImageAndBgmAgitReservationStartDate(image, kstDate);
+                .findByBgmAgitImageAndBgmAgitReservationStartDateAndBgmAgitReservationCancelStatus(
+                        image, kstDate, "N"
+                );
         
         // 중복된 시간대 구성 (Set으로 빠르게 비교)
         Set<String> existingTimeSlots = existingReservations.stream()

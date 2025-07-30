@@ -44,15 +44,15 @@ class BgmAgitReservationServiceImplTest extends RepositoryAndServiceTestSupport 
     @Test
     void test2(){
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "bgmAgitReservationId"));
-        Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(6L, "ROLE_MEMBER", null, null, pageable);
+        Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(6L, "ROLE_USER", null, null, pageable);
         System.out.println("reservationDetail = " + reservationDetail);
     }
     @DisplayName("")
     @Test
     void test3(){
-        Long userId = 6L;
+        Long userId = 1L;
         Long imageId = 14L;
-        String dateString = "2025-07-27T15:00:00.000Z";
+        String dateString = "2025-07-30T15:00:00.000Z";
         //List<String> times = List.of("13:00", "14:00", "15:00","16:00");
         List<String> times = List.of("15:00","16:00");
         

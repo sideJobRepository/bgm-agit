@@ -12,7 +12,12 @@ import java.util.List;
 
 public interface BgmAgitReservationRepository extends JpaRepository<BgmAgitReservation, Long> {
     
-    List<BgmAgitReservation> findByBgmAgitImageAndBgmAgitReservationStartDate(BgmAgitImage image, LocalDate kstDate);
+    List<BgmAgitReservation> findByBgmAgitImageAndBgmAgitReservationStartDateAndBgmAgitReservationCancelStatus(
+            BgmAgitImage image,
+            LocalDate startDate,
+            String cancelStatus
+    );
+
     
     @Query("SELECT MAX(r.bgmAgitReservationNo) FROM BgmAgitReservation r")
     Long findMaxReservationNo();
