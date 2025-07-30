@@ -19,7 +19,17 @@ public interface BgmAgitReservationRepository extends JpaRepository<BgmAgitReser
     
     
     @Modifying(clearAutomatically = true)
-    @Query("UPDATE BgmAgitReservation r SET r.bgmAgitReservationCancelStatus = :cancelStatus WHERE r.bgmAgitReservationId IN :idList")
-    void bulkUpdateCancelStatus(@Param("cancelStatus") String cancelStatus, @Param("idList") List<Long> idList);
+    @Query("""
+    UPDATE BgmAgitReservation r
+    SET r.bgmAgitReservationCancelStatus = :cancelStatus,
+        r.bgmAgitReservationApprovalStatus = :approvalStatus
+    WHERE r.bgmAgitReservationId IN :idList
+""")
+    void bulkUpdateCancelAndApprovalStatus(
+            @Param("cancelStatus") String cancelStatus,
+            @Param("approvalStatus") String approvalStatus,
+            @Param("idList") List<Long> idList
+    );
+
     
 }

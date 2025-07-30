@@ -14,5 +14,6 @@ public class BgmAgitReservationModifyRequest {
     
     private String cancelStatus;
     
+    private String approvalStatus;
 
 }

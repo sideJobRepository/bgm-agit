@@ -302,11 +302,13 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     
     @Override
     public ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request) {
-        Long bgmAgitReservationNo = request.getReservationNo();
-        String bgmAgitReservationCancelStatus = request.getCancelStatus();
+        Long reservationNo = request.getReservationNo();
+        String cancelStatus = request.getCancelStatus();
+        String approvalStatus = request.getApprovalStatus();
+        
         List<BgmAgitReservation> list = queryFactory
                 .selectFrom(bgmAgitReservation)
-                .where(bgmAgitReservation.bgmAgitReservationNo.eq(bgmAgitReservationNo))
+                .where(bgmAgitReservation.bgmAgitReservationNo.eq(reservationNo))
                 .fetch();
         
         List<Long> idList = list.stream()
@@ -314,8 +316,10 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .toList();
         
         if (!idList.isEmpty()) {
-            bgmAgitReservationRepository.bulkUpdateCancelStatus(bgmAgitReservationCancelStatus, idList);
+            bgmAgitReservationRepository.bulkUpdateCancelAndApprovalStatus(
+                    cancelStatus, approvalStatus, idList
+            );
         }
-        return new ApiResponse(200,true,"수정 되었습니다.");
+        return new ApiResponse(200, true, "수정 되었습니다.");
     }
 }
