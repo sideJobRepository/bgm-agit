@@ -101,47 +101,51 @@ export function useNoticeDownloadFetch() {
               type: res.headers['content-type'],
             });
 
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const base64data = reader.result as string;
+            const isIOS =
+              /iP(hone|od|ad)/.test(navigator.userAgent) ||
+              (navigator.userAgent.includes('Macintosh') && 'ontouchend' in document);
 
-              // 파일명 파싱
-              let fileName = 'download.file';
-              const disposition = res.headers['content-disposition'];
-              const matchRfc = disposition?.match(/filename\*=UTF-8''(.+)/);
-              if (matchRfc && matchRfc[1]) {
-                fileName = decodeURIComponent(matchRfc[1]);
-              }
-
-              const isIOS = /(iPhone|iPad|iPod)/i.test(navigator.userAgent);
-
-              if (isIOS) {
-                // iOS는 자동 다운로드 불가 → 새 창 열기 유도
-                const newWindow = window.open();
-                if (newWindow) {
-                  newWindow.document.write(`
-                    <html>
-                      <head><title>${fileName}</title></head>
-                      <body style="margin:0">
-                        <iframe src="${base64data}" frameborder="0" style="width:100%; height:100%"></iframe>
-                      </body>
-                    </html>
-                  `);
-                } else {
-                  alert('팝업이 차단되었습니다. 브라우저 설정에서 허용해주세요.');
-                }
+            // ⬇ 파일 이름 파싱 로직
+            let fileName = 'download.bin';
+            const disposition = res.headers['content-disposition'];
+            if (disposition) {
+              // 우선 RFC 5987 (filename*=UTF-8'') 형식 파싱
+              const rfcMatch = disposition.match(/filename\*=UTF-8''(.+?)(?:;|$)/);
+              if (rfcMatch && rfcMatch[1]) {
+                fileName = decodeURIComponent(rfcMatch[1]);
               } else {
-                // PC/Android → 자동 다운로드
-                const a = document.createElement('a');
-                a.href = base64data;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
+                // fallback: 일반 filename="..." 형식 파싱
+                const normalMatch = disposition.match(/filename="?([^"]+)"?/);
+                if (normalMatch && normalMatch[1]) {
+                  fileName = decodeURIComponent(normalMatch[1]);
+                }
               }
-            };
+            }
 
-            reader.readAsDataURL(blob);
+            if (isIOS && navigator.canShare) {
+              const file = new File([blob], fileName, { type: blob.type });
+              if (navigator.canShare({ files: [file] })) {
+                navigator
+                  .share({
+                    files: [file],
+                    title: '파일 다운로드',
+                    text: '공지사항 첨부파일입니다.',
+                  })
+                  .catch(err => {
+                    console.error('iOS 공유 실패:', err);
+                  });
+                return;
+              }
+            }
+
+            // 일반 브라우저 다운로드
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
           }),
       () => {},
       { ignoreHttpError: true }
