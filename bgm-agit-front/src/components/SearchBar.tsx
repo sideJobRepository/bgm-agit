@@ -175,7 +175,7 @@ const DateRange = styled.div<WithTheme>`
   gap: 6px;
 
   input {
-    width: 100px !important;
+    width: 80px !important;
   }
 
   span {
