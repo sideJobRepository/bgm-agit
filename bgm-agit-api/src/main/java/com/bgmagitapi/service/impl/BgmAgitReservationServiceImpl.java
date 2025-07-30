@@ -302,8 +302,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     
     @Override
     public ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request) {
-        Long bgmAgitReservationNo = request.getBgmAgitReservationNo();
-        String bgmAgitReservationCancelStatus = request.getBgmAgitReservationCancelStatus();
+        Long bgmAgitReservationNo = request.getReservationNo();
+        String bgmAgitReservationCancelStatus = request.getCancelStatus();
         List<BgmAgitReservation> list = queryFactory
                 .selectFrom(bgmAgitReservation)
                 .where(bgmAgitReservation.bgmAgitReservationNo.eq(bgmAgitReservationNo))
