@@ -87,7 +87,7 @@ const TopArea = styled.header<WithTheme>`
   right: 0;
   height: 100px;
   background-color: ${({ theme }) => theme.colors.topBg};
-  z-index: 2;
+  z-index: 3;
 `;
 
 const NavArea = styled.nav<WithTheme & { $home: boolean }>`
