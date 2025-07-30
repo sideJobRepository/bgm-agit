@@ -152,6 +152,11 @@ export default function TopHeader() {
       </Center>
       <Right>
         <ul>
+          {user && (
+            <li>
+              <a>예약내역</a>
+            </li>
+          )}
           <li
             onClick={() => {
               callClick();
@@ -202,6 +207,15 @@ export default function TopHeader() {
               ))}
             </React.Fragment>
           ))}
+          {user && (
+            <SubMainLi
+              onClick={() => {
+                navigate('ReservationList');
+              }}
+            >
+              <a>예약내역</a>
+            </SubMainLi>
+          )}
           <SubMainLi
             onClick={() => {
               callClick();

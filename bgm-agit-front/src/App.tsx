@@ -13,6 +13,7 @@ import Notice from './pages/Notice.tsx';
 import ScrollToTop from './components/layout/ScrollToTop.tsx';
 import KakaoRedirectPage from './pages/KakaoRedirectPage.tsx';
 import { ToastContainer } from 'react-toastify';
+import ReservationList from './pages/ReservationList.tsx';
 
 function App() {
   return (
@@ -29,7 +30,8 @@ function App() {
               <Route index element={<MainPage />} />
               <Route path="about" element={<About />} />
               <Route path="detail/*" element={<Detail />} />
-              <Route path="Notice" element={<Notice mainGb={true} />} />
+              <Route path="notice" element={<Notice mainGb={true} />} />
+              <Route path="ReservationList" element={<ReservationList />} />
             </Route>
           </Routes>
         </BrowserRouter>

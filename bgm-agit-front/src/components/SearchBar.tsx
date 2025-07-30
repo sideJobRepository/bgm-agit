@@ -3,6 +3,8 @@ import { FiSearch } from 'react-icons/fi';
 import type { WithTheme } from '../styles/styled-props.ts';
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface SearchBarProps {
   color: string;
@@ -12,12 +14,19 @@ interface SearchBarProps {
 
 export default function SearchBar({ color, label, onSearch }: SearchBarProps) {
   const location = useLocation();
+  const key = location.pathname.split('/').filter(Boolean).pop();
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
 
   const [keyword, setKeyword] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(keyword);
+    if (key === 'ReservationList') {
+      onSearch([startDate, endDate]); // 배열 또는 객체 전달
+    } else {
+      onSearch(keyword);
+    }
   };
 
   useEffect(() => {
@@ -29,15 +38,36 @@ export default function SearchBar({ color, label, onSearch }: SearchBarProps) {
     <Wrapper>
       <SearchGroup color={color} onSubmit={handleSubmit}>
         <FieldsWrapper>
-          <Field color={color}>
-            <label>{label}</label>
-            <input
-              type="text"
-              placeholder="검색어를 입력해주세요."
-              value={keyword}
-              onChange={e => setKeyword(e.target.value)}
-            />
-          </Field>
+          {key !== 'ReservationList' ? (
+            <Field color={color}>
+              <label>{label}</label>
+              <input
+                type="text"
+                placeholder="검색어를 입력해주세요."
+                value={keyword}
+                onChange={e => setKeyword(e.target.value)}
+              />
+            </Field>
+          ) : (
+            <Field color={color}>
+              <label>집행일자</label>
+              <DateRange>
+                <DatePicker
+                  selected={startDate}
+                  onChange={date => setStartDate(date)}
+                  dateFormat="yyyy.MM.dd"
+                  portalId="root-portal"
+                />
+                <DateCenter>-</DateCenter>
+                <DatePicker
+                  selected={endDate}
+                  onChange={date => setEndDate(date)}
+                  dateFormat="yyyy.MM.dd"
+                  portalId="root-portal"
+                />
+              </DateRange>
+            </Field>
+          )}
         </FieldsWrapper>
         <SearchButton color={color} type="submit">
           <SearchIcon size={22} />
@@ -127,4 +157,21 @@ const SearchButton = styled.button<{ color: string }>`
 
 const SearchIcon = styled(FiSearch)`
   margin-right: 4px;
+`;
+
+const DateRange = styled.div<WithTheme>`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  span {
+    font-size: 14px;
+    font-weight: bold;
+    color: ${({ theme }) => theme.colors.subColor};
+  }
+`;
+
+const DateCenter = styled.div`
+  display: flex;
+  margin-right: 12px;
 `;

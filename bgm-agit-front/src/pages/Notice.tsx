@@ -63,11 +63,14 @@ export default function Notice({ mainGb }: NoticeProps) {
     type: 'NOTICE',
   });
   const [files, setFiles] = useState<File[]>([]);
-  const [attachedFiles, setAttachedFiles] = useState<{ fileName: string; url: string }[]>([]);
+  const [attachedFiles, setAttachedFiles] = useState<
+    { fileName: string; url: string; uuidName: string }[]
+  >([]);
 
   //파일 삭제
   const [originalDeletedFileNames, setOriginalDeletedFileNames] = useState<string[]>([]);
   const [deletedFileNames, setDeletedFileNames] = useState<string[]>([]);
+  const [deletedFileUuid, setDeletedFileUuid] = useState<string[]>([]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -118,9 +121,10 @@ export default function Notice({ mainGb }: NoticeProps) {
     formData.append('bgmAgitNoticeCont', newNotice.content);
     formData.append('bgmAgitNoticeType', newNotice.type);
 
+    console.log('deletedFileNames', deletedFileNames);
     // 삭제파일
-    deletedFileNames.forEach(name => {
-      formData.append('deletedFileNames', name);
+    deletedFileUuid.forEach(uuid => {
+      formData.append('deletedFiles', uuid);
     });
 
     // 새로 선택한 파일도 추가
@@ -148,6 +152,7 @@ export default function Notice({ mainGb }: NoticeProps) {
             setFiles([]);
             setAttachedFiles([]);
             setDeletedFileNames([]);
+            setDeletedFileUuid([]);
             fetchNotice({ page, titleOrCont: searchKeyword });
           },
         });
@@ -178,6 +183,7 @@ export default function Notice({ mainGb }: NoticeProps) {
             setFiles([]);
             setAttachedFiles([]);
             setDeletedFileNames([]);
+            setDeletedFileUuid([]);
             fetchNotice({ page, titleOrCont: searchKeyword });
           },
         });
@@ -246,6 +252,7 @@ export default function Notice({ mainGb }: NoticeProps) {
                         setIsDetailMode(true);
                         setWriteModalOpen(true);
                         setDeletedFileNames([]);
+                        setDeletedFileUuid([]);
                         setOriginalDeletedFileNames([]);
                       }}
                     >
@@ -292,6 +299,7 @@ export default function Notice({ mainGb }: NoticeProps) {
                   setIsDetailMode(true);
                   setWriteModalOpen(true);
                   setDeletedFileNames([]); // 삭제 초기화
+                  setDeletedFileUuid([]);
                   setOriginalDeletedFileNames([]);
                 }}
               >
@@ -355,13 +363,16 @@ export default function Notice({ mainGb }: NoticeProps) {
                         <li key={idx}>
                           <a
                             onClick={() => {
-                              console.log('file', file);
+                              fileDownload(file.url);
                             }}
                           >
                             {file.fileName}
                           </a>
                           <FaTrash
-                            onClick={() => setDeletedFileNames(prev => [...prev, file.fileName])}
+                            onClick={() => {
+                              setDeletedFileUuid(prev => [...prev, file.uuidName]);
+                              setDeletedFileNames(prev => [...prev, file.fileName]);
+                            }}
                           />
                         </li>
                       ))}
