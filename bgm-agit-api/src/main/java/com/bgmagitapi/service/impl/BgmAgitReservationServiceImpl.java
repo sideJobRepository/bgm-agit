@@ -109,6 +109,12 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 LocalDateTime slotStart = cursor;
                 LocalDateTime slotEnd = cursor.plusHours(slotIntervalHours);
                 
+                // 오늘 날짜이고 slotEnd가 현재 시간보다 이전이면 skip
+                if (d.isEqual(today) && slotEnd.isBefore(LocalDateTime.now())) {
+                    cursor = cursor.plusHours(slotIntervalHours);
+                    continue;
+                }
+                
                 boolean overlapped = reserved.stream().anyMatch(r ->
                         slotStart.isBefore(r.getEnd()) && slotEnd.isAfter(r.getStart())
                 );
