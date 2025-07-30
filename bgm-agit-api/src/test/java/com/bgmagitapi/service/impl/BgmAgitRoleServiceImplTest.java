@@ -24,7 +24,7 @@ class BgmAgitRoleServiceImplTest extends RepositoryAndServiceTestSupport {
     @Test
     void test(){
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "bgmAgitReservationId"));
-        Page<BgmAgitRoleResponse> roles = bgmAgitRoleService.getRoles(pageable, new BgmAgitRoleRequest("kadia22"));
+        Page<BgmAgitRoleResponse> roles = bgmAgitRoleService.getRoles(pageable, "kadia");
         System.out.println("roles = " + roles);
         
     }

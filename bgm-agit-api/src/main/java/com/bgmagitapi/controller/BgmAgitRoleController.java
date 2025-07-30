@@ -1,6 +1,8 @@
 package com.bgmagitapi.controller;
 
 
+import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.controller.request.BgmAgitRoleModifyRequest;
 import com.bgmagitapi.controller.request.BgmAgitRoleRequest;
 import com.bgmagitapi.controller.response.BgmAgitRoleResponse;
 import com.bgmagitapi.service.BgmAgitRoleService;
@@ -9,10 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -26,9 +26,13 @@ public class BgmAgitRoleController {
     @GetMapping("/role")
     public Page<BgmAgitRoleResponse> getRoles(
             @PageableDefault(size = 10) Pageable pageable
-    , @RequestBody BgmAgitRoleRequest request
+    , @RequestParam(required = false) String email
     ) {
-        bgmAgitRoleService.getRoles(pageable,request);
-        return null;
+        return bgmAgitRoleService.getRoles(pageable,email);
+    }
+    
+    @PutMapping("/role")
+    public ApiResponse modifyRole(@Validated @RequestBody BgmAgitRoleModifyRequest request) {
+        return bgmAgitRoleService.modifyRole(request);
     }
 }

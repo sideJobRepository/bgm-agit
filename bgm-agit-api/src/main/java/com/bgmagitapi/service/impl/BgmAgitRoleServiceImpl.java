@@ -2,7 +2,6 @@ package com.bgmagitapi.service.impl;
 
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.controller.request.BgmAgitRoleModifyRequest;
-import com.bgmagitapi.controller.request.BgmAgitRoleRequest;
 import com.bgmagitapi.controller.response.BgmAgitRoleResponse;
 import com.bgmagitapi.entity.*;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
@@ -18,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -43,15 +41,15 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
     private final JPAQueryFactory queryFactory;
     
     @Override
-    public Page<BgmAgitRoleResponse> getRoles(Pageable pageable, BgmAgitRoleRequest request) {
+    public Page<BgmAgitRoleResponse> getRoles(Pageable pageable, String email) {
         QBgmAgitMemberRole memberRole = QBgmAgitMemberRole.bgmAgitMemberRole;
         QBgmAgitMember member = QBgmAgitMember.bgmAgitMember;
         QBgmAgitRole role = QBgmAgitRole.bgmAgitRole;
         
         BooleanBuilder booleanBuilder = new BooleanBuilder();
         
-        if (StringUtils.hasText(request.getMemberEmail())) {
-            booleanBuilder.and(member.bgmAgitMemberEmail.like("%" + request.getMemberEmail() + "%"));
+        if (StringUtils.hasText(email)) {
+            booleanBuilder.and(member.bgmAgitMemberEmail.like("%" + email+ "%"));
         }
         
         // 1. 데이터 목록 조회
