@@ -747,7 +747,7 @@ const DetailCont = styled.div<WithTheme>`
   h2 {
     width: 100%;
     text-align: left;
-    padding: 10px;
+    padding: 10px 0;
     font-size: ${({ theme }) => theme.sizes.large};
     color: ${({ theme }) => theme.colors.subColor};
     font-weight: ${({ theme }) => theme.weight.semiBold};
