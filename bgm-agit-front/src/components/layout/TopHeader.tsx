@@ -445,7 +445,7 @@ const MobileMenu = styled.div<WithTheme & { $open: boolean }>`
     flex-direction: column;
     width: 100%;
     margin-top: 20px;
-    gap: 10px;
+    gap: 6px;
     color: ${({ theme }) => theme.colors.subMenuColor};
     font-size: ${({ theme }) => theme.sizes.large};
     font-weight: ${({ theme }) => theme.weight.bold};
