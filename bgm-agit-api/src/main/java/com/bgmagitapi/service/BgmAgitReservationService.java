@@ -16,7 +16,7 @@ public interface BgmAgitReservationService {
     
     ApiResponse createReservation(BgmAgitReservationCreateRequest request, Long jwt);
     
-    Page<GroupedReservationResponse> getReservationDetail(Long memberId, Pageable pageable);
+    Page<GroupedReservationResponse> getReservationDetail(Long memberId, String role, String startDate, String endDate, Pageable pageable);
     
     ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request);
 }

@@ -12,6 +12,10 @@ import java.util.List;
 public class GroupedReservationResponse {
     private Long reservationNo;
     private LocalDate reservationDate;
+    
+    private String approvalStatus;
+    private String cancelStatus;
+    
     private List<TimeSlot> timeSlots;
     
     @Getter

@@ -2,11 +2,8 @@ package com.bgmagitapi.service.impl;
 
 import com.bgmagitapi.RepositoryAndServiceTestSupport;
 import com.bgmagitapi.controller.request.BgmAgitReservationCreateRequest;
-import com.bgmagitapi.controller.response.BgmAgitReservationDetailResponse;
 import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.controller.response.reservation.GroupedReservationResponse;
-import com.bgmagitapi.entity.BgmAgitImage;
-import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.service.BgmAgitReservationService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +16,6 @@ import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 class BgmAgitReservationServiceImplTest extends RepositoryAndServiceTestSupport {
     
@@ -48,7 +44,7 @@ class BgmAgitReservationServiceImplTest extends RepositoryAndServiceTestSupport 
     @Test
     void test2(){
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "bgmAgitReservationId"));
-        Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(6L, pageable);
+        Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(6L, "ROLE_MEMBER", null, null, pageable);
         System.out.println("reservationDetail = " + reservationDetail);
     }
     @DisplayName("")
@@ -77,7 +73,7 @@ class BgmAgitReservationServiceImplTest extends RepositoryAndServiceTestSupport 
     void test(){
         Long userId = 2L;
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "bgmAgitReservationId"));
-        Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(userId, pageable);
+        Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(userId, "ROLE_ADMIN", "2025-07-30", "2025-08-30", pageable);
         System.out.println("reservationDetail = " + reservationDetail);
     }
 }

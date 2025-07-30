@@ -2,20 +2,18 @@ package com.bgmagitapi.controller;
 
 
 import com.bgmagitapi.apiresponse.ApiResponse;
-import com.bgmagitapi.controller.request.BgmAgitReservationModifyRequest;
-import com.bgmagitapi.controller.response.BgmAgitReservationDetailResponse;
-import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.controller.request.BgmAgitReservationCreateRequest;
+import com.bgmagitapi.controller.request.BgmAgitReservationModifyRequest;
+import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.controller.response.reservation.GroupedReservationResponse;
 import com.bgmagitapi.service.BgmAgitReservationService;
-import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.security.oauth2.jwt.Jwt;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -46,9 +44,15 @@ public class BgmAgitReservationController {
     }
     
     @GetMapping("/reservation/detail")
-    public Page<GroupedReservationResponse> getReservationDetail(@AuthenticationPrincipal Jwt jwt, @PageableDefault(size = 10, sort = "bgmAgitReservationId", direction = Sort.Direction.DESC) Pageable pageable) {
-        Long id = jwt.getClaim("id");
-        return bgmAgitReservationService.getReservationDetail(id, pageable);
+    public Page<GroupedReservationResponse> getReservationDetail(
+            @AuthenticationPrincipal Jwt jwt,
+            @PageableDefault(size = 10, sort = "bgmAgitReservationId", direction = Sort.Direction.DESC) Pageable pageable,
+            @RequestParam(name = "startDate", required = false) String startDate,
+            @RequestParam(name = "endDate" , required = false) String endDate
+            ) {
+        Long memberId = extractMemberId(jwt);
+        String role = extractRole(jwt);
+        return bgmAgitReservationService.getReservationDetail(memberId, role, startDate, endDate, pageable);
     }
     
     
@@ -57,6 +61,16 @@ public class BgmAgitReservationController {
     public ApiResponse modifyReservation(@AuthenticationPrincipal Jwt jwt , @RequestBody BgmAgitReservationModifyRequest request) {
         Long id = jwt.getClaim("id");
         return bgmAgitReservationService.modifyReservation(id,request);
+    }
+    
+    
+    private Long extractMemberId(Jwt jwt) {
+        return jwt.getClaim("id");
+    }
+    
+    private String extractRole(Jwt jwt) {
+        List<String> roles = jwt.getClaim("roles");
+        return roles != null && !roles.isEmpty() ? roles.get(0) : "GUEST";
     }
     
     

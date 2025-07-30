@@ -4,7 +4,6 @@ import com.bgmagitapi.advice.exception.ReservationConflictException;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.controller.request.BgmAgitReservationModifyRequest;
-import com.bgmagitapi.controller.response.BgmAgitReservationDetailResponse;
 import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.controller.response.reservation.GroupedReservationResponse;
 import com.bgmagitapi.controller.response.reservation.ReservedTimeDto;
@@ -17,8 +16,8 @@ import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.service.BgmAgitReservationService;
 import com.bgmagitapi.util.LunarCalendar;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
-import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,6 +25,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -206,14 +206,40 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     }
     
     @Override
-    public Page<GroupedReservationResponse> getReservationDetail(Long memberId, Pageable pageable) {
+    public Page<GroupedReservationResponse> getReservationDetail(Long memberId, String role, String startDate, String endDate, Pageable pageable) {
         BgmAgitMember bgmAgitMember = bgmAgitMemberRepository.findById(memberId)
                 .orElseThrow(() -> new RuntimeException("Member Not Found"));
         
-        // 1. 실제 데이터 가져오기 (QueryDSL)
+        BooleanBuilder booleanBuilder = new BooleanBuilder();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        
+        if (role.equals("ROLE_USER")) {
+            booleanBuilder.and(bgmAgitReservation.bgmAgitMember.bgmAgitMemberId.eq(bgmAgitMember.getBgmAgitMemberId()));
+        }
+        
+        if (StringUtils.hasText(startDate) && StringUtils.hasText(endDate)) {
+            // 둘 다 있을 때는 between
+            LocalDate start = LocalDate.parse(startDate, formatter);
+            LocalDate end = LocalDate.parse(endDate, formatter);
+            booleanBuilder.and(bgmAgitReservation.bgmAgitReservationStartDate.between(start, end));
+        } else {
+            // startDate만 있을 때
+            if (StringUtils.hasText(startDate)) {
+                LocalDate start = LocalDate.parse(startDate, formatter);
+                booleanBuilder.and(bgmAgitReservation.bgmAgitReservationStartDate.goe(start));
+            }
+            // endDate만 있을 때
+            if (StringUtils.hasText(endDate)) {
+                LocalDate end = LocalDate.parse(endDate, formatter);
+                booleanBuilder.and(bgmAgitReservation.bgmAgitReservationStartDate.loe(end));
+            }
+        }
+        
+        // 1. 실제 데이터 가져오기
+        
         List<BgmAgitReservation> reservations = queryFactory
                 .selectFrom(bgmAgitReservation)
-                .where(bgmAgitReservation.bgmAgitMember.bgmAgitMemberId.eq(bgmAgitMember.getBgmAgitMemberId()))
+                .where(booleanBuilder)
                 .orderBy(bgmAgitReservation.bgmAgitReservationNo.asc()) // 예약 번호 기준 정렬
                 .fetch();
         
@@ -221,7 +247,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         Long total = queryFactory
                 .select(bgmAgitReservation.bgmAgitReservationNo.countDistinct())
                 .from(bgmAgitReservation)
-                .where(bgmAgitReservation.bgmAgitMember.bgmAgitMemberId.eq(bgmAgitMember.getBgmAgitMemberId()))
+                .where(booleanBuilder)
                 .fetchOne();
         if (total == null) total = 0L;
         
@@ -245,7 +271,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     
                     dto.setTimeSlots(slots);
                     dto.setReservationDate(entry.getValue().get(0).getBgmAgitReservationStartDate());
-                    
+                    dto.setApprovalStatus(entry.getValue().get(0).getBgmAgitReservationApprovalStatus());
+                    dto.setCancelStatus(entry.getValue().get(0).getBgmAgitReservationCancelStatus());
                     return dto;
                 })
                 .collect(Collectors.toList());
