@@ -61,7 +61,7 @@ export default function SearchBar<T = string>({ color, label, onSearch }: Search
             </Field>
           ) : (
             <Field color={color}>
-              <label>집행일자</label>
+              <label>{label}</label>
               <DateRange>
                 <DatePicker
                   selected={startDate}

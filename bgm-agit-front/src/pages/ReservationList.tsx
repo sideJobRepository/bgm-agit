@@ -74,7 +74,7 @@ export default function ReservationList() {
           <SearchBox>
             <SearchBar<[Date | null, Date | null]>
               color="#988271"
-              label="예약자 및 날짜"
+              label="예약일자"
               onSearch={setDateRange}
             />
           </SearchBox>
@@ -96,10 +96,10 @@ export default function ReservationList() {
                 <tr>
                   <Th>번호</Th>
                   <Th>예약 장소</Th>
-                  <Th>날짜</Th>
-                  <Th>시간</Th>
+                  <Th>예약 일자</Th>
+                  <Th>예약 시간</Th>
                   <Th>예약자</Th>
-                  <Th>상태</Th>
+                  <Th>예약 상태</Th>
                 </tr>
               </thead>
               <tbody>
