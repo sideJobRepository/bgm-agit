@@ -4,7 +4,7 @@ import { mainDataState, mainMenuState } from './state/mainState.ts';
 import api from '../utils/axiosInstance';
 import { useRequest } from './useRequest.ts';
 import type { ReservationData } from '../types/reservation.ts';
-import { reservationState } from './state/reservationState.ts';
+import { reservationListDataState, reservationState } from './state/reservationState.ts';
 import { userState } from './state/userState.ts';
 import { jwtDecode } from 'jwt-decode';
 import { toast } from 'react-toastify';
@@ -61,6 +61,20 @@ export function useReservationFetch() {
   return fetchReservation;
 }
 
+export function useReservationListFetch() {
+  const { request } = useRequest();
+  const setReservationList = useSetRecoilState(reservationListDataState);
+
+  const fetchReservationList = (params: params) => {
+    request(
+      () => api.get('/bgm-agit/notice', { params }).then(res => res.data),
+      setReservationList
+    );
+  };
+
+  return fetchReservationList;
+}
+
 export function useNoticeFetch() {
   const { request } = useRequest();
   const setNotice = useSetRecoilState(noticeState);
@@ -80,7 +94,7 @@ export function useNoticeDownloadFetch() {
       () =>
         api
           .get(`/bgm-agit/notice/download/notice/${id}`, {
-            responseType: 'blob', // 👈 중요
+            responseType: 'blob',
           })
           .then(res => {
             const blob = new Blob([res.data], {
@@ -91,28 +105,42 @@ export function useNoticeDownloadFetch() {
             reader.onloadend = () => {
               const base64data = reader.result as string;
 
-              const a = document.createElement('a');
-              a.href = base64data;
-
-              let fileName = 'download.png';
+              // 파일명 파싱
+              let fileName = 'download.file';
               const disposition = res.headers['content-disposition'];
-              if (disposition) {
-                const matchRfc = disposition.match(/filename\*=UTF-8''(.+)/);
-                if (matchRfc && matchRfc[1]) {
-                  fileName = decodeURIComponent(matchRfc[1]);
+              const matchRfc = disposition?.match(/filename\*=UTF-8''(.+)/);
+              if (matchRfc && matchRfc[1]) {
+                fileName = decodeURIComponent(matchRfc[1]);
+              }
+
+              const isIOS = /(iPhone|iPad|iPod)/i.test(navigator.userAgent);
+
+              if (isIOS) {
+                // iOS는 자동 다운로드 불가 → 새 창 열기 유도
+                const newWindow = window.open();
+                if (newWindow) {
+                  newWindow.document.write(`
+                    <html>
+                      <head><title>${fileName}</title></head>
+                      <body style="margin:0">
+                        <iframe src="${base64data}" frameborder="0" style="width:100%; height:100%"></iframe>
+                      </body>
+                    </html>
+                  `);
+                } else {
+                  alert('팝업이 차단되었습니다. 브라우저 설정에서 허용해주세요.');
                 }
-              }
-
-              a.download = fileName;
-
-              // iOS에서는 새 창으로 열어야 동작
-              if (/(iPhone|iPad|iPod)/i.test(navigator.userAgent)) {
-                window.open(base64data, '_blank');
               } else {
+                // PC/Android → 자동 다운로드
+                const a = document.createElement('a');
+                a.href = base64data;
+                a.download = fileName;
+                document.body.appendChild(a);
                 a.click();
+                a.remove();
               }
-              a.remove();
             };
+
             reader.readAsDataURL(blob);
           }),
       () => {},

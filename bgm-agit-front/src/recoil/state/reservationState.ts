@@ -15,3 +15,8 @@ export const reservationDataState = atom<ReservationData | null>({
   key: 'reservationDataState',
   default: null,
 });
+
+export const reservationListDataState = atom({
+  key: 'reservationListDataState',
+  default: null,
+});
