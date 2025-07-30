@@ -703,7 +703,7 @@ const DetailCont = styled.div<WithTheme>`
   p {
     width: 100%;
     margin-top: 20px;
-    min-height: 100px;
+    min-height: 200px;
     padding: 10px;
     text-align: left;
     border: 1px solid ${({ theme }) => theme.colors.lineColor};
