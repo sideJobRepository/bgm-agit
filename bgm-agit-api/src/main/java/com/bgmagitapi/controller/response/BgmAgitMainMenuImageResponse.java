@@ -15,5 +15,6 @@ public class BgmAgitMainMenuImageResponse {
     private String label;
     private String group;
     private String link;
+    private String category;
     
 }

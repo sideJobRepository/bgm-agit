@@ -1,8 +1,8 @@
 package com.bgmagitapi.entity;
 
+import com.bgmagitapi.entity.enumeration.BgmAgitImageCategory;
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -31,9 +31,14 @@ public class BgmAgitImage extends DateSuperClass {
     @Column(name = "BGM_AGIT_MENU_LINK")
     private String bgmAgitMenuLink;
     
-    @Column(name = "BGM_AGIT_IMAGE_GROUPS")
     // BGM 아지트 이미지 그룹
+    @Column(name = "BGM_AGIT_IMAGE_GROUPS")
     private String bgmAgitImageGroups;
+    
+    // BGM 아지트 이미지 카테고리
+    @Column(name = "BGM_AGIT_IMAGE_CATEGORY")
+    @Enumerated(EnumType.STRING)
+    private BgmAgitImageCategory bgmAgitImageCategory;
     
     // BGM 아지트 이미지 URL
     @Column(name = "BGM_AGIT_IMAGE_URL")

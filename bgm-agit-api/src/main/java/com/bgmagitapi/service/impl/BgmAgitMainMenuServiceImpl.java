@@ -81,7 +81,8 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
                         bgmAgitImage.bgmAgitImageUrl,
                         bgmAgitImage.bgmAgitImageLabel,
                         bgmAgitImage.bgmAgitImageGroups,
-                        bgmAgitImage.bgmAgitMenuLink
+                        bgmAgitImage.bgmAgitMenuLink,
+                        bgmAgitImage.bgmAgitImageCategory.stringValue()
                 ))
                 .from(bgmAgitImage)
                 .join(bgmAgitImage.bgmAgitMainMenu, bgmAgitMainMenu)
