@@ -191,5 +191,4 @@ const DateRange = styled.div<WithTheme>`
 
 const DateCenter = styled.div`
   display: flex;
-  margin: 0 auto;
 `;

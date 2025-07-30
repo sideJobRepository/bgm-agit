@@ -12,6 +12,7 @@ import type { AxiosRequestHeaders } from 'axios';
 import { noticeState } from './state/noticeState.ts';
 import type { params } from '../types/notice.ts';
 import type { CustomUser } from '../types/user.ts';
+import { roleState } from './state/roleState.ts';
 
 interface InsertOptions<T> {
   url: string;
@@ -90,6 +91,33 @@ export function useReservationListFetch() {
   };
 
   return fetchReservationList;
+}
+
+export function useRoletFetch() {
+  const { request } = useRequest();
+  const setRole = useSetRecoilState(roleState);
+
+  const fetchRole = (page: number, memberEmail: { memberEmail: string | null }) => {
+    const token = sessionStorage.getItem('token');
+
+    request(
+      () =>
+        api
+          .get('/bgm-agit/role', {
+            params: {
+              page,
+              memberEmail: memberEmail,
+            },
+            headers: {
+              Authorization: `Bearer ${token}`,
+            } as AxiosRequestHeaders,
+          })
+          .then(res => res.data),
+      setRole
+    );
+  };
+
+  return fetchRole;
 }
 
 export function useNoticeFetch() {
