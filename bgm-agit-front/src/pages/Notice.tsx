@@ -368,7 +368,7 @@ export default function Notice({ mainGb }: NoticeProps) {
                 </StyledRadioGroup>
                 <StyledInput
                   type="text"
-                  placeholder="제목"
+                  placeholder="제목을 입력해주세요."
                   value={newNotice.title}
                   onChange={e => setNewNotice(prev => ({ ...prev, title: e.target.value }))}
                 />
@@ -397,7 +397,7 @@ export default function Notice({ mainGb }: NoticeProps) {
                 )}
                 <StyledFileInput type="file" multiple onChange={handleFileChange} />
                 <StyledTextarea
-                  placeholder="내용"
+                  placeholder="내용을 입력해주세요."
                   value={newNotice.content}
                   onChange={e => setNewNotice(prev => ({ ...prev, content: e.target.value }))}
                 />
