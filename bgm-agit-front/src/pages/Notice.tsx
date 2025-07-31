@@ -687,6 +687,7 @@ const StyledFileInput = styled.input<WithTheme>`
   margin-bottom: 10px;
   width: 100%;
   padding: 10px 0;
+  border: none;
 
   &::-webkit-file-upload-button {
     background: ${({ theme }) => theme.colors.noticeColor};
