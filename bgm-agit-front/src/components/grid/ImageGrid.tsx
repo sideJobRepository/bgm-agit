@@ -78,6 +78,11 @@ export default function ImageGrid({ pageData }: Props) {
 
   //게임의 경우 카테고리 추가
   const [category, setCategory] = useState('');
+  const categoryOptions = [
+    { value: 'MURDER', label: '머더 미스터리' },
+    { value: 'STRATEGY', label: '전략' },
+    { value: 'PARTY', label: '파티(가족)' },
+  ];
 
   const [lightboxIndex, setLightboxIndex] = useState(-1);
   const user = useRecoilValue(userState);
@@ -87,6 +92,8 @@ export default function ImageGrid({ pageData }: Props) {
   const [writeModalOpen, setWriteModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [text, setText] = useState('');
+  const [group, setGroup] = useState<string | null>('');
+  const [editCategory, setEditCategory] = useState('');
 
   //수정
   const [isEditMode, setIsEditMode] = useState(false);
@@ -176,10 +183,21 @@ export default function ImageGrid({ pageData }: Props) {
 
     if (labelGb === 3) {
       category = 'ROOM';
+      if (!group) {
+        toast.error('그룹을 입력해주세요.');
+        return;
+      }
+      formData.append('bgmAgitImageGroups', group);
     } else if (subMenu!.bgmAgitMainMenuId === 10) {
       category = 'DRINK';
     } else if (subMenu!.bgmAgitMainMenuId === 11) {
       category = 'FOOD';
+    } else if (labelGb === 2) {
+      if (!editCategory) {
+        toast.error('카테고리를 선택해주세요.');
+        return;
+      }
+      category = editCategory;
     }
 
     formData.append('bgmAgitImageCategory', category!);
@@ -287,6 +305,7 @@ export default function ImageGrid({ pageData }: Props) {
       setUploadedFile(null);
       setEditTarget(null);
       setIsEditMode(false);
+      setEditCategory('');
     }
   }, [writeModalOpen]);
 
@@ -335,7 +354,7 @@ export default function ImageGrid({ pageData }: Props) {
                     <FaUsers /> <span>{item.group}</span>
                   </TopLabel>
                 )}
-                {user?.roles.includes('ROLE_ADMIN') && labelGb !== 3 && (
+                {user?.roles.includes('ROLE_ADMIN') && (
                   <DeleteBox
                     onClick={e => {
                       console.log('itm', item);
@@ -344,6 +363,8 @@ export default function ImageGrid({ pageData }: Props) {
                       setIsEditMode(true);
                       setText(item.label); // 라벨 바인딩
                       setSelectedImage(item.image); // 이미지 프리뷰
+                      setEditCategory(item.category); // 카테고리 게임일 경우
+                      setGroup(item.group); //예약일 경우
                       setEditTarget({ imageId: item.imageId, image: item.image }); // 수정 대상 ID
                     }}
                   >
@@ -395,8 +416,27 @@ export default function ImageGrid({ pageData }: Props) {
             value={text}
             onChange={e => setText(e.target.value)}
           />
+          {labelGb === 2 && (
+            <SelectBox value={editCategory} onChange={e => setEditCategory(e.target.value)}>
+              <option value="" disabled>
+                카테고리를 선택해주세요.
+              </option>
+              {categoryOptions.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </SelectBox>
+          )}
+          {labelGb === 3 && (
+            <TextArea
+              placeholder="그룹을 입력하세요."
+              value={group ?? ''}
+              onChange={e => setGroup(e.target.value)}
+            />
+          )}
           <ButtonBox2>
-            <Button color="#093A6E" onClick={() => insertData()}>
+            <Button color="#1A7D55" onClick={() => insertData()}>
               저장
             </Button>
             {labelGb !== 3 && (
@@ -691,6 +731,28 @@ const TextArea = styled.input<WithTheme>`
 
   &:focus {
     border-color: ${({ theme }) => theme.colors.subColor}; // 원하시는 포커스 색상
+    outline: none;
+  }
+`;
+
+const SelectBox = styled.select<WithTheme>`
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: ${({ theme }) => theme.sizes.medium};
+  margin-bottom: 20px;
+  cursor: pointer;
+
+  /* 화살표 위치 조정 */
+  appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.subColor};
     outline: none;
   }
 `;
