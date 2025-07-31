@@ -1,6 +1,7 @@
 package com.bgmagitapi.controller.request;
 
 import com.bgmagitapi.entity.enumeration.BgmAgitImageCategory;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,7 +15,7 @@ public class BgmAgitImageCreateRequest {
     
     @NotNull(message = "메인 메뉴 ID를 넣어주세요")
     private Long bgmAgitMainMenuId;
-    @NotNull(message = "라벨을 넣어주세요")
+    @NotBlank(message = "라벨을 넣어주세요")
     private String bgmAgitImageLabel;
     
     private String bgmAgitMenuLink;

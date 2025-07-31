@@ -17,7 +17,7 @@ public class BgmAgitImageController {
     private final BgmAgitImageService bgmAgitImageService;
 
     @PostMapping("/image")
-    public ApiResponse createBgmAgitImage(@ModelAttribute BgmAgitImageCreateRequest request){
+    public ApiResponse createBgmAgitImage(@Validated @ModelAttribute BgmAgitImageCreateRequest request){
         return bgmAgitImageService.createBgmAgitImage(request);
     }
 
