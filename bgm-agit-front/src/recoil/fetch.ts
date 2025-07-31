@@ -53,8 +53,17 @@ export function useReservationFetch() {
   const setReservation = useSetRecoilState(reservationState);
 
   const fetchReservation = (params: ReservationData) => {
+    const token = sessionStorage.getItem('token');
     request(
-      () => api.get('/bgm-agit/reservation', { params }).then(res => res.data),
+      () =>
+        api
+          .get('/bgm-agit/reservation', {
+            params,
+            headers: {
+              Authorization: `Bearer ${token}`,
+            } as AxiosRequestHeaders,
+          })
+          .then(res => res.data),
       setReservation
     );
   };
