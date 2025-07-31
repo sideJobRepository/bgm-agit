@@ -13,7 +13,7 @@ interface SearchBarProps<T> {
   color: string;
   label: string;
   onSearch: (keyword: T) => void;
-  onCategory: (category: T) => void;
+  onCategory?: (category: T) => void;
 }
 
 type OptionType = {
@@ -55,7 +55,9 @@ export default function SearchBar<T = string>({
       onSearch([startDate, endDate] as T);
     } else if (key === 'game') {
       onSearch(keyword as T);
-      onCategory(category as T);
+      if (onCategory) {
+        onCategory(category as T);
+      }
     } else {
       onSearch(keyword as T);
     }
