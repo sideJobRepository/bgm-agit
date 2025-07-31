@@ -43,7 +43,7 @@ const Wrapper = styled.div<WithTheme>`
   color: ${({ theme }) => theme.colors.white};
   font-size: ${({ theme }) => theme.sizes.medium};
 
-  @media ${({ theme }) => theme.device.tablet} {
+  @media ${({ theme }) => theme.device.mobile} {
     max-width: 100%;
     min-width: 100%;
     padding: 16px;
@@ -60,7 +60,7 @@ const Left = styled.section<WithTheme>`
   align-items: flex-start;
   justify-content: center;
 
-  @media ${({ theme }) => theme.device.tablet} {
+  @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
     margin-bottom: 20px;
   }
@@ -77,7 +77,7 @@ const Left = styled.section<WithTheme>`
       margin-left: 12px;
       cursor: pointer;
 
-      @media ${({ theme }) => theme.device.tablet} {
+      @media ${({ theme }) => theme.device.mobile} {
         margin-left: 10px;
         width: 24px;
       }
@@ -93,7 +93,7 @@ const Right = styled.section<WithTheme>`
   justify-content: center;
   width: 50%;
 
-  @media ${({ theme }) => theme.device.tablet} {
+  @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
     height: 100%;
     align-items: center;
