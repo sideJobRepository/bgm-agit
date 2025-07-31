@@ -6,13 +6,23 @@ import ImageLightbox from '../ImageLightbox.tsx';
 import SearchBar from '../SearchBar.tsx';
 import type { ReservationData } from '../../types/reservation.ts';
 import ReservationCalendar from '../calendar/ReservationCalendar.tsx';
-import { useReservationFetch } from '../../recoil/fetch.ts';
-import { useRecoilState, useRecoilValue } from 'recoil';
+import {
+  useDeletePost,
+  useInsertPost,
+  useReservationFetch,
+  useUpdatePost,
+} from '../../recoil/fetch.ts';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { reservationDataState } from '../../recoil/state/reservationState.ts';
 import { userState } from '../../recoil/state/userState.ts';
-import { FaTrash } from 'react-icons/fa';
-import { FiPlus } from 'react-icons/fi';
+import { FiPlus, FiEdit } from 'react-icons/fi';
 import Modal from '../Modal.tsx';
+import { toast } from 'react-toastify';
+import { showConfirmModal } from '../confirmAlert.tsx';
+import type { AxiosRequestHeaders } from 'axios';
+import type { MainMenu } from '../../types/menu.ts';
+import { imageUploadState, mainMenuState } from '../../recoil';
+import { useLocation } from 'react-router-dom';
 
 interface GridItem {
   image: string;
@@ -38,7 +48,32 @@ interface Props {
   };
 }
 
+interface EditTarget {
+  imageId: number;
+  image: string;
+}
+
 export default function ImageGrid({ pageData }: Props) {
+  const { insert } = useInsertPost();
+  const { update } = useUpdatePost();
+  const { remove } = useDeletePost();
+
+  //현재 경로 찾기
+  const location = useLocation();
+  const menus = useRecoilValue(mainMenuState);
+  const { mainMenu, subMenu } = findMenuByPath(location.pathname, menus);
+
+  function findMenuByPath(path: string, menus: MainMenu[]) {
+    for (const main of menus) {
+      for (const sub of main.subMenu) {
+        if (sub.link === path) {
+          return { mainMenu: main, subMenu: sub };
+        }
+      }
+    }
+    return { mainMenu: null, subMenu: null };
+  }
+
   const [searchKeyword, setSearchKeyword] = useState('');
 
   //게임의 경우 카테고리 추가
@@ -48,13 +83,22 @@ export default function ImageGrid({ pageData }: Props) {
   const user = useRecoilValue(userState);
 
   //관리자 신규 등록
+  const setImageUploadTrigger = useSetRecoilState(imageUploadState);
   const [writeModalOpen, setWriteModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [text, setText] = useState('');
 
+  //수정
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
+
+  //이미지 저장
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) {
+      setUploadedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setSelectedImage(reader.result as string);
@@ -119,6 +163,97 @@ export default function ImageGrid({ pageData }: Props) {
     }
   }
 
+  //신규 저장
+  function insertData() {
+    if (!validation()) return;
+    console.log('mainMenu', mainMenu);
+    const formData = new FormData();
+    formData.append('bgmAgitMainMenuId', labelGb.toString());
+    formData.append('bgmAgitImageLabel', text);
+    formData.append('bgmAgitMenuLink', subMenu!.link);
+
+    let category;
+
+    if (labelGb === 3) {
+      category = 'ROOM';
+    } else if (subMenu!.bgmAgitMainMenuId === 10) {
+      category = 'DRINK';
+    } else if (subMenu!.bgmAgitMainMenuId === 11) {
+      category = 'FOOD';
+    }
+
+    formData.append('bgmAgitImageCategory', category!);
+
+    if (uploadedFile) {
+      formData.append('bgmAgitImage', uploadedFile);
+      if (editTarget) {
+        formData.append('deletedFiles', editTarget.image!);
+      }
+    }
+
+    if (isEditMode && editTarget) {
+      formData.append('bgmAgitImageId', editTarget.imageId.toString()!);
+    }
+
+    const token = sessionStorage.getItem('token');
+
+    const requestFn = isEditMode ? update : insert;
+
+    showConfirmModal({
+      message: isEditMode ? '수정하시겠습니까?' : '등록하시겠습니까?',
+      onConfirm: () => {
+        requestFn({
+          headers: {
+            Authorization: `Bearer ${token}`,
+          } as AxiosRequestHeaders,
+          url: '/bgm-agit/image',
+          body: formData,
+          ignoreHttpError: true,
+          onSuccess: () => {
+            toast.success(isEditMode ? '수정이 완료되었습니다.' : '신규 등록이 완료되었습니다.');
+            setWriteModalOpen(false);
+            setImageUploadTrigger(Date.now());
+          },
+        });
+      },
+    });
+  }
+
+  //삭제
+  async function deleteData() {
+    const deleteId = editTarget && editTarget.imageId.toString()!;
+
+    const token = sessionStorage.getItem('token');
+    showConfirmModal({
+      message: '삭제하시겠습니까?',
+      onConfirm: () => {
+        remove({
+          headers: {
+            Authorization: `Bearer ${token}`,
+          } as AxiosRequestHeaders,
+          url: `/bgm-agit/image/${deleteId}`,
+          ignoreHttpError: true,
+          onSuccess: () => {
+            toast.success('이미지가 삭제되었습니다.');
+            setWriteModalOpen(false);
+            setImageUploadTrigger(Date.now());
+          },
+        });
+      },
+    });
+  }
+
+  function validation() {
+    if (!uploadedFile && !selectedImage) {
+      toast.error('이미지를 등록해주세요.');
+      return false;
+    } else if (!text) {
+      toast.error('타이틀을 입력해주세요.');
+      return false;
+    }
+    return true;
+  }
+
   useEffect(() => {
     if (labelGb === 3 && filteredItems.length > 0) newItemDatas(filteredItems[0]);
   }, [filteredItems]);
@@ -149,6 +284,9 @@ export default function ImageGrid({ pageData }: Props) {
     if (!writeModalOpen) {
       setText('');
       setSelectedImage(null);
+      setUploadedFile(null);
+      setEditTarget(null);
+      setIsEditMode(false);
     }
   }, [writeModalOpen]);
 
@@ -198,8 +336,18 @@ export default function ImageGrid({ pageData }: Props) {
                   </TopLabel>
                 )}
                 {user?.roles.includes('ROLE_ADMIN') && labelGb !== 3 && (
-                  <DeleteBox>
-                    <FaTrash />
+                  <DeleteBox
+                    onClick={e => {
+                      console.log('itm', item);
+                      e.stopPropagation();
+                      setWriteModalOpen(true);
+                      setIsEditMode(true);
+                      setText(item.label); // 라벨 바인딩
+                      setSelectedImage(item.image); // 이미지 프리뷰
+                      setEditTarget({ imageId: item.imageId, image: item.image }); // 수정 대상 ID
+                    }}
+                  >
+                    <FiEdit />
                   </DeleteBox>
                 )}
               </ImageWrapper>
@@ -248,10 +396,16 @@ export default function ImageGrid({ pageData }: Props) {
             onChange={e => setText(e.target.value)}
           />
           <ButtonBox2>
-            <Button color="#093A6E" onClick={() => {}}>
+            <Button color="#093A6E" onClick={() => insertData()}>
               저장
             </Button>
-            <Button color="#FF5E57" onClick={() => setWriteModalOpen(false)}>
+            {labelGb !== 3 && (
+              <Button onClick={deleteData} color="#FF5E57">
+                삭제
+              </Button>
+            )}
+
+            <Button color="#988271" onClick={() => setWriteModalOpen(false)}>
               닫기
             </Button>
           </ButtonBox2>
@@ -371,7 +525,7 @@ const DeleteBox = styled.div<WithTheme>`
   left: 50%;
   cursor: pointer;
   color: ${({ theme }) => theme.colors.white};
-  background-color: ${({ theme }) => theme.colors.redColor};
+  background-color: ${({ theme }) => theme.colors.blueColor};
   padding: 10px;
   border-radius: 999px;
   transform: translate(-50%, -50%);

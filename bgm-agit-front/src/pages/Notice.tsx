@@ -162,7 +162,7 @@ export default function Notice({ mainGb }: NoticeProps) {
     });
   }
 
-  //업데이트
+  //삭제
   async function deleteData() {
     const deleteId = newNotice.id!.toString();
 

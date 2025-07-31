@@ -21,3 +21,8 @@ export const errorState = atom<boolean>({
   key: 'hasErrorState',
   default: false,
 });
+
+export const imageUploadState = atom<number>({
+  key: 'imageUploadState',
+  default: 0,
+});

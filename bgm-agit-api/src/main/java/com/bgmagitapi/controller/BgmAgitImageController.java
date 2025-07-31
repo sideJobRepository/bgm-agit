@@ -15,17 +15,17 @@ import org.springframework.web.bind.annotation.*;
 public class BgmAgitImageController {
 
     private final BgmAgitImageService bgmAgitImageService;
-    
+
     @PostMapping("/image")
-    public ApiResponse createBgmAgitImage(@RequestBody BgmAgitImageCreateRequest request){
+    public ApiResponse createBgmAgitImage(@ModelAttribute BgmAgitImageCreateRequest request){
         return bgmAgitImageService.createBgmAgitImage(request);
     }
-    
+
     @PutMapping("/image")
-    public ApiResponse modifyBgmAgitImage(@Validated @RequestBody BgmAgitImageModifyRequest request){
+    public ApiResponse modifyBgmAgitImage(@Validated @ModelAttribute BgmAgitImageModifyRequest request){
         return bgmAgitImageService.modifyBgmAgitImage(request);
     }
-    
+
     @DeleteMapping("/image/{imageId}")
     public ApiResponse deleteBgmAgitImage(@PathVariable Long imageId ){
         return bgmAgitImageService.deleteBgmAgitImage(imageId);

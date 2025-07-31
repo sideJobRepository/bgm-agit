@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { useSetRecoilState } from 'recoil';
-import { mainDataState, mainMenuState } from './state/mainState.ts';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { imageUploadState, mainDataState, mainMenuState } from './state/mainState.ts';
 import api from '../utils/axiosInstance';
 import { useRequest } from './useRequest.ts';
 import type { ReservationData } from '../types/reservation.ts';
@@ -34,7 +34,7 @@ export function useFetchMainMenu() {
 export function useFetchMainData(param?: { labelGb?: number; link?: string }) {
   const setMain = useSetRecoilState(mainDataState);
   const { request } = useRequest();
-
+  const trigger = useRecoilValue(imageUploadState);
   useEffect(() => {
     request(
       () =>
@@ -45,7 +45,7 @@ export function useFetchMainData(param?: { labelGb?: number; link?: string }) {
           .then(res => res.data),
       setMain
     );
-  }, [param?.link, param?.labelGb]);
+  }, [param?.link, param?.labelGb, trigger]);
 }
 
 export function useReservationFetch() {
@@ -54,17 +54,17 @@ export function useReservationFetch() {
 
   const fetchReservation = (params: ReservationData) => {
     const token = sessionStorage.getItem('token');
-      const headers = token
-          ? {
-              Authorization: `Bearer ${token}`,
-          } as AxiosRequestHeaders
-          : undefined;
+    const headers = token
+      ? ({
+          Authorization: `Bearer ${token}`,
+        } as AxiosRequestHeaders)
+      : undefined;
     request(
       () =>
         api
           .get('/bgm-agit/reservation', {
-              params,
-              headers
+            params,
+            headers,
           })
           .then(res => res.data),
       setReservation
