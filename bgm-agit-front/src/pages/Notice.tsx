@@ -18,6 +18,7 @@ import type { AxiosRequestHeaders } from 'axios';
 import { toast } from 'react-toastify';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import { FaTrash } from 'react-icons/fa';
+import Modal from '../components/Modal.tsx';
 
 interface NoticeProps {
   mainGb: boolean;
@@ -330,139 +331,137 @@ export default function Notice({ mainGb }: NoticeProps) {
         </Table>
       )}
       {writeModalOpen && (
-        <ModalBackdrop onClick={() => setWriteModalOpen(false)}>
-          <ModalBox onClick={e => e.stopPropagation()}>
-            {!isDetailMode && (
-              <>
-                <StyledRadioGroup>
-                  <StyledRadioLabel>
-                    <input
-                      type="radio"
-                      name="bgmAgitNoticeType"
-                      value="NOTICE"
-                      checked={newNotice.type === 'NOTICE'}
-                      onChange={e =>
-                        setNewNotice(prev => ({
-                          ...prev,
-                          type: e.target.value as 'NOTICE' | 'EVENT',
-                        }))
-                      }
-                    />
-                    공지
-                  </StyledRadioLabel>
-                  <StyledRadioLabel>
-                    <input
-                      type="radio"
-                      name="bgmAgitNoticeType"
-                      value="EVENT"
-                      checked={newNotice.type === 'EVENT'}
-                      onChange={e =>
-                        setNewNotice(prev => ({
-                          ...prev,
-                          type: e.target.value as 'NOTICE' | 'EVENT',
-                        }))
-                      }
-                    />
-                    이벤트
-                  </StyledRadioLabel>
-                </StyledRadioGroup>
-                <StyledInput
-                  type="text"
-                  placeholder="제목을 입력해주세요."
-                  value={newNotice.title}
-                  onChange={e => setNewNotice(prev => ({ ...prev, title: e.target.value }))}
-                />
+        <Modal onClose={() => setWriteModalOpen(false)}>
+          {!isDetailMode && (
+            <>
+              <StyledRadioGroup>
+                <StyledRadioLabel>
+                  <input
+                    type="radio"
+                    name="bgmAgitNoticeType"
+                    value="NOTICE"
+                    checked={newNotice.type === 'NOTICE'}
+                    onChange={e =>
+                      setNewNotice(prev => ({
+                        ...prev,
+                        type: e.target.value as 'NOTICE' | 'EVENT',
+                      }))
+                    }
+                  />
+                  공지
+                </StyledRadioLabel>
+                <StyledRadioLabel>
+                  <input
+                    type="radio"
+                    name="bgmAgitNoticeType"
+                    value="EVENT"
+                    checked={newNotice.type === 'EVENT'}
+                    onChange={e =>
+                      setNewNotice(prev => ({
+                        ...prev,
+                        type: e.target.value as 'NOTICE' | 'EVENT',
+                      }))
+                    }
+                  />
+                  이벤트
+                </StyledRadioLabel>
+              </StyledRadioGroup>
+              <StyledInput
+                type="text"
+                placeholder="제목을 입력해주세요."
+                value={newNotice.title}
+                onChange={e => setNewNotice(prev => ({ ...prev, title: e.target.value }))}
+              />
+              {attachedFiles?.length > 0 && (
+                <StyledFileUl>
+                  {attachedFiles
+                    .filter(file => !deletedFileNames.includes(file.fileName))
+                    .map((file, idx) => (
+                      <li key={idx}>
+                        <a
+                          onClick={() => {
+                            fileDownload(file.url);
+                          }}
+                        >
+                          {file.fileName}
+                        </a>
+                        <FaTrash
+                          onClick={() => {
+                            setDeletedFileUuid(prev => [...prev, file.uuidName]);
+                            setDeletedFileNames(prev => [...prev, file.fileName]);
+                          }}
+                        />
+                      </li>
+                    ))}
+                </StyledFileUl>
+              )}
+              <StyledFileInput type="file" multiple onChange={handleFileChange} />
+              <StyledTextarea
+                placeholder="내용을 입력해주세요."
+                value={newNotice.content}
+                onChange={e => setNewNotice(prev => ({ ...prev, content: e.target.value }))}
+              />
+            </>
+          )}
+          {isDetailMode && (
+            <>
+              <DetailTop>{newNotice.type === 'NOTICE' ? '공지사항' : '이벤트'}</DetailTop>
+              <DetailCont>
+                <h2>{newNotice.title}</h2>
                 {attachedFiles?.length > 0 && (
                   <StyledFileUl>
-                    {attachedFiles
-                      .filter(file => !deletedFileNames.includes(file.fileName))
-                      .map((file, idx) => (
-                        <li key={idx}>
-                          <a
-                            onClick={() => {
-                              fileDownload(file.url);
-                            }}
-                          >
-                            {file.fileName}
-                          </a>
-                          <FaTrash
-                            onClick={() => {
-                              setDeletedFileUuid(prev => [...prev, file.uuidName]);
-                              setDeletedFileNames(prev => [...prev, file.fileName]);
-                            }}
-                          />
-                        </li>
-                      ))}
+                    {attachedFiles.map((file, idx) => (
+                      <li key={idx}>
+                        <a
+                          onClick={() => {
+                            fileDownload(file.url);
+                          }}
+                        >
+                          {file.fileName}
+                        </a>
+                      </li>
+                    ))}
                   </StyledFileUl>
                 )}
-                <StyledFileInput type="file" multiple onChange={handleFileChange} />
-                <StyledTextarea
-                  placeholder="내용을 입력해주세요."
-                  value={newNotice.content}
-                  onChange={e => setNewNotice(prev => ({ ...prev, content: e.target.value }))}
-                />
-              </>
-            )}
-            {isDetailMode && (
-              <>
-                <DetailTop>{newNotice.type === 'NOTICE' ? '공지사항' : '이벤트'}</DetailTop>
-                <DetailCont>
-                  <h2>{newNotice.title}</h2>
-                  {attachedFiles?.length > 0 && (
-                    <StyledFileUl>
-                      {attachedFiles.map((file, idx) => (
-                        <li key={idx}>
-                          <a
-                            onClick={() => {
-                              fileDownload(file.url);
-                            }}
-                          >
-                            {file.fileName}
-                          </a>
-                        </li>
-                      ))}
-                    </StyledFileUl>
-                  )}
-                  <p>{newNotice.content}</p>
-                </DetailCont>
-              </>
-            )}
-            <ButtonBox2>
-              {!isDetailMode && (
-                <Button color="#1A7D55" onClick={isEditMode ? updateData : insertData}>
-                  저장
-                </Button>
-              )}
-              {isDetailMode && user?.roles.includes('ROLE_ADMIN') && (
-                <>
-                  <Button
-                    color="#093A6E"
-                    onClick={() => {
-                      setIsEditMode(true);
-                      setIsDetailMode(false);
-                    }}
-                  >
-                    수정
-                  </Button>
-                  <Button onClick={deleteData} color="#FF5E57">
-                    삭제
-                  </Button>
-                </>
-              )}
-              <Button
-                color="#988271"
-                onClick={() => {
-                  setWriteModalOpen(false);
-                  setIsEditMode(false);
-                  setIsDetailMode(false);
-                  setDeletedFileNames(originalDeletedFileNames);
-                }}
-              >
-                닫기
+                <p>{newNotice.content}</p>
+              </DetailCont>
+            </>
+          )}
+          <ButtonBox2>
+            {!isDetailMode && (
+              <Button color="#1A7D55" onClick={isEditMode ? updateData : insertData}>
+                저장
               </Button>
-            </ButtonBox2>
-          </ModalBox>
-        </ModalBackdrop>
+            )}
+            {isDetailMode && user?.roles.includes('ROLE_ADMIN') && (
+              <>
+                <Button
+                  color="#093A6E"
+                  onClick={() => {
+                    setIsEditMode(true);
+                    setIsDetailMode(false);
+                  }}
+                >
+                  수정
+                </Button>
+                <Button onClick={deleteData} color="#FF5E57">
+                  삭제
+                </Button>
+              </>
+            )}
+            <Button
+              color="#988271"
+              onClick={() => {
+                setWriteModalOpen(false);
+                setIsEditMode(false);
+                setIsDetailMode(false);
+                setDeletedFileNames(originalDeletedFileNames);
+              }}
+            >
+              닫기
+            </Button>
+          </ButtonBox2>
+        </Modal>
       )}
     </>
   );
@@ -593,39 +592,6 @@ const PageButton = styled.button.withConfig({
 
   &:hover {
     opacity: 0.8;
-  }
-`;
-
-const ModalBackdrop = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 4;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-
-const ModalBox = styled.div<WithTheme>`
-  background: ${({ theme }) => theme.colors.white};
-  position: relative;
-  padding: 24px;
-  width: 90%;
-  max-width: 480px;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  text-align: center;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    h2 {
-      font-size: ${({ theme }) => theme.sizes.medium};
-    }
-    p {
-      font-size: ${({ theme }) => theme.sizes.small};
-    }
   }
 `;
 
