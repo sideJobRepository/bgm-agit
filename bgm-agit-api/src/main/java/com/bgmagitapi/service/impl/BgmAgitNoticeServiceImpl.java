@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.bgmagitapi.entity.QBgmAgitNotice.bgmAgitNotice;
-import static com.bgmagitapi.entity.QBgmAgitNoticeFile.*;
 
 @Transactional
 @Service

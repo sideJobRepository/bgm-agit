@@ -90,7 +90,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 )
                 .fetch();
 
-// 2. 예약 시간 Map<날짜, List<TimeRange>> 으로 변환
+        // 2. 예약 시간 Map<날짜, List<TimeRange>> 으로 변환
         Map<LocalDate, List<TimeRange>> reservedMap = reservations.stream()
                 .map(res -> {
                     LocalDateTime start = LocalDateTime.of(res.getDate(), res.getStartTime());
@@ -103,7 +103,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
-// 3. 날짜별 시간 슬롯 생성
+        // 3. 날짜별 시간 슬롯 생성
         List<BgmAgitReservationResponse.TimeSlotByDate> timeSlots = new ArrayList<>();
         
         for (LocalDate d = today; !d.isAfter(endOfYear); d = d.plusDays(1)) {
@@ -247,6 +247,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     }
     
     @Override
+    @Transactional(readOnly = true)
     public Page<GroupedReservationResponse> getReservationDetail(Long memberId, String role, String startDate, String endDate, Pageable pageable) {
         BgmAgitMember bgmAgitMember = bgmAgitMemberRepository.findById(memberId)
                 .orElseThrow(() -> new RuntimeException("Member Not Found"));
@@ -254,7 +255,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         BooleanBuilder booleanBuilder = new BooleanBuilder();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         
-        if (role.equals("ROLE_USER")) {
+        if ("ROLE_USER".equals(role)) {
             booleanBuilder.and(bgmAgitReservation.bgmAgitMember.bgmAgitMemberId.eq(bgmAgitMember.getBgmAgitMemberId()));
         }
         

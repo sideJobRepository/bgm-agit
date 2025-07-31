@@ -41,6 +41,7 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
     private final JPAQueryFactory queryFactory;
     
     @Override
+    @Transactional(readOnly = true)
     public Page<BgmAgitRoleResponse> getRoles(Pageable pageable, String email) {
         QBgmAgitMemberRole memberRole = QBgmAgitMemberRole.bgmAgitMemberRole;
         QBgmAgitMember member = QBgmAgitMember.bgmAgitMember;
