@@ -24,6 +24,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthentication;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -54,10 +59,15 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     @Override
     @Transactional(readOnly = true)
     public BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id, LocalDate date) {
+        Authentication authentication = SecurityContextHolder.getContextHolderStrategy().getContext().getAuthentication();
+        final Long userId = (authentication instanceof JwtAuthenticationToken bearerAuth)
+                ? ((Jwt) bearerAuth.getPrincipal()).getClaim("id")
+                : null;
         LocalDate today = date;
         LocalDate endOfYear = LocalDate.of(today.getYear(), 12, 31);
         String label = "", group = "";
         // 1. 예약 정보 조회
+        // 1. 예약 정보 조회 (Y: 확정 / N: 대기)
         List<ReservedTimeDto> reservations = queryFactory
                 .select(Projections.constructor(
                         ReservedTimeDto.class,
@@ -65,7 +75,9 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                         bgmAgitReservation.bgmAgitReservationStartTime,
                         bgmAgitReservation.bgmAgitReservationEndTime,
                         bgmAgitImage.bgmAgitImageLabel,
-                        bgmAgitImage.bgmAgitImageGroups
+                        bgmAgitImage.bgmAgitImageGroups,
+                        bgmAgitReservation.bgmAgitReservationApprovalStatus,
+                        bgmAgitReservation.bgmAgitMember.bgmAgitMemberId
                 ))
                 .from(bgmAgitReservation)
                 .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage)
@@ -73,26 +85,27 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                         bgmAgitImage.bgmAgitMainMenu.bgmAgitMainMenuId.eq(labelGb),
                         bgmAgitImage.bgmAgitMenuLink.eq(link),
                         bgmAgitImage.bgmAgitImageId.eq(id),
-                        bgmAgitReservation.bgmAgitReservationCancelStatus.eq("N"),
+                        bgmAgitReservation.bgmAgitReservationApprovalStatus.in("Y", "N"), // 확정 포함
                         bgmAgitReservation.bgmAgitReservationStartDate.between(today, endOfYear)
                 )
                 .fetch();
-        
-        // 2. 예약 시간 Map<날짜, List<TimeRange>> 으로 변환
+
+// 2. 예약 시간 Map<날짜, List<TimeRange>> 으로 변환
         Map<LocalDate, List<TimeRange>> reservedMap = reservations.stream()
                 .map(res -> {
                     LocalDateTime start = LocalDateTime.of(res.getDate(), res.getStartTime());
                     LocalDateTime end = res.getEndTime().isBefore(res.getStartTime())
                             ? LocalDateTime.of(res.getDate().plusDays(1), res.getEndTime())
                             : LocalDateTime.of(res.getDate(), res.getEndTime());
-                    return new TimeRange(start, end);
+                    return new TimeRange(start, end, res.getApprovalStatus(), res.getMemberId());
                 })
                 .collect(Collectors.groupingBy(r -> r.getStart().toLocalDate()));
         
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
-        
-        // 3. 날짜별 시간 슬롯 생성 (오늘~연말까지)
+
+// 3. 날짜별 시간 슬롯 생성
         List<BgmAgitReservationResponse.TimeSlotByDate> timeSlots = new ArrayList<>();
+        
         for (LocalDate d = today; !d.isAfter(endOfYear); d = d.plusDays(1)) {
             LocalDateTime open = LocalDateTime.of(d, LocalTime.of(13, 0));
             LocalDateTime close = LocalDateTime.of(d.plusDays(1), LocalTime.of(1, 0));
@@ -102,22 +115,32 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             List<TimeRange> reserved = reservedMap.getOrDefault(d, Collections.emptyList())
                     .stream().sorted(Comparator.comparing(TimeRange::getStart)).toList();
             
-            // id가 18이면 G룸임 G룸은 최소 대여 시간이 3시간, 아니면 1시간
             int slotIntervalHours = (id != null && id == 18) ? 3 : 1;
             
             while (cursor.isBefore(close)) {
                 LocalDateTime slotStart = cursor;
                 LocalDateTime slotEnd = cursor.plusHours(slotIntervalHours);
                 
-                // 오늘 날짜이고 slotEnd가 현재 시간보다 이전이면 skip
                 if (d.isEqual(today) && slotEnd.isBefore(LocalDateTime.now())) {
                     cursor = cursor.plusHours(slotIntervalHours);
                     continue;
                 }
                 
-                boolean overlapped = reserved.stream().anyMatch(r ->
-                        slotStart.isBefore(r.getEnd()) && slotEnd.isAfter(r.getStart())
-                );
+                boolean overlapped = reserved.stream()
+                        .filter(r -> {
+                            String status = r.getApprovalStatus();
+                            Long reserverId = r.getMemberId();
+                            
+                            boolean isConfirmed = "Y".equalsIgnoreCase(status); // 확정이면 무조건 막음
+                            boolean isMyPending = "N".equalsIgnoreCase(status)
+                                    && userId != null
+                                    && Objects.equals(reserverId, userId); // 본인의 대기 예약도 막음
+                            
+                            return isConfirmed || isMyPending;
+                        })
+                        .anyMatch(r ->
+                                slotStart.isBefore(r.getEnd()) && slotEnd.isAfter(r.getStart())
+                        );
                 
                 if (!overlapped) {
                     availableSlots.add(slotStart.format(formatter));
@@ -127,7 +150,6 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             }
             
             if (!availableSlots.isEmpty()) {
-                
                 if (!reservations.isEmpty()) {
                     ReservedTimeDto dto = reservations.get(0);
                     label = dto.getLabel();
@@ -140,15 +162,16 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     }
                 }
             }
+            
             timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(d, availableSlots));
         }
-        
-        // 공휴일 Set 준비 (형식: yyyyMMdd)
+
+        // 4. 공휴일/주말 가격 계산
         Set<String> holidaySet = new LunarCalendar().getHolidaySet(String.valueOf(today.getYear()));
         DateTimeFormatter formatterYY = DateTimeFormatter.ofPattern("yyyyMMdd");
         
-        // 오늘~연말까지 날짜별 가격 계산
         List<BgmAgitReservationResponse.PriceByDate> prices = new ArrayList<>();
+        
         for (LocalDate d = today; !d.isAfter(endOfYear); d = d.plusDays(1)) {
             String dateStr = d.format(formatterYY);
             boolean isWeekend = d.getDayOfWeek() == DayOfWeek.SATURDAY || d.getDayOfWeek() == DayOfWeek.SUNDAY;
@@ -159,6 +182,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         }
         
         return new BgmAgitReservationResponse(timeSlots, prices, label, group);
+        
     }
     
     @Override
@@ -185,6 +209,13 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         
         // 중복된 시간대 구성 (Set으로 빠르게 비교)
         Set<String> existingTimeSlots = existingReservations.stream()
+                .filter(r ->
+                        "Y".equals(r.getBgmAgitReservationApprovalStatus()) ||
+                                (
+                                        "N".equals(r.getBgmAgitReservationApprovalStatus()) &&
+                                                Objects.equals(r.getBgmAgitMember().getBgmAgitMemberId(), userId)
+                                )
+                )
                 .map(r -> r.getBgmAgitReservationStartTime() + "-" + r.getBgmAgitReservationEndTime())
                 .collect(Collectors.toSet());
         Long maxReservationNo = bgmAgitReservationRepository.findMaxReservationNo();

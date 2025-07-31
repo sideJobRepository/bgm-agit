@@ -16,4 +16,6 @@ public class ReservedTimeDto {
     private LocalTime endTime;
     private String label;
     private String group;
+    private String approvalStatus;
+    private Long memberId;
 }

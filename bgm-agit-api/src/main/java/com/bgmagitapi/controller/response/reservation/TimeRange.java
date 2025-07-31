@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 public class TimeRange {
     private final LocalDateTime start;
     private final LocalDateTime end;
-    
+    private final String approvalStatus;
+    private final Long memberId;
     
 }
