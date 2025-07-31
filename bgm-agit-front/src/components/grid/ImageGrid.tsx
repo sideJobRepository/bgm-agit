@@ -16,6 +16,7 @@ import Modal from '../Modal.tsx';
 
 interface GridItem {
   image: string;
+  category: string;
   imageId: number;
   labelGb: number;
   label: string;
@@ -39,6 +40,10 @@ interface Props {
 
 export default function ImageGrid({ pageData }: Props) {
   const [searchKeyword, setSearchKeyword] = useState('');
+
+  //게임의 경우 카테고리 추가
+  const [category, setCategory] = useState('');
+
   const [lightboxIndex, setLightboxIndex] = useState(-1);
   const user = useRecoilValue(userState);
 
@@ -82,10 +87,16 @@ export default function ImageGrid({ pageData }: Props) {
   };
 
   const filteredItems = useMemo(() => {
-    return searchKeyword
-      ? items.filter(item => item.label?.toLowerCase().includes(searchKeyword.toLowerCase()))
-      : items;
-  }, [items, searchKeyword]);
+    return items.filter(item => {
+      const matchesKeyword = searchKeyword
+        ? item.label?.toLowerCase().includes(searchKeyword.toLowerCase())
+        : true;
+
+      const matchesCategory = category ? item.category === category : true;
+
+      return matchesKeyword && matchesCategory;
+    });
+  }, [items, searchKeyword, category]);
 
   const [reservationData, setReservationData] = useRecoilState(reservationDataState);
 
@@ -149,7 +160,12 @@ export default function ImageGrid({ pageData }: Props) {
           <p>{subTitle}</p>
         </TitleBox>
         <SearchBox>
-          <SearchBar<string> color={searchColor} label={label} onSearch={setSearchKeyword} />
+          <SearchBar<string>
+            color={searchColor}
+            label={label}
+            onSearch={setSearchKeyword}
+            onCategory={setCategory}
+          />
         </SearchBox>
       </SearchWrapper>
       {user?.roles.includes('ROLE_ADMIN') && labelGb !== 3 && (

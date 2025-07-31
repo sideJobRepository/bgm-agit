@@ -4,6 +4,7 @@ export type ImageSliderItem = {
 
 export interface GridItem {
   image: string;
+  category: string;
   imageId: number;
   labelGb: number;
   label: string;
