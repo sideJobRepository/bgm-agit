@@ -1,12 +1,14 @@
 import { ClipLoader } from 'react-spinners';
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
+import ReactDOM from 'react-dom';
 
 export default function Loading() {
-  return (
+  return ReactDOM.createPortal(
     <Overlay>
       <ClipLoader color="#1A7D55" size={60} />
-    </Overlay>
+    </Overlay>,
+    document.body
   );
 }
 
