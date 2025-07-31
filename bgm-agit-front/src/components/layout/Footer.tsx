@@ -67,6 +67,7 @@ const Left = styled.section<WithTheme>`
 
   div {
     display: flex;
+
     span {
       display: flex;
       margin-top: 4px;
@@ -97,5 +98,7 @@ const Right = styled.section<WithTheme>`
     width: 100%;
     height: 100%;
     align-items: center;
+    padding-top: 20px;
+    border-top: 1px solid ${({ theme }) => theme.colors.white};
   }
 `;
