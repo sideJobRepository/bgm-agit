@@ -696,7 +696,6 @@ const StyledFileInput = styled.input<WithTheme>`
     padding: 6px 12px;
     cursor: pointer;
     font-size: ${({ theme }) => theme.sizes.small};
-    border-radius: 4px;
   }
 `;
 
