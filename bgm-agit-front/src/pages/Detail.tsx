@@ -25,7 +25,7 @@ export default function Detail() {
       textColor: '#ffffff',
       searchColor: '#1A7D55',
       columnCount: visibleGameCount,
-      label: '게임이름',
+      label: '게임 이름',
     },
     room: {
       labelGb: 3,
@@ -35,7 +35,17 @@ export default function Detail() {
       textColor: '#ffffff',
       searchColor: '#093A6E',
       columnCount: visibleCountReserve,
-      label: '방이름',
+      label: '방 이름',
+    },
+    mahjongRental: {
+      labelGb: 3,
+      title: 'Reserve Your Mahjong Table',
+      subTitle: '지금 원하는 마작 테이블을 예약하고 특별한 시간을 즐겨보세요.',
+      bgColor: '#093A6E',
+      textColor: '#ffffff',
+      searchColor: '#093A6E',
+      columnCount: visibleCountReserve,
+      label: '테이블 이름',
     },
     drink: {
       labelGb: 4,
@@ -45,7 +55,7 @@ export default function Detail() {
       textColor: '#5C3A21',
       searchColor: '#5C3A21',
       columnCount: visibleFoodCount,
-      label: '음료이름',
+      label: '음료 이름',
     },
     food: {
       labelGb: 4,
@@ -55,7 +65,7 @@ export default function Detail() {
       textColor: '#5C3A21',
       searchColor: '#5C3A21',
       columnCount: visibleFoodCount,
-      label: '음식이름',
+      label: '음식 이름',
     },
   };
 
