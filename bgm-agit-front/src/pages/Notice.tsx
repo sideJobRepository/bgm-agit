@@ -81,18 +81,6 @@ export default function Notice({ mainGb }: NoticeProps) {
                     <tr
                       key={notice.bgmAgitNoticeId}
                       onClick={() => {
-                        // setNewNotice({
-                        //   id: notice.bgmAgitNoticeId,
-                        //   title: notice.bgmAgitNoticeTitle,
-                        //   content: notice.bgmAgitNoticeCont,
-                        //   type: notice.bgmAgitNoticeType,
-                        // });
-                        // setAttachedFiles(notice.bgmAgitNoticeFileList ?? []);
-                        // setIsDetailMode(true);
-                        // setWriteModalOpen(true);
-                        // setDeletedFileNames([]);
-                        // setDeletedFileUuid([]);
-                        // setOriginalDeletedFileNames([]);
                         navigate(`/noticeDetail?id=${notice.bgmAgitNoticeId}`);
                       }}
                     >
@@ -127,7 +115,12 @@ export default function Notice({ mainGb }: NoticeProps) {
           </thead>
           <tbody>
             {items?.content.slice(0, 6).map(notice => (
-              <tr key={notice.bgmAgitNoticeId}>
+              <tr
+                key={notice.bgmAgitNoticeId}
+                onClick={() => {
+                  navigate(`/noticeDetail?id=${notice.bgmAgitNoticeId}`);
+                }}
+              >
                 <Td>{notice.bgmAgitNoticeId}</Td>
                 <Td>{notice.bgmAgitNoticeTitle}</Td>
                 {!isMobile && <Td>{notice.registDate}</Td>}

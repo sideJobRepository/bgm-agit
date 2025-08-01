@@ -20,6 +20,7 @@ import { toast } from 'react-toastify';
 import { useSearchParams } from 'react-router-dom';
 import { FaTrash } from 'react-icons/fa';
 import { userState } from '../recoil/state/userState.ts';
+import { FaDownload } from 'react-icons/fa';
 
 type NewNoticeState = {
   id: number | null;
@@ -199,18 +200,20 @@ export default function NoticeDetail() {
         <>
           <ButtonBox>
             {user?.roles.includes('ROLE_ADMIN') && (
-              <Button
-                onClick={() => {
-                  setIsEditMode(true);
-                }}
-                color="#093A6E"
-              >
-                수정
-              </Button>
+              <>
+                <Button
+                  onClick={() => {
+                    setIsEditMode(true);
+                  }}
+                  color="#093A6E"
+                >
+                  수정
+                </Button>
+                <Button color="#FF5E57" onClick={() => deleteData()}>
+                  삭제
+                </Button>
+              </>
             )}
-            <Button color="#FF5E57" onClick={() => deleteData()}>
-              삭제
-            </Button>
             <Button
               onClick={() => {
                 navigate(`/notice`);
@@ -237,6 +240,7 @@ export default function NoticeDetail() {
                     }}
                   >
                     {file.fileName}
+                    <FaDownload />
                   </a>
                 </li>
               ))}
@@ -332,6 +336,7 @@ export default function NoticeDetail() {
                       }}
                     >
                       {file.fileName}
+                      <FaDownload />
                     </a>
                     <FaTrash
                       onClick={() => {
@@ -545,6 +550,9 @@ const StyledFileUl = styled.ul<WithTheme>`
     font-size: ${({ theme }) => theme.sizes.xsmall};
 
     a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       padding: 4px 8px;
       background-color: ${({ theme }) => theme.colors.basicColor};
       border-radius: 4px;

@@ -27,7 +27,7 @@ export default function Nav() {
   return (
     <Wrapper>
       <NavBox>
-        {mainMenu && (
+        {mainMenu ? (
           <>
             <a
               onClick={() => {
@@ -39,9 +39,30 @@ export default function Nav() {
             <IoChevronForward />
             <span>{mainMenu.name}</span>
             <IoChevronForward />
+            <span>{subMenu?.name}</span>
+          </>
+        ) : (
+          <>
+            {' '}
+            <a
+              onClick={() => {
+                navigate('/');
+              }}
+            >
+              홈
+            </a>
+            <IoChevronForward />
+            <span>커뮤니티</span>
+            <IoChevronForward />
+            <a
+              onClick={() => {
+                navigate('/notice');
+              }}
+            >
+              공지사항
+            </a>
           </>
         )}
-        <span>{subMenu?.name}</span>
       </NavBox>
     </Wrapper>
   );
