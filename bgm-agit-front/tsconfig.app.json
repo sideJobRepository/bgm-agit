@@ -25,5 +25,5 @@
 
     "typeRoots": ["./node_modules/@types", "./src/styles"]
   },
-  "include": ["src", "src/styles/styled.d.ts"]
+  "include": ["src", "src/styles/styled.d.ts", "types"]
 }

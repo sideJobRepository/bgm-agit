@@ -12,6 +12,9 @@ import { useRecoilValue } from 'recoil';
 import { noticeState } from '../recoil/state/noticeState.ts';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import type { default as ClassicEditorType } from '@ckeditor/ckeditor5-build-classic';
+import type { FileLoader } from '@ckeditor/ckeditor5-upload';
+import type { Editor } from '@ckeditor/ckeditor5-core';
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
@@ -68,8 +71,7 @@ export default function NoticeDetail() {
     }
   };
 
-  const editorRef = useRef<any>(null);
-  const imageMapRef = useRef<Map<string, File>>(new Map());
+  const editorRef = useRef<ClassicEditorType | null>(null);
 
   function fileDownload(id: string) {
     const sliceId = id.split('/').pop()!; // 마지막 슬래시 이후 값만 추출
@@ -389,24 +391,46 @@ export default function NoticeDetail() {
             <StyledFileInput type="file" multiple onChange={handleFileChange} />
             <EditorBox>
               <CKEditor
-                editor={ClassicEditor as any}
+                editor={ClassicEditor}
                 data={newNotice.content}
                 config={{
                   mediaEmbed: {
                     previewsInData: true,
                   },
                 }}
-                onReady={(editor: any) => {
-                  editorRef.current = editor;
-                  editor.plugins.get('FileRepository').createUploadAdapter = (loader: any) => {
+                onReady={(editor: Editor) => {
+                  editorRef.current = editor as unknown as ClassicEditor;
+
+                  editor.plugins.get('FileRepository').createUploadAdapter = (
+                    loader: FileLoader
+                  ) => {
                     return {
-                      upload: () =>
-                        loader.file.then((file: File) => {
-                          const blobUrl = URL.createObjectURL(file);
-                          imageMapRef.current.set(blobUrl, file);
-                          return { default: blobUrl };
-                        }),
-                      abort: () => {},
+                      upload: async () => {
+                        const file = await loader.file;
+                        const formData = new FormData();
+
+                        if (file) formData.append('file', file);
+
+                        const token = sessionStorage.getItem('token');
+
+                        return new Promise(resolve => {
+                          insert<FormData>({
+                            url: '/bgm-agit/notice/file',
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            } as AxiosRequestHeaders,
+                            body: formData,
+                            ignoreHttpError: true,
+                            onSuccess: (data: unknown) => {
+                              const url = data as string;
+                              resolve({ default: url });
+                            },
+                          });
+                        });
+                      },
+                      abort: () => {
+                        console.warn('업로드 중단됨');
+                      },
                     };
                   };
                 }}
