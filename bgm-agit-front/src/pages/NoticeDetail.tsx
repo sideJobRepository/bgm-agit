@@ -598,6 +598,7 @@ const ContentBox = styled.div<WithTheme>`
   min-height: calc(100vh - 360px);
   padding: 20px 10px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.bronzeColor};
+  margin-bottom: 20px;
 
   iframe {
     width: 100%;
