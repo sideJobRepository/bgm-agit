@@ -15,6 +15,7 @@ import KakaoRedirectPage from './pages/KakaoRedirectPage.tsx';
 import { ToastContainer } from 'react-toastify';
 import ReservationList from './pages/ReservationList.tsx';
 import Role from './pages/Role.tsx';
+import NoticeDetail from './pages/NoticeDetail.tsx';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
               <Route path="about" element={<About />} />
               <Route path="detail/*" element={<Detail />} />
               <Route path="notice" element={<Notice mainGb={true} />} />
+              <Route path="/noticeDetail" element={<NoticeDetail />} />
               <Route path="reservationList" element={<ReservationList />} />
               <Route path="role" element={<Role />} />
             </Route>

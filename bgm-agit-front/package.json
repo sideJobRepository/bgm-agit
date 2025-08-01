@@ -10,7 +10,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ckeditor/ckeditor5-basic-styles": "^46.0.0",
+    "@ckeditor/ckeditor5-build-classic": "^41.4.2",
+    "@ckeditor/ckeditor5-editor-classic": "^46.0.0",
+    "@ckeditor/ckeditor5-essentials": "^46.0.0",
+    "@ckeditor/ckeditor5-image": "^46.0.0",
+    "@ckeditor/ckeditor5-paragraph": "^46.0.0",
+    "@ckeditor/ckeditor5-react": "^11.0.0",
+    "@ckeditor/ckeditor5-theme-lark": "^46.0.0",
+    "@ckeditor/ckeditor5-upload": "^46.0.0",
     "axios": "^1.9.0",
+    "ckeditor5-build-classic": "^1.0.0",
     "jwt-decode": "^4.0.0",
     "react": "^18.2.0",
     "react-calendar": "^6.0.0",
