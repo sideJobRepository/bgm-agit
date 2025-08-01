@@ -385,10 +385,8 @@ export default function ImageGrid({ pageData }: Props) {
               {labelGb !== 3 && <FoodLabel textColor={textColor}>{item.label}</FoodLabel>}
             </GridItemBox>
           ))}
-
-        {filteredItems.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
       </GridContainer>
-
+      {filteredItems.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
       <ImageLightbox
         images={filteredItems.map(item => item.image)}
         index={lightboxIndex}
@@ -628,6 +626,10 @@ const FoodLabel = styled.div.withConfig({
 `;
 
 const NoSearchBox = styled.div<WithTheme>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
   font-size: ${({ theme }) => theme.sizes.menu};
   font-weight: ${({ theme }) => theme.weight.semiBold};
   font-family: 'Jua', sans-serif;

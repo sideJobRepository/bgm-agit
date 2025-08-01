@@ -91,8 +91,8 @@ export default function Notice({ mainGb }: NoticeProps) {
                     </tr>
                   ))}
                 </tbody>
-                {items?.content.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
               </Table>
+              {items?.content.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
               <PaginationWrapper>
                 {[...Array(items?.totalPages ?? 0)].map((_, idx) => (
                   <PageButton key={idx} active={idx === page} onClick={() => handlePageClick(idx)}>
@@ -283,6 +283,10 @@ const ButtonBox = styled.div`
 `;
 
 const NoSearchBox = styled.div<WithTheme>`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
   font-size: ${({ theme }) => theme.sizes.menu};
   font-weight: ${({ theme }) => theme.weight.semiBold};
   font-family: 'Jua', sans-serif;\
