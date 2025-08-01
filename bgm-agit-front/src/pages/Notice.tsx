@@ -77,14 +77,14 @@ export default function Notice({ mainGb }: NoticeProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {items?.content?.map(notice => (
+                  {items?.content?.map((notice, index) => (
                     <tr
                       key={notice.bgmAgitNoticeId}
                       onClick={() => {
                         navigate(`/noticeDetail?id=${notice.bgmAgitNoticeId}`);
                       }}
                     >
-                      <Td>{notice.bgmAgitNoticeId}</Td>
+                      <Td>{index + 1}</Td>
                       <Td>{notice.bgmAgitNoticeTitle}</Td>
                       {!isMobile && <Td>{notice.registDate}</Td>}
                       <Td>{notice.bgmAgitNoticeType === 'NOTICE' ? '공지사항' : '이벤트'}</Td>
@@ -114,14 +114,14 @@ export default function Notice({ mainGb }: NoticeProps) {
             </tr>
           </thead>
           <tbody>
-            {items?.content.slice(0, 6).map(notice => (
+            {items?.content.slice(0, 6).map((notice, index) => (
               <tr
                 key={notice.bgmAgitNoticeId}
                 onClick={() => {
                   navigate(`/noticeDetail?id=${notice.bgmAgitNoticeId}`);
                 }}
               >
-                <Td>{notice.bgmAgitNoticeId}</Td>
+                <Td>{index + 1}</Td>
                 <Td>{notice.bgmAgitNoticeTitle}</Td>
                 {!isMobile && <Td>{notice.registDate}</Td>}
                 <Td>{notice.bgmAgitNoticeType === 'NOTICE' ? '공지사항' : '이벤트'}</Td>
