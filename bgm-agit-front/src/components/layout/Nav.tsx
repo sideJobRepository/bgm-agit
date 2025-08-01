@@ -10,6 +10,7 @@ export default function Nav() {
   const location = useLocation();
   const navigate = useNavigate();
   const menus = useRecoilValue(mainMenuState);
+  console.log('location', location);
 
   const { mainMenu, subMenu } = findMenuByPath(location.pathname, menus);
 
@@ -27,7 +28,7 @@ export default function Nav() {
   return (
     <Wrapper>
       <NavBox>
-        {mainMenu ? (
+        {mainMenu && (
           <>
             <a
               onClick={() => {
@@ -41,9 +42,9 @@ export default function Nav() {
             <IoChevronForward />
             <span>{subMenu?.name}</span>
           </>
-        ) : (
+        )}
+        {!mainMenu && location.pathname !== '/' && (
           <>
-            {' '}
             <a
               onClick={() => {
                 navigate('/');
