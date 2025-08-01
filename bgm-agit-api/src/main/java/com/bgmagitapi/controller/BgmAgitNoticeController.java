@@ -1,6 +1,8 @@
 package com.bgmagitapi.controller;
 
 import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.config.S3FileUtils;
+import com.bgmagitapi.config.UploadResult;
 import com.bgmagitapi.controller.request.BgmAgitNoticeCreateRequest;
 import com.bgmagitapi.controller.request.BgmAgitNoticeModifyRequest;
 import com.bgmagitapi.controller.response.notice.BgmAgitNoticeResponse;
@@ -18,6 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriUtils;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -26,6 +29,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,6 +39,8 @@ public class BgmAgitNoticeController {
     private final BgmAgitNoticeService bgmAgitNoticeService;
     
     private final S3Client s3Client;
+    
+    private final S3FileUtils s3FileUtils;
     
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
@@ -93,6 +99,12 @@ public class BgmAgitNoticeController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resource);
+    }
+    
+    @PostMapping("/notice/file")
+    public String noticeFile(@RequestParam("file") MultipartFile file) {
+        UploadResult notice = s3FileUtils.storeFile(file, "notice");
+        return notice.getUrl();
     }
     
 }
