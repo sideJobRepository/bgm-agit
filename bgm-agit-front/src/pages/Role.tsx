@@ -80,77 +80,79 @@ export default function Role() {
           </SearchBox>
         </SearchWrapper>
         <TableBox>
-          <ButtonBox>
-            <Button color="#988271" onClick={() => updateData()}>
-              저장
-            </Button>
-          </ButtonBox>
-          <Table>
-            <thead>
-              <tr>
-                <Th> </Th>
-                <Th>번호</Th>
-                <Th>아이디</Th>
-                <Th>이름</Th>
-                <Th>권한</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {items?.content.map((item, index) => (
-                <tr key={item.memberId}>
-                  <Td>
-                    <input
-                      type="checkbox"
-                      checked={checkedIds.includes(item.memberId)}
-                      onChange={e => {
-                        const isChecked = e.target.checked;
-                        setCheckedIds(prev =>
-                          isChecked
-                            ? [...prev, item.memberId]
-                            : prev.filter(id => id !== item.memberId)
-                        );
-                      }}
-                    />
-                  </Td>
-                  <Td>{index + 1}</Td>
-                  <Td>{item.memberEmail}</Td>
-                  <Td>{item.memberName}</Td>
-                  <Td>
-                    <div>
-                      <label>
-                        <input
-                          type="radio"
-                          name={`role-${item.memberId}`}
-                          value="1"
-                          checked={(roleMap[item.memberId] ?? item.roleId) === 1}
-                          onChange={() => setRoleMap(prev => ({ ...prev, [item.memberId]: 1 }))}
-                        />
-                        관리자
-                      </label>
-                      <label style={{ marginLeft: '12px' }}>
-                        <input
-                          type="radio"
-                          name={`role-${item.memberId}`}
-                          value="2"
-                          checked={(roleMap[item.memberId] ?? item.roleId) === 2}
-                          onChange={() => setRoleMap(prev => ({ ...prev, [item.memberId]: 2 }))}
-                        />
-                        일반
-                      </label>
-                    </div>
-                  </Td>
+          <TableWrapper>
+            <ButtonBox>
+              <Button color="#988271" onClick={() => updateData()}>
+                저장
+              </Button>
+            </ButtonBox>
+            <Table>
+              <thead>
+                <tr>
+                  <Th> </Th>
+                  <Th>번호</Th>
+                  <Th>아이디</Th>
+                  <Th>이름</Th>
+                  <Th>권한</Th>
                 </tr>
+              </thead>
+              <tbody>
+                {items?.content.map((item, index) => (
+                  <tr key={item.memberId}>
+                    <Td>
+                      <input
+                        type="checkbox"
+                        checked={checkedIds.includes(item.memberId)}
+                        onChange={e => {
+                          const isChecked = e.target.checked;
+                          setCheckedIds(prev =>
+                            isChecked
+                              ? [...prev, item.memberId]
+                              : prev.filter(id => id !== item.memberId)
+                          );
+                        }}
+                      />
+                    </Td>
+                    <Td>{index + 1}</Td>
+                    <Td>{item.memberEmail}</Td>
+                    <Td>{item.memberName}</Td>
+                    <Td>
+                      <div>
+                        <label>
+                          <input
+                            type="radio"
+                            name={`role-${item.memberId}`}
+                            value="1"
+                            checked={(roleMap[item.memberId] ?? item.roleId) === 1}
+                            onChange={() => setRoleMap(prev => ({ ...prev, [item.memberId]: 1 }))}
+                          />
+                          관리자
+                        </label>
+                        <label style={{ marginLeft: '12px' }}>
+                          <input
+                            type="radio"
+                            name={`role-${item.memberId}`}
+                            value="2"
+                            checked={(roleMap[item.memberId] ?? item.roleId) === 2}
+                            onChange={() => setRoleMap(prev => ({ ...prev, [item.memberId]: 2 }))}
+                          />
+                          일반
+                        </label>
+                      </div>
+                    </Td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+            {items?.content.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
+            <PaginationWrapper>
+              {[...Array(items?.totalPages ?? 0)].map((_, idx) => (
+                <PageButton key={idx} active={idx === page} onClick={() => handlePageClick(idx)}>
+                  {idx + 1}
+                </PageButton>
               ))}
-            </tbody>
-          </Table>
-          {items?.content.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
-          <PaginationWrapper>
-            {[...Array(items?.totalPages ?? 0)].map((_, idx) => (
-              <PageButton key={idx} active={idx === page} onClick={() => handlePageClick(idx)}>
-                {idx + 1}
-              </PageButton>
-            ))}
-          </PaginationWrapper>
+            </PaginationWrapper>
+          </TableWrapper>
         </TableBox>
       </NoticeBox>
     </Wrapper>
@@ -163,6 +165,18 @@ const NoticeBox = styled.div`
 
 const TableBox = styled.div`
   padding: 40px 0;
+  overflow-x: auto;
+  width: 100%;
+  white-space: nowrap;
+`;
+
+const TableWrapper = styled.div<WithTheme>`
+  display: inline-block;
+  width: 100%;
+  @media ${({ theme }) => theme.device.mobile} {
+    width: unset;
+    min-width: 100%;
+  }
 `;
 
 const Table = styled.table<WithTheme>`
@@ -319,6 +333,7 @@ const NoSearchBox = styled.div<WithTheme>`
 
 const ButtonBox = styled.div`
   display: flex;
+  width: 100%;
   justify-content: right;
   margin-bottom: 10px;
 `;
