@@ -487,11 +487,19 @@ const TitleBox = styled.div<WithTheme>`
       color: ${({ theme }) => theme.colors.bronzeColor};
       font-size: ${({ theme }) => theme.sizes.menu};
       font-weight: ${({ theme }) => theme.weight.bold};
+
+      @media ${({ theme }) => theme.device.mobile} {
+        font-size: ${({ theme }) => theme.sizes.large};
+      }
     }
     span {
       margin-left: auto;
       color: ${({ theme }) => theme.colors.subColor};
       font-size: ${({ theme }) => theme.sizes.medium};
+
+      @media ${({ theme }) => theme.device.mobile} {
+        font-size: ${({ theme }) => theme.sizes.small};
+      }
     }
   }
 
@@ -504,6 +512,10 @@ const TitleBox = styled.div<WithTheme>`
     font-size: ${({ theme }) => theme.sizes.xlarge};
     font-weight: ${({ theme }) => theme.weight.bold};
     font-family: 'Jua', sans-serif;
+
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: ${({ theme }) => theme.sizes.menu};
+    }
   }
 `;
 
