@@ -10,7 +10,6 @@ export default function Nav() {
   const location = useLocation();
   const navigate = useNavigate();
   const menus = useRecoilValue(mainMenuState);
-  console.log('location', location);
 
   const { mainMenu, subMenu } = findMenuByPath(location.pathname, menus);
 

@@ -173,7 +173,7 @@ export default function ImageGrid({ pageData }: Props) {
   //신규 저장
   function insertData() {
     if (!validation()) return;
-    console.log('mainMenu', mainMenu);
+
     const formData = new FormData();
     formData.append('bgmAgitMainMenuId', labelGb.toString());
     formData.append('bgmAgitImageLabel', text);
@@ -357,7 +357,6 @@ export default function ImageGrid({ pageData }: Props) {
                 {user?.roles.includes('ROLE_ADMIN') && (
                   <DeleteBox
                     onClick={e => {
-                      console.log('itm', item);
                       e.stopPropagation();
                       setWriteModalOpen(true);
                       setIsEditMode(true);

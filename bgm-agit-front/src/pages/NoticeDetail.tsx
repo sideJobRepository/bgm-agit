@@ -194,6 +194,43 @@ export default function NoticeDetail() {
     }
   }, [notices, id]);
 
+  //동영상 변환 함수
+  function convertOembedToIframe(html: string): string {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const oembeds = doc.querySelectorAll('oembed');
+
+    oembeds.forEach(oembed => {
+      const url = oembed.getAttribute('url')!;
+      if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        const videoId = extractYoutubeVideoId(url);
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.youtube.com/embed/${videoId}`;
+        iframe.width = '100%';
+        iframe.height = '400';
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('allowfullscreen', 'true');
+        oembed.replaceWith(iframe);
+      }
+    });
+
+    return doc.body.innerHTML;
+  }
+
+  function extractYoutubeVideoId(url: string): string {
+    try {
+      const u = new URL(url);
+      if (u.hostname === 'youtu.be') {
+        return u.pathname.substring(1);
+      } else if (u.hostname.includes('youtube.com')) {
+        return u.searchParams.get('v') || '';
+      }
+      return '';
+    } catch {
+      return '';
+    }
+  }
+
   return (
     <Wrapper>
       {id && !isEditMode ? (
@@ -249,7 +286,9 @@ export default function NoticeDetail() {
 
           <ContentBox
             className="ck-content"
-            dangerouslySetInnerHTML={{ __html: String(notice?.bgmAgitNoticeCont) }}
+            dangerouslySetInnerHTML={{
+              __html: convertOembedToIframe(String(notice?.bgmAgitNoticeCont)),
+            }}
           />
         </>
       ) : (
@@ -352,6 +391,11 @@ export default function NoticeDetail() {
               <CKEditor
                 editor={ClassicEditor as any}
                 data={newNotice.content}
+                config={{
+                  mediaEmbed: {
+                    previewsInData: true,
+                  },
+                }}
                 onReady={(editor: any) => {
                   editorRef.current = editor;
                   editor.plugins.get('FileRepository').createUploadAdapter = (loader: any) => {
@@ -530,6 +574,21 @@ const ContentBox = styled.div<WithTheme>`
   min-height: calc(100vh - 360px);
   padding: 20px 10px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.basicColor};
+
+  iframe {
+    width: 100%;
+    height: auto; /* 고정 height 제거 */
+    aspect-ratio: 16 / 9; /* 16:9 비율 유지 */
+    max-width: 100%;
+    border: none;
+    display: block;
+  }
+
+  figure.media {
+    margin: 20px 0;
+    max-height: unset;
+    overflow: visible;
+  }
 `;
 
 const StyledFileUl = styled.ul<WithTheme>`

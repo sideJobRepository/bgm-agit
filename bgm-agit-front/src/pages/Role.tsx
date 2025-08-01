@@ -23,7 +23,6 @@ export default function Role() {
   const [roleMap, setRoleMap] = useState<Record<number, number>>({});
 
   const items = useRecoilValue(roleState);
-  console.log('items', items);
 
   const handlePageClick = (pageNum: number) => {
     setPage(pageNum);
@@ -65,7 +64,6 @@ export default function Role() {
   }
 
   useEffect(() => {
-    console.log('searchKeyword', searchKeyword);
     fetchRole(page, searchKeyword);
   }, [searchKeyword, page]);
 
