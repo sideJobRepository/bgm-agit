@@ -26,9 +26,13 @@ export default function Footer() {
         <p>월, 화, 수, 목, 일 : 13:00 ~ 24:00 </p>
       </Left>
       <Right>
-        <p> ※ 개인정보 처리방침 </p>
-        <p>BGM아지트는 카카오 로그인 기능을 위해 이메일, 휴대폰, 이름을 수집합니다.</p>
-        <p> 회원 탈퇴 시 모든 정보는 즉시 삭제됩니다.</p>
+        <p>
+          <strong>※ 개인정보 수집·이용 안내</strong>
+        </p>
+        <p>BGM아지트는 다음의 목적을 위해 아래와 같은 개인정보를 수집합니다.</p>
+        <p>이메일: 카카오 로그인 및 회원 식별</p>
+        <p>이름, 휴대폰번호: 카카오 로그인 및 예약 알림톡 발송</p>
+        <p>수집된 개인정보는 회원 탈퇴 시 즉시 삭제됩니다.</p>
       </Right>
     </Wrapper>
   );
@@ -55,7 +59,6 @@ const Wrapper = styled.div<WithTheme>`
 const Left = styled.section<WithTheme>`
   display: flex;
   flex-direction: column;
-  height: 100%;
   width: 50%;
   align-items: flex-start;
   justify-content: center;
