@@ -10,15 +10,15 @@ export default function Privacy() {
               <SubTitle>1. 수집하는 개인정보 항목</SubTitle>
               <Text>BGM아지트는 회원가입 시 아래와 같은 개인정보를 수집합니다.</Text>
               <List>
-                  <li>이름: 회원 식별 및 본인 확인</li>
-                  <li>전화번호(카카오 계정으로부터 제공): 로그인 및 카카오 알림톡 발송</li>
-                  <li>이메일 주소(카카오 계정으로부터 제공): 로그인 및 공지사항 안내</li>
+                  <li>이름 (필수): 회원 식별 및 본인 확인</li>
+                  <li>전화번호 (필수, 카카오 계정으로부터 제공): 로그인 및 카카오 알림톡 발송</li>
+                  <li>이메일 주소 (필수, 카카오 계정으로부터 제공): 로그인 처리, 공지사항 안내 및 고객 응대</li>
               </List>
           </Section>
 
           <Section>
               <SubTitle>2. 개인정보 수집 및 이용 목적</SubTitle>
-              <Text>수집된 개인정보는 아래 목적에 한해 이용되며, 명시된 목적 외에는 사용되지 않습니다.</Text>
+              <Text>수집된 개인정보는 다음의 목적에만 이용되며, 명시된 목적 외에는 사용되지 않습니다.</Text>
               <List>
                   <li>회원가입 및 로그인 기능 제공</li>
                   <li>이름: 회원 식별 및 본인 확인</li>
@@ -42,6 +42,7 @@ export default function Privacy() {
               </Text>
           </Section>
       </Container>
+
   );
 }
 
