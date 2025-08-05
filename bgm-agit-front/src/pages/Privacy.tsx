@@ -3,46 +3,48 @@ import type { WithTheme } from '../styles/styled-props.ts';
 
 export default function Privacy() {
   return (
-    <Container>
-      <Title>개인정보 처리방침</Title>
+      <Container>
+          <Title>개인정보 처리방침</Title>
 
-      <Section>
-        <SubTitle>1. 수집하는 개인정보 항목</SubTitle>
-        <Text>BGM아지트는 회원가입을 위해 아래와 같은 개인정보를 수집합니다.</Text>
-        <List>
-          <li>이메일(카카오 계정): 회원 식별 및 로그인 처리</li>
-          <li>이름: 회원 식별 및 본인 확인</li>
-          <li>전화번호: 회원 식별 및 본인 확인</li>
-        </List>
-      </Section>
+          <Section>
+              <SubTitle>1. 수집하는 개인정보 항목</SubTitle>
+              <Text>
+                  BGM아지트는 <strong>회원가입 시</strong> 다음과 같은 개인정보를 수집합니다.
+              </Text>
+              <List>
+                  <li>이메일(카카오 계정): 회원 식별, 로그인 처리 및 알림 발송</li>
+                  <li>이름: 회원 식별 및 본인 확인</li>
+                  <li>전화번호: 알림 발송(카카오 알림톡 등) 및 고객 문의 응대</li>
+              </List>
+          </Section>
 
-      <Section>
-        <SubTitle>2. 개인정보 수집 및 이용 목적</SubTitle>
-        <Text>
-          수집된 개인정보는 다음의 목적에만 사용되며, 명시된 목적 외에는 사용되지 않습니다.
-        </Text>
-        <List>
-          <li>회원가입 및 로그인 기능 제공</li>
-          <li>회원 식별 및 본인 확인</li>
-        </List>
-      </Section>
+          <Section>
+              <SubTitle>2. 개인정보 수집 및 이용 목적</SubTitle>
+              <Text>
+                  수집된 개인정보는 다음의 <strong>회원가입 목적</strong>에만 사용되며, 명시된 목적 외에는 사용되지 않습니다.
+              </Text>
+              <List>
+                  <li>회원가입 및 로그인 기능 제공</li>
+                  <li>회원 식별 및 본인 확인</li>
+                  <li>예약 관련 알림 발송 (카카오 알림톡 등)</li>
+                  <li>서비스 이용 관련 안내 및 고객 응대</li>
+              </List>
+          </Section>
 
-      <Section>
-        <SubTitle>3. 보유 및 이용 기간</SubTitle>
-        <Text>
-          수집된 개인정보는 회원 탈퇴 시 즉시 삭제되며, 관련 법령에 따라 일정 기간 보관이 필요한
-          경우 해당 기간 동안 안전하게 보관 후 파기합니다.
-        </Text>
-      </Section>
+          <Section>
+              <SubTitle>3. 보유 및 이용 기간</SubTitle>
+              <Text>
+                  수집된 개인정보는 회원 탈퇴 또는 서비스 종료 시 즉시 파기되며, 관계 법령에 따라 일정 기간 보관이 필요한 경우 해당 기간 동안 안전하게 보관 후 파기합니다.
+              </Text>
+          </Section>
 
-      <Section>
-        <SubTitle>4. 동의 거부 시 불이익</SubTitle>
-        <Text>
-          이용자는 개인정보 수집 및 이용에 대한 동의를 거부할 수 있으며, 이 경우 회원가입 및 로그인
-          기능 이용이 제한될 수 있습니다.
-        </Text>
-      </Section>
-    </Container>
+          <Section>
+              <SubTitle>4. 동의 거부 시 불이익</SubTitle>
+              <Text>
+                  이용자는 개인정보 수집 및 이용에 대한 동의를 거부할 수 있으며, 이 경우 회원가입 및 로그인 기능 사용에 제한이 있을 수 있습니다.
+              </Text>
+          </Section>
+      </Container>
   );
 }
 
