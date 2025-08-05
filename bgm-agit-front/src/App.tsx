@@ -16,6 +16,7 @@ import { ToastContainer } from 'react-toastify';
 import ReservationList from './pages/ReservationList.tsx';
 import Role from './pages/Role.tsx';
 import NoticeDetail from './pages/NoticeDetail.tsx';
+import Privacy from './pages/Privacy.tsx';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
             <Route path="/oauth/kakao/callback" element={<KakaoRedirectPage />} />
             <Route path="/oauth/kakao/logout" element={<KakaoRedirectPage />} />
             <Route path="/error" element={<Error />} />
+            <Route path="/privacy" element={<Privacy />} />
             <Route path="/" element={<Layout />}>
               <Route index element={<MainPage />} />
               <Route path="about" element={<About />} />

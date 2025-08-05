@@ -27,12 +27,10 @@ export default function Footer() {
       </Left>
       <Right>
         <p>
-          <strong>※ 개인정보 수집·이용 안내</strong>
+          <a href="/privacy" target="_blank" rel="noopener noreferrer">
+            ※ 개인정보 처리방침 확인하기
+          </a>
         </p>
-        <p>BGM아지트는 다음의 목적을 위해 아래와 같은 개인정보를 수집합니다.</p>
-        <p>이메일: 카카오 로그인 및 회원 식별</p>
-        <p>이름, 휴대폰번호: 카카오 로그인 및 예약 알림톡 발송</p>
-        <p>수집된 개인정보는 회원 탈퇴 시 즉시 삭제됩니다.</p>
       </Right>
     </Wrapper>
   );
