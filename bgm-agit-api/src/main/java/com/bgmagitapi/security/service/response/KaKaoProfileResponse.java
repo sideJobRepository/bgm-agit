@@ -24,19 +24,26 @@ public class KaKaoProfileResponse {
         
         private String email;
         
+        @JsonProperty("name")
+        private String name;
+        
+        @JsonProperty("phone_number")
+        private String phoneNumber;
+        
         private Profile profile;
     }
     
     @Getter
     @NoArgsConstructor
     public static class Profile {
-        
-        private String nickname;
+      
         
         @JsonProperty("profile_image_url")
         private String profileImageUrl;
         
         @JsonProperty("thumbnail_image_url")
         private String thumbnailImageUrl;
+        
+
     }
 }

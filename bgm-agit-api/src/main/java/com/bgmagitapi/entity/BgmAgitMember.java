@@ -7,11 +7,13 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
 
 @Entity
 @Table(name = "BGM_AGIT_MEMBER")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
+@DynamicUpdate
 public class BgmAgitMember extends DateSuperClass {
     
     @Id
@@ -35,13 +37,26 @@ public class BgmAgitMember extends DateSuperClass {
     @Column(name = "BGM_AGIT_MEMBER_SOCIAL_ID")
     private String bgmAgitMemberSocialId;
     
+    @Column(name = "BGM_AGIT_MEMBER_PHONE_NO")
+    private String bgmAgitMemberPhoneNo;
+    
     
     
     public BgmAgitMember(KaKaoProfileResponse kaKaoProfileResponse) {
         this.bgmAgitMemberEmail = kaKaoProfileResponse.getKakaoAccount().getEmail();
-        this.bgmAgitMemberName = kaKaoProfileResponse.getKakaoAccount().getProfile().getNickname();
+        this.bgmAgitMemberName = kaKaoProfileResponse.getKakaoAccount().getName();
         this.bgmAgitMemberPassword = null;
         this.socialType = BgmAgitSocialType.KAKAO;
         this.bgmAgitMemberSocialId = String.valueOf(kaKaoProfileResponse.getId());
+        this.bgmAgitMemberPhoneNo = kaKaoProfileResponse.getKakaoAccount().getPhoneNumber();
+    }
+    
+    public void modifyMember(KaKaoProfileResponse kaKaoProfileResponse) {
+        this.bgmAgitMemberEmail = kaKaoProfileResponse.getKakaoAccount().getEmail();
+        this.bgmAgitMemberName = kaKaoProfileResponse.getKakaoAccount().getName();
+        this.bgmAgitMemberPassword = null;
+        this.socialType = BgmAgitSocialType.KAKAO;
+        this.bgmAgitMemberSocialId = String.valueOf(kaKaoProfileResponse.getId());
+        this.bgmAgitMemberPhoneNo = kaKaoProfileResponse.getKakaoAccount().getPhoneNumber();
     }
 }

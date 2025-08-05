@@ -56,6 +56,8 @@ public class BgmAgitMemberDetailService implements UserDetailsService {
                     return saveMember;
                 });
         
+        findBgmAgitMember.modifyMember(kaKaoProfile);
+        
         
         List<String> roleNames = queryFactory
                 .select(bgmAgitRole.bgmAgitRoleName)
