@@ -108,7 +108,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         
         for (LocalDate d = today; !d.isAfter(endOfYear); d = d.plusDays(1)) {
             LocalDateTime open = LocalDateTime.of(d, LocalTime.of(13, 0));
-            LocalDateTime close = LocalDateTime.of(d.plusDays(1), LocalTime.of(1, 0));
+            LocalDateTime close = LocalDateTime.of(d.plusDays(1), LocalTime.of(3, 0));
             LocalDateTime cursor = open;
             
             List<String> availableSlots = new ArrayList<>();
