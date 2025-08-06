@@ -126,6 +126,22 @@ export default function ImageGrid({ pageData }: Props) {
     return `${year}-${month}-${day}`;
   }
 
+  function getKoreanDateStringPlusDays(days: number = 0): string {
+    const now = new Date();
+
+    // 9시간 오프셋 기준으로 한국 시간 만들고
+    const offsetDate = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+
+    // 💡 여기서 날짜 더해줌
+    offsetDate.setUTCDate(offsetDate.getUTCDate() + days);
+
+    const year = offsetDate.getUTCFullYear();
+    const month = String(offsetDate.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(offsetDate.getUTCDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
   const today = getKoreanDateString();
 
   const { items, labelGb, bgColor, textColor, searchColor, label, title, subTitle, columnCount } =
@@ -152,11 +168,14 @@ export default function ImageGrid({ pageData }: Props) {
   const [reservationData, setReservationData] = useRecoilState(reservationDataState);
 
   function newItemDatas(item: GridItem) {
+    //M룸의 경우 3일 후 부터 예약가능
+    const threeDaysLater = getKoreanDateStringPlusDays(3);
+
     const newItem = {
       labelGb: item.labelGb,
       link: item.link,
       id: item.imageId,
-      date: today,
+      date: item.imageId === 19 ? threeDaysLater : today,
     } as ReservationData;
 
     setReservationData(newItem);
