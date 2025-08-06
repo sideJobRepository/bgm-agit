@@ -35,7 +35,7 @@ export default function ReservationCalendar({ id }: { id?: number }) {
   //G룸인 경우 3시간 간격이고 마지막은 2시간 단위로 끊음
   const allTime =
     id === 18
-      ? ['13:00', '16:00', '19:00', '22:00']
+      ? ['13:00', '16:00', '19:00', '22:00', '02:00']
       : [
           '13:00',
           '14:00',
@@ -95,6 +95,7 @@ export default function ReservationCalendar({ id }: { id?: number }) {
           const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URL}&response_type=code`;
           window.location.href = kakaoAuthUrl;
         } else {
+          console.log('selectedTimes', selectedTimes);
           const token = sessionStorage.getItem('token');
           insert({
             headers: {
@@ -177,22 +178,17 @@ export default function ReservationCalendar({ id }: { id?: number }) {
         {allTime.map((time, idx) => {
           const isAvailable = matchedSlots?.timeSlots.includes(time) ?? false;
           const isSelected = selectedTimes.includes(time);
-          // const hour = parseInt(time.split(':')[0], 10);
 
-          const label = (() => {
-            const currentIndex = allTime.indexOf(time);
-            const nextTime = allTime[currentIndex + 1];
+          const currentIndex = allTime.indexOf(time);
+          const nextTime = allTime[currentIndex + 1];
+          if (!nextTime) return null; // 마지막 시간이면 아예 버튼 안 그림
 
-            if (!nextTime) return ''; // 마지막이면 표시 안 함
+          const startHour = time.split(':')[0].padStart(2, '0');
+          let endHour = nextTime.split(':')[0].padStart(2, '0');
 
-            const [startHour] = time.split(':');
-            const [endHour] = nextTime.split(':');
+          if (endHour === '00') endHour = '24';
 
-            const displayStart = time === '00:00' ? '24:00' : `${startHour.padStart(2, '0')}:00`;
-            const displayEnd = `${endHour.padStart(2, '0')}:00`;
-
-            return `${displayStart} ~ ${displayEnd}`;
-          })();
+          const label = `${startHour}:00 ~ ${endHour}:00`;
 
           return (
             <TimeSlotButton
