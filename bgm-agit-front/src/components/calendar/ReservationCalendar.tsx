@@ -20,6 +20,8 @@ export default function ReservationCalendar({ id }: { id?: number }) {
   const reservation = useRecoilValue<ReservationDatas>(reservationState);
   const fetchReservation = useReservationFetch();
   const reservationData = useRecoilValue(reservationDataState);
+
+  console.log('reservationData', reservation);
   const today = new Date();
 
   //insert
@@ -34,7 +36,22 @@ export default function ReservationCalendar({ id }: { id?: number }) {
   const allTime =
     id === 18
       ? ['13:00', '16:00', '19:00', '22:00']
-      : Array.from({ length: 11 }, (_, i) => `${i + 13}:00`);
+      : [
+          '13:00',
+          '14:00',
+          '15:00',
+          '16:00',
+          '17:00',
+          '18:00',
+          '19:00',
+          '20:00',
+          '21:00',
+          '22:00',
+          '23:00',
+          '00:00',
+          '01:00',
+          '02:00',
+        ];
 
   const [value, setValue] = useState<Date>(today);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
@@ -160,12 +177,22 @@ export default function ReservationCalendar({ id }: { id?: number }) {
         {allTime.map((time, idx) => {
           const isAvailable = matchedSlots?.timeSlots.includes(time) ?? false;
           const isSelected = selectedTimes.includes(time);
-          const hour = parseInt(time.split(':')[0], 10);
+          // const hour = parseInt(time.split(':')[0], 10);
 
-          const label =
-            id === 18
-              ? `${hour}:00 ~ ${hour + 3 > 24 ? '24:00' : `${hour + 3}:00`}`
-              : `${hour}:00 ~ ${hour + 1}:00`;
+          const label = (() => {
+            const currentIndex = allTime.indexOf(time);
+            const nextTime = allTime[currentIndex + 1];
+
+            if (!nextTime) return ''; // 마지막이면 표시 안 함
+
+            const [startHour] = time.split(':');
+            const [endHour] = nextTime.split(':');
+
+            const displayStart = time === '00:00' ? '24:00' : `${startHour.padStart(2, '0')}:00`;
+            const displayEnd = `${endHour.padStart(2, '0')}:00`;
+
+            return `${displayStart} ~ ${displayEnd}`;
+          })();
 
           return (
             <TimeSlotButton
