@@ -21,7 +21,6 @@ export default function ReservationCalendar({ id }: { id?: number }) {
   const fetchReservation = useReservationFetch();
   const reservationData = useRecoilValue(reservationDataState);
 
-  console.log('reservationData', reservation);
   const today = new Date();
 
   //insert
@@ -141,8 +140,20 @@ export default function ReservationCalendar({ id }: { id?: number }) {
   return (
     <Wrapper>
       <TitleBox>
-        <h2>{reservation.label}</h2>
-        <FaUsers /> <span> {reservation.group} </span>
+        <div>
+          <h2>{reservation.label}</h2>
+          <FaUsers /> <span> {reservation.group} </span>
+        </div>
+        {reservationData?.id === 19 && (
+          <div>
+            <p>※ 최소 3일전 최소인원 15명 이어야지만 예약이 가능합니다.</p>
+          </div>
+        )}
+        {reservationData?.link === '/detail/mahjongRental' && (
+          <div>
+            <p>※ 대탁 예약시 3시간 4만원, 5시간에 6만원, 1시간 추가시 만원의 금액이 발생합니다.</p>
+          </div>
+        )}
       </TitleBox>
 
       <StyledCalendar
@@ -230,25 +241,36 @@ const Wrapper = styled.div<WithTheme>`
 
 const TitleBox = styled.div<WithTheme>`
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   color: ${({ theme }) => theme.colors.subColor};
 
-  h2 {
-    color: ${({ theme }) => theme.colors.menuColor};
-    font-size: ${({ theme }) => theme.sizes.bigLarge};
-    font-weight: ${({ theme }) => theme.weight.bold};
-    margin-right: 10px;
-  }
+  div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-  svg {
-    margin: 3px 4px 0 0;
-    font-size: ${({ theme }) => theme.sizes.medium};
-  }
+    h2 {
+      color: ${({ theme }) => theme.colors.menuColor};
+      font-size: ${({ theme }) => theme.sizes.bigLarge};
+      font-weight: ${({ theme }) => theme.weight.bold};
+      margin-right: 10px;
+    }
 
-  span {
-    margin-top: 3px;
-    font-size: ${({ theme }) => theme.sizes.medium};
+    svg {
+      margin: 3px 4px 0 0;
+      font-size: ${({ theme }) => theme.sizes.medium};
+    }
+
+    span {
+      margin-top: 3px;
+      font-size: ${({ theme }) => theme.sizes.medium};
+    }
+
+    p {
+      padding: 8px 0;
+      color: ${({ theme }) => theme.colors.redColor};
+      font-size: ${({ theme }) => theme.sizes.small};
+    }
   }
 `;
 
