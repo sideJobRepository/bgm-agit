@@ -27,7 +27,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthentication;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +38,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.bgmagitapi.entity.QBgmAgitImage.bgmAgitImage;
-import static com.bgmagitapi.entity.QBgmAgitMember.*;
 import static com.bgmagitapi.entity.QBgmAgitReservation.bgmAgitReservation;
 
 @Transactional
@@ -127,20 +125,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 }
                 
                 boolean overlapped = reserved.stream()
-                        .filter(r -> {
-                            String status = r.getApprovalStatus();
-                            Long reserverId = r.getMemberId();
-                            
-                            boolean isConfirmed = "Y".equalsIgnoreCase(status); // 확정이면 무조건 막음
-                            boolean isMyPending = "N".equalsIgnoreCase(status)
-                                    && userId != null
-                                    && Objects.equals(reserverId, userId); // 본인의 대기 예약도 막음
-                            
-                            return isConfirmed || isMyPending;
-                        })
-                        .anyMatch(r ->
-                                slotStart.isBefore(r.getEnd()) && slotEnd.isAfter(r.getStart())
-                        );
+                        .anyMatch(r -> r.isOverlapping(slotStart, slotEnd, userId));
+                
                 
                 if (!overlapped) {
                     availableSlots.add(slotStart.format(formatter));
