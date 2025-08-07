@@ -214,7 +214,6 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             if (times.length != 2) {
                 throw new IllegalArgumentException("잘못된 시간 슬롯 형식입니다: " + timeSlot);
             }
-            
             LocalTime startTime = LocalTime.parse(times[0]);
             LocalTime endTime = LocalTime.parse(times[1]);
             

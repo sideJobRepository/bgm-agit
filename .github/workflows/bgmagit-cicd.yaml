@@ -67,7 +67,6 @@ jobs:
           script_stop: true
           port: 22
           script: |
-            echo "${{ secrets.RSA_PRIVATE_KEY }}" | base64 -d > /home/bae/keys/private.pem
             docker stop bgmagit-server || true
             docker rm bgmagit-server || true
             docker pull peachcoolpis/bgmagit-server:latest
@@ -83,8 +82,8 @@ jobs:
             -e AWS_BUCKET=${{ secrets.AWS_BUCKET }} \
             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
             -e CLIENT_SECRET=${{ secrets.CLIENT_SECRET }} \
+            -e RSA_PRIVATE_KEY=${{ secrets.RSA_PRIVATE_KEY }} \
             -e SPRING_PROFILES_ACTIVE=real \
-            -v /home/bae/keys/private.pem:/app/keys/private.pem \
             -v $(pwd)/logs:/app/logs \
             -p 8080:8080 \
             peachcoolpis/bgmagit-server:latest
