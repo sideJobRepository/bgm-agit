@@ -1,9 +1,10 @@
 package com.bgmagitapi.security.jwt;
+
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
@@ -12,7 +13,6 @@ import org.springframework.security.core.GrantedAuthority;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public abstract class SecuritySigner {
     /**
@@ -22,7 +22,7 @@ public abstract class SecuritySigner {
      * @param authorities
      * @return
      */
-    protected String getJwtTokenInternal(MACSigner jwsSigner, BgmAgitMember user, JWK jwk, List<GrantedAuthority> authorities) throws JOSEException {
+    protected String getJwtTokenInternal(JWSSigner jwsSigner, BgmAgitMember user, JWK jwk, List<GrantedAuthority> authorities) throws JOSEException {
         JWSHeader header = new JWSHeader.Builder((JWSAlgorithm) jwk.getAlgorithm()).keyID(jwk.getKeyID()).build();
         
         List<String> roleList = new ArrayList<>();

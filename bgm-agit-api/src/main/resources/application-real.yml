@@ -31,7 +31,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jws-algorithms: HS256
+          jws-algorithms: RS256
+          jwk-set-uri: https://bgmagit.co.kr/bgm-agit/.well-known/jwks.json
 
 logging:
   file:
@@ -53,3 +54,4 @@ kakao:
 
 jwt:
   secret: ${JWT_SECRET}
+  private-key: ${RSA_PRIVATE_KEY}

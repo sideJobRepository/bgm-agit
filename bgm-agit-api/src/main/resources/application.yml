@@ -31,7 +31,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jws-algorithms: HS256
+          jws-algorithms: RS256
+          jwk-set-uri: http://localhost:8080/bgm-agit/.well-known/jwks.json
 
   jackson:
         time-zone: Asia/Seoul
@@ -45,3 +46,4 @@ kakao:
 
 jwt:
   secret: ${JWT_SECRET}
+  private-key: ${RSA_PRIVATE_KEY}

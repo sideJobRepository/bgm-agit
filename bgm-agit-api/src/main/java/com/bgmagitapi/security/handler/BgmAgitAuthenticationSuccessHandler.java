@@ -2,7 +2,8 @@ package com.bgmagitapi.security.handler;
 
 
 import com.bgmagitapi.entity.BgmAgitMember;
-import com.bgmagitapi.security.jwt.MacSecuritySigner;
+//import com.bgmagitapi.security.jwt.MacSecuritySigner;
+import com.bgmagitapi.security.jwt.RsaSecuritySigner;
 import com.bgmagitapi.security.token.SocialAuthenticationToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
@@ -25,7 +26,8 @@ import java.util.Map;
 public class BgmAgitAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
     
     private final ObjectMapper objectMapper;
-    private final MacSecuritySigner macSecuritySigner;
+    //private final MacSecuritySigner macSecuritySigner;
+    private final RsaSecuritySigner rsaSecuritySigner;
     private final JWK jwk;
     
     @Override
@@ -38,7 +40,7 @@ public class BgmAgitAuthenticationSuccessHandler implements AuthenticationSucces
         
         String jwt = null;
         try {
-            jwt = macSecuritySigner.getToken(member,jwk,authorities);
+            jwt = rsaSecuritySigner.getToken(member,jwk,authorities);
         } catch (JOSEException e) {
             throw new RuntimeException(e);
         }
