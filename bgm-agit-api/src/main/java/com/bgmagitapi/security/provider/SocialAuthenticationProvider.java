@@ -2,7 +2,7 @@ package com.bgmagitapi.security.provider;
 
 import com.bgmagitapi.security.context.BgmAgitMemberContext;
 import com.bgmagitapi.security.service.BgmAgitMemberDetailService;
-import com.bgmagitapi.security.service.KaKaoService;
+import com.bgmagitapi.security.service.SocialService;
 import com.bgmagitapi.security.service.response.AccessTokenResponse;
 import com.bgmagitapi.security.service.response.KaKaoProfileResponse;
 import com.bgmagitapi.security.token.SocialAuthenticationToken;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SocialAuthenticationProvider implements AuthenticationProvider {
     
-    private final KaKaoService kaKaoService;
+    private final SocialService kaKaoService;
     private final BgmAgitMemberDetailService bgmAgitMemberDetailService;
     
     

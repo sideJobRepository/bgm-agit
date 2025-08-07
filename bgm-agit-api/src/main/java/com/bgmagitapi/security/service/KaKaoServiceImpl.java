@@ -14,7 +14,7 @@ import org.springframework.web.client.RestClient;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class KaKaoServiceImpl implements KaKaoService {
+public class KaKaoServiceImpl implements SocialService {
     
     @Value("${kakao.clientId}")
     private String kakaoClientId;
