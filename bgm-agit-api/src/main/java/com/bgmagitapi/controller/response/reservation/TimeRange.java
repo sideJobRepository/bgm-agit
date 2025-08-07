@@ -14,6 +14,7 @@ public class TimeRange {
     private final LocalDateTime end;
     private final String approvalStatus;
     private final Long memberId;
+    private final String cancelStatus;
     
     
     
@@ -32,7 +33,8 @@ public class TimeRange {
         
         return (isConfirmed || isMyPending)
                 && slotStart.isBefore(adjustedEnd)
-                && slotEnd.isAfter(this.start);
+                && slotEnd.isAfter(this.start)
+                && "N".equals( this.cancelStatus);
     }
     
     private LocalDateTime adjustEndForComparison(LocalDateTime end) {

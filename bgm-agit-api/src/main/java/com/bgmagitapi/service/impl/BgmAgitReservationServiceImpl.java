@@ -75,7 +75,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                         bgmAgitImage.bgmAgitImageLabel,
                         bgmAgitImage.bgmAgitImageGroups,
                         bgmAgitReservation.bgmAgitReservationApprovalStatus,
-                        bgmAgitReservation.bgmAgitMember.bgmAgitMemberId
+                        bgmAgitReservation.bgmAgitMember.bgmAgitMemberId,
+                        bgmAgitReservation.bgmAgitReservationCancelStatus
                 ))
                 .from(bgmAgitReservation)
                 .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage)
@@ -95,7 +96,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     LocalDateTime end = res.getEndTime().isBefore(res.getStartTime())
                             ? LocalDateTime.of(res.getDate().plusDays(1), res.getEndTime())
                             : LocalDateTime.of(res.getDate(), res.getEndTime());
-                    return new TimeRange(start, end, res.getApprovalStatus(), res.getMemberId());
+                    return new TimeRange(start, end, res.getApprovalStatus(), res.getMemberId() , res.getCancelStatus());
                 })
                 .collect(Collectors.groupingBy(r -> r.getStart().toLocalDate()));
         

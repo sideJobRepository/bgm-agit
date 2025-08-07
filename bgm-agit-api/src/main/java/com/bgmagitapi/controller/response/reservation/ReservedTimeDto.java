@@ -19,4 +19,5 @@ public class ReservedTimeDto {
     private String group;
     private String approvalStatus;
     private Long memberId;
+    private String cancelStatus;
 }
