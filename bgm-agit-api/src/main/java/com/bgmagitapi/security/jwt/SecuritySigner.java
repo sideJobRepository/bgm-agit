@@ -31,6 +31,7 @@ public abstract class SecuritySigner {
                 roleList.add("ROLE_" + auth.getAuthority());
             }
         }
+        
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
                 .subject("user")
                 .claim("id",user.getBgmAgitMemberId())
