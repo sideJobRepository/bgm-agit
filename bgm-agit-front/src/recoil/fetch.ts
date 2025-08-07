@@ -25,10 +25,18 @@ interface InsertOptions<T> {
 export function useFetchMainMenu() {
   const setMainMenu = useSetRecoilState(mainMenuState);
   const { request } = useRequest();
-
-  useEffect(() => {
-    request(() => api.get('/bgm-agit/main-menu').then(res => res.data), setMainMenu);
-  }, []);
+    const token = sessionStorage.getItem('token');
+    const headers = token
+        ? ({
+            Authorization: `Bearer ${token}`,
+        } as AxiosRequestHeaders)
+        : undefined;
+    useEffect(() => {
+        request(() =>
+                api.get('/bgm-agit/main-menu', { headers }).then(res => res.data),
+            setMainMenu
+        );
+    }, []);
 }
 
 export function useFetchMainData(param?: { labelGb?: number; link?: string }) {
