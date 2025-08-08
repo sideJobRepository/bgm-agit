@@ -130,6 +130,16 @@ export default function Role() {
                         </label>
                         <label style={{ marginLeft: '12px' }}>
                           <input
+                              type="radio"
+                              name={`role-${item.memberId}`}
+                              value="4"
+                              checked={(roleMap[item.memberId] ?? item.roleId) === 4}
+                              onChange={() => setRoleMap(prev => ({ ...prev, [item.memberId]: 4 }))}
+                          />
+                          멘토
+                        </label>
+                        <label style={{ marginLeft: '12px' }}>
+                          <input
                             type="radio"
                             name={`role-${item.memberId}`}
                             value="2"
