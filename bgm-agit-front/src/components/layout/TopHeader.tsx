@@ -14,6 +14,7 @@ import { useFetchMainMenu } from '../../recoil/fetch.ts';
 import { userState } from '../../recoil/state/userState.ts';
 import { toast } from 'react-toastify';
 import type { SubMenu } from '../../types/menu.ts';
+import api from '../../utils/axiosInstance';
 
 export default function TopHeader() {
   useFetchMainMenu();
@@ -63,14 +64,26 @@ export default function TopHeader() {
   const KAKAO_REDIRECT_URL = import.meta.env.VITE_KAKAO_REDIRECT_URL;
   const KAKAO_LOGOUT_URL = import.meta.env.VITE_KAKAO_LOGOUT_URL;
 
-  const loginWithKakao = () => {
+  const loginWithKakao = async () => {
     if (user) {
       const channel = new BroadcastChannel('auth');
       channel.postMessage('logout');
       channel.close(); // 브라우저 리소스 정리
 
+      const refreshToken = sessionStorage.getItem('refreshToken');
+
+      if (refreshToken) {
+        try {
+          await api.delete('/bgm-agit/refresh', {
+            data: { refreshToken }
+          });
+        } catch (err) {
+          console.error('서버 리프레시 토큰 삭제 실패:', err);
+        }
+      }
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
+      sessionStorage.removeItem('refreshToken');
       resetUser(null);
       setIsOpen(false);
 

@@ -231,6 +231,7 @@ export function useLoginPost() {
           const decoded = jwtDecode<CustomUser>(res.data.token);
           sessionStorage.setItem('user', JSON.stringify(decoded));
           sessionStorage.setItem('token', res.data.token);
+          sessionStorage.setItem('refreshToken', res.data.refreshToken);
           return decoded;
         }),
       decodedUser => {
