@@ -37,8 +37,8 @@ public abstract class SecuritySigner {
                 .claim("socialId", user.getBgmAgitMemberSocialId())
                 .claim("expirationTime",date)
                 .claim("roles", roleList)
-             //   .expirationTime(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1시간
-                .expirationTime(new Date(System.currentTimeMillis() +10))
+                .expirationTime(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1시간
+             //   .expirationTime(new Date(System.currentTimeMillis() +10))
                 .build();
         
         SignedJWT jwt = new SignedJWT(header, claims);
