@@ -47,7 +47,7 @@ public class BgmAgitRefreshTokenServiceImpl implements BgmAgitRefreshTokenServic
         bgmAgitRefreshTokenRepository.save(token);
     }
     
-    @Transactional(readOnly = true)
+    
     public BgmAgitMember validateRefreshToken(String refreshToken) {
         BgmAgitRefreshToken token = bgmAgitRefreshTokenRepository
                 .findByBgmAgitRefreshTokenValue(refreshToken)
