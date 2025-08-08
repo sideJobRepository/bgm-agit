@@ -8,7 +8,7 @@ const api = axios.create({
 
 // 매 요청 Authorization 헤더 주입
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
+  const token = localStorage.getItem('token');
   if (token) {
     config.headers = config.headers ?? {};
     config.headers['Authorization'] = `Bearer ${token}`;
