@@ -46,4 +46,3 @@ kakao:
 
 jwt:
   secret: ${JWT_SECRET}
-  private-key: ${RSA_PRIVATE_KEY}
