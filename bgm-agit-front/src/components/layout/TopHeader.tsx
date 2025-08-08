@@ -70,20 +70,15 @@ export default function TopHeader() {
       channel.postMessage('logout');
       channel.close(); // 브라우저 리소스 정리
 
-      const refreshToken = sessionStorage.getItem('refreshToken');
 
-      if (refreshToken) {
         try {
-          await api.delete('/bgm-agit/refresh', {
-            data: { refreshToken }
-          });
+          await api.delete('/bgm-agit/refresh');
         } catch (err) {
           console.error('서버 리프레시 토큰 삭제 실패:', err);
         }
-      }
+
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
-      sessionStorage.removeItem('refreshToken');
       resetUser(null);
       setIsOpen(false);
 
