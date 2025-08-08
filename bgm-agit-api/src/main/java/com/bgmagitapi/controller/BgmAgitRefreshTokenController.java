@@ -1,11 +1,16 @@
 package com.bgmagitapi.controller;
 
 import com.bgmagitapi.apiresponse.ApiResponse;
-import com.bgmagitapi.controller.request.RefreshTokenRequest;
 import com.bgmagitapi.security.handler.TokenPair;
 import com.bgmagitapi.service.BgmAgitRefreshTokenService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.Duration;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -13,15 +18,44 @@ import org.springframework.web.bind.annotation.*;
 public class BgmAgitRefreshTokenController {
     
     private final BgmAgitRefreshTokenService refreshTokenService;
-
+    
+    @Value("${cookie.secure}")
+    private boolean secure;
     
     @PostMapping("/refresh")
-    public TokenPair refreshToken(@RequestBody RefreshTokenRequest request) {
-        return refreshTokenService.reissueTokenPair(request.getRefreshToken());
+    public Map<String, String> refreshToken(@CookieValue(value = "refreshToken", required = false) String refreshToken
+        , HttpServletResponse response
+    ) {
+        if(refreshToken == null) {
+            return null;
+        }
+        TokenPair tokenPair = refreshTokenService.reissueTokenPair(refreshToken);
+        ResponseCookie newRefreshCookie = ResponseCookie.from("refreshToken", tokenPair.getRefreshToken())
+                .httpOnly(true)
+                .secure(secure)
+                .path("/")
+                .maxAge(Duration.ofDays(1))
+                .sameSite("Strict")
+                .build();
+        response.addHeader("Set-Cookie", newRefreshCookie.toString());
+        return Map.of("token", tokenPair.getAccessToken());
     }
     
     @DeleteMapping("/refresh")
-    public ApiResponse deleteRefreshToken(@RequestBody RefreshTokenRequest request) {
-        return refreshTokenService.deleteRefesh(request);
+    public ApiResponse deleteRefreshToken(@CookieValue(value = "refreshToken", required = false) String refreshToken
+            , HttpServletResponse response) {
+        if (refreshToken == null) {
+            return null;
+        }
+        ApiResponse apiResponse = refreshTokenService.deleteRefesh(refreshToken);
+        ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(secure)
+                .path("/")
+                .maxAge(0) // 삭제
+                .sameSite("Strict")
+                .build();
+        response.addHeader("Set-Cookie", deleteCookie.toString());
+        return apiResponse;
     }
 }

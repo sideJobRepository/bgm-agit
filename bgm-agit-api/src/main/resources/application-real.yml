@@ -54,3 +54,6 @@ kakao:
 
 jwt:
   secret: ${JWT_SECRET}
+
+cookie:
+  secure: true

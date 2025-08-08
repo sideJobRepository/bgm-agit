@@ -1,7 +1,6 @@
 package com.bgmagitapi.service;
 
 import com.bgmagitapi.apiresponse.ApiResponse;
-import com.bgmagitapi.controller.request.RefreshTokenRequest;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.security.handler.TokenPair;
 
@@ -16,5 +15,5 @@ public interface BgmAgitRefreshTokenService {
     
     TokenPair reissueTokenPair(String refreshToken);
     
-    ApiResponse deleteRefesh(RefreshTokenRequest request);
+    ApiResponse deleteRefesh(String request);
 }

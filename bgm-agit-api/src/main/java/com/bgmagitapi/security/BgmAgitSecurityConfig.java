@@ -79,8 +79,8 @@ public class BgmAgitSecurityConfig {
         corsConfiguration.setAllowedOrigins(List.of(corsUrl));
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
-        corsConfiguration.setExposedHeaders(List.of("Content-Disposition"));
-        corsConfiguration.setAllowCredentials(true);
+        corsConfiguration.setExposedHeaders(List.of("Set-Cookie", "Content-Disposition"));
+        corsConfiguration.setAllowCredentials(true); // (쿠키 전달용)
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);
         return source;

@@ -1,7 +1,6 @@
 package com.bgmagitapi.service.impl;
 
 import com.bgmagitapi.apiresponse.ApiResponse;
-import com.bgmagitapi.controller.request.RefreshTokenRequest;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitRefreshToken;
 import com.bgmagitapi.repository.BgmAgitRefreshTokenRepository;
@@ -88,9 +87,8 @@ public class BgmAgitRefreshTokenServiceImpl implements BgmAgitRefreshTokenServic
     }
     
     @Override
-    public ApiResponse deleteRefesh(RefreshTokenRequest request) {
-        String refreshToken = request.getRefreshToken();
-        BgmAgitRefreshToken bgmAgitRefreshToken = bgmAgitRefreshTokenRepository.findByBgmAgitRefreshTokenValue(refreshToken).orElseThrow(() -> new RuntimeException("존재하지않는 리프레쉬 토큰입니다."));
+    public ApiResponse deleteRefesh(String request) {
+        BgmAgitRefreshToken bgmAgitRefreshToken = bgmAgitRefreshTokenRepository.findByBgmAgitRefreshTokenValue(request).orElseThrow(() -> new RuntimeException("존재하지않는 리프레쉬 토큰입니다."));
         bgmAgitRefreshTokenRepository.delete(bgmAgitRefreshToken);
         return new ApiResponse(200,true,"정상 삭제");
     }
