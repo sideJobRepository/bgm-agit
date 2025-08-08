@@ -61,7 +61,10 @@ public class BgmAgitSecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer(oauth -> oauth
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                        .authenticationEntryPoint(bgmagitAuthenticationEntryPoint)
+                        .accessDeniedHandler(bgmAgitAccessDeniedHandler)
+                )
                 .exceptionHandling(e ->
                         e.authenticationEntryPoint(bgmagitAuthenticationEntryPoint).
                     accessDeniedHandler(bgmAgitAccessDeniedHandler))
