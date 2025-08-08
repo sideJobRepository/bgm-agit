@@ -1,9 +1,7 @@
 package com.bgmagitapi.security.pem;
 
-import org.springframework.util.ResourceUtils;
-
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -25,14 +23,13 @@ public class PemKey {
         return (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(spec);
     }
     
-    public  static RSAPublicKey loadPublicKey(String path) throws Exception {
-        String key = Files.readString(Paths.get(ResourceUtils.getFile(path).toURI()));
+    public  static RSAPublicKey loadPublicKey(InputStream inputStream) throws Exception {
+        String key = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        
         String publicKeyPem = key
                 .replace("-----BEGIN PUBLIC KEY-----", "")
                 .replace("-----END PUBLIC KEY-----", "")
-                .replaceAll("\\r", "")
-                .replaceAll("\\n", "")
-                .replaceAll("\\s", "");
+                .replaceAll("\\s+", ""); // 줄바꿈, 탭 등 모두 제거
         
         byte[] decoded = Base64.getDecoder().decode(publicKeyPem);
         X509EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
