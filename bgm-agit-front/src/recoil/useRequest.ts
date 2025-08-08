@@ -27,6 +27,7 @@ export function useRequest() {
       if (!options?.ignoreHttpError) {
         navigate('/error');
       } else {
+        console.error(e);
         toast.error('오류가 발생했습니다.');
       }
     } finally {

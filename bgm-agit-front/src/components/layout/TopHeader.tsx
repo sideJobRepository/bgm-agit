@@ -70,12 +70,11 @@ export default function TopHeader() {
       channel.postMessage('logout');
       channel.close(); // 브라우저 리소스 정리
 
-
-        try {
-          await api.delete('/bgm-agit/refresh');
-        } catch (err) {
-          console.error('서버 리프레시 토큰 삭제 실패:', err);
-        }
+      try {
+        await api.delete('/bgm-agit/refresh');
+      } catch (err) {
+        console.error('서버 리프레시 토큰 삭제 실패:', err);
+      }
 
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
@@ -147,27 +146,20 @@ export default function TopHeader() {
         <SubMenuWrapper ref={subMenuRef} className={isSubOpen ? 'show' : ''}>
           {menus.map((menu, i) => (
             <ul key={i}>
-              {menu.subMenu
-                .filter(sub => {
-                  if (sub.bgmAgitSubMenuId === 14 && !user) return false;
-                  if (sub.bgmAgitMainMenuId === 16 && !user?.roles?.includes('ROLE_ADMIN'))
-                    return false;
-                  return true;
-                })
-                .map((sub, j) => (
-                  <SubLi
-                    key={j}
-                    $active={location.pathname === sub.link}
-                    onClick={() => {
-                      setIsSubOpen(false);
-                      setTimeout(() => {
-                        subMoveEnvent(sub);
-                      }, 300);
-                    }}
-                  >
-                    <a>{sub.name}</a>
-                  </SubLi>
-                ))}
+              {menu.subMenu.map((sub, j) => (
+                <SubLi
+                  key={j}
+                  $active={location.pathname === sub.link}
+                  onClick={() => {
+                    setIsSubOpen(false);
+                    setTimeout(() => {
+                      subMoveEnvent(sub);
+                    }, 300);
+                  }}
+                >
+                  <a>{sub.name}</a>
+                </SubLi>
+              ))}
             </ul>
           ))}
         </SubMenuWrapper>
@@ -193,49 +185,37 @@ export default function TopHeader() {
       </div>
       <MobileMenu ref={menuRef} $open={isOpen} className={isSubOpen ? 'show' : ''}>
         <ul>
-          {menus
-            .filter(menu => {
-              // 메인메뉴 ID가 14번인데 user가 없으면 안보이게
-              if (menu.bgmAgitMainMenuId === 14 && !user) return false;
-              return true;
-            })
-            .map((menu, i) => (
-              <React.Fragment key={i}>
-                <li
-                  onClick={() => {
-                    if (isMobileSubOpen === menu.name) {
-                      setIsMobileSubOpen(null);
-                    } else {
-                      setIsMobileSubOpen(menu.name);
-                    }
-                  }}
-                >
-                  <a>{menu.name}</a>
-                  {isMobileSubOpen === menu.name ? <MdKeyboardArrowUp /> : <MdKeyboardArrowDown />}
-                </li>
-                {menu.subMenu
-                  .filter(sub => {
-                    if (sub.bgmAgitMainMenuId === 16 && !user?.roles?.includes('ROLE_ADMIN'))
-                      return false;
-                    return true;
-                  })
-                  .map((sub, j) => (
-                    <AnimatedSubLiWrapper key={j} $visible={isMobileSubOpen === menu.name}>
-                      <MobileSubLi
-                        $active={location.pathname === sub.link}
-                        onClick={() => {
-                          toggleMenu();
-                          setTimeout(() => {
-                            subMoveEnvent(sub);
-                          }, 300);
-                        }}
-                      >
-                        <a>{sub.name}</a>
-                      </MobileSubLi>
-                    </AnimatedSubLiWrapper>
-                  ))}
-              </React.Fragment>
-            ))}
+          {menus.map((menu, i) => (
+            <React.Fragment key={i}>
+              <li
+                onClick={() => {
+                  if (isMobileSubOpen === menu.name) {
+                    setIsMobileSubOpen(null);
+                  } else {
+                    setIsMobileSubOpen(menu.name);
+                  }
+                }}
+              >
+                <a>{menu.name}</a>
+                {isMobileSubOpen === menu.name ? <MdKeyboardArrowUp /> : <MdKeyboardArrowDown />}
+              </li>
+              {menu.subMenu.map((sub, j) => (
+                <AnimatedSubLiWrapper key={j} $visible={isMobileSubOpen === menu.name}>
+                  <MobileSubLi
+                    $active={location.pathname === sub.link}
+                    onClick={() => {
+                      toggleMenu();
+                      setTimeout(() => {
+                        subMoveEnvent(sub);
+                      }, 300);
+                    }}
+                  >
+                    <a>{sub.name}</a>
+                  </MobileSubLi>
+                </AnimatedSubLiWrapper>
+              ))}
+            </React.Fragment>
+          ))}
           <SubMainLi
             onClick={() => {
               callClick();

@@ -6,4 +6,5 @@ export interface CustomUser extends JwtPayload {
   roles: string[];
   socialId: string;
   sub: string;
+  phoneNumber: string;
 }
