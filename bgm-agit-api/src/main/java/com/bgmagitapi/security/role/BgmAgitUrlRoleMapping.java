@@ -3,7 +3,6 @@ package com.bgmagitapi.security.role;
 import com.bgmagitapi.security.role.response.RoleMapResponse;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

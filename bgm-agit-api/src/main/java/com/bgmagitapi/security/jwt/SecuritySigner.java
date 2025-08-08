@@ -1,6 +1,7 @@
 package com.bgmagitapi.security.jwt;
 
 import com.bgmagitapi.entity.BgmAgitMember;
+import com.bgmagitapi.security.handler.TokenPair;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -15,15 +16,12 @@ import java.util.Date;
 import java.util.List;
 
 public abstract class SecuritySigner {
-    /**
-     * @param jwsSigner
-     * @param user
-     * @param jwk
-     * @param authorities
-     * @return
-     */
-    protected String getJwtTokenInternal(JWSSigner jwsSigner, BgmAgitMember user, JWK jwk, List<GrantedAuthority> authorities) throws JOSEException {
-        JWSHeader header = new JWSHeader.Builder((JWSAlgorithm) jwk.getAlgorithm()).keyID(jwk.getKeyID()).build();
+   
+    
+    protected String generateAccessToken(JWSSigner signer, BgmAgitMember user, JWK jwk, List<GrantedAuthority> authorities) throws JOSEException {
+        JWSHeader header = new JWSHeader.Builder((JWSAlgorithm) jwk.getAlgorithm())
+                .keyID(jwk.getKeyID())
+                .build();
         
         List<String> roleList = new ArrayList<>();
         if (authorities != null && !authorities.isEmpty()) {
@@ -31,19 +29,38 @@ public abstract class SecuritySigner {
                 roleList.add("ROLE_" + auth.getAuthority());
             }
         }
-        
-        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
+        Date date = new Date(System.currentTimeMillis());
+        JWTClaimsSet claims = new JWTClaimsSet.Builder()
                 .subject("user")
-                .claim("id",user.getBgmAgitMemberId())
-                .claim("name",user.getBgmAgitMemberName())
-                .claim("socialId",user.getBgmAgitMemberSocialId())
-                .claim("roles",roleList)
-                .expirationTime(new Date(new Date().getTime() + 24 * 60 * 60 * 1000)) // 1일 (24시간) 유효 시간 설정
+                .claim("id", user.getBgmAgitMemberId())
+                .claim("name", user.getBgmAgitMemberName())
+                .claim("socialId", user.getBgmAgitMemberSocialId())
+                .claim("expirationTime",date)
+                .claim("roles", roleList)
+                .expirationTime(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1시간
                 .build();
         
-        SignedJWT signedJWT = new SignedJWT(header, jwtClaimsSet);
-        signedJWT.sign(jwsSigner);
-        return signedJWT.serialize();
+        SignedJWT jwt = new SignedJWT(header, claims);
+        jwt.sign(signer);
+        
+        return jwt.serialize();
     }
-    public abstract String getToken(BgmAgitMember user , JWK jwk, List<GrantedAuthority> authorities) throws JOSEException;
+    protected String generateRefreshToken(JWSSigner signer, BgmAgitMember user, JWK jwk) throws JOSEException {
+        JWSHeader header = new JWSHeader.Builder((JWSAlgorithm) jwk.getAlgorithm())
+                .keyID(jwk.getKeyID())
+                .build();
+        
+        JWTClaimsSet claims = new JWTClaimsSet.Builder()
+                .subject("refresh")
+                .claim("id", user.getBgmAgitMemberId())
+                .expirationTime(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 7)) // 7일
+                .build();
+        
+        SignedJWT jwt = new SignedJWT(header, claims);
+        jwt.sign(signer);
+        
+        return jwt.serialize();
+    }
+    
+    public abstract TokenPair getToken(BgmAgitMember user, JWK jwk, List<GrantedAuthority> authorities) throws JOSEException;
 }

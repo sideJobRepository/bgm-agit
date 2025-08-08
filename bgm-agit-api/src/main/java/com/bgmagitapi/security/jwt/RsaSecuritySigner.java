@@ -1,11 +1,11 @@
 package com.bgmagitapi.security.jwt;
 
 import com.bgmagitapi.entity.BgmAgitMember;
+import com.bgmagitapi.security.handler.TokenPair;
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jose.jwk.RSAKey;
 import org.springframework.security.core.GrantedAuthority;
 
@@ -13,9 +13,12 @@ import java.util.List;
 
 public class RsaSecuritySigner extends SecuritySigner{
     @Override
-    public String getToken(BgmAgitMember user, JWK jwk, List<GrantedAuthority> authorities) throws JOSEException {
-        RSASSASigner jwsSigner = new RSASSASigner(((RSAKey)jwk).toRSAPrivateKey());
+    public TokenPair getToken(BgmAgitMember user, JWK jwk, List<GrantedAuthority> authorities) throws JOSEException {
+        JWSSigner signer = new RSASSASigner(((RSAKey) jwk).toRSAPrivateKey());
         
-        return super.getJwtTokenInternal(jwsSigner,user,jwk,authorities);
+        String accessToken = super.generateAccessToken(signer, user, jwk, authorities);
+        String refreshToken = super.generateRefreshToken(signer, user, jwk);
+        
+        return new TokenPair(accessToken, refreshToken);
     }
 }
