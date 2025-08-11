@@ -32,9 +32,6 @@ public class BgmAgitAuthenticationFilter  extends AbstractAuthenticationProcessi
         
         String uri = request.getRequestURI();
         
-        SocialLoginUrl socialLoginUrl = SocialLoginUrl.getByPath(uri)
-                .orElseThrow(() -> new ServletException("Social Login URL not found"));
-        
         ObjectMapper objectMapper = new ObjectMapper();
         SocialAuthenticationRequest loginRequest = objectMapper.readValue(request.getReader(), SocialAuthenticationRequest.class);
         

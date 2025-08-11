@@ -157,19 +157,4 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
         }
         return booleanBuilder;
     }
-    
-    public List<String> getRoleNamesFromAuthentication(Authentication authentication) {
-        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-        
-        // 계층 적용
-        Collection<? extends GrantedAuthority> reachableAuthorities =
-                roleHierarchy.getReachableGrantedAuthorities(authorities);
-        
-        // ROLE_ 접두어 제거
-        return reachableAuthorities.stream()
-                .map(GrantedAuthority::getAuthority)
-                .map(role -> role.replace("ROLE_", ""))
-                .distinct()
-                .toList();
-    }
 }
