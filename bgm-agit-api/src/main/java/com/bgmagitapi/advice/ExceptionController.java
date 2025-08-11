@@ -1,6 +1,7 @@
 package com.bgmagitapi.advice;
 
 import com.bgmagitapi.advice.exception.CustomException;
+import com.bgmagitapi.advice.exception.ReservationConflictException;
 import com.bgmagitapi.advice.response.ErrorMessageResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -59,11 +60,21 @@ public class ExceptionController {
         );
     }
     @ResponseStatus(HttpStatus.CONFLICT)
-    @ExceptionHandler(CustomException.class)
+    @ExceptionHandler(ReservationConflictException.class)
     public ErrorMessageResponse handleReservationConflictException(CustomException e) {
         log.info("공통 예외 ", e);
         return new ErrorMessageResponse(
                 String.valueOf(HttpStatus.CONFLICT.value()),
+                e.getMessage()
+        );
+    }
+    
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(CustomException.class)
+    public ErrorMessageResponse handleRefreshTokenExpiredExceptionException(CustomException e) {
+        log.info("공통 예외 ", e);
+        return new ErrorMessageResponse(
+                String.valueOf(HttpStatus.UNAUTHORIZED.value()),
                 e.getMessage()
         );
     }

@@ -1,5 +1,6 @@
 package com.bgmagitapi.service.impl;
 
+import com.bgmagitapi.advice.exception.RefreshTokenExpiredException;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitRefreshToken;
@@ -50,10 +51,10 @@ public class BgmAgitRefreshTokenServiceImpl implements BgmAgitRefreshTokenServic
     }
     
     
-    public BgmAgitMember validateRefreshToken(String refreshToken) {
+    public  BgmAgitMember validateRefreshToken(String refreshToken) {
         BgmAgitRefreshToken token = bgmAgitRefreshTokenRepository
                 .findByBgmAgitRefreshTokenValue(refreshToken)
-                .orElseThrow(() -> new RuntimeException("유효하지 않은 리프레시 토큰입니다."));
+                .orElseThrow(() -> new RefreshTokenExpiredException("유효하지 않은 리프레시 토큰입니다."));
         
         if (token.getBgmAgitRefreshExpiresDate().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("리프레시 토큰이 만료되었습니다.");
