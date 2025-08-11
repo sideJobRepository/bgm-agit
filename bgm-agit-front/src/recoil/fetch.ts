@@ -55,11 +55,18 @@ export function useReservationFetch() {
   const setReservation = useSetRecoilState(reservationState);
 
   const fetchReservation = (params: ReservationData) => {
+    const token = sessionStorage.getItem('token');
+    const headers = token
+      ? ({
+          Authorization: `Bearer ${token}`,
+        } as AxiosRequestHeaders)
+      : undefined;
     request(
       () =>
         api
           .get('/bgm-agit/reservation', {
-            params
+            params,
+            headers,
           })
           .then(res => res.data),
       setReservation
@@ -72,13 +79,11 @@ export function useReservationFetch() {
 export function useReservationListFetch() {
   const { request } = useRequest();
   const setReservationList = useSetRecoilState(reservationListDataState);
-
   const fetchReservationList = (
     page: number,
     dateRange: { startDate: string | null; endDate: string | null }
   ) => {
     const token = sessionStorage.getItem('token');
-
     request(
       () =>
         api
@@ -94,6 +99,7 @@ export function useReservationListFetch() {
           })
           .then(res => res.data),
       setReservationList
+
     );
   };
 
@@ -105,8 +111,6 @@ export function useRoletFetch() {
   const setRole = useSetRecoilState(roleState);
 
   const fetchRole = (page: number, memberEmail: string) => {
-    const token = sessionStorage.getItem('token');
-
     request(
       () =>
         api
@@ -115,9 +119,6 @@ export function useRoletFetch() {
               page,
               email: memberEmail,
             },
-            headers: {
-              Authorization: `Bearer ${token}`,
-            } as AxiosRequestHeaders,
           })
           .then(res => res.data),
       setRole
