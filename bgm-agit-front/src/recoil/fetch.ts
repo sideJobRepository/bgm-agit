@@ -13,7 +13,7 @@ import { noticeState } from './state/noticeState.ts';
 import type { params } from '../types/notice.ts';
 import type { CustomUser } from '../types/user.ts';
 import { roleState } from './state/roleState.ts';
-
+import { tokenStore } from '../utils/tokenStore';
 interface InsertOptions<T> {
     url: string;
     headers?: AxiosRequestHeaders; // 여전히 받되, Authorization은 무시함(아래 stripAuth)
@@ -208,10 +208,14 @@ export function useLoginPost() {
         request(
             () =>
                 api.post('/bgm-agit/kakao-login', { code }).then(res => {
-                    const decoded = jwtDecode<CustomUser>(res.data.token);
+                    const token = res.data.token as string;
+                    // Access Token을 메모리에만 저장
+                    tokenStore.set(token);
+
+                    // UI용 유저 정보는 세션에 보관(필요 시)
+                    const decoded = jwtDecode<CustomUser>(token);
                     sessionStorage.setItem('user', JSON.stringify(decoded));
-                    // *** 인터셉터가 참조하는 저장소/키와 통일 ***
-                    localStorage.setItem('token', res.data.token);
+
                     return decoded;
                 }),
             decodedUser => {

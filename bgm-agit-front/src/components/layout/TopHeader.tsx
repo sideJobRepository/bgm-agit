@@ -12,9 +12,10 @@ import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { mainMenuState } from '../../recoil';
 import { useFetchMainMenu } from '../../recoil/fetch.ts';
 import { userState } from '../../recoil/state/userState.ts';
-import { toast } from 'react-toastify';
+//import { toast } from 'react-toastify';
 import type { SubMenu } from '../../types/menu.ts';
 import api from '../../utils/axiosInstance';
+import { tokenStore } from '../../utils/tokenStore';
 
 export default function TopHeader() {
   useFetchMainMenu();
@@ -68,25 +69,30 @@ export default function TopHeader() {
     if (user) {
       const channel = new BroadcastChannel('auth');
       channel.postMessage('logout');
-      channel.close(); // 브라우저 리소스 정리
+      channel.close();
 
       try {
-        await api.delete('/bgm-agit/refresh');
+        // 서버가 지원하는 엔드포인트 사용 (둘 중 하나)
+        // await api.post('/bgm-agit/logout', null, { withCredentials: true });
+        await api.delete('/bgm-agit/refresh', { withCredentials: true }); // ← Refresh 쿠키 제거
       } catch (err) {
         console.error('서버 리프레시 토큰 삭제 실패:', err);
       }
 
-      sessionStorage.removeItem('token');
-      sessionStorage.removeItem('user');
+      tokenStore.clear();                 // ← 메모리 Access Token 제거
+      sessionStorage.removeItem('user');  // UI용 사용자 정보 제거
       resetUser(null);
       setIsOpen(false);
 
-      window.location.href = `https://kauth.kakao.com/oauth/logout?client_id=${KAKAO_CLIENT_ID}&logout_redirect_uri=${KAKAO_LOGOUT_URL}`;
+      // 카카오 로그아웃까지 필요하면 리다이렉트
+      window.location.href =
+          `https://kauth.kakao.com/oauth/logout?client_id=${KAKAO_CLIENT_ID}&logout_redirect_uri=${KAKAO_LOGOUT_URL}`;
 
-      toast.success('로그아웃 되었습니다.');
+      // 리다이렉트하면 토스트 안 보이니 보통 생략
+      // toast.success('로그아웃 되었습니다.');
     } else {
-      const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URL}&response_type=code`;
-
+      const kakaoAuthUrl =
+          `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URL}&response_type=code`;
       window.location.href = kakaoAuthUrl;
     }
   };

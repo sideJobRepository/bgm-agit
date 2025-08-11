@@ -2,6 +2,7 @@ package com.bgmagitapi.security.handler;
 
 
 import com.bgmagitapi.entity.BgmAgitMember;
+import com.bgmagitapi.security.dto.BgmAgitMemberResponseDto;
 import com.bgmagitapi.security.jwt.RsaSecuritySigner;
 import com.bgmagitapi.security.token.SocialAuthenticationToken;
 import com.bgmagitapi.service.BgmAgitRefreshTokenService;
@@ -51,9 +52,10 @@ public class BgmAgitAuthenticationSuccessHandler implements AuthenticationSucces
             TokenPair tokenPair = rsaSecuritySigner.getToken(member, jwk, authorities);
             bgmAgitRefreshTokenService.refreshTokenSaveOrUpdate(member, tokenPair.getRefreshToken(), expiresAt);
             
+            BgmAgitMemberResponseDto bgmAgitMemberResponseDto = BgmAgitMemberResponseDto.create(member, authorities);
             // Access Token은 응답 JSON에 포함
             Map<String, Object> result = Map.of(
-                    "user", member,
+                    "user", bgmAgitMemberResponseDto,
                     "token", tokenPair.getAccessToken()
             );
             
