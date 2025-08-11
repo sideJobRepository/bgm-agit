@@ -35,7 +35,6 @@ api.interceptors.request.use(async (config: AuthAxiosRequestConfig) => {
   if (config.url?.includes('/bgm-agit/refresh')) return config;
 
   let token = tokenStore.get();
-  console.log('token', token);
   if (!token) {
     if (!refreshing) refreshing = refreshToken(); // 첫 호출만 실제 실행
     token = await refreshing; // 모두 같은 Promise를 기다림
@@ -82,7 +81,6 @@ api.interceptors.response.use(
     if (!isRefreshing) {
       isRefreshing = true;
       try {
-        console.log('---- 재발급 리프래쉬 로직');
         const { data } = await axios.post(
           '/bgm-agit/refresh',
           null,
