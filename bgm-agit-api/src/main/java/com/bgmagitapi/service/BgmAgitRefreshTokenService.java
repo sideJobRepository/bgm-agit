@@ -10,11 +10,7 @@ import java.time.LocalDateTime;
 public interface BgmAgitRefreshTokenService {
     
     void refreshTokenSaveOrUpdate(BgmAgitMember member, String refreshTokenValue, LocalDateTime expiresAt);
-    
-    
     BgmAgitMember validateRefreshToken(String refreshToken);
-    
-    TokenAndUser reissueTokenPair(String refreshToken);
-    
-    ApiResponse deleteRefesh(String request);
+    TokenAndUser reissueTokenWithUser(String refreshToken); // ← 이름/시그니처 통일
+    ApiResponse deleteRefresh(String refreshToken);
 }

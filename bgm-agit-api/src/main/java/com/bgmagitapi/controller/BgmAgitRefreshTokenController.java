@@ -2,7 +2,6 @@ package com.bgmagitapi.controller;
 
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.security.dto.TokenAndUser;
-import com.bgmagitapi.security.handler.TokenPair;
 import com.bgmagitapi.service.BgmAgitRefreshTokenService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +29,7 @@ public class BgmAgitRefreshTokenController {
         if(refreshToken == null) {
             return null;
         }
-        TokenAndUser tokenPair = refreshTokenService.reissueTokenPair(refreshToken);
+        TokenAndUser tokenPair = refreshTokenService.reissueTokenWithUser(refreshToken);
         ResponseCookie newRefreshCookie = ResponseCookie.from("refreshToken", tokenPair.token().getRefreshToken())
                 .httpOnly(true)
                 .secure(secure)
@@ -51,7 +50,7 @@ public class BgmAgitRefreshTokenController {
         if (refreshToken == null) {
             return null;
         }
-        ApiResponse apiResponse = refreshTokenService.deleteRefesh(refreshToken);
+        ApiResponse apiResponse = refreshTokenService.deleteRefresh(refreshToken);
         ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
                 .secure(secure)

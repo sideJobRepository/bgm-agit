@@ -61,10 +61,10 @@ public class BgmAgitRefreshTokenServiceImpl implements BgmAgitRefreshTokenServic
         
         return token.getBgmAgitMember(); // fetch join 필요시 수정
     }
-    
+    @Override
     public TokenAndUser reissueTokenWithUser(String refreshToken) {
         if (refreshToken == null || refreshToken.isBlank()) {
-            return null; // 또는 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED)
+            return null;
         }
         
         BgmAgitMember member = validateRefreshToken(refreshToken);
@@ -96,7 +96,7 @@ public class BgmAgitRefreshTokenServiceImpl implements BgmAgitRefreshTokenServic
     
     
     @Override
-    public ApiResponse deleteRefesh(String request) {
+    public ApiResponse deleteRefresh(String request) {
         BgmAgitRefreshToken bgmAgitRefreshToken = bgmAgitRefreshTokenRepository.findByBgmAgitRefreshTokenValue(request).orElseThrow(() -> new RuntimeException("존재하지않는 리프레쉬 토큰입니다."));
         bgmAgitRefreshTokenRepository.delete(bgmAgitRefreshToken);
         return new ApiResponse(200,true,"정상 삭제");
