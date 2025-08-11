@@ -25,15 +25,9 @@ interface InsertOptions<T> {
 export function useFetchMainMenu() {
   const setMainMenu = useSetRecoilState(mainMenuState);
   const { request } = useRequest();
-    const token = sessionStorage.getItem('token');
-    const headers = token
-        ? ({
-            Authorization: `Bearer ${token}`,
-        } as AxiosRequestHeaders)
-        : undefined;
     useEffect(() => {
         request(() =>
-                api.get('/bgm-agit/main-menu', { headers }).then(res => res.data),
+                api.get('/bgm-agit/main-menu',).then(res => res.data),
             setMainMenu
         );
     }, []);
@@ -61,18 +55,11 @@ export function useReservationFetch() {
   const setReservation = useSetRecoilState(reservationState);
 
   const fetchReservation = (params: ReservationData) => {
-    const token = sessionStorage.getItem('token');
-    const headers = token
-      ? ({
-          Authorization: `Bearer ${token}`,
-        } as AxiosRequestHeaders)
-      : undefined;
     request(
       () =>
         api
           .get('/bgm-agit/reservation', {
-            params,
-            headers,
+            params
           })
           .then(res => res.data),
       setReservation
