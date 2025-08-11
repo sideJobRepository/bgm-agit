@@ -19,7 +19,6 @@ import { FiPlus, FiEdit } from 'react-icons/fi';
 import Modal from '../Modal.tsx';
 import { toast } from 'react-toastify';
 import { showConfirmModal } from '../confirmAlert.tsx';
-import type { AxiosRequestHeaders } from 'axios';
 import type { MainMenu } from '../../types/menu.ts';
 import { imageUploadState, mainMenuState } from '../../recoil';
 import { useLocation } from 'react-router-dom';
@@ -232,17 +231,12 @@ export default function ImageGrid({ pageData }: Props) {
       formData.append('bgmAgitImageId', editTarget.imageId.toString()!);
     }
 
-    const token = sessionStorage.getItem('token');
-
     const requestFn = isEditMode ? update : insert;
 
     showConfirmModal({
       message: isEditMode ? '수정하시겠습니까?' : '등록하시겠습니까?',
       onConfirm: () => {
         requestFn({
-          headers: {
-            Authorization: `Bearer ${token}`,
-          } as AxiosRequestHeaders,
           url: '/bgm-agit/image',
           body: formData,
           ignoreHttpError: true,
@@ -260,14 +254,10 @@ export default function ImageGrid({ pageData }: Props) {
   async function deleteData() {
     const deleteId = editTarget && editTarget.imageId.toString()!;
 
-    const token = sessionStorage.getItem('token');
     showConfirmModal({
       message: '삭제하시겠습니까?',
       onConfirm: () => {
         remove({
-          headers: {
-            Authorization: `Bearer ${token}`,
-          } as AxiosRequestHeaders,
           url: `/bgm-agit/image/${deleteId}`,
           ignoreHttpError: true,
           onSuccess: () => {

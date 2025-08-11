@@ -14,17 +14,11 @@ import { roleState } from './state/roleState.ts';
 import { tokenStore } from '../utils/tokenStore';
 interface InsertOptions<T> {
   url: string;
-  headers?: AxiosRequestHeaders; // 여전히 받되, Authorization은 무시함(아래 stripAuth)
+  headers?: AxiosRequestHeaders;
   body: T;
   onSuccess?: (data: T) => void;
   ignoreHttpError?: boolean;
 }
-
-const stripAuth = (h?: AxiosRequestHeaders) => {
-  if (!h) return h;
-  const { Authorization, authorization, ...rest } = h as any;
-  return rest as AxiosRequestHeaders;
-};
 
 export function useFetchMainMenu() {
   const setMainMenu = useSetRecoilState(mainMenuState);
@@ -216,7 +210,7 @@ export function useInsertPost() {
 
   const insert = <T>({ url, body, onSuccess, ignoreHttpError, headers }: InsertOptions<T>) => {
     request(
-      () => api.post<T>(url, body, { headers: stripAuth(headers) }).then(res => res.data),
+      () => api.post<T>(url, body, { headers }).then(res => res.data),
       data => onSuccess?.(data),
       { ignoreHttpError }
     );
@@ -230,7 +224,7 @@ export function useUpdatePost() {
 
   const update = <T>({ url, body, onSuccess, ignoreHttpError, headers }: InsertOptions<T>) => {
     request(
-      () => api.put<T>(url, body, { headers: stripAuth(headers) }).then(res => res.data),
+      () => api.put<T>(url, body, { headers }).then(res => res.data),
       data => onSuccess?.(data),
       { ignoreHttpError }
     );
@@ -249,7 +243,7 @@ export function useDeletePost() {
     headers,
   }: Omit<InsertOptions<T>, 'body'>) => {
     request(
-      () => api.delete<T>(url, { headers: stripAuth(headers) }).then(res => res.data),
+      () => api.delete<T>(url, { headers }).then(res => res.data),
       data => onSuccess?.(data),
       { ignoreHttpError }
     );

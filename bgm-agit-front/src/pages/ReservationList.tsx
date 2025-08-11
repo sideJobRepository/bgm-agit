@@ -8,7 +8,6 @@ import { useRecoilValue } from 'recoil';
 import { reservationListDataState } from '../recoil/state/reservationState.ts';
 import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
-import type { AxiosRequestHeaders } from 'axios';
 import { toast } from 'react-toastify';
 import type { Reservation } from '../types/reservation.ts';
 
@@ -43,14 +42,10 @@ export default function ReservationList() {
     const url = role ? `/bgm-agit/reservation/admin` : `/bgm-agit/reservation`;
     const message =
       approval === 'Y' ? '해당 예약을 확정하시겠습니까?' : '해당 예약을 취소하시겠습니까?';
-    const token = sessionStorage.getItem('token');
     showConfirmModal({
       message: message,
       onConfirm: () => {
         update({
-          headers: {
-            Authorization: `Bearer ${token}`,
-          } as AxiosRequestHeaders,
           url: url,
           body: param,
           ignoreHttpError: true,

@@ -12,7 +12,6 @@ import 'react-confirm-alert/src/react-confirm-alert.css';
 import { userState } from '../../recoil/state/userState.ts';
 import { showConfirmModal } from '../confirmAlert.tsx';
 import { useInsertPost, useReservationFetch } from '../../recoil/fetch.ts';
-import type { AxiosRequestHeaders } from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 export default function ReservationCalendar({ id }: { id?: number }) {
@@ -94,11 +93,7 @@ export default function ReservationCalendar({ id }: { id?: number }) {
           const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URL}&response_type=code`;
           window.location.href = kakaoAuthUrl;
         } else {
-          const token = sessionStorage.getItem('token');
           insert({
-            headers: {
-              Authorization: `Bearer ${token}`,
-            } as AxiosRequestHeaders,
             url: '/bgm-agit/reservation',
             body: {
               bgmAgitImageId: id,

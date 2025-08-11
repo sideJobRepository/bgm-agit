@@ -7,7 +7,6 @@ import { useRoletFetch, useUpdatePost } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { roleState } from '../recoil/state/roleState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
-import type { AxiosRequestHeaders } from 'axios';
 import { toast } from 'react-toastify';
 
 export default function Role() {
@@ -40,14 +39,10 @@ export default function Role() {
       return;
     }
 
-    const token = sessionStorage.getItem('token');
     showConfirmModal({
       message: '권한을 변경하시겠습니까?',
       onConfirm: () => {
         update({
-          headers: {
-            Authorization: `Bearer ${token}`,
-          } as AxiosRequestHeaders,
           url: 'bgm-agit/role',
           body: selected,
           ignoreHttpError: true,
@@ -130,11 +125,11 @@ export default function Role() {
                         </label>
                         <label style={{ marginLeft: '12px' }}>
                           <input
-                              type="radio"
-                              name={`role-${item.memberId}`}
-                              value="4"
-                              checked={(roleMap[item.memberId] ?? item.roleId) === 4}
-                              onChange={() => setRoleMap(prev => ({ ...prev, [item.memberId]: 4 }))}
+                            type="radio"
+                            name={`role-${item.memberId}`}
+                            value="4"
+                            checked={(roleMap[item.memberId] ?? item.roleId) === 4}
+                            onChange={() => setRoleMap(prev => ({ ...prev, [item.memberId]: 4 }))}
                           />
                           멘토
                         </label>

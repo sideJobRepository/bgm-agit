@@ -103,8 +103,6 @@ export default function NoticeDetail() {
       });
     }
 
-    const token = sessionStorage.getItem('token');
-
     const requestFn = isEditMode ? update : insert;
 
     showConfirmModal({
@@ -113,9 +111,6 @@ export default function NoticeDetail() {
         if (!validation()) return;
 
         requestFn({
-          headers: {
-            Authorization: `Bearer ${token}`,
-          } as AxiosRequestHeaders,
           url: '/bgm-agit/notice',
           body: formData,
           ignoreHttpError: true,
@@ -147,14 +142,10 @@ export default function NoticeDetail() {
   async function deleteData() {
     const deleteId = newNotice.id!.toString();
 
-    const token = sessionStorage.getItem('token');
     showConfirmModal({
       message: '삭제하시겠습니까?',
       onConfirm: () => {
         remove({
-          headers: {
-            Authorization: `Bearer ${token}`,
-          } as AxiosRequestHeaders,
           url: `/bgm-agit/notice/${deleteId}`,
           ignoreHttpError: true,
           onSuccess: () => {
@@ -411,14 +402,9 @@ export default function NoticeDetail() {
 
                         if (file) formData.append('file', file);
 
-                        const token = sessionStorage.getItem('token');
-
                         return new Promise(resolve => {
                           insert<FormData>({
                             url: '/bgm-agit/notice/file',
-                            headers: {
-                              Authorization: `Bearer ${token}`,
-                            } as AxiosRequestHeaders,
                             body: formData,
                             ignoreHttpError: true,
                             onSuccess: (data: unknown) => {
