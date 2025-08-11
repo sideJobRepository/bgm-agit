@@ -1,6 +1,7 @@
 package com.bgmagitapi.controller;
 
 import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.security.dto.TokenAndUser;
 import com.bgmagitapi.security.handler.TokenPair;
 import com.bgmagitapi.service.BgmAgitRefreshTokenService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,14 +24,14 @@ public class BgmAgitRefreshTokenController {
     private boolean secure;
     
     @PostMapping("/refresh")
-    public Map<String, String> refreshToken(@CookieValue(value = "refreshToken", required = false) String refreshToken
+    public Map<String, Object> refreshToken(@CookieValue(value = "refreshToken", required = false) String refreshToken
         , HttpServletResponse response
     ) {
         if(refreshToken == null) {
             return null;
         }
-        TokenPair tokenPair = refreshTokenService.reissueTokenPair(refreshToken);
-        ResponseCookie newRefreshCookie = ResponseCookie.from("refreshToken", tokenPair.getRefreshToken())
+        TokenAndUser tokenPair = refreshTokenService.reissueTokenPair(refreshToken);
+        ResponseCookie newRefreshCookie = ResponseCookie.from("refreshToken", tokenPair.token().getRefreshToken())
                 .httpOnly(true)
                 .secure(secure)
                 .path("/")
@@ -38,7 +39,10 @@ public class BgmAgitRefreshTokenController {
                 .sameSite("Strict")
                 .build();
         response.addHeader("Set-Cookie", newRefreshCookie.toString());
-        return Map.of("token", tokenPair.getAccessToken());
+        return Map.of(
+                "token", tokenPair.token().getAccessToken(),
+                "user", tokenPair.user()
+        );
     }
     
     @DeleteMapping("/refresh")

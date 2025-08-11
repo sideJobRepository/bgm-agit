@@ -68,8 +68,7 @@ public class BgmAgitAuthenticationSuccessHandler implements AuthenticationSucces
                     .sameSite("Strict")
                     .build();
             response.addHeader("Set-Cookie", refreshCookie.toString());
-            
-            response.setContentType("application/json");
+            response.setContentType("application/json; charset=UTF-8");
             response.getWriter().write(objectMapper.writeValueAsString(result));
         } catch (JOSEException e) {
             throw new RuntimeException("JWT 생성 실패", e);

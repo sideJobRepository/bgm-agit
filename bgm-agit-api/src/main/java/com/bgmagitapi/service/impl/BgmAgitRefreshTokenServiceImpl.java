@@ -4,6 +4,8 @@ import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitRefreshToken;
 import com.bgmagitapi.repository.BgmAgitRefreshTokenRepository;
+import com.bgmagitapi.security.dto.BgmAgitMemberResponseDto;
+import com.bgmagitapi.security.dto.TokenAndUser;
 import com.bgmagitapi.security.handler.TokenPair;
 import com.bgmagitapi.security.jwt.RsaSecuritySigner;
 import com.bgmagitapi.service.BgmAgitMemberRoleService;
@@ -60,10 +62,11 @@ public class BgmAgitRefreshTokenServiceImpl implements BgmAgitRefreshTokenServic
         return token.getBgmAgitMember(); // fetch join 필요시 수정
     }
     
-    public TokenPair reissueTokenPair(String refreshToken) {
-        if (refreshToken == null || refreshToken.trim().isEmpty()) {
-            return null;
+    public TokenAndUser reissueTokenWithUser(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return null; // 또는 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED)
         }
+        
         BgmAgitMember member = validateRefreshToken(refreshToken);
         
         String roleName = bgmAgitMemberRoleService
@@ -75,16 +78,22 @@ public class BgmAgitRefreshTokenServiceImpl implements BgmAgitRefreshTokenServic
         
         try {
             TokenPair token = rsaSecuritySigner.getToken(member, jwk, authorities);
+            
             refreshTokenSaveOrUpdate(
                     member,
                     token.getRefreshToken(),
                     LocalDateTime.now().plusDays(1)
             );
-            return token;
+            
+            // 로그인 때와 동일하게 DTO 생성
+            BgmAgitMemberResponseDto user = BgmAgitMemberResponseDto.create(member, authorities);
+            
+            return new TokenAndUser(token, user);
         } catch (JOSEException e) {
             throw new RuntimeException("JWT 생성 실패", e);
         }
     }
+    
     
     @Override
     public ApiResponse deleteRefesh(String request) {
