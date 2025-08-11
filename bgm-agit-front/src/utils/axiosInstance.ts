@@ -22,6 +22,7 @@ api.interceptors.request.use(async (config: AuthAxiosRequestConfig) => {
           baseURL: api.defaults.baseURL,
           withCredentials: true,
         });
+        console.log('---- 최초 새로고침 로직');
 
         token = data.token;
 
@@ -80,6 +81,7 @@ api.interceptors.response.use(
     if (!isRefreshing) {
       isRefreshing = true;
       try {
+        console.log('---- 재발급 리프래쉬 로직');
         const { data } = await axios.post(
           '/bgm-agit/refresh',
           null,
