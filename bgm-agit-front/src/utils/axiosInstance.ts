@@ -11,39 +11,40 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// 최신 메모리 토큰 주입 (refresh는 제외)
+let refreshing: Promise<string | null> | null = null;
+
+async function refreshToken(): Promise<string | null> {
+  try {
+    const { data } = await axios.post('/bgm-agit/refresh', null, {
+      baseURL: api.defaults.baseURL,
+      withCredentials: true,
+    });
+    const newToken = data?.token ?? null;
+    tokenStore.set(newToken);
+    window.dispatchEvent(new CustomEvent('auth:refreshed', { detail: { user: data?.user } }));
+    return newToken;
+  } catch (e) {
+    console.error(e);
+    return null;
+  } finally {
+    refreshing = null; // 락 해제
+  }
+}
+
 api.interceptors.request.use(async (config: AuthAxiosRequestConfig) => {
-  if (!config.url?.includes('/bgm-agit/refresh')) {
-    let token = tokenStore.get();
+  if (config.url?.includes('/bgm-agit/refresh')) return config;
 
-    if (!token) {
-      try {
-        const { data } = await axios.post('/bgm-agit/refresh', null, {
-          baseURL: api.defaults.baseURL,
-          withCredentials: true,
-        });
-        console.log('---- 최초 새로고침 로직');
+  let token = tokenStore.get();
+  console.log('token', token);
+  if (!token) {
+    if (!refreshing) refreshing = refreshToken(); // 첫 호출만 실제 실행
+    token = await refreshing; // 모두 같은 Promise를 기다림
+  }
 
-        token = data.token;
-
-        //이벤트 전달
-        window.dispatchEvent(
-          new CustomEvent('auth:refreshed', {
-            detail: { user: data?.user },
-          })
-        );
-
-        tokenStore.set(token!);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    config.__hadAuth = !!token; // 이 요청이 인증 요청이었는지 표시
-    if (token) {
-      config.headers = config.headers ?? {};
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+  config.__hadAuth = !!token;
+  if (token) {
+    config.headers = config.headers ?? {};
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
