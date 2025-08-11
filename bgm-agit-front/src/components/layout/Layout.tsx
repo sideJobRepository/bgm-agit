@@ -4,11 +4,11 @@ import { Outlet, useLocation } from 'react-router-dom';
 import type { WithTheme } from '../../styles/styled-props.ts';
 import Footer from './Footer.tsx';
 import Nav from './Nav.tsx';
-import { useEffect } from 'react';
-import { useRecoilState, useRecoilValue } from 'recoil';
-import { userState } from '../../recoil/state/userState.ts';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { loadingState } from '../../recoil';
 import Loading from '../Loading.tsx';
+import { useEffect } from 'react';
+import { userState } from '../../recoil/state/userState.ts';
 
 export default function Layout() {
   const location = useLocation();
@@ -16,35 +16,17 @@ export default function Layout() {
 
   const isLoading = useRecoilValue(loadingState);
 
-  //로그인 상태
-  const [user, setUser] = useRecoilState(userState);
+  const setUser = useSetRecoilState(userState);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem('user');
-    if (!user && stored) {
-      setUser(JSON.parse(stored));
-    }
-  }, []);
-
-  useEffect(() => {
-    const channel = new BroadcastChannel('auth');
-
-    channel.onmessage = event => {
-      if (event.data === 'logout') {
-        sessionStorage.clear();
-        setUser(null);
-      }
-
-      if (event.data.type === 'login') {
-        sessionStorage.setItem('user', JSON.stringify(event.data.user));
-        setUser(event.data.user);
+    const handler = (e: CustomEvent) => {
+      if (e.detail?.user) {
+        setUser(e.detail.user);
       }
     };
-
-    return () => {
-      channel.close();
-    };
-  }, []);
+    window.addEventListener('auth:refreshed', handler as EventListener);
+    return () => window.removeEventListener('auth:refreshed', handler as EventListener);
+  }, [setUser]);
 
   return (
     <Wrapper>

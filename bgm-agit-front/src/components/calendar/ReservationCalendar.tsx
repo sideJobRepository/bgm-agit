@@ -94,7 +94,6 @@ export default function ReservationCalendar({ id }: { id?: number }) {
           const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URL}&response_type=code`;
           window.location.href = kakaoAuthUrl;
         } else {
-          console.log('selectedTimes', selectedTimes);
           const token = sessionStorage.getItem('token');
           insert({
             headers: {
@@ -108,9 +107,7 @@ export default function ReservationCalendar({ id }: { id?: number }) {
               startTimeEndTime: selectedTimes,
             },
             ignoreHttpError: true,
-            onSuccess: data => {
-              console.log('data', data);
-
+            onSuccess: () => {
               showConfirmModal({
                 message: (
                   <>

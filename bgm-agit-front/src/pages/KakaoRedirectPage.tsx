@@ -16,10 +16,6 @@ export default function KakaoRedirectPage() {
 
     postUser(code, () => {
       // BroadcastChannel 전역 저장
-      const channel = new BroadcastChannel('auth');
-      channel.postMessage({ type: 'login', user: JSON.parse(sessionStorage.getItem('user')!) });
-      channel.close();
-
       navigate('/');
     });
   }, []);
