@@ -82,6 +82,8 @@ jobs:
             -e AWS_BUCKET=${{ secrets.AWS_BUCKET }} \
             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
             -e CLIENT_SECRET=${{ secrets.CLIENT_SECRET }} \
+            -e BIZTALK_ID=${{ secrets.BIZTALK_ID }} \
+            -e BIZTALK_PASSWORD=${{ secrets.BIZTALK_PASSWORD }} \
             -e SPRING_PROFILES_ACTIVE=real \
             -v $(pwd)/logs:/app/logs \
             -p 8080:8080 \

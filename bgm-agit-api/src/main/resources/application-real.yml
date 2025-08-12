@@ -57,3 +57,7 @@ jwt:
 
 cookie:
   secure: true
+
+biztalk:
+  id: ${BIZTALK_ID}
+  password: ${BIZTALK_PASSWORD}
