@@ -109,6 +109,4 @@ public class BgmAgitBizTalkServiceImpl implements BgmAgitBizTalkService {
         BgmAgitBiztalkToken bgmAgitBiztalkToken = new BgmAgitBiztalkToken(result.getToken(), parse,publicIp);
         biztalkTokenRepository.save(bgmAgitBiztalkToken);
     }
-    
-   
 }

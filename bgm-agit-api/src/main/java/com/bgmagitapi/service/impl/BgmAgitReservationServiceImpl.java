@@ -136,6 +136,10 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     availableSlots.add(slotStart.format(formatter));
                 }
                 
+                if ((id != null && id == 18) && slotStart.format(formatter).equals("01:00")) {
+                    availableSlots.remove(slotStart.format(formatter));
+                }
+                
                 cursor = cursor.plusHours(slotIntervalHours);
             }
             
