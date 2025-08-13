@@ -55,6 +55,19 @@ public class AlimtalkUtils {
                 .toString();
     }
     
+    public static String buildOwnerReservationMessage(String userName, String date, String times) {
+        return new StringBuilder()
+                .append("BGM 아지트 예약 내역을 안내드립니다.\n\n")
+                .append("예약자 : ").append(userName).append("\n")
+                .append("예약 일자 : ").append(date).append("\n")
+                .append("예약 시간 : ").append(times).append("\n")
+                .append("예약 상태 : 예약 대기\n\n")
+                .append("자세한 예약내역은 하단 '예약 확인' 버튼을 눌러 로그인 후\n")
+                .append("마이페이지 > 예약내역에서 확인하실 수 있습니다.\n")
+                .append("감사합니다.")
+                .toString();
+    }
+    
     /** 기본 버튼 세트(필요 시 수정) */
     public static Attach defaultAttach() {
         return new Attach(List.of(
@@ -74,6 +87,21 @@ public class AlimtalkUtils {
         m.put("senderKey", senderKey);
         m.put("tmpltCode", "bgmagit-reservation");
         m.put("recipient", recipient);
+        m.put("message", message);
+        if (attach != null) m.put("attach", attach);
+        return m;
+    }
+    
+    public static Map<String, Object> buildOwnerSendRequest(
+            String senderKey, String message, Attach attach
+    ) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("msgIdx", UUID.randomUUID().toString());
+        m.put("countryCode", "82");
+        m.put("resMethod", "PUSH");
+        m.put("senderKey", senderKey);
+        m.put("tmpltCode", "bgmagit-reservation");
+        m.put("recipient", "010-5059-3499");
         m.put("message", message);
         if (attach != null) m.put("attach", attach);
         return m;

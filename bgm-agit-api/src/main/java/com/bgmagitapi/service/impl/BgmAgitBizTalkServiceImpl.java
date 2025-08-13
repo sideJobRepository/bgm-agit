@@ -52,7 +52,13 @@ public class BgmAgitBizTalkServiceImpl implements BgmAgitBizTalkService {
     @Transactional(readOnly = true)
     public BizTalkTokenResponse getBizTalkToken() {
         
-     return queryFactory
+        String publicIp = RestClient.create()
+                .get().uri("https://ifconfig.me/ip")
+                .retrieve()
+                .body(String.class)
+                .trim();
+        
+        return queryFactory
                 .select(Projections.constructor(
                         BizTalkTokenResponse.class,
                         bgmAgitBiztalkToken.bgmAgitBiztalkTokenValue,
@@ -64,24 +70,28 @@ public class BgmAgitBizTalkServiceImpl implements BgmAgitBizTalkService {
                 ))
                 .from(bgmAgitBiztalkToken)
                 .where(
-                        bgmAgitBiztalkToken.bgmAgitBiztalkTokenId.eq(
-                                JPAExpressions
-                                        .select(bgmAgitBiztalkToken.bgmAgitBiztalkTokenId.max())
-                                        .from(bgmAgitBiztalkToken)
-                        )
+                        bgmAgitBiztalkToken.bgmAgitBiztalkIp.eq(publicIp)
                 ).fetchOne();
     
     }
     
     
     public void issueAndSaveToken() {
-        biztalkTokenRepository.deleteAll();
+     
         RestClient restClient = RestClient.create();
         
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("bsid", biztalkId);
         requestBody.put("passwd", biztalkPassword);
         requestBody.put("expire", 720);
+        
+        String publicIp = RestClient.create()
+                .get().uri("https://ifconfig.me/ip")
+                .retrieve()
+                .body(String.class)
+                .trim();
+        
+        biztalkTokenRepository.deleteByBgmAgitBiztalkIp(publicIp);
         
         BizTalkTokenResponse result = restClient.post()
                 .uri(biztalkUrl + "/v2/auth/getToken")
@@ -97,7 +107,7 @@ public class BgmAgitBizTalkServiceImpl implements BgmAgitBizTalkService {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         LocalDateTime parse = LocalDateTime.parse(expireDateStr, formatter);
         
-        BgmAgitBiztalkToken bgmAgitBiztalkToken = new BgmAgitBiztalkToken(result.getToken(), parse);
+        BgmAgitBiztalkToken bgmAgitBiztalkToken = new BgmAgitBiztalkToken(result.getToken(), parse,publicIp);
         biztalkTokenRepository.save(bgmAgitBiztalkToken);
     }
     

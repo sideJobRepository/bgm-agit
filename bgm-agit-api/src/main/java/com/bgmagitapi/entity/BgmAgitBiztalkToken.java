@@ -28,8 +28,12 @@ public class BgmAgitBiztalkToken extends DateSuperClass {
     @Column(name = "BGM_AGIT_BIZTALK_TOKEN_EXPIRES_DATE")
     private LocalDateTime bgmAgitBiztalkTokenExpiresDate;
     
-    public BgmAgitBiztalkToken(String bgmAgitBiztalkTokenValue, LocalDateTime bgmAgitBiztalkTokenExpiresDate) {
+    @Column(name = "BGM_AGIT_BIZTALK_IP")
+    private String bgmAgitBiztalkIp;
+    
+    public BgmAgitBiztalkToken(String bgmAgitBiztalkTokenValue, LocalDateTime bgmAgitBiztalkTokenExpiresDate, String bgmAgitBiztalkIp) {
         this.bgmAgitBiztalkTokenValue = bgmAgitBiztalkTokenValue;
         this.bgmAgitBiztalkTokenExpiresDate = bgmAgitBiztalkTokenExpiresDate;
+        this.bgmAgitBiztalkIp = bgmAgitBiztalkIp;
     }
 }

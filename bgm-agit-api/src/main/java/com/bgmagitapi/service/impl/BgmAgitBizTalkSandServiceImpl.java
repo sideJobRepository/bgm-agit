@@ -42,12 +42,19 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String message = AlimtalkUtils.buildReservationMessage(
                 member.getBgmAgitMemberName(), formattedDate, formattedTimes);
         
+        String ownerMessage = AlimtalkUtils.buildOwnerReservationMessage(
+                member.getBgmAgitMemberName(), formattedDate, formattedTimes);
+        
         String phone = AlimtalkUtils.formatRecipientKr(member.getBgmAgitMemberPhoneNo());
         
         Attach attach = AlimtalkUtils.defaultAttach();
         
         Map<String, Object> request = AlimtalkUtils.buildSendRequest(
                 senderKey, phone, message, attach);
+        
+        Map<String, Object> request2 = AlimtalkUtils.buildOwnerSendRequest(
+                senderKey, ownerMessage, attach
+        );
         
         RestClient restClient = RestClient.create();
         BizTalkTokenResponse bizTalkToken = bgmAgitBizTalkService.getBizTalkToken();
@@ -60,6 +67,16 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
                 .retrieve()
                 .toEntity(BizTalkResponse.class)
                 .getBody();
+        
+        BizTalkResponse body2 = restClient.post()
+                .uri(bizTalkUrl + "/v2/kko/sendAlimTalk")
+                .header("Content-Type", "application/json")
+                .header("bt-token", bizTalkToken.getToken())
+                .body(request2)
+                .retrieve()
+                .toEntity(BizTalkResponse.class)
+                .getBody();
+        
         
         return new ApiResponse(200, true, "성공");
     }
