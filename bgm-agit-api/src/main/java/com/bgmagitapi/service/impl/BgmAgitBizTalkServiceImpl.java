@@ -6,7 +6,6 @@ import com.bgmagitapi.service.BgmAgitBizTalkService;
 import com.bgmagitapi.service.response.BizTalkTokenResponse;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;

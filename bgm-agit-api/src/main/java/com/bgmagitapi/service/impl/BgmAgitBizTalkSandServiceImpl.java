@@ -77,6 +77,14 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
                 .toEntity(BizTalkResponse.class)
                 .getBody();
         
+        BizTalkResponse body3 = restClient.get()
+                .uri(bizTalkUrl + "/v2/kko/getResultAll")
+                .header("Content-Type", "application/json")
+                .header("bt-token", bizTalkToken.getToken())
+                .retrieve()
+                .toEntity(BizTalkResponse.class)
+                .getBody();
+        
         
         return new ApiResponse(200, true, "성공");
     }

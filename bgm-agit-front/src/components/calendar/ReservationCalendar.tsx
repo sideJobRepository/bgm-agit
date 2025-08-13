@@ -107,7 +107,7 @@ export default function ReservationCalendar({ id }: { id?: number }) {
             ignoreHttpError: true,
             onSuccess: () => {
               //알림 호출
-              kakaoMessageSend();
+              //kakaoMessageSend();
 
               showConfirmModal({
                 message: (
@@ -137,52 +137,52 @@ export default function ReservationCalendar({ id }: { id?: number }) {
 
   //카카오 알림톡
   function kakaoMessageSend() {
-    getToken(token => {
-      console.log('받은 값:', token); //카카오 알림톡 토큰
-
-      const countryCode = user?.phoneNumber.match(/^\+(\d+)/)?.[1]; // +82
-      const formattedDate = value.toISOString().split('T')[0]; // YYYY-MM-DD
-      const formattedTimes = selectedTimes.join(', '); // '13:00, 14:00'
-      const formatted = user?.phoneNumber
-        ?.replace(/^\+82\s?/, '0')
-        ?.replace(/\D/g, '')
-        ?.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
-
-      const message = `안녕하세요. ${user?.name}님.
-        BGM 아지트 예약 내역을 알려드립니다.
-       
-        예약자: ${user?.name}
-        예약 일자: ${formattedDate}
-        예약 시간: ${formattedTimes}
-        예약 상태: 예약 대기
-        
-        자세한 예약내역은 아래 버튼을 눌러 로그인 후,
-        마이페이지 > 예약내역에서 확인하실 수 있습니다.
-        감사합니다.`;
-
-      insert({
-        url: 'https://www.biztalk-api.com/v2/kko/sendAlimTalk',
-        headers: {
-          'Content-Type': 'application/json',
-          'bt-token': token,
-        } as unknown as AxiosRequestHeaders,
-        body: {
-          msgIdx: crypto.randomUUID(),
-          tmpltCode: 'bgmagit-reservation',
-          countryCode,
-          senderKey: import.meta.env.VITE_KAKAO_SEND_KEY,
-          resMethod: 'PUSH',
-          recipient: formatted,
-          message: message,
-          attach: {
-            button: [
-              { name: '홈페이지 바로가기', type: 'WL', url_mobile: 'https://bgmagit.co.kr' },
-            ],
-          },
-        },
-        ignoreHttpError: true,
-      });
-    });
+    // getToken(token => {
+    //   console.log('받은 값:', token); //카카오 알림톡 토큰
+    //
+    //   const countryCode = user?.phoneNumber.match(/^\+(\d+)/)?.[1]; // +82
+    //   const formattedDate = value.toISOString().split('T')[0]; // YYYY-MM-DD
+    //   const formattedTimes = selectedTimes.join(', '); // '13:00, 14:00'
+    //   const formatted = user?.phoneNumber
+    //     ?.replace(/^\+82\s?/, '0')
+    //     ?.replace(/\D/g, '')
+    //     ?.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+    //
+    //   const message = `안녕하세요. ${user?.name}님.
+    //     BGM 아지트 예약 내역을 알려드립니다.
+    //
+    //     예약자: ${user?.name}
+    //     예약 일자: ${formattedDate}
+    //     예약 시간: ${formattedTimes}
+    //     예약 상태: 예약 대기
+    //
+    //     자세한 예약내역은 아래 버튼을 눌러 로그인 후,
+    //     마이페이지 > 예약내역에서 확인하실 수 있습니다.
+    //     감사합니다.`;
+    //
+    //   insert({
+    //     url: 'https://www.biztalk-api.com/v2/kko/sendAlimTalk',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //       'bt-token': token,
+    //     } as unknown as AxiosRequestHeaders,
+    //     body: {
+    //       msgIdx: crypto.randomUUID(),
+    //       tmpltCode: 'bgmagit-reservation',
+    //       countryCode,
+    //       senderKey: import.meta.env.VITE_KAKAO_SEND_KEY,
+    //       resMethod: 'PUSH',
+    //       recipient: formatted,
+    //       message: message,
+    //       attach: {
+    //         button: [
+    //           { name: '홈페이지 바로가기', type: 'WL', url_mobile: 'https://bgmagit.co.kr' },
+    //         ],
+    //       },
+    //     },
+    //     ignoreHttpError: true,
+    //   });
+    // });
   }
 
   return (
