@@ -13,6 +13,7 @@ import { userState } from '../../recoil/state/userState.ts';
 import { showConfirmModal } from '../confirmAlert.tsx';
 import { useInsertPost, useKakaoToken, useReservationFetch } from '../../recoil/fetch.ts';
 import { useNavigate } from 'react-router-dom';
+import type { AxiosRequestHeaders } from 'axios';
 
 export default function ReservationCalendar({ id }: { id?: number }) {
   const navigate = useNavigate();
@@ -136,38 +137,51 @@ export default function ReservationCalendar({ id }: { id?: number }) {
 
   //카카오 알림톡
   function kakaoMessageSend() {
-    // const tset = getToken();
+    getToken(token => {
+      console.log('받은 값:', token); //카카오 알림톡 토큰
 
-    getToken(() => {
-      console.log('받은 카카오 토큰:');
-      // 여기서 다음 작업 진행
-    });
+      const countryCode = user?.phoneNumber.match(/^\+(\d+)/)?.[1]; // +82
+      const formattedDate = value.toISOString().split('T')[0]; // YYYY-MM-DD
+      const formattedTimes = selectedTimes.join(', '); // '13:00, 14:00'
+      const formatted = user?.phoneNumber
+        ?.replace(/^\+82\s?/, '0')
+        ?.replace(/\D/g, '')
+        ?.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
 
-    const countryCode = user?.phoneNumber.match(/^\+(\d+)/)?.[1];
-    const formattedDate = value.toISOString().split('T')[0];
-    const formattedTimes = selectedTimes.join(', ');
-    const formatted = user?.phoneNumber
-      .replace(/^\+82\s?/, '010-') // +82 제거 후 010-로 시작
-      .replace(/\s?/, '') // 혹시 남아있는 공백 제거
-      .replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+      const message = `안녕하세요. ${user?.name}님.
+        BGM 아지트 예약 내역을 알려드립니다.
+       
+        예약자: ${user?.name}
+        예약 일자: ${formattedDate}
+        예약 시간: ${formattedTimes}
+        예약 상태: 예약 대기
+        
+        자세한 예약내역은 아래 버튼을 눌러 로그인 후,
+        마이페이지 > 예약내역에서 확인하실 수 있습니다.
+        감사합니다.`;
 
-    console.log('user', user);
-    //bgmagit-reservation 템플릿코드
-
-    insert({
-      url: '/v2/kko/sendAlimTalk',
-      body: {
-        msgIdx: user?.socialId,
-        tmpltCode: 'bgmagit-reservation',
-        countryCode: countryCode,
-        resMethod: 'PUSH',
-        recipient: formatted,
-        name: user?.name,
-        reservationDate: formattedDate,
-        reservationTime: formattedTimes,
-        reservationStatus: '예약 대기',
-      },
-      ignoreHttpError: true,
+      insert({
+        url: 'https://www.biztalk-api.com/v2/kko/sendAlimTalk',
+        headers: {
+          'Content-Type': 'application/json',
+          'bt-token': token,
+        } as unknown as AxiosRequestHeaders,
+        body: {
+          msgIdx: crypto.randomUUID(),
+          tmpltCode: 'bgmagit-reservation',
+          countryCode,
+          senderKey: import.meta.env.VITE_KAKAO_SEND_KEY,
+          resMethod: 'PUSH',
+          recipient: formatted,
+          message: message,
+          attach: {
+            button: [
+              { name: '홈페이지 바로가기', type: 'WL', url_mobile: 'https://bgmagit.co.kr' },
+            ],
+          },
+        },
+        ignoreHttpError: true,
+      });
     });
   }
 

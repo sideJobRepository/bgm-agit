@@ -215,9 +215,7 @@ export function useKakaoToken() {
     request(
       () =>
         api.post('/bgm-agit/biztalkToken').then(res => {
-          // const token = res.data.token as string;
-          console.log('res', res);
-          return 'zzzz'; // 토큰만 반환
+          return res.data.biztalkToken as string;
         }),
       token => {
         onSuccess?.(token);
