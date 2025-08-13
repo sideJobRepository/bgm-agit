@@ -70,6 +70,7 @@ public class BgmAgitBizTalkServiceImpl implements BgmAgitBizTalkService {
     
     
     public void issueAndSaveToken() {
+        biztalkTokenRepository.deleteAll();
         RestClient restClient = RestClient.create();
         
         Map<String, Object> requestBody = new HashMap<>();
