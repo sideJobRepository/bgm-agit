@@ -5,6 +5,7 @@ import com.bgmagitapi.repository.BgmAgitBiztalkTokenRepository;
 import com.bgmagitapi.service.BgmAgitBizTalkService;
 import com.bgmagitapi.service.response.BizTalkTokenResponse;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.annotation.PostConstruct;
@@ -55,7 +56,11 @@ public class BgmAgitBizTalkServiceImpl implements BgmAgitBizTalkService {
                 .select(Projections.constructor(
                         BizTalkTokenResponse.class,
                         bgmAgitBiztalkToken.bgmAgitBiztalkTokenValue,
-                        bgmAgitBiztalkToken.bgmAgitBiztalkTokenExpiresDate
+                        Expressions.stringTemplate(
+                                "DATE_FORMAT({0}, {1})",
+                                bgmAgitBiztalkToken.bgmAgitBiztalkTokenExpiresDate,
+                                Expressions.constant("%Y%m%d%H%i%s")
+                        )
                 ))
                 .from(bgmAgitBiztalkToken)
                 .where(
