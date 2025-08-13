@@ -79,15 +79,12 @@ export default function TopHeader() {
         console.error('서버 리프레시 토큰 삭제 실패:', err);
       }
 
-      tokenStore.clear(); // ← 메모리 Access Token 제거
+      tokenStore.clear(); // 메모리 Access Token 제거
       resetUser(null);
       setIsOpen(false);
 
       // 카카오 로그아웃까지 필요하면 리다이렉트
       window.location.href = `https://kauth.kakao.com/oauth/logout?client_id=${KAKAO_CLIENT_ID}&logout_redirect_uri=${KAKAO_LOGOUT_URL}`;
-
-      // 리다이렉트하면 토스트 안 보이니 보통 생략
-      // toast.success('로그아웃 되었습니다.');
     } else {
       const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URL}&response_type=code`;
       window.location.href = kakaoAuthUrl;

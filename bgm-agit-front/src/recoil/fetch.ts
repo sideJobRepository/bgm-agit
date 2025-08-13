@@ -191,11 +191,13 @@ export function useLoginPost() {
           tokenStore.set(token);
 
           const user = res.data.user;
+          console.log('user', user);
 
           return user;
         }),
-      decodedUser => {
-        setUser(decodedUser);
+      user => {
+        setUser(user);
+        console.log('user', user);
         onSuccess?.();
         toast.success('로그인에 성공하였습니다.');
       }
@@ -203,6 +205,27 @@ export function useLoginPost() {
   };
 
   return { postUser };
+}
+
+//토근요청
+export function useKakaoToken() {
+  const { request } = useRequest();
+
+  const getToken = (onSuccess?: (token: string) => void) => {
+    request(
+      () =>
+        api.post('/bgm-agit/biztalkToken').then(res => {
+          // const token = res.data.token as string;
+          console.log('res', res);
+          return 'zzzz'; // 토큰만 반환
+        }),
+      token => {
+        onSuccess?.(token);
+      }
+    );
+  };
+
+  return { getToken };
 }
 
 export function useInsertPost() {

@@ -18,7 +18,6 @@ import type { Editor } from '@ckeditor/ckeditor5-core';
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
-import type { AxiosRequestHeaders } from 'axios';
 import { toast } from 'react-toastify';
 import { useSearchParams } from 'react-router-dom';
 import { FaTrash } from 'react-icons/fa';

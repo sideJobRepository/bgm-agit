@@ -15,7 +15,6 @@ export default function KakaoRedirectPage() {
     }
 
     postUser(code, () => {
-      // BroadcastChannel 전역 저장
       navigate('/');
     });
   }, []);

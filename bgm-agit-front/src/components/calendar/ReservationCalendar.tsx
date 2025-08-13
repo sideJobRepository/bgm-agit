@@ -11,7 +11,7 @@ import type { ReservationDatas } from '../../types/reservation.ts';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import { userState } from '../../recoil/state/userState.ts';
 import { showConfirmModal } from '../confirmAlert.tsx';
-import { useInsertPost, useReservationFetch } from '../../recoil/fetch.ts';
+import { useInsertPost, useKakaoToken, useReservationFetch } from '../../recoil/fetch.ts';
 import { useNavigate } from 'react-router-dom';
 
 export default function ReservationCalendar({ id }: { id?: number }) {
@@ -24,6 +24,8 @@ export default function ReservationCalendar({ id }: { id?: number }) {
 
   //insert
   const { insert } = useInsertPost();
+
+  const { getToken } = useKakaoToken();
 
   //useer 정보
   const user = useRecoilValue(userState);
@@ -103,6 +105,9 @@ export default function ReservationCalendar({ id }: { id?: number }) {
             },
             ignoreHttpError: true,
             onSuccess: () => {
+              //알림 호출
+              kakaoMessageSend();
+
               showConfirmModal({
                 message: (
                   <>
@@ -126,6 +131,43 @@ export default function ReservationCalendar({ id }: { id?: number }) {
           });
         }
       },
+    });
+  }
+
+  //카카오 알림톡
+  function kakaoMessageSend() {
+    // const tset = getToken();
+
+    getToken(() => {
+      console.log('받은 카카오 토큰:');
+      // 여기서 다음 작업 진행
+    });
+
+    const countryCode = user?.phoneNumber.match(/^\+(\d+)/)?.[1];
+    const formattedDate = value.toISOString().split('T')[0];
+    const formattedTimes = selectedTimes.join(', ');
+    const formatted = user?.phoneNumber
+      .replace(/^\+82\s?/, '010-') // +82 제거 후 010-로 시작
+      .replace(/\s?/, '') // 혹시 남아있는 공백 제거
+      .replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+
+    console.log('user', user);
+    //bgmagit-reservation 템플릿코드
+
+    insert({
+      url: '/v2/kko/sendAlimTalk',
+      body: {
+        msgIdx: user?.socialId,
+        tmpltCode: 'bgmagit-reservation',
+        countryCode: countryCode,
+        resMethod: 'PUSH',
+        recipient: formatted,
+        name: user?.name,
+        reservationDate: formattedDate,
+        reservationTime: formattedTimes,
+        reservationStatus: '예약 대기',
+      },
+      ignoreHttpError: true,
     });
   }
 
