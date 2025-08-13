@@ -91,7 +91,7 @@ public class BgmAgitBizTalkServiceImpl implements BgmAgitBizTalkService {
                 .body(String.class)
                 .trim();
         
-        biztalkTokenRepository.deleteByBgmAgitBiztalkIp(publicIp);
+        biztalkTokenRepository.deleteIp(publicIp);
         
         BizTalkTokenResponse result = restClient.post()
                 .uri(biztalkUrl + "/v2/auth/getToken")
