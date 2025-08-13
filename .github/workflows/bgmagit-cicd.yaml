@@ -84,6 +84,7 @@ jobs:
             -e CLIENT_SECRET=${{ secrets.CLIENT_SECRET }} \
             -e BIZTALK_ID=${{ secrets.BIZTALK_ID }} \
             -e BIZTALK_PASSWORD=${{ secrets.BIZTALK_PASSWORD }} \
+            -e SENDER_KEY=${{ secrets.SENDER_KEY }} \
             -e SPRING_PROFILES_ACTIVE=real \
             -v $(pwd)/logs:/app/logs \
             -p 8080:8080 \

@@ -61,3 +61,4 @@ cookie:
 biztalk:
   id: ${BIZTALK_ID}
   password: ${BIZTALK_PASSWORD}
+  sender-key: ${SENDER_KEY}

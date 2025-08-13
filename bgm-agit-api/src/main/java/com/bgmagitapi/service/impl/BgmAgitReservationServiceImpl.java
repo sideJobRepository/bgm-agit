@@ -15,6 +15,7 @@ import com.bgmagitapi.entity.QBgmAgitMember;
 import com.bgmagitapi.repository.BgmAgitImageRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.repository.BgmAgitReservationRepository;
+import com.bgmagitapi.service.BgmAgitBizTalkSandService;
 import com.bgmagitapi.service.BgmAgitReservationService;
 import com.bgmagitapi.util.LunarCalendar;
 import com.querydsl.core.BooleanBuilder;
@@ -50,6 +51,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     private final BgmAgitMemberRepository bgmAgitMemberRepository;
     
     private final BgmAgitReservationRepository bgmAgitReservationRepository;
+    
+    private final BgmAgitBizTalkSandService bgmAgitBizTalkSandService;
     
     private final JPAQueryFactory queryFactory;
     
@@ -208,6 +211,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         Long maxReservationNo = bgmAgitReservationRepository.findMaxReservationNo();
         maxReservationNo = (maxReservationNo == null) ? 1L : maxReservationNo + 1L;
         // 신규 예약 생성
+        List<BgmAgitReservation> list = new ArrayList<>();
         for (String timeSlot : timeList) {
             // "14:00 ~ 15:00" → ["14:00", "15:00"]
             String[] times = timeSlot.split(" ~ ");
@@ -226,9 +230,10 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     member, image, reservationType, startTime, endTime, kstDate,maxReservationNo
             );
             bgmAgitReservationRepository.save(reservation);
+            list.add(reservation);
         }
         
-        
+        bgmAgitBizTalkSandService.sandBizTalk(member,image,list);
         return new ApiResponse(200, true, "예약이 완료되었습니다.");
     }
     

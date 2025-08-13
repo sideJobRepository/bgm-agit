@@ -40,6 +40,8 @@ public class BgmAgitReservationCreateRequest {
     @NotNull(message = "예약 시작 시간은 필수입니다.")
     private List<String> startTimeEndTime;
     
+    private String recipient;
+    
     /**
      * 요청된 시간 문자열 리스트로부터 1시간 단위 슬롯을 생성하는 유틸 메서드
      */
