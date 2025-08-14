@@ -109,7 +109,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         List<BgmAgitReservationResponse.TimeSlotByDate> timeSlots = new ArrayList<>();
         
         for (LocalDate d = today; !d.isAfter(endOfYear); d = d.plusDays(1)) {
-            LocalDateTime open = LocalDateTime.of(d, LocalTime.of(13, 0));
+            LocalDateTime open =  isGroomAndMahjongRental(id) ? LocalDateTime.of(d, LocalTime.of(14, 0)) : LocalDateTime.of(d, LocalTime.of(13, 0));
             LocalDateTime close = LocalDateTime.of(d.plusDays(1), LocalTime.of(2, 0));
             LocalDateTime cursor = open;
             
@@ -117,7 +117,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             List<TimeRange> reserved = reservedMap.getOrDefault(d, Collections.emptyList())
                     .stream().sorted(Comparator.comparing(TimeRange::getStart)).toList();
             
-            int slotIntervalHours = (id != null && id == 18) ? 3 : 1;
+            int slotIntervalHours = (isGroomAndMahjongRental(id)) ? 3 : 1;
             
             while (cursor.isBefore(close)) {
                 LocalDateTime slotStart = cursor;
@@ -136,7 +136,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     availableSlots.add(slotStart.format(formatter));
                 }
                 
-                if ((id != null && id == 18) && slotStart.format(formatter).equals("01:00")) {
+                if (isGroomAndMahjongRental(id) && slotStart.format(formatter).equals("01:00")) {
                     availableSlots.remove(slotStart.format(formatter));
                 }
                 
@@ -171,12 +171,21 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             boolean isWeekend = d.getDayOfWeek() == DayOfWeek.SATURDAY || d.getDayOfWeek() == DayOfWeek.SUNDAY;
             boolean isHoliday = holidaySet.contains(dateStr);
             int price = (isWeekend || isHoliday) ? 4000 : 3000;
-            
+            if (mahjongRental(id)) {
+                price = 40000;
+            }
             prices.add(new BgmAgitReservationResponse.PriceByDate(d, price, isWeekend || isHoliday));
         }
         
         return new BgmAgitReservationResponse(timeSlots, prices, label, group);
         
+    }
+    
+    private boolean isGroomAndMahjongRental(Long id) {
+        return id != null && (id == 18 || id == 32 || id == 33 || id == 34 || id == 35);
+    }
+    private boolean mahjongRental(Long id) {
+        return id != null && ( id == 32 || id == 33 || id == 34 || id == 35);
     }
     
     @Override

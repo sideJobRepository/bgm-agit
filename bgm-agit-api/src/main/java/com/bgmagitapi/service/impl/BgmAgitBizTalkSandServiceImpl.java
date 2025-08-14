@@ -59,13 +59,13 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         
         String phone = AlimtalkUtils.formatRecipientKr(member.getBgmAgitMemberPhoneNo());
         
-        Attach attach = AlimtalkUtils.defaultAttach();
+      //  Attach attach = AlimtalkUtils.defaultAttach();
         
         Map<String, Object> request = AlimtalkUtils.buildSendRequest(
-                senderKey, phone, message, attach);
+                senderKey, phone, message);
         
         Map<String, Object> request2 = AlimtalkUtils.buildOwnerSendRequest(
-                senderKey, ownerMessage, attach
+                senderKey, ownerMessage
         );
         
         RestClient restClient = RestClient.create();
