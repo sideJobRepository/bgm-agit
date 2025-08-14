@@ -381,15 +381,14 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         
         // 알림톡
         
+        // ...메서드 내부
         BizTalkCancel bizTalkCancel = queryFactory
-                .select(
-                        Projections.constructor(
-                                BizTalkCancel.class,
-                                bgmAgitMember.bgmAgitMemberName,
-                                bgmAgitImage.bgmAgitImageLabel,
-                                bgmAgitMember.bgmAgitMemberPhoneNo
-                        )
-                )
+                .select(Projections.constructor(
+                        BizTalkCancel.class,
+                        bgmAgitMember.bgmAgitMemberName,
+                        bgmAgitImage.bgmAgitImageLabel,
+                        bgmAgitMember.bgmAgitMemberPhoneNo
+                ))
                 .distinct()
                 .from(bgmAgitReservation)
                 .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember)
@@ -397,39 +396,41 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .where(bgmAgitReservation.bgmAgitReservationNo.eq(reservationNo))
                 .fetchOne();
         
+        if (bizTalkCancel == null) {
+            return new ApiResponse(404, false, "전송 대상이 없습니다.");
+        }
         
         String formattedTimes = AlimtalkUtils.formatTimes(list);
-        String formattedDate = AlimtalkUtils.formatDate(list.get(0).getBgmAgitReservationStartDate());
-        BgmAgitReservation bgmAgitReservation = list.get(0);
-        String memberName = bizTalkCancel.getMemberName();
-        String label = bizTalkCancel.getLabel();
+        String formattedDate  = AlimtalkUtils.formatDate(list.get(0).getBgmAgitReservationStartDate());
+        BgmAgitReservation firstReservation = list.get(0);
         
-        String message = null;
-        String tmpltName = null;
-        if("ROLE_ADMIN".equals(role)) {
-            message = AlimtalkUtils.buildReservationCancelMessageAdmin(memberName, formattedDate, formattedTimes, label);
-            tmpltName = "bgmagit-reservation-cancel-2";
-        }else {
-            message = AlimtalkUtils.buildReservationCancelMessage(memberName, formattedDate, formattedTimes, label);
-            tmpltName = "bgmagit-reservation-cancel";
-        }
-        String phone = AlimtalkUtils.formatRecipientKr(bizTalkCancel.getMemberPhoneNo());
-        Attach attach = AlimtalkUtils.defaultAttach();
+        String memberName = bizTalkCancel.getMemberName();
+        String label      = bizTalkCancel.getLabel();
+        
+        boolean isAdmin   = "ROLE_ADMIN".equals(role);
+        String message    = isAdmin
+                ? AlimtalkUtils.buildReservationCancelMessageAdmin(memberName, formattedDate, formattedTimes, label)
+                : AlimtalkUtils.buildReservationCancelMessage(memberName, formattedDate, formattedTimes, label);
+        String tmpltName  = isAdmin ? "bgmagit-reservation-cancel-2" : "bgmagit-reservation-cancel";
+        
+        String phone      = AlimtalkUtils.formatRecipientKr(bizTalkCancel.getMemberPhoneNo());
+        Attach attach     = AlimtalkUtils.defaultAttach();
         RestClient restClient = RestClient.create();
         BizTalkTokenResponse bizTalkToken = bgmAgitBizTalkService.getBizTalkToken();
         
         Map<String, Object> bizRequest = AlimtalkUtils.buildSendRequest(
-                senderKey, phone, message,tmpltName,attach);
-        
+                senderKey, phone, message, tmpltName, attach);
+
+        // 발송
         restClient.post()
                 .uri(bizTalkUrl + "/v2/kko/sendAlimTalk")
                 .header("Content-Type", "application/json")
                 .header("bt-token", bizTalkToken.getToken())
                 .body(bizRequest)
                 .retrieve()
-                .toEntity(BizTalkResponse.class)
-                .getBody();
-        
+                .toEntity(Void.class);
+
+        // 결과 조회
         BizTalkResponse result = restClient.get()
                 .uri(bizTalkUrl + "/v2/kko/getResultAll")
                 .header("Content-Type", "application/json")
@@ -437,38 +438,36 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .retrieve()
                 .toEntity(BizTalkResponse.class)
                 .getBody();
-        
-        String msgIdx1 = Objects.toString(bizRequest.get("msgIdx"), null);
-        
-        BgmAgitBiztalkSendHistory sendHistory1 = new BgmAgitBiztalkSendHistory(
+
+
+        String msgIdx = Objects.toString(bizRequest.get("msgIdx"), null);
+
+
+        BgmAgitBiztalkSendHistory history = new BgmAgitBiztalkSendHistory(
                 BgmAgitSubject.RESERVATION,
-                bgmAgitReservation.getBgmAgitReservationNo(),
+                firstReservation.getBgmAgitReservationNo(),
                 message,
-                msgIdx1
+                msgIdx
         );
+
+
+        Map<String, String> resultCodeByMsgIdx = Optional.ofNullable(result)
+                .map(BizTalkResponse::getResponse)
+                .orElseGet(List::of)
+                .stream()
+                .filter(Objects::nonNull)
+                .filter(it -> it.getMsgIdx() != null)
+                .collect(Collectors.toMap(
+                        BizTalkResponse.Item::getMsgIdx,
+                        BizTalkResponse.Item::getResultCode,
+                        (a, b) -> a
+                ));
+
         
-        List<BgmAgitBiztalkSendHistory> histories = List.of(sendHistory1);
+        history.settingResultCode(resultCodeByMsgIdx.getOrDefault(msgIdx, "PENDING"));
+
         
-        // 결과 리스트 → msgIdx 별 resultCode 매핑
-        Map<String, String> resultCodeByMsgIdx =
-                Optional.ofNullable(result)
-                        .map(BizTalkResponse::getResponse)
-                        .orElseGet(List::of)
-                        .stream()
-                        .filter(Objects::nonNull)
-                        .filter(it -> it.getMsgIdx() != null)
-                        .collect(Collectors.toMap(
-                                BizTalkResponse.Item::getMsgIdx,
-                                BizTalkResponse.Item::getResultCode,
-                                (a, b) -> a
-                        ));
-        
-        for (BgmAgitBiztalkSendHistory h : histories) {
-            String code = resultCodeByMsgIdx.get(h.getBgmAgitBiztalkSendHistoryMsgIdx());
-            h.settingResultCode(code != null ? code : "PENDING");
-        }
-        
-        bgmAgitBiztalkSendHistoryRepository.saveAll(histories);
+        bgmAgitBiztalkSendHistoryRepository.save(history);
         
         return new ApiResponse(200, true, "수정 되었습니다.");
     }
