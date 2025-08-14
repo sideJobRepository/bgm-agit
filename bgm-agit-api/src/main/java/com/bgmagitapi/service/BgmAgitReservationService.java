@@ -18,5 +18,5 @@ public interface BgmAgitReservationService {
     
     Page<GroupedReservationResponse> getReservationDetail(Long memberId, String role, String startDate, String endDate, Pageable pageable);
     
-    ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request);
+    ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request, String role);
 }

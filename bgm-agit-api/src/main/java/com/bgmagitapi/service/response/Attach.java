@@ -21,14 +21,11 @@ public class Attach {
     public static class Button {
         private String name;
         private String type;
-        @JsonProperty("url_mobile")
-        private String urlMobile;
+        private String url_mobile;
         
-        @JsonProperty("url_pc")
-        private String urlPc;
         
         public static Button wl(String name, String url) {
-            return new Button(name, "WL", url, url);
+            return new Button(name, "WL", url);
         }
     }
 }

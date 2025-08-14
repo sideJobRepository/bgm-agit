@@ -60,13 +60,15 @@ public class BgmAgitReservationController {
     @PutMapping("/reservation")
     public ApiResponse modifyReservation(@AuthenticationPrincipal Jwt jwt , @RequestBody BgmAgitReservationModifyRequest request) {
         Long id = jwt.getClaim("id");
-        return bgmAgitReservationService.modifyReservation(id,request);
+        String role = extractRole(jwt);
+        return bgmAgitReservationService.modifyReservation(id,request,role);
     }
     
     @PutMapping("/reservation/admin")
     public ApiResponse modifyAdminReservation(@AuthenticationPrincipal Jwt jwt , @RequestBody BgmAgitReservationModifyRequest request) {
         Long id = jwt.getClaim("id");
-        return bgmAgitReservationService.modifyReservation(id,request);
+        String role = extractRole(jwt);
+        return bgmAgitReservationService.modifyReservation(id,request,role);
     }
     
     

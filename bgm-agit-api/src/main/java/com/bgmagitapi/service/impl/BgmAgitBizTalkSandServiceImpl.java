@@ -62,10 +62,10 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
       //  Attach attach = AlimtalkUtils.defaultAttach();
         
         Map<String, Object> request = AlimtalkUtils.buildSendRequest(
-                senderKey, phone, message);
+                senderKey, phone, message,"bgmagit-reservation",null);
         
         Map<String, Object> request2 = AlimtalkUtils.buildOwnerSendRequest(
-                senderKey, ownerMessage
+                senderKey, ownerMessage,"bgmagit-reservation",null
         );
         
         RestClient restClient = RestClient.create();

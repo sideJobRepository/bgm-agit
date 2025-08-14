@@ -58,6 +58,34 @@ public class AlimtalkUtils {
                 .append("자세한 예약내역은 BGM 아지트 홈페이지 사이트 에서 로그인 후 마이페이지 > 예약내역에서 확인하실 수 있습니다.")
                 .toString();
     }
+    /* 예약 취소 메시지 필드 1*/
+    public static String buildReservationCancelMessage(String userName, String date, String times, String roomName) {
+        return new StringBuilder()
+                .append("안녕하세요.").append(userName).append("님\n")
+                .append("BGM 아지트 예약 취소 내역을 알려드립니다.\n\n")
+                .append("예약자: ").append(userName).append("\n")
+                .append("예약 일자: ").append(date).append("\n")
+                .append("예약 시간: ").append(times).append("\n")
+                .append("예약 상태: 예약 취소\n")
+                .append("예약 룸: ").append(roomName).append("\n\n")
+                .append("자세한 예약내역은 BGM 아지트 홈페이지 사이트 에서 로그인 후 마이페이지 > 예약내역에서 확인하실 수 있습니다.")
+                .toString();
+    }
+    /* 예약 취소 메시지 필드 2 */
+    public static String buildReservationCancelMessageAdmin(String userName, String date, String times, String roomName) {
+        return new StringBuilder()
+                .append("안녕하세요,").append(userName).append("님.\n")
+                .append("먼저, 예약 취소로 불편을 드려 죄송합니다.\n")
+                .append("선 예약자가 있어 고객님의 BGM 아지트 예약이 취소되어 안내드립니다.\n\n")
+                .append("예약자: ").append(userName).append("\n")
+                .append("예약 일자: ").append(date).append("\n")
+                .append("예약 시간: ").append(times).append("\n")
+                .append("예약 상태: 예약 취소\n")
+                .append("예약 룸: ").append(roomName).append("\n\n")
+                .append("자세한 예약 내역은 BGM 아지트 홈페이지 로그인 후 마이페이지 > 예약내역에서 확인하실 수 있습니다.\n\n")
+                .append(userName).append("님의 양해 부탁드립니다.")
+                .toString();
+    }
     
     public static String buildOwnerReservationMessage(String userName, String date, String times, String roomName) {
         return new StringBuilder()
@@ -75,38 +103,38 @@ public class AlimtalkUtils {
     /** 기본 버튼 세트(필요 시 수정) */
     public static Attach defaultAttach() {
         return new Attach(List.of(
-                Attach.Button.wl("홈페이지 바로가기", "https://bgmagit.co.kr")
+                Attach.Button.wl("예약 내역 확인 하기", "https://bgmagit.co.kr")
         ));
     }
     
     /** 비즈톡 요청 맵 생성 (attach는 null 가능) */
     public static Map<String, Object> buildSendRequest(
-            String senderKey, String recipient, String message
+            String senderKey, String recipient, String message,String tmpltName ,  Attach attach
     ) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("msgIdx", UUID.randomUUID().toString());
         m.put("countryCode", "82");
         m.put("resMethod", "PUSH");
         m.put("senderKey", senderKey);
-        m.put("tmpltCode", "bgmagit-reservation");
+        m.put("tmpltCode", tmpltName);
         m.put("recipient", recipient);
         m.put("message", message);
-    //    if (attach != null) m.put("attach", attach);
+        if (attach != null) m.put("attach", attach);
         return m;
     }
     
     public static Map<String, Object> buildOwnerSendRequest(
-            String senderKey, String message
+            String senderKey, String message , String tmpltName ,  Attach attach
     ) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("msgIdx", UUID.randomUUID().toString());
         m.put("countryCode", "82");
         m.put("resMethod", "PUSH");
         m.put("senderKey", senderKey);
-        m.put("tmpltCode", "bgmagit-reservation");
+        m.put("tmpltCode", tmpltName);
         m.put("recipient", "010-5059-3499");
         m.put("message", message);
-   //     if (attach != null) m.put("attach", attach);
+        if (attach != null) m.put("attach", attach);
         return m;
     }
 }
