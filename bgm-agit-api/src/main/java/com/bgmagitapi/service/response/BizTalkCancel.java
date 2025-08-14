@@ -12,4 +12,6 @@ public class BizTalkCancel {
     private String memberName;
     private String label;
     private String memberPhoneNo;
+    private String approvalStatus;
+    
 }

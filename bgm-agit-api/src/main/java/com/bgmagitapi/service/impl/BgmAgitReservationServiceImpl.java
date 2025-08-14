@@ -8,26 +8,22 @@ import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.controller.response.reservation.GroupedReservationResponse;
 import com.bgmagitapi.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.controller.response.reservation.TimeRange;
-import com.bgmagitapi.entity.*;
-import com.bgmagitapi.entity.enumeration.BgmAgitSubject;
-import com.bgmagitapi.repository.BgmAgitBiztalkSendHistoryRepository;
+import com.bgmagitapi.entity.BgmAgitImage;
+import com.bgmagitapi.entity.BgmAgitMember;
+import com.bgmagitapi.entity.BgmAgitReservation;
+import com.bgmagitapi.entity.QBgmAgitMember;
 import com.bgmagitapi.repository.BgmAgitImageRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.service.BgmAgitBizTalkSandService;
-import com.bgmagitapi.service.BgmAgitBizTalkService;
 import com.bgmagitapi.service.BgmAgitReservationService;
-import com.bgmagitapi.service.response.Attach;
 import com.bgmagitapi.service.response.BizTalkCancel;
-import com.bgmagitapi.service.response.BizTalkResponse;
-import com.bgmagitapi.service.response.BizTalkTokenResponse;
-import com.bgmagitapi.util.AlimtalkUtils;
+import com.bgmagitapi.service.response.ReservationTalkContext;
 import com.bgmagitapi.util.LunarCalendar;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -38,16 +34,14 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestClient;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.bgmagitapi.entity.QBgmAgitImage.*;
 import static com.bgmagitapi.entity.QBgmAgitImage.bgmAgitImage;
-import static com.bgmagitapi.entity.QBgmAgitMember.*;
+import static com.bgmagitapi.entity.QBgmAgitMember.bgmAgitMember;
 import static com.bgmagitapi.entity.QBgmAgitReservation.bgmAgitReservation;
 
 @Transactional
@@ -63,16 +57,9 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     
     private final BgmAgitBizTalkSandService bgmAgitBizTalkSandService;
     
-    private final BgmAgitBizTalkService bgmAgitBizTalkService;
-    
     private final JPAQueryFactory queryFactory;
     
-    private final BgmAgitBiztalkSendHistoryRepository bgmAgitBiztalkSendHistoryRepository;
-    
-    @Value("${biztalk.sender-key}")
-    private String senderKey;
-    
-    private final String bizTalkUrl = "https://www.biztalk-api.com";
+
     
     
     @Override
@@ -373,21 +360,15 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .map(BgmAgitReservation::getBgmAgitReservationId)
                 .toList();
         
-        if (!idList.isEmpty()) {
-            bgmAgitReservationRepository.bulkUpdateCancelAndApprovalStatus(
-                    cancelStatus, approvalStatus, idList
-            );
-        }
+      
         
-        // 알림톡
-        
-        // ...메서드 내부
         BizTalkCancel bizTalkCancel = queryFactory
                 .select(Projections.constructor(
                         BizTalkCancel.class,
                         bgmAgitMember.bgmAgitMemberName,
                         bgmAgitImage.bgmAgitImageLabel,
-                        bgmAgitMember.bgmAgitMemberPhoneNo
+                        bgmAgitMember.bgmAgitMemberPhoneNo,
+                        bgmAgitReservation.bgmAgitReservationApprovalStatus
                 ))
                 .distinct()
                 .from(bgmAgitReservation)
@@ -396,79 +377,35 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .where(bgmAgitReservation.bgmAgitReservationNo.eq(reservationNo))
                 .fetchOne();
         
+        if (!idList.isEmpty()) {
+            bgmAgitReservationRepository.bulkUpdateCancelAndApprovalStatus(
+                    cancelStatus, approvalStatus, idList
+            );
+        }
+        
         if (bizTalkCancel == null) {
             return new ApiResponse(404, false, "전송 대상이 없습니다.");
         }
         
-        String formattedTimes = AlimtalkUtils.formatTimes(list);
-        String formattedDate  = AlimtalkUtils.formatDate(list.get(0).getBgmAgitReservationStartDate());
-        BgmAgitReservation firstReservation = list.get(0);
+        ReservationTalkContext ctx = ReservationTalkContext.of(role, list, bizTalkCancel);
+
+        // 명확한 조건 변수로 가독성 ↑ (대/소문자 및 null 안전)
+        boolean approvedNow = "Y".equalsIgnoreCase(approvalStatus);
+        boolean wasApproved = "Y".equalsIgnoreCase(bizTalkCancel.getApprovalStatus());
+        boolean canceledNow = "Y".equalsIgnoreCase(cancelStatus);
+        // (필요하면 과거 cancelStatus 비교도 추가 가능)
         
-        String memberName = bizTalkCancel.getMemberName();
-        String label      = bizTalkCancel.getLabel();
+        if (approvedNow && !wasApproved) {
+            // 승인으로 '변경' 되었을 때만 완료 알림톡
+            return bgmAgitBizTalkSandService.sendCompleteBizTalk(ctx);
+        }
         
-        boolean isAdmin   = "ROLE_ADMIN".equals(role);
-        String message    = isAdmin
-                ? AlimtalkUtils.buildReservationCancelMessageAdmin(memberName, formattedDate, formattedTimes, label)
-                : AlimtalkUtils.buildReservationCancelMessage(memberName, formattedDate, formattedTimes, label);
-        String tmpltName  = isAdmin ? "bgmagit-reservation-cancel-2" : "bgmagit-reservation-cancel";
-        
-        String phone      = AlimtalkUtils.formatRecipientKr(bizTalkCancel.getMemberPhoneNo());
-        Attach attach     = AlimtalkUtils.defaultAttach();
-        RestClient restClient = RestClient.create();
-        BizTalkTokenResponse bizTalkToken = bgmAgitBizTalkService.getBizTalkToken();
-        
-        Map<String, Object> bizRequest = AlimtalkUtils.buildSendRequest(
-                senderKey, phone, message, tmpltName, attach);
+        if (canceledNow) {
+            // 취소 상태로 요청되었을 때만 취소 알림톡
+            return bgmAgitBizTalkSandService.sendCancelBizTalk(ctx);
+        }
 
-        // 발송
-        restClient.post()
-                .uri(bizTalkUrl + "/v2/kko/sendAlimTalk")
-                .header("Content-Type", "application/json")
-                .header("bt-token", bizTalkToken.getToken())
-                .body(bizRequest)
-                .retrieve()
-                .toEntity(Void.class);
-
-        // 결과 조회
-        BizTalkResponse result = restClient.get()
-                .uri(bizTalkUrl + "/v2/kko/getResultAll")
-                .header("Content-Type", "application/json")
-                .header("bt-token", bizTalkToken.getToken())
-                .retrieve()
-                .toEntity(BizTalkResponse.class)
-                .getBody();
-
-
-        String msgIdx = Objects.toString(bizRequest.get("msgIdx"), null);
-
-
-        BgmAgitBiztalkSendHistory history = new BgmAgitBiztalkSendHistory(
-                BgmAgitSubject.RESERVATION,
-                firstReservation.getBgmAgitReservationNo(),
-                message,
-                msgIdx
-        );
-
-
-        Map<String, String> resultCodeByMsgIdx = Optional.ofNullable(result)
-                .map(BizTalkResponse::getResponse)
-                .orElseGet(List::of)
-                .stream()
-                .filter(Objects::nonNull)
-                .filter(it -> it.getMsgIdx() != null)
-                .collect(Collectors.toMap(
-                        BizTalkResponse.Item::getMsgIdx,
-                        BizTalkResponse.Item::getResultCode,
-                        (a, b) -> a
-                ));
-
-        
-        history.settingResultCode(resultCodeByMsgIdx.getOrDefault(msgIdx, "PENDING"));
-
-        
-        bgmAgitBiztalkSendHistoryRepository.save(history);
-        
-        return new ApiResponse(200, true, "수정 되었습니다.");
+        // 전송 조건이 아닌 경우
+        return new ApiResponse(200, true, "수정 되었습니다. (알림톡 전송 조건 불충족)");
     }
 }
