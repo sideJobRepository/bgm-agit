@@ -39,7 +39,7 @@ public class BgmAgitBizTalkServiceImpl implements BgmAgitBizTalkService {
     
     @PostConstruct
     public void init() {
-        issueAndSaveToken();
+  //      issueAndSaveToken();
     }
     
     @Scheduled(fixedDelayString = "PT11H")
@@ -57,20 +57,21 @@ public class BgmAgitBizTalkServiceImpl implements BgmAgitBizTalkService {
                 .body(String.class)
                 .trim();
         
-        return queryFactory
-                .select(Projections.constructor(
-                        BizTalkTokenResponse.class,
-                        bgmAgitBiztalkToken.bgmAgitBiztalkTokenValue,
-                        Expressions.stringTemplate(
-                                "DATE_FORMAT({0}, {1})",
-                                bgmAgitBiztalkToken.bgmAgitBiztalkTokenExpiresDate,
-                                Expressions.constant("%Y%m%d%H%i%s")
-                        )
-                ))
-                .from(bgmAgitBiztalkToken)
-                .where(
-                        bgmAgitBiztalkToken.bgmAgitBiztalkIp.eq(publicIp)
-                ).fetchOne();
+        return null;
+//        return queryFactory
+//                .select(Projections.constructor(
+//                        BizTalkTokenResponse.class,
+//                        bgmAgitBiztalkToken.bgmAgitBiztalkTokenValue,
+//                        Expressions.stringTemplate(
+//                                "DATE_FORMAT({0}, {1})",
+//                                bgmAgitBiztalkToken.bgmAgitBiztalkTokenExpiresDate,
+//                                Expressions.constant("%Y%m%d%H%i%s")
+//                        )
+//                ))
+//                .from(bgmAgitBiztalkToken)
+//                .where(
+//                        bgmAgitBiztalkToken.bgmAgitBiztalkIp.eq(publicIp)
+//                ).fetchOne();
     
     }
     
