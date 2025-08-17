@@ -11,9 +11,8 @@ import type { ReservationDatas } from '../../types/reservation.ts';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import { userState } from '../../recoil/state/userState.ts';
 import { showConfirmModal } from '../confirmAlert.tsx';
-import { useInsertPost, useKakaoToken, useReservationFetch } from '../../recoil/fetch.ts';
+import { useInsertPost, useReservationFetch } from '../../recoil/fetch.ts';
 import { useNavigate } from 'react-router-dom';
-import type { AxiosRequestHeaders } from 'axios';
 
 export default function ReservationCalendar({ id }: { id?: number }) {
   const navigate = useNavigate();
@@ -22,11 +21,9 @@ export default function ReservationCalendar({ id }: { id?: number }) {
   const reservationData = useRecoilValue(reservationDataState);
 
   const today = new Date();
-
+  console.log('reservation', reservation);
   //insert
   const { insert } = useInsertPost();
-
-  const { getToken } = useKakaoToken();
 
   //useer 정보
   const user = useRecoilValue(userState);
@@ -36,23 +33,25 @@ export default function ReservationCalendar({ id }: { id?: number }) {
   //G룸인 경우 3시간 간격이고 마지막은 2시간 단위로 끊음
   const allTime =
     id === 18
-      ? ['13:00', '16:00', '19:00', '22:00', '02:00']
-      : [
-          '13:00',
-          '14:00',
-          '15:00',
-          '16:00',
-          '17:00',
-          '18:00',
-          '19:00',
-          '20:00',
-          '21:00',
-          '22:00',
-          '23:00',
-          '00:00',
-          '01:00',
-          '02:00',
-        ];
+      ? ['14:00', '17:00', '20:00', '23:00', '02:00']
+      : reservationData?.link === '/detail/mahjongRental'
+        ? ['14:00', '17:00', '20:00', '23:00', '02:00']
+        : [
+            '13:00',
+            '14:00',
+            '15:00',
+            '16:00',
+            '17:00',
+            '18:00',
+            '19:00',
+            '20:00',
+            '21:00',
+            '22:00',
+            '23:00',
+            '00:00',
+            '01:00',
+            '02:00',
+          ];
 
   const [value, setValue] = useState<Date>(today);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
@@ -96,6 +95,7 @@ export default function ReservationCalendar({ id }: { id?: number }) {
           const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URL}&response_type=code`;
           window.location.href = kakaoAuthUrl;
         } else {
+          console.log('000 value', value, 'selectedTimes', selectedTimes);
           insert({
             url: '/bgm-agit/reservation',
             body: {
@@ -106,9 +106,6 @@ export default function ReservationCalendar({ id }: { id?: number }) {
             },
             ignoreHttpError: true,
             onSuccess: () => {
-              //알림 호출
-              //kakaoMessageSend();
-
               showConfirmModal({
                 message: (
                   <>
@@ -133,56 +130,6 @@ export default function ReservationCalendar({ id }: { id?: number }) {
         }
       },
     });
-  }
-
-  //카카오 알림톡
-  function kakaoMessageSend() {
-    // getToken(token => {
-    //   console.log('받은 값:', token); //카카오 알림톡 토큰
-    //
-    //   const countryCode = user?.phoneNumber.match(/^\+(\d+)/)?.[1]; // +82
-    //   const formattedDate = value.toISOString().split('T')[0]; // YYYY-MM-DD
-    //   const formattedTimes = selectedTimes.join(', '); // '13:00, 14:00'
-    //   const formatted = user?.phoneNumber
-    //     ?.replace(/^\+82\s?/, '0')
-    //     ?.replace(/\D/g, '')
-    //     ?.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
-    //
-    //   const message = `안녕하세요. ${user?.name}님.
-    //     BGM 아지트 예약 내역을 알려드립니다.
-    //
-    //     예약자: ${user?.name}
-    //     예약 일자: ${formattedDate}
-    //     예약 시간: ${formattedTimes}
-    //     예약 상태: 예약 대기
-    //
-    //     자세한 예약내역은 아래 버튼을 눌러 로그인 후,
-    //     마이페이지 > 예약내역에서 확인하실 수 있습니다.
-    //     감사합니다.`;
-    //
-    //   insert({
-    //     url: 'https://www.biztalk-api.com/v2/kko/sendAlimTalk',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //       'bt-token': token,
-    //     } as unknown as AxiosRequestHeaders,
-    //     body: {
-    //       msgIdx: crypto.randomUUID(),
-    //       tmpltCode: 'bgmagit-reservation',
-    //       countryCode,
-    //       senderKey: import.meta.env.VITE_KAKAO_SEND_KEY,
-    //       resMethod: 'PUSH',
-    //       recipient: formatted,
-    //       message: message,
-    //       attach: {
-    //         button: [
-    //           { name: '홈페이지 바로가기', type: 'WL', url_mobile: 'https://bgmagit.co.kr' },
-    //         ],
-    //       },
-    //     },
-    //     ignoreHttpError: true,
-    //   });
-    // });
   }
 
   return (

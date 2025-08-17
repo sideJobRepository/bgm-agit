@@ -207,25 +207,6 @@ export function useLoginPost() {
   return { postUser };
 }
 
-//토근요청
-export function useKakaoToken() {
-  const { request } = useRequest();
-
-  const getToken = (onSuccess?: (token: string) => void) => {
-    request(
-      () =>
-        api.post('/bgm-agit/biztalkToken').then(res => {
-          return res.data.biztalkToken as string;
-        }),
-      token => {
-        onSuccess?.(token);
-      }
-    );
-  };
-
-  return { getToken };
-}
-
 export function useInsertPost() {
   const { request } = useRequest();
 
