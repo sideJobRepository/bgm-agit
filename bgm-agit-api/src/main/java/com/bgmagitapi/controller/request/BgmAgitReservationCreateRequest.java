@@ -51,10 +51,15 @@ public class BgmAgitReservationCreateRequest {
         
         for (String timeStr : startTimeEndTime) {
             LocalTime start = LocalTime.parse(timeStr, formatter);
-            LocalTime end = start.plusHours(1);
+            boolean groomAndMahjongRental = isGroomAndMahjongRental(this.bgmAgitImageId);
+            LocalTime end  = groomAndMahjongRental ? start.plusHours(3) : start.plusHours(1);
             
             result.add(start.format(formatter) + " ~ " + end.format(formatter));
         }
         return result;
+    }
+    
+    private boolean isGroomAndMahjongRental(Long id) {
+        return id != null && (id == 18 || id == 32 || id == 33 || id == 34 || id == 35);
     }
 }
