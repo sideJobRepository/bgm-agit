@@ -251,7 +251,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             list.add(reservation);
         }
         
-   //     bgmAgitBizTalkSandService.sandBizTalk(member,image,list);
+        bgmAgitBizTalkSandService.sandBizTalk(member,image,list);
         return new ApiResponse(200, true, "예약이 완료되었습니다.");
     }
     
@@ -362,48 +362,48 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         
       
         
-//        BizTalkCancel bizTalkCancel = queryFactory
-//                .select(Projections.constructor(
-//                        BizTalkCancel.class,
-//                        bgmAgitMember.bgmAgitMemberName,
-//                        bgmAgitImage.bgmAgitImageLabel,
-//                        bgmAgitMember.bgmAgitMemberPhoneNo,
-//                        bgmAgitReservation.bgmAgitReservationApprovalStatus
-//                ))
-//                .distinct()
-//                .from(bgmAgitReservation)
-//                .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember)
-//                .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage)
-//                .where(bgmAgitReservation.bgmAgitReservationNo.eq(reservationNo))
-//                .fetchOne();
-//
+        BizTalkCancel bizTalkCancel = queryFactory
+                .select(Projections.constructor(
+                        BizTalkCancel.class,
+                        bgmAgitMember.bgmAgitMemberName,
+                        bgmAgitImage.bgmAgitImageLabel,
+                        bgmAgitMember.bgmAgitMemberPhoneNo,
+                        bgmAgitReservation.bgmAgitReservationApprovalStatus
+                ))
+                .distinct()
+                .from(bgmAgitReservation)
+                .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember)
+                .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage)
+                .where(bgmAgitReservation.bgmAgitReservationNo.eq(reservationNo))
+                .fetchOne();
+
         if (!idList.isEmpty()) {
             bgmAgitReservationRepository.bulkUpdateCancelAndApprovalStatus(
                     cancelStatus, approvalStatus, idList
             );
         }
-//
-//        if (bizTalkCancel == null) {
-//            return new ApiResponse(404, false, "전송 대상이 없습니다.");
-//        }
-//
-//        ReservationTalkContext ctx = ReservationTalkContext.of(role, list, bizTalkCancel);
-//
-//        // 명확한 조건 변수로 가독성 ↑ (대/소문자 및 null 안전)
-//        boolean approvedNow = "Y".equalsIgnoreCase(approvalStatus);
-//        boolean wasApproved = "Y".equalsIgnoreCase(bizTalkCancel.getApprovalStatus());
-//        boolean canceledNow = "Y".equalsIgnoreCase(cancelStatus);
-//        // (필요하면 과거 cancelStatus 비교도 추가 가능)
-//
-//        if (approvedNow && !wasApproved) {
-//            // 승인으로 '변경' 되었을 때만 완료 알림톡
-//            return bgmAgitBizTalkSandService.sendCompleteBizTalk(ctx);
-//        }
-//
-//        if (canceledNow) {
-//            // 취소 상태로 요청되었을 때만 취소 알림톡
-//            return bgmAgitBizTalkSandService.sendCancelBizTalk(ctx);
-//        }
+
+        if (bizTalkCancel == null) {
+            return new ApiResponse(404, false, "전송 대상이 없습니다.");
+        }
+
+        ReservationTalkContext ctx = ReservationTalkContext.of(role, list, bizTalkCancel);
+
+        // 명확한 조건 변수로 가독성 ↑ (대/소문자 및 null 안전)
+        boolean approvedNow = "Y".equalsIgnoreCase(approvalStatus);
+        boolean wasApproved = "Y".equalsIgnoreCase(bizTalkCancel.getApprovalStatus());
+        boolean canceledNow = "Y".equalsIgnoreCase(cancelStatus);
+        // (필요하면 과거 cancelStatus 비교도 추가 가능)
+
+        if (approvedNow && !wasApproved) {
+            // 승인으로 '변경' 되었을 때만 완료 알림톡
+            return bgmAgitBizTalkSandService.sendCompleteBizTalk(ctx);
+        }
+
+        if (canceledNow) {
+            // 취소 상태로 요청되었을 때만 취소 알림톡
+            return bgmAgitBizTalkSandService.sendCancelBizTalk(ctx);
+        }
 
         // 전송 조건이 아닌 경우
         return new ApiResponse(200, true, "수정 되었습니다. (알림톡 전송 조건 불충족)");
