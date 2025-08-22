@@ -22,11 +22,13 @@ import com.bgmagitapi.service.response.ReservationTalkContext;
 import com.bgmagitapi.util.LunarCalendar;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -295,17 +297,18 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage).fetchJoin()
                 .where(booleanBuilder)
                 .orderBy(bgmAgitReservation.bgmAgitReservationNo.desc()) // 예약 번호 기준 정렬
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
                 .fetch();
         
         // 2. 총 개수
-        Long total = queryFactory
+        JPAQuery<Long> countQuery = queryFactory
                 .select(bgmAgitReservation.bgmAgitReservationNo.countDistinct())
                 .from(bgmAgitReservation)
                 .join(bgmAgitReservation.bgmAgitMember, qBgmAgitMember)
                 .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage)
-                .where(booleanBuilder)
-                .fetchOne();
-        if (total == null) total = 0L;
+                .where(booleanBuilder);
+        
         
         // 3. 그룹핑
         Map<Long, List<BgmAgitReservation>> grouped = reservations.stream()
@@ -335,12 +338,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 })
                 .collect(Collectors.toList());
         
-        // 5. 페이지네이션
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), groupedResponses.size());
-        List<GroupedReservationResponse> pageContent = groupedResponses.subList(start, end);
         
-        return new PageImpl<>(pageContent, pageable, total);
+        return PageableExecutionUtils.getPage(groupedResponses,pageable,countQuery::fetchOne);
     }
     
     @Override

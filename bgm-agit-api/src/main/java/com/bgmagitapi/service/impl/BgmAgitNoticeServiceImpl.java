@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -57,7 +58,7 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
                 .select(bgmAgitNotice.count())
                 .from(bgmAgitNotice)
                 .where(booleanBuilder);
-        Long total = countQuery.fetchOne() == null ? Long.valueOf(0L) : countQuery.fetchOne();
+        
         
         // 데이터 쿼리
         QBgmAgitNotice bgmAgitNotice = QBgmAgitNotice.bgmAgitNotice;
@@ -94,7 +95,8 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
                 .toList();
         
         // Page 반환
-        return new PageImpl<>(content, pageable, total);
+        //return new PageImpl<>(content, pageable, total);
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
     
     private BooleanBuilder getBooleanBuilder(String titleOrCont) {
