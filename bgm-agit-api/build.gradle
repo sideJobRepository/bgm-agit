@@ -46,10 +46,11 @@ dependencies {
 	implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
 
 	// 쿼리 dsl
-	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
-	annotationProcessor "com.querydsl:querydsl-apt:${dependencyManagement.importedProperties['querydsl.version']}:jakarta"
-	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
-	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+	implementation "io.github.openfeign.querydsl:querydsl-jpa:6.11"
+	annotationProcessor "io.github.openfeign.querydsl:querydsl-apt:6.11:jpa"
+	testAnnotationProcessor "io.github.openfeign.querydsl:querydsl-apt:6.11:jpa"
+	annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+	testAnnotationProcessor 'jakarta.persistence:jakarta.persistence-api'
 
 	//스프링 시큐리티
 	implementation 'org.springframework.boot:spring-boot-starter-security'
