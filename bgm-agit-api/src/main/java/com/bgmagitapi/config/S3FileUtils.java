@@ -63,7 +63,7 @@ public class S3FileUtils {
                     .getUrl(b -> b.bucket(bucketName).key(storeFileName))
                     .toExternalForm();
             
-            return new UploadResult(url, uuid);
+            return new UploadResult(url, uuid,originalFilename);
             
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -31,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.bgmagitapi.entity.QBgmAgitNotice.bgmAgitNotice;
 
@@ -50,8 +51,6 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
     @Transactional(readOnly = true)
     public Page<BgmAgitNoticeResponse> getNotice(Pageable pageable, String titleOrCont) {
 
-        
-        // DTO 변환
         
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         Page<BgmAgitNotice> result = bgmAgitNoticeRepository.getNotices(pageable, titleOrCont);
@@ -88,24 +87,14 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
         bgmAgitNoticeRepository.save(notice);
         
         // 2. S3 업로드
-        List<MultipartFile> files = request.getFiles();
-        List<UploadResult> uploadResults = s3FileUtils.storeFiles(files, "notice");
+        List<UploadResult> uploadResults = s3FileUtils.storeFiles(request.getFiles(), "notice");
         
         // 3. 파일 테이블 저장
-        List<BgmAgitNoticeFile> noticeFileEntities = new ArrayList<>();
-        for (int i = 0; i < files.size(); i++) {
-            MultipartFile multipartFile = files.get(i);
-            UploadResult result = uploadResults.get(i);
-            
-            BgmAgitNoticeFile fileEntity = new BgmAgitNoticeFile(
-                    notice,
-                    multipartFile.getOriginalFilename(),
-                    result.getUuid(),
-                    result.getUrl()
-            );
-            noticeFileEntities.add(fileEntity);
-        }
-        bgmAgitNoticeFileRepository.saveAll(noticeFileEntities);
+        List<BgmAgitNoticeFile> noticeFiles = uploadResults.stream()
+                .map(item -> new BgmAgitNoticeFile(notice, item.getOriginalFilename(), item.getUuid(), item.getUrl()))
+                .toList();
+        
+        bgmAgitNoticeFileRepository.saveAll(noticeFiles);
         
         return new ApiResponse(200, true, "공지사항 저장이 성공했습니다.");
     }
@@ -131,25 +120,13 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
         }
         
         // 새 파일 처리
-        List<MultipartFile> multipartFiles = request.getMultipartFiles();
-        if (multipartFiles != null && !multipartFiles.isEmpty()) {
-            List<UploadResult> uploadResults = s3FileUtils.storeFiles(multipartFiles, "notice");
-            List<BgmAgitNoticeFile> newEntities = new ArrayList<>();
+        if (request.getMultipartFiles() != null && !request.getMultipartFiles().isEmpty()) {
+            List<UploadResult> uploadResults = s3FileUtils.storeFiles(request.getMultipartFiles(), "notice");
             
-            for (int i = 0; i < multipartFiles.size(); i++) {
-                MultipartFile multipartFile = multipartFiles.get(i);
-                UploadResult result = uploadResults.get(i);
-                
-                BgmAgitNoticeFile entity = new BgmAgitNoticeFile(
-                        notice,
-                        multipartFile.getOriginalFilename(),
-                        result.getUuid(),
-                        result.getUrl()
-                );
-                newEntities.add(entity);
-            }
-            
-            bgmAgitNoticeFileRepository.saveAll(newEntities);
+            List<BgmAgitNoticeFile> noticeFiles = uploadResults.stream()
+                    .map(item -> new BgmAgitNoticeFile(notice, item.getOriginalFilename(), item.getUuid(), item.getUrl()))
+                    .toList();
+            bgmAgitNoticeFileRepository.saveAll(noticeFiles);
         }
         
         return new ApiResponse(200, true, "수정 되었습니다.");
