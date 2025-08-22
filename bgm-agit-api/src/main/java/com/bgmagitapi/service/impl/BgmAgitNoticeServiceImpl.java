@@ -45,77 +45,36 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
     
     private final S3FileUtils s3FileUtils;
     
-    private final JPAQueryFactory queryFactory;
     
     @Override
     @Transactional(readOnly = true)
     public Page<BgmAgitNoticeResponse> getNotice(Pageable pageable, String titleOrCont) {
-        BooleanBuilder booleanBuilder = getBooleanBuilder(titleOrCont);
+
         
-        
-        // 전체 개수 쿼리
-        JPAQuery<Long> countQuery = queryFactory
-                .select(bgmAgitNotice.count())
-                .from(bgmAgitNotice)
-                .where(booleanBuilder);
-        
-        
-        // 데이터 쿼리
-        QBgmAgitNotice bgmAgitNotice = QBgmAgitNotice.bgmAgitNotice;
-        QBgmAgitNoticeFile bgmAgitNoticeFile = QBgmAgitNoticeFile.bgmAgitNoticeFile;
-        
-        List<BgmAgitNotice> result = queryFactory
-                .selectFrom(bgmAgitNotice)
-                .leftJoin(bgmAgitNotice.bgmAgitNoticeFiles, bgmAgitNoticeFile).fetchJoin()
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .where(booleanBuilder)
-                .orderBy(bgmAgitNotice.bgmAgitNoticeId.desc())
-                .fetch();
         // DTO 변환
         
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        Page<BgmAgitNotice> result = bgmAgitNoticeRepository.getNotices(pageable, titleOrCont);
         
-        List<BgmAgitNoticeResponse> content = result.stream()
-                .map(n -> new BgmAgitNoticeResponse(
+        return result.map(n ->
+                new BgmAgitNoticeResponse(
                         n.getBgmAgitNoticeId(),
                         n.getBgmAgitNoticeTitle(),
                         n.getBgmAgitNoticeCont(),
-                        n.getRegistDate().format(dateFormatter), // 날짜 포맷 적용!
+                        n.getRegistDate().format(dateFormatter),
                         n.getBgmAgitNoticeType().name(),
                         n.getBgmAgitNoticeFiles().stream()
                                 .map(f -> new BgmAgitNoticeFileResponse(
                                         f.getBgmAgitNoticeFileId(),
                                         f.getBgmAgitNoticeFileName(),
                                         f.getBgmAgitNoticeFileUuidName(),
-                                        f.getBgmAgitNoticeFileUrl()
-                                ))
+                                        f.getBgmAgitNoticeFileUrl()))
                                 .toList()
-                ))
-                .toList();
-        
-        // Page 반환
-        //return new PageImpl<>(content, pageable, total);
-        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+                )
+        );
     }
     
-    private BooleanBuilder getBooleanBuilder(String titleOrCont) {
-        BooleanBuilder booleanBuilder = new BooleanBuilder();
-        
-        
-        if (StringUtils.hasText(titleOrCont)) {
-            String keyword = titleOrCont.replaceAll("\\s+", ""); // 검색어에서 공백 제거
-            
-            booleanBuilder.or(
-                    Expressions.stringTemplate("REPLACE({0}, ' ', '')", bgmAgitNotice.bgmAgitNoticeTitle)
-                            .like("%" + keyword + "%")
-            ).or(
-                    Expressions.stringTemplate("REPLACE({0}, ' ', '')", bgmAgitNotice.bgmAgitNoticeCont)
-                            .like("%" + keyword + "%")
-            );
-        }
-        return booleanBuilder;
-    }
+ 
     
     @Override
     public ApiResponse createNotice(BgmAgitNoticeCreateRequest request) {
