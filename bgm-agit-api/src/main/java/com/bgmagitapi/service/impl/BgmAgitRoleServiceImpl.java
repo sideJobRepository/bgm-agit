@@ -9,26 +9,13 @@ import com.bgmagitapi.repository.BgmAgitMemberRoleRepository;
 import com.bgmagitapi.repository.BgmAgitRoleRepository;
 import com.bgmagitapi.security.manager.BgmAgitAuthorizationManager;
 import com.bgmagitapi.service.BgmAgitRoleService;
-import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Projections;
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.CaseBuilder;
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.jpa.impl.JPAQuery;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
-
-import static com.bgmagitapi.entity.QBgmAgitMember.bgmAgitMember;
-import static com.bgmagitapi.entity.QBgmAgitMemberRole.bgmAgitMemberRole;
-import static com.bgmagitapi.entity.QBgmAgitRole.bgmAgitRole;
 
 
 @Service

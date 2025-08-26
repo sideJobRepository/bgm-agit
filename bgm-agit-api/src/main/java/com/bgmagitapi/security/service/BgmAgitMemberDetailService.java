@@ -4,6 +4,7 @@ import com.bgmagitapi.entity.*;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRoleRepository;
 import com.bgmagitapi.repository.BgmAgitRoleRepository;
+import com.bgmagitapi.repository.impl.BgmAgitMemberDetailRepositoryImpl;
 import com.bgmagitapi.security.context.BgmAgitMemberContext;
 import com.bgmagitapi.security.service.response.KaKaoProfileResponse;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -30,11 +31,10 @@ public class BgmAgitMemberDetailService implements UserDetailsService {
     
     private final BgmAgitMemberRepository bgmAgitMemberRepository;
     
-    private final BgmAgitRoleRepository bgmAgitRoleRepository;
-    
     private final BgmAgitMemberRoleRepository bgmAgitMemberRoleRepository;
     
-    private final JPAQueryFactory queryFactory;
+    private final BgmAgitMemberDetailRepositoryImpl bgmAgitMemberDetailRepository;
+    
     
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -48,7 +48,7 @@ public class BgmAgitMemberDetailService implements UserDetailsService {
                     BgmAgitMember agitMember = new BgmAgitMember(kaKaoProfile);
                     BgmAgitMember saveMember = bgmAgitMemberRepository.save(agitMember);
                     
-                    BgmAgitRole findbyBgmAgitRole = bgmAgitRoleRepository.findByBgmAgitRoleName("USER");
+                    BgmAgitRole findbyBgmAgitRole = bgmAgitMemberDetailRepository.findByBgmAgitRoleName("USER");
                     
                     BgmAgitMemberRole bgmAgitMemberRole = new BgmAgitMemberRole(saveMember, findbyBgmAgitRole);
                     
@@ -57,17 +57,9 @@ public class BgmAgitMemberDetailService implements UserDetailsService {
                 });
         
         findBgmAgitMember.modifyMember(kaKaoProfile);
-        
-        
-        List<String> roleNames = queryFactory
-                .select(bgmAgitRole.bgmAgitRoleName)
-                .from(bgmAgitMember)
-                .join(bgmAgitMemberRole).on(bgmAgitMember.eq(bgmAgitMemberRole.bgmAgitMember))
-                .join(bgmAgitRole).on(bgmAgitRole.eq(bgmAgitMemberRole.bgmAgitRole))
-                .where(bgmAgitMember.bgmAgitMemberId.eq(findBgmAgitMember.getBgmAgitMemberId()))
-                .fetch();
-        
-        List<GrantedAuthority> authorityList = AuthorityUtils.createAuthorityList(roleNames);
+        Long id = findBgmAgitMember.getBgmAgitMemberId();
+        List<String> roleName = bgmAgitMemberDetailRepository.getRoleName(id);
+        List<GrantedAuthority> authorityList = AuthorityUtils.createAuthorityList(roleName);
         
         return new BgmAgitMemberContext(findBgmAgitMember, authorityList);
     }

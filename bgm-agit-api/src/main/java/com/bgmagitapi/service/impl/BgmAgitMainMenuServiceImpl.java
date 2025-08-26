@@ -3,27 +3,23 @@ package com.bgmagitapi.service.impl;
 import com.bgmagitapi.controller.response.BgmAgitMainMenuImageResponse;
 import com.bgmagitapi.controller.response.BgmAgitMainMenuResponse;
 import com.bgmagitapi.entity.BgmAgitMainMenu;
+import com.bgmagitapi.repository.BgmAgitImageRepository;
 import com.bgmagitapi.repository.BgmAgitMainMenuRepository;
 import com.bgmagitapi.repository.BgmAgitMenuRoleRepository;
 import com.bgmagitapi.service.BgmAgitMainMenuService;
-import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Projections;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-
-import static com.bgmagitapi.entity.QBgmAgitImage.bgmAgitImage;
-import static com.bgmagitapi.entity.QBgmAgitMainMenu.bgmAgitMainMenu;
 
 @Service
 @Transactional
@@ -34,9 +30,9 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
     
     private final BgmAgitMenuRoleRepository bgmAgitMenuRoleRepository;
     
-    private final RoleHierarchyImpl roleHierarchy;
+    private final BgmAgitImageRepository bgmAgitImageRepository;
     
-    private final JPAQueryFactory queryFactory;
+    private final RoleHierarchyImpl roleHierarchy;
     
     @Override
     @Transactional(readOnly = true)
@@ -52,7 +48,7 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
                 .toList();
         
         // 3. 해당 권한으로 접근 가능한 메뉴 ID 조회
-        List<Long> menuIds = bgmAgitMenuRoleRepository.findMenuIdsByRoleNames(expandedRoleNames);
+        List<Long> menuIds = bgmAgitMenuRoleRepository.findMenuIdByRoleNames(expandedRoleNames);
         
         // 4. 전체 메뉴 조회 (권한 있는 메뉴만 필터링할 경우 이 시점에 filter 가능)
         List<BgmAgitMainMenu> allMenus = bgmAgitMainMenuRepository.findAll();
@@ -124,37 +120,10 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
     @Override
     @Transactional(readOnly = true)
     public Map<Long, List<BgmAgitMainMenuImageResponse>> getMainMenuImage(Long labelGb, String link) {
-        BooleanBuilder booleanBuilder = getBooleanBuilder(labelGb, link);
         
-        List<BgmAgitMainMenuImageResponse> allList = queryFactory
-                .select(Projections.constructor(
-                        BgmAgitMainMenuImageResponse.class,
-                        bgmAgitImage.bgmAgitImageId,
-                        bgmAgitImage.bgmAgitMainMenu.bgmAgitMainMenuId,
-                        bgmAgitImage.bgmAgitImageUrl,
-                        bgmAgitImage.bgmAgitImageLabel,
-                        bgmAgitImage.bgmAgitImageGroups,
-                        bgmAgitImage.bgmAgitMenuLink,
-                        bgmAgitImage.bgmAgitImageCategory.stringValue()
-                ))
-                .from(bgmAgitImage)
-                .join(bgmAgitImage.bgmAgitMainMenu, bgmAgitMainMenu)
-                .where(booleanBuilder)
-                .fetch();
+        List<BgmAgitMainMenuImageResponse> result = bgmAgitImageRepository.getMainMenuImage(labelGb, link);
         
-        return allList.stream()
+        return result.stream()
                 .collect(Collectors.groupingBy(BgmAgitMainMenuImageResponse::getLabelGb));
-    }
-    
-    private BooleanBuilder getBooleanBuilder(Long labelGb, String link) {
-        BooleanBuilder booleanBuilder = new BooleanBuilder();
-        
-        if (labelGb != null) {
-            booleanBuilder.and(bgmAgitImage.bgmAgitMainMenu.bgmAgitMainMenuId.eq(labelGb));
-        }
-        if (StringUtils.hasText(link)) {
-            booleanBuilder.and(bgmAgitImage.bgmAgitMenuLink.eq(link));
-        }
-        return booleanBuilder;
     }
 }
