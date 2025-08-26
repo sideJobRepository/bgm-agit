@@ -4,9 +4,6 @@ import com.bgmagitapi.entity.BgmAgitBiztalkToken;
 import com.bgmagitapi.repository.BgmAgitBiztalkTokenRepository;
 import com.bgmagitapi.service.BgmAgitBizTalkService;
 import com.bgmagitapi.service.response.BizTalkTokenResponse;
-import com.querydsl.core.types.Projections;
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,8 +16,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.bgmagitapi.entity.QBgmAgitBiztalkToken.bgmAgitBiztalkToken;
 
 @Transactional
 @Service

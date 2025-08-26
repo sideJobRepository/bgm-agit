@@ -11,7 +11,6 @@ import com.bgmagitapi.controller.response.reservation.TimeRange;
 import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitReservation;
-import com.bgmagitapi.entity.QBgmAgitMember;
 import com.bgmagitapi.repository.BgmAgitImageRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.repository.BgmAgitReservationRepository;
@@ -20,13 +19,9 @@ import com.bgmagitapi.service.BgmAgitReservationService;
 import com.bgmagitapi.service.response.BizTalkCancel;
 import com.bgmagitapi.service.response.ReservationTalkContext;
 import com.bgmagitapi.util.LunarCalendar;
-import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQuery;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.security.core.Authentication;
@@ -42,10 +37,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.bgmagitapi.entity.QBgmAgitImage.bgmAgitImage;
-import static com.bgmagitapi.entity.QBgmAgitMember.bgmAgitMember;
-import static com.bgmagitapi.entity.QBgmAgitReservation.bgmAgitReservation;
-
 @Transactional
 @Service
 @RequiredArgsConstructor
@@ -58,8 +49,6 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     private final BgmAgitReservationRepository bgmAgitReservationRepository;
     
     private final BgmAgitBizTalkSandService bgmAgitBizTalkSandService;
-    
-    private final JPAQueryFactory queryFactory;
     
     @Override
     @Transactional(readOnly = true)

@@ -9,31 +9,17 @@ import com.bgmagitapi.controller.response.notice.BgmAgitNoticeFileResponse;
 import com.bgmagitapi.controller.response.notice.BgmAgitNoticeResponse;
 import com.bgmagitapi.entity.BgmAgitNotice;
 import com.bgmagitapi.entity.BgmAgitNoticeFile;
-import com.bgmagitapi.entity.QBgmAgitNotice;
-import com.bgmagitapi.entity.QBgmAgitNoticeFile;
 import com.bgmagitapi.repository.BgmAgitNoticeFileRepository;
 import com.bgmagitapi.repository.BgmAgitNoticeRepository;
 import com.bgmagitapi.service.BgmAgitNoticeService;
-import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.jpa.impl.JPAQuery;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static com.bgmagitapi.entity.QBgmAgitNotice.bgmAgitNotice;
 
 @Transactional
 @Service
