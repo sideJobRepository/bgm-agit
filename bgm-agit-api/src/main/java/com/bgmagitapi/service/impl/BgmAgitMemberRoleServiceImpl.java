@@ -16,6 +16,6 @@ public class BgmAgitMemberRoleServiceImpl implements BgmAgitMemberRoleService {
     
     @Override
     public BgmAgitMemberRole getMemberRole(Long memberId) {
-        return bgmAgitMemberRoleRepository.findByBgmAgitMember_BgmAgitMemberId(memberId).orElseThrow(() -> new RuntimeException("MemberRole not found"));
+        return bgmAgitMemberRoleRepository.findByBgmAgitMemberId(memberId).orElseThrow(() -> new RuntimeException("MemberRole not found"));
     }
 }
