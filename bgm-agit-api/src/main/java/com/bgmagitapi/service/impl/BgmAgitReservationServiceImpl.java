@@ -61,9 +61,6 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     
     private final JPAQueryFactory queryFactory;
     
-
-    
-    
     @Override
     @Transactional(readOnly = true)
     public BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id, LocalDate date) {
@@ -76,28 +73,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         String label = "", group = "";
         // 1. 예약 정보 조회
         // 1. 예약 정보 조회 (Y: 확정 / N: 대기)
-        List<ReservedTimeDto> reservations = queryFactory
-                .select(Projections.constructor(
-                        ReservedTimeDto.class,
-                        bgmAgitReservation.bgmAgitReservationStartDate,
-                        bgmAgitReservation.bgmAgitReservationStartTime,
-                        bgmAgitReservation.bgmAgitReservationEndTime,
-                        bgmAgitImage.bgmAgitImageLabel,
-                        bgmAgitImage.bgmAgitImageGroups,
-                        bgmAgitReservation.bgmAgitReservationApprovalStatus,
-                        bgmAgitReservation.bgmAgitMember.bgmAgitMemberId,
-                        bgmAgitReservation.bgmAgitReservationCancelStatus
-                ))
-                .from(bgmAgitReservation)
-                .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage)
-                .where(
-                        bgmAgitImage.bgmAgitMainMenu.bgmAgitMainMenuId.eq(labelGb),
-                        bgmAgitImage.bgmAgitMenuLink.eq(link),
-                        bgmAgitImage.bgmAgitImageId.eq(id),
-                        bgmAgitReservation.bgmAgitReservationApprovalStatus.in("Y", "N"), // 확정 포함
-                        bgmAgitReservation.bgmAgitReservationStartDate.between(today, endOfYear)
-                )
-                .fetch();
+        List<ReservedTimeDto> reservations = bgmAgitReservationRepository.findReservations(labelGb, link, id, today, endOfYear);
 
         // 2. 예약 시간 Map<날짜, List<TimeRange>> 으로 변환
         Map<LocalDate, List<TimeRange>> reservedMap = reservations.stream()
@@ -213,7 +189,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         
         // 기존 예약 조회
         List<BgmAgitReservation> existingReservations = bgmAgitReservationRepository
-                .findByBgmAgitImageAndBgmAgitReservationStartDateAndBgmAgitReservationCancelStatus(
+                .findExistingReservations(
                         image, kstDate, "N"
                 );
         
@@ -263,52 +239,15 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         BgmAgitMember bgmAgitMember = bgmAgitMemberRepository.findById(memberId)
                 .orElseThrow(() -> new RuntimeException("Member Not Found"));
         
-        BooleanBuilder booleanBuilder = new BooleanBuilder();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate start = StringUtils.hasText(startDate) ? LocalDate.parse(startDate, fmt) : null;
+        LocalDate end   = StringUtils.hasText(endDate)   ? LocalDate.parse(endDate, fmt)   : null;
+        boolean isUser = "ROLE_USER".equals(role);
         
-        if ("ROLE_USER".equals(role)) {
-            booleanBuilder.and(bgmAgitReservation.bgmAgitMember.bgmAgitMemberId.eq(bgmAgitMember.getBgmAgitMemberId()));
-        }
+        List<BgmAgitReservation> reservations =
+                bgmAgitReservationRepository.findReservationsForDetail(bgmAgitMember.getBgmAgitMemberId(), isUser, start, end, pageable);
         
-        if (StringUtils.hasText(startDate) && StringUtils.hasText(endDate)) {
-            // 둘 다 있을 때는 between
-            LocalDate start = LocalDate.parse(startDate, formatter);
-            LocalDate end = LocalDate.parse(endDate, formatter);
-            booleanBuilder.and(bgmAgitReservation.bgmAgitReservationStartDate.between(start, end));
-        } else {
-            // startDate만 있을 때
-            if (StringUtils.hasText(startDate)) {
-                LocalDate start = LocalDate.parse(startDate, formatter);
-                booleanBuilder.and(bgmAgitReservation.bgmAgitReservationStartDate.goe(start));
-            }
-            // endDate만 있을 때
-            if (StringUtils.hasText(endDate)) {
-                LocalDate end = LocalDate.parse(endDate, formatter);
-                booleanBuilder.and(bgmAgitReservation.bgmAgitReservationStartDate.loe(end));
-            }
-        }
-        
-        // 1. 실제 데이터 가져오기
-        QBgmAgitMember qBgmAgitMember = QBgmAgitMember.bgmAgitMember;
-        List<BgmAgitReservation> reservations = queryFactory
-                .select(bgmAgitReservation)
-                .from(bgmAgitReservation)
-                .join(bgmAgitReservation.bgmAgitMember , qBgmAgitMember).fetchJoin()
-                .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage).fetchJoin()
-                .where(booleanBuilder)
-                .orderBy(bgmAgitReservation.bgmAgitReservationNo.desc()) // 예약 번호 기준 정렬
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-        
-        // 2. 총 개수
-        JPAQuery<Long> countQuery = queryFactory
-                .select(bgmAgitReservation.bgmAgitReservationNo.countDistinct())
-                .from(bgmAgitReservation)
-                .join(bgmAgitReservation.bgmAgitMember, qBgmAgitMember)
-                .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage)
-                .where(booleanBuilder);
-        
+        JPAQuery<Long> totalCountQuery = bgmAgitReservationRepository.countReservationsDistinctForDetail(bgmAgitMember.getBgmAgitMemberId(), isUser, start, end);
         
         // 3. 그룹핑
         Map<Long, List<BgmAgitReservation>> grouped = reservations.stream()
@@ -339,7 +278,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .collect(Collectors.toList());
         
         
-        return PageableExecutionUtils.getPage(groupedResponses,pageable,countQuery::fetchOne);
+        return PageableExecutionUtils.getPage(groupedResponses,pageable,totalCountQuery::fetchOne);
     }
     
     @Override
@@ -377,7 +316,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .fetchOne();
 
         if (!idList.isEmpty()) {
-            bgmAgitReservationRepository.bulkUpdateCancelAndApprovalStatus(
+            bgmAgitReservationRepository.updateCancelAndApprovalStatus(
                     cancelStatus, approvalStatus, idList
             );
         }
