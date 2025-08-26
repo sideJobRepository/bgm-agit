@@ -35,7 +35,7 @@ public class BgmAgitRefreshTokenServiceImpl implements BgmAgitRefreshTokenServic
     @Override
     public void refreshTokenSaveOrUpdate(BgmAgitMember member, String refreshTokenValue, LocalDateTime expiresAt) {
         BgmAgitRefreshToken token = bgmAgitRefreshTokenRepository
-                .findByBgmAgitMember(member)
+                .findBgmAgitMember(member)
                 .orElse(BgmAgitRefreshToken.builder()
                         .bgmAgitMember(member)
                         .bgmAgitRefreshTokenValue(refreshTokenValue)
@@ -53,7 +53,7 @@ public class BgmAgitRefreshTokenServiceImpl implements BgmAgitRefreshTokenServic
     
     public  BgmAgitMember validateRefreshToken(String refreshToken) {
         BgmAgitRefreshToken token = bgmAgitRefreshTokenRepository
-                .findByBgmAgitRefreshTokenValue(refreshToken)
+                .findBgmAgitRefreshTokenValue(refreshToken)
                 .orElseThrow(() -> new RefreshTokenExpiredException("유효하지 않은 리프레시 토큰입니다."));
         
         if (token.getBgmAgitRefreshExpiresDate().isBefore(LocalDateTime.now())) {
@@ -98,7 +98,7 @@ public class BgmAgitRefreshTokenServiceImpl implements BgmAgitRefreshTokenServic
     
     @Override
     public ApiResponse deleteRefresh(String request) {
-        BgmAgitRefreshToken bgmAgitRefreshToken = bgmAgitRefreshTokenRepository.findByBgmAgitRefreshTokenValue(request).orElseThrow(() -> new RuntimeException("존재하지않는 리프레쉬 토큰입니다."));
+        BgmAgitRefreshToken bgmAgitRefreshToken = bgmAgitRefreshTokenRepository.findBgmAgitRefreshTokenValue(request).orElseThrow(() -> new RuntimeException("존재하지않는 리프레쉬 토큰입니다."));
         bgmAgitRefreshTokenRepository.delete(bgmAgitRefreshToken);
         return new ApiResponse(200,true,"정상 삭제");
     }
