@@ -3,6 +3,7 @@ package com.bgmagitapi.repository.costom;
 import com.bgmagitapi.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitReservation;
+import com.bgmagitapi.service.response.BizTalkCancel;
 import com.querydsl.jpa.impl.JPAQuery;
 import org.springframework.data.domain.Pageable;
 
@@ -22,5 +23,9 @@ public interface BgmAgitReservationCustomRepository{
     List<BgmAgitReservation> findReservationsForDetail( Long memberId, boolean isUserRole, LocalDate start, LocalDate end, Pageable pageable);
     
     JPAQuery<Long> countReservationsDistinctForDetail(Long memberId, boolean isUserRole, LocalDate start, LocalDate end);
+    
+    BizTalkCancel findBizTalkCancel(Long reservationNo);
+    
+    List<BgmAgitReservation> findReservationList(Long reservationNo);
     
 }

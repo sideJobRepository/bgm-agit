@@ -188,10 +188,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         String reservationType = request.getBgmAgitReservationType();
         
         // 기존 예약 조회
-        List<BgmAgitReservation> existingReservations = bgmAgitReservationRepository
-                .findExistingReservations(
-                        image, kstDate, "N"
-                );
+        List<BgmAgitReservation> existingReservations = bgmAgitReservationRepository.findExistingReservations(image, kstDate, "N");
         
         // 중복된 시간대 구성 (Set으로 빠르게 비교)
         Set<String> existingTimeSlots = existingReservations.stream()
@@ -289,32 +286,14 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         String cancelStatus = request.getCancelStatus();
         String approvalStatus = request.getApprovalStatus();
         
-        List<BgmAgitReservation> list = queryFactory
-                .selectFrom(bgmAgitReservation)
-                .where(bgmAgitReservation.bgmAgitReservationNo.eq(reservationNo))
-                .fetch();
+        List<BgmAgitReservation> reservations = bgmAgitReservationRepository.findReservationList(reservationNo);
         
-        List<Long> idList = list.stream()
+        List<Long> idList = reservations.stream()
                 .map(BgmAgitReservation::getBgmAgitReservationId)
                 .toList();
         
-      
+        BizTalkCancel bizTalkCancel = bgmAgitReservationRepository.findBizTalkCancel(reservationNo);
         
-        BizTalkCancel bizTalkCancel = queryFactory
-                .select(Projections.constructor(
-                        BizTalkCancel.class,
-                        bgmAgitMember.bgmAgitMemberName,
-                        bgmAgitImage.bgmAgitImageLabel,
-                        bgmAgitMember.bgmAgitMemberPhoneNo,
-                        bgmAgitReservation.bgmAgitReservationApprovalStatus
-                ))
-                .distinct()
-                .from(bgmAgitReservation)
-                .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember)
-                .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage)
-                .where(bgmAgitReservation.bgmAgitReservationNo.eq(reservationNo))
-                .fetchOne();
-
         if (!idList.isEmpty()) {
             bgmAgitReservationRepository.updateCancelAndApprovalStatus(
                     cancelStatus, approvalStatus, idList
@@ -325,7 +304,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             return new ApiResponse(404, false, "전송 대상이 없습니다.");
         }
 
-        ReservationTalkContext ctx = ReservationTalkContext.of(role, list, bizTalkCancel);
+        ReservationTalkContext ctx = ReservationTalkContext.of(role, reservations, bizTalkCancel);
 
         // 명확한 조건 변수로 가독성 ↑ (대/소문자 및 null 안전)
         boolean approvedNow = "Y".equalsIgnoreCase(approvalStatus);

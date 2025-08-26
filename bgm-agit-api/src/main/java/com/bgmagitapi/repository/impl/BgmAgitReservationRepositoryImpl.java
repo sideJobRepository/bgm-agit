@@ -4,6 +4,7 @@ import com.bgmagitapi.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitReservation;
 import com.bgmagitapi.repository.costom.BgmAgitReservationCustomRepository;
+import com.bgmagitapi.service.response.BizTalkCancel;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -109,6 +110,33 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
                 .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember)
                 .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage)
                 .where(isUserFilter(memberId, isUserRole), dateBetween(start, end));
+    }
+    
+    @Override
+    public BizTalkCancel findBizTalkCancel(Long reservationNo) {
+        return queryFactory
+                .select(Projections.constructor(
+                        BizTalkCancel.class,
+                        bgmAgitMember.bgmAgitMemberName,
+                        bgmAgitImage.bgmAgitImageLabel,
+                        bgmAgitMember.bgmAgitMemberPhoneNo,
+                        bgmAgitReservation.bgmAgitReservationApprovalStatus
+                ))
+                .distinct()
+                .from(bgmAgitReservation)
+                .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember)
+                .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage)
+                .where(bgmAgitReservation.bgmAgitReservationNo.eq(reservationNo))
+                .fetchOne();
+    }
+    
+    @Override
+    public List<BgmAgitReservation> findReservationList(Long reservationNo) {
+        return queryFactory
+                .select(bgmAgitReservation)
+                .from(bgmAgitReservation)
+                .where(bgmAgitReservation.bgmAgitReservationNo.eq(reservationNo))
+                .fetch();
     }
     
     
