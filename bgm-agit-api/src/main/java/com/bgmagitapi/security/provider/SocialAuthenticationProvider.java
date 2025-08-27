@@ -25,7 +25,7 @@ public class SocialAuthenticationProvider implements AuthenticationProvider {
         
         SocialAuthenticationToken token = (SocialAuthenticationToken) authentication;
         
-        BgmAgitMemberContext bgmAgitMemberContext = null;
+        BgmAgitMemberContext bgmAgitMemberContext = new BgmAgitMemberContext(null,null);
         String socialType = token.getSocialLoginUrl().name();
         
         if ("KAKAO".equals(socialType)) {
@@ -35,6 +35,10 @@ public class SocialAuthenticationProvider implements AuthenticationProvider {
             
             bgmAgitMemberContext = (BgmAgitMemberContext)
                     bgmAgitMemberDetailService.loadUserByUsername(kaKaoProfile);
+        }else if("NAVER".equals(socialType)) {
+        
+        }else if ("GOOGLE".equals(socialType)) {
+        
         }
         
         // 다른 소셜도 여기에 추가 가능: NAVER, GOOGLE 등

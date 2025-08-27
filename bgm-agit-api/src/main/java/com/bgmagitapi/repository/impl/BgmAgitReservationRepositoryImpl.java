@@ -75,7 +75,6 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
                 .set(bgmAgitReservation.bgmAgitReservationApprovalStatus, approvalStatus)
                 .where(bgmAgitReservation.bgmAgitReservationId.in(idList))
                 .execute();
-        
         em.clear();
         return execute;
     }

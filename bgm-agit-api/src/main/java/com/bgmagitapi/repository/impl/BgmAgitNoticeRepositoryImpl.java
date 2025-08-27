@@ -2,8 +2,9 @@ package com.bgmagitapi.repository.impl;
 
 import com.bgmagitapi.entity.BgmAgitNotice;
 import com.bgmagitapi.repository.costom.BgmAgitNoticeCostomRepository;
-import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -24,11 +25,10 @@ public class BgmAgitNoticeRepositoryImpl implements BgmAgitNoticeCostomRepositor
     
     @Override
     public Page<BgmAgitNotice> getNotices(Pageable pageable, String titleOrCont) {
-        BooleanBuilder booleanBuilder = getBooleanBuilder(titleOrCont);
 
         List<BgmAgitNotice> content = queryFactory
                 .selectFrom(bgmAgitNotice)
-                .where(booleanBuilder)
+                .where(titleOrContLikeIgnoreSpaces(titleOrCont))
                 .orderBy(bgmAgitNotice.bgmAgitNoticeId.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -38,25 +38,21 @@ public class BgmAgitNoticeRepositoryImpl implements BgmAgitNoticeCostomRepositor
         JPAQuery<Long> countQuery = queryFactory
                 .select(bgmAgitNotice.count())
                 .from(bgmAgitNotice)
-                .where(booleanBuilder);
+                .where(titleOrContLikeIgnoreSpaces(titleOrCont));
         return PageableExecutionUtils.getPage(content,pageable,countQuery::fetchOne);
     }
-    
-    private BooleanBuilder getBooleanBuilder(String titleOrCont) {
-        BooleanBuilder booleanBuilder = new BooleanBuilder();
+ 
+    /** 제목/내용에서 공백 제거 후 LIKE %keyword% 검색(OR) */
+    private BooleanExpression titleOrContLikeIgnoreSpaces(String keyword) {
+        if (!StringUtils.hasText(keyword)) return null;
         
+        String k = keyword.replaceAll("\\s+", "");
+        StringExpression titleNoSpace = Expressions.stringTemplate(
+                "replace({0}, ' ', '')", bgmAgitNotice.bgmAgitNoticeTitle);
+        StringExpression contNoSpace = Expressions.stringTemplate(
+                "replace({0}, ' ', '')", bgmAgitNotice.bgmAgitNoticeCont);
         
-        if (StringUtils.hasText(titleOrCont)) {
-            String keyword = titleOrCont.replaceAll("\\s+", ""); // 검색어에서 공백 제거
-            
-            booleanBuilder.or(
-                    Expressions.stringTemplate("REPLACE({0}, ' ', '')", bgmAgitNotice.bgmAgitNoticeTitle)
-                            .like("%" + keyword + "%")
-            ).or(
-                    Expressions.stringTemplate("REPLACE({0}, ' ', '')", bgmAgitNotice.bgmAgitNoticeCont)
-                            .like("%" + keyword + "%")
-            );
-        }
-        return booleanBuilder;
+        return titleNoSpace.like("%" + k + "%")
+                .or(contNoSpace.like("%" + k + "%"));
     }
 }
