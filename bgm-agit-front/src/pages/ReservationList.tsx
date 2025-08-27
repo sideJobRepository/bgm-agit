@@ -27,6 +27,12 @@ export default function ReservationList() {
     setPage(pageNum);
   };
 
+  function todayFunction(date) {
+    const today = new Date().toISOString().slice(0, 10);
+
+    return date >= today;
+  }
+
   useEffect(() => {
     fetchReservationList(page, { startDate: start, endDate: end });
   }, [dateRange, page]);
@@ -121,37 +127,39 @@ export default function ReservationList() {
 
                         <ButtonBox2>
                           {/* 어드민인 경우 */}
-                          {user?.roles.includes('ROLE_ADMIN') && (
-                            <>
-                              {item.approvalStatus === 'Y' && item.cancelStatus !== 'Y' && (
-                                <Button
-                                  color="#FF5E57"
-                                  onClick={() => updateData(item, true, 'Y', 'N')}
-                                >
-                                  취소
-                                </Button>
-                              )}
-
-                              {item.approvalStatus !== 'Y' && item.cancelStatus !== 'Y' && (
-                                <>
+                          {todayFunction(item.reservationDate) &&
+                            user?.roles.includes('ROLE_ADMIN') && (
+                              <>
+                                {item.approvalStatus === 'Y' && item.cancelStatus !== 'Y' && (
                                   <Button
                                     color="#FF5E57"
                                     onClick={() => updateData(item, true, 'Y', 'N')}
                                   >
                                     취소
                                   </Button>
-                                  <Button
-                                    color="#1A7D55"
-                                    onClick={() => updateData(item, true, 'N', 'Y')}
-                                  >
-                                    확정
-                                  </Button>
-                                </>
-                              )}
-                            </>
-                          )}
+                                )}
 
-                          {!user?.roles.includes('ROLE_ADMIN') &&
+                                {item.approvalStatus !== 'Y' && item.cancelStatus !== 'Y' && (
+                                  <>
+                                    <Button
+                                      color="#FF5E57"
+                                      onClick={() => updateData(item, true, 'Y', 'N')}
+                                    >
+                                      취소
+                                    </Button>
+                                    <Button
+                                      color="#1A7D55"
+                                      onClick={() => updateData(item, true, 'N', 'Y')}
+                                    >
+                                      확정
+                                    </Button>
+                                  </>
+                                )}
+                              </>
+                            )}
+
+                          {todayFunction(item.reservationDate) &&
+                            !user?.roles.includes('ROLE_ADMIN') &&
                             item.approvalStatus !== 'Y' &&
                             item.cancelStatus !== 'Y' && (
                               <Button

@@ -16,13 +16,13 @@ import java.util.Date;
 import java.util.List;
 
 public abstract class SecuritySigner {
-   
-    
+
+
     protected String generateAccessToken(JWSSigner signer, BgmAgitMember user, JWK jwk, List<GrantedAuthority> authorities) throws JOSEException {
         JWSHeader header = new JWSHeader.Builder((JWSAlgorithm) jwk.getAlgorithm())
                 .keyID(jwk.getKeyID())
                 .build();
-        
+
         List<String> roleList = new ArrayList<>();
         if (authorities != null && !authorities.isEmpty()) {
             for (GrantedAuthority auth : authorities) {
@@ -41,28 +41,28 @@ public abstract class SecuritySigner {
                 .expirationTime(new Date(System.currentTimeMillis() + 1000 * 60 * 5)) // 5분
                // .expirationTime(new Date(System.currentTimeMillis() +10))
                 .build();
-        
+
         SignedJWT jwt = new SignedJWT(header, claims);
         jwt.sign(signer);
-        
+
         return jwt.serialize();
     }
     protected String generateRefreshToken(JWSSigner signer, BgmAgitMember user, JWK jwk) throws JOSEException {
         JWSHeader header = new JWSHeader.Builder((JWSAlgorithm) jwk.getAlgorithm())
                 .keyID(jwk.getKeyID())
                 .build();
-        
+
         JWTClaimsSet claims = new JWTClaimsSet.Builder()
                 .subject("refresh")
                 .claim("id", user.getBgmAgitMemberId())
                 .expirationTime(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 7)) // 7일
                 .build();
-        
+
         SignedJWT jwt = new SignedJWT(header, claims);
         jwt.sign(signer);
-        
+
         return jwt.serialize();
     }
-    
+
     public abstract TokenPair getToken(BgmAgitMember user, JWK jwk, List<GrantedAuthority> authorities) throws JOSEException;
 }
