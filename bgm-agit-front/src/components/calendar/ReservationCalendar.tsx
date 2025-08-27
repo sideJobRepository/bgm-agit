@@ -96,11 +96,12 @@ export default function ReservationCalendar({ id }: { id?: number }) {
           window.location.href = kakaoAuthUrl;
         } else {
           console.log('000 value', value, 'selectedTimes', selectedTimes);
-          insert({
+            let b = id === ( 32 || 33 || 34 || 35 );
+            insert({
             url: '/bgm-agit/reservation',
             body: {
               bgmAgitImageId: id,
-              bgmAgitReservationType: 'ROOM',
+              bgmAgitReservationType: b ?  'DELEGATE_PLAY' : 'ROOM' ,
               bgmAgitReservationStartDate: value,
               startTimeEndTime: selectedTimes,
             },
