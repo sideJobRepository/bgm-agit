@@ -17,7 +17,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static com.bgmagitapi.entity.QBgmAgitImage.bgmAgitImage;
-import static com.bgmagitapi.entity.QBgmAgitMember.*;
+import static com.bgmagitapi.entity.QBgmAgitMember.bgmAgitMember;
 import static com.bgmagitapi.entity.QBgmAgitReservation.bgmAgitReservation;
 
 @RequiredArgsConstructor
@@ -87,19 +87,6 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
                 .fetchOne();
     }
     
-    @Override
-    public List<BgmAgitReservation> findReservationsForDetail(Long memberId, boolean isUserRole, LocalDate start, LocalDate end, Pageable pageable) {
-        return queryFactory
-                .select(bgmAgitReservation)
-                .from(bgmAgitReservation)
-                .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember).fetchJoin()
-                .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage).fetchJoin()
-                .where(isUserFilter(memberId, isUserRole), dateBetween(start, end))
-                .orderBy(bgmAgitReservation.bgmAgitReservationNo.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-    }
     
     @Override
     public JPAQuery<Long> countReservationsDistinctForDetail(Long memberId, boolean isUserRole, LocalDate start, LocalDate end) {
@@ -135,6 +122,41 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
                 .select(bgmAgitReservation)
                 .from(bgmAgitReservation)
                 .where(bgmAgitReservation.bgmAgitReservationNo.eq(reservationNo))
+                .fetch();
+    }
+    
+    @Override
+    public List<Long> findReservationNosPageForDetail(Long memberId, boolean isUserRole, LocalDate start, LocalDate end, Pageable pageable) {
+        
+        return queryFactory
+                .select(bgmAgitReservation.bgmAgitReservationNo)
+                .from(bgmAgitReservation)
+                .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember)
+                .join(bgmAgitReservation.bgmAgitImage,  bgmAgitImage)
+                .where(isUserFilter(memberId, isUserRole), dateBetween(start, end))
+                .distinct()
+                .orderBy(bgmAgitReservation.bgmAgitReservationNo.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+    }
+    
+    @Override
+    public List<BgmAgitReservation> findReservationsByNosForDetail(List<Long> reservationNos, Long memberId, boolean isUserRole, LocalDate start, LocalDate end) {
+        
+        if (reservationNos.isEmpty()) return List.of();
+        
+        return queryFactory
+                .selectFrom(bgmAgitReservation)
+                .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember).fetchJoin() // N:1만 fetch join
+                .join(bgmAgitReservation.bgmAgitImage,  bgmAgitImage).fetchJoin()
+                .where(isUserFilter(memberId, isUserRole),
+                        dateBetween(start, end),
+                        bgmAgitReservation.bgmAgitReservationNo.in(reservationNos))
+                .orderBy(
+                        bgmAgitReservation.bgmAgitReservationNo.desc(),         // 그룹 순서 유지
+                        bgmAgitReservation.bgmAgitReservationStartTime.asc()    // 그룹 내 정렬
+                )
                 .fetch();
     }
     

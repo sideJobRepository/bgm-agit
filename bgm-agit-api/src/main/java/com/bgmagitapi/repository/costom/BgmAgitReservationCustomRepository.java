@@ -20,12 +20,15 @@ public interface BgmAgitReservationCustomRepository{
     
     Long findMaxReservationNo();
     
-    List<BgmAgitReservation> findReservationsForDetail( Long memberId, boolean isUserRole, LocalDate start, LocalDate end, Pageable pageable);
-    
     JPAQuery<Long> countReservationsDistinctForDetail(Long memberId, boolean isUserRole, LocalDate start, LocalDate end);
     
     BizTalkCancel findBizTalkCancel(Long reservationNo);
     
     List<BgmAgitReservation> findReservationList(Long reservationNo);
+    
+    List<Long> findReservationNosPageForDetail(Long memberId, boolean isUserRole, LocalDate start, LocalDate end, Pageable pageable);
+    
+    List<BgmAgitReservation> findReservationsByNosForDetail(List<Long> reservationNos, Long memberId, boolean isUserRole, LocalDate start, LocalDate end);
+    
     
 }

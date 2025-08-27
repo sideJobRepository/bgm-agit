@@ -22,6 +22,7 @@ import com.bgmagitapi.util.LunarCalendar;
 import com.querydsl.jpa.impl.JPAQuery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.security.core.Authentication;
@@ -230,41 +231,51 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         LocalDate end   = StringUtils.hasText(endDate)   ? LocalDate.parse(endDate, fmt)   : null;
         boolean isUser = "ROLE_USER".equals(role);
         
-        List<BgmAgitReservation> reservations =
-                bgmAgitReservationRepository.findReservationsForDetail(bgmAgitMember.getBgmAgitMemberId(), isUser, start, end, pageable);
+        // 1) 페이지 키 조회 (예약번호)
+        List<Long> pageNos = bgmAgitReservationRepository
+                .findReservationNosPageForDetail(memberId, isUser, start, end, pageable);
         
-        JPAQuery<Long> totalCountQuery = bgmAgitReservationRepository.countReservationsDistinctForDetail(bgmAgitMember.getBgmAgitMemberId(), isUser, start, end);
-        
-        // 3. 그룹핑
-        Map<Long, List<BgmAgitReservation>> grouped = reservations.stream()
+        if (pageNos.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
+
+        // 2) 상세 로딩
+        List<BgmAgitReservation> rows = bgmAgitReservationRepository
+                .findReservationsByNosForDetail(pageNos, memberId, isUser, start, end);
+
+        // 3) 그룹핑 (키 순서 유지)
+        Map<Long, List<BgmAgitReservation>> bucket = rows.stream()
                 .collect(Collectors.groupingBy(BgmAgitReservation::getBgmAgitReservationNo));
+
+        // pageNos 순서대로 DTO 만들기 → 정렬 비용/불안정 제거
+        List<GroupedReservationResponse> content = new ArrayList<>(pageNos.size());
+        for (Long no : pageNos) {
+            List<BgmAgitReservation> list = bucket.get(no);
+            if (list == null) continue;
+            
+            GroupedReservationResponse dto = new GroupedReservationResponse();
+            dto.setReservationNo(no);
+            dto.setTimeSlots(list.stream()
+                    .map(r -> new GroupedReservationResponse.TimeSlot(
+                            r.getBgmAgitReservationStartTime().toString(),
+                            r.getBgmAgitReservationEndTime().toString()))
+                    .toList());
+            dto.setReservationDate(list.get(0).getBgmAgitReservationStartDate());
+            dto.setApprovalStatus(list.get(0).getBgmAgitReservationApprovalStatus());
+            dto.setCancelStatus(list.get(0).getBgmAgitReservationCancelStatus());
+            dto.setReservationMemberName(list.get(0).getBgmAgitMember().getBgmAgitMemberName());
+            dto.setReservationAddr(list.get(0).getBgmAgitImage().getBgmAgitImageLabel());
+            
+            content.add(dto);
+        }
+
+        // 4) total count
         
-        // 4. 그룹을 응답용 DTO로 변환
-        List<GroupedReservationResponse> groupedResponses = grouped.entrySet().stream()
-                .sorted(Map.Entry.<Long, List<BgmAgitReservation>>comparingByKey().reversed())// reservationNo 기준 정렬
-                .map(entry -> {
-                    GroupedReservationResponse dto = new GroupedReservationResponse();
-                    dto.setReservationNo(entry.getKey());
-                    
-                    List<GroupedReservationResponse.TimeSlot> slots = entry.getValue().stream()
-                            .map(r -> new GroupedReservationResponse.TimeSlot(
-                                    r.getBgmAgitReservationStartTime().toString(),
-                                    r.getBgmAgitReservationEndTime().toString()
-                            ))
-                            .collect(Collectors.toList());
-                    
-                    dto.setTimeSlots(slots);
-                    dto.setReservationDate(entry.getValue().get(0).getBgmAgitReservationStartDate());
-                    dto.setApprovalStatus(entry.getValue().get(0).getBgmAgitReservationApprovalStatus());
-                    dto.setCancelStatus(entry.getValue().get(0).getBgmAgitReservationCancelStatus());
-                    dto.setReservationMemberName(entry.getValue().get(0).getBgmAgitMember().getBgmAgitMemberName());
-                    dto.setReservationAddr(entry.getValue().get(0).getBgmAgitImage().getBgmAgitImageLabel());
-                    return dto;
-                })
-                .collect(Collectors.toList());
+        JPAQuery<Long> countQuery = bgmAgitReservationRepository
+                .countReservationsDistinctForDetail(memberId, isUser, start, end);
         
         
-        return PageableExecutionUtils.getPage(groupedResponses,pageable,totalCountQuery::fetchOne);
+        return  PageableExecutionUtils.getPage(content, pageable,countQuery::fetchOne);
     }
     
     @Override
