@@ -131,7 +131,7 @@ export default function ImageGrid({ pageData }: Props) {
     // 9시간 오프셋 기준으로 한국 시간 만들고
     const offsetDate = new Date(now.getTime() + 9 * 60 * 60 * 1000);
 
-    // 💡 여기서 날짜 더해줌
+    // 여기서 날짜 더해줌
     offsetDate.setUTCDate(offsetDate.getUTCDate() + days);
 
     const year = offsetDate.getUTCFullYear();
@@ -153,7 +153,7 @@ export default function ImageGrid({ pageData }: Props) {
   };
 
   const filteredItems = useMemo(() => {
-    return items.filter(item => {
+    return items?.filter(item => {
       const matchesKeyword = searchKeyword
         ? item.label?.toLowerCase().includes(searchKeyword.toLowerCase())
         : true;
@@ -395,9 +395,9 @@ export default function ImageGrid({ pageData }: Props) {
             </GridItemBox>
           ))}
       </GridContainer>
-      {filteredItems.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
+      {filteredItems?.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
       <ImageLightbox
-        images={filteredItems.map(item => item.image)}
+        images={filteredItems?.map(item => item.image)}
         index={lightboxIndex}
         onClose={() => setLightboxIndex(-1)}
         onIndexChange={setLightboxIndex}

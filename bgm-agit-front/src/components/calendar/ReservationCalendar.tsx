@@ -21,7 +21,6 @@ export default function ReservationCalendar({ id }: { id?: number }) {
   const reservationData = useRecoilValue(reservationDataState);
 
   const today = new Date();
-  console.log('reservation', reservation);
   //insert
   const { insert } = useInsertPost();
 
@@ -95,13 +94,12 @@ export default function ReservationCalendar({ id }: { id?: number }) {
           const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URL}&response_type=code`;
           window.location.href = kakaoAuthUrl;
         } else {
-          console.log('000 value', value, 'selectedTimes', selectedTimes);
-            let b = id === ( 32 || 33 || 34 || 35 );
-            insert({
+          let b = id === (32 || 33 || 34 || 35);
+          insert({
             url: '/bgm-agit/reservation',
             body: {
               bgmAgitImageId: id,
-              bgmAgitReservationType: b ?  'DELEGATE_PLAY' : 'ROOM' ,
+              bgmAgitReservationType: b ? 'DELEGATE_PLAY' : 'ROOM',
               bgmAgitReservationStartDate: value,
               startTimeEndTime: selectedTimes,
             },

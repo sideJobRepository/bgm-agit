@@ -84,7 +84,9 @@ export default function Detail() {
 
   return (
     <Wrapper>
-      <GridBox>{fullPageData.items && <ImageGrid pageData={fullPageData} />}</GridBox>
+      <GridBox>
+        <ImageGrid pageData={fullPageData} />
+      </GridBox>
     </Wrapper>
   );
 }

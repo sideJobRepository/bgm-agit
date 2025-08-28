@@ -191,13 +191,12 @@ export function useLoginPost() {
           tokenStore.set(token);
 
           const user = res.data.user;
-          console.log('user', user);
 
           return user;
         }),
       user => {
         setUser(user);
-        console.log('user', user);
+
         onSuccess?.();
         toast.success('로그인에 성공하였습니다.');
       }

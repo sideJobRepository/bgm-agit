@@ -14,13 +14,13 @@ export default function ImageLightbox({ images, index, onClose, onIndexChange }:
       open={index >= 0}
       close={onClose}
       index={index}
-      slides={images.map(src => ({ src }))}
+      slides={images?.map(src => ({ src }))}
       on={{
         view: ({ index }) => onIndexChange?.(index),
       }}
       render={{
         buttonPrev: index > 0 ? undefined : () => null,
-        buttonNext: index < images.length - 1 ? undefined : () => null,
+        buttonNext: index < images?.length - 1 ? undefined : () => null,
         slide: ({ slide }) => (
           <div
             style={{
