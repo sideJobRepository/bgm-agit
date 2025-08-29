@@ -12,6 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
 
@@ -75,6 +76,16 @@ public class ExceptionController {
         log.info("공통 예외 ", e);
         return new ErrorMessageResponse(
                 String.valueOf(HttpStatus.UNAUTHORIZED.value()),
+                e.getMessage()
+        );
+    }
+    
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ErrorMessageResponse handleNoResourceFoundException(CustomException e) {
+        log.info("404 {}", e.getMessage());
+        return new ErrorMessageResponse(
+                String.valueOf(HttpStatus.NOT_FOUND.value()),
                 e.getMessage()
         );
     }
