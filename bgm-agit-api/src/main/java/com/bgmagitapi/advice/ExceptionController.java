@@ -82,7 +82,7 @@ public class ExceptionController {
     
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(NoResourceFoundException.class)
-    public ErrorMessageResponse handleNoResourceFoundException(CustomException e) {
+    public ErrorMessageResponse handleNoResourceFoundException(NoResourceFoundException  e) {
         log.info("404 {}", e.getMessage());
         return new ErrorMessageResponse(
                 String.valueOf(HttpStatus.NOT_FOUND.value()),
