@@ -47,7 +47,6 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
                         bgmAgitImage.bgmAgitMainMenu.bgmAgitMainMenuId.eq(labelGb),
                         bgmAgitImage.bgmAgitMenuLink.eq(link),
                         bgmAgitImage.bgmAgitImageId.eq(id),
-                        bgmAgitReservation.bgmAgitReservationApprovalStatus.in("Y", "N"), // 확정 포함
                         bgmAgitReservation.bgmAgitReservationStartDate.between(today, endOfYear)
                 )
                 .fetch();

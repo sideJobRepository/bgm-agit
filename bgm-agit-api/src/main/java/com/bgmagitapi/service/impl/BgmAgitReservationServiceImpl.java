@@ -223,8 +223,6 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     @Override
     @Transactional(readOnly = true)
     public Page<GroupedReservationResponse> getReservationDetail(Long memberId, String role, String startDate, String endDate, Pageable pageable) {
-        BgmAgitMember bgmAgitMember = bgmAgitMemberRepository.findById(memberId)
-                .orElseThrow(() -> new RuntimeException("Member Not Found"));
         
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate start = StringUtils.hasText(startDate) ? LocalDate.parse(startDate, fmt) : null;
@@ -236,7 +234,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .findReservationNosPageForDetail(memberId, isUser, start, end, pageable);
         
         if (pageNos.isEmpty()) {
-            return new PageImpl<>(List.of(), pageable, 0);
+            return new PageImpl<>(new ArrayList<>(), pageable, 0L);
         }
 
         // 2) 상세 로딩
@@ -248,7 +246,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .collect(Collectors.groupingBy(BgmAgitReservation::getBgmAgitReservationNo));
 
         // pageNos 순서대로 DTO 만들기 → 정렬 비용/불안정 제거
-        List<GroupedReservationResponse> content = new ArrayList<>(pageNos.size());
+        List<GroupedReservationResponse> content = new ArrayList<>();
         for (Long no : pageNos) {
             List<BgmAgitReservation> list = bucket.get(no);
             if (list == null) continue;
@@ -268,7 +266,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             
             content.add(dto);
         }
-
+        
         // 4) total count
         
         JPAQuery<Long> countQuery = bgmAgitReservationRepository
@@ -321,7 +319,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             // 취소 상태로 요청되었을 때만 취소 알림톡
             return bgmAgitBizTalkSandService.sendCancelBizTalk(ctx);
         }
-
+        
         // 전송 조건이 아닌 경우
         return new ApiResponse(200, true, "수정 되었습니다. (알림톡 전송 조건 불충족)");
     }
