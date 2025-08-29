@@ -282,7 +282,7 @@ export default function ImageGrid({ pageData }: Props) {
   }
 
   useEffect(() => {
-    if (labelGb === 3 && filteredItems.length > 0) newItemDatas(filteredItems[0]);
+    if (labelGb === 3 && filteredItems?.length > 0) newItemDatas(filteredItems[0]);
   }, [filteredItems]);
 
   useEffect(() => {
