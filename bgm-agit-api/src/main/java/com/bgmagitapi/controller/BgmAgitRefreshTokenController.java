@@ -30,6 +30,9 @@ public class BgmAgitRefreshTokenController {
             return null;
         }
         TokenAndUser tokenPair = refreshTokenService.reissueTokenWithUser(refreshToken);
+        if(tokenPair == null) {
+            return null;
+        }
         ResponseCookie newRefreshCookie = ResponseCookie.from("refreshToken", tokenPair.token().getRefreshToken())
                 .httpOnly(true)
                 .secure(secure)

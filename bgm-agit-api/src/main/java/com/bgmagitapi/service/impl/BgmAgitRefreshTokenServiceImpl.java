@@ -54,7 +54,11 @@ public class BgmAgitRefreshTokenServiceImpl implements BgmAgitRefreshTokenServic
     public  BgmAgitMember validateRefreshToken(String refreshToken) {
         BgmAgitRefreshToken token = bgmAgitRefreshTokenRepository
                 .findBgmAgitRefreshTokenValue(refreshToken)
-                .orElseThrow(() -> new RefreshTokenExpiredException("유효하지 않은 리프레시 토큰입니다."));
+                .orElse(null);
+        
+        if (token == null) {
+            return null;
+        }
         
         if (token.getBgmAgitRefreshExpiresDate().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("리프레시 토큰이 만료되었습니다.");
@@ -69,6 +73,10 @@ public class BgmAgitRefreshTokenServiceImpl implements BgmAgitRefreshTokenServic
         }
         
         BgmAgitMember member = validateRefreshToken(refreshToken);
+        
+        if(member == null) {
+            return null;
+        }
         
         String roleName = bgmAgitMemberRoleService
                 .getMemberRole(member.getBgmAgitMemberId())
