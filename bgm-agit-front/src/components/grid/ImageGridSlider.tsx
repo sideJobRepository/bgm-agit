@@ -51,7 +51,7 @@ export default function ImageGridSlider({ items, visibleCount, labelGb, interval
 
   return (
     <Wrapper {...swipeHandlers}>
-      {items && (
+      {items ? (
         <>
           <Slider $visibleCount={visibleCount} $itemCount={items.length} $index={index}>
             {items.map((item, idx) => (
@@ -96,6 +96,8 @@ export default function ImageGridSlider({ items, visibleCount, labelGb, interval
             onIndexChange={setLightboxIndex}
           />
         </>
+      ) : (
+        <NoSearchBox>사진을 준비중입니다.</NoSearchBox>
       )}
     </Wrapper>
   );
@@ -180,5 +182,20 @@ const Slide = styled.div.withConfig({
     border-radius: ${({ radius }) => (radius ? '999px' : '12px')};
     display: block;
     cursor: pointer;
+  }
+`;
+
+const NoSearchBox = styled.div<WithTheme>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font-size: ${({ theme }) => theme.sizes.menu};
+  font-weight: ${({ theme }) => theme.weight.semiBold};
+  font-family: 'Jua', sans-serif;
+  color: ${({ theme }) => theme.colors.menuColor};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.small};
   }
 `;

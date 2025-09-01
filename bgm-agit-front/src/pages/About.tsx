@@ -139,7 +139,7 @@ export default function About() {
               {
                 imageId: 1,
                 labelGb: 3,
-                image: '/images/roomAbout1.png',
+                image: '/images/roomAbout1.jpg',
                 label: 'Room 예약하기',
                 group: null,
                 link: '/detail/room',

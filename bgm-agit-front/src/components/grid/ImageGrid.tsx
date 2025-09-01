@@ -396,6 +396,7 @@ export default function ImageGrid({ pageData }: Props) {
           ))}
       </GridContainer>
       {filteredItems?.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
+      {!items && <NoSearchBox>사진을 준비중입니다.</NoSearchBox>}
       <ImageLightbox
         images={filteredItems?.map(item => item.image)}
         index={lightboxIndex}

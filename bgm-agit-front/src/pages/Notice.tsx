@@ -104,31 +104,34 @@ export default function Notice({ mainGb }: NoticeProps) {
           </NoticeBox>
         </Wrapper>
       ) : (
-        <Table>
-          <thead>
-            <tr>
-              <Th>번호</Th>
-              <Th>제목</Th>
-              {!isMobile && <Th>날짜</Th>}
-              <Th>분류</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {items?.content.slice(0, 6).map((notice, index) => (
-              <tr
-                key={notice.bgmAgitNoticeId}
-                onClick={() => {
-                  navigate(`/noticeDetail?id=${notice.bgmAgitNoticeId}`);
-                }}
-              >
-                <Td>{index + 1}</Td>
-                <Td>{notice.bgmAgitNoticeTitle}</Td>
-                {!isMobile && <Td>{notice.registDate}</Td>}
-                <Td>{notice.bgmAgitNoticeType === 'NOTICE' ? '공지사항' : '이벤트'}</Td>
+        <>
+          <Table>
+            <thead>
+              <tr>
+                <Th>번호</Th>
+                <Th>제목</Th>
+                {!isMobile && <Th>날짜</Th>}
+                <Th>분류</Th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
+            </thead>
+            <tbody>
+              {items?.content.slice(0, 6).map((notice, index) => (
+                <tr
+                  key={notice.bgmAgitNoticeId}
+                  onClick={() => {
+                    navigate(`/noticeDetail?id=${notice.bgmAgitNoticeId}`);
+                  }}
+                >
+                  <Td>{index + 1}</Td>
+                  <Td>{notice.bgmAgitNoticeTitle}</Td>
+                  {!isMobile && <Td>{notice.registDate}</Td>}
+                  <Td>{notice.bgmAgitNoticeType === 'NOTICE' ? '공지사항' : '이벤트'}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+          {items?.content.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
+        </>
       )}
     </>
   );
