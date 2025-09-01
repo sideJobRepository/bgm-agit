@@ -21,7 +21,7 @@ public class BgmAgitMemberResponseDto {
     private List<String> roles;
     private String socialId;
     private String sub;
-    private String phoneNumber;
+    //private String phoneNumber;
     
     public static BgmAgitMemberResponseDto create(BgmAgitMember member,List<GrantedAuthority> authorities) {
         BgmAgitMemberResponseDto bgmAgitMemberResponseDto = new BgmAgitMemberResponseDto();
@@ -35,7 +35,7 @@ public class BgmAgitMemberResponseDto {
         }
         bgmAgitMemberResponseDto.setRoles(roleList);
         bgmAgitMemberResponseDto.setSocialId(member.getBgmAgitMemberSocialId());
-        bgmAgitMemberResponseDto.setPhoneNumber(member.getBgmAgitMemberPhoneNo());
+      //  bgmAgitMemberResponseDto.setPhoneNumber(member.getBgmAgitMemberPhoneNo());
         bgmAgitMemberResponseDto.setSub("user");
         return bgmAgitMemberResponseDto;
     }
