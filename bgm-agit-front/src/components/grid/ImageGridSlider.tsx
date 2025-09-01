@@ -34,17 +34,17 @@ export default function ImageGridSlider({ items, visibleCount, labelGb, interval
 
   const swipeHandlers = useSwipeable({
     onSwipedLeft: () => {
-      setIndex(prev => (prev + 1 > items.length - visibleCount ? 0 : prev + 1));
+      setIndex(prev => (prev + 1 > items?.length - visibleCount ? 0 : prev + 1));
     },
     onSwipedRight: () => {
-      setIndex(prev => (prev === 0 ? items.length - visibleCount : prev - 1));
+      setIndex(prev => (prev === 0 ? items?.length - visibleCount : prev - 1));
     },
     trackMouse: true,
   });
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setIndex(prev => (prev + 1 > items.length - visibleCount ? 0 : prev + 1));
+      setIndex(prev => (prev + 1 > items?.length - visibleCount ? 0 : prev + 1));
     }, interval);
     return () => clearInterval(timer);
   }, [items?.length, visibleCount, interval]);
