@@ -54,7 +54,7 @@ public class BgmAgitBizTalkServiceImpl implements BgmAgitBizTalkService {
     
     }
     
-    
+    @Transactional
     public void issueAndSaveToken() {
      
         RestClient restClient = RestClient.create();
