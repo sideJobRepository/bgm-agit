@@ -35,7 +35,7 @@ public class ExceptionController {
         return errorResponse;
     }
     
-    /**
+     /**
      * 데이터베이스 관련 예외 처리 
      */
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)

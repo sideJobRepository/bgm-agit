@@ -87,7 +87,7 @@ jobs:
             -e SENDER_KEY=${{ secrets.SENDER_KEY }} \
             -e SPRING_PROFILES_ACTIVE=real \
             -v $(pwd)/logs:/app/logs \
-            -p 8080:8080 \
+            -p 127.0.0.1:8080:8080 \
             peachcoolpis/bgmagit-server:latest
             docker image prune -f
 
