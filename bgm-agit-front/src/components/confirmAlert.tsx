@@ -15,7 +15,7 @@ export function showConfirmModal({ message, onConfirm, onCancel }: Props) {
         <ButtonGroup>
           <CancelButton
             onClick={() => {
-              onCancel?.();
+               onCancel?.();
               onClose();
             }}
           >
