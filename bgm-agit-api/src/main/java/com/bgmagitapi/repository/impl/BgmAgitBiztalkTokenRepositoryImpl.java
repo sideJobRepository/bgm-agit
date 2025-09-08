@@ -26,7 +26,7 @@ public class BgmAgitBiztalkTokenRepositoryImpl implements BgmAgitBiztalkTokenCus
                 .delete(bgmAgitBiztalkToken)
                 .where(bgmAgitBiztalkToken.bgmAgitBiztalkIp.eq(bgmAgitBiztalkIp))
                 .execute();
-        em.clear();
+         em.clear();
         return execute;
     }
     
