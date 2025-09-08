@@ -113,9 +113,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: npm 테스트
-        working-directory: bgm-agit-front
-        run: npm install
+#      - name: npm 테스트
+#        working-directory: bgm-agit-front
+#        run: npm install
 
       - name: npm 빌드
         working-directory: bgm-agit-front

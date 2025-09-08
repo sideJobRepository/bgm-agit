@@ -45,7 +45,7 @@ logging:
 
 
 cors:
-  url: https://bgmagit.co.kr
+  url: http://14.50.43.75:8000
 
 kakao:
   redirecturi: https://bgmagit.co.kr/oauth/kakao/callback
