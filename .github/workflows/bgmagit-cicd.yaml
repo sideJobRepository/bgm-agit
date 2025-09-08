@@ -125,7 +125,7 @@ jobs:
 
       - name: npm 빌드
         working-directory: bgm-agit-front
-        run: npm run build
+        run: npm run staging
 
       - name: scp로 전송
         uses: appleboy/scp-action@v0.1.7
