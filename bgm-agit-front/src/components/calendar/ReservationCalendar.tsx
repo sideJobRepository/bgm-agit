@@ -15,7 +15,7 @@ import { useInsertPost, useReservationFetch } from '../../recoil/fetch.ts';
 import { useNavigate } from 'react-router-dom';
 
 export default function ReservationCalendar({ id }: { id?: number }) {
-  const navigate = useNavigate();
+   const navigate = useNavigate();
   const reservation = useRecoilValue<ReservationDatas>(reservationState);
   const fetchReservation = useReservationFetch();
   const reservationData = useRecoilValue(reservationDataState);

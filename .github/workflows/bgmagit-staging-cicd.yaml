@@ -1,4 +1,4 @@
-name: bgm-agit
+name: bgm-staging-agit
 
 on:
   push:
@@ -71,7 +71,7 @@ jobs:
             docker rm bgmagit-staging-server || true
             docker pull peachcoolpis/bgmagit-staging-server:latest
             docker run -d --name bgmagit-staging-server \
-             --network bgm-network \
+             --network bgm-staging-network \
             -e DB_URL=${{ secrets.STAGING_DB_URL }}  \
             -e DB_PORT=${{ secrets.STAGING_DB_PORT }}  \
             -e DB_USERNAME=${{ secrets.DB_USERNAME }}  \
@@ -129,16 +129,16 @@ jobs:
           password: ${{ secrets.STAGING_PASSWORD }}
           port: 2222
           source: bgm-agit-front/dist/*
-          target: /home/bae/deploy/front-dist-temp
+          target: /home/bae-staging/deploy/front-dist-temp
 
       - name: ssh 접속
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.HOST }}
+          host: ${{ secrets.STAGING_HOST }}
           username: ${{ secrets.STAGING_USERNAME }}
           password: ${{ secrets.STAGING_PASSWORD }}
           port: 2222
           script: |
             sudo rm -rf /usr/share/nginx/bgm-agit-front
-            sudo mv /home/bae/deploy/front-dist-temp/* /usr/share/nginx/bgm-agit-front/
+            sudo mv /home/bae-staging/deploy/front-dist-temp/* /usr/share/nginx/bgm-agit-front/
             sudo nginx -t && sudo systemctl reload nginx
