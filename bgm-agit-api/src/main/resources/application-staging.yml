@@ -45,7 +45,7 @@ logging:
 
 
 cors:
-  url: http://14.50.43.75:80
+  url: http://14.50.43.75
 
 kakao:
   redirecturi: http://14.50.43.75:8000/oauth/kakao/callback
