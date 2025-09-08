@@ -1,4 +1,4 @@
-name: bgm-agit
+name: bgm-staging-agit
 
 on:
   push:
@@ -71,7 +71,7 @@ jobs:
             docker rm bgmagit-staging-server || true
             docker pull peachcoolpis/bgmagit-staging-server:latest
             docker run -d --name bgmagit-staging-server \
-             --network bgm-network \
+             --network bgm-staging-network \
             -e DB_URL=${{ secrets.STAGING_DB_URL }}  \
             -e DB_PORT=${{ secrets.STAGING_DB_PORT }}  \
             -e DB_USERNAME=${{ secrets.DB_USERNAME }}  \
