@@ -1,0 +1,64 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
+  datasource:
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url:  jdbc:log4jdbc:mysql://${DB_URL}:${DB_PORT}/BGMAGIT
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+  cloud:
+    aws:
+      credentials:
+        access-key: ${AWS_ACCESS_KEY}
+        secret-key: ${AWS_SECRET_KEY}
+      region:
+        static: ${AWS_REGION}
+      s3:
+        bucket: ${AWS_BUCKET}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jws-algorithms: RS256
+          jwk-set-uri: https://bgmagit.co.kr/bgm-agit/.well-known/jwks.json
+
+logging:
+  file:
+    name: /app/logs/bgmagit.log
+    level:
+      root: INFO
+  logback:
+    rollingpolicy:
+      file-name-pattern: ${LOG_FILE}.%d{yyyy-MM-dd}.%i.log
+
+
+cors:
+  url: https://bgmagit.co.kr
+
+kakao:
+  redirecturi: https://bgmagit.co.kr/oauth/kakao/callback
+  clientId: 1c41b5cad9dceea3074ad92a6d496215
+  client-secret: ${CLIENT_SECRET}
+
+jwt:
+  secret: ${JWT_SECRET}
+
+cookie:
+  secure: true
+
+biztalk:
+  id: ${BIZTALK_ID}
+  password: ${BIZTALK_PASSWORD}
+  sender-key: ${SENDER_KEY}
