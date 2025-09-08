@@ -36,7 +36,7 @@ spring:
 
 logging:
   file:
-    name: /app/logs/bgmagit.log
+    name: /app/logs/bgmagit-staging.log
     level:
       root: INFO
   logback:
