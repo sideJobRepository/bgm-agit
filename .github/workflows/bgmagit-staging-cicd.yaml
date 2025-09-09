@@ -100,6 +100,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Use staging robots/sitemap
+        working-directory: bgm-agit-front
+        run: |
+            cp public/robots.staging.txt public/robots.txt
+            cp public/sitemap.staging.xml public/sitemap.xml || true  
+
       - name: npm 인스톨
         run: cd bgm-agit-front && npm install
 

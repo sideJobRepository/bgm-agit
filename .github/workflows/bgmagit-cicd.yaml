@@ -106,22 +106,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 노드 셋업
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
-
-      - name: 캐시 시키기
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-npm-${{ hashFiles('bgm-agit-front/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: npm 테스트
+      - name: Use prod robots/sitemap
         working-directory: bgm-agit-front
-        run: npm ci
+        run: |
+          cp public/robots.prod.txt public/robots.txt
+          cp public/sitemap.prod.xml public/sitemap.xml || true
+
+      - name: npm 인스톨
+        run: cd bgm-agit-front && npm install
 
       - name: npm 빌드
         working-directory: bgm-agit-front

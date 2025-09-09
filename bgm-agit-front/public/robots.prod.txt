@@ -1,0 +1,15 @@
+# Robots for bgmagit.co.kr
+
+# 기본(모든 크롤러)
+User-agent: *
+
+Disallow: /bgm-agit/
+
+User-agent: Yeti
+Disallow: /bgm-agit/
+Disallow: /api/
+Disallow: /admin/
+Disallow: /private/
+
+
+Sitemap: https://bgmagit.co.kr/sitemap.xml
