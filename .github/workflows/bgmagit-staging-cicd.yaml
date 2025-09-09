@@ -72,8 +72,9 @@ jobs:
             docker pull peachcoolpis/bgmagit-staging-server:latest
             docker run -d --name bgmagit-staging-server \
              --network bgm-staging-network \
-            -e DB_URL=${{ secrets.STAGING_DB_URL }}  \
-            -e DB_PORT=${{ secrets.STAGING_DB_PORT }}  \
+            -e SPRING_PROFILES_ACTIVE=staging \
+            -e STAGING_DB_URL=${{ secrets.STAGING_DB_URL }}  \
+            -e STAGING_DB_PORT=${{ secrets.STAGING_DB_PORT }}  \
             -e DB_USERNAME=${{ secrets.DB_USERNAME }}  \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
             -e AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }} \
@@ -85,7 +86,6 @@ jobs:
             -e BIZTALK_ID=${{ secrets.BIZTALK_ID }} \
             -e BIZTALK_PASSWORD=${{ secrets.BIZTALK_PASSWORD }} \
             -e SENDER_KEY=${{ secrets.SENDER_KEY }} \
-            -e SPRING_PROFILES_ACTIVE=staging \
             -v $(pwd)/logs:/app/logs \
             -p 127.0.0.1:8080:8080 \
             peachcoolpis/bgmagit-staging-server:latest
