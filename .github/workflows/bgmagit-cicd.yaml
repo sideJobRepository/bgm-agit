@@ -121,7 +121,7 @@ jobs:
 
       - name: npm 인스톨
         working-directory: bgm-agit-front
-        run: npm ci
+        run: npm ci --no-audit --fund=false
 
       - name: npm 빌드
         working-directory: bgm-agit-front
