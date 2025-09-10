@@ -25,7 +25,7 @@ export function useFetchMainMenu() {
   const { request } = useRequest();
 
   useEffect(() => {
-    request(() => api.get('/bgm-agit/main-menu').then(res => res.data), setMainMenu);
+     request(() => api.get('/bgm-agit/main-menu').then(res => res.data), setMainMenu);
   }, []);
 }
 

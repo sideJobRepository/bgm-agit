@@ -112,8 +112,16 @@ jobs:
           cp public/robots.prod.txt public/robots.txt
           cp public/sitemap.prod.xml public/sitemap.xml || true
 
+      - name: Node 캐시 키시기
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: bgm-agit-front/package-lock.json
+
       - name: npm 인스톨
-        run: cd bgm-agit-front && npm install
+        working-directory: bgm-agit-front
+        run: npm ci
 
       - name: npm 빌드
         working-directory: bgm-agit-front
