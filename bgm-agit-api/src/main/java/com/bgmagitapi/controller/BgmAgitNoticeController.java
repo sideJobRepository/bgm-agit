@@ -6,6 +6,7 @@ import com.bgmagitapi.config.UploadResult;
 import com.bgmagitapi.controller.request.BgmAgitNoticeCreateRequest;
 import com.bgmagitapi.controller.request.BgmAgitNoticeModifyRequest;
 import com.bgmagitapi.controller.response.notice.BgmAgitNoticeResponse;
+import com.bgmagitapi.page.PageResponse;
 import com.bgmagitapi.service.BgmAgitNoticeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,11 +47,11 @@ public class BgmAgitNoticeController {
     private String bucketName;
     
     @GetMapping("/notice")
-    public Page<BgmAgitNoticeResponse> getNotice(@PageableDefault(size = 10, sort = "bgmAgitNoticeId", direction = Sort.Direction.DESC) Pageable pageable,
-                                                 @RequestParam(name = "titleOrCont" , required = false) String titleOrCont
+    public PageResponse<BgmAgitNoticeResponse> getNotice(@PageableDefault(size = 10, sort = "bgmAgitNoticeId", direction = Sort.Direction.DESC) Pageable pageable,
+                                                         @RequestParam(name = "titleOrCont" , required = false) String titleOrCont
                                                  ) {
-        
-        return bgmAgitNoticeService.getNotice(pageable,titleOrCont);
+        Page<BgmAgitNoticeResponse> notice = bgmAgitNoticeService.getNotice(pageable, titleOrCont);
+        return PageResponse.from(notice);
     }
     @PostMapping("/notice")
     public ApiResponse createNotice(@Validated @ModelAttribute BgmAgitNoticeCreateRequest request) {
