@@ -47,7 +47,14 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
                         n.getBgmAgitNoticeTitle(),
                         n.getBgmAgitNoticeCont(),
                         n.getRegistDate().format(dateFormatter),
-                        n.getBgmAgitNoticeType().name()
+                        n.getBgmAgitNoticeType().name(),
+                        n.getBgmAgitNoticeFiles().stream()
+                                .map(f -> new BgmAgitNoticeFileResponse(
+                                        f.getBgmAgitNoticeFileId(),
+                                        f.getBgmAgitNoticeFileName(),
+                                        f.getBgmAgitNoticeFileUuidName(),
+                                        f.getBgmAgitNoticeFileUrl()))
+                                .toList()
                 )
         );
     }

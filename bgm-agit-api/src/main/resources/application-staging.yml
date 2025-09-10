@@ -6,7 +6,7 @@ spring:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     properties:
       hibernate:
-        default_batch_fetch_size: 100
+        default_batch_fetch_size: 30
   datasource:
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
     url:  jdbc:log4jdbc:mysql://${STAGING_DB_URL}:${STAGING_DB_PORT}/BGMAGIT

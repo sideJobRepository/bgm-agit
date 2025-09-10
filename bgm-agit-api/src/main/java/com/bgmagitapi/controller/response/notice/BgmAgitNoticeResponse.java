@@ -16,6 +16,6 @@ public class BgmAgitNoticeResponse {
     private String registDate;
     private String bgmAgitNoticeType;
     
-    //private List<BgmAgitNoticeFileResponse> bgmAgitNoticeFileList;
+    private List<BgmAgitNoticeFileResponse> bgmAgitNoticeFileList;
     
 }
