@@ -44,7 +44,7 @@ function App() {
         </BrowserRouter>
       </RecoilRoot>
     </ThemeProvider>
-  );
+   );
 }
 
 export default App;
