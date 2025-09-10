@@ -4,6 +4,7 @@ package com.bgmagitapi.controller;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.controller.request.BgmAgitRoleModifyRequest;
 import com.bgmagitapi.controller.response.BgmAgitRoleResponse;
+import com.bgmagitapi.page.PageResponse;
 import com.bgmagitapi.service.BgmAgitRoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,11 +23,12 @@ public class BgmAgitRoleController {
     private final BgmAgitRoleService bgmAgitRoleService;
     
     @GetMapping("/role")
-    public Page<BgmAgitRoleResponse> getRoles(
+    public PageResponse<BgmAgitRoleResponse> getRoles(
             @PageableDefault(size = 10) Pageable pageable
     , @RequestParam(required = false) String email
     ) {
-        return bgmAgitRoleService.getRoles(pageable,email);
+        Page<BgmAgitRoleResponse> roles = bgmAgitRoleService.getRoles(pageable, email);
+        return PageResponse.from(roles);
     }
     
     @PutMapping("/role")

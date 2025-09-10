@@ -6,6 +6,7 @@ import com.bgmagitapi.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.controller.request.BgmAgitReservationModifyRequest;
 import com.bgmagitapi.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.controller.response.reservation.GroupedReservationResponse;
+import com.bgmagitapi.page.PageResponse;
 import com.bgmagitapi.service.BgmAgitReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -44,7 +45,7 @@ public class BgmAgitReservationController {
     }
     
     @GetMapping("/reservation/detail")
-    public Page<GroupedReservationResponse> getReservationDetail(
+    public PageResponse<GroupedReservationResponse> getReservationDetail(
             @AuthenticationPrincipal Jwt jwt,
             @PageableDefault(size = 10, sort = "bgmAgitReservationId", direction = Sort.Direction.DESC) Pageable pageable,
             @RequestParam(name = "startDate", required = false) String startDate,
@@ -52,7 +53,8 @@ public class BgmAgitReservationController {
             ) {
         Long memberId = extractMemberId(jwt);
         String role = extractRole(jwt);
-        return bgmAgitReservationService.getReservationDetail(memberId, role, startDate, endDate, pageable);
+        Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(memberId, role, startDate, endDate, pageable);
+        return PageResponse.from(reservationDetail);
     }
     
     
