@@ -3,7 +3,6 @@ package com.bgmagitapi.controller;
 
 import com.bgmagitapi.controller.response.BgmAgitMainMenuImageResponse;
 import com.bgmagitapi.controller.response.BgmAgitMainMenuResponse;
-import com.bgmagitapi.page.PageResponse;
 import com.bgmagitapi.service.BgmAgitMainMenuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -36,7 +35,7 @@ public class BgmAgitMenuController {
     }
     
     @GetMapping(value = "/detail")
-    public PageResponse<BgmAgitMainMenuImageResponse> getDetail(
+    public Map<String, Object> getDetail(
             @RequestParam(name = "labelGb",required = false) Long labelGb,
             @RequestParam(name = "link",required = false) String link,
             @RequestParam(name = "category",required = false) String category,
