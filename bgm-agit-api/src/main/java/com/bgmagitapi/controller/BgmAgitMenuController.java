@@ -3,8 +3,11 @@ package com.bgmagitapi.controller;
 
 import com.bgmagitapi.controller.response.BgmAgitMainMenuImageResponse;
 import com.bgmagitapi.controller.response.BgmAgitMainMenuResponse;
+import com.bgmagitapi.page.PageResponse;
 import com.bgmagitapi.service.BgmAgitMainMenuService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,5 +33,16 @@ public class BgmAgitMenuController {
             @RequestParam(name = "labelGb",required = false) Long labelGb,
             @RequestParam(name = "link",required = false) String link) {
         return  bgmAgitMainMenuService.getMainMenuImage(labelGb,link);
+    }
+    
+    @GetMapping(value = "/detail")
+    public PageResponse<BgmAgitMainMenuImageResponse> getDetail(
+            @RequestParam(name = "labelGb",required = false) Long labelGb,
+            @RequestParam(name = "link",required = false) String link,
+            @RequestParam(name = "category",required = false) String category,
+            @RequestParam(name = "name",required = false) String name,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        return bgmAgitMainMenuService.getImagePage(labelGb, link, pageable, category, name);
     }
 }

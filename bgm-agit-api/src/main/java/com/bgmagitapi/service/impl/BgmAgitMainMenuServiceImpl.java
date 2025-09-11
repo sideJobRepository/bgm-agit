@@ -3,11 +3,14 @@ package com.bgmagitapi.service.impl;
 import com.bgmagitapi.controller.response.BgmAgitMainMenuImageResponse;
 import com.bgmagitapi.controller.response.BgmAgitMainMenuResponse;
 import com.bgmagitapi.entity.BgmAgitMainMenu;
+import com.bgmagitapi.page.PageResponse;
 import com.bgmagitapi.repository.BgmAgitImageRepository;
 import com.bgmagitapi.repository.BgmAgitMainMenuRepository;
 import com.bgmagitapi.repository.BgmAgitMenuRoleRepository;
 import com.bgmagitapi.service.BgmAgitMainMenuService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -126,4 +129,11 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
         return result.stream()
                 .collect(Collectors.groupingBy(BgmAgitMainMenuImageResponse::getLabelGb));
     }
+    
+    @Override
+    public PageResponse<BgmAgitMainMenuImageResponse> getImagePage(Long labelGb, String link, Pageable pageable, String category, String name) {
+        Page<BgmAgitMainMenuImageResponse> detailImage = bgmAgitImageRepository.getDetailImage(labelGb, link, pageable, category, name);
+        return PageResponse.from(detailImage);
+    }
+    
 }
