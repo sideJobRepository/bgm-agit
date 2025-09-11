@@ -12,4 +12,5 @@ public interface BgmAgitBizTalkSandService {
     ApiResponse sandBizTalk(BgmAgitMember member, BgmAgitImage image, List<BgmAgitReservation> list);
     ApiResponse sendCancelBizTalk(ReservationTalkContext ctx);
     ApiResponse sendCompleteBizTalk(ReservationTalkContext ctx);
+    ApiResponse sendJoinMemberBizTalk(BgmAgitMember member);
 }
