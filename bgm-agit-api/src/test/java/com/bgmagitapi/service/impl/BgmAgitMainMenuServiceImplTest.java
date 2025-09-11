@@ -40,10 +40,10 @@ class BgmAgitMainMenuServiceImplTest extends RepositoryAndServiceTestSupport {
     @DisplayName("")
     @Test
     void test3(){
-        String link = "/detail/game";
+        String link = "/detail/food";
         String category = "MURDER";
         PageRequest pageRequest = PageRequest.of(0, 10);
-        PageResponse<BgmAgitMainMenuImageResponse> result = bgmAgitMainMenuService.getImagePage(2L, link, pageRequest, "MURDER", "페이징테스트1");
+        PageResponse<BgmAgitMainMenuImageResponse> result = bgmAgitMainMenuService.getImagePage(4L, link, pageRequest, null, null);
         
         System.out.println("result = " + result);
         

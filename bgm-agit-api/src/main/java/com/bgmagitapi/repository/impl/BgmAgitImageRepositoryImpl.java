@@ -2,7 +2,6 @@ package com.bgmagitapi.repository.impl;
 
 import com.bgmagitapi.controller.response.BgmAgitMainMenuImageResponse;
 import com.bgmagitapi.entity.enumeration.BgmAgitImageCategory;
-import com.bgmagitapi.repository.BgmAgitMenuRoleRepository;
 import com.bgmagitapi.repository.costom.BgmAgitImageCustomRepository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -14,12 +13,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.bgmagitapi.entity.QBgmAgitImage.bgmAgitImage;
 import static com.bgmagitapi.entity.QBgmAgitMainMenu.bgmAgitMainMenu;
-import static com.bgmagitapi.entity.QBgmAgitMember.bgmAgitMember;
 
 @RequiredArgsConstructor
 public class BgmAgitImageRepositoryImpl implements BgmAgitImageCustomRepository {
@@ -49,69 +46,48 @@ public class BgmAgitImageRepositoryImpl implements BgmAgitImageCustomRepository 
     @Override
     public Page<BgmAgitMainMenuImageResponse> getDetailImage(Long labelGb, String link, Pageable pageable, String category, String name) {
         
-        List<BgmAgitMainMenuImageResponse> list = new ArrayList<>();
-        if (labelGb == 2) {
-            list = queryFactory
-                    .select(Projections.constructor(
-                            BgmAgitMainMenuImageResponse.class,
-                            bgmAgitImage.bgmAgitImageId,
-                            bgmAgitImage.bgmAgitMainMenu.bgmAgitMainMenuId,
-                            bgmAgitImage.bgmAgitImageUrl,
-                            bgmAgitImage.bgmAgitImageLabel,
-                            bgmAgitImage.bgmAgitImageGroups,
-                            bgmAgitImage.bgmAgitMenuLink,
-                            bgmAgitImage.bgmAgitImageCategory.stringValue()
-                    ))
-                    .from(bgmAgitImage)
-                    .join(bgmAgitImage.bgmAgitMainMenu, bgmAgitMainMenu)
-                    .where(mainMenuIdEq(labelGb), menuLinkEq(link), categoryEq(category), labelLike(name))
-                    .offset(pageable.getOffset())
-                    .limit(pageable.getPageSize())
-                    .fetch();
-        } else {
-            list = queryFactory
-                    .select(Projections.constructor(
-                            BgmAgitMainMenuImageResponse.class,
-                            bgmAgitImage.bgmAgitImageId,
-                            bgmAgitImage.bgmAgitMainMenu.bgmAgitMainMenuId,
-                            bgmAgitImage.bgmAgitImageUrl,
-                            bgmAgitImage.bgmAgitImageLabel,
-                            bgmAgitImage.bgmAgitImageGroups,
-                            bgmAgitImage.bgmAgitMenuLink,
-                            bgmAgitImage.bgmAgitImageCategory.stringValue()
-                    ))
-                    .from(bgmAgitImage)
-                    .join(bgmAgitImage.bgmAgitMainMenu, bgmAgitMainMenu)
-                    .where(mainMenuIdEq(labelGb), menuLinkEq(link), labelLike(name))
-                    .offset(pageable.getOffset())
-                    .limit(pageable.getPageSize())
-                    .fetch();
-        }
         
-        if (labelGb == 2) {
-            JPAQuery<Long> countQuery = queryFactory
-                    .select(bgmAgitImage.count())
-                    .from(bgmAgitImage)
-                    .join(bgmAgitImage.bgmAgitMainMenu, bgmAgitMainMenu)
-                    .where(mainMenuIdEq(labelGb), menuLinkEq(link), categoryEq(category), labelLike(name));
-            return PageableExecutionUtils.getPage(list,pageable,countQuery::fetchOne);
-        }else {
-            JPAQuery<Long> countQuery = queryFactory
-                    .select(bgmAgitImage.count())
-                    .from(bgmAgitImage)
-                    .join(bgmAgitImage.bgmAgitMainMenu, bgmAgitMainMenu)
-                    .where(mainMenuIdEq(labelGb), menuLinkEq(link), labelLike(name));
-            return PageableExecutionUtils.getPage(list,pageable,countQuery::fetchOne);
-        }
+        List<BgmAgitMainMenuImageResponse> content = queryFactory
+                .select(Projections.constructor(
+                        BgmAgitMainMenuImageResponse.class,
+                        bgmAgitImage.bgmAgitImageId,
+                        bgmAgitImage.bgmAgitMainMenu.bgmAgitMainMenuId,
+                        bgmAgitImage.bgmAgitImageUrl,
+                        bgmAgitImage.bgmAgitImageLabel,
+                        bgmAgitImage.bgmAgitImageGroups,
+                        bgmAgitImage.bgmAgitMenuLink,
+                        bgmAgitImage.bgmAgitImageCategory.stringValue()
+                ))
+                .from(bgmAgitImage)
+                .join(bgmAgitImage.bgmAgitMainMenu, bgmAgitMainMenu)
+                .where(mainMenuIdEq(labelGb),
+                        menuLinkEq(link),
+                        labelLike(name),
+                        categoryEq(category))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+        
+        
+        JPAQuery<Long> countQuery = queryFactory
+                .select(bgmAgitImage.count())
+                .from(bgmAgitImage)
+                .join(bgmAgitImage.bgmAgitMainMenu, bgmAgitMainMenu)
+                .where(mainMenuIdEq(labelGb),
+                        menuLinkEq(link),
+                        labelLike(name),
+                        categoryEq(category));
+        
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
     
     private BooleanExpression categoryEq(String category) {
-        return category != null ? bgmAgitImage.bgmAgitImageCategory.eq(BgmAgitImageCategory.valueOf(category)) : null;
+        return StringUtils.hasText(category) ? bgmAgitImage.bgmAgitImageCategory.eq(BgmAgitImageCategory.valueOf(category)) : null;
     }
     
     
     private BooleanExpression labelLike(String name) {
-        return name != null ? bgmAgitImage.bgmAgitImageLabel.like('%' + name + '%') : null;
+        return StringUtils.hasText(name) ? bgmAgitImage.bgmAgitImageLabel.like('%' + name + '%') : null;
     }
     
     private BooleanExpression mainMenuIdEq(Long labelGb) {
