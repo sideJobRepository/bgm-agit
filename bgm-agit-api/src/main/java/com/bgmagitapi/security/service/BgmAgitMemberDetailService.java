@@ -1,13 +1,14 @@
 package com.bgmagitapi.security.service;
 
-import com.bgmagitapi.entity.*;
+import com.bgmagitapi.entity.BgmAgitMember;
+import com.bgmagitapi.entity.BgmAgitMemberRole;
+import com.bgmagitapi.entity.BgmAgitRole;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRoleRepository;
-import com.bgmagitapi.repository.BgmAgitRoleRepository;
 import com.bgmagitapi.repository.impl.BgmAgitMemberDetailRepositoryImpl;
 import com.bgmagitapi.security.context.BgmAgitMemberContext;
 import com.bgmagitapi.security.service.response.KaKaoProfileResponse;
-import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.bgmagitapi.service.BgmAgitBizTalkSandService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -18,10 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-
-import static com.bgmagitapi.entity.QBgmAgitMember.*;
-import static com.bgmagitapi.entity.QBgmAgitMemberRole.*;
-import static com.bgmagitapi.entity.QBgmAgitRole.*;
 
 
 @Service
@@ -34,6 +31,8 @@ public class BgmAgitMemberDetailService implements UserDetailsService {
     private final BgmAgitMemberRoleRepository bgmAgitMemberRoleRepository;
     
     private final BgmAgitMemberDetailRepositoryImpl bgmAgitMemberDetailRepository;
+    
+    private final BgmAgitBizTalkSandService bgmAgitBizTalkSandService;
     
     
     @Override
@@ -53,6 +52,7 @@ public class BgmAgitMemberDetailService implements UserDetailsService {
                     BgmAgitMemberRole bgmAgitMemberRole = new BgmAgitMemberRole(saveMember, findbyBgmAgitRole);
                     
                     bgmAgitMemberRoleRepository.save(bgmAgitMemberRole);
+                    bgmAgitBizTalkSandService.sendJoinMemberBizTalk(saveMember);
                     return saveMember;
                 });
         
@@ -60,6 +60,8 @@ public class BgmAgitMemberDetailService implements UserDetailsService {
         Long id = findBgmAgitMember.getBgmAgitMemberId();
         List<String> roleName = bgmAgitMemberDetailRepository.getRoleName(id);
         List<GrantedAuthority> authorityList = AuthorityUtils.createAuthorityList(roleName);
+        
+        
         
         return new BgmAgitMemberContext(findBgmAgitMember, authorityList);
     }

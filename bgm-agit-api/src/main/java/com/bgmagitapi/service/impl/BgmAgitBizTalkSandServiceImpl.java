@@ -17,10 +17,13 @@ import com.bgmagitapi.service.response.ReservationTalkContext;
 import com.bgmagitapi.util.AlimtalkUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -60,7 +63,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         
         String phone = AlimtalkUtils.formatRecipientKr(member.getBgmAgitMemberPhoneNo());
         
-        Attach attach = AlimtalkUtils.defaultAttach();
+        Attach attach = AlimtalkUtils.defaultAttach("예약 내역 확인 하기");
         
         Map<String, Object> request = AlimtalkUtils.buildSendRequest(
                 senderKey, phone, message,"bgmagit-reservation-2",attach);
@@ -158,7 +161,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String template = isAdmin ? "bgmagit-reservation-cancel-2" : "bgmagit-reservation-cancel";
         Long subjectId  = list.get(0).getBgmAgitReservationNo();
         
-        return sendTalk(message, template, ctx.getPhone(), subjectId, "수정 되었습니다.");
+        return sendTalk(message, template, ctx.getPhone(), subjectId, "수정 되었습니다.",BgmAgitSubject.RESERVATION,"예약 내역 확인 하기");
     }
     
     @Override
@@ -172,15 +175,27 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String template = "bgmagit-reservation-complete";
         Long subjectId  = list.get(0).getBgmAgitReservationNo();
         
-        return sendTalk(message, template, ctx.getPhone(), subjectId, "알림톡 발송 완료");
+        return sendTalk(message, template, ctx.getPhone(), subjectId, "알림톡 발송 완료",BgmAgitSubject.RESERVATION,"예약 내역 확인 하기");
+    }
+    
+    @Override
+    public ApiResponse sendJoinMemberBizTalk(BgmAgitMember member) {
+        String template = "bgmagit-member";
+        String memberJoinDate = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(member.getRegistDate());
+        String memberJoinTime = DateTimeFormatter.ofPattern("HH:mm").format(member.getRegistDate());
+        String memberName = member.getBgmAgitMemberName();
+        String message = AlimtalkUtils.memberJoinMessage(memberName, memberJoinDate, memberJoinTime);
+        String adminPhoneNo = "010-5059-3499";
+        ApiResponse apiResponse = sendTalk(message, template, adminPhoneNo, null, "알림톡 발송 완료",BgmAgitSubject.SIGN_UP,"확인 하기");
+        return apiResponse;
     }
     
     /** 공통 전송 + 히스토리 저장 */
     private ApiResponse sendTalk(String message, String templateName, String rawPhone,
-                                 Long subjectId, String okMsg) {
+                                 Long subjectId, String okMsg,BgmAgitSubject bgmAgitSubject,String buttonName) {
         
         String phone = AlimtalkUtils.formatRecipientKr(rawPhone);
-        Attach attach = AlimtalkUtils.defaultAttach();
+        Attach attach = AlimtalkUtils.defaultAttach(buttonName);
         
         RestClient rest = RestClient.create();
         BizTalkTokenResponse token = bgmAgitBizTalkService.getBizTalkToken();
@@ -224,7 +239,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String resultCode = codeByIdx.getOrDefault(msgIdx, "PENDING");
         
         BgmAgitBiztalkSendHistory history = new BgmAgitBiztalkSendHistory(
-                BgmAgitSubject.RESERVATION, subjectId, message, msgIdx
+                bgmAgitSubject, subjectId, message, msgIdx
         );
         history.settingResultCode(resultCode);
         bgmAgitBiztalkSendHistoryRepository.save(history);
