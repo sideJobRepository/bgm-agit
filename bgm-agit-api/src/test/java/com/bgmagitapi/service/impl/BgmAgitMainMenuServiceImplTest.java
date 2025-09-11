@@ -42,7 +42,7 @@ class BgmAgitMainMenuServiceImplTest extends RepositoryAndServiceTestSupport {
         String link = "/detail/food";
         String category = "MURDER";
         PageRequest pageRequest = PageRequest.of(0, 10);
-        Map<String, Object> imagePage = bgmAgitMainMenuService.getImagePage(4L, link, pageRequest, null, null);
+        Map<String, Object> imagePage = bgmAgitMainMenuService.getImagePage(4L, link, pageRequest, "테스트", "페이징");
         
         System.out.println("result = " + imagePage);
         
