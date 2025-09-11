@@ -8,6 +8,8 @@ import 'react-datepicker/dist/react-datepicker.css';
 import Select from 'react-select';
 import { useMediaQuery } from 'react-responsive';
 import type { StylesConfig } from 'react-select';
+import { useSetRecoilState } from 'recoil';
+import { searchState } from '../recoil';
 
 interface SearchBarProps<T> {
   color: string;
@@ -21,15 +23,12 @@ type OptionType = {
   value: string;
 };
 
-export default function SearchBar<T = string>({
-  color,
-  label,
-  onSearch,
-  onCategory,
-}: SearchBarProps<T>) {
+export default function SearchBar<T = string>({ color, label, onSearch }: SearchBarProps<T>) {
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
   const location = useLocation();
   const key = location.pathname.split('/').filter(Boolean).pop()!;
+
+  console.log('keyt', key);
 
   const today = new Date();
   const oneMonthLater = new Date();
@@ -37,6 +36,8 @@ export default function SearchBar<T = string>({
 
   const [startDate, setStartDate] = useState<Date | null>(today);
   const [endDate, setEndDate] = useState<Date | null>(oneMonthLater);
+
+  const setSearch = useSetRecoilState(searchState);
 
   const [keyword, setKeyword] = useState('');
   const categoryOptions = [
@@ -53,13 +54,14 @@ export default function SearchBar<T = string>({
     e.preventDefault();
     if (key === 'reservationList') {
       onSearch([startDate, endDate] as T);
-    } else if (key === 'game') {
+    } else if (key === 'room') {
       onSearch(keyword as T);
-      if (onCategory) {
-        onCategory(category as T);
-      }
     } else {
-      onSearch(keyword as T);
+      setSearch(() => ({
+        name: keyword,
+        category: category,
+        page: 0, // 여기만 업데이트
+      }));
     }
   };
 

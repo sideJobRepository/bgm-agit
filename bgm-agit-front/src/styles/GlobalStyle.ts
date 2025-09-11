@@ -33,6 +33,10 @@ export const GlobalStyle = createGlobalStyle`
         
     }
 
+    html, body, #root {
+        overscroll-behavior: none;  /* 위/아래 체이닝 차단 */
+    }
+
     body {
         font-family: 'Pretendard', sans-serif;
         overscroll-behavior-y: none;

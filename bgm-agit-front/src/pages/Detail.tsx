@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom';
 import { useFetchMainData } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { mainDataState } from '../recoil';
+import { useEffect } from 'react';
 
 export default function Detail() {
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
@@ -80,7 +81,10 @@ export default function Detail() {
   const fullPageData = {
     ...selectedData,
     items: items[selectedData.labelGb],
+    pages: items.page,
   };
+
+  useEffect(() => {}, []);
 
   return (
     <Wrapper>

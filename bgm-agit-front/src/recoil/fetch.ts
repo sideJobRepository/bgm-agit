@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
-import { imageUploadState, mainDataState, mainMenuState } from './state/mainState.ts';
+import { imageUploadState, mainDataState, mainMenuState, searchState } from './state/mainState.ts';
 import api from '../utils/axiosInstance';
 import { useRequest } from './useRequest.ts';
 import type { ReservationData } from '../types/reservation.ts';
@@ -25,26 +25,47 @@ export function useFetchMainMenu() {
   const { request } = useRequest();
 
   useEffect(() => {
-     request(() => api.get('/bgm-agit/main-menu').then(res => res.data), setMainMenu);
+    request(() => api.get('/bgm-agit/main-menu').then(res => res.data), setMainMenu);
   }, []);
 }
 
-export function useFetchMainData(param?: { labelGb?: number; link?: string }) {
+export function useFetchMainData(param?: {
+  labelGb?: number;
+  link?: string;
+  name?: string | null;
+  category?: string | null;
+}) {
   const setMain = useSetRecoilState(mainDataState);
   const { request } = useRequest();
   const trigger = useRecoilValue(imageUploadState);
+  const pageData = useRecoilValue(searchState);
 
   useEffect(() => {
+    console.log('param', param?.labelGb);
+
+    const pageSize: number = param?.labelGb === 2 ? 8 : 10;
+    const url = param?.labelGb === 3 ? 'main-image' : 'detail';
+
+    const params = {
+      ...(param ?? {}), // 기존 값 유지
+      ...(pageData.name ? { name: pageData.name } : {}),
+      ...(pageData.category ? { category: pageData.category } : {}),
+    };
+
+    // const url = 'main-image';
+
+    console.log('parma', params);
+
     request(
       () =>
         api
-          .get('/bgm-agit/main-image', {
-            params: param ?? {},
+          .get(`/bgm-agit/${url}?page=${pageData.page}&size=${pageSize}`, {
+            params: params ?? {},
           })
           .then(res => res.data),
       setMain
     );
-  }, [param?.link, param?.labelGb, trigger]);
+  }, [param?.link, param?.labelGb, trigger, pageData]);
 }
 
 export function useReservationFetch() {

@@ -1,6 +1,4 @@
-export type ImageSliderItem = {
-  [labelGb: number]: GridItem[];
-};
+export type ImageSliderItem = Record<number, GridItem[]> & { page: PageItem };
 
 export interface GridItem {
   image: string;
@@ -10,4 +8,18 @@ export interface GridItem {
   label: string;
   group: null | string;
   link: null | string;
+}
+
+export interface PageItem {
+  last: boolean;
+  number: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface DetailParams {
+  page: number;
+  name: string;
+  category: string | null;
 }
