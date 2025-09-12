@@ -82,7 +82,7 @@ export function useFetchDetailData(param?: {
 
     const params = {
       ...(param ?? {}), // 기존 값 유지
-      ...(pageData.name && paramLink === pageData.gb ? { name: pageData.name } : ''),
+      ...(pageData.name && paramLink === pageData.gb ? { name: encodeURIComponent(pageData.name) } : null),
       ...(pageData.category && paramLink === pageData.gb ? { category: pageData.category } : null),
     };
 
