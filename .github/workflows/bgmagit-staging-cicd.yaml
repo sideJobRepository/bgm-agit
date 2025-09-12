@@ -141,4 +141,4 @@ jobs:
           script: |
             sudo rm -rf /usr/share/nginx/bgm-agit-front
             sudo mv /home/bae-staging/deploy/front-dist-temp/* /usr/share/nginx/bgm-agit-front/
-            sudo nginx -t && sudo systemctl reload nginx
+            sudo nginx -t && sudo systemctl reload-or-restart nginx
