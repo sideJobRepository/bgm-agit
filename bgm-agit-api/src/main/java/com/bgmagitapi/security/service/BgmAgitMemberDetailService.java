@@ -3,7 +3,7 @@ package com.bgmagitapi.security.service;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitMemberRole;
 import com.bgmagitapi.entity.BgmAgitRole;
-import com.bgmagitapi.event.MemberJoinedEvent;
+import com.bgmagitapi.event.dto.MemberJoinedEvent;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRoleRepository;
 import com.bgmagitapi.repository.impl.BgmAgitMemberDetailRepositoryImpl;

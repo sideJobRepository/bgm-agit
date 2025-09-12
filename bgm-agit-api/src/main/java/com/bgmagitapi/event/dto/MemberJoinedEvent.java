@@ -1,4 +1,4 @@
-package com.bgmagitapi.event;
+package com.bgmagitapi.event.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
