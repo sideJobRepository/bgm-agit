@@ -3,13 +3,14 @@ package com.bgmagitapi.security.service;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitMemberRole;
 import com.bgmagitapi.entity.BgmAgitRole;
+import com.bgmagitapi.event.MemberJoinedEvent;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRoleRepository;
 import com.bgmagitapi.repository.impl.BgmAgitMemberDetailRepositoryImpl;
 import com.bgmagitapi.security.context.BgmAgitMemberContext;
 import com.bgmagitapi.security.service.response.KaKaoProfileResponse;
-import com.bgmagitapi.service.BgmAgitBizTalkSandService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -32,7 +33,7 @@ public class BgmAgitMemberDetailService implements UserDetailsService {
     
     private final BgmAgitMemberDetailRepositoryImpl bgmAgitMemberDetailRepository;
     
-    private final BgmAgitBizTalkSandService bgmAgitBizTalkSandService;
+    private final ApplicationEventPublisher  eventPublisher;
     
     
     @Override
@@ -52,7 +53,7 @@ public class BgmAgitMemberDetailService implements UserDetailsService {
                     BgmAgitMemberRole bgmAgitMemberRole = new BgmAgitMemberRole(saveMember, findbyBgmAgitRole);
                     
                     bgmAgitMemberRoleRepository.save(bgmAgitMemberRole);
-                    bgmAgitBizTalkSandService.sendJoinMemberBizTalk(saveMember);
+                    eventPublisher.publishEvent(new MemberJoinedEvent(saveMember.getBgmAgitMemberId()));
                     return saveMember;
                 });
         
@@ -60,8 +61,6 @@ public class BgmAgitMemberDetailService implements UserDetailsService {
         Long id = findBgmAgitMember.getBgmAgitMemberId();
         List<String> roleName = bgmAgitMemberDetailRepository.getRoleName(id);
         List<GrantedAuthority> authorityList = AuthorityUtils.createAuthorityList(roleName);
-        
-        
         
         return new BgmAgitMemberContext(findBgmAgitMember, authorityList);
     }
