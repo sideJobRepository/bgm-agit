@@ -3,10 +3,10 @@ import ImageGrid from '../components/grid/ImageGrid.tsx';
 import { useMediaQuery } from 'react-responsive';
 import { Wrapper } from '../styles';
 import { useLocation } from 'react-router-dom';
-import { useFetchMainData } from '../recoil/fetch.ts';
+import { useFetchDetailData, useFetchMainData } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
-import { mainDataState } from '../recoil';
-import { useEffect } from 'react';
+import { detailDataState, mainDataState } from '../recoil';
+import { useEffect, useState } from 'react';
 
 export default function Detail() {
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
@@ -76,21 +76,27 @@ export default function Detail() {
   const param = { labelGb: selectedData.labelGb, link: '/detail/' + key };
 
   useFetchMainData(param);
-  const items = useRecoilValue(mainDataState);
+  useFetchDetailData(param);
 
-  const fullPageData = {
-    ...selectedData,
-    items: items[selectedData.labelGb],
-    pages: items.page,
-  };
+  const mainItems = useRecoilValue(mainDataState);
+  const detailItems = useRecoilValue(detailDataState);
+  const items = selectedData.labelGb === 3 ? mainItems : detailItems;
 
-  useEffect(() => {}, []);
+  const [fullPageData, setFullPageData] = useState(null);
+
+  useEffect(() => {
+    if (!items) return;
+
+    setFullPageData({
+      ...selectedData,
+      items: items[selectedData.labelGb],
+      pages: items.page,
+    });
+  }, [items]);
 
   return (
     <Wrapper>
-      <GridBox>
-        <ImageGrid pageData={fullPageData} />
-      </GridBox>
+      <GridBox>{fullPageData && <ImageGrid pageData={fullPageData} />}</GridBox>
     </Wrapper>
   );
 }

@@ -22,4 +22,5 @@ export interface DetailParams {
   page: number;
   name: string;
   category: string | null;
+  gb: string;
 }

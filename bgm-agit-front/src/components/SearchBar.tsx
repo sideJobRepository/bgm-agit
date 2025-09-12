@@ -28,8 +28,6 @@ export default function SearchBar<T = string>({ color, label, onSearch }: Search
   const location = useLocation();
   const key = location.pathname.split('/').filter(Boolean).pop()!;
 
-  console.log('keyt', key);
-
   const today = new Date();
   const oneMonthLater = new Date();
   oneMonthLater.setMonth(today.getMonth() + 1);
@@ -61,6 +59,7 @@ export default function SearchBar<T = string>({ color, label, onSearch }: Search
         name: keyword,
         category: category,
         page: 0, // 여기만 업데이트
+        gb: key,
       }));
     }
   };
@@ -111,6 +110,14 @@ export default function SearchBar<T = string>({ color, label, onSearch }: Search
 
   useEffect(() => {
     setKeyword('');
+    setCategory('');
+    setSearch(prev => ({
+      ...prev,
+      name: '',
+      category: '',
+      page: 0,
+      gb: '',
+    }));
 
     // 현재 페이지에 따라 초기 검색값 분기
     if (key === 'reservationList') {

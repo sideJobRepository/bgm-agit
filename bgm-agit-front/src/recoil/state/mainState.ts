@@ -12,6 +12,11 @@ export const mainDataState = atom<ImageSliderItem>({
   default: [],
 });
 
+export const detailDataState = atom<ImageSliderItem>({
+  key: 'detailDataState',
+  default: null,
+});
+
 export const loadingState = atom<boolean>({
   key: 'isLoadingState',
   default: false,
@@ -34,5 +39,6 @@ export const searchState = atom<DetailParams>({
     page: 0,
     name: '',
     category: null,
+    gb: '',
   },
 });

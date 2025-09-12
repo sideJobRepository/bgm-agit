@@ -1,6 +1,12 @@
 import { useEffect } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
-import { imageUploadState, mainDataState, mainMenuState, searchState } from './state/mainState.ts';
+import {
+  detailDataState,
+  imageUploadState,
+  mainDataState,
+  mainMenuState,
+  searchState,
+} from './state/mainState.ts';
 import api from '../utils/axiosInstance';
 import { useRequest } from './useRequest.ts';
 import type { ReservationData } from '../types/reservation.ts';
@@ -38,28 +44,54 @@ export function useFetchMainData(param?: {
   const setMain = useSetRecoilState(mainDataState);
   const { request } = useRequest();
   const trigger = useRecoilValue(imageUploadState);
-  const pageData = useRecoilValue(searchState);
 
   useEffect(() => {
     console.log('param', param?.labelGb);
 
-    const pageSize: number = param?.labelGb === 2 ? 8 : 10;
-    const url = param?.labelGb === 3 ? 'main-image' : 'detail';
+    request(
+      () =>
+        api
+          .get(`/bgm-agit/main-image`, {
+            params: param ?? {},
+          })
+          .then(res => res.data),
+      setMain
+    );
+  }, [param?.link, param?.labelGb, trigger]);
+}
+
+//디테일
+export function useFetchDetailData(param?: {
+  labelGb?: number;
+  link?: string;
+  name?: string | null;
+  category?: string | null;
+}) {
+  const setMain = useSetRecoilState(detailDataState);
+  const { request } = useRequest();
+  const trigger = useRecoilValue(imageUploadState);
+  const pageData = useRecoilValue(searchState);
+
+  useEffect(() => {
+    console.log('param', pageData);
+    console.log('labelGb', param?.link);
+
+    let paramLink;
+
+    if (param?.link) paramLink = param?.link.split('/').filter(Boolean).pop();
 
     const params = {
       ...(param ?? {}), // 기존 값 유지
-      ...(pageData.name ? { name: pageData.name } : {}),
-      ...(pageData.category ? { category: pageData.category } : {}),
+      ...(pageData.name && paramLink === pageData.gb ? { name: pageData.name } : ''),
+      ...(pageData.category && paramLink === pageData.gb ? { category: pageData.category } : null),
     };
 
-    // const url = 'main-image';
-
-    console.log('parma', params);
+    const pageSize: number = param?.labelGb === 2 ? 8 : 10;
 
     request(
       () =>
         api
-          .get(`/bgm-agit/${url}?page=${pageData.page}&size=${pageSize}`, {
+          .get(`/bgm-agit/detail?page=${pageData.page}&size=${pageSize}`, {
             params: params ?? {},
           })
           .then(res => res.data),
