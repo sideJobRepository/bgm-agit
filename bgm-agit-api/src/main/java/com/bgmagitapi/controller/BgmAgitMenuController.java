@@ -7,11 +7,14 @@ import com.bgmagitapi.service.BgmAgitMainMenuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -42,6 +45,9 @@ public class BgmAgitMenuController {
             @RequestParam(name = "name",required = false) String name,
             @PageableDefault(size = 10) Pageable pageable
     ) {
+        if (StringUtils.hasText(name)) {
+           name =  URLDecoder.decode(name, StandardCharsets.UTF_8);
+        }
         return bgmAgitMainMenuService.getImagePage(labelGb, link, pageable, category, name);
     }
 }
