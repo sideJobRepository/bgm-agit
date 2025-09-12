@@ -3,7 +3,7 @@ package com.bgmagitapi.service.impl;
 import com.bgmagitapi.controller.response.BgmAgitMainMenuImageResponse;
 import com.bgmagitapi.controller.response.BgmAgitMainMenuResponse;
 import com.bgmagitapi.entity.BgmAgitMainMenu;
-import com.bgmagitapi.page.PageResponse;
+import com.bgmagitapi.page.PageMeta;
 import com.bgmagitapi.repository.BgmAgitImageRepository;
 import com.bgmagitapi.repository.BgmAgitMainMenuRepository;
 import com.bgmagitapi.repository.BgmAgitMenuRoleRepository;
@@ -18,10 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -131,9 +128,22 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
     }
     
     @Override
-    public PageResponse<BgmAgitMainMenuImageResponse> getImagePage(Long labelGb, String link, Pageable pageable, String category, String name) {
-        Page<BgmAgitMainMenuImageResponse> detailImage = bgmAgitImageRepository.getDetailImage(labelGb, link, pageable, category, name);
-        return PageResponse.from(detailImage);
+    @Transactional(readOnly = true)
+    public Map<String, Object> getImagePage(Long labelGb, String link, Pageable pageable, String category, String name) {
+        Page<BgmAgitMainMenuImageResponse> page =
+                bgmAgitImageRepository.getDetailImage(labelGb, link, pageable, category, name);
+        
+        // { 1:[...], 3:[...], 4:[...] } 로 그룹핑
+        Map<Long, List<BgmAgitMainMenuImageResponse>> groups =
+                page.getContent().stream()
+                        .collect(Collectors.groupingBy(BgmAgitMainMenuImageResponse::getLabelGb));
+        
+        // 평탄화: { "1":[...], "3":[...], "4":[...], "page":{...} } 이거 힘드네..
+        Map<String, Object> body = new LinkedHashMap<>();
+        groups.forEach((k, v) -> body.put(String.valueOf(k), v));
+        body.put("page", PageMeta.from(page));
+        
+        return body;
     }
     
 }

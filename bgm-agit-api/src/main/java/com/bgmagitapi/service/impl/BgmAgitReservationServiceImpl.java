@@ -11,6 +11,9 @@ import com.bgmagitapi.controller.response.reservation.TimeRange;
 import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitReservation;
+import com.bgmagitapi.event.dto.ReservationTalkEvent;
+import com.bgmagitapi.event.dto.ReservationWaitingEvent;
+import com.bgmagitapi.event.dto.TalkAction;
 import com.bgmagitapi.repository.BgmAgitImageRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.repository.BgmAgitReservationRepository;
@@ -21,6 +24,7 @@ import com.bgmagitapi.service.response.ReservationTalkContext;
 import com.bgmagitapi.util.LunarCalendar;
 import com.querydsl.jpa.impl.JPAQuery;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -49,7 +53,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     
     private final BgmAgitReservationRepository bgmAgitReservationRepository;
     
-    private final BgmAgitBizTalkSandService bgmAgitBizTalkSandService;
+    private final ApplicationEventPublisher eventPublisher;
     
     @Override
     @Transactional(readOnly = true)
@@ -216,7 +220,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             list.add(reservation);
         }
         
-        bgmAgitBizTalkSandService.sandBizTalk(member,image,list);
+        eventPublisher.publishEvent(new ReservationWaitingEvent(member,image,list));
         return new ApiResponse(200, true, "예약이 완료되었습니다.");
     }
     
@@ -309,18 +313,19 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         boolean wasApproved = "Y".equalsIgnoreCase(bizTalkCancel.getApprovalStatus());
         boolean canceledNow = "Y".equalsIgnoreCase(cancelStatus);
         // (필요하면 과거 cancelStatus 비교도 추가 가능)
-
-        if (approvedNow && !wasApproved) {
-            // 승인으로 '변경' 되었을 때만 완료 알림톡
-            return bgmAgitBizTalkSandService.sendCompleteBizTalk(ctx);
+        
+        TalkAction action = TalkAction.NONE;
+        if (approvedNow && wasApproved) {
+            action = TalkAction.COMPLETE;
+        } else if (canceledNow) {
+            action = TalkAction.CANCEL;
         }
-
-        if (canceledNow) {
-            // 취소 상태로 요청되었을 때만 취소 알림톡
-            return bgmAgitBizTalkSandService.sendCancelBizTalk(ctx);
+        
+        if (action != TalkAction.NONE) {
+            eventPublisher.publishEvent(new ReservationTalkEvent(action, ctx));
         }
         
         // 전송 조건이 아닌 경우
-        return new ApiResponse(200, true, "수정 되었습니다. (알림톡 전송 조건 불충족)");
+        return new ApiResponse(200, true, "수정 되었습니다.");
     }
 }

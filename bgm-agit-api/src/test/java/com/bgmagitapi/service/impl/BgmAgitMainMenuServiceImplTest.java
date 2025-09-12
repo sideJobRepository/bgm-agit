@@ -3,7 +3,6 @@ package com.bgmagitapi.service.impl;
 import com.bgmagitapi.RepositoryAndServiceTestSupport;
 import com.bgmagitapi.controller.response.BgmAgitMainMenuImageResponse;
 import com.bgmagitapi.controller.response.BgmAgitMainMenuResponse;
-import com.bgmagitapi.page.PageResponse;
 import com.bgmagitapi.service.BgmAgitMainMenuService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,9 +42,9 @@ class BgmAgitMainMenuServiceImplTest extends RepositoryAndServiceTestSupport {
         String link = "/detail/food";
         String category = "MURDER";
         PageRequest pageRequest = PageRequest.of(0, 10);
-        PageResponse<BgmAgitMainMenuImageResponse> result = bgmAgitMainMenuService.getImagePage(4L, link, pageRequest, null, null);
+        Map<String, Object> imagePage = bgmAgitMainMenuService.getImagePage(4L, link, pageRequest, "테스트", "페이징");
         
-        System.out.println("result = " + result);
+        System.out.println("result = " + imagePage);
         
         
     }

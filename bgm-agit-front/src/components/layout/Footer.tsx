@@ -23,7 +23,7 @@ export default function Footer() {
           />
         </div>
         <span>금, 토 : 13:00 ~ 06:00 </span>
-        <p>월, 화, 수, 목, 일 : 13:00 ~ 24:00 </p>
+        <p>월, 화, 수, 목, 일 : 13:00 ~ 02:00 </p>
       </Left>
       <Right>
         <p>

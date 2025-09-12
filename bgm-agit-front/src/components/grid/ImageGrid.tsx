@@ -20,8 +20,9 @@ import Modal from '../Modal.tsx';
 import { toast } from 'react-toastify';
 import { showConfirmModal } from '../confirmAlert.tsx';
 import type { MainMenu } from '../../types/menu.ts';
-import { imageUploadState, mainMenuState } from '../../recoil';
+import { imageUploadState, mainMenuState, searchState } from '../../recoil';
 import { useLocation } from 'react-router-dom';
+import type { PageItem } from '../../types/main.ts';
 
 interface GridItem {
   image: string;
@@ -36,6 +37,7 @@ interface GridItem {
 interface Props {
   pageData: {
     items: GridItem[];
+    pages: PageItem;
     bgColor: string;
     textColor: string;
     searchColor: string;
@@ -56,6 +58,9 @@ export default function ImageGrid({ pageData }: Props) {
   const { insert } = useInsertPost();
   const { update } = useUpdatePost();
   const { remove } = useDeletePost();
+
+  //페이지
+  const [page, setPage] = useRecoilState(searchState);
 
   //현재 경로 찾기
   const location = useLocation();
@@ -143,8 +148,18 @@ export default function ImageGrid({ pageData }: Props) {
 
   const today = getKoreanDateString();
 
-  const { items, labelGb, bgColor, textColor, searchColor, label, title, subTitle, columnCount } =
-    pageData;
+  const {
+    items,
+    labelGb,
+    bgColor,
+    textColor,
+    searchColor,
+    label,
+    title,
+    subTitle,
+    columnCount,
+    pages,
+  } = pageData;
 
   const fetchReservation = useReservationFetch();
 
@@ -281,6 +296,13 @@ export default function ImageGrid({ pageData }: Props) {
     return true;
   }
 
+  const handlePageClick = (pageNum: number) => {
+    setPage(prev => ({
+      ...prev,
+      page: pageNum, // 여기만 업데이트
+    }));
+  };
+
   useEffect(() => {
     if (labelGb === 3 && filteredItems?.length > 0) newItemDatas(filteredItems[0]);
   }, [filteredItems]);
@@ -397,6 +419,13 @@ export default function ImageGrid({ pageData }: Props) {
       </GridContainer>
       {filteredItems?.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
       {!items && <NoSearchBox>사진을 준비중입니다.</NoSearchBox>}
+      <PaginationWrapper>
+        {[...Array(pages?.totalPages ?? 0)].map((_, idx) => (
+          <PageButton key={idx} active={idx === page.page} onClick={() => handlePageClick(idx)}>
+            {idx + 1}
+          </PageButton>
+        ))}
+      </PaginationWrapper>
       <ImageLightbox
         images={filteredItems?.map(item => item.image)}
         index={lightboxIndex}
@@ -765,5 +794,28 @@ const SelectBox = styled.select<WithTheme>`
   &:focus {
     border-color: ${({ theme }) => theme.colors.subColor};
     outline: none;
+  }
+`;
+
+const PaginationWrapper = styled.div`
+  text-align: center;
+  height: 30px;
+  margin-top: 20px;
+`;
+
+const PageButton = styled.button.withConfig({
+  shouldForwardProp: prop => prop !== 'active',
+})<{ active: boolean } & WithTheme>`
+  margin: 0 5px;
+  padding: 4px 8px;
+  border: 1px solid ${({ theme }) => theme.colors.basicColor};
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: ${({ active, theme }) =>
+    active ? theme.colors.noticeColor : theme.colors.white};
+  color: ${({ active, theme }) => (active ? theme.colors.white : theme.colors.subColor)};
+
+  &:hover {
+    opacity: 0.8;
   }
 `;

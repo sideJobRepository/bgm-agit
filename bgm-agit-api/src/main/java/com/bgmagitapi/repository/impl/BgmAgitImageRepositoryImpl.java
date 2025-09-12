@@ -14,6 +14,7 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Objects;
 
 import static com.bgmagitapi.entity.QBgmAgitImage.bgmAgitImage;
 import static com.bgmagitapi.entity.QBgmAgitMainMenu.bgmAgitMainMenu;
@@ -46,6 +47,7 @@ public class BgmAgitImageRepositoryImpl implements BgmAgitImageCustomRepository 
     @Override
     public Page<BgmAgitMainMenuImageResponse> getDetailImage(Long labelGb, String link, Pageable pageable, String category, String name) {
         
+        boolean isGame = Objects.equals(labelGb,2L);
         
         List<BgmAgitMainMenuImageResponse> content = queryFactory
                 .select(Projections.constructor(
@@ -63,7 +65,7 @@ public class BgmAgitImageRepositoryImpl implements BgmAgitImageCustomRepository 
                 .where(mainMenuIdEq(labelGb),
                         menuLinkEq(link),
                         labelLike(name),
-                        categoryEq(category))
+                        isGame ? categoryEq(category) : null)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -76,7 +78,7 @@ public class BgmAgitImageRepositoryImpl implements BgmAgitImageCustomRepository 
                 .where(mainMenuIdEq(labelGb),
                         menuLinkEq(link),
                         labelLike(name),
-                        categoryEq(category));
+                        isGame ? categoryEq(category) : null);
         
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
