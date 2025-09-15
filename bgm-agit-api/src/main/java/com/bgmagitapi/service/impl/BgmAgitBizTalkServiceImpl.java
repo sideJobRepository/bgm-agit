@@ -35,7 +35,8 @@ public class BgmAgitBizTalkServiceImpl implements BgmAgitBizTalkService {
         issueAndSaveToken();
     }
     
-    @Scheduled(fixedDelayString = "PT11H")
+    //@Scheduled(cron = "0 0 0,10,20 * * *", zone = "Asia/Seoul")
+    @Scheduled(fixedRateString = "PT10H")
     public void scheduled() {
         issueAndSaveToken();
     }
