@@ -147,7 +147,7 @@ export default function About() {
               {
                 imageId: 1,
                 labelGb: 3,
-                image: '/images/roomAbout2.png',
+                image: '/images/roomAbout2.jpg',
                 label: '대탁 예약하기',
                 group: null,
                 link: '/detail/mahjongRental',
