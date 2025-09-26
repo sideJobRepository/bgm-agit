@@ -17,12 +17,10 @@ import com.bgmagitapi.service.response.ReservationTalkContext;
 import com.bgmagitapi.util.AlimtalkUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +52,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         BgmAgitReservation bgmAgitReservation = list.get(0);
         
         BgmAgitImage agitImage = bgmAgitImageRepository.findById(image.getBgmAgitImageId()).orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 룸 입니다."));
+        Boolean isRoom = agitImage.isRoom(image.getBgmAgitImageId());
         String roomName = agitImage.getBgmAgitImageLabel();
         String message = AlimtalkUtils.buildReservationMessage(
                 member.getBgmAgitMemberName(), formattedDate, formattedTimes,roomName);
@@ -107,14 +106,14 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
 
         // 히스토리 생성 (현재 생성자: (subject, subjectId, message, msgIdx))
         BgmAgitBiztalkSendHistory sendHistory1 = new BgmAgitBiztalkSendHistory(
-                BgmAgitSubject.RESERVATION,
+                isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL,
                 bgmAgitReservation.getBgmAgitReservationNo(),
                 message,
                 msgIdx1
         );
         
         BgmAgitBiztalkSendHistory sendHistory2 = new BgmAgitBiztalkSendHistory(
-                BgmAgitSubject.RESERVATION,
+                isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL,
                 bgmAgitReservation.getBgmAgitReservationNo(),
                 ownerMessage,
                 msgIdx2
@@ -151,17 +150,27 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     public ApiResponse sendCancelBizTalk(ReservationTalkContext ctx) {
         validateCtx(ctx);
         var list = ctx.getReservations();
+        BgmAgitImage bgmAgitImage = ctx.getReservations().get(0).getBgmAgitImage();
+        Long bgmAgitImageId = bgmAgitImage.getBgmAgitImageId();
+        Boolean isRoom = bgmAgitImage.isRoom(bgmAgitImageId);
         String times = AlimtalkUtils.formatTimes(list);
         String date  = AlimtalkUtils.formatDate(list.get(0).getBgmAgitReservationStartDate());
         
         boolean isAdmin = "ROLE_ADMIN".equalsIgnoreCase(ctx.getRole());
         String message  = isAdmin
-                ? AlimtalkUtils.buildReservationCancelMessageAdmin(ctx.getMemberName(), date, times, ctx.getLabel())
-                : AlimtalkUtils.buildReservationCancelMessage(ctx.getMemberName(), date, times, ctx.getLabel());
+                ? AlimtalkUtils.reservationCancelMessage2(ctx.getMemberName(), date, times, ctx.getLabel())
+                : AlimtalkUtils.reservationCancelMessage1(ctx.getMemberName(), date, times, ctx.getLabel());
         String template = isAdmin ? "bgmagit-reservation-cancel-2" : "bgmagit-reservation-cancel";
         Long subjectId  = list.get(0).getBgmAgitReservationNo();
         
-        return sendTalk(message, template, ctx.getPhone(), subjectId, "수정 되었습니다.",BgmAgitSubject.RESERVATION,"예약 내역 확인 하기");
+        ApiResponse apiResponse = sendTalk(message, template, ctx.getPhone(), subjectId, "수정 되었습니다.", isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL , "예약 내역 확인 하기");
+        
+        if("bgmagit-reservation-cancel".equals(template)) {
+            String cancelMessage3 = AlimtalkUtils.reservationCancelMessage3(ctx.getMemberName(),date, times, ctx.getLabel());
+            sendTalk(cancelMessage3,"bgmagit-reservation-cancel-3","010-5059-3499",subjectId,"수정 되었습니다.",isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL,"예약 내역 확인 하기");
+        }
+        return apiResponse;
+        
     }
     
     @Override

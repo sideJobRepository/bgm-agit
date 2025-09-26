@@ -5,8 +5,9 @@ import lombok.Getter;
 @Getter
 public enum BgmAgitSubject {
     
-    RESERVATION("예약"),
-    SIGN_UP("회원가입");
+    RESERVATION("룸 예약"),
+    SIGN_UP("회원가입"),
+    MAHJONG_RENTAL("대탁");
     
     private final String value;
     
