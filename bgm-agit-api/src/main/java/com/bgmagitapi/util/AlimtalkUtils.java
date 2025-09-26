@@ -59,7 +59,7 @@ public class AlimtalkUtils {
                 .toString();
     }
     /* 예약 취소 메시지 필드 1*/
-    public static String buildReservationCancelMessage(String userName, String date, String times, String roomName) {
+    public static String reservationCancelMessage1(String userName, String date, String times, String roomName) {
         return new StringBuilder()
                 .append("안녕하세요.").append(userName).append("님\n")
                 .append("BGM 아지트 예약 취소 내역을 알려드립니다.\n\n")
@@ -72,7 +72,7 @@ public class AlimtalkUtils {
                 .toString();
     }
     /* 예약 취소 메시지 필드 2 */
-    public static String buildReservationCancelMessageAdmin(String userName, String date, String times, String roomName) {
+    public static String reservationCancelMessage2(String userName, String date, String times, String roomName) {
         return new StringBuilder()
                 .append("안녕하세요,").append(userName).append("님.\n")
                 .append("먼저, 예약 취소로 불편을 드려 죄송합니다.\n")
@@ -86,6 +86,21 @@ public class AlimtalkUtils {
                 .append(userName).append("님의 양해 부탁드립니다.")
                 .toString();
     }
+    /* 예약 취소 메시지 필드 3 */
+    public static String reservationCancelMessage3(String userName, String date, String times, String roomName) {
+        return new StringBuilder()
+                .append("안녕하세요.관리자님\n")
+                .append("BGM 아지트 예약 취소 내역을 알려드립니다.\n\n")
+                .append("예약자: ").append(userName).append("\n")
+                .append("예약 일자: ").append(date).append("\n")
+                .append("예약 시간: ").append(times).append("\n")
+                .append("예약 상태: 예약 취소\n")
+                .append("예약 룸: ").append(roomName).append("\n\n")
+                .append("자세한 예약내역은 BGM 아지트 홈페이지 사이트 에서 로그인 후 마이페이지 > 예약내역에서 확인하실 수 있습니다.")
+                .toString();
+    }
+    
+    
     
     public static String buildReservationCompleteMessage(String userName, String date, String times, String roomName) {
         return new StringBuilder()
@@ -123,6 +138,8 @@ public class AlimtalkUtils {
                 .append("자세한 예약내역은 BGM 아지트 홈페이지 사이트 에서 로그인 후 마이페이지 > 권한 관리에서 확인하실 수 있습니다.")
                 .toString();
     }
+    
+
     
     /** 기본 버튼 세트(필요 시 수정) */
     public static Attach defaultAttach(String message) {

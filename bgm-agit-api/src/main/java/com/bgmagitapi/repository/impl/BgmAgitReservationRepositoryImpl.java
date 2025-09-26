@@ -120,6 +120,7 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
         return queryFactory
                 .select(bgmAgitReservation)
                 .from(bgmAgitReservation)
+                .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage).fetchJoin()
                 .where(bgmAgitReservation.bgmAgitReservationNo.eq(reservationNo))
                 .fetch();
     }
