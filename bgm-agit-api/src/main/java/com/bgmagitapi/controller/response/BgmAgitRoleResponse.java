@@ -9,9 +9,10 @@ import lombok.NoArgsConstructor;
 @Data
 public class BgmAgitRoleResponse {
     
-    Long memberId;
-    Long roleId;
-    String memberName;
-    String roleName;
-    String memberEmail;
+    private Long memberId;
+    private Long roleId;
+    private String memberName;
+    private String roleName;
+    private String memberEmail;
+    private String memberPhoneNo;
 }
