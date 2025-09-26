@@ -88,6 +88,7 @@ export default function Role() {
                   <Th>번호</Th>
                   <Th>아이디</Th>
                   <Th>이름</Th>
+                  <Th>연락처</Th>
                   <Th>권한</Th>
                 </tr>
               </thead>
@@ -111,6 +112,7 @@ export default function Role() {
                     <Td>{index + 1}</Td>
                     <Td>{item.memberEmail}</Td>
                     <Td>{item.memberName}</Td>
+                    <Td>{item.memberPhoneNo}</Td>
                     <Td>
                       <div>
                         <label>
