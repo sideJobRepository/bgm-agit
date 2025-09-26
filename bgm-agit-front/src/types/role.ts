@@ -4,6 +4,7 @@ export type Role = {
   memberName: string;
   roleId: number;
   roleName: string;
+  memberPhoneNo: string;
 };
 
 export type PageRole = {

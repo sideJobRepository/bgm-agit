@@ -36,7 +36,8 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                         bgmAgitMemberRole.bgmAgitRole.bgmAgitRoleId,
                         bgmAgitMember.bgmAgitMemberName,
                         bgmAgitRole.bgmAgitRoleName,
-                        bgmAgitMember.bgmAgitMemberEmail
+                        bgmAgitMember.bgmAgitMemberEmail,
+                        bgmAgitMember.bgmAgitMemberPhoneNo
                 ))
                 .from(bgmAgitMemberRole)
                 .join(bgmAgitMemberRole.bgmAgitMember, bgmAgitMember)
@@ -51,6 +52,13 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
+        
+        content.forEach(item -> {
+                    String memberPhoneNo = item.getMemberPhoneNo()
+                            .replace("+82", "0")
+                            .replaceAll("\\s+", "");
+                    item.setMemberPhoneNo(memberPhoneNo);
+                });
         
         // 2. 전체 개수 조회
         JPAQuery<Long> countQuery = queryFactory
