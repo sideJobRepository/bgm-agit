@@ -310,7 +310,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
 
         // 명확한 조건 변수로 가독성 ↑ (대/소문자 및 null 안전)
         boolean approvedNow = "Y".equalsIgnoreCase(approvalStatus);
-        boolean wasApproved = "Y".equalsIgnoreCase(bizTalkCancel.getApprovalStatus());
+        boolean wasApproved = "N".equalsIgnoreCase(bizTalkCancel.getApprovalStatus());
         boolean canceledNow = "Y".equalsIgnoreCase(cancelStatus);
         // (필요하면 과거 cancelStatus 비교도 추가 가능)
         
