@@ -46,6 +46,10 @@ public class BgmAgitReservation {
     @Column(name = "BGM_AGIT_RESERVATION_END_TIME")
     private LocalTime bgmAgitReservationEndTime;
     
+    // BGM 아지트 예약 인원
+    @Column(name = "BGM_AGIT_RESERVATION_PEOPLE")
+    private Integer bgmAgitReservationPeople;
+    
     // BGM 아지트 예약 승인 여부 'N'
     @Column(name = "BGM_AGIT_RESERVATION_APPROVAL_STATUS")
     private String bgmAgitReservationApprovalStatus;

@@ -48,6 +48,7 @@ export default function ReservationList() {
     const url = role ? `/bgm-agit/reservation/admin` : `/bgm-agit/reservation`;
     const message =
       approval === 'Y' ? '해당 예약을 확정하시겠습니까?' : '해당 예약을 취소하시겠습니까?';
+    const message2 = approval === 'Y' ? '예약이 확정되었습니다.' : '예약이 취소되었습니다.';
     showConfirmModal({
       message: message,
       onConfirm: () => {
@@ -56,7 +57,7 @@ export default function ReservationList() {
           body: param,
           ignoreHttpError: true,
           onSuccess: () => {
-            toast.success('예약이 취소되었습니다.');
+            toast.success(message2);
             fetchReservationList(page, { startDate: start, endDate: end });
           },
         });
