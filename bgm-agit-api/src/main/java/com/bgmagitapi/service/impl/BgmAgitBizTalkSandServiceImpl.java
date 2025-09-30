@@ -149,7 +149,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     @Override
     public ApiResponse sendCancelBizTalk(ReservationTalkContext ctx) {
         validateCtx(ctx);
-        var list = ctx.getReservations();
+        List<BgmAgitReservation> list = ctx.getReservations();
         BgmAgitImage bgmAgitImage = ctx.getReservations().get(0).getBgmAgitImage();
         Long bgmAgitImageId = bgmAgitImage.getBgmAgitImageId();
         Boolean isRoom = bgmAgitImage.isRoom(bgmAgitImageId);
@@ -176,7 +176,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     @Override
     public ApiResponse sendCompleteBizTalk(ReservationTalkContext ctx) {
         validateCtx(ctx);
-        var list = ctx.getReservations();
+        List<BgmAgitReservation> list = ctx.getReservations();
         String times = AlimtalkUtils.formatTimes(list);
         String date  = AlimtalkUtils.formatDate(list.get(0).getBgmAgitReservationStartDate());
         
@@ -195,8 +195,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String memberName = member.getBgmAgitMemberName();
         String message = AlimtalkUtils.memberJoinMessage(memberName, memberJoinDate, memberJoinTime);
         String adminPhoneNo = "010-5059-3499";
-        ApiResponse apiResponse = sendTalk(message, template, adminPhoneNo, null, "알림톡 발송 완료",BgmAgitSubject.SIGN_UP,"확인 하기");
-        return apiResponse;
+        return sendTalk(message, template, adminPhoneNo, null, "알림톡 발송 완료",BgmAgitSubject.SIGN_UP,"확인 하기");
     }
     
     /** 공통 전송 + 히스토리 저장 */
