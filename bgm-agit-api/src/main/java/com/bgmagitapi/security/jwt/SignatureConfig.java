@@ -27,21 +27,7 @@ public class SignatureConfig {
     private String secret;
     
     private final BgmAgitRsaRepository bgmAgitRsaRepository;
-
     
-//    public MacSecuritySigner macSecuritySigner() {
-//        return new MacSecuritySigner();
-//    }
-    
-    
-
-    public OctetSequenceKey OctetSequenceKey() throws JOSEException {
-        SecretKey secretKey = new SecretKeySpec(Base64.getDecoder().decode(secret), "HmacSHA256");
-        return new OctetSequenceKey.Builder(secretKey)
-                .keyID("macKey")
-                .algorithm(JWSAlgorithm.HS256)
-                .build();
-    }
     
     @Bean
     public RsaSecuritySigner rsaSigner() throws JOSEException {
