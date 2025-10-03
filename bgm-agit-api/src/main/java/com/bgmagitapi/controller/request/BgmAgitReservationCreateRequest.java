@@ -38,6 +38,7 @@ public class BgmAgitReservationCreateRequest {
     private LocalTime bgmAgitReservationEndTime;
     
     //예약인원
+    @NotNull(message = "예약 인원은 필수 입니다.")
     private Integer bgmAgitReservationPeople;
     
     //요청 사항
