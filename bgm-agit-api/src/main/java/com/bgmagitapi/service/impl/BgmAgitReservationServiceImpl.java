@@ -274,6 +274,15 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             dto.setReservationAddr(list.get(0).getBgmAgitImage().getBgmAgitImageLabel());
             dto.setReservationPeople(list.get(0).getBgmAgitReservationPeople());
             dto.setReservationRequest(list.get(0).getBgmAgitReservationRequest());
+            String phoneNo = null;
+            if (list.get(0).getBgmAgitMember() != null
+                    && list.get(0).getBgmAgitMember().getBgmAgitMemberPhoneNo() != null) {
+                phoneNo = list.get(0).getBgmAgitMember()
+                        .getBgmAgitMemberPhoneNo()
+                        .replace("+82", "0")
+                        .replaceAll("\\s+", "");
+            }
+            dto.setPhoneNo(phoneNo);
             content.add(dto);
         }
         
