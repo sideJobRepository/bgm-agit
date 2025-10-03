@@ -19,6 +19,7 @@ public class GroupedReservationResponse {
     private String reservationAddr;
     private Integer reservationPeople;
     private String reservationRequest;
+    private String phoneNo;
     
     private List<TimeSlot> timeSlots;
     

@@ -103,6 +103,7 @@ export default function ReservationList() {
                   <Th>예약자</Th>
                   <Th>예약 인원</Th>
                   <Th>요청 사항</Th>
+                  <Th>연락처</Th>
                   <Th>예약 상태</Th>
                 </tr>
               </thead>
@@ -122,6 +123,7 @@ export default function ReservationList() {
                     <Td>{item.reservationMemberName}</Td>
                     <Td>{`${item?.reservationPeople}명`} </Td>
                     <Td>{item?.reservationRequest}</Td>
+                    <Td>{item?.phoneNo}</Td>
                     <Td>
                       <StatusBox>
                         {item.cancelStatus === 'Y'

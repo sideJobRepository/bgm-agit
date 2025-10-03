@@ -37,6 +37,7 @@ export type Reservation = {
   reservationAddr: string;
   reservationPeople: number;
   reservationRequest: string;
+  phoneNo: string;
   approvalStatus: 'Y' | 'N';
   cancelStatus: 'Y' | 'N';
   timeSlots: {
