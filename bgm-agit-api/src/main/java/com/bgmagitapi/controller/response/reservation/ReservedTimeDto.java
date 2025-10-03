@@ -20,4 +20,7 @@ public class ReservedTimeDto {
     private String approvalStatus;
     private Long memberId;
     private String cancelStatus;
+    private Integer minPeople;
+    private Integer maxPeople;
+    
 }
