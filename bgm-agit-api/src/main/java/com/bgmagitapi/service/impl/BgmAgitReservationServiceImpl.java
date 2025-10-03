@@ -168,7 +168,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     @Override
     public ApiResponse createReservation(BgmAgitReservationCreateRequest request, Long userId) {
         List<String> timeList = request.getReservationExpandedTimeSlots();
-
+        Integer people = request.getBgmAgitReservationPeople();
+        String reservationRequest = !StringUtils.hasText(request.getBgmAgitReservationRequest()) ? "없음" : request.getBgmAgitReservationRequest();
         // 날짜 보정
         String dateStr = request.getBgmAgitReservationStartDate(); // "2025-07-27T15:00:00.000Z"
         Instant instant = Instant.parse(dateStr);
@@ -214,7 +215,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             }
             
             BgmAgitReservation reservation = new BgmAgitReservation(
-                    member, image, reservationType, startTime, endTime, kstDate,maxReservationNo
+                    member, image, reservationType, startTime, endTime, kstDate,maxReservationNo,people,reservationRequest
             );
             bgmAgitReservationRepository.save(reservation);
             list.add(reservation);

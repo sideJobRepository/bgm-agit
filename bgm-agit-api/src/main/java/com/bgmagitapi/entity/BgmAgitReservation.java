@@ -49,6 +49,9 @@ public class BgmAgitReservation {
     // BGM 아지트 예약 인원
     @Column(name = "BGM_AGIT_RESERVATION_PEOPLE")
     private Integer bgmAgitReservationPeople;
+    // BGM 아지트 예약 요청사항
+    @Column(name = "BGM_AGIT_RESERVATION_REQUEST")
+    private String bgmAgitReservationRequest;
     
     // BGM 아지트 예약 승인 여부 'N'
     @Column(name = "BGM_AGIT_RESERVATION_APPROVAL_STATUS")
@@ -67,7 +70,12 @@ public class BgmAgitReservation {
                               String reservationType,         // request 대신 필요한 값만 받자
                               LocalTime startTime,
                               LocalTime endTime,
-                              LocalDate reservationDate, Long maxReservationNo) {   // String → 파싱된 LocalDate
+                              LocalDate reservationDate,
+                              Long maxReservationNo,
+                              Integer reservationPeople,
+                              String reservationRequest
+    
+    ) {
         
         this.bgmAgitMember = member;
         this.bgmAgitImage = image;
@@ -78,5 +86,7 @@ public class BgmAgitReservation {
         this.bgmAgitReservationApprovalStatus = "N";
         this.bgmAgitReservationCancelStatus = "N";
         this.bgmAgitReservationNo = maxReservationNo;
+        this.bgmAgitReservationPeople = reservationPeople;
+        this.bgmAgitReservationRequest = reservationRequest;
     }
 }
