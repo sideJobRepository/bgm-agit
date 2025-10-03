@@ -17,6 +17,8 @@ public class GroupedReservationResponse {
     private String cancelStatus;
     private String reservationMemberName;
     private String reservationAddr;
+    private Integer reservationPeople;
+    private String reservationRequest;
     
     private List<TimeSlot> timeSlots;
     

@@ -101,6 +101,8 @@ export default function ReservationList() {
                   <Th>예약 일자</Th>
                   <Th>예약 시간</Th>
                   <Th>예약자</Th>
+                  <Th>예약 인원</Th>
+                  <Th>요청 사항</Th>
                   <Th>예약 상태</Th>
                 </tr>
               </thead>
@@ -118,6 +120,8 @@ export default function ReservationList() {
                       ))}
                     </Td>
                     <Td>{item.reservationMemberName}</Td>
+                    <Td>{`${item?.reservationPeople}명`} </Td>
+                    <Td>{item?.reservationRequest}</Td>
                     <Td>
                       <StatusBox>
                         {item.cancelStatus === 'Y'

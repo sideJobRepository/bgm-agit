@@ -2,6 +2,7 @@ package com.bgmagitapi.util;
 
 import com.bgmagitapi.entity.BgmAgitReservation;
 import com.bgmagitapi.service.response.Attach;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -46,7 +47,7 @@ public class AlimtalkUtils {
     }
     
     /** 예약 안내 메시지 빌드 */
-    public static String buildReservationMessage(String userName, String date, String times, String roomName) {
+    public static String buildReservationMessage(String userName, String date, String times, String roomName, String people, String request) {
         return new StringBuilder()
                 .append("안녕하세요.").append(userName).append("님\n")
                 .append("BGM 아지트 예약 내역을 알려드립니다.\n\n")
@@ -54,12 +55,14 @@ public class AlimtalkUtils {
                 .append("예약 일자: ").append(date).append("\n")
                 .append("예약 시간: ").append(times).append("\n")
                 .append("예약 상태: 예약 대기\n")
-                .append("예약 룸: ").append(roomName).append("\n\n")
+                .append("예약 룸: ").append(roomName).append("\n")
+                .append("예약 인원: ").append(people).append("\n")
+                .append("요청 사항: ").append(request).append("\n\n")
                 .append("자세한 예약내역은 BGM 아지트 홈페이지 사이트 에서 로그인 후 마이페이지 > 예약내역에서 확인하실 수 있습니다.")
                 .toString();
     }
     /* 예약 취소 메시지 필드 1*/
-    public static String reservationCancelMessage1(String userName, String date, String times, String roomName) {
+    public static String reservationCancelMessage1(String userName, String date, String times, String roomName,String people, String request) {
         return new StringBuilder()
                 .append("안녕하세요.").append(userName).append("님\n")
                 .append("BGM 아지트 예약 취소 내역을 알려드립니다.\n\n")
@@ -67,7 +70,9 @@ public class AlimtalkUtils {
                 .append("예약 일자: ").append(date).append("\n")
                 .append("예약 시간: ").append(times).append("\n")
                 .append("예약 상태: 예약 취소\n")
-                .append("예약 룸: ").append(roomName).append("\n\n")
+                .append("예약 룸: ").append(roomName).append("\n")
+                .append("예약 인원: ").append(people).append("\n")
+                .append("요청 사항: ").append(request).append("\n\n")
                 .append("자세한 예약내역은 BGM 아지트 홈페이지 사이트 에서 로그인 후 마이페이지 > 예약내역에서 확인하실 수 있습니다.")
                 .toString();
     }
@@ -87,7 +92,7 @@ public class AlimtalkUtils {
                 .toString();
     }
     /* 예약 취소 메시지 필드 3 */
-    public static String reservationCancelMessage3(String userName, String date, String times, String roomName) {
+    public static String reservationCancelMessage3(String userName, String date, String times, String roomName ,String people, String request) {
         return new StringBuilder()
                 .append("안녕하세요.관리자님\n")
                 .append("BGM 아지트 예약 취소 내역을 알려드립니다.\n\n")
@@ -95,14 +100,16 @@ public class AlimtalkUtils {
                 .append("예약 일자: ").append(date).append("\n")
                 .append("예약 시간: ").append(times).append("\n")
                 .append("예약 상태: 예약 취소\n")
-                .append("예약 룸: ").append(roomName).append("\n\n")
+                .append("예약 룸: ").append(roomName).append("\n")
+                .append("예약 인원: ").append(people).append("\n")
+                .append("요청 사항: ").append(request).append("\n\n")
                 .append("자세한 예약내역은 BGM 아지트 홈페이지 사이트 에서 로그인 후 마이페이지 > 예약내역에서 확인하실 수 있습니다.")
                 .toString();
     }
     
     
     
-    public static String buildReservationCompleteMessage(String userName, String date, String times, String roomName) {
+    public static String buildReservationCompleteMessage(String userName, String date, String times, String roomName,String people,String request) {
         return new StringBuilder()
                 .append("안녕하세요.").append(userName).append("님\n")
                 .append("BGM 아지트 예약 완료 내역을 알려드립니다.\n\n")
@@ -110,12 +117,15 @@ public class AlimtalkUtils {
                 .append("예약 일자: ").append(date).append("\n")
                 .append("예약 시간: ").append(times).append("\n")
                 .append("예약 상태: 예약 완료\n")
-                .append("예약 룸: ").append(roomName).append("\n\n")
+                .append("예약 룸: ").append(roomName).append("\n")
+                .append("예약 인원: ").append(people).append("\n")
+                .append("요청사항: ").append(request).append("\n\n")
+                .append("취소는 1일전까지 가능하며, 당일 취소나 노쇼시 예약금은 환불되지 않습니다.\n")
                 .append("자세한 예약내역은 BGM 아지트 홈페이지 사이트 에서 로그인 후 마이페이지 > 예약내역 에서 확인하실 수 있습니다.")
                 .toString();
     }
     
-    public static String buildOwnerReservationMessage(String userName, String date, String times, String roomName) {
+    public static String buildOwnerReservationMessage(String userName, String date, String times, String roomName,String people, String request ) {
         return new StringBuilder()
                 .append("안녕하세요.").append("관리자").append("님\n")
                 .append("BGM 아지트 예약 내역을 알려드립니다.\n\n")
@@ -123,7 +133,9 @@ public class AlimtalkUtils {
                 .append("예약 일자: ").append(date).append("\n")
                 .append("예약 시간: ").append(times).append("\n")
                 .append("예약 상태: 예약 대기\n")
-                .append("예약 룸: ").append(roomName).append("\n\n")
+                .append("예약 룸: ").append(roomName).append("\n")
+                .append("예약 인원: ").append(people).append("\n")
+                .append("요청 사항: ").append(request).append("\n\n")
                 .append("자세한 예약내역은 BGM 아지트 홈페이지 사이트 에서 로그인 후 마이페이지 > 예약내역에서 확인하실 수 있습니다.")
                 .toString();
     }

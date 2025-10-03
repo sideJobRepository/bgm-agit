@@ -1,8 +1,9 @@
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { FaUsers } from 'react-icons/fa';
+import { MdAdd, MdRemove } from 'react-icons/md';
 import type { WithTheme } from '../../styles/styled-props';
 import { useRecoilValue } from 'recoil';
 import { reservationDataState, reservationState } from '../../recoil/state/reservationState.ts';
@@ -15,10 +16,16 @@ import { useInsertPost, useReservationFetch } from '../../recoil/fetch.ts';
 import { useNavigate } from 'react-router-dom';
 
 export default function ReservationCalendar({ id }: { id?: number }) {
-   const navigate = useNavigate();
+  const navigate = useNavigate();
   const reservation = useRecoilValue<ReservationDatas>(reservationState);
+
   const fetchReservation = useReservationFetch();
   const reservationData = useRecoilValue(reservationDataState);
+
+  //인원수
+  const [count, setCount] = useState(0);
+  //요청사항
+  const [reason, setReason] = useState('');
 
   const today = new Date();
   //insert
@@ -102,6 +109,8 @@ export default function ReservationCalendar({ id }: { id?: number }) {
               bgmAgitReservationType: b ? 'DELEGATE_PLAY' : 'ROOM',
               bgmAgitReservationStartDate: value,
               startTimeEndTime: selectedTimes,
+              bgmAgitReservationPeople: count,
+              bgmAgitReservationRequest: reason,
             },
             ignoreHttpError: true,
             onSuccess: () => {
@@ -131,12 +140,42 @@ export default function ReservationCalendar({ id }: { id?: number }) {
     });
   }
 
+  useEffect(() => {
+    if (reservation) setCount(reservation.minPeople!);
+  }, [reservation?.minPeople]);
+
   return (
     <Wrapper>
       <TitleBox>
         <div>
           <h2>{reservation.label}</h2>
           <FaUsers /> <span> {reservation.group} </span>
+        </div>
+        <div className="count-box">
+          <MdRemove
+            style={{
+              cursor: count > reservation.minPeople! ? 'pointer' : 'not-allowed',
+              opacity: count > reservation.minPeople! ? 1 : 0.3,
+            }}
+            onClick={() => setCount(c => Math.max(reservation.minPeople!, c - 1))}
+          />
+
+          <span>{count}명</span>
+          <MdAdd
+            style={{
+              cursor: count < reservation.maxPeople! ? 'pointer' : 'not-allowed',
+              opacity: count < reservation.maxPeople! ? 1 : 0.3,
+            }}
+            onClick={() => setCount(c => Math.min(reservation.maxPeople!, c + 1))}
+          />
+        </div>
+        <div className="count-box">
+          <input
+            type="text"
+            placeholder="요청사항을 적어주세요."
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+          />
         </div>
         {reservationData?.id === 19 && (
           <div>
@@ -237,6 +276,31 @@ const TitleBox = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
   color: ${({ theme }) => theme.colors.subColor};
+  width: 50%;
+
+  .count-box {
+    display: flex;
+    margin-top: 10px;
+    gap: 3px;
+    align-items: center;
+
+    .title {
+      color: ${({ theme }) => theme.colors.blueColor};
+      margin-right: 6px;
+    }
+
+    input {
+      flex: 1;
+      border: none;
+      width: 100%;
+      padding: 4px 4px;
+      text-align: center;
+      font-size: ${({ theme }) => theme.sizes.small};
+      outline: none;
+      color: ${({ theme }) => theme.colors.subColor};
+      background: transparent;
+    }
+  }
 
   div {
     display: flex;
@@ -345,7 +409,7 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
   }
 
   .date-price.weekend {
-    color: ${({ theme }) => theme.colors.redColor}; // ← 빨간색으로
+    color: ${({ theme }) => theme.colors.redColor};
   }
 `;
 

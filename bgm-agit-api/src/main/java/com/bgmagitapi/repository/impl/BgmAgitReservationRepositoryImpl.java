@@ -39,7 +39,9 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
                         bgmAgitImage.bgmAgitImageGroups,
                         bgmAgitReservation.bgmAgitReservationApprovalStatus,
                         bgmAgitReservation.bgmAgitMember.bgmAgitMemberId,
-                        bgmAgitReservation.bgmAgitReservationCancelStatus
+                        bgmAgitReservation.bgmAgitReservationCancelStatus,
+                        bgmAgitReservation.bgmAgitImage.bgmAgitImageMinPeople,
+                        bgmAgitReservation.bgmAgitImage.bgmAgitImageMaxPeople
                 ))
                 .from(bgmAgitReservation)
                 .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage)

@@ -17,7 +17,6 @@ import com.bgmagitapi.event.dto.TalkAction;
 import com.bgmagitapi.repository.BgmAgitImageRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.repository.BgmAgitReservationRepository;
-import com.bgmagitapi.service.BgmAgitBizTalkSandService;
 import com.bgmagitapi.service.BgmAgitReservationService;
 import com.bgmagitapi.service.response.BizTalkCancel;
 import com.bgmagitapi.service.response.ReservationTalkContext;
@@ -65,6 +64,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         LocalDate today = date;
         LocalDate endOfYear = LocalDate.of(today.getYear(), 12, 31);
         String label = "", group = "";
+        Integer minPeople = null, maxPeople = null;
         // 1. 예약 정보 조회
         // 1. 예약 정보 조회 (Y: 확정 / N: 대기)
         List<ReservedTimeDto> reservations = bgmAgitReservationRepository.findReservations(labelGb, link, id, today, endOfYear);
@@ -125,11 +125,15 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     ReservedTimeDto dto = reservations.get(0);
                     label = dto.getLabel();
                     group = dto.getGroup();
+                    minPeople = dto.getMinPeople();
+                    maxPeople = dto.getMaxPeople();
                 } else {
                     BgmAgitImage image = bgmAgitImageRepository.findById(id).orElse(null);
                     if (image != null) {
                         label = image.getBgmAgitImageLabel();
                         group = image.getBgmAgitImageGroups();
+                        minPeople = image.getBgmAgitImageMinPeople();
+                        maxPeople = image.getBgmAgitImageMaxPeople();
                     }
                 }
             }
@@ -154,7 +158,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             prices.add(new BgmAgitReservationResponse.PriceByDate(d, price, isWeekend || isHoliday));
         }
         
-        return new BgmAgitReservationResponse(timeSlots, prices, label, group);
+        return new BgmAgitReservationResponse(timeSlots, prices, label, group,minPeople, maxPeople);
         
     }
     
@@ -168,7 +172,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     @Override
     public ApiResponse createReservation(BgmAgitReservationCreateRequest request, Long userId) {
         List<String> timeList = request.getReservationExpandedTimeSlots();
-
+        Integer people = request.getBgmAgitReservationPeople();
+        String reservationRequest = !StringUtils.hasText(request.getBgmAgitReservationRequest()) ? "없음" : request.getBgmAgitReservationRequest();
         // 날짜 보정
         String dateStr = request.getBgmAgitReservationStartDate(); // "2025-07-27T15:00:00.000Z"
         Instant instant = Instant.parse(dateStr);
@@ -214,7 +219,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             }
             
             BgmAgitReservation reservation = new BgmAgitReservation(
-                    member, image, reservationType, startTime, endTime, kstDate,maxReservationNo
+                    member, image, reservationType, startTime, endTime, kstDate,maxReservationNo,people,reservationRequest
             );
             bgmAgitReservationRepository.save(reservation);
             list.add(reservation);
@@ -267,7 +272,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             dto.setCancelStatus(list.get(0).getBgmAgitReservationCancelStatus());
             dto.setReservationMemberName(list.get(0).getBgmAgitMember().getBgmAgitMemberName());
             dto.setReservationAddr(list.get(0).getBgmAgitImage().getBgmAgitImageLabel());
-            
+            dto.setReservationPeople(list.get(0).getBgmAgitReservationPeople());
+            dto.setReservationRequest(list.get(0).getBgmAgitReservationRequest());
             content.add(dto);
         }
         

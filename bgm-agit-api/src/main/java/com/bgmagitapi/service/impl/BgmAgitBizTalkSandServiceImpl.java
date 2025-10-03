@@ -50,25 +50,26 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String formattedTimes = AlimtalkUtils.formatTimes(list);
         String formattedDate = AlimtalkUtils.formatDate(list.get(0).getBgmAgitReservationStartDate());
         BgmAgitReservation bgmAgitReservation = list.get(0);
-        
+        String people = String.valueOf( bgmAgitReservation.getBgmAgitReservationPeople());
+        String reservationRequest = bgmAgitReservation.getBgmAgitReservationRequest();
         BgmAgitImage agitImage = bgmAgitImageRepository.findById(image.getBgmAgitImageId()).orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 룸 입니다."));
         Boolean isRoom = agitImage.isRoom(image.getBgmAgitImageId());
         String roomName = agitImage.getBgmAgitImageLabel();
         String message = AlimtalkUtils.buildReservationMessage(
-                member.getBgmAgitMemberName(), formattedDate, formattedTimes,roomName);
+                member.getBgmAgitMemberName(), formattedDate, formattedTimes,roomName,people,reservationRequest);
         
         String ownerMessage = AlimtalkUtils.buildOwnerReservationMessage(
-                member.getBgmAgitMemberName(), formattedDate, formattedTimes,roomName);
+                member.getBgmAgitMemberName(), formattedDate, formattedTimes,roomName,people,reservationRequest);
         
         String phone = AlimtalkUtils.formatRecipientKr(member.getBgmAgitMemberPhoneNo());
         
         Attach attach = AlimtalkUtils.defaultAttach("예약 내역 확인 하기");
         
         Map<String, Object> request = AlimtalkUtils.buildSendRequest(
-                senderKey, phone, message,"bgmagit-reservation-2",attach);
+                senderKey, phone, message,"bgmagit-res",attach);
         
         Map<String, Object> request2 = AlimtalkUtils.buildOwnerSendRequest(
-                senderKey, ownerMessage,"bgmagit-reservation-2",attach
+                senderKey, ownerMessage,"bgmagit-res",attach
         );
         
         RestClient restClient = RestClient.create();
@@ -155,19 +156,20 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         Boolean isRoom = bgmAgitImage.isRoom(bgmAgitImageId);
         String times = AlimtalkUtils.formatTimes(list);
         String date  = AlimtalkUtils.formatDate(list.get(0).getBgmAgitReservationStartDate());
-        
+        String bgmAgitReservationPeople = String.valueOf(list.get(0).getBgmAgitReservationPeople());
+        String bgmAgitReservationRequest = list.get(0).getBgmAgitReservationRequest();
         boolean isAdmin = "ROLE_ADMIN".equalsIgnoreCase(ctx.getRole());
         String message  = isAdmin
                 ? AlimtalkUtils.reservationCancelMessage2(ctx.getMemberName(), date, times, ctx.getLabel())
-                : AlimtalkUtils.reservationCancelMessage1(ctx.getMemberName(), date, times, ctx.getLabel());
-        String template = isAdmin ? "bgmagit-reservation-cancel-2" : "bgmagit-reservation-cancel";
+                : AlimtalkUtils.reservationCancelMessage1(ctx.getMemberName(), date, times, ctx.getLabel(),bgmAgitReservationPeople,bgmAgitReservationRequest);
+        String template = isAdmin ? "bgmagit-reservation-cancel-2" : "bgmagit-res-cancel";
         Long subjectId  = list.get(0).getBgmAgitReservationNo();
         
         ApiResponse apiResponse = sendTalk(message, template, ctx.getPhone(), subjectId, "수정 되었습니다.", isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL , "예약 내역 확인 하기");
         
-        if("bgmagit-reservation-cancel".equals(template)) {
-            String cancelMessage3 = AlimtalkUtils.reservationCancelMessage3(ctx.getMemberName(),date, times, ctx.getLabel());
-            sendTalk(cancelMessage3,"bgmagit-reservation-cancel-3","010-5059-3499",subjectId,"수정 되었습니다.",isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL,"예약 내역 확인 하기");
+        if("bgmagit-res-cancel".equals(template)) {
+            String cancelMessage3 = AlimtalkUtils.reservationCancelMessage3(ctx.getMemberName(),date, times, ctx.getLabel(),bgmAgitReservationPeople,bgmAgitReservationRequest);
+            sendTalk(cancelMessage3,"bgmagit-res-cancel","010-5059-3499",subjectId,"수정 되었습니다.",isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL,"예약 내역 확인 하기");
         }
         return apiResponse;
         
@@ -179,12 +181,16 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         List<BgmAgitReservation> list = ctx.getReservations();
         String times = AlimtalkUtils.formatTimes(list);
         String date  = AlimtalkUtils.formatDate(list.get(0).getBgmAgitReservationStartDate());
-        
-        String message  = AlimtalkUtils.buildReservationCompleteMessage(ctx.getMemberName(), date, times, ctx.getLabel());
-        String template = "bgmagit-reservation-complete";
+        BgmAgitReservation bgmAgitReservation = list.get(0);
+        String people = String.valueOf( bgmAgitReservation.getBgmAgitReservationPeople());
+        String request = bgmAgitReservation.getBgmAgitReservationRequest();
+        String message1  = AlimtalkUtils.buildReservationCompleteMessage(ctx.getMemberName(), date, times, ctx.getLabel(),people,request);
+        String message2  = AlimtalkUtils.buildReservationCompleteMessage("관리자", date, times, ctx.getLabel(),people,request);
+        String template = "bgmagit-res-complete";
         Long subjectId  = list.get(0).getBgmAgitReservationNo();
         
-        return sendTalk(message, template, ctx.getPhone(), subjectId, "알림톡 발송 완료",BgmAgitSubject.RESERVATION,"예약 내역 확인 하기");
+               sendTalk(message1, template, ctx.getPhone(), subjectId, "알림톡 발송 완료",BgmAgitSubject.RESERVATION,"예약 내역 확인 하기");
+        return sendTalk(message2, template, "010-5059-3499", subjectId, "알림톡 발송 완료",BgmAgitSubject.RESERVATION,"예약 내역 확인 하기");
     }
     
     @Override

@@ -50,6 +50,12 @@ public class BgmAgitImage extends DateSuperClass {
     @Column(name = "BGM_AGIT_IMAGE_URL")
     private String bgmAgitImageUrl;
     
+    @Column(name = "BGM_AGIT_IMAGE_MIN_PEOPLE")
+    private Integer bgmAgitImageMinPeople;
+    
+    @Column(name = "BGM_AGIT_IMAGE_MAX_PEOPLE")
+    private Integer bgmAgitImageMaxPeople;
+    
     
     public BgmAgitImage(BgmAgitMainMenu bgmAgitMainMenu, BgmAgitImageCreateRequest request, UploadResult image) {
         this.bgmAgitMainMenu = bgmAgitMainMenu;

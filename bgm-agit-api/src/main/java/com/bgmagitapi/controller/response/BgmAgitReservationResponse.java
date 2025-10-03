@@ -16,6 +16,8 @@ public class BgmAgitReservationResponse {
     private List<PriceByDate> prices;
     private String label;
     private String group;
+    private Integer minPeople;
+    private Integer maxPeople;
     
     @Getter
     @AllArgsConstructor
