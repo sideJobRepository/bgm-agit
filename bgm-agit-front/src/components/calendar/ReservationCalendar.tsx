@@ -141,7 +141,7 @@ export default function ReservationCalendar({ id }: { id?: number }) {
   }
 
   useEffect(() => {
-    if (reservation) setCount(reservation.minPeople);
+    if (reservation) setCount(reservation.minPeople!);
   }, [reservation?.minPeople]);
 
   return (
@@ -153,13 +153,20 @@ export default function ReservationCalendar({ id }: { id?: number }) {
         </div>
         <div className="count-box">
           <MdRemove
-            style={{ cursor: 'pointer' }}
-            onClick={() => setCount(c => Math.max(reservation.minPeople, c - 1))}
+            style={{
+              cursor: count > reservation.minPeople! ? 'pointer' : 'not-allowed',
+              opacity: count > reservation.minPeople! ? 1 : 0.3,
+            }}
+            onClick={() => setCount(c => Math.max(reservation.minPeople!, c - 1))}
           />
+
           <span>{count}명</span>
           <MdAdd
-            style={{ cursor: 'pointer' }}
-            onClick={() => setCount(c => Math.min(reservation.maxPeople, c + 1))}
+            style={{
+              cursor: count < reservation.maxPeople! ? 'pointer' : 'not-allowed',
+              opacity: count < reservation.maxPeople! ? 1 : 0.3,
+            }}
+            onClick={() => setCount(c => Math.min(reservation.maxPeople!, c + 1))}
           />
         </div>
         <div className="count-box">
