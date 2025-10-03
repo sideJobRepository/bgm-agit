@@ -33,6 +33,8 @@ export type Reservation = {
   reservationDate: string;
   reservationMemberName: string;
   reservationAddr: string;
+  reservationPeople : number
+  reservationRequest : string
   approvalStatus: 'Y' | 'N';
   cancelStatus: 'Y' | 'N';
   timeSlots: {
