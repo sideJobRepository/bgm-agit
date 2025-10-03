@@ -23,6 +23,8 @@ export type ReservationDatas = {
   link: string;
   label?: string;
   group?: number;
+  maxPeople?: number;
+  minPeople?: number;
   timeSlots?: ReservedTimeDto[];
   prices?: ReservationPriceDto[];
 };
@@ -33,8 +35,8 @@ export type Reservation = {
   reservationDate: string;
   reservationMemberName: string;
   reservationAddr: string;
-  reservationPeople : number
-  reservationRequest : string
+  reservationPeople: number;
+  reservationRequest: string;
   approvalStatus: 'Y' | 'N';
   cancelStatus: 'Y' | 'N';
   timeSlots: {

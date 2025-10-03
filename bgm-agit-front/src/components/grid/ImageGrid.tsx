@@ -682,7 +682,7 @@ const CalendarSection = styled.section<{ $visible: boolean }>`
   width: 100%;
   overflow: hidden;
   transition: all 0.6s ease;
-  max-height: ${({ $visible }) => ($visible ? '1000px' : '0')};
+  max-height: ${({ $visible }) => ($visible ? '1300px' : '0')};
   opacity: ${({ $visible }) => ($visible ? 1 : 0)};
   margin-top: ${({ $visible }) => ($visible ? '20px' : '0')};
 `;
