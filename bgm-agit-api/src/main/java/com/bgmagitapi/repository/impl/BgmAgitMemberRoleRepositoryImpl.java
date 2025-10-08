@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,12 +44,6 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                 .join(bgmAgitMemberRole.bgmAgitMember, bgmAgitMember)
                 .join(bgmAgitMemberRole.bgmAgitRole, bgmAgitRole)
                 .where(emailLike(email))
-                .orderBy(
-                        // ADMIN이면 0, 그 외는 1 → 오름차순 정렬
-                        new CaseBuilder()
-                                .when(bgmAgitRole.bgmAgitRoleName.eq("ADMIN")).then(0)
-                                .otherwise(1).asc()
-                )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -59,7 +54,10 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                             .replaceAll("\\s+", "");
                     item.setMemberPhoneNo(memberPhoneNo);
                 });
-        
+        content.sort(
+                Comparator
+                        .comparing((BgmAgitRoleResponse r) -> "ADMIN".equals(r.getRoleName()) ? 0 : 1)
+        );
         // 2. 전체 개수 조회
         JPAQuery<Long> countQuery = queryFactory
                 .select(bgmAgitMember.count())
