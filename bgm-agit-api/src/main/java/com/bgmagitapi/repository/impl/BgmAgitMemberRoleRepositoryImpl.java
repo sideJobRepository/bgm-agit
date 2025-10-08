@@ -44,6 +44,13 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                 .join(bgmAgitMemberRole.bgmAgitMember, bgmAgitMember)
                 .join(bgmAgitMemberRole.bgmAgitRole, bgmAgitRole)
                 .where(emailLike(email))
+                .orderBy(
+                        new CaseBuilder()
+                                .when(bgmAgitRole.bgmAgitRoleName.eq("ADMIN")).then(0)
+                                .otherwise(1).asc(),              // ADMIN 먼저
+                        bgmAgitMember.bgmAgitMemberId.asc(), // 회원 PK 타이브레이커
+                        bgmAgitRole.bgmAgitRoleId.asc()      // 역할 PK 타이브레이커
+                )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -54,10 +61,6 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                             .replaceAll("\\s+", "");
                     item.setMemberPhoneNo(memberPhoneNo);
                 });
-        content.sort(
-                Comparator
-                        .comparing((BgmAgitRoleResponse r) -> "ADMIN".equals(r.getRoleName()) ? 0 : 1)
-        );
         // 2. 전체 개수 조회
         JPAQuery<Long> countQuery = queryFactory
                 .select(bgmAgitMember.count())
