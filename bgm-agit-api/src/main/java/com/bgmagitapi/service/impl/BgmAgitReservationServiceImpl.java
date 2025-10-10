@@ -86,15 +86,31 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         List<BgmAgitReservationResponse.TimeSlotByDate> timeSlots = new ArrayList<>();
         
         for (LocalDate d = today; !d.isAfter(endOfYear); d = d.plusDays(1)) {
-            LocalDateTime open =  isGroomAndMahjongRental(id) ? LocalDateTime.of(d, LocalTime.of(14, 0)) : LocalDateTime.of(d, LocalTime.of(13, 0));
-            LocalDateTime close = LocalDateTime.of(d.plusDays(1), LocalTime.of(2, 0));
+            LocalDateTime open = null;
+            LocalDateTime close = null;
+            int slotIntervalHours = 0;
+            if (isGroom(id)) {
+                open =  LocalDateTime.of(d, LocalTime.of(13, 0));
+                close =  LocalDateTime.of(d.plusDays(1), LocalTime.of(0, 0));
+                slotIntervalHours = 6;
+            } else if (isMahjongRental(id)) {
+                open =  LocalDateTime.of(d, LocalTime.of(14, 0));
+                close = LocalDateTime.of(d.plusDays(1), LocalTime.of(2, 0));
+                slotIntervalHours = 3;
+            } else {
+                open =  LocalDateTime.of(d, LocalTime.of(13, 0));
+                close = LocalDateTime.of(d.plusDays(1), LocalTime.of(2, 0));
+                slotIntervalHours = 1;
+            }
+            //LocalDateTime open =  isMahjongRental(id) ? LocalDateTime.of(d, LocalTime.of(14, 0)) : LocalDateTime.of(d, LocalTime.of(13, 0));
+            //LocalDateTime close = LocalDateTime.of(d.plusDays(1), LocalTime.of(2, 0));
             LocalDateTime cursor = open;
             
             List<String> availableSlots = new ArrayList<>();
             List<TimeRange> reserved = reservedMap.getOrDefault(d, Collections.emptyList())
                     .stream().sorted(Comparator.comparing(TimeRange::getStart)).toList();
             
-            int slotIntervalHours = (isGroomAndMahjongRental(id)) ? 3 : 1;
+            //int slotIntervalHours = (isMahjongRental(id)) ? 3 : 1;
             
             while (cursor.isBefore(close)) {
                 LocalDateTime slotStart = cursor;
@@ -113,7 +129,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     availableSlots.add(slotStart.format(formatter));
                 }
                 
-                if (isGroomAndMahjongRental(id) && slotStart.format(formatter).equals("01:00")) {
+                if (isMahjongRental(id) && slotStart.format(formatter).equals("01:00")) {
                     availableSlots.remove(slotStart.format(formatter));
                 }
                 
@@ -162,7 +178,11 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         
     }
     
-    private boolean isGroomAndMahjongRental(Long id) {
+    private boolean isGroom(Long id) {
+        return id != null && id == 18;
+    }
+    
+    private boolean isMahjongRental(Long id) {
         return id != null && (id == 18 || id == 32 || id == 33 || id == 34 || id == 35);
     }
     private boolean mahjongRental(Long id) {
