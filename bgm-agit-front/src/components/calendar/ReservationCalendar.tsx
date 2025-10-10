@@ -212,17 +212,25 @@ export default function ReservationCalendar({ id }: { id?: number }) {
         </div>
         {reservationData?.id === 18 && (
           <div>
-            <p>※ 예약하는 날짜에는 한 팀이 한 개의 시간대만 선택 가능합니다.</p>
+            <p>
+              <strong>※ 예약하는 날짜에 한 팀당 한 개의 시간대만 선택이 가능합니다.</strong>
+            </p>
           </div>
         )}
         {reservationData?.id === 19 && (
           <div>
-            <p>※ 최소 3일전 최소인원 15명 이어야지만 예약이 가능합니다.</p>
+            <p>
+              <strong>※ 최소 3일전 최소인원 15명 이어야지만 예약이 가능합니다.</strong>
+            </p>
           </div>
         )}
         {reservationData?.link === '/detail/mahjongRental' && (
           <div>
-            <p>※ 대탁 예약시 3시간 4만원, 5시간에 6만원, 1시간 추가시 만원의 금액이 발생합니다.</p>
+            <p>
+              <strong>
+                ※ 대탁 예약시 3시간 4만원, 5시간에 6만원, 1시간 추가시 만원의 금액이 발생합니다.
+              </strong>
+            </p>
           </div>
         )}
       </TitleBox>
