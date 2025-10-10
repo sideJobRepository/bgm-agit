@@ -210,6 +210,11 @@ export default function ReservationCalendar({ id }: { id?: number }) {
             onChange={e => setReason(e.target.value)}
           />
         </div>
+        {reservationData?.id === 18 && (
+          <div>
+            <p>※ 예약하는 날짜에는 한 팀이 한 개의 시간대만 선택 가능합니다.</p>
+          </div>
+        )}
         {reservationData?.id === 19 && (
           <div>
             <p>※ 최소 3일전 최소인원 15명 이어야지만 예약이 가능합니다.</p>
