@@ -39,7 +39,7 @@ export default function ReservationCalendar({ id }: { id?: number }) {
   //G룸인 경우 3시간 간격이고 마지막은 2시간 단위로 끊음
   const allTime =
     id === 18
-      ? ['14:00', '17:00', '20:00', '23:00', '02:00']
+      ? ['13:00', '18:00', '00:00']
       : reservationData?.link === '/detail/mahjongRental'
         ? ['14:00', '17:00', '20:00', '23:00', '02:00']
         : [
