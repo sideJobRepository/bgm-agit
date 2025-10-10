@@ -101,7 +101,16 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     .sorted(Comparator.comparing(TimeRange::getStart))
                     .toList();
             
-            
+            if (userId != null && SlotSchedule.isGroom(id)) {
+                boolean alreadyBookedTodayByMe = reserved.stream().anyMatch(r ->
+                        Objects.equals(r.getMemberId(), userId) &&
+                                !"Y".equals(r.getCancelStatus())
+                );
+                if (alreadyBookedTodayByMe) {
+                    timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(d, List.of(),"G룸은 하루에 1팀당 1개의 예약이 가능하여 다른 시간대의 예약이 불가능 합니다."));
+                    continue;
+                }
+            }
             
             while (cursor.isBefore(close)) {
                 LocalDateTime slotStart = cursor;
@@ -145,7 +154,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 }
             }
             
-            timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(d, availableSlots));
+            timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(d, availableSlots,null));
         }
 
         // 4. 공휴일/주말 가격 계산

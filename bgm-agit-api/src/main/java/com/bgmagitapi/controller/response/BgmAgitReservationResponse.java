@@ -24,6 +24,7 @@ public class BgmAgitReservationResponse {
     public static class TimeSlotByDate {
         private LocalDate date;
         private List<String> timeSlots;
+        private String message;
     }
     
     @Getter
