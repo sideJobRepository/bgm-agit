@@ -77,7 +77,9 @@ export default function ReservationCalendar({ id }: { id?: number }) {
       ? {
           message: (
             <>
-              해당 일자로 예약하시겠습니까?
+              {reservation.label} {count}명
+              <br />
+              해당 일자를 예약하시겠습니까?
               <br />
               예약금 입금 후 예약 확정이 완료됩니다.
             </>
