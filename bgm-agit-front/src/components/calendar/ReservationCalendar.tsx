@@ -79,8 +79,12 @@ export default function ReservationCalendar({ id }: { id?: number }) {
             <>
               {reservation.label} {count}명
               <br />
-              요청사항: {reason}
-              <br />
+              {reason && (
+                <>
+                  요청사항: {reason}
+                  <br />
+                </>
+              )}
               해당 일자를 예약하시겠습니까?
               <br />
               예약금 입금 후 예약 확정이 완료됩니다.
