@@ -1,6 +1,6 @@
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { FaUsers } from 'react-icons/fa';
 import { MdAdd, MdRemove } from 'react-icons/md';
@@ -14,6 +14,7 @@ import { userState } from '../../recoil/state/userState.ts';
 import { showConfirmModal } from '../confirmAlert.tsx';
 import { useInsertPost, useReservationFetch } from '../../recoil/fetch.ts';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 export default function ReservationCalendar({ id }: { id?: number }) {
   const navigate = useNavigate();
@@ -37,10 +38,17 @@ export default function ReservationCalendar({ id }: { id?: number }) {
   const KAKAO_REDIRECT_URL = import.meta.env.VITE_KAKAO_REDIRECT_URL;
 
   //G룸인 경우 3시간 간격이고 마지막은 2시간 단위로 끊음
-  const allTime =
-    id === 18
-      ? ['14:00', '17:00', '20:00', '23:00', '02:00']
-      : reservationData?.link === '/detail/mahjongRental'
+  const intervals = useMemo(() => {
+    // G Room: 13~18, 19~00 두 구간만 표시
+    if (id === 18)
+      return [
+        ['13:00', '18:00'],
+        ['19:00', '00:00'],
+      ];
+
+    // 마작 대여 케이스
+    const times =
+      reservationData?.link === '/detail/mahjongRental'
         ? ['14:00', '17:00', '20:00', '23:00', '02:00']
         : [
             '13:00',
@@ -59,6 +67,12 @@ export default function ReservationCalendar({ id }: { id?: number }) {
             '02:00',
           ];
 
+    // 연속 시간으로 페어링
+    const pairs: [string, string][] = [];
+    for (let i = 0; i < times.length - 1; i++) pairs.push([times[i], times[i + 1]]);
+    return pairs;
+  }, [id, reservationData]);
+
   const [value, setValue] = useState<Date>(today);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const getLocalDateStr = (date: Date) => date.toLocaleDateString('sv-SE');
@@ -67,9 +81,20 @@ export default function ReservationCalendar({ id }: { id?: number }) {
   const matchedSlots = reservation.timeSlots?.find(d => d.date === dateStr);
 
   const handleTimeClick = (time: string) => {
-    setSelectedTimes(prev =>
-      prev.includes(time) ? prev.filter(t => t !== time) : [...prev, time]
-    );
+    setSelectedTimes(prev => {
+      // 이미 선택된 시간 해제하는 경우
+      if (prev.includes(time)) {
+        return prev.filter(t => t !== time);
+      }
+
+      // 새로 선택하는 경우 제한 체크
+      if (id === 18 && prev.length >= 1) {
+        toast.error('하나의 시간대만 예약이 가능합니다.');
+        return prev; // 변경하지 않음
+      }
+
+      return [...prev, time];
+    });
   };
 
   function reservationSave() {
@@ -77,7 +102,15 @@ export default function ReservationCalendar({ id }: { id?: number }) {
       ? {
           message: (
             <>
-              해당 일자로 예약하시겠습니까?
+              {reservation.label} {count}명
+              <br />
+              {reason && (
+                <>
+                  요청사항: {reason}
+                  <br />
+                </>
+              )}
+              해당 일자를 예약하시겠습니까?
               <br />
               예약금 입금 후 예약 확정이 완료됩니다.
             </>
@@ -177,14 +210,27 @@ export default function ReservationCalendar({ id }: { id?: number }) {
             onChange={e => setReason(e.target.value)}
           />
         </div>
+        {reservationData?.id === 18 && (
+          <div>
+            <p>
+              <strong>※ 예약하는 날짜에 한 팀당 한 개의 시간대만 선택이 가능합니다.</strong>
+            </p>
+          </div>
+        )}
         {reservationData?.id === 19 && (
           <div>
-            <p>※ 최소 3일전 최소인원 15명 이어야지만 예약이 가능합니다.</p>
+            <p>
+              <strong>※ 최소 3일전 최소인원 15명 이어야지만 예약이 가능합니다.</strong>
+            </p>
           </div>
         )}
         {reservationData?.link === '/detail/mahjongRental' && (
           <div>
-            <p>※ 대탁 예약시 3시간 4만원, 5시간에 6만원, 1시간 추가시 만원의 금액이 발생합니다.</p>
+            <p>
+              <strong>
+                ※ 대탁 예약시 3시간 4만원, 5시간에 6만원, 1시간 추가시 만원의 금액이 발생합니다.
+              </strong>
+            </p>
           </div>
         )}
       </TitleBox>
@@ -219,26 +265,20 @@ export default function ReservationCalendar({ id }: { id?: number }) {
       />
 
       <TimeBox>
-        {allTime.map((time, idx) => {
-          const isAvailable = matchedSlots?.timeSlots.includes(time) ?? false;
-          const isSelected = selectedTimes.includes(time);
-
-          const currentIndex = allTime.indexOf(time);
-          const nextTime = allTime[currentIndex + 1];
-          if (!nextTime) return null; // 마지막 시간이면 아예 버튼 안 그림
-
-          const startHour = time.split(':')[0].padStart(2, '0');
-          let endHour = nextTime.split(':')[0].padStart(2, '0');
-
+        {intervals.map(([start, end], idx) => {
+          const isAvailable = matchedSlots?.timeSlots.includes(start) ?? false;
+          const startHour = start.split(':')[0].padStart(2, '0');
+          let endHour = end.split(':')[0].padStart(2, '0');
           if (endHour === '00') endHour = '24';
-
           const label = `${startHour}:00 ~ ${endHour}:00`;
+
+          const isSelected = selectedTimes.includes(start); // 시작 시각으로 선택 관리
 
           return (
             <TimeSlotButton
               key={idx}
               selected={isSelected}
-              onClick={() => isAvailable && handleTimeClick(time)}
+              onClick={() => isAvailable && handleTimeClick(start)}
               disabled={!isAvailable}
             >
               {label}

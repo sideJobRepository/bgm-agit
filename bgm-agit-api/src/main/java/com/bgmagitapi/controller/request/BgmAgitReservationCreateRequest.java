@@ -1,5 +1,6 @@
 package com.bgmagitapi.controller.request;
 
+import com.bgmagitapi.util.SlotSchedule;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -58,9 +59,16 @@ public class BgmAgitReservationCreateRequest {
         
         for (String timeStr : startTimeEndTime) {
             LocalTime start = LocalTime.parse(timeStr, formatter);
-            boolean groomAndMahjongRental = isGroomAndMahjongRental(this.bgmAgitImageId);
-            LocalTime end  = groomAndMahjongRental ? start.plusHours(3) : start.plusHours(1);
-            
+            boolean mahjongRental = SlotSchedule.isMahjongRental(this.bgmAgitImageId);
+            boolean groom = SlotSchedule.isGroom(this.bgmAgitImageId);
+            LocalTime end = null;
+            if (groom) {
+                end = start.plusHours(5);
+            } else if (mahjongRental) {
+                end = start.plusHours(3);
+            }else {
+                end = start.plusHours(1);
+            }
             result.add(start.format(formatter) + " ~ " + end.format(formatter));
         }
         return result;

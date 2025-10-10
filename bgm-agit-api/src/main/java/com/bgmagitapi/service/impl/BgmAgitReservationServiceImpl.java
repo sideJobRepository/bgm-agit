@@ -21,6 +21,7 @@ import com.bgmagitapi.service.BgmAgitReservationService;
 import com.bgmagitapi.service.response.BizTalkCancel;
 import com.bgmagitapi.service.response.ReservationTalkContext;
 import com.bgmagitapi.util.LunarCalendar;
+import com.bgmagitapi.util.SlotSchedule;
 import com.querydsl.jpa.impl.JPAQuery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -58,7 +59,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     @Transactional(readOnly = true)
     public BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id, LocalDate date) {
         Authentication authentication = SecurityContextHolder.getContextHolderStrategy().getContext().getAuthentication();
-        final Long userId = (authentication instanceof JwtAuthenticationToken bearerAuth)
+        Long userId = (authentication instanceof JwtAuthenticationToken bearerAuth)
                 ? ((Jwt) bearerAuth.getPrincipal()).getClaim("id")
                 : null;
         LocalDate today = date;
@@ -86,15 +87,30 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         List<BgmAgitReservationResponse.TimeSlotByDate> timeSlots = new ArrayList<>();
         
         for (LocalDate d = today; !d.isAfter(endOfYear); d = d.plusDays(1)) {
-            LocalDateTime open =  isGroomAndMahjongRental(id) ? LocalDateTime.of(d, LocalTime.of(14, 0)) : LocalDateTime.of(d, LocalTime.of(13, 0));
-            LocalDateTime close = LocalDateTime.of(d.plusDays(1), LocalTime.of(2, 0));
+            SlotSchedule schedule = SlotSchedule.of(id, d);
+            
+            LocalDateTime open = schedule.open();
+            LocalDateTime close = schedule.close();
+            int slotIntervalHours = schedule.intervalHours();
+            
             LocalDateTime cursor = open;
-            
             List<String> availableSlots = new ArrayList<>();
-            List<TimeRange> reserved = reservedMap.getOrDefault(d, Collections.emptyList())
-                    .stream().sorted(Comparator.comparing(TimeRange::getStart)).toList();
+            List<TimeRange> reserved = reservedMap
+                    .getOrDefault(d, Collections.emptyList())
+                    .stream()
+                    .sorted(Comparator.comparing(TimeRange::getStart))
+                    .toList();
             
-            int slotIntervalHours = (isGroomAndMahjongRental(id)) ? 3 : 1;
+            if (userId != null && SlotSchedule.isGroom(id)) {
+                boolean alreadyBookedTodayByMe = reserved.stream().anyMatch(r ->
+                        Objects.equals(r.getMemberId(), userId) &&
+                                !"Y".equals(r.getCancelStatus())
+                );
+                if (alreadyBookedTodayByMe) {
+                    timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(d, List.of(),"G룸은 하루에 1팀당 1개의 예약이 가능하여 다른 시간대의 예약이 불가능 합니다."));
+                    continue;
+                }
+            }
             
             while (cursor.isBefore(close)) {
                 LocalDateTime slotStart = cursor;
@@ -113,7 +129,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     availableSlots.add(slotStart.format(formatter));
                 }
                 
-                if (isGroomAndMahjongRental(id) && slotStart.format(formatter).equals("01:00")) {
+                if (SlotSchedule.isMahjongRental(id) && slotStart.format(formatter).equals("01:00")) {
                     availableSlots.remove(slotStart.format(formatter));
                 }
                 
@@ -138,7 +154,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 }
             }
             
-            timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(d, availableSlots));
+            timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(d, availableSlots,null));
         }
 
         // 4. 공휴일/주말 가격 계산
@@ -152,7 +168,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             boolean isWeekend = d.getDayOfWeek() == DayOfWeek.SATURDAY || d.getDayOfWeek() == DayOfWeek.SUNDAY;
             boolean isHoliday = holidaySet.contains(dateStr);
             int price = (isWeekend || isHoliday) ? 4000 : 3000;
-            if (mahjongRental(id)) {
+            if (SlotSchedule.isMahjongRental(id)) {
                 price = 40000;
             }
             prices.add(new BgmAgitReservationResponse.PriceByDate(d, price, isWeekend || isHoliday));
@@ -160,13 +176,6 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         
         return new BgmAgitReservationResponse(timeSlots, prices, label, group,minPeople, maxPeople);
         
-    }
-    
-    private boolean isGroomAndMahjongRental(Long id) {
-        return id != null && (id == 18 || id == 32 || id == 33 || id == 34 || id == 35);
-    }
-    private boolean mahjongRental(Long id) {
-        return id != null && ( id == 32 || id == 33 || id == 34 || id == 35);
     }
     
     @Override
