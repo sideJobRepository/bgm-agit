@@ -59,7 +59,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     @Transactional(readOnly = true)
     public BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id, LocalDate date) {
         Authentication authentication = SecurityContextHolder.getContextHolderStrategy().getContext().getAuthentication();
-        final Long userId = (authentication instanceof JwtAuthenticationToken bearerAuth)
+        Long userId = (authentication instanceof JwtAuthenticationToken bearerAuth)
                 ? ((Jwt) bearerAuth.getPrincipal()).getClaim("id")
                 : null;
         LocalDate today = date;
