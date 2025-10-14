@@ -1,6 +1,6 @@
 package com.bgmagitapi.controller.request;
 
-import com.bgmagitapi.util.SlotSchedule;
+import com.bgmagitapi.entity.enumeration.BgmAgitImageCategory;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -8,14 +8,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.time.LocalTime;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -53,28 +49,25 @@ public class BgmAgitReservationCreateRequest {
     /**
      * 요청된 시간 문자열 리스트로부터 1시간 단위 슬롯을 생성하는 유틸 메서드
      */
-    public List<String> getReservationExpandedTimeSlots() {
+    public List<String> getReservationExpandedTimeSlots(BgmAgitImageCategory bgmAgitImageCategory , String imageLabel) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
         List<String> result = new ArrayList<>();
         
         for (String timeStr : startTimeEndTime) {
             LocalTime start = LocalTime.parse(timeStr, formatter);
-            boolean mahjongRental = SlotSchedule.isMahjongRental(this.bgmAgitImageId);
-            boolean groom = SlotSchedule.isGroom(this.bgmAgitImageId);
-            LocalTime end = null;
-            if (groom) {
-                end = start.plusHours(5);
-            } else if (mahjongRental) {
-                end = start.plusHours(3);
-            }else {
-                end = start.plusHours(1);
-            }
+            boolean mahjongRental = isMahjong(bgmAgitImageCategory);
+            boolean groom = isGroom(bgmAgitImageCategory, imageLabel);
+            long hoursToAdd = groom ? 5 : mahjongRental ? 3 : 1;
+            LocalTime end = start.plusHours(hoursToAdd);
             result.add(start.format(formatter) + " ~ " + end.format(formatter));
         }
         return result;
     }
     
-    private boolean isGroomAndMahjongRental(Long id) {
-        return id != null && (id == 18 || id == 32 || id == 33 || id == 34 || id == 35);
+    private  boolean isMahjong(BgmAgitImageCategory bgmAgitImageCategory) {
+        return bgmAgitImageCategory == BgmAgitImageCategory.MAHJONG;
+    }
+    private  boolean isGroom(BgmAgitImageCategory bgmAgitImageCategory, String imageLabel) {
+        return bgmAgitImageCategory == BgmAgitImageCategory.ROOM && "G Room".equals(imageLabel);
     }
 }

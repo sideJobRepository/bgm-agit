@@ -5,6 +5,7 @@ import com.bgmagitapi.entity.BgmAgitBiztalkSendHistory;
 import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitReservation;
+import com.bgmagitapi.entity.enumeration.BgmAgitImageCategory;
 import com.bgmagitapi.entity.enumeration.BgmAgitSubject;
 import com.bgmagitapi.repository.BgmAgitBiztalkSendHistoryRepository;
 import com.bgmagitapi.repository.BgmAgitImageRepository;
@@ -47,103 +48,41 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     
     @Override
     public ApiResponse sandBizTalk(BgmAgitMember member, BgmAgitImage image, List<BgmAgitReservation> list) {
-        String formattedTimes = AlimtalkUtils.formatTimes(list);
-        String formattedDate = AlimtalkUtils.formatDate(list.get(0).getBgmAgitReservationStartDate());
+        validateList(list);
+        
         BgmAgitReservation bgmAgitReservation = list.get(0);
-        String people = String.valueOf( bgmAgitReservation.getBgmAgitReservationPeople());
+        String formattedTimes = AlimtalkUtils.formatTimes(list);
+        String formattedDate = AlimtalkUtils.formatDate(bgmAgitReservation.getBgmAgitReservationStartDate());
+        String people = String.valueOf(bgmAgitReservation.getBgmAgitReservationPeople());
         String reservationRequest = bgmAgitReservation.getBgmAgitReservationRequest();
-        BgmAgitImage agitImage = bgmAgitImageRepository.findById(image.getBgmAgitImageId()).orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 룸 입니다."));
-        Boolean isRoom = agitImage.isRoom(image.getBgmAgitImageId());
+        
+        // 이미지 검증 및 룸/마작 구분
+        BgmAgitImage agitImage = bgmAgitImageRepository.findById(image.getBgmAgitImageId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 룸입니다."));
+        boolean isRoom = agitImage.getBgmAgitImageCategory() == BgmAgitImageCategory.ROOM;
         String roomName = agitImage.getBgmAgitImageLabel();
+        
+        // 메시지 구성
         String message = AlimtalkUtils.buildReservationMessage(
-                member.getBgmAgitMemberName(), formattedDate, formattedTimes,roomName,people,reservationRequest);
+                member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, reservationRequest
+        );
         
         String ownerMessage = AlimtalkUtils.buildOwnerReservationMessage(
-                member.getBgmAgitMemberName(), formattedDate, formattedTimes,roomName,people,reservationRequest);
-        
-        String phone = AlimtalkUtils.formatRecipientKr(member.getBgmAgitMemberPhoneNo());
-        
-        Attach attach = AlimtalkUtils.defaultAttach("예약 내역 확인 하기");
-        
-        Map<String, Object> request = AlimtalkUtils.buildSendRequest(
-                senderKey, phone, message,"bgmagit-res",attach);
-        
-        Map<String, Object> request2 = AlimtalkUtils.buildOwnerSendRequest(
-                senderKey, ownerMessage,"bgmagit-res",attach
+                member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, reservationRequest
         );
         
-        RestClient restClient = RestClient.create();
-        BizTalkTokenResponse bizTalkToken = bgmAgitBizTalkService.getBizTalkToken();
+        // 템플릿명 및 버튼명 정의
+        String template = "bgmagit-res";
+        String buttonName = "예약 내역 확인 하기";
+        Long subjectId = bgmAgitReservation.getBgmAgitReservationNo();
+        BgmAgitSubject subject = isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL;
         
-    restClient.post()
-                .uri(bizTalkUrl + "/v2/kko/sendAlimTalk")
-                .header("Content-Type", "application/json")
-                .header("bt-token", bizTalkToken.getToken())
-                .body(request)
-                .retrieve()
-                .toEntity(BizTalkResponse.class)
-                .getBody();
+        // 사용자에게 발송
+        sendTalk(message, template, member.getBgmAgitMemberPhoneNo(), subjectId, "알림톡 발송 완료", subject, buttonName);
         
-        restClient.post()
-                .uri(bizTalkUrl + "/v2/kko/sendAlimTalk")
-                .header("Content-Type", "application/json")
-                .header("bt-token", bizTalkToken.getToken())
-                .body(request2)
-                .retrieve()
-                .toEntity(BizTalkResponse.class)
-                .getBody();
+        // 관리자에게 발송
+        sendTalk(ownerMessage, template, "010-5059-3499", subjectId, "알림톡 발송 완료", subject, buttonName);
         
-        BizTalkResponse result = restClient.get()
-                .uri(bizTalkUrl + "/v2/kko/getResultAll")
-                .header("Content-Type", "application/json")
-                .header("bt-token", bizTalkToken.getToken())
-                .retrieve()
-                .toEntity(BizTalkResponse.class)
-                .getBody();
-        
-        
-        String msgIdx1 = Objects.toString(request.get("msgIdx"), null);
-        String msgIdx2 = Objects.toString(request2.get("msgIdx"), null);
-
-        // 히스토리 생성 (현재 생성자: (subject, subjectId, message, msgIdx))
-        BgmAgitBiztalkSendHistory sendHistory1 = new BgmAgitBiztalkSendHistory(
-                isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL,
-                bgmAgitReservation.getBgmAgitReservationNo(),
-                message,
-                msgIdx1
-        );
-        
-        BgmAgitBiztalkSendHistory sendHistory2 = new BgmAgitBiztalkSendHistory(
-                isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL,
-                bgmAgitReservation.getBgmAgitReservationNo(),
-                ownerMessage,
-                msgIdx2
-        );
-        
-        List<BgmAgitBiztalkSendHistory> histories = List.of(sendHistory1, sendHistory2);
-
-        // 결과 리스트 → msgIdx 별 resultCode 매핑
-        Map<String, String> resultCodeByMsgIdx =
-                Optional.ofNullable(result)
-                        .map(BizTalkResponse::getResponse)
-                        .orElseGet(List::of)
-                        .stream()
-                        .filter(Objects::nonNull)
-                        .filter(it -> it.getMsgIdx() != null)
-                        .collect(Collectors.toMap(
-                                BizTalkResponse.Item::getMsgIdx,
-                                BizTalkResponse.Item::getResultCode,
-                                (a, b) -> a
-                        ));
-
-
-        for (BgmAgitBiztalkSendHistory h : histories) {
-            String code = resultCodeByMsgIdx.get(h.getBgmAgitBiztalkSendHistoryMsgIdx());
-            h.settingResultCode(code != null ? code : "PENDING");
-        }
-
-
-        bgmAgitBiztalkSendHistoryRepository.saveAll(histories);
         return new ApiResponse(200, true, "성공");
     }
     
@@ -152,8 +91,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         validateCtx(ctx);
         List<BgmAgitReservation> list = ctx.getReservations();
         BgmAgitImage bgmAgitImage = ctx.getReservations().get(0).getBgmAgitImage();
-        Long bgmAgitImageId = bgmAgitImage.getBgmAgitImageId();
-        Boolean isRoom = bgmAgitImage.isRoom(bgmAgitImageId);
+        boolean isRoom = bgmAgitImage.getBgmAgitImageCategory() == BgmAgitImageCategory.ROOM;
         String times = AlimtalkUtils.formatTimes(list);
         String date  = AlimtalkUtils.formatDate(list.get(0).getBgmAgitReservationStartDate());
         String bgmAgitReservationPeople = String.valueOf(list.get(0).getBgmAgitReservationPeople());
@@ -179,6 +117,8 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     public ApiResponse sendCompleteBizTalk(ReservationTalkContext ctx) {
         validateCtx(ctx);
         List<BgmAgitReservation> list = ctx.getReservations();
+        BgmAgitImage bgmAgitImage = ctx.getReservations().get(0).getBgmAgitImage();
+        boolean isRoom = bgmAgitImage.getBgmAgitImageCategory() == BgmAgitImageCategory.ROOM;
         String times = AlimtalkUtils.formatTimes(list);
         String date  = AlimtalkUtils.formatDate(list.get(0).getBgmAgitReservationStartDate());
         BgmAgitReservation bgmAgitReservation = list.get(0);
@@ -189,8 +129,8 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String template = "bgmagit-res-complete";
         Long subjectId  = list.get(0).getBgmAgitReservationNo();
         
-               sendTalk(message1, template, ctx.getPhone(), subjectId, "알림톡 발송 완료",BgmAgitSubject.RESERVATION,"예약 내역 확인 하기");
-        return sendTalk(message2, template, "010-5059-3499", subjectId, "알림톡 발송 완료",BgmAgitSubject.RESERVATION,"예약 내역 확인 하기");
+               sendTalk(message1, template, ctx.getPhone(), subjectId, "알림톡 발송 완료", isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL,"예약 내역 확인 하기");
+        return sendTalk(message2, template, "010-5059-3499", subjectId, "알림톡 발송 완료", isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL,"예약 내역 확인 하기");
     }
     
     @Override
@@ -267,4 +207,11 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
             throw new IllegalArgumentException("전송 대상이 없습니다.");
         }
     }
+    /** 리스트 유효성 검사 (null 또는 empty 방지) */
+    private void validateList(List<BgmAgitReservation> list) {
+        if (list == null || list.isEmpty()) {
+            throw new IllegalArgumentException("예약 데이터가 없습니다.");
+        }
+    }
+    
 }
