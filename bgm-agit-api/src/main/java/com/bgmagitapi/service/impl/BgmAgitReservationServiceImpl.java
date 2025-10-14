@@ -72,15 +72,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         List<ReservedTimeDto> reservations = bgmAgitReservationRepository.findReservations(labelGb, link, id, today, endOfYear);
         BgmAgitImage bgmAgitImage = bgmAgitImageRepository.findById(id).orElseThrow(() -> new RuntimeException("존재 하지않는 이미지 입니다."));
         // 2. 예약 시간 Map<날짜, List<TimeRange>> 으로 변환
-        Map<LocalDate, List<TimeRange>> reservedMap = reservations.stream()
-                .map(res -> {
-                    LocalDateTime start = LocalDateTime.of(res.getDate(), res.getStartTime());
-                    LocalDateTime end = res.getEndTime().isBefore(res.getStartTime())
-                            ? LocalDateTime.of(res.getDate().plusDays(1), res.getEndTime())
-                            : LocalDateTime.of(res.getDate(), res.getEndTime());
-                    return new TimeRange(start, end, res.getApprovalStatus(), res.getMemberId() , res.getCancelStatus());
-                })
-                .collect(Collectors.groupingBy(r -> r.getStart().toLocalDate()));
+        Map<LocalDate, List<TimeRange>> reservedMap = ReservedTimeDto.groupedReservation(reservations);
         
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
@@ -192,12 +184,10 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         // 예약 기본 정보 조회
         BgmAgitMember member = bgmAgitMemberRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User Not Found"));
-        BgmAgitImage image = bgmAgitImageRepository.findById(request.getBgmAgitImageId())
-                .orElseThrow(() -> new RuntimeException("Not Found Image Id"));
         String reservationType = request.getBgmAgitReservationType();
         
         // 기존 예약 조회
-        List<BgmAgitReservation> existingReservations = bgmAgitReservationRepository.findExistingReservations(image, kstDate, "N");
+        List<BgmAgitReservation> existingReservations = bgmAgitReservationRepository.findExistingReservations(bgmAgitImage, kstDate, "N");
         
         // 중복된 시간대 구성 (Set으로 빠르게 비교)
         Set<String> existingTimeSlots = existingReservations.stream()
@@ -229,13 +219,13 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             }
             
             BgmAgitReservation reservation = new BgmAgitReservation(
-                    member, image, reservationType, startTime, endTime, kstDate,maxReservationNo,people,reservationRequest
+                    member, bgmAgitImage, reservationType, startTime, endTime, kstDate,maxReservationNo,people,reservationRequest
             );
             bgmAgitReservationRepository.save(reservation);
             list.add(reservation);
         }
         
-        eventPublisher.publishEvent(new ReservationWaitingEvent(member,image,list));
+        eventPublisher.publishEvent(new ReservationWaitingEvent(member,bgmAgitImage,list));
         return new ApiResponse(200, true, "예약이 완료되었습니다.");
     }
     

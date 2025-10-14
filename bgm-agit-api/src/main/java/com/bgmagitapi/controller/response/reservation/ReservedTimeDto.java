@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Data
 @AllArgsConstructor
@@ -23,4 +26,16 @@ public class ReservedTimeDto {
     private Integer minPeople;
     private Integer maxPeople;
     
+    
+    public static Map<LocalDate, List<TimeRange>> groupedReservation(List<ReservedTimeDto> reservations) {
+        return reservations.stream()
+                .map(res -> {
+                    LocalDateTime start = LocalDateTime.of(res.getDate(), res.getStartTime());
+                    LocalDateTime end = res.getEndTime().isBefore(res.getStartTime())
+                            ? LocalDateTime.of(res.getDate().plusDays(1), res.getEndTime())
+                            : LocalDateTime.of(res.getDate(), res.getEndTime());
+                    return new TimeRange(start, end, res.getApprovalStatus(), res.getMemberId() , res.getCancelStatus());
+                })
+                .collect(Collectors.groupingBy(r -> r.getStart().toLocalDate()));
+    }
 }
