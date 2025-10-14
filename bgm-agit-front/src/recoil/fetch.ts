@@ -149,7 +149,7 @@ export function useRoletFetch() {
       () =>
         api
           .get('/bgm-agit/role', {
-            params: { page, email: memberEmail },
+            params: { page, res: memberEmail },
           })
           .then(res => res.data),
       setRole

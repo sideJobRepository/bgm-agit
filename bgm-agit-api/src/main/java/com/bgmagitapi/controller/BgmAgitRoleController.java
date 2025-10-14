@@ -25,9 +25,9 @@ public class BgmAgitRoleController {
     @GetMapping("/role")
     public PageResponse<BgmAgitRoleResponse> getRoles(
             @PageableDefault(size = 10) Pageable pageable
-    , @RequestParam(required = false) String email
+    , @RequestParam(required = false) String res
     ) {
-        Page<BgmAgitRoleResponse> roles = bgmAgitRoleService.getRoles(pageable, email);
+        Page<BgmAgitRoleResponse> roles = bgmAgitRoleService.getRoles(pageable, res);
         return PageResponse.from(roles);
     }
     

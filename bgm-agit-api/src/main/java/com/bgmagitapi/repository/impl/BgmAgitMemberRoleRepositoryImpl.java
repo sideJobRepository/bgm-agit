@@ -14,7 +14,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,7 +27,7 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
     private final JPAQueryFactory queryFactory;
     
     @Override
-    public Page<BgmAgitRoleResponse> getRoles(Pageable pageable, String email) {
+    public Page<BgmAgitRoleResponse> getRoles(Pageable pageable, String res) {
         // 1. 데이터 목록 조회
         List<BgmAgitRoleResponse> content = queryFactory
                 .select(Projections.constructor(
@@ -43,7 +42,7 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                 .from(bgmAgitMemberRole)
                 .join(bgmAgitMemberRole.bgmAgitMember, bgmAgitMember)
                 .join(bgmAgitMemberRole.bgmAgitRole, bgmAgitRole)
-                .where(emailLike(email))
+                .where(emailOrNameOrPhoneNo(res))
                 .orderBy(
                         new CaseBuilder()
                                 .when(bgmAgitRole.bgmAgitRoleName.eq("ADMIN")).then(0)
@@ -65,7 +64,7 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
         JPAQuery<Long> countQuery = queryFactory
                 .select(bgmAgitMember.count())
                 .from(bgmAgitMember)
-                .where(emailLike(email));
+                .where(emailOrNameOrPhoneNo(res));
         
         return PageableExecutionUtils.getPage(content, pageable,countQuery::fetchOne);
     }
@@ -81,7 +80,18 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
         return Optional.ofNullable(result);
     }
     
-    private BooleanExpression emailLike(String email) {
-        return StringUtils.hasText(email) ? bgmAgitMember.bgmAgitMemberEmail.like("%" + email + "%") : null;
+    private BooleanExpression emailOrNameOrPhoneNo(String res) {
+        if (StringUtils.hasText(res) && res.startsWith("010")) {
+            String replace = res.replace("010", "+82 10");
+            return bgmAgitMember.bgmAgitMemberEmail.like("%" + replace + "%")
+                    .or(bgmAgitMember.bgmAgitMemberName.like("%" + replace + "%"))
+                    .or(bgmAgitMember.bgmAgitMemberPhoneNo.like("%" + replace + "%"));
+        }
+        if(StringUtils.hasText(res)) {
+              return bgmAgitMember.bgmAgitMemberEmail.like("%" + res + "%")
+                    .or(bgmAgitMember.bgmAgitMemberName.like("%" + res + "%"))
+                    .or(bgmAgitMember.bgmAgitMemberPhoneNo.like("%" + res + "%"));
+        }
+        return null;
     }
 }

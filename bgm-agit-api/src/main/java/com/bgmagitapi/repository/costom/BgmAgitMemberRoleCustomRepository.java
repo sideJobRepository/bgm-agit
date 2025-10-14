@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface BgmAgitMemberRoleCustomRepository {
     
-    Page<BgmAgitRoleResponse> getRoles(Pageable pageable, String email);
+    Page<BgmAgitRoleResponse> getRoles(Pageable pageable, String res);
     
     Optional<BgmAgitMemberRole> findByBgmAgitMemberId(Long memberId);
 }
