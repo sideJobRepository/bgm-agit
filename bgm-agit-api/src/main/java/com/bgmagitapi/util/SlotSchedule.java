@@ -1,5 +1,7 @@
 package com.bgmagitapi.util;
 
+import com.bgmagitapi.entity.enumeration.BgmAgitImageCategory;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -16,14 +18,14 @@ public class SlotSchedule {
         this.intervalHours = intervalHours;
     }
     
-    public static SlotSchedule of(Long id, LocalDate d) {
-        if (isGroom(id)) {
+    public static SlotSchedule of(BgmAgitImageCategory category, String label, LocalDate d) {
+        if (isGroom(category,label)) {
             return new SlotSchedule(
                     LocalDateTime.of(d, LocalTime.of(13, 0)),
                     LocalDateTime.of(d.plusDays(1), LocalTime.of(0, 0)),
                     6
             );
-        } else if (isMahjongRental(id)) {
+        } else if (isMahjongRental(category)) {
             return new SlotSchedule(
                     LocalDateTime.of(d, LocalTime.of(14, 0)),
                     LocalDateTime.of(d.plusDays(1), LocalTime.of(2, 0)),
@@ -51,11 +53,11 @@ public class SlotSchedule {
     }
     
     // ===== 정책 함수들 =====
-    public static boolean isGroom(Long id) {
-        return id != null && id == 18;
+    public static boolean isGroom(BgmAgitImageCategory category, String label) {
+        return category == BgmAgitImageCategory.ROOM && "G Room".equals(label);
     }
     
-    public static boolean isMahjongRental(Long id) {
-        return id != null && (id == 32 || id == 33 || id == 34 || id == 35);
+    public static boolean isMahjongRental(BgmAgitImageCategory category) {
+        return category == BgmAgitImageCategory.MAHJONG;
     }
 }

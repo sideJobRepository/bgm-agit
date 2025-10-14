@@ -83,11 +83,4 @@ public class BgmAgitImage extends DateSuperClass {
             this.bgmAgitImageLabel = request.getBgmAgitImageLabel();
         }
     }
-    
-    public Boolean isRoom(Long imageId) {
-        if (imageId == null) {
-            return null;
-        }
-        return imageId == 13 || imageId == 14 || imageId == 15 || imageId == 16 || imageId == 17 || imageId == 18 || imageId == 19;
-    }
 }
