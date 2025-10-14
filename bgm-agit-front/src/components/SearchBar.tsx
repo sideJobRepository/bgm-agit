@@ -51,9 +51,11 @@ export default function SearchBar<T = string>({ color, label, onSearch }: Search
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    debugger;
+
     if (key === 'reservationList') {
       onSearch([startDate, endDate] as T);
-    } else if (['room', 'role'].includes(key)) {
+    } else if (['room', 'role', 'notice'].includes(key)) {
       onSearch(keyword as T);
     } else {
       setSearch(() => ({
