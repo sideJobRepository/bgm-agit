@@ -5,6 +5,12 @@ import net.sf.log4jdbc.sql.Spy;
 import net.sf.log4jdbc.sql.resultsetcollector.ResultSetCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.neo4j.Neo4jProperties;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 import java.util.regex.Pattern;
 
@@ -12,7 +18,7 @@ public class CustomLog4JdbcCustomFormatter implements SpyLogDelegator {
     
     
     private static final Logger sqlLogger = LoggerFactory.getLogger("jdbc.sqlonly");
-    
+    private static final Logger logger = LoggerFactory.getLogger("user.log");
     private static final Pattern CLEAN_PATTERN = Pattern.compile("\\n[\\t\\s]*\\n");
     private static final Pattern SQL_KEYWORDS = Pattern.compile(
             "\\b(from|where|and|or|group by|order by|having|left join|right join|inner join|outer join|select|insert into|values|update|set)\\b",
@@ -42,7 +48,14 @@ public class CustomLog4JdbcCustomFormatter implements SpyLogDelegator {
             cleanedSql = "/* " + mapperId + " */" + cleanedSql;
             JpaQueryContextHolder.clear();
         }
-        
+        Authentication authentication = SecurityContextHolder.getContextHolderStrategy().getContext().getAuthentication();
+        if (authentication instanceof AnonymousAuthenticationToken) {
+            logger.info("익명 사용자");
+        } else if (authentication instanceof JwtAuthenticationToken) {
+            Jwt token = ((JwtAuthenticationToken) authentication).getToken();
+            String name = token.getClaim("name");
+            logger.info("사용자 이름 = {}", name);
+        }
         sqlLogger.info("[SQL] {} :::\n{}", methodCall, cleanedSql);
         
     }
