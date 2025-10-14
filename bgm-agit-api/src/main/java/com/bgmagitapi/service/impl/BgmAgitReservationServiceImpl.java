@@ -263,40 +263,18 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         Map<Long, List<BgmAgitReservation>> bucket = rows.stream()
                 .collect(Collectors.groupingBy(BgmAgitReservation::getBgmAgitReservationNo));
 
-        // pageNos 순서대로 DTO 만들기 → 정렬 비용/불안정 제거
+        // pageNos 순서대로 DTO 만들기
         List<GroupedReservationResponse> content = new ArrayList<>();
         for (Long no : pageNos) {
             List<BgmAgitReservation> list = bucket.get(no);
-            if (list == null) continue;
-            
-            GroupedReservationResponse dto = new GroupedReservationResponse();
-            dto.setReservationNo(no);
-            dto.setTimeSlots(list.stream()
-                    .map(r -> new GroupedReservationResponse.TimeSlot(
-                            r.getBgmAgitReservationStartTime().toString(),
-                            r.getBgmAgitReservationEndTime().toString()))
-                    .toList());
-            dto.setReservationDate(list.get(0).getBgmAgitReservationStartDate());
-            dto.setApprovalStatus(list.get(0).getBgmAgitReservationApprovalStatus());
-            dto.setCancelStatus(list.get(0).getBgmAgitReservationCancelStatus());
-            dto.setReservationMemberName(list.get(0).getBgmAgitMember().getBgmAgitMemberName());
-            dto.setReservationAddr(list.get(0).getBgmAgitImage().getBgmAgitImageLabel());
-            dto.setReservationPeople(list.get(0).getBgmAgitReservationPeople());
-            dto.setReservationRequest(list.get(0).getBgmAgitReservationRequest());
-            String phoneNo = null;
-            if (list.get(0).getBgmAgitMember() != null
-                    && list.get(0).getBgmAgitMember().getBgmAgitMemberPhoneNo() != null) {
-                phoneNo = list.get(0).getBgmAgitMember()
-                        .getBgmAgitMemberPhoneNo()
-                        .replace("+82", "0")
-                        .replaceAll("\\s+", "");
+            if (list == null){
+                continue;
             }
-            dto.setPhoneNo(phoneNo);
+            GroupedReservationResponse dto = new GroupedReservationResponse(no,list);
             content.add(dto);
         }
         
         // 4) total count
-        
         JPAQuery<Long> countQuery = bgmAgitReservationRepository
                 .countReservationsDistinctForDetail(memberId, isUser, start, end);
         
