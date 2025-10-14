@@ -48,6 +48,7 @@ public class GroupedReservationResponse {
             if (isMember && isPhoneNo) {
                 this.phoneNo = this.replacePhoneNo(reservation.getBgmAgitMember().getBgmAgitMemberPhoneNo());
             }
+            break;
         }
     
     }

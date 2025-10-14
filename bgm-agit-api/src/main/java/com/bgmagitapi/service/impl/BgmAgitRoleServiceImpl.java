@@ -31,8 +31,8 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
     
     @Override
     @Transactional(readOnly = true)
-    public Page<BgmAgitRoleResponse> getRoles(Pageable pageable, String email) {
-        return bgmAgitMemberRoleRepository.getRoles(pageable,email);
+    public Page<BgmAgitRoleResponse> getRoles(Pageable pageable, String res) {
+        return bgmAgitMemberRoleRepository.getRoles(pageable,res);
     }
   
     

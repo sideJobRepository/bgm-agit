@@ -254,7 +254,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         if (pageNos.isEmpty()) {
             return new PageImpl<>(new ArrayList<>(), pageable, 0L);
         }
-
+        
         // 2) 상세 로딩
         List<BgmAgitReservation> rows = bgmAgitReservationRepository
                 .findReservationsByNosForDetail(pageNos, memberId, isUser, start, end);

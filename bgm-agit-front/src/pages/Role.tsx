@@ -71,7 +71,7 @@ export default function Role() {
             <p>사용자 권한을 부여하세요.</p>
           </TitleBox>
           <SearchBox>
-            <SearchBar<string> color="#988271" label="아이디" onSearch={setSearchKeyword} />
+            <SearchBar<string> color="#988271" label="아이디,이름,연락처" onSearch={setSearchKeyword} />
           </SearchBox>
         </SearchWrapper>
         <TableBox>
