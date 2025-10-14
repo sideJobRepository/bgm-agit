@@ -81,6 +81,12 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
     }
     
     private BooleanExpression emailOrNameOrPhoneNo(String res) {
+        if (StringUtils.hasText(res) && res.startsWith("010")) {
+            String replace = res.replace("010", "+82 10");
+            return bgmAgitMember.bgmAgitMemberEmail.like("%" + replace + "%")
+                    .or(bgmAgitMember.bgmAgitMemberName.like("%" + replace + "%"))
+                    .or(bgmAgitMember.bgmAgitMemberPhoneNo.like("%" + replace + "%"));
+        }
         if(StringUtils.hasText(res)) {
               return bgmAgitMember.bgmAgitMemberEmail.like("%" + res + "%")
                     .or(bgmAgitMember.bgmAgitMemberName.like("%" + res + "%"))
