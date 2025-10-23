@@ -26,28 +26,36 @@ public class SocialAuthenticationProvider implements AuthenticationProvider {
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         
         SocialAuthenticationToken token = (SocialAuthenticationToken) authentication;
-        
-        String socialType = token.getSocialLoginUrl().name();
-        String authorizeCode = (String) token.getPrincipal();
-        if ("KAKAO".equals(socialType)) {
-            AccessTokenResponse accessToken = kakaoService.getAccessToken(authorizeCode);
-            SocialProfile kaKaoProfile = kakaoService.getProfile(accessToken.getAccessToken());
-            BgmAgitMemberContext bgmAgitMemberContext = (BgmAgitMemberContext) bgmAgitMemberDetailService.loadUserByUsername(kaKaoProfile);
-            return new SocialAuthenticationToken(bgmAgitMemberContext.getBgmAgitMember(), null, null, bgmAgitMemberContext.getAuthorities());
-        }else if("NAVER".equals(socialType)) {
-            AccessTokenResponse accessToken = naverService.getAccessToken(authorizeCode);
-            SocialProfile naverProfile = naverService.getProfile(accessToken.getAccessToken());
-            BgmAgitMemberContext bgmagitMemberContext = (BgmAgitMemberContext) bgmAgitMemberDetailService.loadUserByUsername(naverProfile);
-            return new SocialAuthenticationToken(bgmagitMemberContext.getBgmAgitMember(), null, null, bgmagitMemberContext.getAuthorities());
-        }
-        
-        // 다른 소셜도 여기에 추가 가능: NAVER, GOOGLE 등
-        throw new BadCredentialsException("존재 하지 않는 소셜 로그인 url 입니다. " + socialType);
+      
+          String socialType = token.getSocialLoginUrl().name();
+          String authorizeCode = (String) token.getPrincipal();
+      
+          SocialService socialService = getSocialService(socialType);
+          AccessTokenResponse accessToken = socialService.getAccessToken(authorizeCode);
+          SocialProfile profile = socialService.getProfile(accessToken.getAccessToken());
+      
+          BgmAgitMemberContext memberContext =
+                  (BgmAgitMemberContext) bgmAgitMemberDetailService.loadUserByUsername(profile);
+      
+          return new SocialAuthenticationToken(
+                  memberContext.getBgmAgitMember(),
+                  null,
+                  null,
+                  memberContext.getAuthorities()
+          );
         
     }
     
     @Override
     public boolean supports(Class<?> authentication) {
         return SocialAuthenticationToken.class.isAssignableFrom(authentication);
+    }
+    
+    private SocialService getSocialService(String socialType) {
+        return switch (socialType) {
+            case "KAKAO" -> kakaoService;
+            case "NAVER" -> naverService;
+            default -> throw new BadCredentialsException("존재하지 않는 소셜 로그인 url입니다: " + socialType);
+        };
     }
 }
