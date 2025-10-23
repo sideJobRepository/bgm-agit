@@ -82,7 +82,9 @@ export function useFetchDetailData(param?: {
 
     const params = {
       ...(param ?? {}), // 기존 값 유지
-      ...(pageData.name && paramLink === pageData.gb ? { name: encodeURIComponent(pageData.name) } : null),
+      ...(pageData.name && paramLink === pageData.gb
+        ? { name: encodeURIComponent(pageData.name) }
+        : null),
       ...(pageData.category && paramLink === pageData.gb ? { category: pageData.category } : null),
     };
 
@@ -236,10 +238,10 @@ export function useLoginPost() {
   const { request } = useRequest();
   const setUser = useSetRecoilState(userState);
 
-  const postUser = (code: string, onSuccess?: () => void) => {
+  const postUser = (code: string, name: string, onSuccess?: () => void) => {
     request(
       () =>
-        api.post('/bgm-agit/kakao-login', { code }).then(res => {
+        api.post(`/bgm-agit/${name}-login`, { code }).then(res => {
           const token = res.data.token as string;
           tokenStore.set(token);
 

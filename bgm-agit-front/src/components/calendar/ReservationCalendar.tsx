@@ -1,6 +1,6 @@
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { FaUsers } from 'react-icons/fa';
 import { MdAdd, MdRemove } from 'react-icons/md';
@@ -15,6 +15,7 @@ import { showConfirmModal } from '../confirmAlert.tsx';
 import { useInsertPost, useReservationFetch } from '../../recoil/fetch.ts';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import LoginMoadl from '../LoginMoadl.tsx';
 
 export default function ReservationCalendar({ id }: { id?: number }) {
   const navigate = useNavigate();
@@ -22,6 +23,9 @@ export default function ReservationCalendar({ id }: { id?: number }) {
 
   const fetchReservation = useReservationFetch();
   const reservationData = useRecoilValue(reservationDataState);
+
+  //로그인 모달
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   //인원수
   const [count, setCount] = useState(0);
@@ -131,8 +135,7 @@ export default function ReservationCalendar({ id }: { id?: number }) {
       message: messageGb.message,
       onConfirm: () => {
         if (messageGb.gb === 1) {
-          const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URL}&response_type=code`;
-          window.location.href = kakaoAuthUrl;
+          setIsLoginModalOpen(true);
         } else {
           let b = id === (32 || 33 || 34 || 35);
           insert({
@@ -292,6 +295,7 @@ export default function ReservationCalendar({ id }: { id?: number }) {
       >
         예약하기
       </Button>
+      {isLoginModalOpen && <LoginMoadl onClose={() => setIsLoginModalOpen(false)} />}
     </Wrapper>
   );
 }

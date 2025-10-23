@@ -1,6 +1,5 @@
 import styled from 'styled-components';
 import logo from '/headerLogo.png';
-import kakao from '/kakao.png';
 import { useEffect, useRef, useState } from 'react';
 import type { WithTheme } from '../../styles/styled-props.ts';
 import { FaPhone } from 'react-icons/fa';
@@ -12,10 +11,11 @@ import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { mainMenuState } from '../../recoil';
 import { useFetchMainMenu } from '../../recoil/fetch.ts';
 import { userState } from '../../recoil/state/userState.ts';
-//import { toast } from 'react-toastify';
 import type { SubMenu } from '../../types/menu.ts';
 import api from '../../utils/axiosInstance';
 import { tokenStore } from '../../utils/tokenStore';
+import LoginMoadl from '../LoginMoadl.tsx';
+import { toast } from 'react-toastify';
 
 export default function TopHeader() {
   useFetchMainMenu();
@@ -30,6 +30,9 @@ export default function TopHeader() {
   const location = useLocation();
 
   const [isSubOpen, setIsSubOpen] = useState(false);
+
+  //로그인 모달
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   //서브메뉴 높이 측정
   const subMenuRef = useRef<HTMLDivElement>(null);
@@ -61,11 +64,11 @@ export default function TopHeader() {
   }
 
   //카카오 로그인
-  const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID;
-  const KAKAO_REDIRECT_URL = import.meta.env.VITE_KAKAO_REDIRECT_URL;
-  const KAKAO_LOGOUT_URL = import.meta.env.VITE_KAKAO_LOGOUT_URL;
+  // const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID;
+  // const KAKAO_REDIRECT_URL = import.meta.env.VITE_KAKAO_REDIRECT_URL;
+  // const KAKAO_LOGOUT_URL = import.meta.env.VITE_KAKAO_LOGOUT_URL;
 
-  const loginWithKakao = async () => {
+  const loginEvent = async () => {
     if (user) {
       const channel = new BroadcastChannel('auth');
       channel.postMessage('logout');
@@ -83,11 +86,12 @@ export default function TopHeader() {
       resetUser(null);
       setIsOpen(false);
 
-      // 카카오 로그아웃까지 필요하면 리다이렉트
-      window.location.href = `https://kauth.kakao.com/oauth/logout?client_id=${KAKAO_CLIENT_ID}&logout_redirect_uri=${KAKAO_LOGOUT_URL}`;
+      toast.success('로그아웃에 성공하였습니다.');
+
+      // // 카카오 로그아웃까지 필요하면 리다이렉트
+      // window.location.href = `https://kauth.kakao.com/oauth/logout?client_id=${KAKAO_CLIENT_ID}&logout_redirect_uri=${KAKAO_LOGOUT_URL}`;
     } else {
-      const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URL}&response_type=code`;
-      window.location.href = kakaoAuthUrl;
+      setIsLoginModalOpen(true);
     }
   };
 
@@ -174,10 +178,7 @@ export default function TopHeader() {
             <FaPhone />
             <a>문의하기</a>
           </li>
-          <li onClick={loginWithKakao}>
-            <img src={kakao} alt="카카오" />
-            {user ? '로그아웃' : '로그인'}
-          </li>
+          <li onClick={() => loginEvent()}>{user ? '로그아웃' : '로그인'}</li>
         </ul>
       </Right>
       <div ref={hamburgerRef}>
@@ -224,12 +225,10 @@ export default function TopHeader() {
             <FaPhone />
             <a>문의하기</a>
           </SubMainLi>
-          <SubMainLi onClick={loginWithKakao}>
-            <img src={kakao} alt="카카오" />
-            {user ? '로그아웃' : '로그인'}
-          </SubMainLi>
+          <SubMainLi onClick={() => loginEvent()}>{user ? '로그아웃' : '로그인'}</SubMainLi>
         </ul>
       </MobileMenu>
+      {isLoginModalOpen && <LoginMoadl onClose={() => setIsLoginModalOpen(false)} />}
     </Wrapper>
   );
 }
