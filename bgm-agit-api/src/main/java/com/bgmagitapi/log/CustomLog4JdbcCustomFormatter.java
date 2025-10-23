@@ -5,7 +5,6 @@ import net.sf.log4jdbc.sql.Spy;
 import net.sf.log4jdbc.sql.resultsetcollector.ResultSetCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.neo4j.Neo4jProperties;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

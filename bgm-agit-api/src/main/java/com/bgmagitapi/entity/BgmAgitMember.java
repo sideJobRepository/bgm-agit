@@ -2,7 +2,7 @@ package com.bgmagitapi.entity;
 
 import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
-import com.bgmagitapi.security.service.response.KaKaoProfileResponse;
+import com.bgmagitapi.security.service.social.SocialProfile;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -42,21 +42,21 @@ public class BgmAgitMember extends DateSuperClass {
     
     
     
-    public BgmAgitMember(KaKaoProfileResponse kaKaoProfileResponse) {
-        this.bgmAgitMemberEmail = kaKaoProfileResponse.getKakaoAccount().getEmail();
-        this.bgmAgitMemberName = kaKaoProfileResponse.getKakaoAccount().getName();
+    public BgmAgitMember(SocialProfile socialProfile) {
+        this.bgmAgitMemberEmail = socialProfile.email();
+        this.bgmAgitMemberName = socialProfile.name();
         this.bgmAgitMemberPassword = null;
-        this.socialType = BgmAgitSocialType.KAKAO;
-        this.bgmAgitMemberSocialId = String.valueOf(kaKaoProfileResponse.getId());
-        this.bgmAgitMemberPhoneNo = kaKaoProfileResponse.getKakaoAccount().getPhoneNumber();
+        this.socialType = socialProfile.provider();
+        this.bgmAgitMemberSocialId = socialProfile.sub();
+        this.bgmAgitMemberPhoneNo = socialProfile.phone();
     }
     
-    public void modifyMember(KaKaoProfileResponse kaKaoProfileResponse) {
-        this.bgmAgitMemberEmail = kaKaoProfileResponse.getKakaoAccount().getEmail();
-        this.bgmAgitMemberName = kaKaoProfileResponse.getKakaoAccount().getName();
+    public void modifyMember(SocialProfile socialProfile) {
+        this.bgmAgitMemberEmail = socialProfile.email();
+        this.bgmAgitMemberName = socialProfile.name();
         this.bgmAgitMemberPassword = null;
-        this.socialType = BgmAgitSocialType.KAKAO;
-        this.bgmAgitMemberSocialId = String.valueOf(kaKaoProfileResponse.getId());
-        this.bgmAgitMemberPhoneNo = kaKaoProfileResponse.getKakaoAccount().getPhoneNumber();
+        this.socialType = socialProfile.provider();
+        this.bgmAgitMemberSocialId = socialProfile.sub();
+        this.bgmAgitMemberPhoneNo = socialProfile.phone();
     }
 }
