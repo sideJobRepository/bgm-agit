@@ -3,7 +3,7 @@ package com.bgmagitapi.repository.impl;
 import com.bgmagitapi.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitReservation;
-import com.bgmagitapi.repository.costom.BgmAgitReservationCustomRepository;
+import com.bgmagitapi.repository.custom.BgmAgitReservationCustomRepository;
 import com.bgmagitapi.service.response.BizTalkCancel;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;

@@ -2,7 +2,7 @@ package com.bgmagitapi.repository.impl;
 
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitRefreshToken;
-import com.bgmagitapi.repository.costom.BgmAgitRefreshTokenCustomRepository;
+import com.bgmagitapi.repository.custom.BgmAgitRefreshTokenCustomRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 

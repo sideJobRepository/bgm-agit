@@ -1,7 +1,7 @@
 package com.bgmagitapi.repository.impl;
 
 import com.bgmagitapi.entity.BgmAgitNotice;
-import com.bgmagitapi.repository.costom.BgmAgitNoticeCostomRepository;
+import com.bgmagitapi.repository.custom.BgmAgitNoticeCostomRepository;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.StringExpression;

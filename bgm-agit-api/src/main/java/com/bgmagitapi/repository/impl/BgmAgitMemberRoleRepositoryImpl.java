@@ -2,7 +2,7 @@ package com.bgmagitapi.repository.impl;
 
 import com.bgmagitapi.controller.response.BgmAgitRoleResponse;
 import com.bgmagitapi.entity.BgmAgitMemberRole;
-import com.bgmagitapi.repository.costom.BgmAgitMemberRoleCustomRepository;
+import com.bgmagitapi.repository.custom.BgmAgitMemberRoleCustomRepository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;

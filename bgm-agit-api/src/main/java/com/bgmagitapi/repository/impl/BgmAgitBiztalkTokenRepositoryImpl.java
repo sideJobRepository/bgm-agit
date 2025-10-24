@@ -1,6 +1,6 @@
 package com.bgmagitapi.repository.impl;
 
-import com.bgmagitapi.repository.costom.BgmAgitBiztalkTokenCustomRepository;
+import com.bgmagitapi.repository.custom.BgmAgitBiztalkTokenCustomRepository;
 import com.bgmagitapi.service.response.BizTalkTokenResponse;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.Expressions;

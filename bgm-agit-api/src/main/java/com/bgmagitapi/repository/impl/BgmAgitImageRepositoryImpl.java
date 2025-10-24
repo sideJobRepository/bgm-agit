@@ -2,7 +2,7 @@ package com.bgmagitapi.repository.impl;
 
 import com.bgmagitapi.controller.response.BgmAgitMainMenuImageResponse;
 import com.bgmagitapi.entity.enumeration.BgmAgitImageCategory;
-import com.bgmagitapi.repository.costom.BgmAgitImageCustomRepository;
+import com.bgmagitapi.repository.custom.BgmAgitImageCustomRepository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
