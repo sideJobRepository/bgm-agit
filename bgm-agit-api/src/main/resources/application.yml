@@ -45,7 +45,7 @@ kakao:
   client-secret: ${CLIENT_SECRET}
 
 naver:
-  redirecturi:
+  redirecturi: http://localhost:5173/oauth/naver/callback
   clientId: PsFKP7NZFE16cvAOX80d
   client-secret: ${NAVER_CLIENT_SECRET}
 
