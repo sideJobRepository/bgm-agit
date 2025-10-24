@@ -38,7 +38,7 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
     @Transactional(readOnly = true)
     public List<BgmAgitMainMenuResponse> getMainMenu() {
         // 1. 현재 인증된 사용자
-        Authentication authentication = SecurityContextHolder.getContextHolderStrategy().getContext().getAuthentication();
+         Authentication authentication = SecurityContextHolder.getContextHolderStrategy().getContext().getAuthentication();
         
         // 2. 계층 권한 포함 모든 역할 가져오기
         List<String> expandedRoleNames = roleHierarchy.getReachableGrantedAuthorities(authentication.getAuthorities())
