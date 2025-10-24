@@ -60,7 +60,8 @@ const LoginModalWrapper = styled.div<WithTheme>`
   flex-direction: column;
   gap: 30px;
   padding-bottom: 36px;
-
+  border-radius: 12px;
+  background-color: ${({ theme }) => theme.colors.topBg};
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
   }
@@ -69,15 +70,14 @@ const LoginModalWrapper = styled.div<WithTheme>`
 const TopModalBox = styled.div<WithTheme>`
   width: 100%;
   display: flex;
-  padding: 12px;
+  padding: 20px;
   border-radius: 12px 12px 0 0;
-  background-color: ${({ theme }) => theme.colors.subBgColor};
 
   svg {
-    color: ${({ theme }) => theme.colors.black};
+    color: ${({ theme }) => theme.colors.menuColor};
     margin-left: auto;
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     cursor: pointer;
   }
 `;
@@ -92,11 +92,12 @@ const CenterModalBox = styled.div<WithTheme>`
 
   img {
     border-radius: 999px;
-    height: 60px;
+    height: 48px;
   }
 
   h2 {
-    font-size: ${({ theme }) => theme.sizes.large};
+    font-family: 'Jua', sans-serif;
+    font-size: ${({ theme }) => theme.sizes.bigLarge};
     color: ${({ theme }) => theme.colors.purpleColor};
     font-weight: 600;
   }
@@ -117,17 +118,18 @@ const BottomModalBox = styled.div<WithTheme>`
     width: 100%;
     padding: 12px 60px;
     gap: 16px;
-    background-color: ${({ theme }) => theme.colors.topBg};
+    background-color: transparent;
     color: ${({ theme }) => theme.colors.menuColor};
-    border: 2px solid ${({ theme }) => theme.colors.navColor};
+    border: 1px solid rgba(225, 225, 225, 1);
     border-radius: 80px;
-    font-size: ${({ theme }) => theme.sizes.menuSize};
-    font-weight: 600;
+    font-family: 'Jua', sans-serif;
+    font-size: ${({ theme }) => theme.sizes.medium};
+    font-weight: 500;
     cursor: pointer;
 
     img {
-      width: 20px;
-      height: 20px;
+      width: 24px;
+      height: 24px;
     }
   }
 `;

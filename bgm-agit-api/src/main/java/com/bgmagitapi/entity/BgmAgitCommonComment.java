@@ -4,11 +4,14 @@ package com.bgmagitapi.entity;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.*;
 
 @Table(name = "BGM_AGIT_COMMON_COMMENT")
 @Entity
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class BgmAgitCommonComment extends DateSuperClass {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
