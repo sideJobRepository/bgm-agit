@@ -1,12 +1,16 @@
 package com.bgmagitapi.entity;
 
+import com.bgmagitapi.controller.request.BgmAgitFreePostRequest;
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.*;
 
 @Table(name = "BGM_AGIT_FREE")
 @Entity
 @Getter
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
 public class BgmAgitFree extends DateSuperClass {
 
     
@@ -28,4 +32,5 @@ public class BgmAgitFree extends DateSuperClass {
     // BGM 아지트 자유 내용
     @Column(name = "BGM_AGIT_FREE_CONT")
     private String bgmAgitFreeCont;
+    
 }
