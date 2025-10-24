@@ -71,7 +71,7 @@ const TopModalBox = styled.div<WithTheme>`
   display: flex;
   padding: 12px;
   border-radius: 12px 12px 0 0;
-  background-color: ${({ theme }) => theme.colors.topBg};
+  background-color: ${({ theme }) => theme.colors.subBgColor};
 
   svg {
     color: ${({ theme }) => theme.colors.black};
@@ -92,7 +92,7 @@ const CenterModalBox = styled.div<WithTheme>`
 
   img {
     border-radius: 999px;
-    height: 80px;
+    height: 60px;
   }
 
   h2 {
@@ -108,7 +108,7 @@ const BottomModalBox = styled.div<WithTheme>`
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  padding: 20px 0 30px 0;
+  padding: 20px 30px 30px 30px;
 
   button {
     display: flex;
@@ -116,12 +116,13 @@ const BottomModalBox = styled.div<WithTheme>`
     max-width: 310px;
     width: 100%;
     padding: 12px 60px;
-    gap: 34px;
-    background-color: transparent;
-    color: ${({ theme }) => theme.colors.subColor};
-    border: 1px solid ${({ theme }) => theme.colors.subColor};
+    gap: 16px;
+    background-color: ${({ theme }) => theme.colors.topBg};
+    color: ${({ theme }) => theme.colors.menuColor};
+    border: 2px solid ${({ theme }) => theme.colors.navColor};
     border-radius: 80px;
     font-size: ${({ theme }) => theme.sizes.menuSize};
+    font-weight: 600;
     cursor: pointer;
 
     img {
