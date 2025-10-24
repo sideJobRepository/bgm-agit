@@ -434,57 +434,59 @@ export default function ImageGrid({ pageData }: Props) {
       />
       {writeModalOpen && (
         <Modal onClose={() => setWriteModalOpen(false)}>
-          <ImageUploadWrapper>
-            {selectedImage && <PreviewImage src={selectedImage} alt="preview" />}
-            <UploadLabel htmlFor="imageUpload">
-              <FiPlus />
-            </UploadLabel>
-            <HiddenInput
-              type="file"
-              accept="image/*"
-              id="imageUpload"
-              onChange={handleImageUpload}
-            />
-          </ImageUploadWrapper>
+          <ImageModalWraaper>
+            <ImageUploadWrapper>
+              {selectedImage && <PreviewImage src={selectedImage} alt="preview" />}
+              <UploadLabel htmlFor="imageUpload">
+                <FiPlus />
+              </UploadLabel>
+              <HiddenInput
+                type="file"
+                accept="image/*"
+                id="imageUpload"
+                onChange={handleImageUpload}
+              />
+            </ImageUploadWrapper>
 
-          <TextArea
-            placeholder="타이틀을 입력하세요."
-            value={text}
-            onChange={e => setText(e.target.value)}
-          />
-          {labelGb === 2 && (
-            <SelectBox value={editCategory} onChange={e => setEditCategory(e.target.value)}>
-              <option value="" disabled>
-                카테고리를 선택해주세요.
-              </option>
-              {categoryOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </SelectBox>
-          )}
-          {labelGb === 3 && (
             <TextArea
-              placeholder="그룹을 입력하세요."
-              value={group ?? ''}
-              onChange={e => setGroup(e.target.value)}
+              placeholder="타이틀을 입력하세요."
+              value={text}
+              onChange={e => setText(e.target.value)}
             />
-          )}
-          <ButtonBox2>
-            <Button color="#1A7D55" onClick={() => insertData()}>
-              저장
-            </Button>
-            {labelGb !== 3 && (
-              <Button onClick={deleteData} color="#FF5E57">
-                삭제
-              </Button>
+            {labelGb === 2 && (
+              <SelectBox value={editCategory} onChange={e => setEditCategory(e.target.value)}>
+                <option value="" disabled>
+                  카테고리를 선택해주세요.
+                </option>
+                {categoryOptions.map(opt => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </SelectBox>
             )}
+            {labelGb === 3 && (
+              <TextArea
+                placeholder="그룹을 입력하세요."
+                value={group ?? ''}
+                onChange={e => setGroup(e.target.value)}
+              />
+            )}
+            <ButtonBox2>
+              <Button color="#1A7D55" onClick={() => insertData()}>
+                저장
+              </Button>
+              {labelGb !== 3 && (
+                <Button onClick={deleteData} color="#FF5E57">
+                  삭제
+                </Button>
+              )}
 
-            <Button color="#988271" onClick={() => setWriteModalOpen(false)}>
-              닫기
-            </Button>
-          </ButtonBox2>
+              <Button color="#988271" onClick={() => setWriteModalOpen(false)}>
+                닫기
+              </Button>
+            </ButtonBox2>
+          </ImageModalWraaper>
         </Modal>
       )}
     </Wrapper>
@@ -712,6 +714,10 @@ const Button = styled.button<WithTheme & { color: string }>`
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.sizes.small};
   }
+`;
+
+const ImageModalWraaper = styled.div`
+  padding: 24px;
 `;
 
 const ImageUploadWrapper = styled.div`

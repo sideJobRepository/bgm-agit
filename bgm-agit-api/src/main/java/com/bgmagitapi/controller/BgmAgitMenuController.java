@@ -27,16 +27,15 @@ public class BgmAgitMenuController {
     
     @GetMapping(value = "/main-menu")
     public List<BgmAgitMainMenuResponse> getMenu() {
-        return  bgmAgitMainMenuService.getMainMenu();
+        return bgmAgitMainMenuService.getMainMenu();
     }
     
     @GetMapping(value = "/main-image")
     public Map<Long, List<BgmAgitMainMenuImageResponse>> getMenuImage(
-            @RequestParam(name = "labelGb",required = false) Long labelGb,
-            @RequestParam(name = "link",required = false) String link) {
-        return  bgmAgitMainMenuService.getMainMenuImage(labelGb,link);
+            @RequestParam(name = "labelGb", required = false) Long labelGb,
+            @RequestParam(name = "link", required = false) String link) {
+        return bgmAgitMainMenuService.getMainMenuImage(labelGb, link);
     }
-    
     @GetMapping(value = "/detail")
     public Map<String, Object> getDetail(
             @RequestParam(name = "labelGb",required = false) Long labelGb,

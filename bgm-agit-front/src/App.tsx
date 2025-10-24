@@ -11,7 +11,7 @@ import Detail from './pages/Detail.tsx';
 import Error from './pages/Error.tsx';
 import Notice from './pages/Notice.tsx';
 import ScrollToTop from './components/layout/ScrollToTop.tsx';
-import KakaoRedirectPage from './pages/KakaoRedirectPage.tsx';
+import RedirectPage from './pages/RedirectPage.tsx';
 import { ToastContainer } from 'react-toastify';
 import ReservationList from './pages/ReservationList.tsx';
 import Role from './pages/Role.tsx';
@@ -27,8 +27,7 @@ function App() {
         <BrowserRouter>
           <ScrollToTop />
           <Routes>
-            <Route path="/oauth/kakao/callback" element={<KakaoRedirectPage />} />
-            <Route path="/oauth/kakao/logout" element={<KakaoRedirectPage />} />
+            <Route path="/oauth/:provider/callback" element={<RedirectPage />} />
             <Route path="/error" element={<Error />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/" element={<Layout />}>
@@ -44,7 +43,7 @@ function App() {
         </BrowserRouter>
       </RecoilRoot>
     </ThemeProvider>
-   );
+  );
 }
 
 export default App;

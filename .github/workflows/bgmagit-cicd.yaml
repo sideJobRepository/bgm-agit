@@ -91,6 +91,7 @@ jobs:
             -e BIZTALK_ID=${{ secrets.BIZTALK_ID }} \
             -e BIZTALK_PASSWORD=${{ secrets.BIZTALK_PASSWORD }} \
             -e SENDER_KEY=${{ secrets.SENDER_KEY }} \
+            -e NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET }} \
             -e SPRING_PROFILES_ACTIVE=real \
             -v $(pwd)/logs:/app/logs \
             -p 127.0.0.1:8080:8080 \

@@ -4,10 +4,11 @@ import com.bgmagitapi.security.context.BgmAgitMemberContext;
 import com.bgmagitapi.security.service.BgmAgitMemberDetailService;
 import com.bgmagitapi.security.service.SocialService;
 import com.bgmagitapi.security.service.response.AccessTokenResponse;
-import com.bgmagitapi.security.service.response.KaKaoProfileResponse;
+import com.bgmagitapi.security.service.social.SocialProfile;
 import com.bgmagitapi.security.token.SocialAuthenticationToken;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
@@ -16,7 +17,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SocialAuthenticationProvider implements AuthenticationProvider {
     
-    private final SocialService kaKaoService;
+    private final SocialService kakaoService;
+    private final SocialService naverService;
     private final BgmAgitMemberDetailService bgmAgitMemberDetailService;
     
     
@@ -24,35 +26,36 @@ public class SocialAuthenticationProvider implements AuthenticationProvider {
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         
         SocialAuthenticationToken token = (SocialAuthenticationToken) authentication;
+      
+          String socialType = token.getSocialLoginUrl().name();
+          String authorizeCode = (String) token.getPrincipal();
+      
+          SocialService socialService = getSocialService(socialType);
+          AccessTokenResponse accessToken = socialService.getAccessToken(authorizeCode);
+          SocialProfile profile = socialService.getProfile(accessToken.getAccessToken());
+      
+          BgmAgitMemberContext memberContext =
+                  (BgmAgitMemberContext) bgmAgitMemberDetailService.loadUserByUsername(profile);
+      
+          return new SocialAuthenticationToken(
+                  memberContext.getBgmAgitMember(),
+                  null,
+                  null,
+                  memberContext.getAuthorities()
+          );
         
-        BgmAgitMemberContext bgmAgitMemberContext = new BgmAgitMemberContext(null,null);
-        String socialType = token.getSocialLoginUrl().name();
-        
-        if ("KAKAO".equals(socialType)) {
-            String authorizeCode = (String) token.getPrincipal();
-            AccessTokenResponse accessToken = kaKaoService.getAccessToken(authorizeCode);
-            KaKaoProfileResponse kaKaoProfile = kaKaoService.getKaKaoProfile(accessToken.getAccessToken());
-            
-            bgmAgitMemberContext = (BgmAgitMemberContext)
-                    bgmAgitMemberDetailService.loadUserByUsername(kaKaoProfile);
-        }else if("NAVER".equals(socialType)) {
-        
-        }else if ("GOOGLE".equals(socialType)) {
-        
-        }
-        
-        // 다른 소셜도 여기에 추가 가능: NAVER, GOOGLE 등
-        
-        return new SocialAuthenticationToken(
-                bgmAgitMemberContext.getBgmAgitMember(),
-                null,
-                null,
-                bgmAgitMemberContext.getAuthorities()
-        );
     }
     
     @Override
     public boolean supports(Class<?> authentication) {
         return SocialAuthenticationToken.class.isAssignableFrom(authentication);
+    }
+    
+    private SocialService getSocialService(String socialType) {
+        return switch (socialType) {
+            case "KAKAO" -> kakaoService;
+            case "NAVER" -> naverService;
+            default -> throw new BadCredentialsException("존재하지 않는 소셜 로그인 url입니다: " + socialType);
+        };
     }
 }

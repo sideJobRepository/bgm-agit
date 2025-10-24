@@ -49,8 +49,13 @@ cors:
 
 kakao:
   redirecturi: https://bgmagit.co.kr/oauth/kakao/callback
-  clientId: 1c41b5cad9dceea3074ad92a6d496215
+  clientId: PsFKP7NZFE16cvAOX80d
   client-secret: ${CLIENT_SECRET}
+
+naver:
+  redirecturi: https://bgmagit.co.kr/oauth/naver/callback
+  clientId: Rqis1X1qP4UZR79Gu0dt
+  client-secret: ${NAVER_CLIENT_SECRET}
 
 jwt:
   secret: ${JWT_SECRET}

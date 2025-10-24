@@ -1,9 +1,13 @@
 package com.bgmagitapi.security.service;
 
+import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.security.service.response.AccessTokenResponse;
 import com.bgmagitapi.security.service.response.KaKaoProfileResponse;
+import com.bgmagitapi.security.service.social.SocialLoginUrl;
+import com.bgmagitapi.security.service.social.SocialProfile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
@@ -11,7 +15,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
 
-@Service
+@Service("kakaoService")
 @Transactional
 @RequiredArgsConstructor
 public class KaKaoServiceImpl implements SocialService {
@@ -46,15 +50,30 @@ public class KaKaoServiceImpl implements SocialService {
     }
     
     @Override
-    public KaKaoProfileResponse getKaKaoProfile(String accessToken) {
-        RestClient restClient = RestClient.create();
+    public SocialProfile getProfile(String accessToken) {
+        KaKaoProfileResponse resp = RestClient.create().get()
+                     .uri("https://kapi.kakao.com/v2/user/me")
+                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                     .retrieve()
+                     .body(KaKaoProfileResponse.class);   //  body만 받기
+             
+             Long id = resp != null ? resp.getId() : null;
+             
+        KaKaoProfileResponse.KakaoAccount acc =
+                     resp != null ? resp.getKakaoAccount() : null;
+        KaKaoProfileResponse.Profile p =
+                     acc != null ? acc.getProfile() : null;
         
-        return restClient.post()
-                .uri("https://kapi.kakao.com/v2/user/me")
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .header("Authorization", "Bearer " + accessToken)
-                .retrieve()
-                .toEntity(KaKaoProfileResponse.class)
-                .getBody();
+             String email         = acc != null ? acc.getEmail()          : null;
+             String name          = acc != null ? acc.getName()           : null;
+             String phone         = acc != null ? acc.getPhoneNumber()    : null;
+             
+             return new SocialProfile(
+                     BgmAgitSocialType.KAKAO,
+                     id != null ? String.valueOf(id) : null,
+                     email,
+                     name,
+                     phone
+             );
     }
 }

@@ -8,7 +8,7 @@ import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRoleRepository;
 import com.bgmagitapi.repository.impl.BgmAgitMemberDetailRepositoryImpl;
 import com.bgmagitapi.security.context.BgmAgitMemberContext;
-import com.bgmagitapi.security.service.response.KaKaoProfileResponse;
+import com.bgmagitapi.security.service.social.SocialProfile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.GrantedAuthority;
@@ -41,11 +41,11 @@ public class BgmAgitMemberDetailService implements UserDetailsService {
         return null;
     }
     
-    public UserDetails loadUserByUsername(KaKaoProfileResponse kaKaoProfile) {
+    public UserDetails loadUserByUsername(SocialProfile socialProfile) {
         
-        BgmAgitMember findBgmAgitMember = bgmAgitMemberRepository.findByBgmAgitMemberSocialId(String.valueOf(kaKaoProfile.getId()))
+        BgmAgitMember findBgmAgitMember = bgmAgitMemberRepository.findByBgmAgitMemberSocialId(String.valueOf(socialProfile.sub()))
                 .orElseGet(() -> {
-                    BgmAgitMember agitMember = new BgmAgitMember(kaKaoProfile);
+                    BgmAgitMember agitMember = new BgmAgitMember(socialProfile);
                     BgmAgitMember saveMember = bgmAgitMemberRepository.save(agitMember);
                     
                     BgmAgitRole findbyBgmAgitRole = bgmAgitMemberDetailRepository.findByBgmAgitRoleName("USER");
@@ -57,7 +57,7 @@ public class BgmAgitMemberDetailService implements UserDetailsService {
                     return saveMember;
                 });
         
-        findBgmAgitMember.modifyMember(kaKaoProfile);
+        findBgmAgitMember.modifyMember(socialProfile);
         Long id = findBgmAgitMember.getBgmAgitMemberId();
         List<String> roleName = bgmAgitMemberDetailRepository.getRoleName(id);
         List<GrantedAuthority> authorityList = AuthorityUtils.createAuthorityList(roleName);
