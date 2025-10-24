@@ -16,7 +16,6 @@ import type { SubMenu } from '../../types/menu.ts';
 import api from '../../utils/axiosInstance';
 import { tokenStore } from '../../utils/tokenStore';
 import LoginMoadl from '../LoginMoadl.tsx';
-import { toast } from 'react-toastify';
 
 export default function TopHeader() {
   useFetchMainMenu();
@@ -87,10 +86,7 @@ export default function TopHeader() {
       resetUser(null);
       setIsOpen(false);
 
-      toast.success('로그아웃에 성공하였습니다.');
-
-      // // 카카오 로그아웃까지 필요하면 리다이렉트
-      // window.location.href = `https://kauth.kakao.com/oauth/logout?client_id=${KAKAO_CLIENT_ID}&logout_redirect_uri=${KAKAO_LOGOUT_URL}`;
+      window.location.href = `/`;
     } else {
       setIsLoginModalOpen(true);
     }
