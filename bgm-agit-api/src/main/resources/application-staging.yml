@@ -54,7 +54,7 @@ kakao:
 
 naver:
   redirecturi: http://14.50.43.75:8000/oauth/naver/callback
-  clientId: Rqis1X1qP4UZR79Gu0dt
+  clientId: PsFKP7NZFE16cvAOX80d
   client-secret: ${NAVER_CLIENT_SECRET}
 
 jwt:

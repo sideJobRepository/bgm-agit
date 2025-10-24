@@ -41,7 +41,7 @@ cors:
 
 kakao:
   redirecturi: http://localhost:5173/oauth/kakao/callback
-  clientId: 1c41b5cad9dceea3074ad92a6d496215
+  clientId: PsFKP7NZFE16cvAOX80d
   client-secret: ${CLIENT_SECRET}
 
 naver:
