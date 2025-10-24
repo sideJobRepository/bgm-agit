@@ -22,7 +22,7 @@ export default function ReservationCalendar({ id }: { id?: number }) {
   const reservation = useRecoilValue<ReservationDatas>(reservationState);
 
   const fetchReservation = useReservationFetch();
-  const reservationData = useRecoilValue(reservationDataState);
+   const reservationData = useRecoilValue(reservationDataState);
 
   //로그인 모달
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
