@@ -4,13 +4,16 @@ import com.bgmagitapi.RepositoryAndServiceTestSupport;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.controller.BgmAgitFreeController;
 import com.bgmagitapi.controller.request.BgmAgitFreePostRequest;
+import com.bgmagitapi.controller.response.BgmAgitFreeGetResponse;
 import com.bgmagitapi.entity.BgmAgitFree;
 import com.bgmagitapi.entity.BgmAgitMember;
+import com.bgmagitapi.page.PageResponse;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.service.BgmAgitFreeService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,9 +34,21 @@ class BgmAgitFreeServiceImplTest extends RepositoryAndServiceTestSupport {
     @Autowired
     private BgmAgitMemberRepository bgmAgitMemberRepository;
     
+    @DisplayName("자유 게시판 전체 조회 댓글갯수 포함")
+    @Test
+    void test1(){
+        
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        
+        PageResponse<BgmAgitFreeGetResponse> bgmAgitFree = bgmAgitFreeService.getBgmAgitFree(pageRequest);
+        
+        System.out.println("bgmAgitFree = " + bgmAgitFree);
+        
+    }
+    
     @DisplayName("자유 게시판 작성 테스트")
     @Test
-    void test1() throws IOException {
+    void test2() throws IOException {
         
         BgmAgitFreePostRequest request = new BgmAgitFreePostRequest(11L, "제목 테스트", "내용 테스트", null);
         

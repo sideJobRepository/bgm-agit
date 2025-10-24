@@ -9,7 +9,9 @@ import lombok.NoArgsConstructor;
 @Data
 public class BgmAgitFreeGetResponse {
     
-    private Long freeId;
-    private Long memberId;
+    private Long id;
     private String title;
+    private String content;
+    private Long memberId;
+    private Long commentCount;
 }

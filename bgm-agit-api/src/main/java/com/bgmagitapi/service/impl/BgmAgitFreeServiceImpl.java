@@ -9,11 +9,15 @@ import com.bgmagitapi.entity.BgmAgitCommonFile;
 import com.bgmagitapi.entity.BgmAgitFree;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
+import com.bgmagitapi.page.PageResponse;
 import com.bgmagitapi.repository.BgmAgitCommonFileRepository;
 import com.bgmagitapi.repository.BgmAgitFreeRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.service.BgmAgitFreeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,8 +39,9 @@ public class BgmAgitFreeServiceImpl implements BgmAgitFreeService {
     private final S3FileUtils s3FileUtils;
     
     @Override
-    public List<BgmAgitFreeGetResponse> getBgmAgitFree() {
-        return List.of();
+    public PageResponse<BgmAgitFreeGetResponse> getBgmAgitFree(Pageable pageable) {
+        Page<BgmAgitFreeGetResponse> byAllBgmAgitFree = bgmAgitFreeRepository.findByAllBgmAgitFree(pageable);
+        return PageResponse.from(byAllBgmAgitFree);
     }
     
     @Override
