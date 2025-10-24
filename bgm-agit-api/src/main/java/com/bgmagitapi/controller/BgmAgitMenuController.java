@@ -27,7 +27,7 @@ public class BgmAgitMenuController {
     
     @GetMapping(value = "/main-menu")
     public List<BgmAgitMainMenuResponse> getMenu() {
-        return bgmAgitMainMenuService.getMainMenu();
+         return bgmAgitMainMenuService.getMainMenu();
     }
     
     @GetMapping(value = "/main-image")
