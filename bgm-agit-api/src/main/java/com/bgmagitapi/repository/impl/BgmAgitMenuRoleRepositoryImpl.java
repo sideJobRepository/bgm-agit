@@ -1,6 +1,6 @@
 package com.bgmagitapi.repository.impl;
 
-import com.bgmagitapi.repository.costom.BgmAgitMenuRoleCustomRepository;
+import com.bgmagitapi.repository.custom.BgmAgitMenuRoleCustomRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 

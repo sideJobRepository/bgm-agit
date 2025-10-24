@@ -1,4 +1,4 @@
-package com.bgmagitapi.repository.costom;
+package com.bgmagitapi.repository.custom;
 
 import com.bgmagitapi.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.entity.BgmAgitImage;

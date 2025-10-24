@@ -1,7 +1,7 @@
 package com.bgmagitapi.repository.impl;
 
 import com.bgmagitapi.entity.BgmAgitNoticeFile;
-import com.bgmagitapi.repository.costom.BgmAgitNoticeFileCustomRepository;
+import com.bgmagitapi.repository.custom.BgmAgitNoticeFileCustomRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
