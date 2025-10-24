@@ -3,6 +3,7 @@ import logo from '/headerLogo.png';
 import { useEffect, useRef, useState } from 'react';
 import type { WithTheme } from '../../styles/styled-props.ts';
 import { FaPhone } from 'react-icons/fa';
+import { FiLogIn, FiLogOut } from 'react-icons/fi';
 import { GiHamburgerMenu } from 'react-icons/gi';
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from 'react-icons/md';
 import React from 'react';
@@ -175,10 +176,20 @@ export default function TopHeader() {
               callClick();
             }}
           >
-            <FaPhone />
-            <a>문의하기</a>
+            <PhoneIcon />
+            <a>0507-1445-3503</a>
           </li>
-          <li onClick={() => loginEvent()}>{user ? '로그아웃' : '로그인'}</li>
+          <li onClick={() => loginEvent()}>
+            {user ? (
+              <>
+                <FiLogIn /> 로그아웃
+              </>
+            ) : (
+              <>
+                <FiLogOut /> 로그인
+              </>
+            )}
+          </li>
         </ul>
       </Right>
       <div ref={hamburgerRef}>
@@ -222,10 +233,20 @@ export default function TopHeader() {
               callClick();
             }}
           >
-            <FaPhone />
+            <PhoneIcon />
             <a>문의하기</a>
           </SubMainLi>
-          <SubMainLi onClick={() => loginEvent()}>{user ? '로그아웃' : '로그인'}</SubMainLi>
+          <SubMainLi onClick={() => loginEvent()}>
+            {user ? (
+              <>
+                <FiLogOut /> 로그아웃
+              </>
+            ) : (
+              <>
+                <FiLogIn /> 로그인
+              </>
+            )}
+          </SubMainLi>
         </ul>
       </MobileMenu>
       {isLoginModalOpen && <LoginMoadl onClose={() => setIsLoginModalOpen(false)} />}
@@ -283,7 +304,7 @@ const Center = styled.nav<WithTheme>`
   align-items: center;
   height: 100%;
   position: relative;
-  margin-left: auto;
+  margin: 0 auto;
 
   ul {
     color: ${({ theme }) => theme.colors.menuColor};
@@ -305,22 +326,25 @@ const Right = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   justify-content: right;
-  margin-left: auto;
 
   ul {
     color: ${({ theme }) => theme.colors.subMenuColor};
     font-size: ${({ theme }) => theme.sizes.large};
     font-weight: ${({ theme }) => theme.weight.semiBold};
+    display: flex;
+    gap: 40px;
 
     li {
       display: flex;
       align-items: center;
-      width: 120px;
       justify-content: right;
+
+      a {
+        flex-wrap: nowrap;
+      }
 
       svg {
         margin-right: 8px;
-        transform: rotate(-240deg);
       }
 
       img {
@@ -333,6 +357,10 @@ const Right = styled.div<WithTheme>`
   @media ${({ theme }) => theme.device.tablet} {
     display: none;
   }
+`;
+
+const PhoneIcon = styled(FaPhone)`
+  transform: rotate(-240deg);
 `;
 
 const BgSubWrapper = styled.div<WithTheme & { $height: number }>`
@@ -490,6 +518,5 @@ const SubMainLi = styled.li<WithTheme>`
   svg {
     margin-left: 0 !important;
     margin-right: 8px;
-    transform: rotate(-240deg);
   }
 `;
