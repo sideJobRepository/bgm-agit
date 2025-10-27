@@ -18,6 +18,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Optional;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/bgm-agit")
@@ -35,13 +37,11 @@ public class BgmAgitFreeController {
     
     @GetMapping("/free/{id}")
     public BgmAgitFreeGetDetailResponse getBgmAgitFreeDetail(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
-        Long memberId = null;
-        if (jwt != null) {
-            Object claimValue = jwt.getClaim("id");
-            if (claimValue != null) {
-                memberId = Long.valueOf(String.valueOf(claimValue));
-            }
-        }
+        Long memberId = Optional.ofNullable(jwt)
+                .map(token -> token.getClaim("id"))
+                .map(Object::toString)
+                .map(Long::valueOf)
+                .orElse(null);
         return bgmAgitFreeService.getBgmAgitFreeDetail(id,memberId);
     }
     
