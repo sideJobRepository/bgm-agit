@@ -24,7 +24,7 @@ public class BgmAgitFreePostRequest {
     @NotBlank(message = "내용은 필수 입력 입니다.")
     private String cont;
     
-    List<MultipartFile> files;
+    private List<MultipartFile> files;
     
     public List<MultipartFile> getFiles() {
         if(this.files == null) {
