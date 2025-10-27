@@ -17,19 +17,19 @@ public class BgmAgitCommonFileRepositoryImpl implements BgmAgitCommonFileCustomR
     private final JPAQueryFactory queryFactory;
     private final EntityManager em;
     @Override
-    public List<BgmAgitCommonFile> findByUUID(List<String> deletedFiles) {
+    public List<BgmAgitCommonFile> findByIds(List<Long> deletedFiles) {
         return queryFactory
                 .selectFrom(bgmAgitCommonFile)
-                .where(bgmAgitCommonFile.bgmAgitCommonFileUuidName.in(deletedFiles))
+                .where(bgmAgitCommonFile.bgmAgitCommonFileId.in(deletedFiles))
                 .fetch();
     }
     
     @Override
-    public Long removeFiles(List<String> uuidList) {
+    public Long removeFiles(List<Long> fileIds) {
         em.flush();
         long execute = queryFactory
                 .delete(bgmAgitCommonFile)
-                .where(bgmAgitCommonFile.bgmAgitCommonFileUuidName.in(uuidList))
+                .where(bgmAgitCommonFile.bgmAgitCommonFileId.in(fileIds))
                 .execute();
         em.clear();
         return execute;

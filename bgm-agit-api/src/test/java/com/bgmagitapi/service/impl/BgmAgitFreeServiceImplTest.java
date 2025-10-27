@@ -87,9 +87,19 @@ class BgmAgitFreeServiceImplTest extends RepositoryAndServiceTestSupport {
     
     @DisplayName("자유 게시판 수정")
     @Test
-    void test3(){
-//        new BgmAgitFreePutRequest(11L,11L,"수정 테스트","수정 테스트 내용")
-//        bgmAgitFreeService.modifyBgmAgitFree()
+    void test3() throws IOException {
+        List<Long> deleteFiles = List.of(25L, 26L);
+      
+        File file = new File("src/test/java/com/bgmagitapi/file/로그인캡처2.png");
+        FileInputStream fis1 = new FileInputStream(file);
+        
+        
+        MockMultipartFile multipartFile = new MockMultipartFile(
+                    "bgmAgitFree", file.getName(), "png",fis1
+            );
+        List<MultipartFile> multipartFile3 = List.of(multipartFile);
+        BgmAgitFreePutRequest bgmAgitFreePutRequest = new BgmAgitFreePutRequest(12L, 11L, "수정 테스트", "수정 테스트 내용", deleteFiles, multipartFile3);
+        bgmAgitFreeService.modifyBgmAgitFree(bgmAgitFreePutRequest);
     }
  
     

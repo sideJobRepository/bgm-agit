@@ -25,7 +25,7 @@ public class BgmAgitFreePutRequest {
     @NotBlank(message = "내용은 필수 입력 입니다.")
     private String content;
     
-    private List<String> deletedFiles;
+    private List<Long> deletedFiles;
     
     private List<MultipartFile> files;
     

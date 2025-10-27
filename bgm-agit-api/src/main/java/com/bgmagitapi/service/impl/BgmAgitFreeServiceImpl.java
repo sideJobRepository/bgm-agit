@@ -7,7 +7,6 @@ import com.bgmagitapi.controller.request.BgmAgitFreePostRequest;
 import com.bgmagitapi.controller.request.BgmAgitFreePutRequest;
 import com.bgmagitapi.controller.response.BgmAgitFreeGetDetailResponse;
 import com.bgmagitapi.controller.response.BgmAgitFreeGetResponse;
-import com.bgmagitapi.entity.BgmAgitCommonComment;
 import com.bgmagitapi.entity.BgmAgitCommonFile;
 import com.bgmagitapi.entity.BgmAgitFree;
 import com.bgmagitapi.entity.BgmAgitMember;
@@ -137,11 +136,12 @@ public class BgmAgitFreeServiceImpl implements BgmAgitFreeService {
         
         free.modifyFree(request);
         
-        List<String> deletedFiles = request.getDeletedFiles();
+        List<Long> deletedFiles = request.getDeletedFiles();
         if (!deletedFiles.isEmpty()) {
-            List<BgmAgitCommonFile> byUUID = bgmAgitCommonFileRepository.findByUUID(deletedFiles);
+            List<BgmAgitCommonFile> byUUID = bgmAgitCommonFileRepository.findByIds(deletedFiles);
             
             for (BgmAgitCommonFile file : byUUID) {
+                
                 s3FileUtils.deleteFile(file.getBgmAgitCommonFileUrl());
             }
             bgmAgitCommonFileRepository.removeFiles(deletedFiles);
@@ -157,6 +157,7 @@ public class BgmAgitFreeServiceImpl implements BgmAgitFreeService {
                                   .bgmAgitCommonFileTargetId(free.getBgmAgitFreeId())
                                   .bgmAgitCommonFileType(BgmAgitCommonType.FREE)
                                   .bgmAgitCommonFileUrl(item.getUrl())
+                                  .bgmAgitCommonFileUuidName(item.getUuid())
                                   .bgmAgitCommonFileName(item.getOriginalFilename())
                                   .build();
                       })
