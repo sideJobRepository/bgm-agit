@@ -93,6 +93,7 @@ public class BgmAgitFreeRepositoryImpl implements BgmAgitFreeCustomRepository {
     public List<BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseFile> findFiles(Long id) {
         return queryFactory.select(Projections.constructor(
                         BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseFile.class,
+                        bgmAgitCommonFile.bgmAgitCommonFileId,
                         bgmAgitCommonFile.bgmAgitCommonFileName,
                         bgmAgitCommonFile.bgmAgitCommonFileUuidName,
                         bgmAgitCommonFile.bgmAgitCommonFileUrl

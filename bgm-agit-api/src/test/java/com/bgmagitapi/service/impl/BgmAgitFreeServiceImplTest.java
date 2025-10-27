@@ -4,6 +4,7 @@ import com.bgmagitapi.RepositoryAndServiceTestSupport;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.controller.BgmAgitFreeController;
 import com.bgmagitapi.controller.request.BgmAgitFreePostRequest;
+import com.bgmagitapi.controller.request.BgmAgitFreePutRequest;
 import com.bgmagitapi.controller.response.BgmAgitFreeGetDetailResponse;
 import com.bgmagitapi.controller.response.BgmAgitFreeGetResponse;
 import com.bgmagitapi.entity.BgmAgitFree;
@@ -74,24 +75,23 @@ class BgmAgitFreeServiceImplTest extends RepositoryAndServiceTestSupport {
         
     }
     
-    @DisplayName("자유 게시판 수정")
-    @Test
-    void test3(){
-        //given
-        
-        //when
-        
-        //then
-    }
     
     @DisplayName("자유 게시판 상세조회")
     @Test
     void test4(){
         
-        BgmAgitFreeGetDetailResponse bgmAgitFreeDetail = bgmAgitFreeService.getBgmAgitFreeDetail(4L, 1L);
+        BgmAgitFreeGetDetailResponse bgmAgitFreeDetail = bgmAgitFreeService.getBgmAgitFreeDetail(11L, 1L);
         
         System.out.println("bgmAgitFreeDetail = " + bgmAgitFreeDetail);
     }
+    
+    @DisplayName("자유 게시판 수정")
+    @Test
+    void test3(){
+//        new BgmAgitFreePutRequest(11L,11L,"수정 테스트","수정 테스트 내용")
+//        bgmAgitFreeService.modifyBgmAgitFree()
+    }
+ 
     
     @DisplayName("자유 게시판 삭제")
     @Test

@@ -36,6 +36,7 @@ public class BgmAgitFreeGetDetailResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class BgmAgitFreeGetDetailResponseFile{
+        private Long id;
         private String fileName;
         private String uuidName;
         private String fileUrl;
