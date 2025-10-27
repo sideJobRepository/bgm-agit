@@ -26,4 +26,9 @@ public class BgmAgitCommonCommentServiceImpl implements BgmAgitCommonCommentServ
     public ApiResponse modifyComment(BgmAgitCommonCommentPutRequest request) {
         return null;
     }
+    
+    @Override
+    public ApiResponse removeComment(Long id) {
+        return null;
+    }
 }

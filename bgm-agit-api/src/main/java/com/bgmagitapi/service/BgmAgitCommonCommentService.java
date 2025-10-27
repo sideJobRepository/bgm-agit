@@ -9,4 +9,6 @@ public interface BgmAgitCommonCommentService {
     ApiResponse createComment(BgmAgitCommonCommentPostRequest request);
     
     ApiResponse modifyComment(BgmAgitCommonCommentPutRequest request);
+    
+    ApiResponse removeComment(Long id);
 }

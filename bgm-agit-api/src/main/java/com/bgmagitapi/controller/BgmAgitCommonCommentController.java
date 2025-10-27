@@ -31,4 +31,8 @@ public class BgmAgitCommonCommentController {
     public ApiResponse modifyComment(@Validated @RequestBody BgmAgitCommonCommentPutRequest request) {
         return bgmAgitCommonCommentService.modifyComment(request);
     }
+    @DeleteMapping("/comment/{id}")
+    public ApiResponse removeComment(@PathVariable Long id) {
+        return bgmAgitCommonCommentService.removeComment(id);
+    }
 }
