@@ -12,6 +12,7 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
@@ -91,7 +92,7 @@ public class BgmAgitFreeRepositoryImpl implements BgmAgitFreeCustomRepository {
     }
     
     public List<BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseFile> findFiles(Long id) {
-        return queryFactory.select(Projections.constructor(
+        List<BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseFile> result = queryFactory.select(Projections.constructor(
                         BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseFile.class,
                         bgmAgitCommonFile.bgmAgitCommonFileId,
                         bgmAgitCommonFile.bgmAgitCommonFileName,
@@ -101,6 +102,12 @@ public class BgmAgitFreeRepositoryImpl implements BgmAgitFreeCustomRepository {
                 .from(bgmAgitCommonFile)
                 .where(bgmAgitCommonFile.bgmAgitCommonFileTargetId.eq(id))
                 .fetch();
+        result
+                .forEach(item -> {
+                    String extension = FilenameUtils.getExtension(item.getFileName());
+                    item.setUuidName(item.getUuidName() + "." + extension);
+                });
+        return result;
     }
     
     public List<BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseComment> findComments(Long id, Long memberId) {

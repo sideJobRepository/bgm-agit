@@ -66,6 +66,9 @@ dependencies {
 
 	//test 롬복 사용
 	testCompileOnly 'org.projectlombok:lombok'
+
+	//파일 유틸
+	implementation 'commons-io:commons-io:2.15.1'
 }
 
 
