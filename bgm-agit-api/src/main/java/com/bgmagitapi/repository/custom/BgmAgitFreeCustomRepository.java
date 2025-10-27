@@ -18,4 +18,6 @@ public interface BgmAgitFreeCustomRepository {
     
     List<BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseFile> findFiles(Long id);
     List<BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseComment> findComments(Long id, Long memberId);
+    
+    Long deleteByIdAndMember(Long id, BgmAgitMember bgmAgitMember);
 }

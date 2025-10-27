@@ -7,11 +7,13 @@ import com.bgmagitapi.controller.request.BgmAgitFreePostRequest;
 import com.bgmagitapi.controller.request.BgmAgitFreePutRequest;
 import com.bgmagitapi.controller.response.BgmAgitFreeGetDetailResponse;
 import com.bgmagitapi.controller.response.BgmAgitFreeGetResponse;
+import com.bgmagitapi.entity.BgmAgitCommonComment;
 import com.bgmagitapi.entity.BgmAgitCommonFile;
 import com.bgmagitapi.entity.BgmAgitFree;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.page.PageResponse;
+import com.bgmagitapi.repository.BgmAgitCommonCommentRepository;
 import com.bgmagitapi.repository.BgmAgitCommonFileRepository;
 import com.bgmagitapi.repository.BgmAgitFreeRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
@@ -19,8 +21,6 @@ import com.bgmagitapi.service.BgmAgitFreeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,6 +40,8 @@ public class BgmAgitFreeServiceImpl implements BgmAgitFreeService {
     private final BgmAgitMemberRepository bgmAgitMemberRepository;
     
     private final BgmAgitCommonFileRepository bgmAgitCommonFileRepository;
+    
+    private final BgmAgitCommonCommentRepository bgmAgitCommonCommentRepository;
     
     private final S3FileUtils s3FileUtils;
     
@@ -163,5 +165,24 @@ public class BgmAgitFreeServiceImpl implements BgmAgitFreeService {
           }
         
         return new ApiResponse(200,true,"수정 되었습니다.");
+    }
+    
+    @Override
+    public ApiResponse romoveBgmAgitFree(Long id, Long memberId) {
+        BgmAgitMember bgmAgitMember = bgmAgitMemberRepository.findById(memberId).orElseThrow(() -> new RuntimeException("존재하지 않는 회원입니다."));
+        List<BgmAgitCommonFile> byDeleteFile = bgmAgitCommonFileRepository.findByDeleteFile(id);
+        
+        for (BgmAgitCommonFile bgmAgitCommonFile : byDeleteFile) {
+            s3FileUtils.deleteFile(bgmAgitCommonFile.getBgmAgitCommonFileUrl());
+        }
+        bgmAgitCommonFileRepository.deleteAll(byDeleteFile);
+        bgmAgitCommonCommentRepository.deleteByCommonDepth(id);
+        
+        Long count = bgmAgitFreeRepository.deleteByIdAndMember(id, bgmAgitMember);
+        if(0L >= count) {
+            throw new RuntimeException("삭제는 본인만 가능합니다");
+        }
+        
+        return new ApiResponse(200,true,"삭제 되었습니다.");
     }
 }

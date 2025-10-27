@@ -53,6 +53,15 @@ public class BgmAgitFreeController {
     public ApiResponse modifyBgmAgitFree(@Validated @ModelAttribute BgmAgitFreePutRequest request) {
         return bgmAgitFreeService.modifyBgmAgitFree(request);
     }
+    @DeleteMapping("/free/{id}")
+    public ApiResponse removeBgmAgitFree(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        Long memberId = Optional.ofNullable(jwt)
+                     .map(token -> token.getClaim("id"))
+                     .map(Object::toString)
+                     .map(Long::valueOf)
+                     .orElse(null);
+        return bgmAgitFreeService.romoveBgmAgitFree(id,memberId);
+    }
     
     
     @PostMapping("/free/file")

@@ -1,6 +1,7 @@
 package com.bgmagitapi.repository.impl;
 
 import com.bgmagitapi.entity.BgmAgitCommonFile;
+import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.repository.custom.BgmAgitCommonFileCustomRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -32,5 +33,16 @@ public class BgmAgitCommonFileRepositoryImpl implements BgmAgitCommonFileCustomR
                 .execute();
         em.clear();
         return execute;
+    }
+    
+    @Override
+    public List<BgmAgitCommonFile> findByDeleteFile(Long id) {
+         return queryFactory
+                .select(bgmAgitCommonFile)
+                .from(bgmAgitCommonFile)
+                .where(bgmAgitCommonFile.bgmAgitCommonFileTargetId.eq(id),
+                        bgmAgitCommonFile.bgmAgitCommonFileType.eq(BgmAgitCommonType.FREE)
+                        )
+                .fetch();
     }
 }

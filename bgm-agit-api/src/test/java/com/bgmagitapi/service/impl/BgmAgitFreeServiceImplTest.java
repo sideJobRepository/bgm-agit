@@ -91,7 +91,17 @@ class BgmAgitFreeServiceImplTest extends RepositoryAndServiceTestSupport {
         BgmAgitFreeGetDetailResponse bgmAgitFreeDetail = bgmAgitFreeService.getBgmAgitFreeDetail(4L, 1L);
         
         System.out.println("bgmAgitFreeDetail = " + bgmAgitFreeDetail);
+    }
+    
+    @DisplayName("자유 게시판 삭제")
+    @Test
+    void test(){
+        ApiResponse apiResponse = bgmAgitFreeService.romoveBgmAgitFree(4L, 11L);
+        
+        System.out.println("apiResponse = " + apiResponse);
+        
         
     }
+    
     
 }

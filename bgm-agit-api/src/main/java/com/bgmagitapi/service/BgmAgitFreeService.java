@@ -18,4 +18,5 @@ public interface BgmAgitFreeService {
     
     ApiResponse modifyBgmAgitFree(BgmAgitFreePutRequest request);
     
+    ApiResponse romoveBgmAgitFree(Long id, Long memberId);
 }
