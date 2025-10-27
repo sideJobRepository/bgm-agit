@@ -1,6 +1,7 @@
 package com.bgmagitapi.entity;
 
 import com.bgmagitapi.controller.request.BgmAgitFreePostRequest;
+import com.bgmagitapi.controller.request.BgmAgitFreePutRequest;
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,4 +34,8 @@ public class BgmAgitFree extends DateSuperClass {
     @Column(name = "BGM_AGIT_FREE_CONT")
     private String bgmAgitFreeCont;
     
+    public void modifyFree(BgmAgitFreePutRequest request) {
+        this.bgmAgitFreeTitle = request.getTitle();
+        this.bgmAgitFreeCont = request.getContent();
+    }
 }

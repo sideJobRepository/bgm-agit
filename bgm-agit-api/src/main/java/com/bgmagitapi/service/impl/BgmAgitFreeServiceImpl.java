@@ -4,6 +4,8 @@ import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.config.S3FileUtils;
 import com.bgmagitapi.config.UploadResult;
 import com.bgmagitapi.controller.request.BgmAgitFreePostRequest;
+import com.bgmagitapi.controller.request.BgmAgitFreePutRequest;
+import com.bgmagitapi.controller.response.BgmAgitFreeGetDetailResponse;
 import com.bgmagitapi.controller.response.BgmAgitFreeGetResponse;
 import com.bgmagitapi.entity.BgmAgitCommonFile;
 import com.bgmagitapi.entity.BgmAgitFree;
@@ -17,13 +19,16 @@ import com.bgmagitapi.service.BgmAgitFreeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 @Transactional
 @Service
@@ -42,6 +47,45 @@ public class BgmAgitFreeServiceImpl implements BgmAgitFreeService {
     public PageResponse<BgmAgitFreeGetResponse> getBgmAgitFree(Pageable pageable) {
         Page<BgmAgitFreeGetResponse> byAllBgmAgitFree = bgmAgitFreeRepository.findByAllBgmAgitFree(pageable);
         return PageResponse.from(byAllBgmAgitFree);
+    }
+    
+    @Override
+    public BgmAgitFreeGetDetailResponse getBgmAgitFreeDetail(Long id,Long memberId) {
+        // 1. 기본 게시글
+        BgmAgitFreeGetDetailResponse response = bgmAgitFreeRepository.findByFreeDetail(id, memberId);
+        if (response == null) return null;
+    
+        // 2. 파일
+        List<BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseFile> files =
+            bgmAgitFreeRepository.findFiles(id);
+        response.setFiles(files);
+    
+        // 3. 댓글
+        List<BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseComment> comments =
+            bgmAgitFreeRepository.findComments(id, memberId);
+    
+        // 4. 댓글 트리 조립
+        Map<String, BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseComment> commentMap = new HashMap<>();
+        for (BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseComment c : comments) {
+            commentMap.put(c.getCommentId(), c);
+        }
+    
+        List<BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseComment> rootComments = new ArrayList<>();
+        for (BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseComment c : comments) {
+            if (c.getParentId() == null) {
+                rootComments.add(c);
+            } else {
+                BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseComment parent = commentMap.get(c.getParentId());
+                if (parent != null) {
+                    parent.getChildren().add(c);
+                }
+            }
+        }
+    
+        response.setComments(rootComments);
+        response.setIsAuthor(response.getMemberId().equals(memberId));
+    
+        return response;
     }
     
     @Override
@@ -74,5 +118,48 @@ public class BgmAgitFreeServiceImpl implements BgmAgitFreeService {
         }
         
         return new ApiResponse(200,true,"게시글이 작성되었습니다.");
+    }
+    
+    @Override
+    public ApiResponse modifyBgmAgitFree(BgmAgitFreePutRequest request) {
+        Long id = request.getId();
+        BgmAgitMember bgmAgitMember = bgmAgitMemberRepository.findById(request.getMemberId()).orElseThrow(() -> new RuntimeException("존재 하지 않는 회원입니다."));
+        
+        BgmAgitFree free = bgmAgitFreeRepository.findByIdAndMemberId(id,bgmAgitMember);
+        
+        if (free == null) {
+            throw new RuntimeException("존재 하지 않는 게시글 입니다.");
+        }
+        
+        free.modifyFree(request);
+        
+        List<String> deletedFiles = request.getDeletedFiles();
+        if (!deletedFiles.isEmpty()) {
+            List<BgmAgitCommonFile> byUUID = bgmAgitCommonFileRepository.findByUUID(deletedFiles);
+            
+            for (BgmAgitCommonFile file : byUUID) {
+                s3FileUtils.deleteFile(file.getBgmAgitCommonFileUrl());
+            }
+            bgmAgitCommonFileRepository.removeFiles(deletedFiles);
+        }
+        
+        if (request.getFiles() != null && !request.getFiles().isEmpty()) {
+              List<UploadResult> uploadResults = s3FileUtils.storeFiles(request.getFiles(), "free");
+              
+              List<BgmAgitCommonFile> commonFiles = uploadResults.stream()
+                      .map(item -> {
+                          return BgmAgitCommonFile
+                                  .builder()
+                                  .bgmAgitCommonFileTargetId(free.getBgmAgitFreeId())
+                                  .bgmAgitCommonFileType(BgmAgitCommonType.FREE)
+                                  .bgmAgitCommonFileUrl(item.getUrl())
+                                  .bgmAgitCommonFileName(item.getOriginalFilename())
+                                  .build();
+                      })
+                      .toList();
+              bgmAgitCommonFileRepository.saveAll(commonFiles);
+          }
+        
+        return new ApiResponse(200,true,"수정 되었습니다.");
     }
 }
