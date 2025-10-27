@@ -1,5 +1,6 @@
 package com.bgmagitapi.controller.request;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,6 +11,9 @@ import lombok.NoArgsConstructor;
 public class BgmAgitCommonCommentPostRequest {
 
     private Long parentId; // 대댓글이면 있어있어야함
-    private Long freeId;
+    
+    @NotBlank(message = "댓글 내용은 필수 입니다.")
     private String content;
+    
+    private Long memberId;
 }
