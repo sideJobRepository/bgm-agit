@@ -44,12 +44,14 @@ public class BgmAgitFreeServiceImpl implements BgmAgitFreeService {
     private final S3FileUtils s3FileUtils;
     
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<BgmAgitFreeGetResponse> getBgmAgitFree(Pageable pageable) {
         Page<BgmAgitFreeGetResponse> byAllBgmAgitFree = bgmAgitFreeRepository.findByAllBgmAgitFree(pageable);
         return PageResponse.from(byAllBgmAgitFree);
     }
     
     @Override
+    @Transactional(readOnly = true)
     public BgmAgitFreeGetDetailResponse getBgmAgitFreeDetail(Long id,Long memberId) {
         // 1. 기본 게시글
         BgmAgitFreeGetDetailResponse response = bgmAgitFreeRepository.findByFreeDetail(id, memberId);
@@ -81,7 +83,7 @@ public class BgmAgitFreeServiceImpl implements BgmAgitFreeService {
                 }
             }
         }
-    
+        
         response.setComments(rootComments);
         response.setIsAuthor(response.getMemberId().equals(memberId));
     
