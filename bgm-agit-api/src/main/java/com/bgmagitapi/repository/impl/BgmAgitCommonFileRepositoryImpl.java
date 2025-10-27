@@ -1,7 +1,6 @@
 package com.bgmagitapi.repository.impl;
 
 import com.bgmagitapi.entity.BgmAgitCommonFile;
-import com.bgmagitapi.entity.QBgmAgitCommonFile;
 import com.bgmagitapi.repository.custom.BgmAgitCommonFileCustomRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -9,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
-import static com.bgmagitapi.entity.QBgmAgitCommonFile.*;
+import static com.bgmagitapi.entity.QBgmAgitCommonFile.bgmAgitCommonFile;
 
 @RequiredArgsConstructor
 public class BgmAgitCommonFileRepositoryImpl implements BgmAgitCommonFileCustomRepository {

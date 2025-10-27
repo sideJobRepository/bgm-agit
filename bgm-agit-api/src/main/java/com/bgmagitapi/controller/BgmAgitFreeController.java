@@ -35,7 +35,13 @@ public class BgmAgitFreeController {
     
     @GetMapping("/free/{id}")
     public BgmAgitFreeGetDetailResponse getBgmAgitFreeDetail(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
-        Long memberId = jwt.getClaim("id");
+        Long memberId = null;
+        if (jwt != null) {
+            Object claimValue = jwt.getClaim("id");
+            if (claimValue != null) {
+                memberId = Long.valueOf(String.valueOf(claimValue));
+            }
+        }
         return bgmAgitFreeService.getBgmAgitFreeDetail(id,memberId);
     }
     
