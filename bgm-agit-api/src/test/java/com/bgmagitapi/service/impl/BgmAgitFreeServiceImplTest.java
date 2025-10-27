@@ -88,7 +88,7 @@ class BgmAgitFreeServiceImplTest extends RepositoryAndServiceTestSupport {
     @Test
     void test4(){
         
-        BgmAgitFreeGetDetailResponse bgmAgitFreeDetail = bgmAgitFreeService.getBgmAgitFreeDetail(4L, null);
+        BgmAgitFreeGetDetailResponse bgmAgitFreeDetail = bgmAgitFreeService.getBgmAgitFreeDetail(4L, 1L);
         
         System.out.println("bgmAgitFreeDetail = " + bgmAgitFreeDetail);
         

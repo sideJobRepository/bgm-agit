@@ -4,6 +4,7 @@ import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.config.S3FileUtils;
 import com.bgmagitapi.config.UploadResult;
 import com.bgmagitapi.controller.request.BgmAgitFreePostRequest;
+import com.bgmagitapi.controller.request.BgmAgitFreePutRequest;
 import com.bgmagitapi.controller.response.BgmAgitFreeGetDetailResponse;
 import com.bgmagitapi.controller.response.BgmAgitFreeGetResponse;
 import com.bgmagitapi.page.PageResponse;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,8 +40,12 @@ public class BgmAgitFreeController {
     }
     
     @PostMapping("/free")
-    public ApiResponse createBgmAgitFree(@ModelAttribute BgmAgitFreePostRequest request) {
+    public ApiResponse createBgmAgitFree(@Validated @ModelAttribute BgmAgitFreePostRequest request) {
         return bgmAgitFreeService.createBgmAgitFree(request);
+    }
+    @PutMapping("/free")
+    public ApiResponse modifyBgmAgitFree(@Validated @ModelAttribute BgmAgitFreePutRequest request) {
+        return bgmAgitFreeService.modifyBgmAgitFree(request);
     }
     
     
