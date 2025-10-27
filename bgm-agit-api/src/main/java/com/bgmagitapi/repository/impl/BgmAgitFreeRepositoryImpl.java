@@ -83,7 +83,8 @@ public class BgmAgitFreeRepositoryImpl implements BgmAgitFreeCustomRepository {
                 bgmAgitFree.bgmAgitFreeId,
                 bgmAgitMember.bgmAgitMemberId,
                 bgmAgitFree.bgmAgitFreeTitle,
-                bgmAgitFree.bgmAgitFreeCont
+                bgmAgitFree.bgmAgitFreeCont,
+                bgmAgitFree.registDate
             ))
             .from(bgmAgitFree)
             .join(bgmAgitFree.bgmAgitMember, bgmAgitMember)
@@ -116,7 +117,8 @@ public class BgmAgitFreeRepositoryImpl implements BgmAgitFreeCustomRepository {
                                 : Expressions.FALSE)
                             .then(true)
                             .otherwise(false),
-                        bgmAgitCommonComment.parentId.stringValue()
+                        bgmAgitCommonComment.parentId.stringValue(),
+                bgmAgitCommonComment.registDate
                 ))
                 .from(bgmAgitCommonComment)
                 .where(bgmAgitCommonComment.targetId.eq(id))

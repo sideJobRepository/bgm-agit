@@ -1,9 +1,11 @@
 package com.bgmagitapi.controller.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,14 +19,17 @@ public class BgmAgitFreeGetDetailResponse {
     private String title;
     private String content;
     private Boolean isAuthor;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDateTime registDate;
     private List<BgmAgitFreeGetDetailResponseFile> files;
     private List<BgmAgitFreeGetDetailResponseComment> comments;
     
-    public BgmAgitFreeGetDetailResponse(Long id, Long memberId, String title, String content) {
+    public BgmAgitFreeGetDetailResponse(Long id, Long memberId, String title, String content,  LocalDateTime registDate) {
         this.id = id;
         this.memberId = memberId;
         this.title = title;
         this.content = content;
+        this.registDate = registDate;
     }
     
     @Data
@@ -47,6 +52,8 @@ public class BgmAgitFreeGetDetailResponse {
         private Boolean isAuthor;
         private String parentId; //부모 댓글 ID
         private List<BgmAgitFreeGetDetailResponseComment> children;
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private LocalDateTime registDate;
         
         public List<BgmAgitFreeGetDetailResponseComment> getChildren() {
             if(this.children == null) {
@@ -55,13 +62,14 @@ public class BgmAgitFreeGetDetailResponse {
             return children;
         }
         
-        public BgmAgitFreeGetDetailResponseComment(String commentId, String memberName, String content, Integer depth, Boolean isAuthor, String parentId) {
+        public BgmAgitFreeGetDetailResponseComment(String commentId, String memberName, String content, Integer depth, Boolean isAuthor, String parentId,LocalDateTime registDate) {
             this.commentId = commentId;
             this.memberName = memberName;
             this.content = content;
             this.depth = depth;
             this.isAuthor = isAuthor;
             this.parentId = parentId;
+            this.registDate = registDate;
         }
     }
 }
