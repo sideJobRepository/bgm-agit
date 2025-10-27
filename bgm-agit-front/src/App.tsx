@@ -17,6 +17,8 @@ import ReservationList from './pages/ReservationList.tsx';
 import Role from './pages/Role.tsx';
 import NoticeDetail from './pages/NoticeDetail.tsx';
 import Privacy from './pages/Privacy.tsx';
+import Free from './pages/Free.tsx';
+import FreeDetail from './pages/FreeDetail.tsx';
 
 function App() {
   return (
@@ -38,6 +40,8 @@ function App() {
               <Route path="/noticeDetail" element={<NoticeDetail />} />
               <Route path="reservationList" element={<ReservationList />} />
               <Route path="role" element={<Role />} />
+              <Route path="free" element={<Free />} />
+              <Route path="/freeDetail" element={<FreeDetail />} />
             </Route>
           </Routes>
         </BrowserRouter>
