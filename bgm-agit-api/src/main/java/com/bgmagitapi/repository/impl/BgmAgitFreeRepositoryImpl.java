@@ -7,7 +7,9 @@ import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.repository.custom.BgmAgitFreeCustomRepository;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -16,6 +18,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -32,7 +35,7 @@ public class BgmAgitFreeRepositoryImpl implements BgmAgitFreeCustomRepository {
     private final EntityManager em;
     
     @Override
-    public Page<BgmAgitFreeGetResponse> findByAllBgmAgitFree(Pageable pageable) {
+    public Page<BgmAgitFreeGetResponse> findByAllBgmAgitFree(Pageable pageable,String titleOrCont) {
         List<BgmAgitFreeGetResponse> result = queryFactory
                 .select(Projections.constructor(
                         BgmAgitFreeGetResponse.class,
@@ -48,6 +51,7 @@ public class BgmAgitFreeRepositoryImpl implements BgmAgitFreeCustomRepository {
                 .leftJoin(bgmAgitCommonComment)
                 .on(bgmAgitCommonComment.targetId.eq(bgmAgitFree.bgmAgitFreeId)
                         .and(bgmAgitCommonComment.bgmAgitCommonType.eq(BgmAgitCommonType.FREE)))
+                .where(titleOrContLikeIgnoreSpaces(titleOrCont))
                 .groupBy(bgmAgitFree.bgmAgitFreeId,
                         bgmAgitFree.bgmAgitMember.bgmAgitMemberId,
                         bgmAgitFree.bgmAgitMember.bgmAgitMemberName,
@@ -59,6 +63,7 @@ public class BgmAgitFreeRepositoryImpl implements BgmAgitFreeCustomRepository {
         
         JPAQuery<Long> countQuery = queryFactory
                 .select(bgmAgitFree.count())
+                .where(titleOrContLikeIgnoreSpaces(titleOrCont))
                 .from(bgmAgitFree);
         
         return PageableExecutionUtils.getPage(result, pageable, countQuery::fetchOne);
@@ -148,4 +153,18 @@ public class BgmAgitFreeRepositoryImpl implements BgmAgitFreeCustomRepository {
         em.clear();
         return execute;
     }
+    
+    private BooleanExpression titleOrContLikeIgnoreSpaces(String keyword) {
+          if (!StringUtils.hasText(keyword)) {
+              return null;
+          }
+          String k = keyword.replaceAll("\\s+", "");
+          StringExpression titleNoSpace = Expressions.stringTemplate(
+                  "replace({0}, ' ', '')", bgmAgitFree.bgmAgitFreeTitle);
+          StringExpression contNoSpace = Expressions.stringTemplate(
+                  "replace({0}, ' ', '')", bgmAgitFree.bgmAgitFreeCont);
+          
+          return titleNoSpace.like("%" + k + "%")
+                  .or(contNoSpace.like("%" + k + "%"));
+      }
 }

@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface BgmAgitFreeCustomRepository {
     
-    Page<BgmAgitFreeGetResponse> findByAllBgmAgitFree(Pageable pageable);
+    Page<BgmAgitFreeGetResponse> findByAllBgmAgitFree(Pageable pageable,String titleOrCont);
     BgmAgitFree findByIdAndMemberId(Long id, BgmAgitMember bgmAgitMember);
     
     BgmAgitFreeGetDetailResponse findByFreeDetail(Long id,Long memberId);

@@ -10,7 +10,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface BgmAgitFreeService {
     
-    PageResponse<BgmAgitFreeGetResponse> getBgmAgitFree(Pageable pageable);
+    PageResponse<BgmAgitFreeGetResponse> getBgmAgitFree(Pageable pageable,String titleOrCont);
     
     BgmAgitFreeGetDetailResponse getBgmAgitFreeDetail(Long id,Long memberId);
     

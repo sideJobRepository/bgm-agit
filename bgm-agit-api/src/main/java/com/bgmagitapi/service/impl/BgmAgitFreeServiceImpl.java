@@ -46,8 +46,8 @@ public class BgmAgitFreeServiceImpl implements BgmAgitFreeService {
     
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<BgmAgitFreeGetResponse> getBgmAgitFree(Pageable pageable) {
-        Page<BgmAgitFreeGetResponse> byAllBgmAgitFree = bgmAgitFreeRepository.findByAllBgmAgitFree(pageable);
+    public PageResponse<BgmAgitFreeGetResponse> getBgmAgitFree(Pageable pageable,String titleOrCont) {
+        Page<BgmAgitFreeGetResponse> byAllBgmAgitFree = bgmAgitFreeRepository.findByAllBgmAgitFree(pageable,titleOrCont);
         return PageResponse.from(byAllBgmAgitFree);
     }
     

@@ -49,8 +49,9 @@ public class BgmAgitFreeController {
     private String bucketName;
     
     @GetMapping("/free")
-    public PageResponse<BgmAgitFreeGetResponse> getBgmAgitFree(@PageableDefault(size = 10) Pageable pageable) {
-        return bgmAgitFreeService.getBgmAgitFree(pageable);
+    public PageResponse<BgmAgitFreeGetResponse> getBgmAgitFree(@PageableDefault(size = 10) Pageable pageable,
+                                                               @RequestParam(name = "titleOrCont" , required = false) String titleOrCont) {
+        return bgmAgitFreeService.getBgmAgitFree(pageable,titleOrCont);
     }
     
     @GetMapping("/free/{id}")

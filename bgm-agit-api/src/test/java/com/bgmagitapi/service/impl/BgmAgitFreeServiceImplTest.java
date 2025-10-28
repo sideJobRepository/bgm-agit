@@ -42,7 +42,7 @@ class BgmAgitFreeServiceImplTest extends RepositoryAndServiceTestSupport {
         
         PageRequest pageRequest = PageRequest.of(0, 10);
         
-        PageResponse<BgmAgitFreeGetResponse> bgmAgitFree = bgmAgitFreeService.getBgmAgitFree(pageRequest);
+        PageResponse<BgmAgitFreeGetResponse> bgmAgitFree = bgmAgitFreeService.getBgmAgitFree(pageRequest,"박지수");
         
         System.out.println("bgmAgitFree = " + bgmAgitFree);
         
