@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @AllArgsConstructor
@@ -29,4 +30,17 @@ public class BgmAgitFreePutRequest {
     
     private List<MultipartFile> files;
     
+    public List<Long> getDeletedFiles() {
+        if(this.deletedFiles == null){
+            this.deletedFiles = new ArrayList<>();
+        }
+        return this.deletedFiles;
+    }
+    
+    public List<MultipartFile> getFiles() {
+        if(this.files == null){
+            this.files = new ArrayList<>();
+        }
+        return this.files;
+    }
 }
