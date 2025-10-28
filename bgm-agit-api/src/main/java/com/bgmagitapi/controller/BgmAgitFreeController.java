@@ -8,6 +8,7 @@ import com.bgmagitapi.controller.request.BgmAgitFreePutRequest;
 import com.bgmagitapi.controller.response.BgmAgitFreeGetDetailResponse;
 import com.bgmagitapi.controller.response.BgmAgitFreeGetResponse;
 import com.bgmagitapi.page.PageResponse;
+import com.bgmagitapi.security.xss.HtmlSanitizerService;
 import com.bgmagitapi.service.BgmAgitFreeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +46,8 @@ public class BgmAgitFreeController {
     
     private final S3FileUtils s3FileUtils;
     
+    private final HtmlSanitizerService sanitizer;
+    
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
     
@@ -66,10 +69,14 @@ public class BgmAgitFreeController {
     
     @PostMapping("/free")
     public ApiResponse createBgmAgitFree(@Validated @ModelAttribute BgmAgitFreePostRequest request) {
+        String safeHtml = sanitizer.sanitize(request.getCont());
+        request.setCont(safeHtml);
         return bgmAgitFreeService.createBgmAgitFree(request);
     }
     @PutMapping("/free")
     public ApiResponse modifyBgmAgitFree(@Validated @ModelAttribute BgmAgitFreePutRequest request) {
+        String safeHtml = sanitizer.sanitize(request.getContent());
+        request.setContent(safeHtml);
         return bgmAgitFreeService.modifyBgmAgitFree(request);
     }
     @DeleteMapping("/free/{id}")

@@ -69,6 +69,16 @@ dependencies {
 
 	//파일 유틸
 	implementation 'commons-io:commons-io:2.15.1'
+
+	// Jsoup HTML Sanitizer
+ 	//  - HTML 파싱 및 정화(스크립트/이벤트 제거 등)에 사용
+ 	//  - Jsoup.clean()을 이용해 Safelist 기반의 안전한 HTML만 남김
+ 	implementation 'org.jsoup:jsoup:1.16.1'
+
+    //  - &lt;script&gt; 같은 HTML 엔티티를 실제 태그로 변환하는 데 사용
+	 implementation 'org.apache.commons:commons-text:1.14.0'
+	// commons-lang3를 명시적으로 고정(commons-text 취약 버전이 들어오는 것을 막기 위해)
+	implementation 'org.apache.commons:commons-lang3:3.18.0'
 }
 
 
