@@ -1,15 +1,9 @@
 import { Wrapper } from '../styles';
 import { useNavigate } from 'react-router-dom';
-import {
-  useDeletePost,
-  useInsertPost,
-  useNoticeDownloadFetch,
-  useNoticeFetch,
-  useUpdatePost,
-} from '../recoil/fetch.ts';
+import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts';
 import { useEffect, useRef, useState } from 'react';
-import { useRecoilValue } from 'recoil';
-import { noticeState } from '../recoil/state/noticeState.ts';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
+
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import type { default as ClassicEditorType } from '@ckeditor/ckeditor5-build-classic';
@@ -23,10 +17,11 @@ import { useSearchParams } from 'react-router-dom';
 import { FaTrash } from 'react-icons/fa';
 import { userState } from '../recoil/state/userState.ts';
 import { FaDownload } from 'react-icons/fa';
-import { useDetailCommunityFetch } from '../recoil/communityFetch.ts';
+import { useCommunityDownloadFetch, useDetailCommunityFetch } from '../recoil/communityFetch.ts';
 import { detailCommunityState } from '../recoil/state/community.ts';
+import type { CommunityFile } from '../types/community.ts';
 
-type NewNoticeState = {
+type NewCommunityState = {
   id: number | null;
   title: string;
   content: string;
@@ -38,37 +33,33 @@ export default function FreeDetail() {
   //디테일 조회
   const fetchDetailCommunity = useDetailCommunityFetch();
   const detailItem = useRecoilValue(detailCommunityState);
+  const setDetailItem = useSetRecoilState(detailCommunityState);
   console.log('-detailItem', detailItem);
 
-  const fetchNotice = useNoticeFetch();
-  const fetchNoticeDownload = useNoticeDownloadFetch();
+  const fetchCommunityDownload = useCommunityDownloadFetch();
 
   const [searchParams] = useSearchParams();
   const id = searchParams.get('id');
-  const page = 0;
 
   const { insert } = useInsertPost();
   const { update } = useUpdatePost();
   const { remove } = useDeletePost();
 
-  const notices = useRecoilValue(noticeState);
   const navigate = useNavigate();
 
   const [isEditMode, setIsEditMode] = useState(false);
 
-  const [newNotice, setNewNotice] = useState<NewNoticeState>({
+  const [community, setNewCommunity] = useState<NewCommunityState>({
     id: null,
     title: '',
     content: '',
   });
 
   const [files, setFiles] = useState<File[]>([]);
-  const [attachedFiles, setAttachedFiles] = useState<
-    { fileName: string; url: string; uuidName: string }[]
-  >([]);
+  const [attachedFiles, setAttachedFiles] = useState<CommunityFile[]>([]);
 
   const [deletedFileNames, setDeletedFileNames] = useState<string[]>([]);
-  const [deletedFileUuid, setDeletedFileUuid] = useState<string[]>([]);
+  const [deletedFileId, setDeletedFileId] = useState<string[]>([]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -79,30 +70,31 @@ export default function FreeDetail() {
   const editorRef = useRef<ClassicEditorType | null>(null);
 
   function fileDownload(id: string) {
-    const sliceId = id.split('/').pop()!; // 마지막 슬래시 이후 값만 추출
-    fetchNoticeDownload(sliceId);
+    console.log(id);
+
+    fetchCommunityDownload(id);
   }
 
   const handleSubmit = async () => {
     const formData = new FormData();
 
-    formData.append('bgmAgitNoticeTitle', newNotice.title);
-
-    formData.append('bgmAgitNoticeType', newNotice.type);
+    formData.append('title', community.title);
 
     if (isEditMode) {
-      formData.append('bgmAgitNoticeId', id!);
-      formData.append('bgmAgitNoticeCont', newNotice.content);
+      formData.append('id', id!);
+      formData.append('memberId', detailItem.memberId);
+      formData.append('content', community.content);
 
-      deletedFileUuid.forEach(uuid => {
-        formData.append('deletedFiles', uuid);
+      deletedFileId.forEach(id => {
+        formData.append('deletedFiles', id);
       });
 
       files.forEach(file => {
-        formData.append('multipartFiles', file);
+        formData.append('files', file);
       });
     } else {
-      formData.append('bgmAgitNoticeContent', newNotice.content);
+      formData.append('memberId', String(user?.id));
+      formData.append('cont', community.content);
       files.forEach(file => {
         formData.append('files', file);
       });
@@ -116,25 +108,25 @@ export default function FreeDetail() {
         if (!validation()) return;
 
         requestFn({
-          url: '/bgm-agit/notice',
+          url: '/bgm-agit/free',
           body: formData,
           ignoreHttpError: true,
           onSuccess: () => {
             if (!isEditMode) {
-              navigate(`/notice`);
-              toast.success('공지사항이 작성되었습니다.');
+              navigate(`/free`);
+              toast.success('게시글이 작성되었습니다.');
             } else {
               showConfirmModal({
                 message: (
                   <>
-                    공지사항이 저장되었습니다. <br /> 목록으로 이동하시겠습니까?
+                    게시글이 저장되었습니다. <br /> 목록으로 이동하시겠습니까?
                   </>
                 ),
                 onConfirm: () => {
-                  navigate(`/notice`);
+                  navigate(`/free`);
                 },
               });
-              fetchNotice({ page, titleOrCont: '' });
+              fetchDetailCommunity(id!);
             }
             setIsEditMode(false);
           },
@@ -145,17 +137,17 @@ export default function FreeDetail() {
 
   //삭제
   async function deleteData() {
-    const deleteId = newNotice.id!.toString();
+    const deleteId = community.id!.toString();
 
     showConfirmModal({
       message: '삭제하시겠습니까?',
       onConfirm: () => {
         remove({
-          url: `/bgm-agit/notice/${deleteId}`,
+          url: `/bgm-agit/free/${deleteId}`,
           ignoreHttpError: true,
           onSuccess: () => {
-            toast.success('공지사항이 삭제되었습니다.');
-            navigate(`/notice`);
+            toast.success('게시글이 삭제되었습니다.');
+            navigate(`/free`);
           },
         });
       },
@@ -163,39 +155,48 @@ export default function FreeDetail() {
   }
 
   function validation() {
-    if (!newNotice.title) {
+    if (!community.title) {
       toast.error('타이틀을 입력해주세요.');
       return false;
-    } else if (!newNotice.content) {
+    } else if (!community.content) {
       toast.error('내용을 입력해주세요.');
       return false;
     }
     return true;
   }
 
-  const notice = notices.content?.find(item => item.bgmAgitNoticeId === Number(id));
-
   useEffect(() => {
     if (id) {
-      fetchNotice({ page, titleOrCont: '' });
-
-      //디테일 추가
       fetchDetailCommunity(id);
     }
   }, []);
 
   useEffect(() => {
-    const matched = notices.content?.find(item => item.bgmAgitNoticeId === Number(id));
-    if (matched) {
-      setNewNotice({
-        id: matched.bgmAgitNoticeId,
-        title: matched.bgmAgitNoticeTitle,
-        content: matched.bgmAgitNoticeCont,
-        type: matched.bgmAgitNoticeType,
+    if (detailItem) {
+      setNewCommunity({
+        id: detailItem.id,
+        title: detailItem.title,
+        content: detailItem.content,
       });
-      setAttachedFiles(matched.bgmAgitNoticeFileList ?? []);
+      setAttachedFiles(detailItem.files ?? []);
     }
-  }, [notices, id]);
+  }, [detailItem, id]);
+
+  //언마운트
+  useEffect(() => {
+    return () => {
+      setDetailItem({
+        comments: [],
+        content: '',
+        files: [],
+        id: 0,
+        isAuthor: false,
+        memberId: '',
+        title: '',
+        registDate: '',
+      });
+    };
+  }, []);
 
   //동영상 변환 함수
   function convertOembedToIframe(html: string): string {
@@ -239,7 +240,7 @@ export default function FreeDetail() {
       {id && !isEditMode ? (
         <>
           <ButtonBox>
-            {user?.roles.includes('ROLE_ADMIN') && (
+            {detailItem?.isAuthor && (
               <>
                 <Button
                   onClick={() => {
@@ -256,7 +257,7 @@ export default function FreeDetail() {
             )}
             <Button
               onClick={() => {
-                navigate(`/notice`);
+                navigate(`/free`);
               }}
               color="#988271"
             >
@@ -265,18 +266,17 @@ export default function FreeDetail() {
           </ButtonBox>
           <TitleBox>
             <div>
-              <h3>{notice?.bgmAgitNoticeType === 'NOTICE' ? '공지사항' : '이벤트'}</h3>
-              <span>{notice?.registDate} </span>
+              <span>{detailItem?.registDate} </span>
             </div>
-            <h2>{notice?.bgmAgitNoticeTitle}</h2>
+            <h2>{detailItem?.title}</h2>
           </TitleBox>
-          {attachedFiles.length > 0 && (
+          {detailItem?.files?.length > 0 && (
             <StyledFileUl>
-              {attachedFiles.map((file, idx) => (
+              {detailItem.files.map((file, idx) => (
                 <li key={idx}>
                   <a
                     onClick={() => {
-                      fileDownload(file.url);
+                      fileDownload(file.uuidName);
                     }}
                   >
                     {file.fileName}
@@ -290,7 +290,7 @@ export default function FreeDetail() {
           <ContentBox
             className="ck-content"
             dangerouslySetInnerHTML={{
-              __html: convertOembedToIframe(String(notice?.bgmAgitNoticeCont)),
+              __html: convertOembedToIframe(String(detailItem?.content)),
             }}
           />
         </>
@@ -305,22 +305,16 @@ export default function FreeDetail() {
                 if (isEditMode) {
                   setIsEditMode(false);
                   setDeletedFileNames([]);
-                  setDeletedFileUuid([]);
+                  setDeletedFileId([]);
 
-                  const matched = notices.content?.find(
-                    item => item.bgmAgitNoticeId === Number(id)
-                  );
-                  if (matched) {
-                    setNewNotice({
-                      id: matched.bgmAgitNoticeId,
-                      title: matched.bgmAgitNoticeTitle,
-                      content: matched.bgmAgitNoticeCont,
-                      type: matched.bgmAgitNoticeType,
-                    });
-                    setAttachedFiles(matched.bgmAgitNoticeFileList ?? []);
-                  }
+                  setNewCommunity({
+                    id: detailItem.id,
+                    title: detailItem.title,
+                    content: detailItem.content,
+                  });
+                  setAttachedFiles(detailItem.files ?? []);
                 } else {
-                  navigate('/notice');
+                  navigate('/free');
                 }
               }}
               color="#988271"
@@ -329,43 +323,11 @@ export default function FreeDetail() {
             </Button>
           </ButtonBox>
           <EditorWrapper>
-            <StyledRadioGroup>
-              <StyledRadioLabel>
-                <input
-                  type="radio"
-                  name="bgmAgitNoticeType"
-                  value="NOTICE"
-                  checked={newNotice.type === 'NOTICE'}
-                  onChange={e =>
-                    setNewNotice(prev => ({
-                      ...prev,
-                      type: e.target.value as 'NOTICE' | 'EVENT',
-                    }))
-                  }
-                />
-                공지
-              </StyledRadioLabel>
-              <StyledRadioLabel>
-                <input
-                  type="radio"
-                  name="bgmAgitNoticeType"
-                  value="EVENT"
-                  checked={newNotice.type === 'EVENT'}
-                  onChange={e =>
-                    setNewNotice(prev => ({
-                      ...prev,
-                      type: e.target.value as 'NOTICE' | 'EVENT',
-                    }))
-                  }
-                />
-                이벤트
-              </StyledRadioLabel>
-            </StyledRadioGroup>
             <InputBox
               type="text"
               placeholder="제목을 입력해주세요."
-              value={newNotice.title}
-              onChange={e => setNewNotice(prev => ({ ...prev, title: e.target.value }))}
+              value={community.title}
+              onChange={e => setNewCommunity(prev => ({ ...prev, title: e.target.value }))}
             />
             <StyledFileUl>
               {attachedFiles
@@ -374,7 +336,7 @@ export default function FreeDetail() {
                   <li key={idx}>
                     <a
                       onClick={() => {
-                        fileDownload(file.url);
+                        fileDownload(file.fileUrl);
                       }}
                     >
                       {file.fileName}
@@ -382,7 +344,7 @@ export default function FreeDetail() {
                     </a>
                     <FaTrash
                       onClick={() => {
-                        setDeletedFileUuid(prev => [...prev, file.uuidName]);
+                        setDeletedFileId(prev => [...prev, file.id]);
                         setDeletedFileNames(prev => [...prev, file.fileName]);
                       }}
                     />
@@ -393,7 +355,7 @@ export default function FreeDetail() {
             <EditorBox>
               <CKEditor
                 editor={ClassicEditor}
-                data={newNotice.content}
+                data={community.content}
                 config={{
                   mediaEmbed: {
                     previewsInData: true,
@@ -414,7 +376,7 @@ export default function FreeDetail() {
 
                         return new Promise(resolve => {
                           insert<FormData>({
-                            url: '/bgm-agit/notice/file',
+                            url: '/bgm-agit/free/file',
                             body: formData,
                             ignoreHttpError: true,
                             onSuccess: (data: unknown) => {
@@ -432,7 +394,7 @@ export default function FreeDetail() {
                 }}
                 onChange={(_, editor) => {
                   const data = editor.getData();
-                  setNewNotice(prev => ({ ...prev, content: data }));
+                  setNewCommunity(prev => ({ ...prev, content: data }));
                 }}
               />
             </EditorBox>

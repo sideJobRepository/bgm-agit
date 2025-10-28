@@ -1,5 +1,5 @@
 import { atom } from 'recoil';
-import type { PagedCommunity } from '../../types/community.ts';
+import type { DetaileCommunity, PagedCommunity } from '../../types/community.ts';
 
 export const communityState = atom<PagedCommunity>({
   key: 'communityState',
@@ -15,7 +15,16 @@ export const communityState = atom<PagedCommunity>({
   },
 });
 
-export const detailCommunityState = atom({
-  key: 'communityState',
-  default: null,
+export const detailCommunityState = atom<DetaileCommunity>({
+  key: 'detailCommunityState',
+  default: {
+    comments: [],
+    content: '',
+    files: [],
+    id: 0,
+    isAuthor: false,
+    memberId: '',
+    title: '',
+    registDate: '',
+  },
 });
