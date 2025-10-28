@@ -37,4 +37,7 @@ public class BgmAgitCommonComment extends DateSuperClass {
     
     @Column(name = "BGM_AGIT_COMMON_COMMENT_DEPTH")
     private Integer depth; // 0=댓글, 1=대댓글
+    
+    @Column(name = "BGM_AGIT_COMMON_COMMENT_DEL_STATUS")
+    private String delStatus; // 삭제여부
 }
