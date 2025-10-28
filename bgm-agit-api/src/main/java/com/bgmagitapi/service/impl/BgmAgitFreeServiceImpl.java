@@ -56,18 +56,21 @@ public class BgmAgitFreeServiceImpl implements BgmAgitFreeService {
     public BgmAgitFreeGetDetailResponse getBgmAgitFreeDetail(Long id,Long memberId) {
         // 1. 기본 게시글
         BgmAgitFreeGetDetailResponse response = bgmAgitFreeRepository.findByFreeDetail(id, memberId);
-        if (response == null) return null;
+        if (response == null) {
+            return null;
+        };
     
         // 2. 파일
-        List<BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseFile> files =
-            bgmAgitFreeRepository.findFiles(id);
+        List<BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseFile> files = bgmAgitFreeRepository.findFiles(id);
         response.setFiles(files);
     
         // 3. 댓글
-        List<BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseComment> comments =
-            bgmAgitFreeRepository.findComments(id, memberId);
-    
+        List<BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseComment> comments = bgmAgitFreeRepository.findComments(id, memberId);
+        
         // 4. 댓글 트리 조립
+        comments.stream()
+                .filter(item -> "Y".equals( item.getDelStatus()))
+                .forEach(comment -> comment.setContent("삭제된 댓글입니다.")); // 삭제된 댓글이면 내용을 삭제된 댓글이라고 응답 보내주고 DB 에는 원본데이터 남겨야함
         Map<String, BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseComment> commentMap = new HashMap<>();
         for (BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseComment c : comments) {
             commentMap.put(c.getCommentId(), c);

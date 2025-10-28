@@ -1,6 +1,7 @@
 package com.bgmagitapi.entity;
 
 
+import com.bgmagitapi.controller.request.BgmAgitCommonCommentPutRequest;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
@@ -40,4 +41,13 @@ public class BgmAgitCommonComment extends DateSuperClass {
     
     @Column(name = "BGM_AGIT_COMMON_COMMENT_DEL_STATUS")
     private String delStatus; // 삭제여부
+    
+    
+    public void modifyComment(String comment) {
+        this.content = comment;
+    }
+    
+    public void removeComment(String delStatus) {
+        this.delStatus = delStatus;
+    }
 }

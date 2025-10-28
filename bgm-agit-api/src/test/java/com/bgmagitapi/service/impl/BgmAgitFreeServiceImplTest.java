@@ -80,7 +80,7 @@ class BgmAgitFreeServiceImplTest extends RepositoryAndServiceTestSupport {
     @Test
     void test4(){
         
-        BgmAgitFreeGetDetailResponse bgmAgitFreeDetail = bgmAgitFreeService.getBgmAgitFreeDetail(11L, 1L);
+        BgmAgitFreeGetDetailResponse bgmAgitFreeDetail = bgmAgitFreeService.getBgmAgitFreeDetail(1L, 1L);
         
         System.out.println("bgmAgitFreeDetail = " + bgmAgitFreeDetail);
     }
@@ -109,7 +109,6 @@ class BgmAgitFreeServiceImplTest extends RepositoryAndServiceTestSupport {
         ApiResponse apiResponse = bgmAgitFreeService.romoveBgmAgitFree(4L, 11L);
         
         System.out.println("apiResponse = " + apiResponse);
-        
         
     }
     

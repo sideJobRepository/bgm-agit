@@ -55,6 +55,7 @@ public class BgmAgitFreeGetDetailResponse {
         private List<BgmAgitFreeGetDetailResponseComment> children;
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
         private LocalDateTime registDate;
+        private String delStatus;
         
         public List<BgmAgitFreeGetDetailResponseComment> getChildren() {
             if(this.children == null) {
@@ -63,7 +64,7 @@ public class BgmAgitFreeGetDetailResponse {
             return children;
         }
         
-        public BgmAgitFreeGetDetailResponseComment(String commentId, String memberName, String content, Integer depth, Boolean isAuthor, String parentId,LocalDateTime registDate) {
+        public BgmAgitFreeGetDetailResponseComment(String commentId, String memberName, String content, Integer depth, Boolean isAuthor, String parentId,LocalDateTime registDate,String delStatus) {
             this.commentId = commentId;
             this.memberName = memberName;
             this.content = content;
@@ -71,6 +72,7 @@ public class BgmAgitFreeGetDetailResponse {
             this.isAuthor = isAuthor;
             this.parentId = parentId;
             this.registDate = registDate;
+            this.delStatus = delStatus;
         }
     }
 }

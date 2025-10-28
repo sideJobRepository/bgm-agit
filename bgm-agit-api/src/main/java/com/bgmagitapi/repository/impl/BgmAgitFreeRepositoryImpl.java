@@ -124,7 +124,8 @@ public class BgmAgitFreeRepositoryImpl implements BgmAgitFreeCustomRepository {
                                 .then(true)
                                 .otherwise(false),
                         bgmAgitCommonComment.parentId.stringValue(),
-                        bgmAgitCommonComment.registDate
+                        bgmAgitCommonComment.registDate,
+                        bgmAgitCommonComment.delStatus
                 ))
                 .from(bgmAgitCommonComment)
                 .where(bgmAgitCommonComment.targetId.eq(id))
