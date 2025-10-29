@@ -21,15 +21,17 @@ public class BgmAgitFreeGetDetailResponse {
     private Boolean isAuthor;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDateTime registDate;
+    private String memberName;
     private List<BgmAgitFreeGetDetailResponseFile> files;
     private List<BgmAgitFreeGetDetailResponseComment> comments;
     
-    public BgmAgitFreeGetDetailResponse(Long id, Long memberId, String title, String content,  LocalDateTime registDate) {
+    public BgmAgitFreeGetDetailResponse(Long id, Long memberId, String title, String content,  LocalDateTime registDate,String memberName) {
         this.id = id;
         this.memberId = memberId;
         this.title = title;
         this.content = content;
         this.registDate = registDate;
+        this.memberName = memberName;
     }
     
     @Data

@@ -88,7 +88,8 @@ public class BgmAgitFreeRepositoryImpl implements BgmAgitFreeCustomRepository {
                         bgmAgitMember.bgmAgitMemberId,
                         bgmAgitFree.bgmAgitFreeTitle,
                         bgmAgitFree.bgmAgitFreeCont,
-                        bgmAgitFree.registDate
+                        bgmAgitFree.registDate,
+                        bgmAgitMember.bgmAgitMemberName
                 ))
                 .from(bgmAgitFree)
                 .join(bgmAgitFree.bgmAgitMember, bgmAgitMember)
