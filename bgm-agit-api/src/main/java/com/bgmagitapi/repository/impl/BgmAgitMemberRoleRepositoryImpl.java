@@ -44,11 +44,8 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                 .join(bgmAgitMemberRole.bgmAgitRole, bgmAgitRole)
                 .where(emailOrNameOrPhoneNo(res))
                 .orderBy(
-                        new CaseBuilder()
-                                .when(bgmAgitRole.bgmAgitRoleName.eq("ADMIN")).then(0)
-                                .otherwise(1).asc(),              // ADMIN 먼저
-                        bgmAgitMember.bgmAgitMemberId.asc(), // 회원 PK 타이브레이커
-                        bgmAgitRole.bgmAgitRoleId.asc()      // 역할 PK 타이브레이커
+                       bgmAgitRole.bgmAgitRoleName.asc(),
+                        bgmAgitMember.registDate.asc()
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
