@@ -212,6 +212,8 @@ export default function FreeDetail() {
           ignoreHttpError: true,
           onSuccess: () => {
             toast.success('댓글 작성되었습니다.');
+            setWriteReplyMode(false);
+            setWriteConent('');
             if (id) fetchDetailCommunity(id);
           },
         });
