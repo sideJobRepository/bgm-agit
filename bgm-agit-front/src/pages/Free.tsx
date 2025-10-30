@@ -9,8 +9,11 @@ import { useNavigate } from 'react-router-dom';
 import { useCommunityFetch } from '../recoil/communityFetch.ts';
 import { communityState } from '../recoil/state/community.ts';
 import { FaCommentDots } from 'react-icons/fa';
+import { userState } from '../recoil/state/userState.ts';
 
 export default function Free() {
+  const user = useRecoilValue(userState);
+
   const fetchCommunity = useCommunityFetch();
 
   const navigate = useNavigate();
@@ -45,16 +48,18 @@ export default function Free() {
           </SearchBox>
         </SearchWrapper>
         <TableBox>
-          <ButtonBox>
-            <Button
-              color="#988271"
-              onClick={() => {
-                navigate(`/freeDetail`);
-              }}
-            >
-              작성
-            </Button>
-          </ButtonBox>
+          {user && (
+            <ButtonBox>
+              <Button
+                color="#988271"
+                onClick={() => {
+                  navigate(`/freeDetail`);
+                }}
+              >
+                작성
+              </Button>
+            </ButtonBox>
+          )}
           <TableScrollBox>
             <Table>
               <thead>
