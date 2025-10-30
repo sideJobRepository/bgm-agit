@@ -69,8 +69,8 @@ export default function FreeDetail() {
   const [writeReplyMdoe, setWriteReplyMode] = useState(false);
   const [writeConent, setWriteConent] = useState('');
 
-  //수정 댓글 모드
-  const [editReplyMdoe, setEditWriteReplyMode] = useState(false);
+  // 수정 대상 commentId
+  const [editCommentId, setEditCommentId] = useState<number | null>(null);
 
   // 답글 입력 상태
   const [replyToId, setReplyToId] = useState<number | null>(null);
@@ -188,7 +188,7 @@ export default function FreeDetail() {
   }
 
   //댓글 저장
-  const handleReplySubmit = async (id: number | null, mode: boolean) => {
+  const handleReplySubmit = async (commentId: number | null, mode: boolean) => {
     //로그인 체크
     if (!user) {
       showConfirmModal({
@@ -204,10 +204,11 @@ export default function FreeDetail() {
       return;
     }
     let requestFn = insert;
-    let param = {
+    const param = {
       content: writeConent,
       freeId: detailItem.id,
-      parentId: id,
+      parentId: commentId,
+      commentId: commentId,
     };
 
     if (!mode) {
@@ -226,12 +227,30 @@ export default function FreeDetail() {
             setWriteReplyMode(false);
             setReplyToId(null);
             setWriteConent('');
+            setEditCommentId(null);
             if (id) fetchDetailCommunity(id);
           },
         });
       },
     });
   };
+
+  //댓글 삭제
+  async function deleteReplyData(deleteId: number) {
+    showConfirmModal({
+      message: '삭제하시겠습니까?',
+      onConfirm: () => {
+        remove({
+          url: `/bgm-agit/comment/${deleteId}`,
+          ignoreHttpError: true,
+          onSuccess: () => {
+            toast.success('댓글이 삭제되었습니다.');
+            if (id) fetchDetailCommunity(id);
+          },
+        });
+      },
+    });
+  }
 
   useEffect(() => {
     if (id) {
@@ -369,7 +388,14 @@ export default function FreeDetail() {
                 <FaCommentDots /> 댓글 <span>{detailItem?.comments?.length}</span>
               </h3>
               {!writeReplyMdoe && (
-                <Button color="#F2EDEA" onClick={() => setWriteReplyMode(true)}>
+                <Button
+                  color="#F2EDEA"
+                  onClick={() => {
+                    setWriteReplyMode(true);
+                    setReplyToId(null);
+                    setEditCommentId(null);
+                  }}
+                >
                   댓글달기
                 </Button>
               )}
@@ -401,22 +427,68 @@ export default function FreeDetail() {
                 <div className="reply-top">
                   <span>
                     <strong>{item.memberName}</strong> {item.registDate}
-                    {item.isAuthor && (
+                    {item.isAuthor && item.delStatus === 'N' && (
                       <div className="reply-button-box">
-                        <Button color="#093A6E">수정</Button>
-                        <Button color="#FF5E57">삭제</Button>
+                        {editCommentId === item.commentId ? (
+                          <>
+                            <Button
+                              color="#1A7D55"
+                              onClick={() => handleReplySubmit(item.commentId, false)}
+                            >
+                              저장
+                            </Button>
+                            <Button
+                              color="#FF5E57"
+                              onClick={() => {
+                                setEditCommentId(null);
+                                setWriteConent('');
+                              }}
+                            >
+                              취소
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              color="#093A6E"
+                              onClick={() => {
+                                setEditCommentId(item.commentId);
+                                setWriteConent(item.content);
+                                setWriteReplyMode(false);
+                                setReplyToId(null);
+                              }}
+                            >
+                              수정
+                            </Button>
+                            <Button color="#FF5E57" onClick={() => deleteReplyData(item.commentId)}>
+                              삭제
+                            </Button>
+                          </>
+                        )}
                       </div>
                     )}
                   </span>
                 </div>
                 <div className="reply-center">
-                  {item.content}
+                  {editCommentId === item.commentId ? (
+                    <div className="textarea-box">
+                      <TextArea
+                        value={writeConent}
+                        onChange={e => setWriteConent(e.target.value)}
+                        placeholder="댓글을 수정해주세요."
+                      />
+                    </div>
+                  ) : (
+                    <div className="reply-center">{item.content}</div>
+                  )}
                   {item.delStatus === 'N' && (
                     <div className="reply-button-box">
                       <Button
                         color="#F2EDEA"
                         onClick={() => {
                           setReplyToId(item.commentId);
+                          setWriteReplyMode(false);
+                          setEditCommentId(null);
                           setWriteConent('');
                         }}
                       >
@@ -455,13 +527,60 @@ export default function FreeDetail() {
                           <strong>{item.memberName}</strong> {item.registDate}
                           {item.isAuthor && item.delStatus === 'N' && (
                             <div className="reply-button-box">
-                              <Button color="#093A6E">수정</Button>
-                              <Button color="#FF5E57">삭제</Button>
+                              {editCommentId === item.commentId ? (
+                                <>
+                                  <Button
+                                    color="#1A7D55"
+                                    onClick={() => handleReplySubmit(item.commentId, false)}
+                                  >
+                                    저장
+                                  </Button>
+                                  <Button
+                                    color="#FF5E57"
+                                    onClick={() => {
+                                      setEditCommentId(null);
+                                      setWriteConent('');
+                                    }}
+                                  >
+                                    취소
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <Button
+                                    color="#093A6E"
+                                    onClick={() => {
+                                      setEditCommentId(item.commentId);
+                                      setWriteConent(item.content);
+                                      setWriteReplyMode(false);
+                                      setReplyToId(null);
+                                    }}
+                                  >
+                                    수정
+                                  </Button>
+                                  <Button
+                                    color="#FF5E57"
+                                    onClick={() => deleteReplyData(item.commentId)}
+                                  >
+                                    삭제
+                                  </Button>
+                                </>
+                              )}
                             </div>
                           )}
                         </span>
                       </div>
-                      <div className="reply-center">{item.content}</div>
+                      {editCommentId === item.commentId ? (
+                        <div className="textarea-box">
+                          <TextArea
+                            value={writeConent}
+                            onChange={e => setWriteConent(e.target.value)}
+                            placeholder="댓글을 수정해주세요."
+                          />
+                        </div>
+                      ) : (
+                        <div className="reply-center">{item.content}</div>
+                      )}
                     </div>
                   </div>
                 ))}
