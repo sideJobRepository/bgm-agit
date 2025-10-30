@@ -72,6 +72,16 @@ export default function FreeDetail() {
   //수정 댓글 모드
   const [editReplyMdoe, setEditWriteReplyMode] = useState(false);
 
+  // 답글 입력 상태
+  const [replyToId, setReplyToId] = useState<number | null>(null);
+  const replyInputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    if (replyToId && replyInputRef.current) {
+      replyInputRef.current.focus(); // 답글창 생길 때 자동 포커스
+    }
+  }, [replyToId]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setFiles(Array.from(e.target.files));
@@ -178,7 +188,7 @@ export default function FreeDetail() {
   }
 
   //댓글 저장
-  const handleReplySubmit = async () => {
+  const handleReplySubmit = async (id: number | null, mode: boolean) => {
     //로그인 체크
     if (!user) {
       showConfirmModal({
@@ -197,9 +207,10 @@ export default function FreeDetail() {
     let param = {
       content: writeConent,
       freeId: detailItem.id,
+      parentId: id,
     };
 
-    if (!writeReplyMdoe) {
+    if (!mode) {
       requestFn = update;
     }
 
@@ -211,8 +222,9 @@ export default function FreeDetail() {
           body: param,
           ignoreHttpError: true,
           onSuccess: () => {
-            toast.success('댓글 작성되었습니다.');
+            toast.success('댓글이 작성되었습니다.');
             setWriteReplyMode(false);
+            setReplyToId(null);
             setWriteConent('');
             if (id) fetchDetailCommunity(id);
           },
@@ -365,7 +377,7 @@ export default function FreeDetail() {
             {writeReplyMdoe && (
               <div className="textarea-box">
                 <div className="reply-button-box">
-                  <Button color="#1A7D55" onClick={() => handleReplySubmit()}>
+                  <Button color="#1A7D55" onClick={() => handleReplySubmit(null, true)}>
                     저장
                   </Button>
                   <Button
@@ -401,10 +413,39 @@ export default function FreeDetail() {
                   {item.content}
                   {item.delStatus === 'N' && (
                     <div className="reply-button-box">
-                      <Button color="#F2EDEA">답글</Button>
+                      <Button
+                        color="#F2EDEA"
+                        onClick={() => {
+                          setReplyToId(item.commentId);
+                          setWriteConent('');
+                        }}
+                      >
+                        답글
+                      </Button>
                     </div>
                   )}
                 </div>
+                {replyToId === item.commentId && (
+                  <div className="textarea-box">
+                    <div className="reply-button-box">
+                      <Button
+                        color="#1A7D55"
+                        onClick={() => handleReplySubmit(item.commentId, true)}
+                      >
+                        저장
+                      </Button>
+                      <Button color="#FF5E57" onClick={() => setReplyToId(null)}>
+                        취소
+                      </Button>
+                    </div>
+                    <TextArea
+                      ref={replyInputRef}
+                      value={writeConent}
+                      onChange={e => setWriteConent(e.target.value)}
+                      placeholder="답글을 입력해주세요."
+                    />
+                  </div>
+                )}
                 {item?.children?.map(item => (
                   <div className="reply-children-box" key={item.commentId}>
                     <BiSubdirectoryRight />
@@ -699,9 +740,11 @@ const ReplyBox = styled.div<WithTheme>`
 
   .textarea-box {
     display: flex;
+    padding: 10px 0;
     flex-direction: column;
     gap: 4px;
     justify-content: right;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
 
     .reply-button-box {
       justify-content: right;
