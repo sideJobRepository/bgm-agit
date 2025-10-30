@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts';
 import { useEffect, useRef, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
-
+import { BiSubdirectoryRight } from 'react-icons/bi';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import type { default as ClassicEditorType } from '@ckeditor/ckeditor5-build-classic';
@@ -14,7 +14,7 @@ import type { WithTheme } from '../styles/styled-props.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import { toast } from 'react-toastify';
 import { useSearchParams } from 'react-router-dom';
-import { FaTrash } from 'react-icons/fa';
+import { FaCommentDots, FaTrash } from 'react-icons/fa';
 import { userState } from '../recoil/state/userState.ts';
 import { FaDownload } from 'react-icons/fa';
 import { useCommunityDownloadFetch, useDetailCommunityFetch } from '../recoil/communityFetch.ts';
@@ -60,6 +60,11 @@ export default function FreeDetail() {
 
   const [deletedFileNames, setDeletedFileNames] = useState<string[]>([]);
   const [deletedFileId, setDeletedFileId] = useState<string[]>([]);
+
+  //댓글 입력 모드
+  const [writeReplyMdoe, setWriteReplyMode] = useState(false);
+  //수정 댓글 모드
+  const [editReplyMdoe, setEditWriteReplyMode] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -194,6 +199,7 @@ export default function FreeDetail() {
         memberId: '',
         title: '',
         registDate: '',
+        memberName: '',
       });
     };
   }, []);
@@ -266,6 +272,7 @@ export default function FreeDetail() {
           </ButtonBox>
           <TitleBox>
             <div>
+              <h3>{detailItem?.memberName}</h3>
               <span>{detailItem?.registDate} </span>
             </div>
             <h2>{detailItem?.title}</h2>
@@ -293,6 +300,76 @@ export default function FreeDetail() {
               __html: convertOembedToIframe(String(detailItem?.content)),
             }}
           />
+          <ReplyBox>
+            <div className="reply-header-box">
+              <h3>
+                <FaCommentDots /> 댓글 <span>{detailItem?.comments?.length}</span>
+              </h3>
+              {!writeReplyMdoe && (
+                <Button color="#F2EDEA" onClick={() => setWriteReplyMode(true)}>
+                  댓글달기
+                </Button>
+              )}
+            </div>
+            {writeReplyMdoe && (
+              <div className="textarea-box">
+                <div className="reply-button-box">
+                  <Button color="#1A7D55">저장</Button>
+                  <Button
+                    onClick={() => {
+                      setWriteReplyMode(false);
+                    }}
+                    color="#FF5E57"
+                  >
+                    취소
+                  </Button>
+                </div>
+                <TextArea placeholder="댓글을 입력해주세요." />
+              </div>
+            )}
+            {detailItem?.comments?.map(item => (
+              <div className="reply-box" key={item.commentId}>
+                <div className="reply-top">
+                  <span>
+                    <strong>{item.memberName}</strong> {item.registDate}
+                    {item.isAuthor && (
+                      <div className="reply-button-box">
+                        <Button color="#093A6E">수정</Button>
+                        <Button color="#FF5E57">삭제</Button>
+                      </div>
+                    )}
+                  </span>
+                </div>
+                <div className="reply-center">
+                  {item.content}
+                  {item.delStatus === 'N' && (
+                    <div className="reply-button-box">
+                      <Button color="#F2EDEA">답글</Button>
+                    </div>
+                  )}
+                </div>
+                {item?.children?.map(item => (
+                  <div className="reply-children-box" key={item.commentId}>
+                    <BiSubdirectoryRight />
+                    <div>
+                      <div className="reply-top">
+                        <span>
+                          <strong>{item.memberName}</strong> {item.registDate}
+                          {item.isAuthor && item.delStatus === 'N' && (
+                            <div className="reply-button-box">
+                              <Button color="#093A6E">수정</Button>
+                              <Button color="#FF5E57">삭제</Button>
+                            </div>
+                          )}
+                        </span>
+                      </div>
+                      <div className="reply-center">{item.content}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </ReplyBox>
         </>
       ) : (
         <>
@@ -480,25 +557,6 @@ const Button = styled.button<WithTheme & { color: string }>`
   }
 `;
 
-const StyledRadioGroup = styled.div`
-  display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
-`;
-
-const StyledRadioLabel = styled.label<WithTheme>`
-  display: flex;
-  align-items: center;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  color: ${({ theme }) => theme.colors.subColor};
-
-  input {
-    cursor: pointer;
-    margin-right: 6px;
-    accent-color: ${({ theme }) => theme.colors.noticeColor};
-  }
-`;
-
 const TitleBox = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
@@ -571,6 +629,110 @@ const ContentBox = styled.div<WithTheme>`
     margin: 20px 0;
     max-height: unset;
     overflow: visible;
+  }
+`;
+
+const ReplyBox = styled.div<WithTheme>`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 16px;
+  padding: 10px;
+
+  .textarea-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    justify-content: right;
+
+    .reply-button-box {
+      justify-content: right;
+    }
+  }
+
+  .reply-button-box {
+    display: flex;
+    margin-top: 6px;
+    gap: 4px;
+
+    button {
+      font-family: 'Jua', sans-serif;
+      font-size: ${({ theme }) => theme.sizes.xsmall};
+      padding: 4px 6px;
+    }
+  }
+
+  .reply-header-box {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+    font-family: 'Jua', sans-serif;
+
+    h3 {
+      display: flex;
+      color: ${({ theme }) => theme.colors.bronzeColor};
+      gap: 6px;
+      align-items: center;
+
+      span {
+        font-size: ${({ theme }) => theme.sizes.medium};
+        color: ${({ theme }) => theme.colors.bronzeColor};
+      }
+    }
+
+    button {
+      color: ${({ theme }) => theme.colors.bronzeColor};
+      font-family: 'Jua', sans-serif;
+    }
+  }
+
+  .reply-box {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 10px;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+  }
+
+  .reply-children-box {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .reply-top {
+    font-size: ${({ theme }) => theme.sizes.xsmall};
+    color: ${({ theme }) => theme.colors.navColor};
+    margin-bottom: 12px;
+
+    strong {
+      font-family: 'Jua', sans-serif;
+      color: ${({ theme }) => theme.colors.text};
+      font-size: ${({ theme }) => theme.sizes.medium};
+      margin-right: 8px;
+    }
+  }
+  .reply-center {
+    color: ${({ theme }) => theme.colors.subColor};
+    font-size: ${({ theme }) => theme.sizes.small};
+
+    button {
+      color: ${({ theme }) => theme.colors.bronzeColor};
+    }
+  }
+`;
+
+const TextArea = styled.textarea<WithTheme>`
+  width: 100%;
+  padding: 8px;
+  resize: none;
+  font-size: ${({ theme }) => theme.sizes.small};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 6px;
+  margin-bottom: 20px;
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.noticeColor};
   }
 `;
 

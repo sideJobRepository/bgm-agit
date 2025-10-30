@@ -33,6 +33,7 @@ export type Comment = {
   memberName: string;
   parentId: string;
   registDate: string;
+  delStatus: string;
 };
 
 export type CommunityFile = {
@@ -51,4 +52,5 @@ export type DetaileCommunity = {
   memberId: string;
   title: string;
   registDate: string;
+  memberName: string;
 };

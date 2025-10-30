@@ -26,5 +26,6 @@ export const detailCommunityState = atom<DetaileCommunity>({
     memberId: '',
     title: '',
     registDate: '',
+    memberName: '',
   },
 });
