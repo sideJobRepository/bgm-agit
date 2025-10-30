@@ -1,7 +1,7 @@
 import { Wrapper } from '../styles';
 import { useNavigate } from 'react-router-dom';
 import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { BiSubdirectoryRight } from 'react-icons/bi';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
@@ -20,6 +20,7 @@ import { FaDownload } from 'react-icons/fa';
 import { useCommunityDownloadFetch, useDetailCommunityFetch } from '../recoil/communityFetch.ts';
 import { detailCommunityState } from '../recoil/state/community.ts';
 import type { CommunityFile } from '../types/community.ts';
+import LoginMoadl from '../components/LoginMoadl.tsx';
 
 type NewCommunityState = {
   id: number | null;
@@ -29,6 +30,9 @@ type NewCommunityState = {
 
 export default function FreeDetail() {
   const user = useRecoilValue(userState);
+
+  //로그인 모달
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   //디테일 조회
   const fetchDetailCommunity = useDetailCommunityFetch();
@@ -63,6 +67,8 @@ export default function FreeDetail() {
 
   //댓글 입력 모드
   const [writeReplyMdoe, setWriteReplyMode] = useState(false);
+  const [writeConent, setWriteConent] = useState('');
+
   //수정 댓글 모드
   const [editReplyMdoe, setEditWriteReplyMode] = useState(false);
 
@@ -80,6 +86,7 @@ export default function FreeDetail() {
     fetchCommunityDownload(id);
   }
 
+  //커뮤니티 저장
   const handleSubmit = async () => {
     const formData = new FormData();
 
@@ -169,6 +176,48 @@ export default function FreeDetail() {
     }
     return true;
   }
+
+  //댓글 저장
+  const handleReplySubmit = async () => {
+    //로그인 체크
+    if (!user) {
+      showConfirmModal({
+        message: (
+          <>
+            로그인 후 이용 가능합니다. <br /> 로그인 하시겠습니까?
+          </>
+        ),
+        onConfirm: () => {
+          setIsLoginModalOpen(true);
+        },
+      });
+      return;
+    }
+    let requestFn = insert;
+    let param = {
+      content: writeConent,
+      freeId: detailItem.id,
+    };
+
+    if (!writeReplyMdoe) {
+      requestFn = update;
+    }
+
+    showConfirmModal({
+      message: '저장하시겠습니까?',
+      onConfirm: () => {
+        requestFn({
+          url: '/bgm-agit/comment',
+          body: param,
+          ignoreHttpError: true,
+          onSuccess: () => {
+            toast.success('댓글 작성되었습니다.');
+            if (id) fetchDetailCommunity(id);
+          },
+        });
+      },
+    });
+  };
 
   useEffect(() => {
     if (id) {
@@ -314,7 +363,9 @@ export default function FreeDetail() {
             {writeReplyMdoe && (
               <div className="textarea-box">
                 <div className="reply-button-box">
-                  <Button color="#1A7D55">저장</Button>
+                  <Button color="#1A7D55" onClick={() => handleReplySubmit()}>
+                    저장
+                  </Button>
                   <Button
                     onClick={() => {
                       setWriteReplyMode(false);
@@ -324,7 +375,11 @@ export default function FreeDetail() {
                     취소
                   </Button>
                 </div>
-                <TextArea placeholder="댓글을 입력해주세요." />
+                <TextArea
+                  value={writeConent}
+                  onChange={e => setWriteConent(e.target.value)}
+                  placeholder="댓글을 입력해주세요."
+                />
               </div>
             )}
             {detailItem?.comments?.map(item => (
@@ -478,6 +533,7 @@ export default function FreeDetail() {
           </EditorWrapper>
         </>
       )}
+      {isLoginModalOpen && <LoginMoadl onClose={() => setIsLoginModalOpen(false)} />}
     </Wrapper>
   );
 }
