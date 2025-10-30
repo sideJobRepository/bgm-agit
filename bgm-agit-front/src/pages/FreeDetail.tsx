@@ -328,7 +328,7 @@ export default function FreeDetail() {
       {id && !isEditMode ? (
         <>
           <ButtonBox>
-            {detailItem?.isAuthor && (
+            {(detailItem?.isAuthor || user?.roles.includes('ROLE_ADMIN')) && (
               <>
                 <Button
                   onClick={() => {
@@ -427,46 +427,50 @@ export default function FreeDetail() {
                 <div className="reply-top">
                   <span>
                     <strong>{item.memberName}</strong> {item.registDate}
-                    {item.isAuthor && item.delStatus === 'N' && (
-                      <div className="reply-button-box">
-                        {editCommentId === item.commentId ? (
-                          <>
-                            <Button
-                              color="#1A7D55"
-                              onClick={() => handleReplySubmit(item.commentId, false)}
-                            >
-                              저장
-                            </Button>
-                            <Button
-                              color="#FF5E57"
-                              onClick={() => {
-                                setEditCommentId(null);
-                                setWriteConent('');
-                              }}
-                            >
-                              취소
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button
-                              color="#093A6E"
-                              onClick={() => {
-                                setEditCommentId(item.commentId);
-                                setWriteConent(item.content);
-                                setWriteReplyMode(false);
-                                setReplyToId(null);
-                              }}
-                            >
-                              수정
-                            </Button>
-                            <Button color="#FF5E57" onClick={() => deleteReplyData(item.commentId)}>
-                              삭제
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    )}
+                    {(item.isAuthor || user?.roles.includes('ROLE_ADMIN')) &&
+                      item.delStatus === 'N' && (
+                        <div className="reply-button-box">
+                          {editCommentId === item.commentId ? (
+                            <>
+                              <Button
+                                color="#1A7D55"
+                                onClick={() => handleReplySubmit(item.commentId, false)}
+                              >
+                                저장
+                              </Button>
+                              <Button
+                                color="#FF5E57"
+                                onClick={() => {
+                                  setEditCommentId(null);
+                                  setWriteConent('');
+                                }}
+                              >
+                                취소
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                color="#093A6E"
+                                onClick={() => {
+                                  setEditCommentId(item.commentId);
+                                  setWriteConent(item.content);
+                                  setWriteReplyMode(false);
+                                  setReplyToId(null);
+                                }}
+                              >
+                                수정
+                              </Button>
+                              <Button
+                                color="#FF5E57"
+                                onClick={() => deleteReplyData(item.commentId)}
+                              >
+                                삭제
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      )}
                   </span>
                 </div>
                 <div className="reply-center">
@@ -525,49 +529,50 @@ export default function FreeDetail() {
                       <div className="reply-top">
                         <span>
                           <strong>{item.memberName}</strong> {item.registDate}
-                          {item.isAuthor && item.delStatus === 'N' && (
-                            <div className="reply-button-box">
-                              {editCommentId === item.commentId ? (
-                                <>
-                                  <Button
-                                    color="#1A7D55"
-                                    onClick={() => handleReplySubmit(item.commentId, false)}
-                                  >
-                                    저장
-                                  </Button>
-                                  <Button
-                                    color="#FF5E57"
-                                    onClick={() => {
-                                      setEditCommentId(null);
-                                      setWriteConent('');
-                                    }}
-                                  >
-                                    취소
-                                  </Button>
-                                </>
-                              ) : (
-                                <>
-                                  <Button
-                                    color="#093A6E"
-                                    onClick={() => {
-                                      setEditCommentId(item.commentId);
-                                      setWriteConent(item.content);
-                                      setWriteReplyMode(false);
-                                      setReplyToId(null);
-                                    }}
-                                  >
-                                    수정
-                                  </Button>
-                                  <Button
-                                    color="#FF5E57"
-                                    onClick={() => deleteReplyData(item.commentId)}
-                                  >
-                                    삭제
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                          )}
+                          {(item.isAuthor || user?.roles.includes('ROLE_ADMIN')) &&
+                            item.delStatus === 'N' && (
+                              <div className="reply-button-box">
+                                {editCommentId === item.commentId ? (
+                                  <>
+                                    <Button
+                                      color="#1A7D55"
+                                      onClick={() => handleReplySubmit(item.commentId, false)}
+                                    >
+                                      저장
+                                    </Button>
+                                    <Button
+                                      color="#FF5E57"
+                                      onClick={() => {
+                                        setEditCommentId(null);
+                                        setWriteConent('');
+                                      }}
+                                    >
+                                      취소
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Button
+                                      color="#093A6E"
+                                      onClick={() => {
+                                        setEditCommentId(item.commentId);
+                                        setWriteConent(item.content);
+                                        setWriteReplyMode(false);
+                                        setReplyToId(null);
+                                      }}
+                                    >
+                                      수정
+                                    </Button>
+                                    <Button
+                                      color="#FF5E57"
+                                      onClick={() => deleteReplyData(item.commentId)}
+                                    >
+                                      삭제
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
+                            )}
                         </span>
                       </div>
                       {editCommentId === item.commentId ? (
