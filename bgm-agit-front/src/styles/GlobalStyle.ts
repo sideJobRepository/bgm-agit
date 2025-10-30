@@ -56,4 +56,11 @@ export const GlobalStyle = createGlobalStyle`
     ul, ol {
         list-style: none;
     }
+
+    /* 모바일 가로 세로 깨지는 문제 수정 */
+    .react-confirm-alert-overlay {
+        width: 100vw;
+        height: 100vh;
+        
+    }
 `;
