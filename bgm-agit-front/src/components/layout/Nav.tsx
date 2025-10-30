@@ -24,6 +24,8 @@ export default function Nav() {
     return { mainMenu: null, subMenu: null };
   }
 
+  console.log('main---------!!', mainMenu, subMenu, 'location', location);
+
   return (
     <Wrapper>
       <NavBox>
@@ -56,10 +58,10 @@ export default function Nav() {
             <IoChevronForward />
             <a
               onClick={() => {
-                navigate('/notice');
+                navigate(location.pathname === '/noticeDetail' ? '/notice' : '/free');
               }}
             >
-              공지사항
+              {location.pathname === '/noticeDetail' ? '공지사항' : '자유 게시판'}
             </a>
           </>
         )}

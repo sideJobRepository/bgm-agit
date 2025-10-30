@@ -46,8 +46,6 @@ export function useFetchMainData(param?: {
   const trigger = useRecoilValue(imageUploadState);
 
   useEffect(() => {
-    console.log('param', param?.labelGb);
-
     request(
       () =>
         api
@@ -73,9 +71,6 @@ export function useFetchDetailData(param?: {
   const pageData = useRecoilValue(searchState);
 
   useEffect(() => {
-    console.log('param', pageData);
-    console.log('labelGb', param?.link);
-
     let paramLink;
 
     if (param?.link) paramLink = param?.link.split('/').filter(Boolean).pop();
@@ -161,6 +156,7 @@ export function useRoletFetch() {
   return fetchRole;
 }
 
+//공지사항
 export function useNoticeFetch() {
   const { request } = useRequest();
   const setNotice = useSetRecoilState(noticeState);

@@ -51,7 +51,7 @@ export default function TopHeader() {
   //메뉴 이동 이벤트
   function subMoveEnvent(item: SubMenu) {
     //오픈 채팅방 링크로 이동
-    if ([9, 13, 17].includes(item.bgmAgitMainMenuId)) {
+    if ([9, 17, 19].includes(item.bgmAgitMainMenuId)) {
       window.open(item.link, '_blank');
     } else {
       navigate(item.link);

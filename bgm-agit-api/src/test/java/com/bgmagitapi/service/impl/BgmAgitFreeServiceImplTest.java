@@ -4,13 +4,18 @@ import com.bgmagitapi.RepositoryAndServiceTestSupport;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.controller.BgmAgitFreeController;
 import com.bgmagitapi.controller.request.BgmAgitFreePostRequest;
+import com.bgmagitapi.controller.request.BgmAgitFreePutRequest;
+import com.bgmagitapi.controller.response.BgmAgitFreeGetDetailResponse;
+import com.bgmagitapi.controller.response.BgmAgitFreeGetResponse;
 import com.bgmagitapi.entity.BgmAgitFree;
 import com.bgmagitapi.entity.BgmAgitMember;
+import com.bgmagitapi.page.PageResponse;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.service.BgmAgitFreeService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,9 +36,21 @@ class BgmAgitFreeServiceImplTest extends RepositoryAndServiceTestSupport {
     @Autowired
     private BgmAgitMemberRepository bgmAgitMemberRepository;
     
+    @DisplayName("자유 게시판 전체 조회 댓글갯수 포함")
+    @Test
+    void test1(){
+        
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        
+        PageResponse<BgmAgitFreeGetResponse> bgmAgitFree = bgmAgitFreeService.getBgmAgitFree(pageRequest,"박지수");
+        
+        System.out.println("bgmAgitFree = " + bgmAgitFree);
+        
+    }
+    
     @DisplayName("자유 게시판 작성 테스트")
     @Test
-    void test1() throws IOException {
+    void test2() throws IOException {
         
         BgmAgitFreePostRequest request = new BgmAgitFreePostRequest(11L, "제목 테스트", "내용 테스트", null);
         
@@ -57,4 +74,43 @@ class BgmAgitFreeServiceImplTest extends RepositoryAndServiceTestSupport {
         System.out.println("bgmAgitFree = " + bgmAgitFree);
         
     }
+    
+    
+    @DisplayName("자유 게시판 상세조회")
+    @Test
+    void test4(){
+        
+        BgmAgitFreeGetDetailResponse bgmAgitFreeDetail = bgmAgitFreeService.getBgmAgitFreeDetail(1L, 1L);
+        
+        System.out.println("bgmAgitFreeDetail = " + bgmAgitFreeDetail);
+    }
+    
+    @DisplayName("자유 게시판 수정")
+    @Test
+    void test3() throws IOException {
+        List<Long> deleteFiles = List.of(25L, 26L);
+      
+        File file = new File("src/test/java/com/bgmagitapi/file/로그인캡처2.png");
+        FileInputStream fis1 = new FileInputStream(file);
+        
+        
+        MockMultipartFile multipartFile = new MockMultipartFile(
+                    "bgmAgitFree", file.getName(), "png",fis1
+            );
+        List<MultipartFile> multipartFile3 = List.of(multipartFile);
+        BgmAgitFreePutRequest bgmAgitFreePutRequest = new BgmAgitFreePutRequest(12L, 11L, "수정 테스트", "수정 테스트 내용", deleteFiles, multipartFile3);
+        bgmAgitFreeService.modifyBgmAgitFree(bgmAgitFreePutRequest);
+    }
+ 
+    
+    @DisplayName("자유 게시판 삭제")
+    @Test
+    void test(){
+        ApiResponse apiResponse = bgmAgitFreeService.romoveBgmAgitFree(4L, 11L);
+        
+        System.out.println("apiResponse = " + apiResponse);
+        
+    }
+    
+    
 }

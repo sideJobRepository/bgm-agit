@@ -10,24 +10,35 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class BgmAgitFreePostRequest {
+@NoArgsConstructor
+@Data
+public class BgmAgitFreePutRequest {
     
-    @NotNull(message = "로그인을 다시해주세요")
+    @NotNull(message = "자유 게시판 ID가 존재하지않습니다.")
+    private Long id;
+    
     private Long memberId;
     
     @NotBlank(message = "제목은 필수 입력 입니다.")
     private String title;
     
     @NotBlank(message = "내용은 필수 입력 입니다.")
-    private String cont;
+    private String content;
+    
+    private List<Long> deletedFiles;
     
     private List<MultipartFile> files;
     
+    public List<Long> getDeletedFiles() {
+        if(this.deletedFiles == null){
+            this.deletedFiles = new ArrayList<>();
+        }
+        return this.deletedFiles;
+    }
+    
     public List<MultipartFile> getFiles() {
-        if(this.files == null) {
+        if(this.files == null){
             this.files = new ArrayList<>();
         }
         return this.files;
