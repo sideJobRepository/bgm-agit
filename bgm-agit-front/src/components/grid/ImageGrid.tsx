@@ -421,7 +421,11 @@ export default function ImageGrid({ pageData }: Props) {
       {filteredItems?.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
       {!items && <NoSearchBox>사진을 준비중입니다.</NoSearchBox>}
       <PaginationWrapper>
-        <Pagination current={page.page} totalPages={pages.totalPages} onChange={handlePageClick} />
+        <Pagination
+          current={page?.page}
+          totalPages={pages?.totalPages}
+          onChange={handlePageClick}
+        />
       </PaginationWrapper>
       <ImageLightbox
         images={filteredItems?.map(item => item.image)}
