@@ -97,7 +97,7 @@ export default function Notice({ mainGb }: NoticeProps) {
               <PaginationWrapper>
                 <Pagination
                   current={page}
-                  totalPages={items.totalPages}
+                  totalPages={items?.totalPages}
                   onChange={handlePageClick}
                 />
               </PaginationWrapper>

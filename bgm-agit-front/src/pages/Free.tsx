@@ -96,7 +96,7 @@ export default function Free() {
           </TableScrollBox>
           {items?.content.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
           <PaginationWrapper>
-            <Pagination current={page} totalPages={items.totalPages} onChange={handlePageClick} />
+            <Pagination current={page} totalPages={items?.totalPages} onChange={handlePageClick} />
           </PaginationWrapper>
         </TableBox>
       </NoticeBox>
