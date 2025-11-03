@@ -10,6 +10,7 @@ import { useCommunityFetch } from '../recoil/communityFetch.ts';
 import { communityState } from '../recoil/state/community.ts';
 import { FaCommentDots } from 'react-icons/fa';
 import { userState } from '../recoil/state/userState.ts';
+import Pagination from '../components/Pagination.tsx';
 
 export default function Free() {
   const user = useRecoilValue(userState);
@@ -95,11 +96,7 @@ export default function Free() {
           </TableScrollBox>
           {items?.content.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
           <PaginationWrapper>
-            {[...Array(items?.totalPages ?? 0)].map((_, idx) => (
-              <PageButton key={idx} active={idx === page} onClick={() => handlePageClick(idx)}>
-                {idx + 1}
-              </PageButton>
-            ))}
+            <Pagination current={page} totalPages={items.totalPages} onChange={handlePageClick} />
           </PaginationWrapper>
         </TableBox>
       </NoticeBox>
@@ -236,23 +233,6 @@ const SearchBox = styled.div<WithTheme>`
 const PaginationWrapper = styled.div`
   text-align: center;
   margin-top: 20px;
-`;
-
-const PageButton = styled.button.withConfig({
-  shouldForwardProp: prop => prop !== 'active',
-})<{ active: boolean } & WithTheme>`
-  margin: 0 5px;
-  padding: 4px 8px;
-  border: 1px solid ${({ theme }) => theme.colors.basicColor};
-  border-radius: 4px;
-  cursor: pointer;
-  background-color: ${({ active, theme }) =>
-    active ? theme.colors.noticeColor : theme.colors.white};
-  color: ${({ active, theme }) => (active ? theme.colors.white : theme.colors.subColor)};
-
-  &:hover {
-    opacity: 0.8;
-  }
 `;
 
 const Button = styled.button<WithTheme & { color: string }>`

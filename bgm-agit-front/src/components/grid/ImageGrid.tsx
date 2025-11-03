@@ -23,6 +23,7 @@ import type { MainMenu } from '../../types/menu.ts';
 import { imageUploadState, mainMenuState, searchState } from '../../recoil';
 import { useLocation } from 'react-router-dom';
 import type { PageItem } from '../../types/main.ts';
+import Pagination from '../Pagination.tsx';
 
 interface GridItem {
   image: string;
@@ -420,11 +421,7 @@ export default function ImageGrid({ pageData }: Props) {
       {filteredItems?.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
       {!items && <NoSearchBox>사진을 준비중입니다.</NoSearchBox>}
       <PaginationWrapper>
-        {[...Array(pages?.totalPages ?? 0)].map((_, idx) => (
-          <PageButton key={idx} active={idx === page.page} onClick={() => handlePageClick(idx)}>
-            {idx + 1}
-          </PageButton>
-        ))}
+        <Pagination current={page.page} totalPages={pages.totalPages} onChange={handlePageClick} />
       </PaginationWrapper>
       <ImageLightbox
         images={filteredItems?.map(item => item.image)}
@@ -807,21 +804,4 @@ const PaginationWrapper = styled.div`
   text-align: center;
   height: 30px;
   margin-top: 20px;
-`;
-
-const PageButton = styled.button.withConfig({
-  shouldForwardProp: prop => prop !== 'active',
-})<{ active: boolean } & WithTheme>`
-  margin: 0 5px;
-  padding: 4px 8px;
-  border: 1px solid ${({ theme }) => theme.colors.basicColor};
-  border-radius: 4px;
-  cursor: pointer;
-  background-color: ${({ active, theme }) =>
-    active ? theme.colors.noticeColor : theme.colors.white};
-  color: ${({ active, theme }) => (active ? theme.colors.white : theme.colors.subColor)};
-
-  &:hover {
-    opacity: 0.8;
-  }
 `;

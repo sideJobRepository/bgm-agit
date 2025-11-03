@@ -8,6 +8,7 @@ import { useRecoilValue } from 'recoil';
 import { roleState } from '../recoil/state/roleState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import { toast } from 'react-toastify';
+import Pagination from '../components/Pagination.tsx';
 
 export default function Role() {
   const fetchRole = useRoletFetch();
@@ -71,7 +72,11 @@ export default function Role() {
             <p>사용자 권한을 부여하세요.</p>
           </TitleBox>
           <SearchBox>
-            <SearchBar<string> color="#988271" label="아이디,이름,연락처" onSearch={setSearchKeyword} />
+            <SearchBar<string>
+              color="#988271"
+              label="아이디,이름,연락처"
+              onSearch={setSearchKeyword}
+            />
           </SearchBox>
         </SearchWrapper>
         <TableBox>
@@ -153,11 +158,7 @@ export default function Role() {
             </Table>
             {items?.content.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
             <PaginationWrapper>
-              {[...Array(items?.totalPages ?? 0)].map((_, idx) => (
-                <PageButton key={idx} active={idx === page} onClick={() => handlePageClick(idx)}>
-                  {idx + 1}
-                </PageButton>
-              ))}
+              <Pagination current={page} totalPages={items.totalPages} onChange={handlePageClick} />
             </PaginationWrapper>
           </TableWrapper>
         </TableBox>
@@ -304,23 +305,6 @@ const SearchBox = styled.div<WithTheme>`
 const PaginationWrapper = styled.div`
   text-align: center;
   margin-top: 20px;
-`;
-
-const PageButton = styled.button.withConfig({
-  shouldForwardProp: prop => prop !== 'active',
-})<{ active: boolean } & WithTheme>`
-  margin: 0 5px;
-  padding: 4px 8px;
-  border: 1px solid ${({ theme }) => theme.colors.basicColor};
-  border-radius: 4px;
-  cursor: pointer;
-  background-color: ${({ active, theme }) =>
-    active ? theme.colors.noticeColor : theme.colors.white};
-  color: ${({ active, theme }) => (active ? theme.colors.white : theme.colors.subColor)};
-
-  &:hover {
-    opacity: 0.8;
-  }
 `;
 
 const NoSearchBox = styled.div<WithTheme>`
