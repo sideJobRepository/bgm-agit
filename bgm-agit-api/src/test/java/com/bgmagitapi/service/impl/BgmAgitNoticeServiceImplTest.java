@@ -11,6 +11,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import java.util.List;
+
 class BgmAgitNoticeServiceImplTest extends RepositoryAndServiceTestSupport {
     
     
@@ -27,5 +29,15 @@ class BgmAgitNoticeServiceImplTest extends RepositoryAndServiceTestSupport {
         Page<BgmAgitNoticeResponse> result = bgmAgitNoticeService.getNotice(pageable, title);
         System.out.println("result = " + result);
     
+    }
+    
+    @DisplayName("")
+    @Test
+    void test2(){
+        
+        List<BgmAgitNoticeResponse> popupNotice = bgmAgitNoticeService.getPopupNotice();
+        
+        System.out.println("popupNotice = " + popupNotice);
+        
     }
 }

@@ -41,7 +41,16 @@ public class BgmAgitNoticeRepositoryImpl implements BgmAgitNoticeCostomRepositor
                 .where(titleOrContLikeIgnoreSpaces(titleOrCont));
         return PageableExecutionUtils.getPage(content,pageable,countQuery::fetchOne);
     }
- 
+    
+    @Override
+    public List<BgmAgitNotice> getPopupNotices() {
+        return queryFactory
+                .selectFrom(bgmAgitNotice)
+                .where(bgmAgitNotice.bgmAgitPopupUseStatus.eq("Y"))
+                .orderBy(bgmAgitNotice.bgmAgitNoticeId.desc())
+                .fetch();
+    }
+    
     /** 제목/내용에서 공백 제거 후 LIKE %keyword% 검색(OR) */
     private BooleanExpression titleOrContLikeIgnoreSpaces(String keyword) {
         if (!StringUtils.hasText(keyword)) return null;

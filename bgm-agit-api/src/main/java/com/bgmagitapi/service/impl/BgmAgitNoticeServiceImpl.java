@@ -36,8 +36,6 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
     @Override
     @Transactional(readOnly = true)
     public Page<BgmAgitNoticeResponse> getNotice(Pageable pageable, String titleOrCont) {
-
-        
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         Page<BgmAgitNotice> result = bgmAgitNoticeRepository.getNotices(pageable, titleOrCont);
         
@@ -59,7 +57,29 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
         );
     }
     
- 
+    @Override
+    public List<BgmAgitNoticeResponse> getPopupNotice() {
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        List<BgmAgitNotice> popupNotices = bgmAgitNoticeRepository.getPopupNotices();
+        return popupNotices.stream()
+                .map(n -> new BgmAgitNoticeResponse(
+                        n.getBgmAgitNoticeId(),
+                        n.getBgmAgitNoticeTitle(),
+                        n.getBgmAgitNoticeCont(),
+                        n.getRegistDate().format(dateFormatter),
+                        n.getBgmAgitNoticeType().name(),
+                        n.getBgmAgitNoticeFiles().stream()
+                                .map(f -> new BgmAgitNoticeFileResponse(
+                                        f.getBgmAgitNoticeFileId(),
+                                        f.getBgmAgitNoticeFileName(),
+                                        f.getBgmAgitNoticeFileUuidName(),
+                                        f.getBgmAgitNoticeFileUrl()
+                                ))
+                                .toList()
+                ))
+                .toList();
+    }
+    
     
     @Override
     public ApiResponse createNotice(BgmAgitNoticeCreateRequest request) {
