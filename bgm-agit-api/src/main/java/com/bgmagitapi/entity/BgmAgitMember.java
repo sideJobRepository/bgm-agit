@@ -40,6 +40,13 @@ public class BgmAgitMember extends DateSuperClass {
     @Column(name = "BGM_AGIT_MEMBER_PHONE_NO")
     private String bgmAgitMemberPhoneNo;
     
+    @Column(name = "BGM_AGIT_MEMBER_NICKNAME")
+    private String bgmAgitMemberNickname;
+    
+    @Column(name = "BGM_AGIT_MEMBER_NICKNAME_USE_STATUS")
+    private String bgmAgitMemberNicknameUseStatus;
+    
+    
     
     
     public BgmAgitMember(SocialProfile socialProfile) {
@@ -49,6 +56,8 @@ public class BgmAgitMember extends DateSuperClass {
         this.socialType = socialProfile.provider();
         this.bgmAgitMemberSocialId = socialProfile.sub();
         this.bgmAgitMemberPhoneNo = socialProfile.phone();
+        this.bgmAgitMemberNickname = socialProfile.name();
+        this.bgmAgitMemberNicknameUseStatus = "Y";
     }
     
     public void modifyMember(SocialProfile socialProfile) {
@@ -58,5 +67,7 @@ public class BgmAgitMember extends DateSuperClass {
         this.socialType = socialProfile.provider();
         this.bgmAgitMemberSocialId = socialProfile.sub();
         this.bgmAgitMemberPhoneNo = socialProfile.phone();
+        this.bgmAgitMemberNickname = socialProfile.name();
+        this.bgmAgitMemberNicknameUseStatus = "Y";
     }
 }
