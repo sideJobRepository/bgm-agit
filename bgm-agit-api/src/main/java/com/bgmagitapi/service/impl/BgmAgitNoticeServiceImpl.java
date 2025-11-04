@@ -68,7 +68,8 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
         BgmAgitNotice notice = new BgmAgitNotice(
                 request.getBgmAgitNoticeTitle(),
                 request.getBgmAgitNoticeContent(),
-                request.getBgmAgitNoticeType()
+                request.getBgmAgitNoticeType(),
+                request.getPopupUseStatus()
         );
         bgmAgitNoticeRepository.save(notice);
         
