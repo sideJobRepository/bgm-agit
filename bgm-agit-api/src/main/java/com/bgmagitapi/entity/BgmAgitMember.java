@@ -1,5 +1,6 @@
 package com.bgmagitapi.entity;
 
+import com.bgmagitapi.controller.response.notice.BgmAgitMyPagePutRequest;
 import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import com.bgmagitapi.security.service.social.SocialProfile;
@@ -55,7 +56,7 @@ public class BgmAgitMember extends DateSuperClass {
         this.bgmAgitMemberPassword = null;
         this.socialType = socialProfile.provider();
         this.bgmAgitMemberSocialId = socialProfile.sub();
-        this.bgmAgitMemberPhoneNo = socialProfile.phone();
+        this.bgmAgitMemberPhoneNo = normalizePhone(socialProfile.phone());
         this.bgmAgitMemberNickname = socialProfile.name();
         this.bgmAgitMemberNicknameUseStatus = "Y";
     }
@@ -66,8 +67,22 @@ public class BgmAgitMember extends DateSuperClass {
         this.bgmAgitMemberPassword = null;
         this.socialType = socialProfile.provider();
         this.bgmAgitMemberSocialId = socialProfile.sub();
-        this.bgmAgitMemberPhoneNo = socialProfile.phone();
+        this.bgmAgitMemberPhoneNo = normalizePhone(socialProfile.phone());
         this.bgmAgitMemberNickname = socialProfile.name();
         this.bgmAgitMemberNicknameUseStatus = "Y";
     }
+    public void modifyMyPage(BgmAgitMyPagePutRequest request) {
+        this.bgmAgitMemberNickname =  request.getNickName();
+        this.bgmAgitMemberPhoneNo =  request.getPhoneNo();
+        this.bgmAgitMemberNicknameUseStatus =  request.getNickNameUseStatus();
+    }
+    
+    private String normalizePhone(String phone) {
+        if (phone == null) return null;
+        // +82로 시작하면 0으로 변경
+        phone = phone.replaceAll("^\\+82\\s?", "0");
+        return phone;
+    }
+    
+    
 }
