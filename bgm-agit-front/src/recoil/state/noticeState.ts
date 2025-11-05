@@ -1,5 +1,5 @@
 import { atom } from 'recoil';
-import type { PagedNotice } from '../../types/notice';
+import type { Notice, PagedNotice } from '../../types/notice';
 
 export const noticeState = atom<PagedNotice>({
   key: 'noticeState',
@@ -13,4 +13,9 @@ export const noticeState = atom<PagedNotice>({
     last: true,
     empty: true,
   },
+});
+
+export const noticePopupState = atom<Notice[]>({
+  key: 'noticePopupState',
+  default: [],
 });

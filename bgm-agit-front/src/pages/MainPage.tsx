@@ -8,7 +8,9 @@ import { useMediaQuery } from 'react-responsive';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import { mainDataState } from '../recoil';
-import { useFetchMainData } from '../recoil/fetch.ts';
+import { useFetchMainData, useNoticePopupFetch } from '../recoil/fetch.ts';
+import { noticePopupState } from '../recoil/state/noticeState.ts';
+import { useEffect, useRef } from 'react';
 
 export default function MainPage() {
   useFetchMainData();
@@ -22,6 +24,51 @@ export default function MainPage() {
   const visibleCountGame = isMobile ? 2 : 3;
   const visibleCountReserve = isMobile ? 1 : 1;
   const visibleCountFood = isMobile ? 3 : 4;
+
+  //팝업
+  const fetchNoticePopup = useNoticePopupFetch();
+  const popupDate = useRecoilValue(noticePopupState);
+  const popupOpenedRef = useRef(false);
+
+  const getToday = () => new Date().toISOString().slice(0, 10);
+
+  const shouldShowPopup = (id: number) => {
+    const key = `notice_${id}_hide_until`;
+    const until = localStorage.getItem(key);
+    const today = getToday();
+    return until !== today; // 오늘 날짜면 보여주지 않음
+  };
+
+  useEffect(() => {
+    fetchNoticePopup();
+  }, []);
+
+  useEffect(() => {
+    //여기서 팝업 호출
+    if (!popupDate || popupDate.length === 0) return;
+    if (popupOpenedRef.current) return; // 이미 열었으면 종료
+    popupOpenedRef.current = true;
+
+    console.log('popupDate', popupDate);
+
+    popupDate.forEach(item => {
+      const id = item.bgmAgitNoticeId;
+
+      if (id && !shouldShowPopup(id)) {
+        return;
+      }
+
+      const url = `/noticeDetailPopup?id=${item.bgmAgitNoticeId}&popup=true`;
+      const w = Math.min(800, window.innerWidth * 0.9);
+      const h = Math.min(500, window.innerHeight * 0.9);
+
+      window.open(
+        url,
+        '_blank',
+        `width=${w},height=${h},left=${(window.innerWidth - w) / 2},top=${(window.innerHeight - h) / 2}`
+      );
+    });
+  }, [popupDate]);
 
   return (
     <Wrapper>

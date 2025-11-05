@@ -53,6 +53,12 @@ public class BgmAgitNoticeController {
         Page<BgmAgitNoticeResponse> notice = bgmAgitNoticeService.getNotice(pageable, titleOrCont);
         return PageResponse.from(notice);
     }
+    
+    @GetMapping("/notice/popup")
+    public List<BgmAgitNoticeResponse> getNoticePopup() {
+        return bgmAgitNoticeService.getPopupNotice();
+    }
+    
     @PostMapping("/notice")
     public ApiResponse createNotice(@Validated @ModelAttribute BgmAgitNoticeCreateRequest request) {
         return bgmAgitNoticeService.createNotice(request);

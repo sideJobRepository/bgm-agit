@@ -1,5 +1,6 @@
 // 개별 공지사항 타입
 export type Notice = {
+  bgmAgitPopupUseStatus: string;
   bgmAgitNoticeId: number | null;
   bgmAgitNoticeTitle: string;
   bgmAgitNoticeCont: string;

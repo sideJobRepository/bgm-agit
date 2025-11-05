@@ -22,6 +22,7 @@ public class BgmAgitNoticeCreateRequest {
     private String bgmAgitNoticeContent;
     @NotNull(message = "공지 유형을 선택해주세요.")
     private BgmAgitNoticeType  bgmAgitNoticeType;
+    private String popupUseStatus;
     private List<MultipartFile> files;
     
     public List<MultipartFile> getFiles() {

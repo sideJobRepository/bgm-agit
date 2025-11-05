@@ -15,6 +15,7 @@ public class BgmAgitNoticeResponse {
     private String bgmAgitNoticeCont;
     private String registDate;
     private String bgmAgitNoticeType;
+    private String bgmAgitPopupUseStatus;
     
     private List<BgmAgitNoticeFileResponse> bgmAgitNoticeFileList;
     

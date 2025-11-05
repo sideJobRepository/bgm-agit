@@ -14,7 +14,7 @@ import { reservationListDataState, reservationState } from './state/reservationS
 import { userState } from './state/userState.ts';
 import { toast } from 'react-toastify';
 import type { AxiosRequestHeaders } from 'axios';
-import { noticeState } from './state/noticeState.ts';
+import { noticePopupState, noticeState } from './state/noticeState.ts';
 import type { params } from '../types/notice.ts';
 import { roleState } from './state/roleState.ts';
 import { tokenStore } from '../utils/tokenStore';
@@ -166,6 +166,17 @@ export function useNoticeFetch() {
   };
 
   return fetchNotice;
+}
+
+export function useNoticePopupFetch() {
+  const { request } = useRequest();
+  const setNoticePopup = useSetRecoilState(noticePopupState);
+
+  const fetchNoticePopup = () => {
+    request(() => api.get('/bgm-agit/notice/popup').then(res => res.data), setNoticePopup);
+  };
+
+  return fetchNoticePopup;
 }
 
 export function useNoticeDownloadFetch() {

@@ -7,10 +7,14 @@ import com.bgmagitapi.controller.response.notice.BgmAgitNoticeResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface BgmAgitNoticeService {
     
     
     Page<BgmAgitNoticeResponse> getNotice(Pageable pageable, String title);
+    
+    List<BgmAgitNoticeResponse> getPopupNotice();
     
     ApiResponse createNotice(BgmAgitNoticeCreateRequest request);
     

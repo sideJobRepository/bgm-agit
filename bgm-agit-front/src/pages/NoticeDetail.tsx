@@ -29,6 +29,7 @@ type NewNoticeState = {
   title: string;
   content: string;
   type: 'NOTICE' | 'EVENT';
+  popupUseStatus: string;
 };
 
 export default function NoticeDetail() {
@@ -38,6 +39,7 @@ export default function NoticeDetail() {
 
   const [searchParams] = useSearchParams();
   const id = searchParams.get('id');
+
   const page = 0;
 
   const { insert } = useInsertPost();
@@ -45,6 +47,7 @@ export default function NoticeDetail() {
   const { remove } = useDeletePost();
 
   const notices = useRecoilValue(noticeState);
+
   const navigate = useNavigate();
 
   const [isEditMode, setIsEditMode] = useState(false);
@@ -54,6 +57,7 @@ export default function NoticeDetail() {
     title: '',
     content: '',
     type: 'NOTICE',
+    popupUseStatus: '',
   });
 
   const [files, setFiles] = useState<File[]>([]);
@@ -83,6 +87,7 @@ export default function NoticeDetail() {
     formData.append('bgmAgitNoticeTitle', newNotice.title);
 
     formData.append('bgmAgitNoticeType', newNotice.type);
+    formData.append('popupUseStatus', newNotice.popupUseStatus);
 
     if (isEditMode) {
       formData.append('bgmAgitNoticeId', id!);
@@ -181,6 +186,7 @@ export default function NoticeDetail() {
         title: matched.bgmAgitNoticeTitle,
         content: matched.bgmAgitNoticeCont,
         type: matched.bgmAgitNoticeType,
+        popupUseStatus: matched.bgmAgitPopupUseStatus,
       });
       setAttachedFiles(matched.bgmAgitNoticeFileList ?? []);
     }
@@ -305,6 +311,7 @@ export default function NoticeDetail() {
                       title: matched.bgmAgitNoticeTitle,
                       content: matched.bgmAgitNoticeCont,
                       type: matched.bgmAgitNoticeType,
+                      popupUseStatus: matched.bgmAgitPopupUseStatus,
                     });
                     setAttachedFiles(matched.bgmAgitNoticeFileList ?? []);
                   }
@@ -348,6 +355,20 @@ export default function NoticeDetail() {
                   }
                 />
                 이벤트
+              </StyledRadioLabel>
+              <StyledRadioLabel>
+                <input
+                  type="checkbox"
+                  name="bgmAgitPopup"
+                  checked={newNotice.popupUseStatus === 'Y'}
+                  onChange={e =>
+                    setNewNotice(prev => ({
+                      ...prev,
+                      popupUseStatus: e.target.checked ? 'Y' : 'N',
+                    }))
+                  }
+                />
+                팝업
               </StyledRadioLabel>
             </StyledRadioGroup>
             <InputBox

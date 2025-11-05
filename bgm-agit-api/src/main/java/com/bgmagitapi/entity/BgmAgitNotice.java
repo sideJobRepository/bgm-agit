@@ -34,26 +34,30 @@ public class BgmAgitNotice extends DateSuperClass {
     private String bgmAgitNoticeCont;
     
     // BGM 아지트 공지사항 타입
-    
     @Column(name = "BGM_AGIT_NOTICE_TYPE")
     @Enumerated(EnumType.STRING)
     private BgmAgitNoticeType bgmAgitNoticeType;
+    
+    @Column(name = "BGM_AGIT_POPUP_USE_STATUS")
+    private String bgmAgitPopupUseStatus;
     
     
     @OneToMany(mappedBy = "bgmAgitNotice", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.LAZY)
     private List<BgmAgitNoticeFile> bgmAgitNoticeFiles = new ArrayList<>();
     
     
-    public BgmAgitNotice(String bgmAgitNoticeTitle, String bgmAgitNoticeCont, BgmAgitNoticeType bgmAgitNoticeType) {
+    public BgmAgitNotice(String bgmAgitNoticeTitle, String bgmAgitNoticeCont, BgmAgitNoticeType bgmAgitNoticeType,String popupUseStatus) {
         this.bgmAgitNoticeTitle = bgmAgitNoticeTitle;
         this.bgmAgitNoticeCont = bgmAgitNoticeCont;
         this.bgmAgitNoticeType = bgmAgitNoticeType;
+        this.bgmAgitPopupUseStatus = popupUseStatus;
     }
     
     public void modifyNotice(BgmAgitNoticeModifyRequest request) {
         this.bgmAgitNoticeTitle = request.getBgmAgitNoticeTitle();
         this.bgmAgitNoticeCont = request.getBgmAgitNoticeCont();
         this.bgmAgitNoticeType = request.getBgmAgitNoticeType();
+        this.bgmAgitPopupUseStatus = request.getPopupUseStatus();
     }
     
     public void addFile(BgmAgitNoticeFile file) {
