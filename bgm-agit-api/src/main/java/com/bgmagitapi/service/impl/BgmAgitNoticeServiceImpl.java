@@ -46,6 +46,7 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
                         n.getBgmAgitNoticeCont(),
                         n.getRegistDate().format(dateFormatter),
                         n.getBgmAgitNoticeType().name(),
+                        n.getBgmAgitPopupUseStatus(),
                         n.getBgmAgitNoticeFiles().stream()
                                 .map(f -> new BgmAgitNoticeFileResponse(
                                         f.getBgmAgitNoticeFileId(),
@@ -68,6 +69,7 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
                         n.getBgmAgitNoticeCont(),
                         n.getRegistDate().format(dateFormatter),
                         n.getBgmAgitNoticeType().name(),
+                        n.getBgmAgitPopupUseStatus(),
                         n.getBgmAgitNoticeFiles().stream()
                                 .map(f -> new BgmAgitNoticeFileResponse(
                                         f.getBgmAgitNoticeFileId(),

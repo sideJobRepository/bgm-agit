@@ -24,7 +24,7 @@ class BgmAgitNoticeServiceImplTest extends RepositoryAndServiceTestSupport {
     void test(){
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "bgmAgitNoticeId"));
         
-        String title = "테스트 제목2";
+        String title = null;
         
         Page<BgmAgitNoticeResponse> result = bgmAgitNoticeService.getNotice(pageable, title);
         System.out.println("result = " + result);
