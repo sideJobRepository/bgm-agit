@@ -37,7 +37,8 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                         bgmAgitMember.bgmAgitMemberName,
                         bgmAgitRole.bgmAgitRoleName,
                         bgmAgitMember.bgmAgitMemberEmail,
-                        bgmAgitMember.bgmAgitMemberPhoneNo
+                        bgmAgitMember.bgmAgitMemberPhoneNo,
+                        bgmAgitMember.socialType.stringValue()
                 ))
                 .from(bgmAgitMemberRole)
                 .join(bgmAgitMemberRole.bgmAgitMember, bgmAgitMember)

@@ -1,4 +1,5 @@
 export type Role = {
+  memberLoginType: string;
   memberEmail: string;
   memberId: number;
   memberName: string;
