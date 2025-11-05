@@ -19,6 +19,7 @@ import NoticeDetail from './pages/NoticeDetail.tsx';
 import Privacy from './pages/Privacy.tsx';
 import Free from './pages/Free.tsx';
 import FreeDetail from './pages/FreeDetail.tsx';
+import NoticePopupDetail from './pages/NoticePopupDetail.tsx';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
             <Route path="/oauth/:provider/callback" element={<RedirectPage />} />
             <Route path="/error" element={<Error />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/noticeDetailPopup" element={<NoticePopupDetail />} />
             <Route path="/" element={<Layout />}>
               <Route index element={<MainPage />} />
               <Route path="about" element={<About />} />
