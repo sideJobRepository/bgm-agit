@@ -124,6 +124,9 @@ export default function NoticePopupDetail() {
         {popup && (
           <PopupBox>
             <ButtonBox>
+              <Button onClick={() => window.close()} color="#FF5E57">
+                닫기
+              </Button>
               <Button
                 color="#482768"
                 onClick={() => {
@@ -151,7 +154,7 @@ const ButtonBox = styled.div`
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   height: 40px;
   padding: 8px;
   gap: 4px;
