@@ -15,4 +15,5 @@ public class BgmAgitRoleResponse {
     private String roleName;
     private String memberEmail;
     private String memberPhoneNo;
+    private String memberLoginType;
 }
