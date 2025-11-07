@@ -64,9 +64,36 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "보드게임카페 BGM(비지엠) 아지트",
-      "url": "https://bgmagit.co.kr/"
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "name": "보드게임카페 BGM 아지트",
+          "url": "https://bgmagit.co.kr/"
+        },
+        {
+          "@type": "SiteNavigationElement",
+          "name": [
+            "BGM 아지트 소개",
+            "보유게임",
+            "룸",
+            "마작/게임 예약",
+            "음료",
+            "식사",
+            "공지사항",
+            "자유게시판"
+          ],
+          "url": [
+            "https://bgmagit.co.kr/about",
+            "https://bgmagit.co.kr/detail/game",
+            "https://bgmagit.co.kr/detail/room",
+            "https://bgmagit.co.kr/detail/mahjongRental",
+            "https://bgmagit.co.kr/detail/drink",
+            "https://bgmagit.co.kr/detail/food",
+            "https://bgmagit.co.kr/notice",
+            "https://bgmagit.co.kr/free"
+          ]
+        }
+      ]
     }
     </script>
 </head>
