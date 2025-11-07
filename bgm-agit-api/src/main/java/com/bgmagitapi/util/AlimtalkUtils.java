@@ -151,6 +151,39 @@ public class AlimtalkUtils {
                 .toString();
     }
     
+    /**
+     * BGM 아지트 문의 등록 관리자 알림
+     * @param userName
+     * @param title
+     * @param date
+     * @param time
+     * @return
+     */
+    public static String oneToOneInquiry(String userName,String title,String date, String time) {
+     return new StringBuilder()
+             .append(("[BGM 아지트 1:1 문의 알림]\n\n"))
+             .append("문의하신 회원:").append(userName).append("\n")
+             .append("문의 제목:").append(title).append("\n")
+             .append("문의 등록일:").append(date).append("\n")
+             .append("문의 등록시간:").append(time).append("\n\n")
+             .append("자세한 예약내역은 BGM 아지트 홈페이지 사이트 에서 로그인 후 마이페이지 > 1:1문의에서 확인하실 수 있습니다.")
+             .toString();
+    }
+    
+    /**
+     *	BGM 아지트 문의 답변 알림
+     * @param userName
+     * @return
+     */
+    public static String oneToOneInquiryAns(String userName) {
+        return new StringBuilder()
+                 .append(("BGM 아지트 1:1 문의 답변 안내]\n\n"))
+                 .append("안녕하세요.").append(userName).append("님").append("\n")
+                 .append("BGM 아지트에 남겨주신 1:1 문의에 대한 답변이 등록되었습니다.")
+                 .append("자세한 예약내역은 BGM 아지트 홈페이지 사이트 에서 로그인 후 마이페이지 > 1:1문의에서 확인하실 수 있습니다.")
+                 .toString();
+    }
+    
 
     
     /** 기본 버튼 세트(필요 시 수정) */
@@ -171,21 +204,6 @@ public class AlimtalkUtils {
         m.put("senderKey", senderKey);
         m.put("tmpltCode", tmpltName);
         m.put("recipient", recipient);
-        m.put("message", message);
-        if (attach != null) m.put("attach", attach);
-        return m;
-    }
-    
-    public static Map<String, Object> buildOwnerSendRequest(
-            String senderKey, String message , String tmpltName ,  Attach attach
-    ) {
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("msgIdx", UUID.randomUUID().toString());
-        m.put("countryCode", "82");
-        m.put("resMethod", "PUSH");
-        m.put("senderKey", senderKey);
-        m.put("tmpltCode", tmpltName);
-        m.put("recipient", "010-5059-3499");
         m.put("message", message);
         if (attach != null) m.put("attach", attach);
         return m;
