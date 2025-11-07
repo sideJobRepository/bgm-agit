@@ -8,3 +8,13 @@ export interface CustomUser extends JwtPayload {
   sub: string;
   //phoneNumber: string;
 }
+
+export type MyPage = {
+  id: string;
+  nickName: string;
+  phoneNo: string;
+  nickNameUseStatus: string;
+  name: string;
+  mail: string;
+  registDate: string;
+};

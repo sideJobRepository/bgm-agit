@@ -11,7 +11,7 @@ import api from '../utils/axiosInstance';
 import { useRequest } from './useRequest.ts';
 import type { ReservationData } from '../types/reservation.ts';
 import { reservationListDataState, reservationState } from './state/reservationState.ts';
-import { userState } from './state/userState.ts';
+import { myPageState, userState } from './state/userState.ts';
 import { toast } from 'react-toastify';
 import type { AxiosRequestHeaders } from 'axios';
 import { noticePopupState, noticeState } from './state/noticeState.ts';
@@ -239,6 +239,18 @@ export function useNoticeDownloadFetch() {
   };
 
   return fetchNoticeDownload;
+}
+
+//myPage
+export function useMyPageFetch() {
+  const { request } = useRequest();
+  const setMyPage = useSetRecoilState(myPageState);
+
+  const fetchReservation = () => {
+    request(() => api.get('/bgm-agit/mypage').then(res => res.data), setMyPage);
+  };
+
+  return fetchReservation;
 }
 
 export function useLoginPost() {

@@ -16,6 +16,7 @@ import type { SubMenu } from '../../types/menu.ts';
 import api from '../../utils/axiosInstance';
 import { tokenStore } from '../../utils/tokenStore';
 import LoginMoadl from '../LoginMoadl.tsx';
+import MyPageModal from '../MyPageModal.tsx';
 
 export default function TopHeader() {
   useFetchMainMenu();
@@ -33,6 +34,8 @@ export default function TopHeader() {
 
   //로그인 모달
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  //내정보 모달
+  const [isMyPageModalOpen, setIsMyPageModalOpen] = useState(false);
 
   //서브메뉴 높이 측정
   const subMenuRef = useRef<HTMLDivElement>(null);
@@ -53,6 +56,9 @@ export default function TopHeader() {
     //오픈 채팅방 링크로 이동
     if ([9, 17, 19].includes(item.bgmAgitMainMenuId)) {
       window.open(item.link, '_blank');
+    } else if ([20].includes(item.bgmAgitMainMenuId)) {
+      //내정보 팝업
+      setIsMyPageModalOpen(true);
     } else {
       navigate(item.link);
     }
@@ -246,6 +252,7 @@ export default function TopHeader() {
         </ul>
       </MobileMenu>
       {isLoginModalOpen && <LoginMoadl onClose={() => setIsLoginModalOpen(false)} />}
+      {isMyPageModalOpen && <MyPageModal onClose={() => setIsMyPageModalOpen(false)} />}
     </Wrapper>
   );
 }

@@ -4,6 +4,7 @@ import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.controller.response.BgmAgitMyPageGetResponse;
 import com.bgmagitapi.controller.response.notice.BgmAgitMyPagePutRequest;
 import com.bgmagitapi.service.BgmAgitMyPageService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -25,7 +26,7 @@ public class BgmAgitMyPageController {
         return bgmAgitMyPageService.getMyPage(memberId);
     }
     @PutMapping("/mypage")
-    public ApiResponse modifyMyPage(@AuthenticationPrincipal Jwt jwt,@RequestBody BgmAgitMyPagePutRequest request) {
+    public ApiResponse modifyMyPage(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody BgmAgitMyPagePutRequest request) {
         if(jwt == null) {
             throw new RuntimeException("비 로그인입니다.");
         }

@@ -6,6 +6,7 @@ export type Community = {
   commentCount: number;
   registDate: string;
   memberName: string;
+  memberNickname: string;
 };
 
 export type PagedCommunity = {
@@ -34,6 +35,7 @@ export type Comment = {
   parentId: string;
   registDate: string;
   delStatus: string;
+  memberNickname: string;
 };
 
 export type CommunityFile = {
@@ -53,4 +55,5 @@ export type DetaileCommunity = {
   title: string;
   registDate: string;
   memberName: string;
+  memberNickName: string;
 };

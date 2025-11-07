@@ -282,6 +282,7 @@ export default function FreeDetail() {
         title: '',
         registDate: '',
         memberName: '',
+        memberNickName: '',
       });
     };
   }, []);
@@ -354,7 +355,7 @@ export default function FreeDetail() {
           </ButtonBox>
           <TitleBox>
             <div>
-              <h3>{detailItem?.memberName}</h3>
+              <h3>{detailItem?.memberNickName}</h3>
               <span>{detailItem?.registDate} </span>
             </div>
             <h2>{detailItem?.title}</h2>
@@ -426,7 +427,7 @@ export default function FreeDetail() {
               <div className="reply-box" key={item.commentId}>
                 <div className="reply-top">
                   <span>
-                    <strong>{item.memberName}</strong> {item.registDate}
+                    <strong>{item.memberNickname}</strong> {item.registDate}
                     {(item.isAuthor || user?.roles.includes('ROLE_ADMIN')) &&
                       item.delStatus === 'N' && (
                         <div className="reply-button-box">
@@ -528,7 +529,7 @@ export default function FreeDetail() {
                     <div>
                       <div className="reply-top">
                         <span>
-                          <strong>{item.memberName}</strong> {item.registDate}
+                          <strong>{item.memberNickname}</strong> {item.registDate}
                           {(item.isAuthor || user?.roles.includes('ROLE_ADMIN')) &&
                             item.delStatus === 'N' && (
                               <div className="reply-button-box">

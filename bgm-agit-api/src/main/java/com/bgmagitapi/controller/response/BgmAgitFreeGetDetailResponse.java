@@ -22,16 +22,18 @@ public class BgmAgitFreeGetDetailResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDateTime registDate;
     private String memberName;
+    private String memberNickName;
     private List<BgmAgitFreeGetDetailResponseFile> files;
     private List<BgmAgitFreeGetDetailResponseComment> comments;
     
-    public BgmAgitFreeGetDetailResponse(Long id, Long memberId, String title, String content,  LocalDateTime registDate,String memberName) {
+    public BgmAgitFreeGetDetailResponse(Long id, Long memberId, String title, String content,  LocalDateTime registDate,String memberName,String memberNickName) {
         this.id = id;
         this.memberId = memberId;
         this.title = title;
         this.content = content;
         this.registDate = registDate;
         this.memberName = memberName;
+        this.memberNickName = memberNickName;
     }
     
     @Data
@@ -50,6 +52,7 @@ public class BgmAgitFreeGetDetailResponse {
     public static class BgmAgitFreeGetDetailResponseComment{
         private String commentId;
         private String memberName;
+        private String memberNickname;
         private String content;
         private Integer depth;
         private Boolean isAuthor;
@@ -66,9 +69,10 @@ public class BgmAgitFreeGetDetailResponse {
             return children;
         }
         
-        public BgmAgitFreeGetDetailResponseComment(String commentId, String memberName, String content, Integer depth, Boolean isAuthor, String parentId,LocalDateTime registDate,String delStatus) {
+        public BgmAgitFreeGetDetailResponseComment(String commentId, String memberName,String memberNickname,  String content, Integer depth, Boolean isAuthor, String parentId,LocalDateTime registDate,String delStatus) {
             this.commentId = commentId;
             this.memberName = memberName;
+            this.memberNickname = memberNickname;
             this.content = content;
             this.depth = depth;
             this.isAuthor = isAuthor;

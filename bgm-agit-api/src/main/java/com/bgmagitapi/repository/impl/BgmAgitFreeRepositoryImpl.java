@@ -44,6 +44,7 @@ public class BgmAgitFreeRepositoryImpl implements BgmAgitFreeCustomRepository {
                         bgmAgitFree.bgmAgitFreeCont,
                         bgmAgitFree.bgmAgitMember.bgmAgitMemberId,
                         bgmAgitFree.bgmAgitMember.bgmAgitMemberName, // 작성자 이름 추가
+                        bgmAgitFree.bgmAgitMember.bgmAgitMemberNickname,
                         bgmAgitFree.registDate,                      //  등록일 추가
                         bgmAgitCommonComment.count()                 // 댓글 수
                 ))
@@ -89,7 +90,8 @@ public class BgmAgitFreeRepositoryImpl implements BgmAgitFreeCustomRepository {
                         bgmAgitFree.bgmAgitFreeTitle,
                         bgmAgitFree.bgmAgitFreeCont,
                         bgmAgitFree.registDate,
-                        bgmAgitMember.bgmAgitMemberName
+                        bgmAgitMember.bgmAgitMemberName,
+                        bgmAgitMember.bgmAgitMemberNickname
                 ))
                 .from(bgmAgitFree)
                 .join(bgmAgitFree.bgmAgitMember, bgmAgitMember)
@@ -121,6 +123,7 @@ public class BgmAgitFreeRepositoryImpl implements BgmAgitFreeCustomRepository {
                         BgmAgitFreeGetDetailResponse.BgmAgitFreeGetDetailResponseComment.class,
                         bgmAgitCommonComment.id.stringValue(),
                         bgmAgitCommonComment.member.bgmAgitMemberName,
+                        bgmAgitCommonComment.member.bgmAgitMemberNickname,
                         bgmAgitCommonComment.content,
                         bgmAgitCommonComment.depth,
                         Expressions.cases()
