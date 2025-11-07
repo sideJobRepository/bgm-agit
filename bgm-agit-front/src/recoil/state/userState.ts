@@ -13,5 +13,7 @@ export const myPageState = atom({
     nickName: '',
     phoneNo: '',
     nickNameUseStatus: '',
+    name: '',
+    mail: '',
   },
 });

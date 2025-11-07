@@ -19,6 +19,7 @@ export default function MyPageModal({ onClose }: Props) {
 
   const fetchMyPage = useMyPageFetch();
   const items = useRecoilValue(myPageState);
+  console.log('myppageItems', items);
 
   const [nickName, setNickName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -68,6 +69,28 @@ export default function MyPageModal({ onClose }: Props) {
           <h2>회원정보</h2>
         </CenterModalBox>
         <BottomModalBox>
+          <InputBox>
+            <label htmlFor="email">EMAIL</label>
+            <input
+              id="email"
+              className="readonly-input"
+              type="text"
+              placeholder="이메일을 입력해주세요."
+              value={items?.mail}
+              readOnly
+            />
+          </InputBox>
+          <InputBox>
+            <label htmlFor="name">이름</label>
+            <input
+              id="name"
+              className="readonly-input"
+              type="text"
+              placeholder="이름을 입력해주세요."
+              value={items?.name}
+              readOnly
+            />
+          </InputBox>
           <InputBox>
             <label htmlFor="nickname">닉네임</label>
             <input
@@ -180,13 +203,13 @@ const InputBox = styled.div<WithTheme>`
     text-align: left;
     color: ${({ theme }) => theme.colors.bronzeColor};
     font-weight: 600;
+    padding: 0 8px;
   }
 
   input {
     height: 40px;
     width: 100%;
     padding: 0 8px;
-
     border: 1px solid #c4c4c4; /* CKEditor 기본 테두리 색상 */
     border-radius: 4px;
     box-shadow: none;
@@ -195,5 +218,10 @@ const InputBox = styled.div<WithTheme>`
       outline: none;
       border-color: ${({ theme }) => theme.colors.noticeColor};
     }
+  }
+
+  .readonly-input {
+    background-color: transparent;
+    border: none;
   }
 `;
