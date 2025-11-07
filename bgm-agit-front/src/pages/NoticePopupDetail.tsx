@@ -1,29 +1,26 @@
-import { Wrapper } from '../styles';
 import { useNoticeDownloadFetch, useNoticeFetch } from '../recoil/fetch.ts';
 import { useEffect, useState } from 'react';
 import { useRecoilValue } from 'recoil';
 import { noticeState } from '../recoil/state/noticeState.ts';
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
-import { useSearchParams } from 'react-router-dom';
 
 import { FaDownload } from 'react-icons/fa';
+import Modal from '../components/Modal.tsx';
+import type { NoticeContent } from '../types/notice.ts';
 
-const getToday = () => new Date().toISOString().slice(0, 10);
-
-const hidePopupToday = (id: string) => {
-  const key = `notice_${id}_hide_until`;
-  localStorage.setItem(key, getToday());
-};
-
-export default function NoticePopupDetail() {
+export default function NoticePopupDetail({
+  item,
+  onClose,
+}: {
+  item: NoticeContent;
+  onClose: () => void;
+}) {
   const fetchNotice = useNoticeFetch();
   const fetchNoticeDownload = useNoticeDownloadFetch();
 
-  const [searchParams] = useSearchParams();
-  const id = searchParams.get('id');
-  const popup = searchParams.get('popup');
-  console.log('popup duqn', popup);
+  const id = item?.bgmAgitNoticeId;
+
   const page = 0;
 
   const notices = useRecoilValue(noticeState);
@@ -88,8 +85,15 @@ export default function NoticePopupDetail() {
     }
   }
 
+  //오늘하루 보지 않기
+  function hideToday() {
+    const today = new Date().toISOString().slice(0, 10);
+    localStorage.setItem(`notice_${id}_hide_until`, today);
+    onClose();
+  }
+
   return (
-    <Wrapper>
+    <Modal onClose={onClose}>
       <PopupWrapper>
         <TitleBox>
           <div>
@@ -121,33 +125,33 @@ export default function NoticePopupDetail() {
             __html: convertOembedToIframe(String(notice?.bgmAgitNoticeCont)),
           }}
         />
-        {popup && (
-          <PopupBox>
-            <ButtonBox>
-              <Button onClick={() => window.close()} color="#FF5E57">
-                닫기
-              </Button>
-              <Button
-                color="#482768"
-                onClick={() => {
-                  if (id) hidePopupToday(id);
-                  window.close();
-                }}
-              >
-                오늘 하루 보지 않기
-              </Button>
-            </ButtonBox>
-          </PopupBox>
-        )}
+        <PopupBox>
+          <ButtonBox>
+            <Button onClick={onClose} color="#FF5E57">
+              닫기
+            </Button>
+            <Button color="#482768" onClick={hideToday}>
+              오늘 하루 보지 않기
+            </Button>
+          </ButtonBox>
+        </PopupBox>
       </PopupWrapper>
-    </Wrapper>
+    </Modal>
   );
 }
 
 const PopupWrapper = styled.div<WithTheme>`
-  min-height: calc(100dvh - 40px);
+  width: 800px;
+  position: relative;
+  height: calc(100dvh - 40px);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  border-radius: 12px 12px 0 0;
+
+  @media ${({ theme }) => theme.device.tablet} {
+    width: calc(100vw - 40px);
+  }
 `;
 
 const ButtonBox = styled.div`
@@ -188,6 +192,7 @@ const TitleBox = styled.div<WithTheme>`
     padding: 14px 20px;
     width: 100%;
     background-color: ${({ theme }) => theme.colors.basicColor};
+    border-radius: 12px 12px 0 0;
 
     h3 {
       color: ${({ theme }) => theme.colors.bronzeColor};
@@ -254,9 +259,8 @@ const StyledFileUl = styled.ul<WithTheme>`
   text-align: left;
   width: 100%;
   color: ${({ theme }) => theme.colors.bronzeColor};
-  padding-top: 10px;
+  padding: 10px;
   gap: 4px;
-  padding-bottom: 10px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.basicColor};
 
   li {
@@ -286,10 +290,11 @@ const StyledFileUl = styled.ul<WithTheme>`
 `;
 
 const PopupBox = styled.div<WithTheme>`
-  position: fixed;
+  position: sticky;
   bottom: 0;
   left: 0;
   right: 0;
   background-color: ${({ theme }) => theme.colors.topBg};
   z-index: 3;
+  border-radius: 0 0 12px 12px;
 `;

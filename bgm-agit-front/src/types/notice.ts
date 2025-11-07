@@ -1,5 +1,5 @@
 // 개별 공지사항 타입
-export type Notice = {
+export type NoticeContent = {
   bgmAgitPopupUseStatus: string;
   bgmAgitNoticeId: number | null;
   bgmAgitNoticeTitle: string;
@@ -11,7 +11,7 @@ export type Notice = {
 
 // 공지사항 페이징 응답
 export type PagedNotice = {
-  content: Notice[];
+  content: NoticeContent[];
   totalPages: number;
   totalElements: number;
   number: number;

@@ -10,7 +10,9 @@ import { useRecoilValue } from 'recoil';
 import { mainDataState } from '../recoil';
 import { useFetchMainData, useNoticePopupFetch } from '../recoil/fetch.ts';
 import { noticePopupState } from '../recoil/state/noticeState.ts';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { NoticeContent } from '../types/notice.ts';
+import NoticePopupDetail from './NoticePopupDetail.tsx';
 
 export default function MainPage() {
   useFetchMainData();
@@ -28,6 +30,9 @@ export default function MainPage() {
   //팝업
   const fetchNoticePopup = useNoticePopupFetch();
   const popupDate = useRecoilValue(noticePopupState);
+
+  const [popupItems, setPopupItems] = useState<NoticeContent[]>([]);
+
   const popupOpenedRef = useRef(false);
 
   const getToday = () => new Date().toISOString().slice(0, 10);
@@ -44,31 +49,44 @@ export default function MainPage() {
   }, []);
 
   useEffect(() => {
-    //여기서 팝업 호출
     if (!popupDate || popupDate.length === 0) return;
-    if (popupOpenedRef.current) return; // 이미 열었으면 종료
+    if (popupOpenedRef.current) return;
     popupOpenedRef.current = true;
 
-    console.log('popupDate', popupDate);
-
-    popupDate.forEach(item => {
+    const filtered = popupDate.filter(item => {
       const id = item.bgmAgitNoticeId;
-
-      if (id && !shouldShowPopup(id)) {
-        return;
-      }
-
-      const url = `/noticeDetailPopup?id=${item.bgmAgitNoticeId}&popup=true`;
-      const w = Math.min(800, window.innerWidth * 0.9);
-      const h = Math.min(500, window.innerHeight * 0.9);
-
-      window.open(
-        url,
-        '_blank',
-        `width=${w},height=${h},left=${(window.innerWidth - w) / 2},top=${(window.innerHeight - h) / 2}`
-      );
+      return id && shouldShowPopup(id);
     });
+
+    setPopupItems(filtered);
   }, [popupDate]);
+
+  // useEffect(() => {
+  //   //여기서 팝업 호출
+  //   if (!popupDate || popupDate.length === 0) return;
+  //   if (popupOpenedRef.current) return; // 이미 열었으면 종료
+  //   popupOpenedRef.current = true;
+  //
+  //   console.log('popupDate', popupDate);
+  //
+  //   popupDate.forEach(item => {
+  //     const id = item.bgmAgitNoticeId;
+  //
+  //     if (id && !shouldShowPopup(id)) {
+  //       return;
+  //     }
+  //
+  //     const url = `/noticeDetailPopup?id=${item.bgmAgitNoticeId}&popup=true`;
+  //     const w = Math.min(800, window.innerWidth * 0.9);
+  //     const h = Math.min(500, window.innerHeight * 0.9);
+  //
+  //     window.open(
+  //       url,
+  //       '_blank',
+  //       `width=${w},height=${h},left=${(window.innerWidth - w) / 2},top=${(window.innerHeight - h) / 2}`
+  //     );
+  //   });
+  // }, [popupDate]);
 
   return (
     <Wrapper>
@@ -163,6 +181,15 @@ export default function MainPage() {
           </SliderBox>
         </NoticeSection>
       </ReservationNoticeSection>
+      {popupItems.map(item => (
+        <NoticePopupDetail
+          key={item.bgmAgitNoticeId}
+          item={item}
+          onClose={() => {
+            setPopupItems(prev => prev.filter(p => p.bgmAgitNoticeId !== item.bgmAgitNoticeId));
+          }}
+        />
+      ))}
     </Wrapper>
   );
 }
