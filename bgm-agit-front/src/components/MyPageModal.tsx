@@ -121,7 +121,8 @@ export default function MyPageModal({ onClose }: Props) {
 
 const ModalWrapper = styled.div<WithTheme>`
   display: flex;
-  width: 300px;
+  width: 400px;
+  margin: 0 auto;
   flex-direction: column;
   gap: 30px;
   padding-bottom: 36px;

@@ -1,12 +1,12 @@
 import { atom } from 'recoil';
-import type { CustomUser } from '../../types/user.ts';
+import type { CustomUser, MyPage } from '../../types/user.ts';
 
 export const userState = atom<CustomUser | null>({
   key: 'userState',
   default: null,
 });
 
-export const myPageState = atom({
+export const myPageState = atom<MyPage>({
   key: 'myPageState',
   default: {
     id: '',
