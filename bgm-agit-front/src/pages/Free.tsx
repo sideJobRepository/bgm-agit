@@ -21,8 +21,6 @@ export default function Free() {
 
   const items = useRecoilValue(communityState);
 
-  console.log('커뮤니티 아이템', items);
-
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
 
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -68,7 +66,7 @@ export default function Free() {
                   <Th style={{ width: '50px' }}>번호</Th>
                   <Th style={{ width: '250px' }}>제목</Th>
                   {!isMobile && <Th style={{ width: '120px' }}>날짜</Th>}
-                  <Th style={{ width: '120px' }}>아이디</Th>
+                  <Th style={{ width: '120px' }}>닉네임</Th>
                 </tr>
               </thead>
               <tbody>
@@ -88,7 +86,7 @@ export default function Free() {
                       </span>
                     </Td>
                     {!isMobile && <Td>{item.registDate}</Td>}
-                    <Td>{item.memberName}</Td>
+                    <Td>{item.memberNickname}</Td>
                   </tr>
                 ))}
               </tbody>
