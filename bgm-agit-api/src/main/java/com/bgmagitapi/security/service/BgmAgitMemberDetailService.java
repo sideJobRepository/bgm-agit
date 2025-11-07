@@ -57,7 +57,6 @@ public class BgmAgitMemberDetailService implements UserDetailsService {
                     return saveMember;
                 });
         
-        findBgmAgitMember.modifyMember(socialProfile);
         Long id = findBgmAgitMember.getBgmAgitMemberId();
         List<String> roleName = bgmAgitMemberDetailRepository.getRoleName(id);
         List<GrantedAuthority> authorityList = AuthorityUtils.createAuthorityList(roleName);
