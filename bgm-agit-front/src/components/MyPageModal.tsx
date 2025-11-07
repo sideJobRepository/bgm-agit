@@ -24,8 +24,24 @@ export default function MyPageModal({ onClose }: Props) {
   const [nickName, setNickName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
 
+  //휴대폰 정규식
+  const PHONE_REGEX = /^01[0-9]-[0-9]{3,4}-[0-9]{4}$/;
+
   //업데이트
   async function updateData() {
+    if (!nickName) {
+      toast.error('닉네임을 입력해주세요.');
+      return;
+    } else if (!PHONE_REGEX.test(phoneNumber)) {
+      toast.error(
+        <>
+          휴대폰 번호 형식이 올바르지 않습니다. <br />
+          (예: 010-1234-5678)
+        </>
+      );
+      return;
+    }
+
     const param = {
       id: items?.id,
       nickName: nickName,
@@ -77,6 +93,17 @@ export default function MyPageModal({ onClose }: Props) {
               type="text"
               placeholder="이메일을 입력해주세요."
               value={items?.mail}
+              readOnly
+            />
+          </InputBox>
+          <InputBox>
+            <label htmlFor="registDate">가입일자</label>
+            <input
+              id="registDate"
+              className="readonly-input"
+              type="text"
+              placeholder="가입입자를 입력해주세요."
+              value={items?.registDate}
               readOnly
             />
           </InputBox>

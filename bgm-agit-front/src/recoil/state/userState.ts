@@ -15,5 +15,6 @@ export const myPageState = atom<MyPage>({
     nickNameUseStatus: '',
     name: '',
     mail: '',
+    registDate: '',
   },
 });

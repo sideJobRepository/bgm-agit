@@ -16,4 +16,5 @@ export type MyPage = {
   nickNameUseStatus: string;
   name: string;
   mail: string;
+  registDate: string;
 };
