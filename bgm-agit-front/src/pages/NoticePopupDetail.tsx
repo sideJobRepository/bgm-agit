@@ -143,11 +143,11 @@ export default function NoticePopupDetail({
 const PopupWrapper = styled.div<WithTheme>`
   width: 800px;
   position: relative;
-  height: calc(100dvh - 40px);
+  height: calc(100vh - 120px);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  border-radius: 12px 12px 0 0;
+  border-radius: 8px 8px 0 0;
 
   @media ${({ theme }) => theme.device.tablet} {
     width: calc(100vw - 40px);
@@ -182,7 +182,6 @@ const TitleBox = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
   width: 100%;
-  border-top: 1px solid ${({ theme }) => theme.colors.bronzeColor};
   border-bottom: 1px solid ${({ theme }) => theme.colors.basicColor};
 
   div {
@@ -192,7 +191,6 @@ const TitleBox = styled.div<WithTheme>`
     padding: 14px 20px;
     width: 100%;
     background-color: ${({ theme }) => theme.colors.basicColor};
-    border-radius: 12px 12px 0 0;
 
     h3 {
       color: ${({ theme }) => theme.colors.bronzeColor};
@@ -296,5 +294,5 @@ const PopupBox = styled.div<WithTheme>`
   right: 0;
   background-color: ${({ theme }) => theme.colors.topBg};
   z-index: 3;
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 8px 8px;
 `;
