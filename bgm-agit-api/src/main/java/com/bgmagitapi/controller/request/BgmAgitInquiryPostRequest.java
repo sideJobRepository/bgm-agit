@@ -4,6 +4,10 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -16,4 +20,13 @@ public class BgmAgitInquiryPostRequest {
     private String title;
     @NotBlank(message = "내용은 필수입니다.")
     private String cont;
+    
+    private List<MultipartFile> files;
+    
+    public List<MultipartFile> getFiles() {
+        if(this.files==null){
+            this.files = new ArrayList<>();
+        }
+        return this.files;
+    }
 }

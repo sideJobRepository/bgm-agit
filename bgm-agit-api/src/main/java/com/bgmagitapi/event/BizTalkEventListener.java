@@ -4,6 +4,7 @@ package com.bgmagitapi.event;
 import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitReservation;
+import com.bgmagitapi.event.dto.InquiryEvent;
 import com.bgmagitapi.event.dto.MemberJoinedEvent;
 import com.bgmagitapi.event.dto.ReservationTalkEvent;
 import com.bgmagitapi.event.dto.ReservationWaitingEvent;
@@ -20,7 +21,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class BizTalkEventListener {
-
+    
     private final BgmAgitMemberRepository bgmAgitMemberRepository;
     private final BgmAgitBizTalkSandService bgmAgitBizTalkSandService;
     
@@ -49,9 +50,9 @@ public class BizTalkEventListener {
         List<BgmAgitReservation> list = reservationWaiting.getList();
         if (bgmAgitMember == null) return;
         try {
-            bgmAgitBizTalkSandService.sandBizTalk(bgmAgitMember ,bgmAgitImage,list);
-        }catch (Exception e) {
-            bgmAgitBizTalkSandService.sandBizTalk(bgmAgitMember ,bgmAgitImage,list);
+            bgmAgitBizTalkSandService.sandBizTalk(bgmAgitMember, bgmAgitImage, list);
+        } catch (Exception e) {
+            bgmAgitBizTalkSandService.sandBizTalk(bgmAgitMember, bgmAgitImage, list);
         }
     }
     
@@ -61,14 +62,37 @@ public class BizTalkEventListener {
         try {
             switch (e.getAction()) {
                 case COMPLETE -> bgmAgitBizTalkSandService.sendCompleteBizTalk(e.getReservationTalkContext());
-                case CANCEL   -> bgmAgitBizTalkSandService.sendCancelBizTalk(e.getReservationTalkContext());
-                default       -> { }
+                case CANCEL -> bgmAgitBizTalkSandService.sendCancelBizTalk(e.getReservationTalkContext());
+                default -> {
+                }
             }
         } catch (Exception ex) {
             switch (e.getAction()) {
                 case COMPLETE -> bgmAgitBizTalkSandService.sendCompleteBizTalk(e.getReservationTalkContext());
-                case CANCEL   -> bgmAgitBizTalkSandService.sendCancelBizTalk(e.getReservationTalkContext());
-                default       -> { }
+                case CANCEL -> bgmAgitBizTalkSandService.sendCancelBizTalk(e.getReservationTalkContext());
+                default -> {
+                }
+            }
+        }
+    }
+    
+    @Async("bizTalkExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onReservationTalk(InquiryEvent e) {
+        try {
+            switch (e.getTalkAction()) {
+                case NONE -> bgmAgitBizTalkSandService.sendInquiry(e);
+                case COMPLETE -> bgmAgitBizTalkSandService.sendInquiryComplete(e);
+                default -> {
+                }
+            }
+            
+        } catch (Exception ex) {
+            switch (e.getTalkAction()) {
+                case NONE -> bgmAgitBizTalkSandService.sendInquiry(e);
+                case COMPLETE -> bgmAgitBizTalkSandService.sendInquiryComplete(e);
+                default -> {
+                }
             }
         }
     }

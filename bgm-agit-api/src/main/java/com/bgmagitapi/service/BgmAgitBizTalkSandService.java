@@ -4,6 +4,7 @@ import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitReservation;
+import com.bgmagitapi.event.dto.InquiryEvent;
 import com.bgmagitapi.service.response.ReservationTalkContext;
 
 import java.util.List;
@@ -13,4 +14,7 @@ public interface BgmAgitBizTalkSandService {
     ApiResponse sendCancelBizTalk(ReservationTalkContext ctx);
     ApiResponse sendCompleteBizTalk(ReservationTalkContext ctx);
     ApiResponse sendJoinMemberBizTalk(BgmAgitMember member);
+    ApiResponse sendInquiry(InquiryEvent event);
+    ApiResponse sendInquiryComplete(InquiryEvent event);
+    
 }

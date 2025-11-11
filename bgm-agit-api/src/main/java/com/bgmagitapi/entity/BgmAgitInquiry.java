@@ -1,5 +1,6 @@
 package com.bgmagitapi.entity;
 
+import com.bgmagitapi.controller.request.BgmAgitInquiryPutRequest;
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,15 +31,23 @@ public class BgmAgitInquiry extends DateSuperClass {
        private BgmAgitMember bgmAgitMember;
    
        /** 문의 제목 */
-       @Column(name = "BGM_AGIT_INQUIRY_TITLE", length = 500)
+       @Column(name = "BGM_AGIT_INQUIRY_TITLE")
        private String bgmAgitInquiryTitle;
    
        /** 문의 내용 */
-       @Column(name = "BGM_AGIT_INQUIRY_CONT", length = 4000)
+       @Column(name = "BGM_AGIT_INQUIRY_CONT")
        private String bgmAgitInquiryCont;
    
        /** 답변 여부 (Y/N) */
-       @Column(name = "BGM_AGIT_INQUIRY_ANSWER_STATUS", length = 1)
+       @Column(name = "BGM_AGIT_INQUIRY_ANSWER_STATUS")
        private String bgmAgitInquiryAnswerStatus;
-     
+       
+       public void modify(BgmAgitInquiryPutRequest request) {
+              this.bgmAgitInquiryTitle = request.getTitle();
+              this.bgmAgitInquiryCont = request.getCont();
+       }
+       
+       public void modifyAnswerStatus(String value) {
+              this.bgmAgitInquiryAnswerStatus = value;
+       }
 }
