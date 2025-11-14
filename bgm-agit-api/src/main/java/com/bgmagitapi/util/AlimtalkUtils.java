@@ -180,7 +180,7 @@ public class AlimtalkUtils {
         return new StringBuilder()
                  .append(("[BGM 아지트 1:1 문의 답변 안내]\n\n"))
                  .append("안녕하세요.").append(userName).append("님").append("\n")
-                 .append("BGM 아지트에 남겨주신 1:1 문의에 대한 답변이 등록되었습니다.")
+                 .append("BGM 아지트에 남겨주신 1:1 문의에 대한 답변이 등록되었습니다.\n\n")
                  .append("자세한 문의내역은 BGM 아지트 홈페이지 사이트 에서 로그인 후 마이페이지 > 1:1문의에서 확인하실 수 있습니다.")
                  .toString();
     }
