@@ -67,8 +67,15 @@
       "@graph": [
         {
           "@type": "WebSite",
+          "@id": "https://bgmagit.co.kr/#website",
+          "url": "https://bgmagit.co.kr/",
           "name": "보드게임카페 BGM 아지트",
-          "url": "https://bgmagit.co.kr/"
+          "alternateName": "BGM 아지트",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://bgmagit.co.kr/search?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
         },
         {
           "@type": "SiteNavigationElement",
