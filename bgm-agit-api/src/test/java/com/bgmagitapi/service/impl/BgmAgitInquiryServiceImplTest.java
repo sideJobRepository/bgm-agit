@@ -49,7 +49,7 @@ class BgmAgitInquiryServiceImplTest extends RepositoryAndServiceTestSupport {
                            "bgmAgitImage", file.getName(), "image/jpeg", fis
                    );
         List<MultipartFile> multipartFile1 = List.of(multipartFile);
-        BgmAgitInquiryPostRequest request = new BgmAgitInquiryPostRequest(3L, 11L, "1:1문의 답글 테스트", "1:1문의 답글 테스트",multipartFile1);
+        BgmAgitInquiryPostRequest request = new BgmAgitInquiryPostRequest(5L, 11L, "1:1문의 답글 테스트", "1:1문의 답글 테스트",multipartFile1);
         ApiResponse inquiry = bgmAgitInquiryService.createInquiry(request);
         Assertions.assertThat(inquiry).isNotNull();
     }
@@ -65,7 +65,7 @@ class BgmAgitInquiryServiceImplTest extends RepositoryAndServiceTestSupport {
       @DisplayName("1:1상세 조회")
       @Test
       void test4(){
-        BgmAgitInquiryGetDetailResponse detailInquiry = bgmAgitInquiryService.getDetailInquiry(3L);
+        BgmAgitInquiryGetDetailResponse detailInquiry = bgmAgitInquiryService.getDetailInquiry(5L);
         System.out.println("detailInquiry = " + detailInquiry);
       }
       

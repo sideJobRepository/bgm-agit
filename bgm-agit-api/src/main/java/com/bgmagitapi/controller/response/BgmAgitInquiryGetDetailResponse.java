@@ -16,6 +16,7 @@ public class BgmAgitInquiryGetDetailResponse {
     private String memberId;
     private String title;
     private String cont;
+    private String memberName;
     private String answerStatus;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDateTime registDate;
@@ -32,6 +33,7 @@ public class BgmAgitInquiryGetDetailResponse {
         private String memberId;
         private String title;
         private String cont;
+        private String memberName;
         private String answerStatus;
         
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
