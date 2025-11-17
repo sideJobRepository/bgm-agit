@@ -185,21 +185,41 @@ public class BgmAgitInquiryServiceImpl implements BgmAgitInquiryService {
         
         
         TalkAction talkAction = TalkAction.NONE;
-        if (request.getParentId() != null) {
+        Long parentId = request.getParentId();
+        
+        Long inquiryId = (parentId != null)
+                ? parentId
+                : saveInquiry.getBgmAgitInquiryId();
+        
+        BgmAgitMember targetMember;
+        
+        if (parentId != null) {
             talkAction = TalkAction.COMPLETE;
-            Long parentId = request.getParentId();
-            BgmAgitInquiry bgmAgitInquiry = inquiryRepository.findById(parentId).orElseThrow(() -> new RuntimeException("존재하지 않는 문의글 입니다."));
-            bgmAgitInquiry.modifyAnswerStatus("Y");
+            
+            BgmAgitInquiry parentInquiry = inquiryRepository.findById(parentId)
+                    .orElseThrow(() -> new RuntimeException("존재하지 않는 문의글 입니다."));
+            
+            parentInquiry.modifyAnswerStatus("Y");
+            
+            // 멤버 정보는 여기서 그대로 가져감
+            targetMember = parentInquiry.getBgmAgitMember();
+            
+        } else {
+            // 신규 문의 생성 시
+            targetMember = bgmAgitMember;
         }
-        if (request.getParentId() != null) {
-            Long parentId = request.getParentId();
-            BgmAgitInquiry bgmAgitInquiry = inquiryRepository.findById(parentId).orElseThrow(() -> new RuntimeException("존재하지 않는 문의글 입니다."));
-            String memberName = bgmAgitInquiry.getBgmAgitMember().getBgmAgitMemberName();
-            String memberPhoneNo = bgmAgitInquiry.getBgmAgitMember().getBgmAgitMemberPhoneNo();
-            eventPublisher.publishEvent(new InquiryEvent(request.getParentId() != null ? request.getParentId() : saveInquiry.getBgmAgitInquiryId(), memberName, request.getTitle(), saveInquiry.getRegistDate() ,memberPhoneNo,talkAction));
-        }else {
-            eventPublisher.publishEvent(new InquiryEvent(saveInquiry.getBgmAgitInquiryId(), bgmAgitMember.getBgmAgitMemberName(), request.getTitle(), saveInquiry.getRegistDate() ,bgmAgitMember.getBgmAgitMemberPhoneNo(),talkAction));
-        }
+
+        // 이벤트 발행
+        eventPublisher.publishEvent(
+                new InquiryEvent(
+                        inquiryId,
+                        targetMember.getBgmAgitMemberName(),
+                        request.getTitle(),
+                        saveInquiry.getRegistDate(),
+                        targetMember.getBgmAgitMemberPhoneNo(),
+                        talkAction
+                )
+        );
         
         return new ApiResponse(200, true, "1:1 문의가 접수되었습니다.");
     }
