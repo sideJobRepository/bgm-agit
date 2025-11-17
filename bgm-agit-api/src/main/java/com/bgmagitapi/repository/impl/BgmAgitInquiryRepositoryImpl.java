@@ -3,7 +3,8 @@ package com.bgmagitapi.repository.impl;
 import com.bgmagitapi.entity.BgmAgitInquiry;
 import com.bgmagitapi.repository.custom.BgmAgitInquiryCustomRepository;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.jpa.impl.JPADeleteClause;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -25,13 +27,13 @@ public class BgmAgitInquiryRepositoryImpl implements BgmAgitInquiryCustomReposit
     private final EntityManager em;
     
     @Override
-    public Page<BgmAgitInquiry> findByInquirys(Long memberId, boolean isUser, Pageable pageable) {
+    public Page<BgmAgitInquiry> findByInquirys(Long memberId, boolean isUser, Pageable pageable, String titleOrCont) {
         
         List<BgmAgitInquiry> result = queryFactory
                 .select(bgmAgitInquiry)
                 .from(bgmAgitInquiry)
                 .join(bgmAgitInquiry.bgmAgitMember, bgmAgitMember).fetchJoin()
-                .where(isUserFilter(memberId, isUser) , bgmAgitInquiry.bgmAgitInquiryHierarchyId.isNull())
+                .where(isUserFilter(memberId, isUser) , bgmAgitInquiry.bgmAgitInquiryHierarchyId.isNull(),titleOrContLikeIgnoreSpaces(titleOrCont))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -79,6 +81,20 @@ public class BgmAgitInquiryRepositoryImpl implements BgmAgitInquiryCustomReposit
     
     private BooleanExpression isUserFilter(Long memberId, boolean isUser) {
         return isUser ? bgmAgitInquiry.bgmAgitMember.bgmAgitMemberId.eq(memberId) : null;
+    }
+    
+    /** 제목/내용에서 공백 제거 후 LIKE %keyword% 검색(OR) */
+    private BooleanExpression titleOrContLikeIgnoreSpaces(String keyword) {
+        if (!StringUtils.hasText(keyword)) return null;
+        
+        String k = keyword.replaceAll("\\s+", "");
+        StringExpression titleNoSpace = Expressions.stringTemplate(
+                "replace({0}, ' ', '')", bgmAgitInquiry.bgmAgitInquiryTitle);
+        StringExpression contNoSpace = Expressions.stringTemplate(
+                "replace({0}, ' ', '')", bgmAgitInquiry.bgmAgitInquiryCont);
+        
+        return titleNoSpace.like("%" + k + "%")
+                .or(contNoSpace.like("%" + k + "%"));
     }
     
 }

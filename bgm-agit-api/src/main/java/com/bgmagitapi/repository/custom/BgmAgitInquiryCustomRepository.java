@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface BgmAgitInquiryCustomRepository {
     
-    Page<BgmAgitInquiry> findByInquirys(Long memberId, boolean isUser, Pageable pageable);
+    Page<BgmAgitInquiry> findByInquirys(Long memberId, boolean isUser, Pageable pageable, String titleOrCont);
     
     List<BgmAgitInquiry> findByDetailInquiry(Long inquiryId);
     

@@ -58,7 +58,7 @@ class BgmAgitInquiryServiceImplTest extends RepositoryAndServiceTestSupport {
     @Test
     void test3(){
         PageRequest pageRequest = PageRequest.of(0, 10);
-        Page<BgmAgitInquiryGetResponse> result = bgmAgitInquiryService.getInquiry(11L, "ROLE_ADMIN", pageRequest);
+        Page<BgmAgitInquiryGetResponse> result = bgmAgitInquiryService.getInquiry(11L, "ROLE_ADMIN", pageRequest, "qdqwdqd");
         System.out.println("result = " + result);
     }
     

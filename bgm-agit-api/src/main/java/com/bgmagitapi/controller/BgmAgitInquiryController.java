@@ -53,7 +53,9 @@ public class BgmAgitInquiryController {
     
     @GetMapping("/inquiry")
     public PageResponse<BgmAgitInquiryGetResponse>  getInquiry(@PageableDefault(size = 10) Pageable pageable,
-                                                               @AuthenticationPrincipal Jwt jwt) {
+                                                               @AuthenticationPrincipal Jwt jwt,
+                                                               @RequestParam(name = "titleOrCont" , required = false) String titleOrCont
+                                                               ) {
         if(jwt == null) {
             throw new RuntimeException("비 로그인입니다.");
         }
@@ -63,7 +65,7 @@ public class BgmAgitInquiryController {
                 .map(Long::valueOf)
                 .orElse(null);
         String role = extractRole(jwt);
-        Page<BgmAgitInquiryGetResponse> inquiry = inquiryService.getInquiry(memberId, role, pageable);
+        Page<BgmAgitInquiryGetResponse> inquiry = inquiryService.getInquiry(memberId, role, pageable,titleOrCont);
         return PageResponse.from(inquiry);
     }
     

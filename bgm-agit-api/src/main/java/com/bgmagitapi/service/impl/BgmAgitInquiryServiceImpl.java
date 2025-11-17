@@ -18,7 +18,6 @@ import com.bgmagitapi.repository.BgmAgitInquiryRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.service.BgmAgitInquiryService;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -52,9 +51,9 @@ public class BgmAgitInquiryServiceImpl implements BgmAgitInquiryService {
     
     
     @Override
-    public Page<BgmAgitInquiryGetResponse> getInquiry(Long memberId, String role, Pageable pageable) {
+    public Page<BgmAgitInquiryGetResponse> getInquiry(Long memberId, String role, Pageable pageable, String titleOrCont) {
         boolean isUser = "ROLE_USER".equals(role) || "ROLE_MENTOR".equals(role);
-        Page<BgmAgitInquiry> inquiry = inquiryRepository.findByInquirys(memberId, isUser, pageable);
+        Page<BgmAgitInquiry> inquiry = inquiryRepository.findByInquirys(memberId, isUser, pageable,titleOrCont);
         return inquiry.map(item -> {
             return BgmAgitInquiryGetResponse
                     .builder()

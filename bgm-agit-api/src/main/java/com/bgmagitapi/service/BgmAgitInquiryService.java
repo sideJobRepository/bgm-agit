@@ -11,7 +11,7 @@ import org.springframework.data.domain.Pageable;
 public interface BgmAgitInquiryService {
 
     
-    Page<BgmAgitInquiryGetResponse> getInquiry(Long memberId, String role, Pageable pageable);
+    Page<BgmAgitInquiryGetResponse> getInquiry(Long memberId, String role, Pageable pageable, String titleOrCont);
     
     BgmAgitInquiryGetDetailResponse getDetailInquiry(Long inquiryId);
     
