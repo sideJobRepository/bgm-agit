@@ -48,6 +48,7 @@ public class BgmAgitInquiryServiceImpl implements BgmAgitInquiryService {
     private final ApplicationEventPublisher eventPublisher;
     
     private final S3FileUtils s3FileUtils;
+    private final BgmAgitInquiryRepository bgmAgitInquiryRepository;
     
     
     @Override
@@ -190,8 +191,15 @@ public class BgmAgitInquiryServiceImpl implements BgmAgitInquiryService {
             BgmAgitInquiry bgmAgitInquiry = inquiryRepository.findById(parentId).orElseThrow(() -> new RuntimeException("존재하지 않는 문의글 입니다."));
             bgmAgitInquiry.modifyAnswerStatus("Y");
         }
-        
-        eventPublisher.publishEvent(new InquiryEvent(request.getParentId() != null ? request.getParentId() : saveInquiry.getBgmAgitInquiryId(), bgmAgitMember.getBgmAgitMemberName(), request.getTitle(), saveInquiry.getRegistDate() ,bgmAgitMember.getBgmAgitMemberPhoneNo(),talkAction));
+        if (request.getParentId() != null) {
+            Long parentId = request.getParentId();
+            BgmAgitInquiry bgmAgitInquiry = inquiryRepository.findById(parentId).orElseThrow(() -> new RuntimeException("존재하지 않는 문의글 입니다."));
+            String memberName = bgmAgitInquiry.getBgmAgitMember().getBgmAgitMemberName();
+            String memberPhoneNo = bgmAgitInquiry.getBgmAgitMember().getBgmAgitMemberPhoneNo();
+            eventPublisher.publishEvent(new InquiryEvent(request.getParentId() != null ? request.getParentId() : saveInquiry.getBgmAgitInquiryId(), memberName, request.getTitle(), saveInquiry.getRegistDate() ,memberPhoneNo,talkAction));
+        }else {
+            eventPublisher.publishEvent(new InquiryEvent(saveInquiry.getBgmAgitInquiryId(), bgmAgitMember.getBgmAgitMemberName(), request.getTitle(), saveInquiry.getRegistDate() ,bgmAgitMember.getBgmAgitMemberPhoneNo(),talkAction));
+        }
         
         return new ApiResponse(200, true, "1:1 문의가 접수되었습니다.");
     }
