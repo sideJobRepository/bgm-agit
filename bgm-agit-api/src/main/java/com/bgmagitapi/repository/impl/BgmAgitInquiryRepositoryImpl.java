@@ -36,6 +36,7 @@ public class BgmAgitInquiryRepositoryImpl implements BgmAgitInquiryCustomReposit
                 .where(isUserFilter(memberId, isUser) , bgmAgitInquiry.bgmAgitInquiryHierarchyId.isNull(),titleOrContLikeIgnoreSpaces(titleOrCont))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
+                .orderBy(bgmAgitInquiry.registDate.desc())
                 .fetch();
         
         
