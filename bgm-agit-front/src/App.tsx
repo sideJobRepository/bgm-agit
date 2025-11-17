@@ -19,7 +19,8 @@ import NoticeDetail from './pages/NoticeDetail.tsx';
 import Privacy from './pages/Privacy.tsx';
 import Free from './pages/Free.tsx';
 import FreeDetail from './pages/FreeDetail.tsx';
-import NoticePopupDetail from './pages/NoticePopupDetail.tsx';
+import Inquiry from './pages/Inquiry.tsx';
+import InquiryDetail from './pages/InquiryDetail.tsx';
 
 function App() {
   return (
@@ -33,7 +34,6 @@ function App() {
             <Route path="/oauth/:provider/callback" element={<RedirectPage />} />
             <Route path="/error" element={<Error />} />
             <Route path="/privacy" element={<Privacy />} />
-            <Route path="/noticeDetailPopup" element={<NoticePopupDetail />} />
             <Route path="/" element={<Layout />}>
               <Route index element={<MainPage />} />
               <Route path="about" element={<About />} />
@@ -44,6 +44,8 @@ function App() {
               <Route path="role" element={<Role />} />
               <Route path="free" element={<Free />} />
               <Route path="/freeDetail" element={<FreeDetail />} />
+              <Route path="inquiry" element={<Inquiry />} />
+              <Route path="/inquiryDetail" element={<InquiryDetail />} />
             </Route>
           </Routes>
         </BrowserRouter>

@@ -17,30 +17,29 @@ import { useSearchParams } from 'react-router-dom';
 import { FaCommentDots, FaTrash } from 'react-icons/fa';
 import { userState } from '../recoil/state/userState.ts';
 import { FaDownload } from 'react-icons/fa';
-import { useCommunityDownloadFetch, useDetailCommunityFetch } from '../recoil/communityFetch.ts';
-import { detailCommunityState } from '../recoil/state/communitySate.ts';
-import type { CommunityFile } from '../types/community.ts';
 import LoginMoadl from '../components/LoginMoadl.tsx';
+import { useDetailSupportFetch, useSupportDownloadFetch } from '../recoil/supportFetch.ts';
+import { detailSupportState } from '../recoil/state/supportState.ts';
+import type { SupportFile } from '../types/support.ts';
 
-type NewCommunityState = {
-  id: number | null;
+type NewSupportState = {
+  id: string;
   title: string;
-  content: string;
+  cont: string;
 };
 
-export default function FreeDetail() {
+export default function InquiryDetail() {
   const user = useRecoilValue(userState);
 
   //로그인 모달
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   //디테일 조회
-  const fetchDetailCommunity = useDetailCommunityFetch();
-  const detailItem = useRecoilValue(detailCommunityState);
-  const setDetailItem = useSetRecoilState(detailCommunityState);
-  console.log('-detailItem', detailItem);
+  const fetchDetailSupport = useDetailSupportFetch();
+  const detailItem = useRecoilValue(detailSupportState);
+  const setDetailItem = useSetRecoilState(detailSupportState);
 
-  const fetchCommunityDownload = useCommunityDownloadFetch();
+  const fetchSupportDownload = useSupportDownloadFetch();
 
   const [searchParams] = useSearchParams();
   const id = searchParams.get('id');
@@ -53,34 +52,36 @@ export default function FreeDetail() {
 
   const [isEditMode, setIsEditMode] = useState(false);
 
-  const [community, setNewCommunity] = useState<NewCommunityState>({
-    id: null,
+  const [isReplyEditMode, setIsReplyEditMode] = useState(false);
+
+  const [supportItem, setSupportItem] = useState<NewSupportState>({
+    id: '',
     title: '',
-    content: '',
+    cont: '',
+  });
+
+  //댓글
+  const [supportReplyItem, setSupportReplyItem] = useState<NewSupportState>({
+    id: '',
+    title: '',
+    cont: '',
   });
 
   const [files, setFiles] = useState<File[]>([]);
-  const [attachedFiles, setAttachedFiles] = useState<CommunityFile[]>([]);
+  const [attachedFiles, setAttachedFiles] = useState<SupportFile[]>([]);
 
   const [deletedFileNames, setDeletedFileNames] = useState<string[]>([]);
   const [deletedFileId, setDeletedFileId] = useState<string[]>([]);
 
+  //답글 파일
+  // 댓글용 파일 상태 추가
+  const [replyFiles, setReplyFiles] = useState<File[]>([]);
+  const [replyAttachedFiles, setReplyAttachedFiles] = useState<SupportFile[]>([]);
+  const [replyDeletedFileNames, setReplyDeletedFileNames] = useState<string[]>([]);
+  const [replyDeletedFileId, setReplyDeletedFileId] = useState<string[]>([]);
+
   //댓글 입력 모드
   const [writeReplyMdoe, setWriteReplyMode] = useState(false);
-  const [writeConent, setWriteConent] = useState('');
-
-  // 수정 대상 commentId
-  const [editCommentId, setEditCommentId] = useState<number | null>(null);
-
-  // 답글 입력 상태
-  const [replyToId, setReplyToId] = useState<number | null>(null);
-  const replyInputRef = useRef<HTMLTextAreaElement | null>(null);
-
-  useEffect(() => {
-    if (replyToId && replyInputRef.current) {
-      replyInputRef.current.focus(); // 답글창 생길 때 자동 포커스
-    }
-  }, [replyToId]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -88,24 +89,29 @@ export default function FreeDetail() {
     }
   };
 
+  //답글 파일
+  const handleReplyFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setReplyFiles(Array.from(e.target.files));
+    }
+  };
+
   const editorRef = useRef<ClassicEditorType | null>(null);
 
   function fileDownload(id: string) {
-    console.log(id);
-
-    fetchCommunityDownload(id);
+    fetchSupportDownload(id);
   }
 
-  //커뮤니티 저장
+  //문의 저장
   const handleSubmit = async () => {
     const formData = new FormData();
 
-    formData.append('title', community.title);
+    formData.append('title', supportItem.title);
 
     if (isEditMode) {
       formData.append('id', id!);
       formData.append('memberId', detailItem.memberId);
-      formData.append('content', community.content);
+      formData.append('cont', supportItem.cont);
 
       deletedFileId.forEach(id => {
         formData.append('deletedFiles', id);
@@ -116,7 +122,7 @@ export default function FreeDetail() {
       });
     } else {
       formData.append('memberId', String(user?.id));
-      formData.append('cont', community.content);
+      formData.append('cont', supportItem.cont);
       files.forEach(file => {
         formData.append('files', file);
       });
@@ -130,12 +136,12 @@ export default function FreeDetail() {
         if (!validation()) return;
 
         requestFn({
-          url: '/bgm-agit/free',
+          url: '/bgm-agit/inquiry',
           body: formData,
           ignoreHttpError: true,
           onSuccess: () => {
             if (!isEditMode) {
-              navigate(`/free`);
+              navigate(`/inquiry`);
               toast.success('게시글이 작성되었습니다.');
             } else {
               showConfirmModal({
@@ -145,10 +151,10 @@ export default function FreeDetail() {
                   </>
                 ),
                 onConfirm: () => {
-                  navigate(`/free`);
+                  navigate(`/inquiry`);
                 },
               });
-              fetchDetailCommunity(id!);
+              fetchDetailSupport(id!);
             }
             setIsEditMode(false);
           },
@@ -159,17 +165,17 @@ export default function FreeDetail() {
 
   //삭제
   async function deleteData() {
-    const deleteId = community.id!.toString();
+    const deleteId = supportItem.id!.toString();
 
     showConfirmModal({
       message: '삭제하시겠습니까?',
       onConfirm: () => {
         remove({
-          url: `/bgm-agit/free/${deleteId}`,
+          url: `/bgm-agit/inquiry/${deleteId}`,
           ignoreHttpError: true,
           onSuccess: () => {
             toast.success('게시글이 삭제되었습니다.');
-            navigate(`/free`);
+            navigate(`/inquiry`);
           },
         });
       },
@@ -177,10 +183,10 @@ export default function FreeDetail() {
   }
 
   function validation() {
-    if (!community.title) {
+    if (!supportItem.title) {
       toast.error('타이틀을 입력해주세요.');
       return false;
-    } else if (!community.content) {
+    } else if (!supportItem.cont) {
       toast.error('내용을 입력해주세요.');
       return false;
     }
@@ -188,64 +194,88 @@ export default function FreeDetail() {
   }
 
   //댓글 저장
-  const handleReplySubmit = async (commentId: number | null, mode: boolean) => {
-    //로그인 체크
-    if (!user) {
-      showConfirmModal({
-        message: (
-          <>
-            로그인 후 이용 가능합니다. <br /> 로그인 하시겠습니까?
-          </>
-        ),
-        onConfirm: () => {
-          setIsLoginModalOpen(true);
-        },
-      });
-      return;
-    }
-    let requestFn = insert;
-    const param = {
-      content: writeConent,
-      freeId: detailItem.id,
-      parentId: commentId,
-      commentId: commentId,
-    };
+  const handleReplySubmit = async () => {
+    const formData = new FormData();
 
-    if (!mode) {
-      requestFn = update;
+    formData.append('title', supportReplyItem.title);
+    formData.append('parentId', detailItem.id);
+
+    if (isEditMode) {
+      formData.append('cont', supportReplyItem.cont);
+
+      replyDeletedFileId.forEach(id => {
+        formData.append('deletedFiles', id);
+      });
+
+      replyFiles.forEach(file => {
+        formData.append('files', file);
+      });
+    } else {
+      formData.append('cont', supportReplyItem.cont);
+      replyFiles.forEach(file => {
+        formData.append('files', file);
+      });
     }
+
+    const requestFn = isReplyEditMode ? update : insert;
 
     showConfirmModal({
-      message: '저장하시겠습니까?',
+      message: '답글을 저장하시겠습니까?',
       onConfirm: () => {
+        if (!validationReply()) return;
+
         requestFn({
-          url: '/bgm-agit/comment',
-          body: param,
+          url: '/bgm-agit/inquiry',
+          body: formData,
           ignoreHttpError: true,
           onSuccess: () => {
-            toast.success('댓글이 작성되었습니다.');
-            setWriteReplyMode(false);
-            setReplyToId(null);
-            setWriteConent('');
-            setEditCommentId(null);
-            if (id) fetchDetailCommunity(id);
+            if (!isEditMode) {
+              navigate(`/inquiry`);
+              toast.success('답글이 작성되었습니다.');
+            } else {
+              showConfirmModal({
+                message: (
+                  <>
+                    답글이 저장되었습니다. <br /> 목록으로 이동하시겠습니까?
+                  </>
+                ),
+                onConfirm: () => {
+                  navigate(`/inquiry`);
+                },
+              });
+              fetchDetailSupport(id!);
+            }
+            setIsReplyEditMode(false);
           },
         });
       },
     });
   };
 
+  function validationReply() {
+    if (!supportReplyItem.title) {
+      toast.error('타이틀을 입력해주세요.');
+      return false;
+    } else if (!supportReplyItem.cont) {
+      toast.error('내용을 입력해주세요.');
+      return false;
+    }
+    return true;
+  }
+
   //댓글 삭제
-  async function deleteReplyData(deleteId: number) {
+  async function deleteReplyData() {
+    const deleteId = detailItem?.reply.id;
+
     showConfirmModal({
-      message: '삭제하시겠습니까?',
+      message: '답글을 삭제하시겠습니까?',
       onConfirm: () => {
         remove({
-          url: `/bgm-agit/comment/${deleteId}`,
+          url: `/bgm-agit/inquiry/${deleteId}`,
           ignoreHttpError: true,
           onSuccess: () => {
-            toast.success('댓글이 삭제되었습니다.');
-            if (id) fetchDetailCommunity(id);
+            toast.success('답글이 삭제되었습니다.');
+            if (id) fetchDetailSupport(id);
           },
         });
       },
@@ -254,17 +284,28 @@ export default function FreeDetail() {
 
   useEffect(() => {
     if (id) {
-      fetchDetailCommunity(id);
+      fetchDetailSupport(id);
     }
   }, []);
 
   useEffect(() => {
     if (detailItem) {
-      setNewCommunity({
+      setSupportItem({
         id: detailItem.id,
         title: detailItem.title,
-        content: detailItem.content,
+        cont: detailItem.cont,
       });
+
+      if (detailItem.reply) {
+        setSupportReplyItem({
+          id: detailItem.id,
+          title: detailItem.title,
+          cont: detailItem.cont,
+        });
+
+        setReplyAttachedFiles(detailItem.reply.files ?? []);
+      }
+
       setAttachedFiles(detailItem.files ?? []);
     }
   }, [detailItem, id]);
@@ -273,16 +314,24 @@ export default function FreeDetail() {
   useEffect(() => {
     return () => {
       setDetailItem({
-        comments: [],
-        content: '',
+        reply: {
+          answerStatus: '',
+          cont: '',
+          files: [],
+          id: '',
+          memberId: '',
+          memberName: '',
+          registDate: '',
+          title: '',
+        },
+        cont: '',
         files: [],
         id: 0,
-        isAuthor: false,
         memberId: '',
         title: '',
         registDate: '',
         memberName: '',
-        memberNickName: '',
+        answerStatus: '',
       });
     };
   }, []);
@@ -329,7 +378,7 @@ export default function FreeDetail() {
       {id && !isEditMode ? (
         <>
           <ButtonBox>
-            {(detailItem?.isAuthor || user?.roles.includes('ROLE_ADMIN')) && (
+            {detailItem?.answerStatus === 'N' && (
               <>
                 <Button
                   onClick={() => {
@@ -346,7 +395,7 @@ export default function FreeDetail() {
             )}
             <Button
               onClick={() => {
-                navigate(`/free`);
+                navigate(`/inquiry`);
               }}
               color="#988271"
             >
@@ -355,7 +404,7 @@ export default function FreeDetail() {
           </ButtonBox>
           <TitleBox>
             <div>
-              <h3>{detailItem?.memberNickName}</h3>
+              <h3>{detailItem?.memberName}</h3>
               <span>{detailItem?.registDate} </span>
             </div>
             <h2>{detailItem?.title}</h2>
@@ -366,7 +415,7 @@ export default function FreeDetail() {
                 <li key={idx}>
                   <a
                     onClick={() => {
-                      fileDownload(file.uuidName);
+                      fileDownload(file.uuid);
                     }}
                   >
                     {file.fileName}
@@ -380,218 +429,186 @@ export default function FreeDetail() {
           <ContentBox
             className="ck-content"
             dangerouslySetInnerHTML={{
-              __html: convertOembedToIframe(String(detailItem?.content)),
+              __html: convertOembedToIframe(String(detailItem?.cont)),
             }}
           />
           <ReplyBox>
             <div className="reply-header-box">
               <h3>
-                <FaCommentDots /> 댓글 <span>{detailItem?.comments?.length}</span>
+                <FaCommentDots /> 답변
               </h3>
-              {!writeReplyMdoe && (
+              {!writeReplyMdoe && !detailItem.reply && user?.roles.includes('ROLE_ADMIN') && (
                 <Button
                   color="#F2EDEA"
                   onClick={() => {
                     setWriteReplyMode(true);
-                    setReplyToId(null);
-                    setEditCommentId(null);
                   }}
                 >
-                  댓글달기
+                  답변달기
                 </Button>
               )}
             </div>
+            {detailItem?.reply && !writeReplyMdoe && (
+              <>
+                <ButtonBox>
+                  <>
+                    <Button
+                      onClick={() => {
+                        setIsReplyEditMode(true);
+                      }}
+                      color="#093A6E"
+                    >
+                      수정
+                    </Button>
+                    <Button color="#FF5E57" onClick={() => deleteReplyData()}>
+                      삭제
+                    </Button>
+                  </>
+                </ButtonBox>
+                <TitleBox>
+                  <div>
+                    <h3>
+                      <BiSubdirectoryRight style={{ marginRight: '8px' }} />
+                      관리자
+                    </h3>
+                    <span>{detailItem?.reply?.registDate} </span>
+                  </div>
+                  <h2>{detailItem?.reply?.title}</h2>
+                </TitleBox>
+                {detailItem?.reply?.files?.length > 0 && (
+                  <StyledFileUl>
+                    {detailItem.reply?.files.map((file, idx) => (
+                      <li key={idx}>
+                        <a
+                          onClick={() => {
+                            fileDownload(file.uuid);
+                          }}
+                        >
+                          {file.fileName}
+                          <FaDownload />
+                        </a>
+                      </li>
+                    ))}
+                  </StyledFileUl>
+                )}
+
+                <ContentBox
+                  className="ck-content"
+                  dangerouslySetInnerHTML={{
+                    __html: convertOembedToIframe(String(detailItem?.reply?.cont)),
+                  }}
+                />
+              </>
+            )}
             {writeReplyMdoe && (
-              <div className="textarea-box">
-                <div className="reply-button-box">
-                  <Button color="#1A7D55" onClick={() => handleReplySubmit(null, true)}>
+              <>
+                <ButtonBox>
+                  <Button onClick={handleReplySubmit} color="#1A7D55">
                     저장
                   </Button>
                   <Button
                     onClick={() => {
-                      setWriteReplyMode(false);
+                      if (isReplyEditMode) {
+                        setIsReplyEditMode(false);
+                        setReplyDeletedFileNames([]);
+                        setReplyDeletedFileId([]);
+
+                        setSupportReplyItem({
+                          id: detailItem.reply.id,
+                          title: detailItem.reply.title,
+                          cont: detailItem.reply.cont,
+                        });
+                        setReplyAttachedFiles(detailItem.reply.files ?? []);
+                      } else {
+                        navigate('/inquiry');
+                      }
                     }}
-                    color="#FF5E57"
+                    color="#988271"
                   >
                     취소
                   </Button>
-                </div>
-                <TextArea
-                  value={writeConent}
-                  onChange={e => setWriteConent(e.target.value)}
-                  placeholder="댓글을 입력해주세요."
-                />
-              </div>
-            )}
-            {detailItem?.comments?.map(item => (
-              <div className="reply-box" key={item.commentId}>
-                <div className="reply-top">
-                  <span>
-                    <strong>{item.memberNickname}</strong> {item.registDate}
-                    {(item.isAuthor || user?.roles.includes('ROLE_ADMIN')) &&
-                      item.delStatus === 'N' && (
-                        <div className="reply-button-box">
-                          {editCommentId === item.commentId ? (
-                            <>
-                              <Button
-                                color="#1A7D55"
-                                onClick={() => handleReplySubmit(item.commentId, false)}
-                              >
-                                저장
-                              </Button>
-                              <Button
-                                color="#FF5E57"
-                                onClick={() => {
-                                  setEditCommentId(null);
-                                  setWriteConent('');
-                                }}
-                              >
-                                취소
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Button
-                                color="#093A6E"
-                                onClick={() => {
-                                  setEditCommentId(item.commentId);
-                                  setWriteConent(item.content);
-                                  setWriteReplyMode(false);
-                                  setReplyToId(null);
-                                }}
-                              >
-                                수정
-                              </Button>
-                              <Button
-                                color="#FF5E57"
-                                onClick={() => deleteReplyData(item.commentId)}
-                              >
-                                삭제
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      )}
-                  </span>
-                </div>
-                <div className="reply-center">
-                  {editCommentId === item.commentId ? (
-                    <div className="textarea-box">
-                      <TextArea
-                        value={writeConent}
-                        onChange={e => setWriteConent(e.target.value)}
-                        placeholder="댓글을 수정해주세요."
-                      />
-                    </div>
-                  ) : (
-                    <div className="reply-center">{item.content}</div>
-                  )}
-                  {item.delStatus === 'N' && (
-                    <div className="reply-button-box">
-                      <Button
-                        color="#F2EDEA"
-                        onClick={() => {
-                          setReplyToId(item.commentId);
-                          setWriteReplyMode(false);
-                          setEditCommentId(null);
-                          setWriteConent('');
-                        }}
-                      >
-                        답글
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                {replyToId === item.commentId && (
-                  <div className="textarea-box">
-                    <div className="reply-button-box">
-                      <Button
-                        color="#1A7D55"
-                        onClick={() => handleReplySubmit(item.commentId, true)}
-                      >
-                        저장
-                      </Button>
-                      <Button color="#FF5E57" onClick={() => setReplyToId(null)}>
-                        취소
-                      </Button>
-                    </div>
-                    <TextArea
-                      ref={replyInputRef}
-                      value={writeConent}
-                      onChange={e => setWriteConent(e.target.value)}
-                      placeholder="답글을 입력해주세요."
-                    />
-                  </div>
-                )}
-                {item?.children?.map(item => (
-                  <div className="reply-children-box" key={item.commentId}>
-                    <BiSubdirectoryRight />
-                    <div>
-                      <div className="reply-top">
-                        <span>
-                          <strong>{item.memberNickname}</strong> {item.registDate}
-                          {(item.isAuthor || user?.roles.includes('ROLE_ADMIN')) &&
-                            item.delStatus === 'N' && (
-                              <div className="reply-button-box">
-                                {editCommentId === item.commentId ? (
-                                  <>
-                                    <Button
-                                      color="#1A7D55"
-                                      onClick={() => handleReplySubmit(item.commentId, false)}
-                                    >
-                                      저장
-                                    </Button>
-                                    <Button
-                                      color="#FF5E57"
-                                      onClick={() => {
-                                        setEditCommentId(null);
-                                        setWriteConent('');
-                                      }}
-                                    >
-                                      취소
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Button
-                                      color="#093A6E"
-                                      onClick={() => {
-                                        setEditCommentId(item.commentId);
-                                        setWriteConent(item.content);
-                                        setWriteReplyMode(false);
-                                        setReplyToId(null);
-                                      }}
-                                    >
-                                      수정
-                                    </Button>
-                                    <Button
-                                      color="#FF5E57"
-                                      onClick={() => deleteReplyData(item.commentId)}
-                                    >
-                                      삭제
-                                    </Button>
-                                  </>
-                                )}
-                              </div>
-                            )}
-                        </span>
-                      </div>
-                      {editCommentId === item.commentId ? (
-                        <div className="textarea-box">
-                          <TextArea
-                            value={writeConent}
-                            onChange={e => setWriteConent(e.target.value)}
-                            placeholder="댓글을 수정해주세요."
+                </ButtonBox>
+                <EditorWrapper>
+                  <InputBox
+                    type="text"
+                    placeholder="제목을 입력해주세요."
+                    value={supportReplyItem.title}
+                    onChange={e =>
+                      setSupportReplyItem(prev => ({ ...prev, title: e.target.value }))
+                    }
+                  />
+                  <StyledFileUl>
+                    {replyAttachedFiles
+                      .filter(file => !replyDeletedFileNames.includes(file.fileName))
+                      .map((file, idx) => (
+                        <li key={idx}>
+                          <a
+                            onClick={() => {
+                              fileDownload(file.uuid);
+                            }}
+                          >
+                            {file.fileName}
+                            <FaDownload />
+                          </a>
+                          <FaTrash
+                            onClick={() => {
+                              setReplyDeletedFileId(prev => [...prev, file.id]);
+                              setReplyDeletedFileNames(prev => [...prev, file.fileName]);
+                            }}
                           />
-                        </div>
-                      ) : (
-                        <div className="reply-center">{item.content}</div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
+                        </li>
+                      ))}
+                  </StyledFileUl>
+                  <StyledFileInput type="file" multiple onChange={handleReplyFileChange} />
+                  <EditorBox>
+                    <CKEditor
+                      editor={ClassicEditor}
+                      data={supportReplyItem.cont}
+                      config={{
+                        mediaEmbed: {
+                          previewsInData: true,
+                        },
+                      }}
+                      onReady={(editor: Editor) => {
+                        editorRef.current = editor as unknown as ClassicEditor;
+
+                        editor.plugins.get('FileRepository').createUploadAdapter = (
+                          loader: FileLoader
+                        ) => {
+                          return {
+                            upload: async () => {
+                              const file = await loader.file;
+                              const formData = new FormData();
+
+                              if (file) formData.append('file', file);
+
+                              return new Promise(resolve => {
+                                insert<FormData>({
+                                  url: '/bgm-agit/inquiry/file',
+                                  body: formData,
+                                  ignoreHttpError: true,
+                                  onSuccess: (data: unknown) => {
+                                    const url = data as string;
+                                    resolve({ default: url });
+                                  },
+                                });
+                              });
+                            },
+                            abort: () => {
+                              console.warn('업로드 중단됨');
+                            },
+                          };
+                        };
+                      }}
+                      onChange={(_, editor) => {
+                        const data = editor.getData();
+                        setSupportReplyItem(prev => ({ ...prev, cont: data }));
+                      }}
+                    />
+                  </EditorBox>
+                </EditorWrapper>
+              </>
+            )}
           </ReplyBox>
         </>
       ) : (
@@ -607,14 +624,14 @@ export default function FreeDetail() {
                   setDeletedFileNames([]);
                   setDeletedFileId([]);
 
-                  setNewCommunity({
+                  setSupportItem({
                     id: detailItem.id,
                     title: detailItem.title,
-                    content: detailItem.content,
+                    cont: detailItem.cont,
                   });
                   setAttachedFiles(detailItem.files ?? []);
                 } else {
-                  navigate('/free');
+                  navigate('/inquiry');
                 }
               }}
               color="#988271"
@@ -626,8 +643,8 @@ export default function FreeDetail() {
             <InputBox
               type="text"
               placeholder="제목을 입력해주세요."
-              value={community.title}
-              onChange={e => setNewCommunity(prev => ({ ...prev, title: e.target.value }))}
+              value={supportItem.title}
+              onChange={e => setSupportItem(prev => ({ ...prev, title: e.target.value }))}
             />
             <StyledFileUl>
               {attachedFiles
@@ -636,7 +653,7 @@ export default function FreeDetail() {
                   <li key={idx}>
                     <a
                       onClick={() => {
-                        fileDownload(file.fileUrl);
+                        fileDownload(file.uuid);
                       }}
                     >
                       {file.fileName}
@@ -655,7 +672,7 @@ export default function FreeDetail() {
             <EditorBox>
               <CKEditor
                 editor={ClassicEditor}
-                data={community.content}
+                data={supportItem.cont}
                 config={{
                   mediaEmbed: {
                     previewsInData: true,
@@ -676,7 +693,7 @@ export default function FreeDetail() {
 
                         return new Promise(resolve => {
                           insert<FormData>({
-                            url: '/bgm-agit/free/file',
+                            url: '/bgm-agit/inquiry/file',
                             body: formData,
                             ignoreHttpError: true,
                             onSuccess: (data: unknown) => {
@@ -694,7 +711,7 @@ export default function FreeDetail() {
                 }}
                 onChange={(_, editor) => {
                   const data = editor.getData();
-                  setNewCommunity(prev => ({ ...prev, content: data }));
+                  setSupportItem(prev => ({ ...prev, cont: data }));
                 }}
               />
             </EditorBox>
@@ -797,6 +814,8 @@ const TitleBox = styled.div<WithTheme>`
     background-color: ${({ theme }) => theme.colors.basicColor};
 
     h3 {
+      display: flex;
+      align-items: center;
       color: ${({ theme }) => theme.colors.bronzeColor};
       font-size: ${({ theme }) => theme.sizes.menu};
       font-weight: ${({ theme }) => theme.weight.bold};
@@ -861,32 +880,6 @@ const ReplyBox = styled.div<WithTheme>`
   flex-direction: column;
   width: 100%;
   gap: 16px;
-  padding: 10px;
-
-  .textarea-box {
-    display: flex;
-    padding: 10px 0;
-    flex-direction: column;
-    gap: 4px;
-    justify-content: right;
-    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-
-    .reply-button-box {
-      justify-content: right;
-    }
-  }
-
-  .reply-button-box {
-    display: flex;
-    margin-top: 6px;
-    gap: 4px;
-
-    button {
-      font-family: 'Jua', sans-serif;
-      font-size: ${({ theme }) => theme.sizes.xsmall};
-      padding: 4px 6px;
-    }
-  }
 
   .reply-header-box {
     display: flex;
@@ -911,54 +904,6 @@ const ReplyBox = styled.div<WithTheme>`
       color: ${({ theme }) => theme.colors.bronzeColor};
       font-family: 'Jua', sans-serif;
     }
-  }
-
-  .reply-box {
-    display: flex;
-    flex-direction: column;
-    padding-bottom: 10px;
-    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  }
-
-  .reply-children-box {
-    display: flex;
-    gap: 6px;
-    margin-top: 8px;
-  }
-
-  .reply-top {
-    font-size: ${({ theme }) => theme.sizes.xsmall};
-    color: ${({ theme }) => theme.colors.navColor};
-    margin-bottom: 12px;
-
-    strong {
-      font-family: 'Jua', sans-serif;
-      color: ${({ theme }) => theme.colors.text};
-      font-size: ${({ theme }) => theme.sizes.medium};
-      margin-right: 8px;
-    }
-  }
-  .reply-center {
-    color: ${({ theme }) => theme.colors.subColor};
-    font-size: ${({ theme }) => theme.sizes.small};
-
-    button {
-      color: ${({ theme }) => theme.colors.bronzeColor};
-    }
-  }
-`;
-
-const TextArea = styled.textarea<WithTheme>`
-  width: 100%;
-  padding: 8px;
-  resize: none;
-  font-size: ${({ theme }) => theme.sizes.small};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 6px;
-  margin-bottom: 20px;
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.noticeColor};
   }
 `;
 
