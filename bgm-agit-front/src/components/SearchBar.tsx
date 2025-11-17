@@ -53,7 +53,7 @@ export default function SearchBar<T = string>({ color, label, onSearch }: Search
 
     if (key === 'reservationList') {
       onSearch([startDate, endDate] as T);
-    } else if (['room', 'role', 'notice', 'free'].includes(key)) {
+    } else if (['room', 'role', 'notice', 'free', 'inquiry'].includes(key)) {
       onSearch(keyword as T);
     } else {
       setSearch(() => ({

@@ -236,7 +236,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate start = StringUtils.hasText(startDate) ? LocalDate.parse(startDate, fmt) : null;
         LocalDate end   = StringUtils.hasText(endDate)   ? LocalDate.parse(endDate, fmt)   : null;
-        boolean isUser = "ROLE_USER".equals(role);
+        boolean isUser = "ROLE_USER".equals(role) || "ROLE_MENTOR".equals(role);
         
         // 1) 페이지 키 조회 (예약번호)
         List<Long> pageNos = bgmAgitReservationRepository

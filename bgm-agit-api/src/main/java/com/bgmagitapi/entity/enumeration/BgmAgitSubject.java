@@ -7,7 +7,8 @@ public enum BgmAgitSubject {
     
     RESERVATION("룸 예약"),
     SIGN_UP("회원가입"),
-    MAHJONG_RENTAL("대탁");
+    MAHJONG_RENTAL("대탁"),
+    INQUIRY("1:1문의");
     
     private final String value;
     

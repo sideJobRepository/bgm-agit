@@ -174,7 +174,7 @@ public class BgmAgitFreeServiceImpl implements BgmAgitFreeService {
     @Override
     public ApiResponse romoveBgmAgitFree(Long id, Long memberId) {
         BgmAgitMember bgmAgitMember = bgmAgitMemberRepository.findById(memberId).orElseThrow(() -> new RuntimeException("존재하지 않는 회원입니다."));
-        List<BgmAgitCommonFile> byDeleteFile = bgmAgitCommonFileRepository.findByDeleteFile(id);
+        List<BgmAgitCommonFile> byDeleteFile = bgmAgitCommonFileRepository.findByDeleteFile(id,BgmAgitCommonType.FREE);
         
         for (BgmAgitCommonFile bgmAgitCommonFile : byDeleteFile) {
             s3FileUtils.deleteFile(bgmAgitCommonFile.getBgmAgitCommonFileUrl());

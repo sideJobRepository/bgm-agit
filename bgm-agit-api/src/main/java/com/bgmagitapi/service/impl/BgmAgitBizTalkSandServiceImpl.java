@@ -7,6 +7,7 @@ import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitReservation;
 import com.bgmagitapi.entity.enumeration.BgmAgitImageCategory;
 import com.bgmagitapi.entity.enumeration.BgmAgitSubject;
+import com.bgmagitapi.event.dto.InquiryEvent;
 import com.bgmagitapi.repository.BgmAgitBiztalkSendHistoryRepository;
 import com.bgmagitapi.repository.BgmAgitImageRepository;
 import com.bgmagitapi.service.BgmAgitBizTalkSandService;
@@ -17,6 +18,7 @@ import com.bgmagitapi.service.response.BizTalkTokenResponse;
 import com.bgmagitapi.service.response.ReservationTalkContext;
 import com.bgmagitapi.util.AlimtalkUtils;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.engine.jdbc.mutation.TableInclusionChecker;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -142,6 +144,29 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String message = AlimtalkUtils.memberJoinMessage(memberName, memberJoinDate, memberJoinTime);
         String adminPhoneNo = "010-5059-3499";
         return sendTalk(message, template, adminPhoneNo, null, "알림톡 발송 완료",BgmAgitSubject.SIGN_UP,"확인 하기");
+    }
+    
+    @Override
+    public ApiResponse sendInquiry(InquiryEvent event) {
+        String template =  "bgmagit-inquiry";
+        Long id = event.getId();
+        String memberName = event.getMemberName();
+        String title = event.getTitle();
+        String inquiryDate = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(event.getRegistDate());
+        String inquiryTime = DateTimeFormatter.ofPattern("HH:mm").format(event.getRegistDate());
+        String adminPhoneNo = "010-5059-3499";
+        String message = AlimtalkUtils.oneToOneInquiry(memberName, title, inquiryDate, inquiryTime);
+        return sendTalk(message, template, adminPhoneNo, id, "알림톡 발송 완료",BgmAgitSubject.INQUIRY,"사이트 바로가기");
+    }
+    
+    @Override
+    public ApiResponse sendInquiryComplete(InquiryEvent event) {
+        String template =  "bgmagit-inquiry-ans";
+        Long id = event.getId();
+        String memberName = event.getMemberName();
+        String memberPhoneNo = event.getMemberPhoneNo();
+        String message = AlimtalkUtils.oneToOneInquiryAns(memberName);
+        return sendTalk(message,template,memberPhoneNo,id,"알림톡 발송 완료",BgmAgitSubject.INQUIRY,"사이트 바로가기");
     }
     
     /** 공통 전송 + 히스토리 저장 */

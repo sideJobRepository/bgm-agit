@@ -36,13 +36,22 @@ public class BgmAgitCommonFileRepositoryImpl implements BgmAgitCommonFileCustomR
     }
     
     @Override
-    public List<BgmAgitCommonFile> findByDeleteFile(Long id) {
+    public List<BgmAgitCommonFile> findByDeleteFile(Long id,BgmAgitCommonType type) {
          return queryFactory
                 .select(bgmAgitCommonFile)
                 .from(bgmAgitCommonFile)
                 .where(bgmAgitCommonFile.bgmAgitCommonFileTargetId.eq(id),
-                        bgmAgitCommonFile.bgmAgitCommonFileType.eq(BgmAgitCommonType.FREE)
+                        bgmAgitCommonFile.bgmAgitCommonFileType.eq(type)
                         )
+                .fetch();
+    }
+    
+    @Override
+    public List<BgmAgitCommonFile> findAllByTargetIdsAndType(List<Long> targetIds, BgmAgitCommonType bgmAgitCommonType) {
+        return queryFactory
+                .selectFrom(bgmAgitCommonFile)
+                .where(bgmAgitCommonFile.bgmAgitCommonFileTargetId.in(targetIds)
+                ,bgmAgitCommonFile.bgmAgitCommonFileType.eq(bgmAgitCommonType))
                 .fetch();
     }
 }

@@ -6,20 +6,21 @@ import SearchBar from '../components/SearchBar.tsx';
 import { useEffect, useState } from 'react';
 import { useRecoilValue } from 'recoil';
 import { useNavigate } from 'react-router-dom';
-import { useCommunityFetch } from '../recoil/communityFetch.ts';
-import { communityState } from '../recoil/state/communitySate.ts';
-import { FaCommentDots } from 'react-icons/fa';
 import { userState } from '../recoil/state/userState.ts';
 import Pagination from '../components/Pagination.tsx';
+import { useSupportFetch } from '../recoil/supportFetch.ts';
+import { supportState } from '../recoil/state/supportState.ts';
 
-export default function Free() {
+export default function Inquiry() {
   const user = useRecoilValue(userState);
 
-  const fetchCommunity = useCommunityFetch();
+  const fetchSupport = useSupportFetch();
 
   const navigate = useNavigate();
 
-  const items = useRecoilValue(communityState);
+  const items = useRecoilValue(supportState);
+  console.log('items', user);
+  console.log('items', items);
 
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
 
@@ -27,7 +28,7 @@ export default function Free() {
   const [page, setPage] = useState(0);
 
   useEffect(() => {
-    fetchCommunity({ page, titleOrCont: searchKeyword });
+    fetchSupport({ page, titleOrCont: searchKeyword });
   }, [page, searchKeyword]);
 
   const handlePageClick = (pageNum: number) => {
@@ -39,20 +40,20 @@ export default function Free() {
       <NoticeBox>
         <SearchWrapper bgColor="#988271">
           <TitleBox textColor="#ffffff">
-            <h2>Community Board</h2>
-            <p>소소한 일상부터 궁금한 이야기까지, 자유롭게 나눠보세요.</p>
+            <h2>Customer Support</h2>
+            <p>궁금한 점이나 요청사항을 남겨주시면 빠르게 답변드리겠습니다.</p>
           </TitleBox>
           <SearchBox>
             <SearchBar<string> color="#988271" label="제목 및 내용" onSearch={setSearchKeyword} />
           </SearchBox>
         </SearchWrapper>
         <TableBox>
-          {user && (
+          {user?.roles.includes('ROLE_USER') && (
             <ButtonBox>
               <Button
                 color="#988271"
                 onClick={() => {
-                  navigate(`/freeDetail`);
+                  navigate(`/inquiryDetail`);
                 }}
               >
                 작성
@@ -74,19 +75,18 @@ export default function Free() {
                   <tr
                     key={item.id}
                     onClick={() => {
-                      navigate(`/freeDetail?id=${item.id}`);
+                      navigate(`/inquiryDetail?id=${item.id}`);
                     }}
                   >
                     <Td>{index + 1}</Td>
                     <Td style={{ display: 'flex' }}>
+                      <StatusLabel $gb={item.answerStatus}>
+                        {item.answerStatus === 'Y' ? '답변완료' : '답변대기'}
+                      </StatusLabel>
                       {item.title}
-                      <span>
-                        <FaCommentDots />
-                        {item.commentCount}
-                      </span>
                     </Td>
                     {!isMobile && <Td>{item.registDate}</Td>}
-                    <Td>{item.memberNickname}</Td>
+                    <Td>{item.memberName}</Td>
                   </tr>
                 ))}
               </tbody>
@@ -156,17 +156,19 @@ const Th = styled.th<WithTheme>`
   font-weight: ${({ theme }) => theme.weight.semiBold};
 `;
 
-const Td = styled.td<WithTheme>`
-  span {
-    display: flex;
-    align-items: center;
-    margin-left: 8px;
-    gap: 4px;
-    font-size: ${({ theme }) => theme.sizes.small};
+const Td = styled.td<WithTheme>``;
 
-    @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.sizes.xxsmall};
-    }
+const StatusLabel = styled.label<WithTheme & { $gb: string }>`
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  margin-right: 8px;
+  color: #ffffff;
+  font-size: ${({ theme }) => theme.sizes.xsmall};
+  background-color: ${({ $gb }) => ($gb === 'Y' ? '#1A7D55' : '#988271')};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.xxsmall};
   }
 `;
 

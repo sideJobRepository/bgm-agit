@@ -58,10 +58,20 @@ export default function Nav() {
             <IoChevronForward />
             <a
               onClick={() => {
-                navigate(location.pathname === '/noticeDetail' ? '/notice' : '/free');
+                let path = '/notice';
+                if (location.pathname === '/noticeDetail') {
+                  path = '/notice';
+                } else if (location.pathname === '/freeDetail') {
+                  path = '/free';
+                } else if (location.pathname === '/inquiryDetail') {
+                  path = '/inquiry';
+                }
+                navigate(path);
               }}
             >
-              {location.pathname === '/noticeDetail' ? '공지사항' : '자유 게시판'}
+              {location.pathname === '/noticeDetail' && '공지사항'}
+              {location.pathname === '/freeDetail' && '자유 게시판'}
+              {location.pathname === '/inquiryDetail' && '1:1문의'}
             </a>
           </>
         )}

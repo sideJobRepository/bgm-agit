@@ -1,40 +1,39 @@
-//자유게시판
 import { useRequest } from './useRequest.ts';
 import { useSetRecoilState } from 'recoil';
 import api from '../utils/axiosInstance.ts';
-import type { params } from '../types/community.ts';
-import { communityState, detailCommunityState } from './state/communitySate.ts';
+import { detailSupportState, supportState } from './state/supportState.ts';
+import type { params } from '../types/support.ts';
 
-export function useCommunityFetch() {
+export function useSupportFetch() {
   const { request } = useRequest();
-  const setCommunity = useSetRecoilState(communityState);
+  const setSupport = useSetRecoilState(supportState);
 
-  const fetchCommunity = (params: params) => {
-    request(() => api.get('/bgm-agit/free', { params }).then(res => res.data), setCommunity);
+  const fetchSupport = (params: params) => {
+    request(() => api.get('/bgm-agit/inquiry', { params }).then(res => res.data), setSupport);
   };
 
-  return fetchCommunity;
+  return fetchSupport;
 }
 
-export function useDetailCommunityFetch() {
+export function useDetailSupportFetch() {
   const { request } = useRequest();
-  const setDetailCommunity = useSetRecoilState(detailCommunityState);
+  const setDetailSupport = useSetRecoilState(detailSupportState);
 
-  const fetchDetailCommunity = (id: string) => {
-    request(() => api.get(`/bgm-agit/free/${id}`).then(res => res.data), setDetailCommunity);
+  const fetchDetailSupport = (id: string) => {
+    request(() => api.get(`/bgm-agit/inquiry/${id}`).then(res => res.data), setDetailSupport);
   };
 
-  return fetchDetailCommunity;
+  return fetchDetailSupport;
 }
 
-export function useCommunityDownloadFetch() {
+export function useSupportDownloadFetch() {
   const { request } = useRequest();
 
-  const fetchCommunityDownload = (id: string) => {
+  const fetchSupportDownload = (id: string) => {
     request(
       () =>
         api
-          .get(`/bgm-agit/free/download/free/${id}`, {
+          .get(`/bgm-agit/inquiry/download/inquiry/${id}`, {
             responseType: 'blob',
           })
           .then(res => {
@@ -65,7 +64,7 @@ export function useCommunityDownloadFetch() {
                   .share({
                     files: [file],
                     title: '파일 다운로드',
-                    text: '자유게시판 첨부파일입니다.',
+                    text: '문의게시판 첨부파일입니다.',
                   })
                   .catch(err => console.error('iOS 공유 실패:', err));
                 return;
@@ -86,5 +85,5 @@ export function useCommunityDownloadFetch() {
     );
   };
 
-  return fetchCommunityDownload;
+  return fetchSupportDownload;
 }
