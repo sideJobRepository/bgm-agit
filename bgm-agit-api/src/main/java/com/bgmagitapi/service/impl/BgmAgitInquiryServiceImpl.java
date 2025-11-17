@@ -18,6 +18,8 @@ import com.bgmagitapi.repository.BgmAgitInquiryRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.service.BgmAgitInquiryService;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -104,7 +106,7 @@ public class BgmAgitInquiryServiceImpl implements BgmAgitInquiryService {
                                  .id(f.getBgmAgitCommonFileId())
                                  .fileName(f.getBgmAgitCommonFileName())
                                  .fileUrl(f.getBgmAgitCommonFileUrl())
-                                 .uuid(f.getBgmAgitCommonFileUuidName())
+                                 .uuid(f.getBgmAgitCommonFileUuidName() + "." + FilenameUtils.getExtension(f.getBgmAgitCommonFileName()))
                                  .build())
                          .toList();
      
@@ -117,7 +119,7 @@ public class BgmAgitInquiryServiceImpl implements BgmAgitInquiryService {
                                          .id(f.getBgmAgitCommonFileId())
                                          .fileName(f.getBgmAgitCommonFileName())
                                          .fileUrl(f.getBgmAgitCommonFileUrl())
-                                         .uuid(f.getBgmAgitCommonFileUuidName())
+                                         .uuid(f.getBgmAgitCommonFileUuidName()  + "." + FilenameUtils.getExtension(f.getBgmAgitCommonFileName()))
                                          .build())
                                  .toList();
      
