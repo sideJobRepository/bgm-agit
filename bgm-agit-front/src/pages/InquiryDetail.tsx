@@ -200,7 +200,9 @@ export default function InquiryDetail() {
     formData.append('title', supportReplyItem.title);
     formData.append('parentId', detailItem.id);
 
-    if (isEditMode) {
+    if (isReplyEditMode) {
+      formData.append('id', detailItem.reply.id);
+
       formData.append('cont', supportReplyItem.cont);
 
       replyDeletedFileId.forEach(id => {
@@ -229,7 +231,7 @@ export default function InquiryDetail() {
           body: formData,
           ignoreHttpError: true,
           onSuccess: () => {
-            if (!isEditMode) {
+            if (!isReplyEditMode) {
               navigate(`/inquiry`);
               toast.success('답글이 작성되었습니다.');
             } else {
@@ -246,6 +248,7 @@ export default function InquiryDetail() {
               fetchDetailSupport(id!);
             }
             setIsReplyEditMode(false);
+            setWriteReplyMode(false);
           },
         });
       },
@@ -298,9 +301,9 @@ export default function InquiryDetail() {
 
       if (detailItem.reply) {
         setSupportReplyItem({
-          id: detailItem.id,
-          title: detailItem.title,
-          cont: detailItem.cont,
+          id: detailItem.reply.id,
+          title: detailItem.reply.title,
+          cont: detailItem.reply.cont,
         });
 
         setReplyAttachedFiles(detailItem.reply.files ?? []);
@@ -435,7 +438,8 @@ export default function InquiryDetail() {
           <ReplyBox>
             <div className="reply-header-box">
               <h3>
-                <FaCommentDots /> 답변
+                <FaCommentDots />
+                {detailItem?.reply?.answerStatus === 'Y' ? '답변완료' : '답변대기'}
               </h3>
               {!writeReplyMdoe && !detailItem.reply && user?.roles.includes('ROLE_ADMIN') && (
                 <Button
@@ -450,21 +454,24 @@ export default function InquiryDetail() {
             </div>
             {detailItem?.reply && !writeReplyMdoe && (
               <>
-                <ButtonBox>
-                  <>
-                    <Button
-                      onClick={() => {
-                        setIsReplyEditMode(true);
-                      }}
-                      color="#093A6E"
-                    >
-                      수정
-                    </Button>
-                    <Button color="#FF5E57" onClick={() => deleteReplyData()}>
-                      삭제
-                    </Button>
-                  </>
-                </ButtonBox>
+                {user?.roles.includes('ROLE_ADMIN') && (
+                  <ButtonBox>
+                    <>
+                      <Button
+                        onClick={() => {
+                          setIsReplyEditMode(true);
+                          setWriteReplyMode(true);
+                        }}
+                        color="#093A6E"
+                      >
+                        수정
+                      </Button>
+                      <Button color="#FF5E57" onClick={() => deleteReplyData()}>
+                        삭제
+                      </Button>
+                    </>
+                  </ButtonBox>
+                )}
                 <TitleBox>
                   <div>
                     <h3>
