@@ -87,6 +87,7 @@ jobs:
             -e BIZTALK_PASSWORD=${{ secrets.BIZTALK_PASSWORD }} \
             -e SENDER_KEY=${{ secrets.SENDER_KEY }} \
             -e NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET }} \
+            -e KEY_STORE_PASSWORD=${{ secrets.KEY_STORE_PASSWORD }} \
             -v $(pwd)/logs:/app/logs \
             -p 127.0.0.1:8080:8080 \
             peachcoolpis/bgmagit-staging-server:latest
