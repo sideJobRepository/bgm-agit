@@ -50,7 +50,7 @@ public class BgmAgitNoticeController {
     public PageResponse<BgmAgitNoticeResponse> getNotice(@PageableDefault(size = 10, sort = "bgmAgitNoticeId", direction = Sort.Direction.DESC) Pageable pageable,
                                                          @RequestParam(name = "titleOrCont" , required = false) String titleOrCont
                                                  ) {
-        Page<BgmAgitNoticeResponse> notice = bgmAgitNoticeService.getNotice(pageable, titleOrCont);
+         Page<BgmAgitNoticeResponse> notice = bgmAgitNoticeService.getNotice(pageable, titleOrCont);
         return PageResponse.from(notice);
     }
     
