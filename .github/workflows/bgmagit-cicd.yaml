@@ -97,6 +97,7 @@ jobs:
             -v $(pwd)/logs:/app/logs \
             -v /etc/letsencrypt/live/bgmagit.co.kr/keystore.p12:/app/keystore.p12:ro \
             -p 127.0.0.1:8080:8080 \
+            -p 127.0.0.1:8443:8443 \
             peachcoolpis/bgmagit-server:latest
             docker image prune -f
 
