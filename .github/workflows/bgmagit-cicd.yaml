@@ -95,6 +95,7 @@ jobs:
             -e KEY_STORE_PASSWORD=${{ secrets.KEY_STORE_PASSWORD }} \
             -e SPRING_PROFILES_ACTIVE=real \
             -v $(pwd)/logs:/app/logs \
+            -v /etc/letsencrypt/live/bgmagit.co.kr/keystore.p12:/app/keystore.p12:ro \
             -p 127.0.0.1:8080:8080 \
             peachcoolpis/bgmagit-server:latest
             docker image prune -f

@@ -73,6 +73,6 @@ server:
   port: 8443
   ssl:
     enabled: true
-    key-store: file:/etc/letsencrypt/live/bgmagit.co.kr/keystore.p12
-    key-store-password: ${KEY_STORE_PASSWORD}
+    key-store: file:/app/keystore.p12
+    key-store-password: ${SSL_KEY_STORE_PASSWORD}
     key-store-type: PKCS12
