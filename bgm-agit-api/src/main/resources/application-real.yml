@@ -68,11 +68,3 @@ biztalk:
   id: ${BIZTALK_ID}
   password: ${BIZTALK_PASSWORD}
   sender-key: ${SENDER_KEY}
-
-server:
-  port: 8443
-  ssl:
-    enabled: true
-    key-store: file:/app/keystore.p12
-    key-store-password: ${KEY_STORE_PASSWORD}
-    key-store-type: PKCS12

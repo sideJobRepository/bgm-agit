@@ -26,10 +26,13 @@ jobs:
               - 'bgm-agit-api/**'
             frontend : 
               - 'bgm-agit-front/**'
+             kml_frontend:
+              - 'bgm-agit-kml-front/**'
 
     outputs:
       backend: ${{ steps.changes.outputs.backend }}
       frontend: ${{ steps.changes.outputs.frontend }}
+      kml_frontend: ${{ steps.changes.outputs.kml_frontend }}
 
   build-backend:
     needs: detect-changes
@@ -92,12 +95,9 @@ jobs:
             -e BIZTALK_PASSWORD=${{ secrets.BIZTALK_PASSWORD }} \
             -e SENDER_KEY=${{ secrets.SENDER_KEY }} \
             -e NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET }} \
-            -e KEY_STORE_PASSWORD=${{ secrets.KEY_STORE_PASSWORD }} \
             -e SPRING_PROFILES_ACTIVE=real \
             -v $(pwd)/logs:/app/logs \
-            -v /etc/letsencrypt/live/bgmagit.co.kr/keystore.p12:/app/keystore.p12:ro \
             -p 127.0.0.1:8080:8080 \
-            -p 127.0.0.1:8443:8443 \
             peachcoolpis/bgmagit-server:latest
             docker image prune -f
 
@@ -152,3 +152,46 @@ jobs:
             sudo rm -rf /usr/share/nginx/bgm-agit-front
             sudo mv /home/bae/deploy/front-dist-temp/* /usr/share/nginx/bgm-agit-front/
             sudo nginx -t && sudo systemctl reload nginx
+
+  build-kml-frontend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.kml_frontend == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Docker Build Next.js
+        run: |
+          cd bgm-agit-kml-front
+          docker build -t peachcoolpis/bgmagit-kml-front .
+
+      - name: Docker Hub Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker Push
+        run: docker push peachcoolpis/bgmagit-kml-front
+
+      - name: SSH 접속 후 Next 컨테이너 실행
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.USERNAME  }}
+          password: ${{ secrets.PASSWORD }}
+          port: 22
+          script: |
+            docker stop bgmagit-kml-front || true
+            docker rm bgmagit-kml-front || true
+            docker pull peachcoolpis/bgmagit-kml-front:latest
+            docker run -d --name bgmagit-kml-front \
+              --network bgm-staging-network \
+              -e NODE_ENV=production \
+              -e NEXT_PUBLIC_API_URL=https://bgmagit.co.kr/bgm-agit \
+              -e NEXT_PUBLIC_SITE_URL=https://bgmagit.co.kr/record \
+              -p 127.0.0.1:3000:3000 \
+              peachcoolpis/bgmagit-kml-front:latest
+            docker image prune -f
