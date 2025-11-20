@@ -188,7 +188,7 @@ jobs:
             docker rm bgmagit-kml-front || true
             docker pull peachcoolpis/bgmagit-kml-front:latest
             docker run -d --name bgmagit-kml-front \
-              --network bgm-staging-network \
+              --network bgm-network  \
               -e NODE_ENV=production \
               -e NEXT_PUBLIC_API_URL=https://bgmagit.co.kr/bgm-agit \
               -e NEXT_PUBLIC_SITE_URL=https://bgmagit.co.kr/record \
