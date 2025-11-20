@@ -182,9 +182,13 @@ jobs:
             docker stop bgmagit-staging-kml-front || true
             docker rm bgmagit-staging-kml-front || true
             docker pull peachcoolpis/bgmagit-staging-kml-front:latest
+          
             docker run -d --name bgmagit-staging-kml-front \
               --network bgm-staging-network \
-              -e NODE_ENV=staging \
+              -e NODE_ENV=staging \               
+              -e NEXT_PUBLIC_API_URL=http://14.50.43.75:8080 \ 
+              -e NEXT_PUBLIC_SITE_URL=http://14.50.43.75:3000 \
               -p 127.0.0.1:3000:3000 \
               peachcoolpis/bgmagit-staging-kml-front:latest
+          
             docker image prune -f
