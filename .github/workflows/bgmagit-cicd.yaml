@@ -26,7 +26,7 @@ jobs:
               - 'bgm-agit-api/**'
             frontend : 
               - 'bgm-agit-front/**'
-             kml_frontend:
+            kml_frontend:
               - 'bgm-agit-kml-front/**'
 
     outputs:
