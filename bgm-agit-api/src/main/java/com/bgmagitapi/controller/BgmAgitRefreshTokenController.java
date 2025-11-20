@@ -24,7 +24,7 @@ public class BgmAgitRefreshTokenController {
     
     @PostMapping("/refresh")
     public Map<String, Object> refreshToken(@CookieValue(value = "refreshToken", required = false) String refreshToken
-        , HttpServletResponse response
+         , HttpServletResponse response
     ) {
         if(refreshToken == null) {
             return null;
