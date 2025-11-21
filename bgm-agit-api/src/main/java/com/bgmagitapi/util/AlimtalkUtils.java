@@ -58,7 +58,13 @@ public class AlimtalkUtils {
                 .append("예약 룸: ").append(roomName).append("\n")
                 .append("예약 인원: ").append(people).append("\n")
                 .append("요청 사항: ").append(request).append("\n\n")
-                .append("자세한 예약내역은 BGM 아지트 홈페이지 사이트 에서 로그인 후 마이페이지 > 예약내역에서 확인하실 수 있습니다.")
+                .append("예약은 예약금 10,000원이 입금 확인되는 시점에 최종 확정됩니다.\n")
+                .append("가급적 예약자명으로 입금해 주시기 바랍니다.\n\n")
+                .append("확정 이후 취소가 필요한 경우에는 0507-1445-3503으로 문의해 주시면 안내해 드리겠습니다.\n")
+                .append("[입금 계좌 안내]\n")
+                .append("하나은행 : 60891052636607\n")
+                .append("예금주 : 박범후\n\n")
+                .append("자세한 예약내역은 BGM 아지트 홈페이지 로그인 후 마이페이지 > 예약내역에서 확인하실 수 있습니다.")
                 .toString();
     }
     /* 예약 취소 메시지 필드 1*/
