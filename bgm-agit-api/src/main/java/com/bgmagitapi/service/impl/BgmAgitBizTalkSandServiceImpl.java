@@ -74,7 +74,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         );
         
         // 템플릿명 및 버튼명 정의
-        String template = "bgmagit-res";
+        String template = "bgmagit-res-account";
         String buttonName = "예약 내역 확인 하기";
         Long subjectId = bgmAgitReservation.getBgmAgitReservationNo();
         BgmAgitSubject subject = isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL;
