@@ -66,6 +66,33 @@ export default function ReservationList() {
     });
   }
 
+  //공유하기
+  function shareReservation(item: Reservation) {
+    if (!window.Kakao || !window.Kakao.isInitialized()) {
+      return;
+    }
+
+    const timeText = item.timeSlots.map(slot => `${slot.startTime}~${slot.endTime}`).join(', ');
+
+    window.Kakao.Share.sendDefault({
+      objectType: 'text',
+      text: `
+      [예약 내역 안내]
+      
+      예약자: ${item.reservationMemberName}
+      예약일자: ${item.reservationDate}
+      예약시간: ${timeText}
+      인원: ${item.reservationPeople}명
+      요청사항: ${item.reservationRequest || '없음'}
+      연락처: ${item.phoneNo}
+    `.trim(),
+      link: {
+        mobileWebUrl: 'https://bgmagit.co.kr',
+        webUrl: 'https://bgmagit.co.kr',
+      },
+    });
+  }
+
   return (
     <Wrapper>
       <NoticeBox>
@@ -177,6 +204,9 @@ export default function ReservationList() {
                                 취소
                               </Button>
                             )}
+                          <Button color="#093A6E" onClick={() => shareReservation(item)}>
+                            공유
+                          </Button>
                         </ButtonBox2>
                       </StatusBox>
                     </Td>
