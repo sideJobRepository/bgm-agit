@@ -64,7 +64,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 ? ((Jwt) bearerAuth.getPrincipal()).getClaim("id")
                 : null;
         LocalDate today = date;
-        LocalDate endOfYear = LocalDate.of(today.getYear(), 12, 31);
+        LocalDate endOfYear = LocalDate.of(today.getYear() + 1, 12, 31);
         String label = "", group = "";
         Integer minPeople = null, maxPeople = null;
         // 1. 예약 정보 조회
