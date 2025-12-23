@@ -146,7 +146,17 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         }
 
         // 4. 공휴일/주말 가격 계산
-        Set<String> holidaySet = new LunarCalendar().getHolidaySet(String.valueOf(today.getYear()));
+        Set<String> holidaySet = new HashSet<>();
+        
+        int startYear = today.getYear();
+        int endYear = endOfYear.getYear();
+        
+        for (int y = startYear; y <= endYear; y++) {
+            holidaySet.addAll(
+                    new LunarCalendar().getHolidaySet(String.valueOf(y))
+            );
+        }
+        
         DateTimeFormatter formatterYY = DateTimeFormatter.ofPattern("yyyyMMdd");
         
         List<BgmAgitReservationResponse.PriceByDate> prices = new ArrayList<>();
