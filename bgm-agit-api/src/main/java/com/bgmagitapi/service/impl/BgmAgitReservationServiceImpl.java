@@ -64,7 +64,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 ? ((Jwt) bearerAuth.getPrincipal()).getClaim("id")
                 : null;
         LocalDate today = date;
-        LocalDate endOfYear = LocalDate.of(today.getYear() + 1, 12, 31);
+        LocalDate endOfYear = today.plusMonths(3);
         String label = "", group = "";
         Integer minPeople = null, maxPeople = null;
         // 1. 예약 정보 조회
@@ -146,7 +146,17 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         }
 
         // 4. 공휴일/주말 가격 계산
-        Set<String> holidaySet = new LunarCalendar().getHolidaySet(String.valueOf(today.getYear()));
+        Set<String> holidaySet = new HashSet<>();
+        
+        int startYear = today.getYear();
+        int endYear = endOfYear.getYear();
+        
+        for (int y = startYear; y <= endYear; y++) {
+            holidaySet.addAll(
+                    new LunarCalendar().getHolidaySet(String.valueOf(y))
+            );
+        }
+        
         DateTimeFormatter formatterYY = DateTimeFormatter.ofPattern("yyyyMMdd");
         
         List<BgmAgitReservationResponse.PriceByDate> prices = new ArrayList<>();
