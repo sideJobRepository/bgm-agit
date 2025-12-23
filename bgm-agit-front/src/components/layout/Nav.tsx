@@ -24,7 +24,6 @@ export default function Nav() {
     return { mainMenu: null, subMenu: null };
   }
 
-  console.log('main---------!!', mainMenu, subMenu, 'location', location);
 
   return (
     <Wrapper>

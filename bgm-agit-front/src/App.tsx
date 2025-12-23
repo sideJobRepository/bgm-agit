@@ -21,6 +21,7 @@ import Free from './pages/Free.tsx';
 import FreeDetail from './pages/FreeDetail.tsx';
 import Inquiry from './pages/Inquiry.tsx';
 import InquiryDetail from './pages/InquiryDetail.tsx';
+import Academy from './pages/Academy.tsx';
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
               <Route path="/freeDetail" element={<FreeDetail />} />
               <Route path="inquiry" element={<Inquiry />} />
               <Route path="/inquiryDetail" element={<InquiryDetail />} />
+              <Route path="/academy" element={<Academy />} />
             </Route>
           </Routes>
         </BrowserRouter>
