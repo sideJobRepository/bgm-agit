@@ -73,9 +73,6 @@ export default function Academy() {
         <Curriculum
           classKey={classKey}
           onChangeClassKey={setClassKey}
-          value={curriculumState}
-          onChange={setCurriculumState}
-          onSave={saveCurriculum}
         />
       )}
 
