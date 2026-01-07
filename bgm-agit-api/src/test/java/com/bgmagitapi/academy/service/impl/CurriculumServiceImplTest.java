@@ -87,8 +87,8 @@ class CurriculumServiceImplTest extends RepositoryAndServiceTestSupport {
     void test2(){
         
         
-        CurriculumGetResponse curriculum = curriculumService.getCurriculum(1L);
-        
+        CurriculumGetResponse curriculum = curriculumService.getCurriculum(2026,"3G");
+        System.out.println("curriculum = " + curriculum);
         
     }
 }

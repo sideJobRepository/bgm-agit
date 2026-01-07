@@ -16,8 +16,8 @@ public class CurriculumController {
     
     
     @GetMapping("/curriculum")
-    public CurriculumGetResponse get(@RequestParam(name = "curriculumId") Long curriculumId) {
-        return curriculumService.getCurriculum(curriculumId);
+    public CurriculumGetResponse get(@RequestParam(name = "year") Integer year, @RequestParam(name = "className") String className) {
+        return curriculumService.getCurriculum(year,className);
     }
     
     

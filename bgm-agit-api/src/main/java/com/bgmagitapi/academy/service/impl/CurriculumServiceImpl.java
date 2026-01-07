@@ -27,8 +27,8 @@ public class CurriculumServiceImpl implements CurriculumService {
     private final CurriculumProgressRepository curriculumProgressRepository;
     
     @Override
-    public CurriculumGetResponse getCurriculum(Long curriculumId) {
-        List<CurriculumCont> findCurriculum = curriculumRepository.findByCurriculum(curriculumId);
+    public CurriculumGetResponse getCurriculum(Integer year , String className) {
+        List<CurriculumCont> findCurriculum = curriculumRepository.findByCurriculum(year ,className);
         Curriculum curriculum = findCurriculum.get(0).getCurriculumProgress().getCurriculum();
         return new CurriculumGetResponse(
                 curriculum.getYears(),

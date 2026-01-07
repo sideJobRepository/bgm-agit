@@ -6,7 +6,7 @@ import com.bgmagitapi.apiresponse.ApiResponse;
 
 public interface CurriculumService {
     
-    CurriculumGetResponse getCurriculum(Long curriculumId);
+    CurriculumGetResponse getCurriculum(Integer year , String className);
     
     ApiResponse createCurriculum(CurriculumPostRequest request);
 }

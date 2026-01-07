@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface CurriculumQueryRepository {
 
-    List<CurriculumCont> findByCurriculum(Long curriculumId);
+    List<CurriculumCont> findByCurriculum(Integer year , String className);
 }

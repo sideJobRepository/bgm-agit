@@ -21,12 +21,12 @@ public class CurriculumRepositoryImpl implements CurriculumQueryRepository {
     private final JPAQueryFactory queryFactory;
     
     @Override
-    public List<CurriculumCont> findByCurriculum(Long curriculumId) {
+    public List<CurriculumCont> findByCurriculum(Integer year, String className) {
         return queryFactory
                 .selectFrom(curriculumCont)
                 .join(curriculumCont.curriculumProgress , curriculumProgress)
                 .join(curriculumProgress.curriculum , curriculum)
-                .where(curriculum.id.eq(curriculumId))
+                .where(curriculum.years.eq(year) , curriculum.classes.eq(className))
                 .fetch();
     }
 }
