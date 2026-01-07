@@ -9,6 +9,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+@Getter
 public class CurriculumProgress extends DateSuperClass {
 
     // 커리큘럼 진도 ID

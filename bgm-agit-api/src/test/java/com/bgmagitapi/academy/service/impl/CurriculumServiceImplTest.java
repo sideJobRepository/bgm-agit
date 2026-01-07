@@ -2,6 +2,7 @@ package com.bgmagitapi.academy.service.impl;
 
 import com.bgmagitapi.RepositoryAndServiceTestSupport;
 import com.bgmagitapi.academy.dto.request.CurriculumPostRequest;
+import com.bgmagitapi.academy.dto.response.CurriculumGetResponse;
 import com.bgmagitapi.academy.service.CurriculumService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -81,4 +82,13 @@ class CurriculumServiceImplTest extends RepositoryAndServiceTestSupport {
         curriculumService.createCurriculum(request);
     }
     
+    @DisplayName("")
+    @Test
+    void test2(){
+        
+        
+        CurriculumGetResponse curriculum = curriculumService.getCurriculum(1L);
+        
+        
+    }
 }

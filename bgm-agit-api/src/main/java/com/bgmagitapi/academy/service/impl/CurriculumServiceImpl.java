@@ -1,6 +1,7 @@
 package com.bgmagitapi.academy.service.impl;
 
 import com.bgmagitapi.academy.dto.request.CurriculumPostRequest;
+import com.bgmagitapi.academy.dto.response.CurriculumGetResponse;
 import com.bgmagitapi.academy.entity.Curriculum;
 import com.bgmagitapi.academy.entity.CurriculumCont;
 import com.bgmagitapi.academy.entity.CurriculumProgress;
@@ -14,20 +15,44 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class CurriculumServiceImpl implements CurriculumService {
-
+    
     private final CurriculumRepository curriculumRepository;
     private final CurriculumContRepository curriculumContRepository;
     private final CurriculumProgressRepository curriculumProgressRepository;
     
     @Override
+    public CurriculumGetResponse getCurriculum(Long curriculumId) {
+        List<CurriculumCont> findCurriculum = curriculumRepository.findByCurriculum(curriculumId);
+        Curriculum curriculum = findCurriculum.get(0).getCurriculumProgress().getCurriculum();
+        return new CurriculumGetResponse(
+                curriculum.getYears(),
+                curriculum.getClasses(),
+                curriculum.getTitle(),
+                findCurriculum.stream()
+                        .collect(Collectors.groupingBy(
+                                (CurriculumCont c) ->
+                                        c.getCurriculumProgress().getProgressGubun()
+                        ))
+                        .entrySet()
+                        .stream()
+                        .map(item ->
+                                new CurriculumGetResponse.Row(
+                                        item.getKey(),
+                                        item.getValue().stream().map(item2 -> new CurriculumGetResponse.MonthContent(item2.getStartMonths(), item2.getEndMonths(), item2.getCont()))
+                                                .collect(Collectors.toList())
+                                ))
+                        .collect(Collectors.toList())
+        );
+    }
+    
+    @Override
     public ApiResponse createCurriculum(CurriculumPostRequest request) {
-        
-        
         Curriculum curriculum = Curriculum
                 .builder()
                 .title(request.getTitle())
@@ -48,22 +73,22 @@ public class CurriculumServiceImpl implements CurriculumService {
             curriculumProgressRepository.save(curriculumProgress);
             List<CurriculumPostRequest.MonthContent> months = row.getMonths();
             months.forEach(item -> {
-                        String content = item.getContent();
-                        Integer startMonth = item.getStartMonth();
-                        Integer endMonth = item.getEndMonth();
-                        
-                        CurriculumCont cont = CurriculumCont
-                                .builder()
-                                .curriculumProgress(curriculumProgress)
-                                .startMonths(startMonth)
-                                .endMonths(endMonth)
-                                .cont(content)
-                                .build();
-                        curriculumContRepository.save(cont);
-                    });
+                String content = item.getContent();
+                Integer startMonth = item.getStartMonth();
+                Integer endMonth = item.getEndMonth();
+                
+                CurriculumCont cont = CurriculumCont
+                        .builder()
+                        .curriculumProgress(curriculumProgress)
+                        .startMonths(startMonth)
+                        .endMonths(endMonth)
+                        .cont(content)
+                        .build();
+                curriculumContRepository.save(cont);
+            });
             
         }
-        return new  ApiResponse(200,true,"저장성공");
+        return new ApiResponse(200, true, "저장성공");
     }
 }
 

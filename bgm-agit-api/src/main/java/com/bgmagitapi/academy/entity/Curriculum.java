@@ -2,16 +2,14 @@ package com.bgmagitapi.academy.entity;
 
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "CURRICULUM")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+@Getter
 public class Curriculum extends DateSuperClass {
 
 

@@ -5,4 +5,5 @@ import com.bgmagitapi.academy.repository.query.CurriculumQueryRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CurriculumRepository extends JpaRepository<Curriculum, Long> , CurriculumQueryRepository {
+
 }
