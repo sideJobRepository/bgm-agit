@@ -2,9 +2,10 @@ package com.bgmagitapi.academy.entity;
 
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
-import lombok.*;
-
-import java.time.LocalDate;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "CURRICULUM")
@@ -23,12 +24,11 @@ public class Curriculum extends DateSuperClass {
     // 반
     @Column(name = "CLASSES")
     private String classes;
-
-    // 진도 구분
-    @Column(name = "PROGRESS_GUBUN")
-    private String progressGubun;
-
+    
     // 연도
     @Column(name = "YEARS")
-    private LocalDate years;
+    private Integer years;
+    
+    @Column(name = "CURRICULUM_TITLE")
+    private String title;
 }

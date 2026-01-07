@@ -24,15 +24,20 @@ public class CurriculumCont extends DateSuperClass {
     private Long id;
     
     // 커리큘럼 ID
-    @JoinColumn(name = "CURRICULUM_ID")
+    @JoinColumn(name = "CURRICULUM_PROGRESS_ID")
     @ManyToOne(fetch = FetchType.LAZY)
-    private Curriculum curriculum;
+    private CurriculumProgress curriculumProgress;
     
-    // 월
-    @Column(name = "MONTHS")
-    private LocalDate months;
+    // 시작 월
+    @Column(name = "START_MONTHS")
+    private Integer startMonths;
+
+    // 종료 월
+    @Column(name = "END_MONTHS")
+    private Integer endMonths;
     
     // 커리큘럼 내용
     @Column(name = "CURRICULUM_CONT")
     private String cont;
+    
 }

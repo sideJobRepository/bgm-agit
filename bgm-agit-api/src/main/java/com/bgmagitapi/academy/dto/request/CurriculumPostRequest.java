@@ -1,15 +1,18 @@
 package com.bgmagitapi.academy.dto.request;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class CurriculumPostRequest {
   
   /*  {
@@ -39,7 +42,6 @@ public class CurriculumPostRequest {
       ]
     } */
     
-    
     private Integer year;
     private String className;
     private String title;
@@ -56,15 +58,24 @@ public class CurriculumPostRequest {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
+    @Builder
     public static class Row {
         private String progressType;
         private List<MonthContent> months;
+        
+        public List<MonthContent> getMonths() {
+            if(this.months == null) {
+                this.months = new ArrayList<>();
+            }
+            return this.months;
+        }
     }
     
     
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
+    @Builder
     public static class MonthContent {
         private Integer startMonth;   // 1~12
         private Integer endMonth;     // 1~12
