@@ -59,6 +59,10 @@ export default function HandsontableBase({
                             if (!selected) return true;
 
                             const [startRow, startCol, endRow, endCol] = selected;
+
+                            // 진도구분(0번째 행)이 포함되면 비활성화
+                            if (startCol === 0 || endCol === 0) return true;
+
                             const isHorizontal = startRow === endRow && startCol !== endCol;
                             return !isHorizontal;
                         },
@@ -71,7 +75,11 @@ export default function HandsontableBase({
                             if (!selected) return;
 
                             const [startRow, startCol, endRow, endCol] = selected;
-                            plugin.unmerge(startRow, startCol);
+
+
+                            console.log("startCol", startCol, "endCol", endCol)
+
+                            plugin.unmerge(startRow, startCol, endRow, endCol);
 
                             hot.getPlugin('mergeCells').merge(startRow, startCol, endRow, endCol);
                             hot.render(); // 병합 후 리렌더링
@@ -99,8 +107,11 @@ export default function HandsontableBase({
                             const selected = hot?.getSelectedLast();
                             if (!selected || !plugin) return;
 
-                            const [startRow, startCol] = selected;
-                            plugin.unmerge(startRow, startCol);
+                            const [startRow, startCol, endRow, endCol] = selected;
+
+                            console.log("확인",startRow, startCol, endRow, endCol)
+
+                            plugin.unmerge(startRow, startCol, endRow, endCol);
                             hot.render();
                         },
                     },
