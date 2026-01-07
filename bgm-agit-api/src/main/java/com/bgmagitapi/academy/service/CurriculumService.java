@@ -12,4 +12,7 @@ public interface CurriculumService {
     ApiResponse createCurriculum(CurriculumPostRequest request);
     
     ApiResponse modifyCurriculum(CurriculumPutRequest request);
+    
+    ApiResponse removeRow(Long id);
+    
 }

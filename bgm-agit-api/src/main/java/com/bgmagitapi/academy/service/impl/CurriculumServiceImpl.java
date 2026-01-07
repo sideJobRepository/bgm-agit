@@ -120,11 +120,9 @@ public class CurriculumServiceImpl implements CurriculumService {
         
         
         // ========== 1) 기존 DB 데이터 조회 ==========
-        List<CurriculumProgress> dbProgress =
-                curriculumProgressRepository.findByCurriculumId(curriculumId);
+        List<CurriculumProgress> dbProgress = curriculumProgressRepository.findByCurriculumId(curriculumId);
         
-        List<CurriculumCont> dbCont =
-                curriculumContRepository.findByCurriculumId(curriculumId);
+        List<CurriculumCont> dbCont = curriculumContRepository.findByCurriculumId(curriculumId);
         
         Set<Long> requestProgressIds = new HashSet<>();
         Set<Long> requestContIds = new HashSet<>();
@@ -194,6 +192,14 @@ public class CurriculumServiceImpl implements CurriculumService {
         
         
         return new ApiResponse(200,true,"수정 되었습니다.");
+    }
+    
+    @Override
+    public ApiResponse removeRow(Long id) {
+        
+        
+        
+        return null;
     }
 }
 

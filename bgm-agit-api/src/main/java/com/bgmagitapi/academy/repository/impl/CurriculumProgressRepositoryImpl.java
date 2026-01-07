@@ -19,7 +19,7 @@ public class CurriculumProgressRepositoryImpl implements CurriculumProgressQuery
     public List<CurriculumProgress> findByCurriculumId(Long curriculumId) {
         return queryFactory
                 .selectFrom(curriculumProgress)
-                .where(curriculumProgress.id.eq(curriculumId))
+                .where(curriculumProgress.curriculum.id.eq(curriculumId))
                 .fetch();
     }
 }
