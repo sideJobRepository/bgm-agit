@@ -38,14 +38,7 @@ export default function HandsontableBase({
             readOnly={readOnly}
             contextMenu={{
                 items: [
-                    {
-                        key: 'remove_row',
-                        name: 'Delete row',
-                        disabled: () => {
-                            const hot = hotRef.current?.hotInstance;
-                            return hot?.countRows() <= 1;
-                        },
-                    },
+                    'remove_row',
                     'row_above',
                     'row_below',
                     'undo',
