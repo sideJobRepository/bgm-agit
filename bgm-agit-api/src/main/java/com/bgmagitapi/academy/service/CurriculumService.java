@@ -13,6 +13,4 @@ public interface CurriculumService {
     
     ApiResponse modifyCurriculum(CurriculumPutRequest request);
     
-    ApiResponse removeRow(Long id);
-    
 }

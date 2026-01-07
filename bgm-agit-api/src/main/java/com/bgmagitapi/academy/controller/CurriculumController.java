@@ -31,9 +31,4 @@ public class CurriculumController {
     public ApiResponse updateCurriculum(@RequestBody CurriculumPutRequest request) {
         return curriculumService.modifyCurriculum(request);
     }
-    
-    @DeleteMapping("/curriculum/{id}")
-    public ApiResponse deleteCurriculum(@PathVariable("id") Long id) {
-        return curriculumService.removeRow(id);
-    }
 }

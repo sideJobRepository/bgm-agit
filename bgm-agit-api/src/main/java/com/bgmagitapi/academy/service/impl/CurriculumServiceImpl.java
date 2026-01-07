@@ -193,13 +193,5 @@ public class CurriculumServiceImpl implements CurriculumService {
         
         return new ApiResponse(200,true,"수정 되었습니다.");
     }
-    
-    @Override
-    public ApiResponse removeRow(Long id) {
-        
-        
-        
-        return null;
-    }
 }
 
