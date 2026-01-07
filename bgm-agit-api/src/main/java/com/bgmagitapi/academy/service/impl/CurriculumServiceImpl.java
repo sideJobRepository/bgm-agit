@@ -33,42 +33,44 @@ public class CurriculumServiceImpl implements CurriculumService {
     @Override
     public CurriculumGetResponse getCurriculum(Integer year, String className) {
         List<CurriculumCont> findCurriculum = curriculumRepository.findByCurriculum(year, className);
-        Curriculum curriculum = findCurriculum.get(0).getCurriculumProgress().getCurriculum();
         
-        Map<Long, List<CurriculumCont>> collect = findCurriculum
-                .stream()
-                .collect(Collectors.groupingBy(item -> item.getCurriculumProgress().getId()));
-        return new CurriculumGetResponse(
-                curriculum.getId(),
-                curriculum.getYears(),
-                curriculum.getClasses(),
-                curriculum.getTitle(),
-                findCurriculum.stream()
-                        .collect(Collectors.groupingBy(c ->
-                                c.getCurriculumProgress().getId()
-                        ))
-                        .entrySet()
-                        .stream()
-                        .map(entry -> {
-                            Long progressId = entry.getKey();
-                            List<CurriculumCont> contList = entry.getValue();
-                            String progressType = contList.get(0).getCurriculumProgress().getProgressGubun();
-                            List<CurriculumGetResponse.MonthContent> ranges =
-                                    contList.stream()
-                                            .map(cc -> new CurriculumGetResponse.MonthContent(
-                                                    cc.getId(),
-                                                    cc.getStartMonths(),
-                                                    cc.getEndMonths(),
-                                                    cc.getCont()
-                                            ))
-                                            .toList();
-                            return new CurriculumGetResponse.Row(
-                                    progressId,
-                                    progressType,
-                                    ranges
-                            );
-                        })
-                        .toList());
+        if (findCurriculum != null && !findCurriculum.isEmpty()) {
+            Curriculum curriculum = findCurriculum.get(0).getCurriculumProgress().getCurriculum();
+            
+            return new CurriculumGetResponse(
+                    curriculum.getId(),
+                    curriculum.getYears(),
+                    curriculum.getClasses(),
+                    curriculum.getTitle(),
+                    findCurriculum.stream()
+                            .collect(Collectors.groupingBy(c ->
+                                    c.getCurriculumProgress().getId()
+                            ))
+                            .entrySet()
+                            .stream()
+                            .map(entry -> {
+                                Long progressId = entry.getKey();
+                                List<CurriculumCont> contList = entry.getValue();
+                                String progressType = contList.get(0).getCurriculumProgress().getProgressGubun();
+                                List<CurriculumGetResponse.MonthContent> ranges =
+                                        contList.stream()
+                                                .map(cc -> new CurriculumGetResponse.MonthContent(
+                                                        cc.getId(),
+                                                        cc.getStartMonths(),
+                                                        cc.getEndMonths(),
+                                                        cc.getCont()
+                                                ))
+                                                .toList();
+                                return new CurriculumGetResponse.Row(
+                                        progressId,
+                                        progressType,
+                                        ranges
+                                );
+                            })
+                            .toList());
+        }else {
+            return new CurriculumGetResponse();
+        }
     }
     
     @Override
@@ -161,7 +163,7 @@ public class CurriculumServiceImpl implements CurriculumService {
                     cont = curriculumContRepository.findById(mc.getId())
                             .orElseThrow(() -> new RuntimeException("없는 cont id"));
                     
-                    cont.modifyCont(mc.getStartMonth(),mc.getEndMonth(), mc.getContent());
+                    cont.modifyCont(mc.getStartMonth(), mc.getEndMonth(), mc.getContent());
                     
                 }
                 // --- INSERT ---
@@ -191,7 +193,7 @@ public class CurriculumServiceImpl implements CurriculumService {
                 .forEach(curriculumContRepository::delete);
         
         
-        return new ApiResponse(200,true,"수정 되었습니다.");
+        return new ApiResponse(200, true, "수정 되었습니다.");
     }
 }
 
