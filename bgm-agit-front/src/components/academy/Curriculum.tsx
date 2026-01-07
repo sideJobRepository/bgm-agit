@@ -131,8 +131,8 @@ export default function Curriculum({ classKey, onChangeClassKey }: Props) {
 
 
     const handleSubmit = async () => {
-        const isEditMode = false;
-        const requestFn = isEditMode ? update : insert;
+
+        const requestFn = curriculumData?.id ? update : insert;
 
         const payload = transformDataToJSON(
             tableDataRef.current,
