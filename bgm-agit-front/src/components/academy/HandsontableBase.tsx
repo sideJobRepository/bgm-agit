@@ -1,6 +1,13 @@
-import  {useRef} from "react";
-import {HotTable} from "@handsontable/react";
-import 'handsontable/dist/handsontable.full.css';
+import {useRef} from "react";
+import { HotTable } from "@handsontable/react";
+import { registerAllModules } from "handsontable/registry";
+
+import "handsontable/dist/handsontable.full.css";
+import "handsontable/plugins/contextMenu";
+import "handsontable/plugins/mergeCells";
+
+// 🔥 이거 없으면 우클릭 절대 안 됨
+registerAllModules();
 
 type Props = {
     data: any[][];
@@ -21,6 +28,7 @@ export default function HandsontableBase({
                                          }: Props) {
     const hotRef = useRef<any>(null);
 
+
     return (
         <HotTable
             ref={hotRef}
@@ -28,22 +36,94 @@ export default function HandsontableBase({
             colHeaders={colHeaders}
             rowHeaders={rowHeaders}
             readOnly={readOnly}
+            contextMenu={{
+                items: [
+                    {
+                        key: 'remove_row',
+                        name: 'Delete row',
+                        disabled: () => {
+                            const hot = hotRef.current?.hotInstance;
+                            return hot?.countRows() <= 1;
+                        },
+                    },
+                    'row_above',
+                    'row_below',
+                    'undo',
+                    'redo',
+                    {
+                        key: 'mergeCells',
+                        name: 'Merge cells',
+                        disabled: () => {
+                            const hot = hotRef.current?.hotInstance;
+                            const selected = hot?.getSelectedLast();
+                            if (!selected) return true;
+
+                            const [startRow, startCol, endRow, endCol] = selected;
+                            const isHorizontal = startRow === endRow && startCol !== endCol;
+                            return !isHorizontal;
+                        },
+                        callback: () => {
+                            const hot = hotRef.current?.hotInstance;
+                            const plugin = hot?.getPlugin("mergeCells");
+                            if (!hot) return;
+
+                            const selected = hot.getSelectedLast();
+                            if (!selected) return;
+
+                            const [startRow, startCol, endRow, endCol] = selected;
+                            plugin.unmerge(startRow, startCol);
+
+                            hot.getPlugin('mergeCells').merge(startRow, startCol, endRow, endCol);
+                            hot.render(); // 병합 후 리렌더링
+                        },
+                    },
+                    {
+                        key: "unmergeCells",
+                        name: 'Unmerge cells',
+                        disabled: () => {
+                            const hot = hotRef.current?.hotInstance;
+                            const plugin = hot?.getPlugin("mergeCells");
+                            const selected = hot?.getSelectedLast();
+
+                            if (!selected || !plugin) return true;
+
+                            const [startRow, startCol] = selected;
+
+                            // 현재 셀이 병합되어 있지 않으면 disabled
+                            const merged = plugin.mergedCellsCollection.get(startRow, startCol);
+                            return !merged;
+                        },
+                        callback: () => {
+                            const hot = hotRef.current?.hotInstance;
+                            const plugin = hot?.getPlugin("mergeCells");
+                            const selected = hot?.getSelectedLast();
+                            if (!selected || !plugin) return;
+
+                            const [startRow, startCol] = selected;
+                            plugin.unmerge(startRow, startCol);
+                            hot.render();
+                        },
+                    },
+
+                ] as any,
+            }}
             mergeCells={mergeCells}
-            contextMenu={!readOnly}
             width="100%"
             height="600"
             stretchH="all"
             licenseKey="non-commercial-and-evaluation"
             afterChange={() => {
                 if (!onChange) return;
+
                 const hot = hotRef.current?.hotInstance;
                 if (!hot) return;
 
-                const merges =
-                    hot.getPlugin('mergeCells').mergedCellsCollection.mergedCells;
+                const plugin = hot.getPlugin("mergeCells");
+                const merges = plugin?.mergedCellsCollection?.mergedCells ?? [];
 
                 onChange(hot.getData(), merges);
             }}
+
         />
     );
 }
