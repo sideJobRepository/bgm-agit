@@ -1,4 +1,6 @@
 import HandsontableBase from './HandsontableBase';
+import styled from "styled-components";
+import type {WithTheme} from "../../styles/styled-props.ts";
 
 type Props = {
     classKey: string;
@@ -51,21 +53,29 @@ export default function Curriculum({ classKey, onChangeClassKey }: Props) {
 
     return (
         <div style={{ padding: 16 }}>
-            <div style={{ marginBottom: 12 }}>
+            <TopBox>
                 <select
                     value={classKey}
                     onChange={(e) => onChangeClassKey(e.target.value)}
                 >
-                    <option value="3g">3학년 G반</option>
-                    <option value="3k">3학년 K반</option>
-                    <option value="4g1">4학년 G1반</option>
+                    <option value="3g">3g</option>
+                    <option value="3k">3k</option>
                 </select>
-            </div>
+
+                <Button
+                    color="#222"
+                    onClick={() => {
+
+                    }}
+                >
+                    저장
+                </Button>
+            </TopBox>
 
             <HandsontableBase
                 data={[
-                    ['수학', '', '', '', '', '', '', '', '', '', '', '', ''],
-                    ['영어', '', '', '', '', '', '', '', '', '', '', '', ''],
+                    ['', '', '', '', '', '', '', '', '', '', '', '', ''],
+                    ['', '', '', '', '', '', '', '', '', '', '', '', ''],
                 ]}
                 colHeaders={headers}
                 onChange={(data, merges) => {
@@ -75,3 +85,27 @@ export default function Curriculum({ classKey, onChangeClassKey }: Props) {
         </div>
     );
 }
+
+const TopBox = styled.div`
+    display: inline-flex;
+    width: 100%;
+    margin-bottom: 16px;
+    justify-content: space-between;
+`
+
+const Button = styled.button<WithTheme & { color: string }>`
+  padding: 4px 8px;
+  background-color: ${({ color }) => color};
+  color: ${({ theme }) => theme.colors.white};
+  font-size: ${({ theme }) => theme.sizes.small};
+  border: none;
+  cursor: pointer;
+    
+    &:hover {
+        opacity: 0.8;
+    }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.small};
+  }
+`;
