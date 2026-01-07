@@ -123,8 +123,9 @@ export default function HandsontableBase({
             height="600"
             stretchH="all"
             licenseKey="non-commercial-and-evaluation"
-            afterChange={() => {
+            afterChange={(_changes, source) => {
                 if (!onChange) return;
+                if (source === 'loadData') return;
 
                 const hot = hotRef.current?.hotInstance;
                 if (!hot) return;
@@ -134,6 +135,7 @@ export default function HandsontableBase({
 
                 onChange(hot.getData(), merges);
             }}
+
 
         />
     );
