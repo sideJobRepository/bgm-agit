@@ -15,10 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -75,8 +72,7 @@ public class CurriculumServiceImpl implements CurriculumService {
     
     @Override
     public ApiResponse createCurriculum(CurriculumPostRequest request) {
-        Curriculum curriculum = Curriculum
-                .builder()
+        Curriculum curriculum = Curriculum.builder()
                 .title(request.getTitle())
                 .years(request.getYear())
                 .classes(request.getClassName())
@@ -84,33 +80,43 @@ public class CurriculumServiceImpl implements CurriculumService {
         
         curriculumRepository.save(curriculum);
         
-        List<CurriculumPostRequest.Row> rows = request.getRows();
+
+        List<CurriculumPostRequest.Row> rows =
+                Optional.ofNullable(request.getRows())
+                        .orElse(Collections.emptyList());
+        
         for (CurriculumPostRequest.Row row : rows) {
-            String progressType = row.getProgressType();
-            CurriculumProgress curriculumProgress = CurriculumProgress
-                    .builder()
-                    .curriculum(curriculum)
-                    .progressGubun(progressType)
-                    .build();
-            curriculumProgressRepository.save(curriculumProgress);
-            List<CurriculumPostRequest.MonthContent> months = row.getMonths();
-            months.forEach(item -> {
-                String content = item.getContent();
-                Integer startMonth = item.getStartMonth();
-                Integer endMonth = item.getEndMonth();
-                
-                CurriculumCont cont = CurriculumCont
-                        .builder()
-                        .curriculumProgress(curriculumProgress)
-                        .startMonths(startMonth)
-                        .endMonths(endMonth)
-                        .cont(content)
-                        .build();
-                curriculumContRepository.save(cont);
-            });
             
+            CurriculumProgress curriculumProgress = CurriculumProgress.builder()
+                    .curriculum(curriculum)
+                    .progressGubun(row.getProgressType())
+                    .build();
+        
+            curriculumProgressRepository.save(curriculumProgress);
+        
+       
+            List<CurriculumPostRequest.MonthContent> months =
+                    Optional.ofNullable(row.getMonths())
+                            .orElse(Collections.emptyList());
+        
+            if (months.isEmpty()) {
+                continue;
+            }
+        
+            for (CurriculumPostRequest.MonthContent item : months) {
+        
+                CurriculumCont cont = CurriculumCont.builder()
+                        .curriculumProgress(curriculumProgress)
+                        .startMonths(item.getStartMonth())
+                        .endMonths(item.getEndMonth())
+                        .cont(item.getContent())
+                        .build();
+        
+                curriculumContRepository.save(cont);
+            }
         }
-        return new ApiResponse(200, true, "저장성공");
+        
+        return new ApiResponse(200, true, "저장 성공");
     }
     
     @Override
