@@ -29,7 +29,7 @@ class CurriculumServiceImplTest extends RepositoryAndServiceTestSupport {
                 .builder()
                 .startMonth(1)
                 .endMonth(2)
-                .content("내용1")
+                .content("내용1111")
                 .build();
         
         
@@ -37,14 +37,14 @@ class CurriculumServiceImplTest extends RepositoryAndServiceTestSupport {
                 .builder()
                 .startMonth(3)
                 .endMonth(12)
-                .content("내용2")
+                .content("내용2111")
                 .build();
         
         CurriculumPostRequest.MonthContent monthContent3 = CurriculumPostRequest.MonthContent
                 .builder()
                 .startMonth(1)
                 .endMonth(6)
-                .content("내용3")
+                .content("내용3111")
                 .build();
         
         
@@ -52,7 +52,7 @@ class CurriculumServiceImplTest extends RepositoryAndServiceTestSupport {
                 .builder()
                 .startMonth(7)
                 .endMonth(11)
-                .content("내용4")
+                .content("내용41111")
                 .build();
         
         
@@ -61,22 +61,22 @@ class CurriculumServiceImplTest extends RepositoryAndServiceTestSupport {
         
         CurriculumPostRequest.Row row1 = CurriculumPostRequest.Row
                 .builder()
-                .progressType("수학")
+                .progressType("사회")
                 .months(monthContentList1)
                 .build();
         
         
         CurriculumPostRequest.Row row2 = CurriculumPostRequest.Row
                 .builder()
-                .progressType("영어")
+                .progressType("과학")
                 .months(monthContentList2)
                 .build();
         
         List<CurriculumPostRequest.Row> rowList = List.of(row1, row2);
         CurriculumPostRequest request = CurriculumPostRequest.builder()
                 .year(2026)
-                .title("타이틀")
-                .className("3G")
+                .title("타이틀12121212")
+                .className("3F")
                 .rows(rowList)
                 .build();
         
