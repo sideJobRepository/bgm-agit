@@ -27,4 +27,7 @@ public class CurriculumProgress extends DateSuperClass {
     @Column(name = "CURRICULUM_PROGRESS_GUBUN")
     private String progressGubun;
     
+    public void modifyProgressGubun(String progressType) {
+        this.progressGubun = progressType;
+    }
 }

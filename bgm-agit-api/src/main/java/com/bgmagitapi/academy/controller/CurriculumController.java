@@ -1,6 +1,7 @@
 package com.bgmagitapi.academy.controller;
 
 import com.bgmagitapi.academy.dto.request.CurriculumPostRequest;
+import com.bgmagitapi.academy.dto.request.CurriculumPutRequest;
 import com.bgmagitapi.academy.dto.response.CurriculumGetResponse;
 import com.bgmagitapi.academy.service.CurriculumService;
 import com.bgmagitapi.apiresponse.ApiResponse;
@@ -24,5 +25,10 @@ public class CurriculumController {
     @PostMapping("/curriculum")
     public ApiResponse createCurriculum(@RequestBody CurriculumPostRequest request) {
         return curriculumService.createCurriculum(request);
+    }
+    
+    @PutMapping("/curriculum")
+    public ApiResponse updateCurriculum(@RequestBody CurriculumPutRequest request) {
+        return curriculumService.modifyCurriculum(request);
     }
 }

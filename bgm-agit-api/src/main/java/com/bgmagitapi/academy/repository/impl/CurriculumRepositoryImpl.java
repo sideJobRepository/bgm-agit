@@ -1,19 +1,15 @@
 package com.bgmagitapi.academy.repository.impl;
 
-import com.bgmagitapi.academy.dto.response.CurriculumGetResponse;
-import com.bgmagitapi.academy.dto.response.QCurriculumGetResponse;
-import com.bgmagitapi.academy.dto.response.QCurriculumGetResponse_MonthContent;
-import com.bgmagitapi.academy.dto.response.QCurriculumGetResponse_Row;
-import com.bgmagitapi.academy.entity.*;
+import com.bgmagitapi.academy.entity.CurriculumCont;
 import com.bgmagitapi.academy.repository.query.CurriculumQueryRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
-import static com.bgmagitapi.academy.entity.QCurriculum.*;
-import static com.bgmagitapi.academy.entity.QCurriculumCont.*;
-import static com.bgmagitapi.academy.entity.QCurriculumProgress.*;
+import static com.bgmagitapi.academy.entity.QCurriculum.curriculum;
+import static com.bgmagitapi.academy.entity.QCurriculumCont.curriculumCont;
+import static com.bgmagitapi.academy.entity.QCurriculumProgress.curriculumProgress;
 
 @RequiredArgsConstructor
 public class CurriculumRepositoryImpl implements CurriculumQueryRepository {

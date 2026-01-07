@@ -38,4 +38,9 @@ public class CurriculumCont extends DateSuperClass {
     @Column(name = "CURRICULUM_CONT")
     private String cont;
     
+    public void modifyCont(Integer startMonth, Integer endMonth, String content) {
+        this.startMonths = startMonth;
+        this.endMonths = endMonth;
+        this.cont = content;
+    }
 }
