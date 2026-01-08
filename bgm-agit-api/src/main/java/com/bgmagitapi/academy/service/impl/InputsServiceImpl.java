@@ -53,6 +53,7 @@ public class InputsServiceImpl implements InputsService {
                 .tests(request.getInputsTests())
                 .homework(request.getInputsHomework())
                 .inputsDate(request.getInputsDate())
+                .textbook(request.getTextbook())
                 .build();
         inputsRepository.save(inputs);
         return new ApiResponse(200, true, "저장 되었습니다.");

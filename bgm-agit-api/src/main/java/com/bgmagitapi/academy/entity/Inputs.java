@@ -58,6 +58,9 @@ public class Inputs extends DateSuperClass {
     // 입력 과제
     @Column(name = "INPUTS_HOMEWORK")
     private String homework;
+    // 입력 교재
+    @Column(name = "INPUTS_TEXTBOOK")
+    private String textbook;
     
     // 입력 일시
     @Column(name = "INPUTS_DATE")
@@ -72,6 +75,7 @@ public class Inputs extends DateSuperClass {
         this.pages = request.getInputsPages();
         this.progress = request.getInputsProgress();
         this.tests = request.getInputsTests();
+        this.textbook = request.getTextbook();
         this.homework = request.getInputsHomework();
         this.inputsDate = request.getInputsDate();
     }

@@ -41,6 +41,8 @@ public class InputsPutRequest {
     // 입력 과제
     private String inputsHomework;
     
+    private String textbook;
+    
     // 입력 일시
     private LocalDate inputsDate;
 }
