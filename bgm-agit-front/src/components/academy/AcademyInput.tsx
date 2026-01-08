@@ -7,20 +7,18 @@ import type { ClassKey } from '../../pages/Academy';
 import { showConfirmModal } from '../confirmAlert.tsx';
 
 type ProgressItem = {
-  id: string;
   classKey: ClassKey;
-  date: string; // YYYY-MM-DD
-
-  teacher: string;
-  book: string;
-
-  unit: string; // 단원
-  pages: string; // 페이지
-
-  subject: string;
-  content: string;
-  test: string;
-  homework: string;
+  curriculumProgressId: string; // 진도구분의 id
+  inputsClasses: string; //반
+  inputsDate: string; //일시
+  inputsTeacher: string; //강사
+  inputsSubjects: string; //과목
+  //진도구분, 교재명 추가 해야함
+  inputsUnit: string; //단원
+  inputsPages: string; //페이지
+  inputsProgress: string; //진도
+  inputsTests: string; // 테스트
+  inputsHomework: string; //과제
 };
 
 type ProgressInputState = {
@@ -102,16 +100,19 @@ export default function AcademyInput({
     );
   }, [value.rows, classKey, dateStr, selectedBook]);
 
-  // form (한 날짜 + 한 교재 = 1건)
+
   const [form, setForm] = useState<Omit<ProgressItem, 'id' | 'classKey' | 'date'>>({
-    teacher: '',
-    book: '',
-    unit: '',
-    pages: '',
-    subject: '수학',
-    content: '',
-    test: '',
-    homework: '',
+    curriculumProgressId: '', // 진도구분의 id
+    inputsClasses: '', //반
+    inputsDate: '', //일시
+    inputsTeacher: '', //강사
+    inputsSubjects: '', //과목
+    //진도구분, 교재명 추가 해야함
+    inputsUnit: '', //단원
+    inputsPages: '', //페이지
+    inputsProgress: '', //진도
+    inputsTests: '', // 테스트
+    inputsHomework: '', //과제
   });
 
   const setField = (k: keyof typeof form, v: string) => setForm(prev => ({ ...prev, [k]: v }));
@@ -261,15 +262,15 @@ export default function AcademyInput({
             <FieldBox>
               <Field>
                 <Label>강사</Label>
-                <Input value={form.teacher} onChange={e => setField('teacher', e.target.value)} />
+                <Input value={form.inputsTeacher} onChange={e => setField('inputsTeacher', e.target.value)} />
               </Field>
               <Field>
                 <Label>과목</Label>
-                <Input value={form.teacher} onChange={e => setField('teacher', e.target.value)} />
+                <Input value={form.inputsSubjects} onChange={e => setField('inputsSubjects', e.target.value)} />
               </Field>
               <Field>
                 <Label>진도구분</Label>
-                <Select value={form.teacher} onChange={e => setField('teacher', e.target.value)} />
+                <Select value={form.curriculumProgressId} onChange={e => setField('curriculumProgressId', e.target.value)} />
               </Field>
             </FieldBox>
 
@@ -280,11 +281,11 @@ export default function AcademyInput({
               </Field>
               <Field>
                 <Label>단원</Label>
-                <Input value={form.teacher} onChange={e => setField('teacher', e.target.value)} />
+                <Input value={form.inputsUnit} onChange={e => setField('inputsUnit', e.target.value)} />
               </Field>
               <Field>
                 <Label>페이지</Label>
-                <Input value={form.teacher} onChange={e => setField('teacher', e.target.value)} />
+                <Input value={form.inputsPages} onChange={e => setField('inputsPages', e.target.value)} />
               </Field>
             </FieldBox>
 
@@ -297,14 +298,14 @@ export default function AcademyInput({
             <FieldBox>
               <Field>
                 <Label>진도</Label>
-                <Textarea value={form.content} onChange={e => setField('content', e.target.value)} />
+                <Textarea value={form.inputsProgress} onChange={e => setField('inputsProgress', e.target.value)} />
               </Field>
             </FieldBox>
 
             <FieldBox>
               <Field>
                 <Label>테스트</Label>
-                <Textarea value={form.test} onChange={e => setField('test', e.target.value)} />
+                <Textarea value={form.inputsTests} onChange={e => setField('inputsTests', e.target.value)} />
               </Field>
             </FieldBox>
 
@@ -312,8 +313,8 @@ export default function AcademyInput({
               <Field>
                 <Label>과제</Label>
                 <Textarea
-                    value={form.homework}
-                    onChange={e => setField('homework', e.target.value)}
+                    value={form.inputsHomework}
+                    onChange={e => setField('inputsHomework', e.target.value)}
                 />
               </Field>
             </FieldBox>
