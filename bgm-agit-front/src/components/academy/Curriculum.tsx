@@ -9,12 +9,21 @@ import {useCurriiculumFetch} from "../../recoil/academyFetch.ts";
 import {useRecoilValue} from "recoil";
 import {curriculumDataState} from "../../recoil/state/academy.ts";
 
-type Props = {
-    classKey: string;
-    onChangeClassKey: (key: string) => void;
-};
 
-export default function Curriculum({ classKey, onChangeClassKey }: Props) {
+export default function Curriculum() {
+
+    const categoryOptions = [
+        { value: '3g', label: '3g' },
+        { value: '3k', label: '3k' },
+        { value: '4g1', label: '4g1' },
+    ];
+
+
+    const [classKey, setClassKey] = useState(categoryOptions[0].value);
+
+    const [title, setTitle] = useState('');
+
+
     const headers = [
         '진도구분',
         ...Array.from({ length: 12 }, (_, i) => `${i + 1}월`),
@@ -49,6 +58,7 @@ export default function Curriculum({ classKey, onChangeClassKey }: Props) {
         className: string,
         title: string
     ) {
+
         const rows = data
             .map((row, rowIndex) => {
                 const progressType = row[0];
@@ -86,6 +96,7 @@ export default function Curriculum({ classKey, onChangeClassKey }: Props) {
             );
 
         return {
+            id: curriculumData?.id ?? undefined,
             year,
             className,
             title,
@@ -139,7 +150,7 @@ export default function Curriculum({ classKey, onChangeClassKey }: Props) {
             tableMergesRef.current,
             2026,
             classKey,
-            '커리큘럼 12월 예시'
+            title
         );
 
         showConfirmModal({
@@ -180,6 +191,7 @@ export default function Curriculum({ classKey, onChangeClassKey }: Props) {
 
         setTableData(data);
         setTableMerges(merges);
+        setTitle(curriculumData?.title);
 
         tableDataRef.current = data;
         tableMergesRef.current = merges;
@@ -187,21 +199,29 @@ export default function Curriculum({ classKey, onChangeClassKey }: Props) {
 
 
 
-    //검색
+    //반 기준
     useEffect(() => {
         fetchCurriculum({ year: 2026, className: classKey });
     }, [classKey]);
 
     return (
-        <div style={{ padding: 16 }}>
+        <div>
             <TopBox>
-                <select
-                    value={classKey}
-                    onChange={(e) => onChangeClassKey(e.target.value)}
-                >
-                    <option value="3g">3g</option>
-                    <option value="3k">3k</option>
-                </select>
+                <div>
+                    <SelectBox value={classKey} onChange={e => setClassKey(e.target.value)}>
+                        {categoryOptions.map(opt => (
+                            <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </option>
+                        ))}
+                    </SelectBox>
+                    <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="커리큘럼 제목 입력"
+                    />
+                </div>
 
                 <Button
                     color="#222"
@@ -224,18 +244,31 @@ export default function Curriculum({ classKey, onChangeClassKey }: Props) {
     );
 }
 
-const TopBox = styled.div`
+const TopBox = styled.div<WithTheme>`
     display: inline-flex;
     width: 100%;
     margin-bottom: 16px;
     justify-content: space-between;
+    > div {
+        display: inline-flex;
+        gap: 8px;
+        input {
+            border: none;
+            width: 100%;
+            padding: 4px 8px;
+            font-size: ${({ theme }) => theme.sizes.small};
+            outline: none;
+            color: ${({ theme }) => theme.colors.subColor};
+            background: transparent;
+        }
+    }
 `
 
 const Button = styled.button<WithTheme & { color: string }>`
   padding: 4px 8px;
   background-color: ${({ color }) => color};
   color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.small};
+  font-size: ${({ theme }) => theme.sizes.xsmall};
   border: none;
   cursor: pointer;
     
@@ -244,6 +277,28 @@ const Button = styled.button<WithTheme & { color: string }>`
     }
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
+    font-size: ${({ theme }) => theme.sizes.xsmall};
   }
+`;
+
+const SelectBox = styled.select<WithTheme>`
+    width: 68px;
+    border: 1px solid  ${({theme}) => theme.colors.navColor};
+    color: ${({theme}) => theme.colors.subColor};
+    padding: 4px 8px;
+    font-size: ${({theme}) => theme.sizes.xsmall};
+    cursor: pointer;
+    background-color: #F8F9FA;
+
+    /* 화살표 위치 조정 */
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 16px;
+
+    &:focus {
+        border-color: ${({theme}) => theme.colors.subColor};
+        outline: none;
+    }
 `;

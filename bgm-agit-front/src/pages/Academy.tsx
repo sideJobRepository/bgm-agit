@@ -69,49 +69,54 @@ export default function Academy() {
         </TabButton>
       </AcademyTabBox>
 
-      {activeTab === 'curriculum' && (
-        <Curriculum
-          classKey={classKey}
-          onChangeClassKey={setClassKey}
-        />
-      )}
+      <ContentBox>
+        {activeTab === 'curriculum' && (
+            <Curriculum
+            />
+        )}
 
-      {activeTab === 'input' && (
-        <AcademyInput
-          classKey={classKey}
-          onChangeClassKey={setClassKey}
-          value={progressInputState}
-          onChange={setProgressInputState}
-          onSave={saveProgressInput}
-          curriculumState={curriculumState}
-        />
-      )}
+        {activeTab === 'input' && (
+            <AcademyInput
+                classKey={classKey}
+                onChangeClassKey={setClassKey}
+                value={progressInputState}
+                onChange={setProgressInputState}
+                onSave={saveProgressInput}
+                curriculumState={curriculumState}
+            />
+        )}
 
-      {activeTab === 'view' && (
-        <AcademyView
-          classKey={classKey}
-          onChangeClassKey={setClassKey}
-          curriculumState={curriculumState}
-          progressInputState={progressInputState}
-          year={2025}
-          month={12}
-        />
-      )}
+        {activeTab === 'view' && (
+            <AcademyView
+                classKey={classKey}
+                onChangeClassKey={setClassKey}
+                curriculumState={curriculumState}
+                progressInputState={progressInputState}
+                year={2025}
+                month={12}
+            />
+        )}
+      </ContentBox>
     </Wrapper>
   );
 }
 
-const AcademyTabBox = styled.section`
+const AcademyTabBox = styled.section<WithTheme>`
   display: flex;
-  gap: 12px;
+  gap: 4px;
+  margin-bottom: 12px;
 `;
 
 const TabButton = styled.button<{ active: boolean } & WithTheme>`
-  background-color: ${({ active, theme }) => (active ? theme.colors.blueColor : 'transparent')};
+  background-color: ${({ active, theme }) => (active ? theme.colors.menuColor : 'transparent')};
   color: ${({ active, theme }) => (active ? theme.colors.white : theme.colors.text)};
   border: none;
   padding: 6px 10px;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  border-radius: 6px;
+  font-size: ${({ theme }) => theme.sizes.small};
   cursor: pointer;
 `;
+
+const ContentBox = styled.section<WithTheme>`
+  padding: 24px 0;
+  border-top: 1px solid ${({ theme }) => theme.colors.lineColor};
+`

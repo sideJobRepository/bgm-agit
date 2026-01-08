@@ -6,7 +6,7 @@ import "handsontable/dist/handsontable.full.css";
 import "handsontable/plugins/contextMenu";
 import "handsontable/plugins/mergeCells";
 
-// 🔥 이거 없으면 우클릭 절대 안 됨
+// 우클릭 메뉴
 registerAllModules();
 
 type Props = {
@@ -113,7 +113,7 @@ export default function HandsontableBase({
             }}
             mergeCells={mergeCells}
             width="100%"
-            height="600"
+            height="400"
             stretchH="all"
             licenseKey="non-commercial-and-evaluation"
             afterChange={(_changes, source) => {
@@ -127,6 +127,16 @@ export default function HandsontableBase({
                 const merges = plugin?.mergedCellsCollection?.mergedCells ?? [];
 
                 onChange(hot.getData(), merges);
+            }}
+            afterRemoveRow={() => {
+                const hot = hotRef.current?.hotInstance;
+                if (!hot || !onChange) return;
+
+                const plugin = hot.getPlugin("mergeCells");
+                const merges = plugin?.mergedCellsCollection?.mergedCells ?? [];
+                const data = hot.getData();
+
+                onChange(data, merges);
             }}
 
 
