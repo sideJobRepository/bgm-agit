@@ -6,11 +6,14 @@ import com.bgmagitapi.academy.dto.response.CurriculumGetResponse;
 import com.bgmagitapi.academy.entity.Curriculum;
 import com.bgmagitapi.academy.entity.CurriculumCont;
 import com.bgmagitapi.academy.entity.CurriculumProgress;
+import com.bgmagitapi.academy.entity.Inputs;
 import com.bgmagitapi.academy.repository.CurriculumContRepository;
 import com.bgmagitapi.academy.repository.CurriculumProgressRepository;
 import com.bgmagitapi.academy.repository.CurriculumRepository;
+import com.bgmagitapi.academy.repository.InputsRepository;
 import com.bgmagitapi.academy.service.CurriculumService;
 import com.bgmagitapi.apiresponse.ApiResponse;
+import com.querydsl.codegen.ParameterizedTypeImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +29,7 @@ public class CurriculumServiceImpl implements CurriculumService {
     private final CurriculumRepository curriculumRepository;
     private final CurriculumContRepository curriculumContRepository;
     private final CurriculumProgressRepository curriculumProgressRepository;
+    private final InputsRepository inputsRepository;
     
     @Override
     public CurriculumGetResponse getCurriculum(Integer year, String className) {
@@ -126,79 +130,66 @@ public class CurriculumServiceImpl implements CurriculumService {
         
         Curriculum curriculum = curriculumRepository.findById(curriculumId).orElseThrow(() -> new RuntimeException("존재 하지않는 커리큘럼 입니다."));
         
+        List<CurriculumProgress> progresses = curriculumProgressRepository.findByCurriculumId(curriculumId);
         
-        // ========== 1) 기존 DB 데이터 조회 ==========
-        List<CurriculumProgress> dbProgress = curriculumProgressRepository.findByCurriculumId(curriculumId);
+        List<CurriculumCont> cont = curriculumContRepository.findByCurriculumId(curriculumId);
         
-        List<CurriculumCont> dbCont = curriculumContRepository.findByCurriculumId(curriculumId);
+        curriculumContRepository.deleteAll(cont);
         
-        Set<Long> requestProgressIds = new HashSet<>();
-        Set<Long> requestContIds = new HashSet<>();
+        List<Inputs> inputs =
+                inputsRepository.findByCurriculumProgressIds(
+                        progresses.stream()
+                                  .map(CurriculumProgress::getId)
+                                  .toList()
+                );
         
-        // ========== 2) 요청 rows 처리 ==========
-        for (CurriculumPutRequest.Row rowReq : request.getRows()) {
-            
-            CurriculumProgress progress;
-            
-            // --- UPDATE ---
-            if (rowReq.getId() != null) {
-                requestProgressIds.add(rowReq.getId());
-                progress = curriculumProgressRepository.findById(rowReq.getId())
-                        .orElseThrow(() -> new RuntimeException("없는 row id"));
-                progress.modifyProgressGubun(rowReq.getProgressType());
-            }
-            // --- INSERT ---
-            else {
-                progress = CurriculumProgress.builder()
-                        .curriculum(curriculum)
-                        .progressGubun(rowReq.getProgressType())
-                        .build();
-                
-                curriculumProgressRepository.save(progress);
-                requestProgressIds.add(progress.getId());
-            }
-            
-            // ===== ranges 처리 =====
-            for (CurriculumPutRequest.MonthContent mc : rowReq.getMonths()) {
-                
-                CurriculumCont cont;
-                
-                // --- UPDATE ---
-                if (mc.getId() != null) {
-                    requestContIds.add(mc.getId());
-                    cont = curriculumContRepository.findById(mc.getId())
-                            .orElseThrow(() -> new RuntimeException("없는 cont id"));
-                    
-                    cont.modifyCont(mc.getStartMonth(), mc.getEndMonth(), mc.getContent());
-                    
-                }
-                // --- INSERT ---
-                else {
-                    cont = CurriculumCont.builder()
-                            .curriculumProgress(progress)
-                            .startMonths(mc.getStartMonth())
-                            .endMonths(mc.getEndMonth())
-                            .cont(mc.getContent())
-                            .build();
-                    
-                    curriculumContRepository.save(cont);
-                    requestContIds.add(cont.getId());
-                }
-            }
+        for (Inputs input : inputs) {
+            input.modifyInptsCurriculumProgressId();;
         }
+        curriculumProgressRepository.deleteAll(progresses);
+        curriculumRepository.delete(curriculum);
         
-        // 요청에 없는 것 삭제
-        // row 삭제
-        dbProgress.stream()
-                .filter(p -> !requestProgressIds.contains(p.getId()))
-                .forEach(curriculumProgressRepository::delete);
-        
-        // cont 삭제
-        dbCont.stream()
-                .filter(c -> !requestContIds.contains(c.getId()))
-                .forEach(curriculumContRepository::delete);
-        
-        
+        Curriculum saveCurriculum = Curriculum.builder()
+                     .title(request.getTitle())
+                     .years(request.getYear())
+                     .classes(request.getClassName())
+                     .build();
+             
+             curriculumRepository.save(saveCurriculum);
+             
+     
+             List<CurriculumPutRequest.Row> rows = Optional.ofNullable(request.getRows()).orElse(Collections.emptyList());
+             
+             for (CurriculumPutRequest.Row row : rows) {
+                 
+                 CurriculumProgress curriculumProgress = CurriculumProgress.builder()
+                         .curriculum(saveCurriculum)
+                         .progressGubun(row.getProgressType())
+                         .build();
+             
+                 curriculumProgressRepository.save(curriculumProgress);
+             
+            
+                 List<CurriculumPutRequest.MonthContent> months =
+                         Optional.ofNullable(row.getMonths())
+                                 .orElse(Collections.emptyList());
+             
+                 if (months.isEmpty()) {
+                     continue;
+                 }
+             
+                 for (CurriculumPutRequest.MonthContent item : months) {
+             
+                     CurriculumCont cont1 = CurriculumCont.builder()
+                             .curriculumProgress(curriculumProgress)
+                             .startMonths(item.getStartMonth())
+                             .endMonths(item.getEndMonth())
+                             .cont(item.getContent())
+                             .build();
+             
+                     curriculumContRepository.save(cont1);
+                 }
+             }
         return new ApiResponse(200, true, "수정 되었습니다.");
     }
 }

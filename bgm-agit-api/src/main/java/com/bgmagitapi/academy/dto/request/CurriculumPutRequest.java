@@ -61,7 +61,6 @@ public class CurriculumPutRequest {
     @NoArgsConstructor
     @Builder
     public static class Row {
-        private Long id;
         private String progressType;
         private List<MonthContent> months;
         
@@ -79,7 +78,6 @@ public class CurriculumPutRequest {
     @NoArgsConstructor
     @Builder
     public static class MonthContent {
-        private Long id;
         private Integer startMonth;   // 1~12
         private Integer endMonth;     // 1~12
         private String content;     // 내용

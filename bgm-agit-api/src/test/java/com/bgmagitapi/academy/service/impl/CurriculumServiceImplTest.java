@@ -115,13 +115,11 @@ class CurriculumServiceImplTest extends RepositoryAndServiceTestSupport {
     
                         //1) 기존 row 수정 (id 존재)
                         CurriculumPutRequest.Row.builder()
-                                .id(1L)  // ← DB에 이미 존재하는 progress id
                                 .progressType("국어(수정됨)")
                                 .months(List.of(
     
                                         // 기존 cont 수정
                                         CurriculumPutRequest.MonthContent.builder()
-                                                .id(1L) // DB 존재
                                                 .startMonth(1)
                                                 .endMonth(2)
                                                 .content("받아쓰기 (수정)")
@@ -129,7 +127,6 @@ class CurriculumServiceImplTest extends RepositoryAndServiceTestSupport {
     
                                         // 기존 cont 또 수정
                                         CurriculumPutRequest.MonthContent.builder()
-                                                .id(2L)
                                                 .startMonth(3)
                                                 .endMonth(3)
                                                 .content("문장쓰기 (수정)")

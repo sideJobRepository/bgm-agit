@@ -75,4 +75,8 @@ public class Inputs extends DateSuperClass {
         this.homework = request.getInputsHomework();
         this.inputsDate = request.getInputsDate();
     }
+    
+    public void modifyInptsCurriculumProgressId() {
+        this.curriculumProgress = null;
+    }
 }
