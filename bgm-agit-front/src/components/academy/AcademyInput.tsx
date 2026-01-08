@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-
+import { IoChevronBackSharp, IoChevronForwardSharp } from 'react-icons/io5';
 import type { WithTheme } from '../../styles/styled-props';
 import type { ClassKey } from '../../pages/Academy';
 import { showConfirmModal } from '../confirmAlert.tsx';
@@ -202,14 +202,11 @@ export default function AcademyInput({
       <TopBar>
         <DateNav>
           <IconBtn type="button" onClick={() => moveDay(-1)}>
-            ‹
+            ◀
           </IconBtn>
-          <DateText>{dateStr}</DateText>
+          <DateText onClick={() => setCalendarOpen(v => !v)}>{dateStr}</DateText>
           <IconBtn type="button" onClick={() => moveDay(1)}>
-            ›
-          </IconBtn>
-          <IconBtn type="button" onClick={() => setCalendarOpen(v => !v)}>
-            📅
+            ▶
           </IconBtn>
 
           {calendarOpen && (
@@ -226,15 +223,13 @@ export default function AcademyInput({
           )}
         </DateNav>
 
-        <PrimaryBtn type="button" onClick={submitSave}>
+        <PrimaryBtn  color="#222" onClick={submitSave}>
           저장
         </PrimaryBtn>
       </TopBar>
 
       <Body>
-        {/* 좌측: 반 목록(형태만) */}
         <LeftPane>
-          <PaneTitle>반목록</PaneTitle>
           <ClassList>
             {(['3g', '3k', '4g1'] as ClassKey[]).map(k => (
               <ClassRow key={k}>
@@ -252,88 +247,79 @@ export default function AcademyInput({
 
         {/* 우측: 입력 폼 */}
         <RightPane>
-          <PaneTitle>진도 추가</PaneTitle>
-
           <Grid2>
-            <Field>
-              <Label>반목록</Label>
-              <ReadOnly>{classKey.toUpperCase()}</ReadOnly>
-            </Field>
+            <FieldBox>
+              <Field>
+                <Label>반목록</Label>
+                <ReadOnly>{classKey.toUpperCase()}</ReadOnly>
+              </Field>
+              <Field>
+                <Label>수업일</Label>
+                <ReadOnly>{dateStr}</ReadOnly>
+              </Field>
+            </FieldBox>
 
-            <Field>
-              <Label>수업일</Label>
-              <ReadOnly>{dateStr}</ReadOnly>
-            </Field>
+            <FieldBox>
+              <Field>
+                <Label>강사</Label>
+                <Input value={form.teacher} onChange={e => setField('teacher', e.target.value)} />
+              </Field>
+              <Field>
+                <Label>과목</Label>
+                <Input value={form.teacher} onChange={e => setField('teacher', e.target.value)} />
+              </Field>
+              <Field>
+                <Label>진도구분</Label>
+                <Select value={form.teacher} onChange={e => setField('teacher', e.target.value)} />
+              </Field>
+            </FieldBox>
 
-            <Field>
-              <Label>강사</Label>
-              <Input value={form.teacher} onChange={e => setField('teacher', e.target.value)} />
-            </Field>
+            <FieldBox>
+              <Field>
+                <Label>교재명</Label>
+                <Input value={form.teacher} onChange={e => setField('teacher', e.target.value)} />
+              </Field>
+              <Field>
+                <Label>단원</Label>
+                <Input value={form.teacher} onChange={e => setField('teacher', e.target.value)} />
+              </Field>
+              <Field>
+                <Label>페이지</Label>
+                <Input value={form.teacher} onChange={e => setField('teacher', e.target.value)} />
+              </Field>
+            </FieldBox>
 
-            <Field>
-              <Label>과목</Label>
-              <Select value={form.subject} onChange={e => setField('subject', e.target.value)}>
-                <option value="수학">수학</option>
-                <option value="영어">영어</option>
-                <option value="국어">국어</option>
-              </Select>
-            </Field>
+            <AddbtnBox>
+              <AddBtn  color="#2E2E2E" onClick={submitSave}>
+                + 새로운 행 추가
+              </AddBtn>
+            </AddbtnBox>
 
-            <Field>
-              <Label>교재</Label>
-              <Select
-                value={selectedBook}
-                onChange={e => {
-                  const next = e.target.value;
-                  setSelectedBook(next);
-                  // book 필드도 동기화(저장시 book 강제하지만 UX상 즉시 반영)
-                  setField('book', next);
-                }}
-              >
-                <option value="">선택</option>
-                {bookOptions.map(b => (
-                  <option key={b} value={b}>
-                    {b}
-                  </option>
-                ))}
-              </Select>
-            </Field>
+            <FieldBox>
+              <Field>
+                <Label>진도</Label>
+                <Textarea value={form.content} onChange={e => setField('content', e.target.value)} />
+              </Field>
+            </FieldBox>
 
-            <Field>
-              <Label>단원</Label>
-              <Input
-                value={form.unit}
-                onChange={e => setField('unit', e.target.value)}
-                placeholder="예) 2단원"
-              />
-            </Field>
+            <FieldBox>
+              <Field>
+                <Label>테스트</Label>
+                <Textarea value={form.test} onChange={e => setField('test', e.target.value)} />
+              </Field>
+            </FieldBox>
 
-            <Field>
-              <Label>페이지</Label>
-              <Input
-                value={form.pages}
-                onChange={e => setField('pages', e.target.value)}
-                placeholder="예) p.70~73"
-              />
-            </Field>
+            <FieldBox>
+              <Field>
+                <Label>과제</Label>
+                <Textarea
+                    value={form.homework}
+                    onChange={e => setField('homework', e.target.value)}
+                />
+              </Field>
+            </FieldBox>
 
-            <Field $span2>
-              <Label>진도</Label>
-              <Textarea value={form.content} onChange={e => setField('content', e.target.value)} />
-            </Field>
-
-            <Field $span2>
-              <Label>테스트</Label>
-              <Textarea value={form.test} onChange={e => setField('test', e.target.value)} />
-            </Field>
-
-            <Field $span2>
-              <Label>과제</Label>
-              <Textarea
-                value={form.homework}
-                onChange={e => setField('homework', e.target.value)}
-              />
-            </Field>
+       
           </Grid2>
         </RightPane>
       </Body>
@@ -355,22 +341,24 @@ const TopBar = styled.div`
   justify-content: space-between;
 `;
 
-const DateNav = styled.div`
+const DateNav = styled.div<WithTheme>`
   position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: ${({ theme }) => theme.sizes.small};
 `;
 
 const DateText = styled.div`
   font-weight: 700;
+  cursor: pointer;
 `;
 
 const IconBtn = styled.button<WithTheme>`
-  border: 1px solid ${({ theme }) => theme.colors.gray300};
+  border: none;
   background: ${({ theme }) => theme.colors.white};
-  border-radius: 8px;
-  padding: 6px 10px;
+  cursor: pointer;
+  font-size: ${({ theme }) => theme.sizes.xxsmall};
 `;
 
 const CalendarPopover = styled.div`
@@ -385,96 +373,154 @@ const CalendarPopover = styled.div`
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 `;
 
-const PrimaryBtn = styled.button<WithTheme>`
-  border: none;
-  background: ${({ theme }) => theme.colors.greenColor};
+const PrimaryBtn = styled.button<WithTheme & { color: string }>`
+  padding: 4px 8px;
+  background-color: ${({ color }) => color};
   color: ${({ theme }) => theme.colors.white};
+  font-size: ${({ theme }) => theme.sizes.xsmall};
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.xsmall};
+  }
+`;
+
+const AddbtnBox = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`
+
+const AddBtn = styled.button<WithTheme & { color: string }>`
+  padding: 6px 12px;
+  background-color: ${({ color }) => color};
+  color: ${({ theme }) => theme.colors.white};
+  font-size: ${({ theme }) => theme.sizes.xsmall};
+  border: none;
+  cursor: pointer;
   border-radius: 4px;
-  padding: 8px;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.xsmall};
+  }
 `;
 
 const Body = styled.div`
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 12px;
-  min-height: 520px;
 `;
 
-const LeftPane = styled.div`
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+const LeftPane = styled.div<WithTheme>`
+  border: 1px solid  ${({ theme }) => theme.colors.lineColor};
   padding: 12px;
+  background-color: ${({ theme }) => theme.colors.softColor};
+  font-size: ${({ theme }) => theme.sizes.small};
 `;
 
-const RightPane = styled.div`
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 12px;
+const RightPane = styled.div<WithTheme>`
+  border: 1px solid  ${({ theme }) => theme.colors.lineColor};
+  padding: 12px 24px;
+  font-size: ${({ theme }) => theme.sizes.small};
 `;
 
-const PaneTitle = styled.div`
-  font-weight: 800;
-  margin-bottom: 10px;
-`;
 
 const ClassList = styled.div`
   display: grid;
   gap: 8px;
 `;
 
-const ClassRow = styled.label`
+const ClassRow = styled.label<WithTheme>`
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid #eef2f7;
+  border-radius: 4px;
+  background-color: white;
+  font-size: ${({ theme }) => theme.sizes.xsmall};
+  border: 1px solid  ${({ theme }) => theme.colors.lineColor};
 `;
 
 const Grid2 = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  //display: grid;
+  //grid-template-columns: 1fr 1fr;
+  //gap: 10px 12px;
 `;
 
-const Field = styled.div<{ $span2?: boolean }>`
-  display: grid;
-  gap: 6px;
-  grid-column: ${({ $span2 }) => ($span2 ? '1 / span 2' : 'auto')};
+const FieldBox = styled.div`
+    display: flex;
+    gap: 16px;
+`
+
+const Field = styled.div`
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: 1;
 `;
 
-const Label = styled.div`
-  font-weight: 700;
+const Label = styled.div<WithTheme>`
+  font-weight: 600;
+  width: 60px;
+  font-size: ${({ theme }) => theme.sizes.small};
+  color: ${({ theme }) => theme.colors.menuColor};
 `;
 
-const ReadOnly = styled.div`
-  height: 36px;
+const ReadOnly = styled.div<WithTheme>`
+  height: 32px;
   display: flex;
   align-items: center;
   padding: 0 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  background: #f8fafc;
+  border-radius: 4px;
+  font-size: ${({ theme }) => theme.sizes.xsmall};
+  color: ${({ theme }) => theme.colors.subColor};
+  border: 1px solid  ${({theme}) => theme.colors.lineColor};
+  background: ${({theme}) => theme.colors.border};
+  flex: 1;
 `;
 
 const Input = styled.input<WithTheme>`
-  height: 36px;
-  border: 1px solid ${({ theme }) => theme.colors.gray300};
-  border-radius: 10px;
+
+  height: 32px;
+  display: flex;
+  align-items: center;
   padding: 0 10px;
+  border-radius: 4px;
+  font-size: ${({ theme }) => theme.sizes.xsmall};
+  color: ${({ theme }) => theme.colors.subColor};
+  border: 1px solid  ${({theme}) => theme.colors.lineColor};
+  flex: 1;
 `;
 
 const Select = styled.select<WithTheme>`
-  height: 36px;
-  border: 1px solid ${({ theme }) => theme.colors.gray300};
-  border-radius: 10px;
+  height: 32px;
+  font-size: ${({ theme }) => theme.sizes.xsmall};
+  color: ${({ theme }) => theme.colors.subColor};
+  border: 1px solid  ${({theme}) => theme.colors.lineColor};
+  flex: 1;
+  border-radius: 4px;
   padding: 0 10px;
 `;
 
 const Textarea = styled.textarea<WithTheme>`
-  min-height: 72px;
-  border: 1px solid ${({ theme }) => theme.colors.gray300};
-  border-radius: 10px;
+  min-height: 32px;
+  border: 1px solid  ${({theme}) => theme.colors.lineColor};
+  font-size: ${({ theme }) => theme.sizes.xsmall};
+  color: ${({ theme }) => theme.colors.subColor};
+  border-radius: 4px;
   padding: 10px;
   resize: vertical;
+  flex: 1;
 `;
