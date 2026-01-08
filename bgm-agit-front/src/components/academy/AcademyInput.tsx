@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { IoChevronBackSharp, IoChevronForwardSharp } from 'react-icons/io5';
 import type { WithTheme } from '../../styles/styled-props';
 import type { ClassKey } from '../../pages/Academy';
 import { showConfirmModal } from '../confirmAlert.tsx';
