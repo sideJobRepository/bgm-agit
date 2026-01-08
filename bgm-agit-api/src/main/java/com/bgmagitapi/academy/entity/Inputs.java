@@ -1,5 +1,6 @@
 package com.bgmagitapi.academy.entity;
 
+import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,7 +13,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 @Getter
-public class Inputs {
+public class Inputs extends DateSuperClass {
     
     // 입력 ID
     @Id

@@ -1,7 +1,10 @@
 package com.bgmagitapi.academy.repository.impl;
 
+import com.bgmagitapi.academy.dto.response.InputGetResponse;
 import com.bgmagitapi.academy.dto.response.InputsCurriculumGetResponse;
+import com.bgmagitapi.academy.dto.response.QInputGetResponse;
 import com.bgmagitapi.academy.dto.response.QInputsCurriculumGetResponse;
+import com.bgmagitapi.academy.entity.QInputs;
 import com.bgmagitapi.academy.repository.query.InputsQueryRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +13,7 @@ import java.util.List;
 
 import static com.bgmagitapi.academy.entity.QCurriculum.curriculum;
 import static com.bgmagitapi.academy.entity.QCurriculumProgress.curriculumProgress;
+import static com.bgmagitapi.academy.entity.QInputs.*;
 
 @RequiredArgsConstructor
 public class InputsRepositoryImpl implements InputsQueryRepository {
@@ -25,8 +29,33 @@ public class InputsRepositoryImpl implements InputsQueryRepository {
                         curriculumProgress.progressGubun
                 ))
                 .from(curriculumProgress)
-                .join(curriculumProgress.curriculum , curriculum)
+                .join(curriculumProgress.curriculum, curriculum)
                 .where(curriculum.classes.eq(className))
+                .fetch();
+    }
+    
+    @Override
+    public List<InputGetResponse> findByInputs(String className) {
+        return queryFactory
+                .select(
+                        new QInputGetResponse(
+                                inputs.id,
+                                curriculumProgress.id,
+                                inputs.classes,
+                                inputs.teacher,
+                                inputs.subjects,
+                                inputs.unit,
+                                inputs.pages,
+                                inputs.progress,
+                                inputs.tests,
+                                inputs.homework,
+                                inputs.inputsDate,
+                                inputs.progress
+                        )
+                )
+                .from(inputs)
+                .join(inputs.curriculumProgress, curriculumProgress)
+                .where(inputs.classes.eq(className))
                 .fetch();
     }
 }
