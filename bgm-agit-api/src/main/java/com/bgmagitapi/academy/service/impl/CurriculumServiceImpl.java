@@ -49,12 +49,19 @@ public class CurriculumServiceImpl implements CurriculumService {
                             ))
                             .entrySet()
                             .stream()
+                            .sorted(Map.Entry.comparingByKey())
                             .map(entry -> {
                                 Long progressId = entry.getKey();
                                 List<CurriculumCont> contList = entry.getValue();
-                                String progressType = contList.get(0).getCurriculumProgress().getProgressGubun();
+            
+                                String progressType =
+                                        contList.get(0)
+                                                .getCurriculumProgress()
+                                                .getProgressGubun();
+                                
                                 List<CurriculumGetResponse.MonthContent> ranges =
                                         contList.stream()
+                                                .sorted(Comparator.comparing(CurriculumCont::getId))
                                                 .map(cc -> new CurriculumGetResponse.MonthContent(
                                                         cc.getId(),
                                                         cc.getStartMonths(),
@@ -62,13 +69,15 @@ public class CurriculumServiceImpl implements CurriculumService {
                                                         cc.getCont()
                                                 ))
                                                 .toList();
+            
                                 return new CurriculumGetResponse.Row(
                                         progressId,
                                         progressType,
                                         ranges
                                 );
                             })
-                            .toList());
+                            .toList()
+            );
         }else {
             return new CurriculumGetResponse();
         }
