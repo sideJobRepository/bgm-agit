@@ -8,7 +8,8 @@ import {useEffect, useRef, useState} from "react";
 import {useCurriiculumFetch} from "../../recoil/academyFetch.ts";
 import {useRecoilValue} from "recoil";
 import {curriculumDataState} from "../../recoil/state/academy.ts";
-
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 
 export default function Curriculum() {
 
@@ -22,6 +23,8 @@ export default function Curriculum() {
     const [classKey, setClassKey] = useState(categoryOptions[0].value);
 
     const [title, setTitle] = useState('');
+    const [year, setYear] = useState(new Date().getFullYear());
+    const [showCalendar, setShowCalendar] = useState(false);
 
 
     const headers = [
@@ -148,7 +151,7 @@ export default function Curriculum() {
         const payload = transformDataToJSON(
             tableDataRef.current,
             tableMergesRef.current,
-            2026,
+            year,
             classKey,
             title
         );
@@ -162,7 +165,7 @@ export default function Curriculum() {
                     ignoreHttpError: true,
                     onSuccess: () => {
                         toast.success('저장되었습니다.');
-                        fetchCurriculum({ year: 2026, className: classKey });
+                        fetchCurriculum({ year: year, className: classKey });
                     },
                 });
             },
@@ -175,7 +178,7 @@ export default function Curriculum() {
     useEffect(() => {
         // 1. 데이터 없음 → 기본 빈 테이블
         if (!curriculumData || !curriculumData.rows?.length) {
-            const emptyData = createEmptyTable(2);
+            const emptyData = createEmptyTable(1);
             const emptyMerges: any[] = [];
 
             setTableData(emptyData);
@@ -201,13 +204,34 @@ export default function Curriculum() {
 
     //반 기준
     useEffect(() => {
-        fetchCurriculum({ year: 2026, className: classKey });
-    }, [classKey]);
+        fetchCurriculum({ year: year, className: classKey });
+    }, [classKey, year]);
 
     return (
         <div>
             <TopBox>
                 <div>
+                    <YearBox>
+                        <YearButton  color="#222" onClick={() => setShowCalendar(prev => !prev)}>
+                            {year}
+                        </YearButton>
+
+                        {showCalendar && (
+                            <div style={{position: 'absolute', zIndex: 100}}>
+                                <Calendar
+                                    onClickYear={(value) => {
+                                        setYear(value.getFullYear());
+                                        setShowCalendar(false);
+                                    }}
+                                    value={new Date(year, 0)}
+                                    view="decade"
+                                    maxDetail="decade"
+                                    showNavigation={false}
+                                />
+                            </div>
+                        )}
+                    </YearBox>
+
                     <SelectBox value={classKey} onChange={e => setClassKey(e.target.value)}>
                         {categoryOptions.map(opt => (
                             <option key={opt.value} value={opt.value}>
@@ -264,6 +288,31 @@ const TopBox = styled.div<WithTheme>`
     }
 `
 
+const YearBox = styled.div`
+ position: relative;
+    height: 100%;
+    z-index: 10000;
+`
+
+const YearButton = styled.button<WithTheme & { color: string }>`
+  padding: 4px 8px;
+    width: 60px;
+    height: 100%;
+  background-color: ${({ color }) => color};
+  color: ${({ theme }) => theme.colors.white};
+  font-size: ${({ theme }) => theme.sizes.xsmall};
+  border: none;
+  cursor: pointer;
+    
+    &:hover {
+        opacity: 0.8;
+    }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.xsmall};
+  }
+`;
+
 const Button = styled.button<WithTheme & { color: string }>`
   padding: 4px 8px;
   background-color: ${({ color }) => color};
@@ -282,7 +331,7 @@ const Button = styled.button<WithTheme & { color: string }>`
 `;
 
 const SelectBox = styled.select<WithTheme>`
-    width: 68px;
+    width: 72px;
     border: 1px solid  ${({theme}) => theme.colors.navColor};
     color: ${({theme}) => theme.colors.subColor};
     padding: 4px 8px;
@@ -294,7 +343,7 @@ const SelectBox = styled.select<WithTheme>`
     appearance: none;
     background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
     background-repeat: no-repeat;
-    background-position: right 6px center;
+    background-position: right 4px center;
     background-size: 16px;
 
     &:focus {
