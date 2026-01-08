@@ -2,6 +2,7 @@ package com.bgmagitapi.academy.service.impl;
 
 import com.bgmagitapi.RepositoryAndServiceTestSupport;
 import com.bgmagitapi.academy.dto.request.InputsPostRequest;
+import com.bgmagitapi.academy.dto.request.InputsPutRequest;
 import com.bgmagitapi.academy.dto.response.InputGetResponse;
 import com.bgmagitapi.academy.dto.response.InputsCurriculumGetResponse;
 import com.bgmagitapi.academy.service.InputsService;
@@ -23,14 +24,14 @@ class InputsServiceImplTest extends RepositoryAndServiceTestSupport {
     
     @DisplayName("")
     @Test
-    void test1(){
+    void test1() {
         List<InputsCurriculumGetResponse> curriculum = inputsService.getCurriculum("3g");
         System.out.println("curriculum = " + curriculum);
     }
     
     @DisplayName("")
     @Test
-    void test2(){
+    void test2() {
         InputsPostRequest request = InputsPostRequest
                 .builder()
                 .curriculumProgressId(1L)
@@ -50,9 +51,30 @@ class InputsServiceImplTest extends RepositoryAndServiceTestSupport {
     
     @DisplayName("")
     @Test
-    void test3(){
+    void test3() {
         List<InputGetResponse> inputs = inputsService.getInputs("3g");
         System.out.println("inputs = " + inputs);
+    }
+    
+    @DisplayName("")
+    @Test
+    void test4() {
+        InputsPutRequest request = InputsPutRequest
+                .builder()
+                .id(1L)
+                .curriculumProgressId(2L)
+                .inputsClasses("3g")
+                .inputsTeacher("박sd지수")
+                .inputsSubjects("ssd수학")
+                .inputsUnit("단sd원")
+                .inputsPages("73페이지")
+                .inputsProgress("dddd")
+                .inputsTests("ddd")
+                .inputsHomework("sdsd숙제 많이해와라")
+                .inputsDate(LocalDate.now())
+                .build();
         
+        ApiResponse apiResponse = inputsService.modifyInputs(request);
+        System.out.println("apiResponse = " + apiResponse);
     }
 }

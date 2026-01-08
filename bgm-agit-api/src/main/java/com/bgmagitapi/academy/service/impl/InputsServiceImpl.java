@@ -21,7 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class InputsServiceImpl implements InputsService {
-
+    
     private final InputsRepository inputsRepository;
     
     private final CurriculumProgressRepository progressRepository;
@@ -55,11 +55,16 @@ public class InputsServiceImpl implements InputsService {
                 .inputsDate(request.getInputsDate())
                 .build();
         inputsRepository.save(inputs);
-        return new ApiResponse(200,true,"저장 되었습니다.");
+        return new ApiResponse(200, true, "저장 되었습니다.");
     }
     
     @Override
     public ApiResponse modifyInputs(InputsPutRequest request) {
-        return null;
+        Long id = request.getId();
+        Long curriculumProgressId = request.getCurriculumProgressId();
+        Inputs findInputs = inputsRepository.findById(id).orElseThrow(() -> new RuntimeException("존재하지않는 id"));
+        CurriculumProgress findCurriculumProgress = progressRepository.findById(curriculumProgressId).orElseThrow(() -> new RuntimeException("존재하지않는 id"));
+        findInputs.modifyInputs(request, findCurriculumProgress);
+        return new ApiResponse(200, true, "수정 되었습니다.");
     }
 }

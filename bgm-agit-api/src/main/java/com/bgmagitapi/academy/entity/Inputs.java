@@ -1,5 +1,6 @@
 package com.bgmagitapi.academy.entity;
 
+import com.bgmagitapi.academy.dto.request.InputsPutRequest;
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
 import lombok.*;
@@ -62,4 +63,16 @@ public class Inputs extends DateSuperClass {
     @Column(name = "INPUTS_DATE")
     private LocalDate inputsDate;
     
+    public void modifyInputs(InputsPutRequest request, CurriculumProgress findCurriculumProgress) {
+        this.curriculumProgress = findCurriculumProgress;
+        this.classes = request.getInputsClasses();
+        this.teacher = request.getInputsTeacher();
+        this.subjects = request.getInputsSubjects();
+        this.unit = request.getInputsUnit();
+        this.pages = request.getInputsPages();
+        this.progress = request.getInputsProgress();
+        this.tests = request.getInputsTests();
+        this.homework = request.getInputsHomework();
+        this.inputsDate = request.getInputsDate();
+    }
 }
