@@ -8,7 +8,7 @@ import com.bgmagitapi.academy.entity.Inputs;
 import java.util.List;
 
 public interface InputsQueryRepository {
-    List<InputsCurriculumGetResponse> findByCurriculum(String className);
+    List<InputsCurriculumGetResponse> findByCurriculum(String className, Integer year);
     
     List<InputGetResponse> findByInputs(String className);
     

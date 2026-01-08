@@ -14,8 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class InputsServiceImplTest extends RepositoryAndServiceTestSupport {
     
     
@@ -25,7 +23,7 @@ class InputsServiceImplTest extends RepositoryAndServiceTestSupport {
     @DisplayName("")
     @Test
     void test1() {
-        List<InputsCurriculumGetResponse> curriculum = inputsService.getCurriculum("3g");
+        List<InputsCurriculumGetResponse> curriculum = inputsService.getCurriculum("3g", 2026);
         System.out.println("curriculum = " + curriculum);
     }
     

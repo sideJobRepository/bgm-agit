@@ -9,7 +9,7 @@ import com.bgmagitapi.apiresponse.ApiResponse;
 import java.util.List;
 
 public interface InputsService {
-    List<InputsCurriculumGetResponse> getCurriculum(String className);
+    List<InputsCurriculumGetResponse> getCurriculum(String className, Integer year);
     
     List<InputGetResponse> getInputs(String className);
     

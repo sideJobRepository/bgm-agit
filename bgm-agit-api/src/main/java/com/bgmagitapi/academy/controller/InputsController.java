@@ -20,8 +20,8 @@ public class InputsController {
     
     
     @GetMapping("/inputs/class")
-    public List<InputsCurriculumGetResponse> inputsCurriculum(@RequestParam String className) {
-         return inputsService.getCurriculum(className);
+    public List<InputsCurriculumGetResponse> inputsCurriculum(@RequestParam String className ,@RequestParam Integer year ) {
+         return inputsService.getCurriculum(className,year);
     }
     
     @PostMapping("/inputs")

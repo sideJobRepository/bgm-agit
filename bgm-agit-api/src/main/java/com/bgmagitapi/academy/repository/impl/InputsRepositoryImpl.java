@@ -22,7 +22,7 @@ public class InputsRepositoryImpl implements InputsQueryRepository {
     private final JPAQueryFactory queryFactory;
     
     @Override
-    public List<InputsCurriculumGetResponse> findByCurriculum(String className) {
+    public List<InputsCurriculumGetResponse> findByCurriculum(String className, Integer year) {
         return queryFactory
                 .select(new QInputsCurriculumGetResponse(
                         curriculum.years,
@@ -31,7 +31,7 @@ public class InputsRepositoryImpl implements InputsQueryRepository {
                 ))
                 .from(curriculumProgress)
                 .join(curriculumProgress.curriculum, curriculum)
-                .where(curriculum.classes.eq(className))
+                .where(curriculum.classes.eq(className) , curriculum.years.eq(year))
                 .fetch();
     }
     
