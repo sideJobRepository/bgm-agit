@@ -5,7 +5,7 @@ import 'react-calendar/dist/Calendar.css';
 import type { WithTheme } from '../../styles/styled-props';
 import type { ClassKey } from '../../pages/Academy';
 import { showConfirmModal } from '../confirmAlert.tsx';
-import {useInsertPost, useUpdatePost} from "../../recoil/fetch.ts";
+// import {useInsertPost, useUpdatePost} from "../../recoil/fetch.ts";
 import {useAcademyClassFetch} from "../../recoil/academyFetch.ts";
 import {useRecoilValue} from "recoil";
 import {academyClassDataState} from "../../recoil/state/academy.ts";
@@ -17,16 +17,19 @@ type ProgressItem = {
   inputsDate: string; //일시
   inputsTeacher: string; //강사
   inputsSubjects: string; //과목
-  //진도구분, 교재명 추가 해야함
-  inputsUnit: string; //단원
-  inputsPages: string; //페이지
   inputsProgress: string; //진도
   inputsTests: string; // 테스트
   inputsHomework: string; //과제
+
+  rows:
+    {
+      textbook: string; //교재명
+      inputsUnit: string; //단원
+      inputsPages: string; //페이지
+    }[]
+
 };
 
-
-type Month = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 function fmtDate(d: Date) {
   const y = d.getFullYear();
@@ -37,8 +40,8 @@ function fmtDate(d: Date) {
 
 export default function AcademyInput() {
 
-  const { insert } = useInsertPost();
-  const { update } = useUpdatePost();
+  // const { insert } = useInsertPost();
+  // const { update } = useUpdatePost();
 
   const fetchAcademyClass = useAcademyClassFetch();
   const academyClassData = useRecoilValue(academyClassDataState);
@@ -64,12 +67,16 @@ export default function AcademyInput() {
     inputsDate: '', //일시
     inputsTeacher: '', //강사
     inputsSubjects: '', //과목
-    //진도구분, 교재명 추가 해야함
-    inputsUnit: '', //단원
-    inputsPages: '', //페이지
     inputsProgress: '', //진도
     inputsTests: '', // 테스트
     inputsHomework: '', //과제
+    rows:[
+      {
+        textbook: '', //교재명
+        inputsUnit: '', //단원
+        inputsPages: '', //페이지
+      }
+    ]
   });
 
   const setField = (k: keyof typeof form, v: string) => setForm(prev => ({ ...prev, [k]: v }));
@@ -80,7 +87,36 @@ export default function AcademyInput() {
     setSelectedDate(next);
   };
 
+  //새로운 행 추가
+  const updateRow = (
+      index: number,
+      key: keyof ProgressItem['rows'][number],
+      value: string
+  ) => {
+    setForm(prev => {
+      const rows = [...prev.rows];
+      rows[index] = { ...rows[index], [key]: value };
+      return { ...prev, rows };
+    });
+  };
 
+  const addRow = () => {
+    setForm(prev => ({
+      ...prev,
+      rows: [
+        ...prev.rows,
+        { textbook: '', inputsUnit: '', inputsPages: '' }
+      ],
+    }));
+  };
+
+  const removeRow = (index: number) => {
+    setForm(prev => {
+      const rows = [...prev.rows];
+      rows.splice(index, 1);
+      return { ...prev, rows };
+    });
+  };
 
   const submitSave = () => {
     showConfirmModal({
@@ -184,23 +220,39 @@ export default function AcademyInput() {
               </Field>
             </FieldBox>
 
-            <FieldBox>
-              <Field>
-                <Label>교재명</Label>
-                <Input value={form.teacher} onChange={e => setField('teacher', e.target.value)} />
-              </Field>
-              <Field>
-                <Label>단원</Label>
-                <Input value={form.inputsUnit} onChange={e => setField('inputsUnit', e.target.value)} />
-              </Field>
-              <Field>
-                <Label>페이지</Label>
-                <Input value={form.inputsPages} onChange={e => setField('inputsPages', e.target.value)} />
-              </Field>
-            </FieldBox>
+            <AddBox>
+            {form.rows.map((row, idx) => (
+                <FieldBox key={idx}>
+                  <Field>
+                    <Label>교재명</Label>
+                    <Input
+                        value={row.textbook}
+                        onChange={e => updateRow(idx, 'textbook', e.target.value)}
+                    />
+                  </Field>
+                  <Field>
+                    <Label>단원</Label>
+                    <Input
+                        value={row.inputsUnit}
+                        onChange={e => updateRow(idx, 'inputsUnit', e.target.value)}
+                    />
+                  </Field>
+                  <Field>
+                    <Label>페이지</Label>
+                    <Input
+                        value={row.inputsPages}
+                        onChange={e => updateRow(idx, 'inputsPages', e.target.value)}
+                    />
+                  </Field>
+                  <DeleteBtn  color="#222" onClick={() => {removeRow(idx)}}>
+                    삭제
+                  </DeleteBtn>
+                </FieldBox>
+            ))}
+            </AddBox>
 
             <AddbtnBox>
-              <AddBtn  color="#2E2E2E" onClick={submitSave}>
+              <AddBtn  color="#2E2E2E" onClick={addRow}>
                 + 새로운 행 추가
               </AddBtn>
             </AddbtnBox>
@@ -300,6 +352,23 @@ const PrimaryBtn = styled.button<WithTheme & { color: string }>`
   }
 `;
 
+const DeleteBtn = styled.button<WithTheme & { color: string }>`
+  width: 50px;
+  background-color: transparent;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.redColor};
+  font-size: ${({ theme }) => theme.sizes.xsmall};
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.xsmall};
+  }
+`;
 const AddbtnBox = styled.div`
   display: flex;
   align-items: center;
@@ -368,6 +437,15 @@ const Grid2 = styled.div`
   //grid-template-columns: 1fr 1fr;
   //gap: 10px 12px;
 `;
+
+const AddBox = styled.div<WithTheme>`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border: 1px solid  ${({ theme }) => theme.colors.lineColor};
+  background: ${({theme}) => theme.colors.softColor};
+  padding: 16px 24px;
+`
 
 const FieldBox = styled.div`
     display: flex;
