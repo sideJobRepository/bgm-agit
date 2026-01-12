@@ -1,447 +1,368 @@
-import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
-import type { WithTheme } from '../../styles/styled-props.ts';
-import type { ClassKey } from '../../pages/Academy';
-import { showConfirmModal } from '../confirmAlert.tsx';
-import { toast } from 'react-toastify';
+import HandsontableBase from './HandsontableBase';
+import styled from "styled-components";
+import type {WithTheme} from "../../styles/styled-props.ts";
+import {useInsertPost, useUpdatePost} from "../../recoil/fetch.ts";
+import {toast} from "react-toastify";
+import {useEffect, useRef, useState} from "react";
+import {useCurriiculumFetch} from "../../recoil/academyFetch.ts";
+import {useRecoilValue} from "recoil";
+import {curriculumDataState} from "../../recoil/state/academy.ts";
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
+import {TabWrap} from "../../pages/Academy.tsx";
 
-/* =======================
-   Types
-======================= */
+export default function Curriculum() {
 
-type Month = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+    const categoryOptions = [
+        { value: '3g', label: '3g' },
+        { value: '3k', label: '3k' },
+        { value: '4g1', label: '4g1' },
+    ];
 
-type MonthMerge = {
-  start: Month;
-  end: Month;
-  value: string;
-};
 
-type CurriculumRow = {
-  id: string;
-  bookName: string;
-  months: Record<Month, string>;
-  merges: MonthMerge[];
-};
+    const [classKey, setClassKey] = useState(categoryOptions[0].value);
 
-type CurriculumState = {
-  byClass: Record<ClassKey, CurriculumRow[]>;
-  titleByClass: Record<ClassKey, string>;
-};
+    const [title, setTitle] = useState('');
+    const [year, setYear] = useState(new Date().getFullYear());
+    const [showCalendar, setShowCalendar] = useState(false);
 
-/* =======================
-   Constants / Utils
-======================= */
 
-const MONTHS: Month[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    const headers = [
+        '진도구분',
+        ...Array.from({ length: 12 }, (_, i) => `${i + 1}월`),
+    ];
 
-function createEmptyRow(): CurriculumRow {
-  const months = MONTHS.reduce(
-    (acc, m) => {
-      acc[m] = '';
-      return acc;
-    },
-    {} as Record<Month, string>
-  );
-
-  return {
-    id: crypto.randomUUID(),
-    bookName: '',
-    months,
-    merges: [],
-  };
-}
-
-/* =======================
-   Component
-======================= */
-
-export default function Curriculum({
-  classKey,
-  onChangeClassKey,
-  value,
-  onChange,
-  onSave,
-}: {
-  classKey: ClassKey;
-  onChangeClassKey: (v: ClassKey) => void;
-  value: CurriculumState;
-  onChange: React.Dispatch<React.SetStateAction<CurriculumState>>;
-  onSave: () => void;
-}) {
-  const rows = value.byClass[classKey] ?? [];
-
-  /* 드래그 상태 */
-  const [drag, setDrag] = useState<null | {
-    rowId: string;
-    start: Month;
-    end: Month;
-    moved: boolean;
-  }>(null);
-
-  const title = value.titleByClass[classKey] ?? '';
-
-  const updateTitle = (v: string) => {
-    onChange(prev => ({
-      ...prev,
-      titleByClass: {
-        ...prev.titleByClass,
-        [classKey]: v,
-      },
-    }));
-  };
-
-  /* 최초 1행 보장 */
-  useEffect(() => {
-    if (rows.length === 0) {
-      setRows([createEmptyRow()]);
+    //기본
+    function createEmptyTable(rowCount = 2): string[][] {
+        return Array.from({ length: rowCount }, () =>
+            Array(13).fill('') // 진도구분 + 12개월
+        );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [classKey]);
 
-  /* =======================
-     State helpers
-  ======================= */
+    const { insert } = useInsertPost();
+    const { update } = useUpdatePost();
 
-  const setRows = (nextRows: CurriculumRow[]) => {
-    onChange(prev => ({
-      ...prev,
-      byClass: {
-        ...prev.byClass,
-        [classKey]: nextRows,
-      },
-    }));
-  };
+    const fetchCurriculum = useCurriiculumFetch();
 
-  const addRow = () => setRows([...rows, createEmptyRow()]);
-  const removeRow = (id: string) => setRows(rows.filter(r => r.id !== id));
+    const curriculumData = useRecoilValue(curriculumDataState);
+    console.log("curriculumData", curriculumData)
+    const tableDataRef = useRef<string[][]>([]);
+    const tableMergesRef = useRef<any[]>([]);
+    //id
+    const rowIdRef = useRef<(number | null)[]>([]);
 
-  const updateBookName = (id: string, v: string) => {
-    setRows(rows.map(r => (r.id === id ? { ...r, bookName: v } : r)));
-  };
+    //바인딩 함수
+    const [tableData, setTableData] = useState<string[][]>([]);
+    const [tableMerges, setTableMerges] = useState<any[]>([]);
 
-  const updateMonthValue = (id: string, month: Month, v: string) => {
-    setRows(rows.map(r => (r.id === id ? { ...r, months: { ...r.months, [month]: v } } : r)));
-  };
+    //저장 로직
+    function transformDataToJSON(
+        data: string[][],
+        merges: any[],
+        year: number,
+        className: string,
+        title: string
+    ) {
 
-  /* =======================
-     Merge helpers
-  ======================= */
+        const rows = data
+            .map((row, rowIndex) => {
+                const progressType = row[0];
+                if (!progressType) return null;
 
-  const addMerge = (rowId: string, start: Month, end: Month) => {
-    const s = Math.min(start, end) as Month;
-    const e = Math.max(start, end) as Month;
+                const months: {
+                    startMonth: number;
+                    endMonth: number;
+                    content: string;
+                }[] = [];
 
-    setRows(
-      rows.map(r => {
-        if (r.id !== rowId) return r;
+                for (let col = 1; col <= 12; col++) {
+                    const cellContent = row[col];
+                    if (!cellContent) continue;
 
-        const overlap = r.merges.some(m => !(e < m.start || s > m.end));
-        if (overlap) {
-          toast.error('이미 병합된 구간과 겹칩니다.');
-          return r;
-        }
+                    const merge = merges.find(
+                        m => m.row === rowIndex && m.col === col
+                    );
 
-        const nextMonths = { ...r.months };
-        for (let m = s; m <= e; m++) nextMonths[m as Month] = '';
+                    const startMonth = col;
+                    const endMonth = merge ? col + merge.colspan - 1 : col;
+
+                    months.push({
+                        startMonth,
+                        endMonth,
+                        content: cellContent,
+                    });
+                }
+
+                return {
+                    id: rowIdRef.current[rowIndex],
+                    progressType,
+                    months,
+                };
+            })
+            .filter(
+                (row): row is {
+                    id: number | null;
+                    progressType: string;
+                    months: {
+                        startMonth: number;
+                        endMonth: number;
+                        content: string;
+                    }[];
+                } => row !== null
+            );
 
         return {
-          ...r,
-          months: nextMonths,
-          merges: [...r.merges, { start: s, end: e, value: '' }],
+            id: curriculumData?.id ?? undefined,
+            year,
+            className,
+            title,
+            rows,
         };
-      })
+    }
+
+    //역변환 함수
+    function transformJSONToTable(curriculumData: any) {
+        if (!curriculumData?.rows) {
+            return { data: [], merges: [] };
+        }
+
+        const data: string[][] = [];
+        const merges: any[] = [];
+
+        curriculumData.rows.forEach((row: any, rowIndex: number) => {
+            const tableRow = Array(13).fill('');
+            tableRow[0] = row.progressType;
+
+            row.months.forEach((month: any) => {
+                const startCol = month.startMonth;
+                const endCol = month.endMonth;
+
+                tableRow[startCol] = month.content;
+
+                if (endCol > startCol) {
+                    merges.push({
+                        row: rowIndex,
+                        col: startCol,
+                        rowspan: 1,
+                        colspan: endCol - startCol + 1,
+                    });
+                }
+            });
+
+            data.push(tableRow);
+        });
+
+        return { data, merges };
+    }
+
+
+
+    const handleSubmit = async () => {
+
+        const requestFn = curriculumData?.id ? update : insert;
+
+        const payload = transformDataToJSON(
+            tableDataRef.current,
+            tableMergesRef.current,
+            year,
+            classKey,
+            title
+        );
+        const confirmed = window.confirm('저장하시겠습니까?');
+
+        if (confirmed) {
+            requestFn({
+                url: '/bgm-agit/curriculum',
+                body: payload,
+                ignoreHttpError: true,
+                onSuccess: () => {
+                    toast.success('저장되었습니다.');
+                    fetchCurriculum({year: year, className: classKey});
+                },
+            });
+        }
+    };
+
+    console.log("curriculumData", curriculumData)
+
+    //바인딩
+    useEffect(() => {
+        // 1. 데이터 없음 → 기본 빈 테이블
+        if (!curriculumData || !curriculumData.rows?.length) {
+            const emptyData = createEmptyTable(1);
+            const emptyMerges: any[] = [];
+
+            setTableData(emptyData);
+            setTableMerges(emptyMerges);
+
+            tableDataRef.current = emptyData;
+            tableMergesRef.current = emptyMerges;
+            rowIdRef.current = Array(emptyData.length).fill(null);
+            return;
+        }
+
+        // 2. 데이터 있음 → 서버 데이터 바인딩
+        const { data, merges } = transformJSONToTable(curriculumData);
+
+        setTableData(data);
+        setTableMerges(merges);
+        setTitle(curriculumData?.title);
+
+        tableDataRef.current = data;
+        tableMergesRef.current = merges;
+        rowIdRef.current = curriculumData.rows.map((row: any) => row.id ?? null);
+
+    }, [curriculumData]);
+
+
+
+    //반 기준
+    useEffect(() => {
+        fetchCurriculum({ year: year, className: classKey });
+    }, [classKey, year]);
+
+    return (
+        <TabWrap>
+            <TopBox>
+                <div>
+                    <YearBox>
+                        <YearButton  color="#222" onClick={() => setShowCalendar(prev => !prev)}>
+                            {year}
+                        </YearButton>
+
+                        {showCalendar && (
+                            <div style={{position: 'absolute', zIndex: 100}}>
+                                <Calendar
+                                    onClickYear={(value) => {
+                                        setYear(value.getFullYear());
+                                        setShowCalendar(false);
+                                    }}
+                                    value={new Date(year, 0)}
+                                    view="decade"
+                                    maxDetail="decade"
+                                    showNavigation={false}
+                                />
+                            </div>
+                        )}
+                    </YearBox>
+
+                    <SelectBox value={classKey} onChange={e => setClassKey(e.target.value)}>
+                        {categoryOptions.map(opt => (
+                            <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </option>
+                        ))}
+                    </SelectBox>
+                    <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="커리큘럼 제목 입력"
+                    />
+                </div>
+
+                <Button
+                    color="#222"
+                    onClick={() => handleSubmit()}
+                >
+                    저장
+                </Button>
+            </TopBox>
+
+            <HandsontableBase
+                data={tableData}
+                mergeCells={tableMerges}
+                colHeaders={headers}
+                rowIdRef={rowIdRef}
+                onChange={(data, merges) => {
+                    tableDataRef.current = data;
+                    tableMergesRef.current = merges;
+                }}
+            />
+        </TabWrap>
     );
-  };
-
-  const removeMerge = (rowId: string, start: Month) => {
-    setRows(
-      rows.map(r =>
-        r.id === rowId ? { ...r, merges: r.merges.filter(m => m.start !== start) } : r
-      )
-    );
-  };
-
-  const updateMergeValue = (rowId: string, start: Month, value: string) => {
-    setRows(
-      rows.map(r =>
-        r.id === rowId
-          ? {
-              ...r,
-              merges: r.merges.map(m => (m.start === start ? { ...m, value } : m)),
-            }
-          : r
-      )
-    );
-  };
-
-  const getMergeStart = (row: CurriculumRow, m: Month) => row.merges.find(x => x.start === m);
-
-  const isCoveredByMerge = (row: CurriculumRow, m: Month) =>
-    row.merges.some(x => m > x.start && m <= x.end);
-
-  /* =======================
-     Submit
-  ======================= */
-
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    showConfirmModal({
-      message: '커리큘럼을 저장하시겠습니까?',
-      onConfirm: onSave,
-    });
-  };
-
-  /* =======================
-     Render
-  ======================= */
-
-  return (
-    <Form onSubmit={onSubmit}>
-      <HeaderRow>
-        <LeftHeader>
-          <Title>커리큘럼 12월 예시</Title>
-          <Select value={classKey} onChange={e => onChangeClassKey(e.target.value as ClassKey)}>
-            <option value="3g">3G</option>
-            <option value="3k">3K</option>
-            <option value="4g1">4G1</option>
-          </Select>
-          <TitleInput
-            value={title}
-            onChange={e => updateTitle(e.target.value)}
-            placeholder="커리큘럼 타이틀 입력"
-          />
-        </LeftHeader>
-
-        <Actions>
-          <Button type="button" onClick={addRow}>
-            + 행 추가
-          </Button>
-          <Button type="submit" $variant="primary">
-            저장
-          </Button>
-        </Actions>
-      </HeaderRow>
-
-      <TableWrap>
-        <Table>
-          <thead>
-            <tr>
-              <Th $stickyLeft $w={220}>
-                진도구분
-              </Th>
-              {MONTHS.map(m => (
-                <Th key={m} $w={90}>
-                  {m}월
-                </Th>
-              ))}
-              <Th $w={50}></Th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {rows.map(row => (
-              <tr key={row.id}>
-                <Td $stickyLeft>
-                  <TextInput
-                    value={row.bookName}
-                    onChange={e => updateBookName(row.id, e.target.value)}
-                  />
-                </Td>
-
-                {MONTHS.map(m => {
-                  if (isCoveredByMerge(row, m)) return null;
-
-                  const merge = getMergeStart(row, m);
-                  const isSelected =
-                    drag?.rowId === row.id &&
-                    m >= Math.min(drag.start, drag.end) &&
-                    m <= Math.max(drag.start, drag.end);
-
-                  if (merge) {
-                    const span = merge.end - merge.start + 1;
-                    return (
-                      <Td
-                        key={m}
-                        colSpan={span}
-                        $selected={isSelected}
-                        onContextMenu={e => {
-                          e.preventDefault();
-
-                          showConfirmModal({
-                            message: `${merge.start}~${merge.end}월 병합을 해제하시겠습니까?`,
-                            onConfirm: () => removeMerge(row.id, merge.start),
-                          });
-                        }}
-                      >
-                        <CellInput
-                          value={merge.value}
-                          onChange={e => updateMergeValue(row.id, merge.start, e.target.value)}
-                        />
-                      </Td>
-                    );
-                  }
-
-                  return (
-                    <Td
-                      key={m}
-                      $selected={isSelected}
-                      onMouseDown={() =>
-                        setDrag({
-                          rowId: row.id,
-                          start: m,
-                          end: m,
-                          moved: false,
-                        })
-                      }
-                      onMouseEnter={() => {
-                        if (!drag || drag.rowId !== row.id) return;
-
-                        setDrag(prev =>
-                          prev
-                            ? {
-                                ...prev,
-                                end: m,
-                                moved: true, // 실제 이동 발생
-                              }
-                            : prev
-                        );
-                      }}
-                      onMouseUp={() => {
-                        if (!drag || drag.rowId !== row.id) return;
-
-                        const { start, end, moved } = drag;
-                        setDrag(null);
-
-                        // 클릭은 무시
-                        if (!moved) return;
-
-                        if (start === end) return;
-
-                        showConfirmModal({
-                          message: `${Math.min(start, end)}~${Math.max(start, end)}월을 병합하시겠습니까?`,
-                          onConfirm: () => addMerge(row.id, start, end),
-                        });
-                      }}
-                    >
-                      <CellInput
-                        value={row.months[m]}
-                        onChange={e => updateMonthValue(row.id, m, e.target.value)}
-                      />
-                    </Td>
-                  );
-                })}
-
-                <Td>
-                  <DangerButton type="button" onClick={() => removeRow(row.id)}>
-                    삭제
-                  </DangerButton>
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </TableWrap>
-    </Form>
-  );
 }
 
-const Form = styled.form<WithTheme>`
-  display: grid;
-  gap: 12px;
-  margin-top: 24px;
+const TopBox = styled.div<WithTheme>`
+    display: inline-flex;
+    width: 100%;
+    margin-bottom: 16px;
+    justify-content: space-between;
+    > div {
+        display: inline-flex;
+        gap: 8px;
+        input {
+            border: none;
+            width: 100%;
+            padding: 4px 8px;
+            font-size: ${({ theme }) => theme.sizes.small};
+            outline: none;
+            color: ${({ theme }) => theme.colors.subColor};
+            background: transparent;
+        }
+    }
+`
 
-  tr {
-    margin-bottom: 24px;
+const YearBox = styled.div`
+ position: relative;
+    height: 100%;
+    z-index: 10000;
+`
+
+const YearButton = styled.button<WithTheme & { color: string }>`
+  padding: 4px 8px;
+    width: 60px;
+    height: 100%;
+  background-color: ${({ color }) => color};
+  color: ${({ theme }) => theme.colors.white};
+  font-size: ${({ theme }) => theme.sizes.xsmall};
+  border: none;
+  cursor: pointer;
+    
+    &:hover {
+        opacity: 0.8;
+    }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.xsmall};
   }
+`;
 
-  button {
+const Button = styled.button<WithTheme & { color: string }>`
+  padding: 4px 8px;
+  background-color: ${({ color }) => color};
+  color: ${({ theme }) => theme.colors.white};
+  font-size: ${({ theme }) => theme.sizes.xsmall};
+  border: none;
+  cursor: pointer;
+    
+    &:hover {
+        opacity: 0.8;
+    }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.xsmall};
+  }
+`;
+
+const SelectBox = styled.select<WithTheme>`
+    width: 72px;
+    border: 1px solid  ${({theme}) => theme.colors.navColor};
+    color: ${({theme}) => theme.colors.subColor};
+    padding: 4px 8px;
+    font-size: ${({theme}) => theme.sizes.xsmall};
     cursor: pointer;
-  }
-`;
+    background-color: #F8F9FA;
 
-const HeaderRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-`;
+    /* 화살표 위치 조정 */
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 4px center;
+    background-size: 16px;
 
-const LeftHeader = styled.div`
-  display: flex;
-  gap: 10px;
-  align-items: center;
-`;
-
-const Title = styled.h2<WithTheme>`
-  margin: 0;
-`;
-
-const Select = styled.select<WithTheme>`
-  height: 36px;
-`;
-
-const Actions = styled.div`
-  display: flex;
-  gap: 8px;
-`;
-
-const Button = styled.button<{ $variant?: 'primary' } & WithTheme>`
-  padding: 8px 10px;
-  border: none;
-  border-radius: 4px;
-  background-color: ${({ $variant, theme }) =>
-    $variant === 'primary' ? theme.colors.greenColor : theme.colors.lineColor};
-  color: ${({ $variant, theme }) =>
-    $variant === 'primary' ? theme.colors.white : theme.colors.text};
-`;
-
-const DangerButton = styled.button<WithTheme>`
-  background: ${({ theme }) => theme.colors.redColor};
-  margin-left: 8px;
-  padding: 8px 8px;
-  border-radius: 4px;
-  border: none;
-  color: white;
-`;
-
-const TableWrap = styled.div`
-  overflow: auto;
-`;
-
-const Table = styled.table`
-  border-collapse: separate;
-`;
-
-const Th = styled.th<{ $stickyLeft?: boolean; $w?: number }>`
-  width: ${({ $w }) => ($w ? `${$w}px` : 'auto')};
-`;
-
-const Td = styled.td<{ $stickyLeft?: boolean; $selected?: boolean }>`
-  height: 16px;
-  margin: 0 auto;
-  background: ${({ $selected }) => ($selected ? '#e0f2fe' : 'white')};
-`;
-
-const TextInput = styled.input<WithTheme>`
-  width: 100%;
-  height: 100%;
-  padding: 4px 8px;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  text-align: center;
-`;
-
-const CellInput = styled.input<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.medium};
-  width: 100%;
-  height: 100%;
-  padding: 4px 8px;
-  text-align: center;
-`;
-
-const TitleInput = styled.input<WithTheme>`
-  height: 36px;
-  width: 240px;
-  padding: 0 10px;
-  border: 1px solid ${({ theme }) => theme.colors.gray300};
-  border-radius: 6px;
-  font-size: ${({ theme }) => theme.sizes.medium};
+    &:focus {
+        border-color: ${({theme}) => theme.colors.subColor};
+        outline: none;
+    }
 `;

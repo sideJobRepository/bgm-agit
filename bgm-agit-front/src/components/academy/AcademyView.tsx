@@ -1,320 +1,183 @@
-import React, { useMemo } from 'react';
-import styled from 'styled-components';
-import type { WithTheme } from '../../styles/styled-props';
-import type { ClassKey } from '../../pages/Academy';
+import styled from "styled-components";
+import { useAcademyViewFetch } from "../../recoil/academyFetch";
+import { useRecoilValue } from "recoil";
+import { academyViewDataState } from "../../recoil/state/academy";
+import { useEffect } from "react";
 
-type Month = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
-const STICKY_LEFT_1 = 120;
-type CurriculumRow = {
-  id: string;
-  bookName: string; // 구분
-  months: Record<Month, string>; // 해당 월 교재(진도 입력의 book 값)
-};
-
-type ProgressRow = {
-  id: string;
-  classKey: ClassKey;
-  date: string; // YYYY-MM-DD
-  book: string; // 교재(=months[month])
-  unit: string;
-  pages: string;
-};
-
-type CurriculumState = {
-  byClass: Record<ClassKey, CurriculumRow[]>;
-  titleByClass: Record<ClassKey, string>;
-};
-
-type ProgressInputState = {
-  rows: ProgressRow[];
-};
-
-function pad2(n: number) {
-  return String(n).padStart(2, '0');
+function makeWeekKey(w: any) {
+  return `${w.startDate}~${w.endDate}`;
 }
 
-function ymd(year: number, month: number, day: number) {
-  return `${year}-${pad2(month)}-${pad2(day)}`;
-}
+export default function AcademyView() {
+  const fetchViewAcademy = useAcademyViewFetch();
+  const academyViewData = useRecoilValue(academyViewDataState);
 
-function daysInMonth(year: number, month: number) {
-  return new Date(year, month, 0).getDate();
-}
+  useEffect(() => {
+    fetchViewAcademy();
+  }, []);
 
-export default function AcademyView({
-  classKey,
-  onChangeClassKey,
-  curriculumState,
-  progressInputState,
-  year,
-  month,
-}: {
-  classKey: ClassKey;
-  onChangeClassKey: (v: ClassKey) => void;
-  curriculumState: CurriculumState;
-  progressInputState: ProgressInputState;
-  year: number;
-  month: Month; // 12 고정 가능
-}) {
-  const dayCount = useMemo(() => daysInMonth(year, month), [year, month]);
-
-  const dates = useMemo(() => {
-    return Array.from({ length: dayCount }, (_, i) => {
-      const d = i + 1;
-      return {
-        key: ymd(year, month, d),
-        label: `${month}/${pad2(d)}`,
-      };
-    });
-  }, [year, month, dayCount]);
-
-  const leftRows = useMemo(() => {
-    const rows = curriculumState.byClass[classKey] ?? [];
-    const seen = new Set<string>();
-
-    const mapped = rows
-      .map(r => ({
-        type: 'group' as const,
-        groupLabel: (r.bookName ?? '').trim(),
-        monthBook: (r.months?.[month] ?? '').trim(),
-      }))
-      .filter(x => x.groupLabel.length > 0);
-
-    const unique = mapped.filter(x => {
-      if (seen.has(x.groupLabel)) return false;
-      seen.add(x.groupLabel);
-      return true;
-    });
-
-    return [...unique];
-  }, [curriculumState.byClass, classKey, month]);
-
-  /**
-   * key = date__book
-   * value = [{ unit, pages }, ...]
-   */
-  const progressIndex = useMemo(() => {
-    const map = new Map<string, Array<{ unit: string; pages: string }>>();
-    const rows = progressInputState.rows ?? [];
-
-    for (const r of rows) {
-      if (r.classKey !== classKey) continue;
-      if (!r.date.startsWith(`${year}-${pad2(month)}-`)) continue;
-
-      const book = (r.book ?? '').trim();
-      if (!book) continue;
-
-      const key = `${r.date}__${book}`;
-
-      const unit = (r.unit ?? '').trim();
-      const pages = (r.pages ?? '').trim();
-      if (!unit && !pages) continue;
-
-      const prev = map.get(key) ?? [];
-      prev.push({ unit, pages });
-      map.set(key, prev);
-    }
-
-    return map;
-  }, [progressInputState.rows, classKey, year, month]);
+  if (!academyViewData) return null;
 
   return (
-    <Wrap>
-      <Header>
-        <HLeft>
-          <HTitle>
-            {year}년 {month}월 {classKey.toUpperCase()} 진도표
-          </HTitle>
+      <Wrap>
+        {academyViewData.headers.map((monthData: any, mi: number) => {
+          const { month, weekGroups, rows } = monthData;
 
-          <Select value={classKey} onChange={e => onChangeClassKey(e.target.value as ClassKey)}>
-            <option value="3g">3G</option>
-            <option value="3k">3K</option>
-            <option value="4g1">4G1</option>
-          </Select>
-        </HLeft>
+          return (
+              <MonthSection key={month}>
+                <MonthTitle>{month}월</MonthTitle>
 
-        <Hint>셀: 상단=교재, 하단=단원/페이지</Hint>
-      </Header>
+                <Table>
+                  <thead>
+                  <tr>
+                    <th >반명</th>
+                    <th>담임</th>
+                    <th>진도구분</th>
+                    {weekGroups.map((w: any, i: number) => (
+                        <th key={i}>{w.label}</th>
+                    ))}
+                  </tr>
+                  </thead>
 
-      <TableWrap>
-        <Table>
-          <thead>
-            <tr>
-              <Th $stickyLeft $w={120}>
-                반
-              </Th>
-              <Th $stickyLeft2 $w={240}>
-                진도구분
-              </Th>
+                  <tbody>
+                  {rows.map((classGroup: any, gi: number) => {
+                    // row 하나당 2줄 → *2
+                    const span = (classGroup.rows?.length ?? 0) * 2;
 
-              {dates.map(d => (
-                <Th key={d.key} $w={140}>
-                  {d.label}
-                </Th>
-              ))}
-            </tr>
-          </thead>
+                    return (classGroup.rows ?? []).flatMap((row: any, ri: number) => {
+                      const weekMap = new Map<string, any>();
+                      (row.weeks ?? []).forEach((w: any) => {
+                        weekMap.set(makeWeekKey(w), w);
+                      });
 
-          <tbody>
-            {leftRows.map((r, idx) => (
-              <tr key={`${r.type}-${r.groupLabel}-${idx}`}>
-                <Td $stickyLeft>{classKey.toUpperCase()}</Td>
+                      // 커리큘럼 행
+                      const curriculumRow = (
+                          <tr key={`${month}-${gi}-${ri}-cur`} className="tr-curriculum">
+                            {ri === 0 && (
+                                <td rowSpan={span} className="td-fixed className">
+                                  {row.className}
+                                </td>
+                            )}
+                            {ri === 0 && (
+                                <td rowSpan={span} className="td-fixed teacher">
+                                  {row.teacher}
+                                </td>
+                            )}
 
-                <Td $stickyLeft2 $bold={r.type !== 'note'}>
-                  {r.groupLabel}
-                </Td>
+                            <td rowSpan={2} className="td-progress">
+                              {row.progressGubun}
+                            </td>
 
-                {dates.map(d => {
-                  if (r.type === 'note') return <Td key={d.key} />;
+                            {weekGroups.map((wg: any, wi: number) => {
+                              const week = weekMap.get(makeWeekKey(wg));
+                              return (
+                                  <td key={wi} className="td-week td-curriculum">
+                                    {week?.startItem?.curriculumContent && (
+                                        <div>{week.startItem.curriculumContent}</div>
+                                    )}
+                                  </td>
+                              );
+                            })}
+                          </tr>
+                      );
 
-                  const monthBook = r.monthBook;
-                  if (!monthBook) return <Td key={d.key} />;
+                      // 2️⃣ 내용 행
+                      const contentRow = (
+                          <tr key={`${month}-${gi}-${ri}-con`} className="tr-content">
+                            {weekGroups.map((wg: any, wi: number) => {
+                              const week = weekMap.get(makeWeekKey(wg));
+                              return (
+                                  <td key={wi} className="td-week">
+                                    {week?.startItem?.content && (
+                                        <div>{week.startItem.content}</div>
+                                    )}
+                                    {week?.endItem?.content && (
+                                        <div>{week.endItem.content}</div>
+                                    )}
+                                  </td>
+                              );
+                            })}
+                          </tr>
+                      );
 
-                  const key = `${d.key}__${monthBook}`;
-                  const items = progressIndex.get(key) ?? [];
-
-                  if (items.length === 0) return <Td key={d.key} />;
-
-                  return (
-                    <Td key={d.key}>
-                      <CellBox>
-                        <BookBadge>{monthBook}</BookBadge>
-
-                        <CellBody>
-                          {items.map((it, i) => (
-                            <Line key={i}>
-                              {it.unit && <span>{it.unit}</span>}
-                              {it.unit && it.pages && <Dot>·</Dot>}
-                              {it.pages && <span>{it.pages}</span>}
-                            </Line>
-                          ))}
-                        </CellBody>
-                      </CellBox>
-                    </Td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </TableWrap>
-    </Wrap>
+                      return [curriculumRow, contentRow];
+                    });
+                  })}
+                  </tbody>
+                </Table>
+              </MonthSection>
+          );
+        })}
+      </Wrap>
   );
 }
-
-/* styles */
-
 const Wrap = styled.div`
-  margin-top: 16px;
-  display: grid;
-  gap: 10px;
+  padding: 24px;
+  margin-top: 100px;
 `;
 
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 12px;
+const MonthSection = styled.section`
+  margin-bottom: 48px;
 `;
 
-const HLeft = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
-
-const HTitle = styled.h2<WithTheme>`
-  margin: 0;
-  font-size: ${({ theme }) => theme.sizes.large};
-`;
-
-const Hint = styled.div`
-  font-size: 12px;
-  opacity: 0.7;
-`;
-
-const Select = styled.select<WithTheme>`
-  height: 36px;
-  border: 1px solid ${({ theme }) => theme.colors.gray300};
-  border-radius: 8px;
-  padding: 0 10px;
-`;
-
-const TableWrap = styled.div`
-  overflow: auto;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  position: relative;
+const MonthTitle = styled.h2`
+  margin-bottom: 12px;
+  font-size: 18px;
+  font-weight: 700;
 `;
 
 const Table = styled.table`
-  width: max-content;
-  min-width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-`;
-
-const Th = styled.th<{ $stickyLeft?: boolean; $w?: number; $stickyLeft2?: boolean }>`
-  position: ${({ $stickyLeft, $stickyLeft2 }) =>
-    $stickyLeft || $stickyLeft2 ? 'sticky' : 'static'};
-  left: ${({ $stickyLeft, $stickyLeft2 }) =>
-    $stickyLeft ? 0 : $stickyLeft2 ? `${STICKY_LEFT_1}px` : 'auto'};
-  z-index: ${({ $stickyLeft, $stickyLeft2 }) => ($stickyLeft ? 3 : $stickyLeft2 ? 2 : 1)};
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 10px 8px;
-  text-align: center;
-  font-weight: 700;
-  width: ${({ $w }) => ($w ? `${$w}px` : 'auto')};
-  white-space: nowrap;
-`;
-
-const Td = styled.td<{ $stickyLeft?: boolean; $stickyLeft2?: boolean; $bold?: boolean }>`
-  position: ${({ $stickyLeft, $stickyLeft2 }) =>
-    $stickyLeft || $stickyLeft2 ? 'sticky' : 'static'};
-  left: ${({ $stickyLeft, $stickyLeft2 }) =>
-    $stickyLeft ? 0 : $stickyLeft2 ? `${STICKY_LEFT_1}px` : 'auto'};
-  z-index: ${({ $stickyLeft, $stickyLeft2 }) => ($stickyLeft ? 2 : $stickyLeft2 ? 1 : 0)};
-  background: white;
-  text-align: center;
-  border-bottom: 1px solid #f1f5f9;
-  border-right: 1px solid #f1f5f9;
-  padding: 8px;
-  min-height: 44px;
-
-  font-weight: ${({ $bold }) => ($bold ? 700 : 400)};
-`;
-
-const CellBox = styled.div`
-  display: grid;
-  gap: 6px;
-`;
-
-const BookBadge = styled.div<WithTheme>`
-  display: inline-flex;
   width: 100%;
-  align-items: center;
-  justify-content: center;
-  max-width: 100%;
-  padding: 4px 8px;
-  border: none;
-  font-size: 14px;
-  color: white;
-  background: ${({ theme }) => theme.colors.purpleColor};
-`;
+  border-collapse: collapse;
+  //table-layout: fixed;
 
-const CellBody = styled.div`
-  display: grid;
-  gap: 4px;
-`;
+  th,
+  td {
+    border: 1px solid #d9d9d9;
+    padding: 8px;
+    vertical-align: top;
+    font-size: 13px;
+    white-space: nowrap;
+  }
 
-const Line = styled.div`
-  font-size: 12px;
-  line-height: 1.25;
-  white-space: pre-wrap;
-`;
+  th {
+    background: #f3f4f6;
+    text-align: center;
+    font-weight: 600;
+  }
 
-const Dot = styled.span`
-  margin: 0 6px;
-  opacity: 0.7;
+  .td-fixed {
+    text-align: center;
+    vertical-align: middle;
+  }
+    
+  .className {
+    background: #093A6E;
+    color: white;
+    font-weight: 600;
+  }
+  
+  .teacher {
+    background: #2a7ecf;
+    color: white;
+    font-weight: 600;
+  }
+
+  .td-progress {
+    background: #6098cf;
+    color: white;
+    font-weight: 600;
+    vertical-align: middle;
+  }
+
+  .tr-curriculum td.td-week {
+    background: #6098cf;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+  }
+
+  .tr-content td.td-week {
+    background: #ffffff;
+  }
 `;

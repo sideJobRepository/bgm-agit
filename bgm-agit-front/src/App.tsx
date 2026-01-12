@@ -35,6 +35,7 @@ function App() {
             <Route path="/oauth/:provider/callback" element={<RedirectPage />} />
             <Route path="/error" element={<Error />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/academy" element={<Academy />} />
             <Route path="/" element={<Layout />}>
               <Route index element={<MainPage />} />
               <Route path="about" element={<About />} />
@@ -47,7 +48,6 @@ function App() {
               <Route path="/freeDetail" element={<FreeDetail />} />
               <Route path="inquiry" element={<Inquiry />} />
               <Route path="/inquiryDetail" element={<InquiryDetail />} />
-              <Route path="/academy" element={<Academy />} />
             </Route>
           </Routes>
         </BrowserRouter>
