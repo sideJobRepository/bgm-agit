@@ -41,28 +41,33 @@ export default function Academy() {
   return (
     <Wrapper>
       <AcademyTabBox>
-        <TabButton
-          type="button"
-          active={activeTab === 'curriculum'}
-          onClick={() => setActiveTab('curriculum')}
-        >
-          커리큘럼
-        </TabButton>
+        <ImgBox>
+          <img src='http://www.yangyoung.com/images/logo.png' alt="로고"/>
+        </ImgBox>
+        <TabButtonBox>
+          <TabButton
+              type="button"
+              active={activeTab === 'curriculum'}
+              onClick={() => setActiveTab('curriculum')}
+          >
+            커리큘럼
+          </TabButton>
 
-        <TabButton
-          type="button"
-          active={activeTab === 'input'}
-          onClick={() => setActiveTab('input')}
-        >
-          진도표 입력
-        </TabButton>
+          <TabButton
+              type="button"
+              active={activeTab === 'input'}
+              onClick={() => setActiveTab('input')}
+          >
+            진도표 입력
+          </TabButton>
 
-        <TabButton type="button" active={activeTab === 'view'} onClick={() => setActiveTab('view')}>
-          진도표 확인
-        </TabButton>
+          <TabButton type="button" active={activeTab === 'view'} onClick={() => setActiveTab('view')}>
+            진도표 확인
+          </TabButton>
+        </TabButtonBox>
       </AcademyTabBox>
 
-        {activeTab === 'curriculum' && (
+      {activeTab === 'curriculum' && (
             <Curriculum
             />
         )}
@@ -100,18 +105,39 @@ export const Wrapper = styled.div<WithTheme>`
 `;
 
 const AcademyTabBox = styled.section<WithTheme>`
+  position: fixed;
+  top: 0;
+  height: 100px;
+  width: 100%;
   display: flex;
   gap: 4px;
   margin-bottom: 12px;
-  padding: 16px 8px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
 `;
 
+const ImgBox = styled.div`
+`
+const TabButtonBox = styled.div`
+    display: flex;
+  gap: 8px;
+`
+
 const TabButton = styled.button<{ active: boolean } & WithTheme>`
-  background-color: ${({ active, theme }) => (active ? theme.colors.menuColor : 'transparent')};
-  color: ${({ active, theme }) => (active ? theme.colors.white : theme.colors.text)};
+  background-color: transparent;;
+  color: ${({ active, theme }) => (active ? theme.colors.blueColor : theme.colors.text)};
   border: none;
   padding: 6px 10px;
-  font-size: ${({ theme }) => theme.sizes.small};
+  font-size: ${({ active, theme }) => (active ? theme.sizes.menu : theme.sizes.large)}; 
+  font-weight: 600;
   cursor: pointer;
 `;
+
+export const TabWrap = styled.div`
+    display: flex;
+  flex-direction: column;
+  padding: 24px;
+  margin-top: 100px;
+`

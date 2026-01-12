@@ -10,6 +10,7 @@ import {useRecoilValue} from "recoil";
 import {curriculumDataState} from "../../recoil/state/academy.ts";
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import {TabWrap} from "../../pages/Academy.tsx";
 
 export default function Curriculum() {
 
@@ -208,7 +209,7 @@ export default function Curriculum() {
     }, [classKey, year]);
 
     return (
-        <div>
+        <TabWrap>
             <TopBox>
                 <div>
                     <YearBox>
@@ -264,7 +265,7 @@ export default function Curriculum() {
                     tableMergesRef.current = merges;
                 }}
             />
-        </div>
+        </TabWrap>
     );
 }
 

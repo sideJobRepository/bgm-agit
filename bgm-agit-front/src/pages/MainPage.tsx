@@ -211,7 +211,7 @@ const LeftSection = styled.section<WithTheme>`
   margin-right: 10px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  `justify-content: space-between;`
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
     height: 180px;

@@ -386,9 +386,11 @@ export default function AcademyInput() {
 /* styles */
 
 const Wrap = styled.div`
-  margin-top: 16px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
   gap: 12px;
+  margin-top: 100px;
 `;
 
 const TopBar = styled.div`
