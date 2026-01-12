@@ -5,6 +5,10 @@ import 'react-calendar/dist/Calendar.css';
 import type { WithTheme } from '../../styles/styled-props';
 import type { ClassKey } from '../../pages/Academy';
 import { showConfirmModal } from '../confirmAlert.tsx';
+import {useInsertPost, useUpdatePost} from "../../recoil/fetch.ts";
+import {useAcademyClassFetch} from "../../recoil/academyFetch.ts";
+import {useRecoilValue} from "recoil";
+import {academyClassDataState} from "../../recoil/state/academy.ts";
 
 type ProgressItem = {
   classKey: ClassKey;
@@ -21,23 +25,8 @@ type ProgressItem = {
   inputsHomework: string; //과제
 };
 
-type ProgressInputState = {
-  rows: ProgressItem[];
-};
 
 type Month = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
-
-type CurriculumRow = {
-  id: string;
-  bookName: string;
-  months: Record<Month, string>;
-  merges: any;
-};
-
-type CurriculumState = {
-  byClass: Record<ClassKey, CurriculumRow[]>;
-  titleByClass: Record<ClassKey, string>;
-};
 
 function fmtDate(d: Date) {
   const y = d.getFullYear();
@@ -46,59 +35,27 @@ function fmtDate(d: Date) {
   return `${y}-${m}-${dd}`;
 }
 
-export default function AcademyInput({
-  classKey,
-  onChangeClassKey,
-  value,
-  onChange,
-  onSave,
-  curriculumState,
-}: {
-  classKey: ClassKey;
-  onChangeClassKey: (v: ClassKey) => void;
-  value: ProgressInputState;
-  onChange: React.Dispatch<React.SetStateAction<ProgressInputState>>;
-  onSave: () => void;
-  curriculumState: CurriculumState;
-}) {
+export default function AcademyInput() {
+
+  const { insert } = useInsertPost();
+  const { update } = useUpdatePost();
+
+  const fetchAcademyClass = useAcademyClassFetch();
+  const academyClassData = useRecoilValue(academyClassDataState);
+  console.log("adacacac", academyClassData);
+
+
+  const categoryOptions = [
+    { value: '3g', label: '3g' },
+    { value: '3k', label: '3k' },
+    { value: '4g1', label: '4g1' },
+  ];
+  const [classKey, setClassKey] = useState(categoryOptions[0].value);
+
   const today = useMemo(() => new Date(), []);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(today);
   const dateStr = fmtDate(selectedDate);
-
-  const month = (selectedDate.getMonth() + 1) as Month;
-
-  // 커리큘럼에서 교재 옵션 뽑기(반+월 기준)
-  const bookOptions = useMemo(() => {
-    const rows = curriculumState.byClass[classKey] ?? [];
-    const vals = rows.map(r => (r.months?.[month] ?? '').trim()).filter(Boolean);
-    return Array.from(new Set(vals));
-  }, [curriculumState.byClass, classKey, month]);
-
-  /**
-   * 이제 폼은 (반+날짜)만이 아니라 (반+날짜+교재) 기준으로 로드해야 하므로
-   * 교재 선택값을 "명시적으로" 상태로 둔다.
-   */
-  const [selectedBook, setSelectedBook] = useState<string>('');
-
-  // bookOptions가 바뀌거나, 반/날짜가 바뀌면 selectedBook 기본값 보정
-  useEffect(() => {
-    // 현재 선택된 교재가 옵션에 없으면 첫 옵션으로
-    if (selectedBook && bookOptions.includes(selectedBook)) return;
-    setSelectedBook(bookOptions[0] ?? '');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [classKey, dateStr, bookOptions.join('|')]);
-
-  // 현재 (반+날짜+교재) 저장된 데이터 찾기
-  const currentSaved = useMemo(() => {
-    const book = (selectedBook ?? '').trim();
-    if (!book) return null;
-    return (
-      (value.rows ?? []).find(
-        r => r.classKey === classKey && r.date === dateStr && r.book === book
-      ) ?? null
-    );
-  }, [value.rows, classKey, dateStr, selectedBook]);
 
 
   const [form, setForm] = useState<Omit<ProgressItem, 'id' | 'classKey' | 'date'>>({
@@ -117,85 +74,30 @@ export default function AcademyInput({
 
   const setField = (k: keyof typeof form, v: string) => setForm(prev => ({ ...prev, [k]: v }));
 
-  // 반/날짜/교재 변경 시 자동 로드
-  useEffect(() => {
-    if (!selectedBook) {
-      // 교재가 없으면 전체 초기화
-      setForm({
-        teacher: '',
-        book: '',
-        unit: '',
-        pages: '',
-        subject: '수학',
-        content: '',
-        test: '',
-        homework: '',
-      });
-      return;
-    }
-
-    if (currentSaved) {
-      const { id, classKey: ck, date, ...rest } = currentSaved;
-      setForm(rest);
-    } else {
-      // 새 교재(또는 저장 안 된 조합)면 초기화하되 book은 고정
-      setForm({
-        teacher: '',
-        book: selectedBook,
-        unit: '',
-        pages: '',
-        subject: '수학',
-        content: '',
-        test: '',
-        homework: '',
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [classKey, dateStr, selectedBook]);
-
   const moveDay = (delta: number) => {
     const next = new Date(selectedDate);
     next.setDate(next.getDate() + delta);
     setSelectedDate(next);
   };
 
-  // 저장 = upsert (반+날짜+교재 1건)
-  const upsert = () => {
-    const book = (selectedBook ?? '').trim();
-    if (!book) return;
 
-    const nextItem: ProgressItem = {
-      id: currentSaved?.id ?? crypto.randomUUID(),
-      classKey,
-      date: dateStr,
-      ...form,
-      book, // 선택된 교재로 강제(폼/상태 불일치 방지)
-    };
-
-    onChange(prev => {
-      const rows = prev.rows ?? [];
-      const idx = rows.findIndex(
-        r => r.classKey === classKey && r.date === dateStr && r.book === book
-      );
-
-      if (idx >= 0) {
-        const copy = rows.slice();
-        copy[idx] = nextItem;
-        return { ...prev, rows: copy };
-      }
-      return { ...prev, rows: [nextItem, ...rows] };
-    });
-  };
 
   const submitSave = () => {
     showConfirmModal({
       message: '진도표를 저장하시겠습니까?',
       onConfirm: () => {
-        upsert();
-        onSave();
+
       },
     });
   };
+
+  //초기 랜더
+  useEffect(() => {
+    const year = selectedDate.getFullYear();
+    console.log("selectedDate", selectedDate, "className",  year)
+    fetchAcademyClass({className : classKey, year: year});
+
+  }, [classKey, selectedDate]);
 
   return (
     <Wrap>
@@ -231,16 +133,17 @@ export default function AcademyInput({
       <Body>
         <LeftPane>
           <ClassList>
-            {(['3g', '3k', '4g1'] as ClassKey[]).map(k => (
-              <ClassRow key={k}>
-                <input
-                  type="radio"
-                  name="classKey"
-                  checked={classKey === k}
-                  onChange={() => onChangeClassKey(k)}
-                />
-                <span>{k.toUpperCase()}</span>
-              </ClassRow>
+            {categoryOptions.map(({ value, label }) => (
+                <ClassRow key={value}>
+                  <input
+                      type="radio"
+                      name="classKey"
+                      value={value}
+                      checked={classKey === value}
+                      onChange={() => setClassKey(value)}
+                  />
+                  <span>{label.toUpperCase()}</span>
+                </ClassRow>
             ))}
           </ClassList>
         </LeftPane>
@@ -270,7 +173,14 @@ export default function AcademyInput({
               </Field>
               <Field>
                 <Label>진도구분</Label>
-                <Select value={form.curriculumProgressId} onChange={e => setField('curriculumProgressId', e.target.value)} />
+                <Select value={form.curriculumProgressId} onChange={e => setField('curriculumProgressId', e.target.value)}>
+                  {academyClassData?.map(opt => (
+                      <option key={opt.progressType} value={opt.progressType}>
+                        {opt.progressType}
+                      </option>
+
+                  ))}
+                </Select>
               </Field>
             </FieldBox>
 
@@ -512,6 +422,13 @@ const Select = styled.select<WithTheme>`
   flex: 1;
   border-radius: 4px;
   padding: 0 10px;
+
+  /* 화살표 위치 조정 */
+  appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 4px center;
+  background-size: 16px;
 `;
 
 const Textarea = styled.textarea<WithTheme>`

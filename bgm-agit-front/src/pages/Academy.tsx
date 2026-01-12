@@ -39,12 +39,6 @@ export default function Academy() {
 
   const [progressInputState, setProgressInputState] = useState<ProgressInputState>({ rows: [] });
 
-  const saveCurriculum = () =>
-    console.log('save curriculum', { classKey, rows: curriculumState.byClass[classKey] });
-
-  const saveProgressInput = () =>
-    console.log('save progressInput', { classKey, progressInputState });
-
   return (
     <Wrapper>
       <AcademyTabBox>
@@ -77,12 +71,6 @@ export default function Academy() {
 
         {activeTab === 'input' && (
             <AcademyInput
-                classKey={classKey}
-                onChangeClassKey={setClassKey}
-                value={progressInputState}
-                onChange={setProgressInputState}
-                onSave={saveProgressInput}
-                curriculumState={curriculumState}
             />
         )}
 
