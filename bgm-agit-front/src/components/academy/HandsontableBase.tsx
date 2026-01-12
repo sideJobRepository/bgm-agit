@@ -1,7 +1,7 @@
 import {useRef} from "react";
 import { HotTable } from "@handsontable/react";
 import { registerAllModules } from "handsontable/registry";
-
+import type { RefObject } from 'react';
 import "handsontable/dist/handsontable.full.css";
 import "handsontable/plugins/contextMenu";
 import "handsontable/plugins/mergeCells";
@@ -15,6 +15,7 @@ type Props = {
     rowHeaders?: boolean;
     readOnly?: boolean;
     mergeCells?: boolean | any[];
+    rowIdRef: RefObject<(number | null)[]>;
     onChange?: (data: any[][], merges: any[]) => void;
 };
 
@@ -25,6 +26,7 @@ export default function HandsontableBase({
                                              readOnly = false,
                                              mergeCells = true,
                                              onChange,
+                                             rowIdRef,
                                          }: Props) {
     const hotRef = useRef<any>(null);
 
@@ -39,8 +41,39 @@ export default function HandsontableBase({
             contextMenu={{
                 items: [
                     'remove_row',
-                    'row_above',
-                    'row_below',
+                    {
+                        key: 'row_above',
+                        name: 'row_above',
+                        callback: () => {
+                            const hot = hotRef.current?.hotInstance;
+                            if (!hot) return;
+
+                            const selected = hot.getSelectedLast();
+                            if (!selected) return;
+
+                            const [row] = selected;
+                            hot.alter('insert_row_above', row);
+
+                            rowIdRef.current?.splice(row, 0, null);
+                        },
+                    },
+                    {
+                        key: 'row_below',
+                        name: 'row_below',
+                        callback: () => {
+                            const hot = hotRef.current?.hotInstance;
+                            if (!hot) return;
+
+                            const selected = hot.getSelectedLast();
+                            if (!selected) return;
+
+                            const [row] = selected;
+                            hot.alter('insert_row_below', row + 1);
+
+                            rowIdRef.current?.splice(row + 1, 0, null);
+                        },
+
+                    },
                     'undo',
                     'redo',
                     {
@@ -128,9 +161,11 @@ export default function HandsontableBase({
 
                 onChange(hot.getData(), merges);
             }}
-            afterRemoveRow={() => {
+            afterRemoveRow={(index, amount) => {
                 const hot = hotRef.current?.hotInstance;
                 if (!hot || !onChange) return;
+
+                rowIdRef.current?.splice(index, amount);
 
                 const plugin = hot.getPlugin("mergeCells");
                 const merges = plugin?.mergedCellsCollection?.mergedCells ?? [];

@@ -179,14 +179,37 @@ export default function AcademyInput() {
   }, [classKey, selectedDate]);
 
   useEffect(() => {
-    if (academyClassData.length > 0 && selectedProgressId === null) {
-      setSelectedProgressId(academyClassData[0].id);
+    if (selectedProgressId === null) {
+
+      if(academyClassData.length > 0 ){
+        setSelectedProgressId(academyClassData[0].id);
+      }else {
+        //진도 구분이 존재하지 않을 경우
+        setForm({
+          curriculumProgressId: null,
+          inputsClasses: '',
+          inputsDate: '',
+          inputsTeacher: '',
+          inputsSubjects: '',
+          inputsProgress: '',
+          inputsTests: '',
+          inputsHomework: '',
+          rows:[
+                    {
+                      textbook: '',
+                      inputsUnit: '',
+                      inputsPages: '',
+                    },
+                  ],
+        });
+      }
     }
   }, [academyClassData]);
 
 
   useEffect(() => {
     if (selectedProgressId) {
+      console.log("세번쨰실행")
       const yearStr = fmtDate(selectedDate);
       fetchAcademy({
         className: classKey,

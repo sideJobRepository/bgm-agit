@@ -2,7 +2,6 @@ import HandsontableBase from './HandsontableBase';
 import styled from "styled-components";
 import type {WithTheme} from "../../styles/styled-props.ts";
 import {useInsertPost, useUpdatePost} from "../../recoil/fetch.ts";
-import {showConfirmModal} from "../confirmAlert.tsx";
 import {toast} from "react-toastify";
 import {useEffect, useRef, useState} from "react";
 import {useCurriiculumFetch} from "../../recoil/academyFetch.ts";
@@ -46,9 +45,11 @@ export default function Curriculum() {
     const fetchCurriculum = useCurriiculumFetch();
 
     const curriculumData = useRecoilValue(curriculumDataState);
-
+    console.log("curriculumData", curriculumData)
     const tableDataRef = useRef<string[][]>([]);
     const tableMergesRef = useRef<any[]>([]);
+    //id
+    const rowIdRef = useRef<(number | null)[]>([]);
 
     //바인딩 함수
     const [tableData, setTableData] = useState<string[][]>([]);
@@ -92,11 +93,22 @@ export default function Curriculum() {
                     });
                 }
 
-                return { progressType, months };
+                return {
+                    id: rowIdRef.current[rowIndex],
+                    progressType,
+                    months,
+                };
             })
             .filter(
-                (row): row is { progressType: string; months: { startMonth: number; endMonth: number; content: string }[] } =>
-                    row !== null
+                (row): row is {
+                    id: number | null;
+                    progressType: string;
+                    months: {
+                        startMonth: number;
+                        endMonth: number;
+                        content: string;
+                    }[];
+                } => row !== null
             );
 
         return {
@@ -185,6 +197,7 @@ export default function Curriculum() {
 
             tableDataRef.current = emptyData;
             tableMergesRef.current = emptyMerges;
+            rowIdRef.current = Array(emptyData.length).fill(null);
             return;
         }
 
@@ -197,6 +210,8 @@ export default function Curriculum() {
 
         tableDataRef.current = data;
         tableMergesRef.current = merges;
+        rowIdRef.current = curriculumData.rows.map((row: any) => row.id ?? null);
+
     }, [curriculumData]);
 
 
@@ -258,6 +273,7 @@ export default function Curriculum() {
                 data={tableData}
                 mergeCells={tableMerges}
                 colHeaders={headers}
+                rowIdRef={rowIdRef}
                 onChange={(data, merges) => {
                     tableDataRef.current = data;
                     tableMergesRef.current = merges;
