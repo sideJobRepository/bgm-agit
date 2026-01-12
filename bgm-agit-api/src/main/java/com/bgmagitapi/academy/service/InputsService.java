@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface InputsService {
-    List<InputsCurriculumGetResponse> getCurriculum(String className, Integer year);
+    List<InputsCurriculumGetResponse> getCurriculum(String className, Integer year,Integer month);
     
     InputGetResponse getInputs(String className, LocalDate date, Long curriculumProgressId);
     

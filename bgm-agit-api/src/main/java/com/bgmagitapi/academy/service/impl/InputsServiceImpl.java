@@ -32,8 +32,8 @@ public class InputsServiceImpl implements InputsService {
     private final ProgressInputsRepository progressInputsRepository;
     
     @Override
-    public List<InputsCurriculumGetResponse> getCurriculum(String className, Integer year) {
-        return inputsRepository.findByCurriculum(className,year);
+    public List<InputsCurriculumGetResponse> getCurriculum(String className, Integer year,Integer month) {
+        return inputsRepository.findByCurriculum(className,year,month);
     }
     
     @Override

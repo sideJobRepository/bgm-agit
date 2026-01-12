@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface InputsQueryRepository {
-    List<InputsCurriculumGetResponse> findByCurriculum(String className, Integer year);
+    List<InputsCurriculumGetResponse> findByCurriculum(String className, Integer year,Integer month);
     
     List<ProgressInputs> findByInputs(String className, LocalDate date, Long curriculumProgressId);
     

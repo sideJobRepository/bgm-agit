@@ -23,7 +23,7 @@ class InputsServiceImplTest extends RepositoryAndServiceTestSupport {
     @DisplayName("")
     @Test
     void test1() {
-        List<InputsCurriculumGetResponse> curriculum = inputsService.getCurriculum("3g", 2026);
+        List<InputsCurriculumGetResponse> curriculum = inputsService.getCurriculum("3g", 2026,2);
         System.out.println("curriculum = " + curriculum);
     }
     

@@ -2,9 +2,7 @@ package com.bgmagitapi.academy.repository.impl;
 
 import com.bgmagitapi.academy.dto.response.InputsCurriculumGetResponse;
 import com.bgmagitapi.academy.dto.response.QInputsCurriculumGetResponse;
-import com.bgmagitapi.academy.entity.CurriculumCont;
-import com.bgmagitapi.academy.entity.Inputs;
-import com.bgmagitapi.academy.entity.ProgressInputs;
+import com.bgmagitapi.academy.entity.*;
 import com.bgmagitapi.academy.repository.query.InputsQueryRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -24,17 +22,22 @@ public class InputsRepositoryImpl implements InputsQueryRepository {
     private final JPAQueryFactory queryFactory;
     
     @Override
-    public List<InputsCurriculumGetResponse> findByCurriculum(String className, Integer year) {
+    public List<InputsCurriculumGetResponse> findByCurriculum(String className, Integer year, Integer month) {
         return queryFactory
                 .select(new QInputsCurriculumGetResponse(
-                        curriculumProgress.id,
-                        curriculum.years,
-                        curriculum.classes,
-                        curriculumProgress.progressGubun
-                ))
-                .from(curriculumProgress)
-                .join(curriculumProgress.curriculum, curriculum)
-                .where(curriculum.classes.eq(className), curriculum.years.eq(year))
+                                        curriculumProgress.id,
+                                        curriculum.years,
+                                        curriculum.classes,
+                                        curriculumProgress.progressGubun
+                                ))
+                .from(curriculumCont)
+                .join(curriculumCont.curriculumProgress, curriculumProgress)
+                .where(
+                        
+                        curriculum.classes.eq(className), curriculum.years.eq(year),
+                        curriculumCont.startMonths.loe(month)
+                        .and(curriculumCont.endMonths.goe(month))
+                )
                 .fetch();
     }
     
