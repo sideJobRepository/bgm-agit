@@ -13,7 +13,7 @@ public interface InputsQueryRepository {
     
     List<ProgressInputs> findByInputs(String className, LocalDate date, Long curriculumProgressId);
     
-    List<CurriculumCont> findByInputsCheck(String className);
+    List<ProgressInputs> findByInputsCheck(String className);
     
     List<Inputs> findByCurriculumProgressIds(List<Long> list);
 }

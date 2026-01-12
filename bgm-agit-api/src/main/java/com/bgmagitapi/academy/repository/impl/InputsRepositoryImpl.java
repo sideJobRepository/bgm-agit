@@ -47,19 +47,18 @@ public class InputsRepositoryImpl implements InputsQueryRepository {
                 .from(progressInputs)
                 .join(progressInputs.curriculumProgress, curriculumProgress).fetchJoin()
                 .join(progressInputs.inputs, inputs).fetchJoin()
-                .where(inputs.classes.eq(className), inputs.inputsDate.eq(date) , progressInputs.curriculumProgress.id.eq(curriculumProgressId))
+                .where(inputs.classes.eq(className), inputs.inputsDate.eq(date), progressInputs.curriculumProgress.id.eq(curriculumProgressId))
                 .fetch();
     }
     
     @Override
-    public List<CurriculumCont> findByInputsCheck(String className) {
-        return queryFactory
-                .select(curriculumCont)
-                .from(curriculumCont)
-                .join(curriculumCont.curriculumProgress, curriculumProgress)
-                .join(curriculumProgress.curriculum, curriculum)
-                .where(curriculum.classes.eq(className))
-                .fetch();
+    public List<ProgressInputs> findByInputsCheck(String className) {
+         return queryFactory.
+                selectFrom(progressInputs)
+                        .join(progressInputs.inputs, inputs).fetchJoin()
+                         .join(progressInputs.curriculumProgress, curriculumProgress).fetchJoin()
+                         .join(curriculumProgress.curriculum, curriculum).fetchJoin()
+                 .where(curriculum.classes.eq(className)).fetch();
     }
     
     @Override

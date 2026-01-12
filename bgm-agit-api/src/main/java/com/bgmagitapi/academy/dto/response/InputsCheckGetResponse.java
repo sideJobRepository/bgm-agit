@@ -14,7 +14,7 @@ import java.util.List;
 public class InputsCheckGetResponse {
     
     private InputsCheckDateHeader header;   // 엑셀 맨 위
-    private List<InputsCheckGetResponse> rows; // 진도 체크 데이터
+    private List<InputsCheckRowResponse> rows; // 진도 체크 데이터
     
 
 }

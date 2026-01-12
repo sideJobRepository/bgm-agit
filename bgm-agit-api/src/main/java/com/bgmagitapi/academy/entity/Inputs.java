@@ -56,6 +56,7 @@ public class Inputs extends DateSuperClass {
         this.teacher = request.getInputsTeacher();
         this.subjects = request.getInputsSubjects();
         this.tests = request.getInputsTests();
+        this.progress = request.getInputsProgress();
         this.homework = request.getInputsHomework();
         this.inputsDate = request.getInputsDate();
     }
