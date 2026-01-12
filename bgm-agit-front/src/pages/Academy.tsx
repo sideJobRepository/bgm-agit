@@ -122,7 +122,7 @@ const ImgBox = styled.div`
 `
 const TabButtonBox = styled.div`
     display: flex;
-  gap: 8px;
+  gap: 12px;
 `
 
 const TabButton = styled.button<{ active: boolean } & WithTheme>`
@@ -131,7 +131,7 @@ const TabButton = styled.button<{ active: boolean } & WithTheme>`
   border: none;
   padding: 6px 10px;
   font-size: ${({ active, theme }) => (active ? theme.sizes.menu : theme.sizes.large)}; 
-  font-weight: 600;
+  font-weight: 800;
   cursor: pointer;
 `;
 

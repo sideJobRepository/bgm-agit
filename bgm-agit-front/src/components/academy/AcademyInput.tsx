@@ -397,6 +397,9 @@ const TopBar = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: fixed;
+  top: 124px;
+  width: calc(100% - 48px);
 `;
 
 const DateNav = styled.div<WithTheme>`
@@ -493,6 +496,7 @@ const Body = styled.div`
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 12px;
+  margin-top: 48px;
 `;
 
 const LeftPane = styled.div<WithTheme>`
