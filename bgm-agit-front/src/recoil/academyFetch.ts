@@ -2,7 +2,7 @@
 import { useRequest } from './useRequest.ts';
 import { useSetRecoilState } from 'recoil';
 import api from '../utils/axiosInstance.ts';
-import {academyClassDataState, curriculumDataState} from "./state/academy.ts";
+import {academyClassDataState, academyDataState, curriculumDataState} from "./state/academy.ts";
 
 export function useCurriiculumFetch() {
   const { request } = useRequest();
@@ -14,6 +14,19 @@ export function useCurriiculumFetch() {
 
   return fetchCurriiculum;
 }
+
+export function useAcademyFetch() {
+  const { request } = useRequest();
+  const setAcademy = useSetRecoilState(academyDataState);
+
+  const fetchAcademy = (params: any) => {
+    request(() => api.get('/bgm-agit/inputs', { params }).then(res => res.data), setAcademy);
+  };
+
+  return fetchAcademy;
+}
+
+
 
 export function useAcademyClassFetch() {
   const { request } = useRequest();

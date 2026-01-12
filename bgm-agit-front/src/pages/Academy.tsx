@@ -1,4 +1,3 @@
-import { Wrapper } from '../styles';
 import styled from 'styled-components';
 import { useState } from 'react';
 import type { WithTheme } from '../styles/styled-props';
@@ -63,7 +62,6 @@ export default function Academy() {
         </TabButton>
       </AcademyTabBox>
 
-      <ContentBox>
         {activeTab === 'curriculum' && (
             <Curriculum
             />
@@ -84,15 +82,29 @@ export default function Academy() {
                 month={12}
             />
         )}
-      </ContentBox>
     </Wrapper>
   );
 }
+
+export const Wrapper = styled.div<WithTheme>`
+  max-width: 1500px;
+  min-width: 1280px;
+  min-height: 600px;
+  height: 100%;
+  margin: 0 auto;
+  @media ${({ theme }) => theme.device.mobile} {
+    max-width: 100%;
+    min-width: 100%;
+    min-height: unset;
+  }
+`;
 
 const AcademyTabBox = styled.section<WithTheme>`
   display: flex;
   gap: 4px;
   margin-bottom: 12px;
+  padding: 16px 8px;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
 `;
 
 const TabButton = styled.button<{ active: boolean } & WithTheme>`
@@ -103,8 +115,3 @@ const TabButton = styled.button<{ active: boolean } & WithTheme>`
   font-size: ${({ theme }) => theme.sizes.small};
   cursor: pointer;
 `;
-
-const ContentBox = styled.section<WithTheme>`
-  padding: 24px 0;
-  border-top: 1px solid ${({ theme }) => theme.colors.lineColor};
-`

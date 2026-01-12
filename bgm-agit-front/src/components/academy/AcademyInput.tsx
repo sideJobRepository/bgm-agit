@@ -5,14 +5,15 @@ import 'react-calendar/dist/Calendar.css';
 import type { WithTheme } from '../../styles/styled-props';
 import type { ClassKey } from '../../pages/Academy';
 import { showConfirmModal } from '../confirmAlert.tsx';
-// import {useInsertPost, useUpdatePost} from "../../recoil/fetch.ts";
-import {useAcademyClassFetch} from "../../recoil/academyFetch.ts";
+import {useInsertPost, useUpdatePost} from "../../recoil/fetch.ts";
+import {useAcademyClassFetch, useAcademyFetch} from "../../recoil/academyFetch.ts";
 import {useRecoilValue} from "recoil";
-import {academyClassDataState} from "../../recoil/state/academy.ts";
+import {academyClassDataState, academyDataState} from "../../recoil/state/academy.ts";
+import {toast} from "react-toastify";
 
 type ProgressItem = {
   classKey: ClassKey;
-  curriculumProgressId: string; // 진도구분의 id
+  curriculumProgressId: null | number; // 진도구분의 id
   inputsClasses: string; //반
   inputsDate: string; //일시
   inputsTeacher: string; //강사
@@ -40,12 +41,16 @@ function fmtDate(d: Date) {
 
 export default function AcademyInput() {
 
-  // const { insert } = useInsertPost();
-  // const { update } = useUpdatePost();
+  const { insert } = useInsertPost();
+  const { update } = useUpdatePost();
+
+  const fetchAcademy = useAcademyFetch();
+  const academyData = useRecoilValue(academyDataState);
+  console.log("academyData", academyData)
 
   const fetchAcademyClass = useAcademyClassFetch();
   const academyClassData = useRecoilValue(academyClassDataState);
-  console.log("adacacac", academyClassData);
+  console.log("academyClassData", academyClassData);
 
 
   const categoryOptions = [
@@ -62,7 +67,7 @@ export default function AcademyInput() {
 
 
   const [form, setForm] = useState<Omit<ProgressItem, 'id' | 'classKey' | 'date'>>({
-    curriculumProgressId: '', // 진도구분의 id
+    curriculumProgressId: null, // 진도구분의 id
     inputsClasses: '', //반
     inputsDate: '', //일시
     inputsTeacher: '', //강사
@@ -79,7 +84,7 @@ export default function AcademyInput() {
     ]
   });
 
-  const setField = (k: keyof typeof form, v: string) => setForm(prev => ({ ...prev, [k]: v }));
+  const setField = (k: keyof typeof form, v: number) => setForm(prev => ({ ...prev, [k]: v }));
 
   const moveDay = (delta: number) => {
     const next = new Date(selectedDate);
@@ -119,21 +124,89 @@ export default function AcademyInput() {
   };
 
   const submitSave = () => {
-    showConfirmModal({
-      message: '진도표를 저장하시겠습니까?',
-      onConfirm: () => {
+    const dateStr = fmtDate(selectedDate); // 여전히 사용됨
+    console.log("curriculumProgressId", form)
 
+    const requestFn = academyData?.id ? update : insert;
+
+    showConfirmModal({
+      message: '저장하시겠습니까?',
+      onConfirm: () => {
+        const body = academyData?.id ? {
+          ...form,
+          id: academyData?.id,
+          inputsDate: dateStr,
+          inputsClasses: classKey,
+          progressItems: form.rows.map(row => ({
+            textbook: row.textbook,
+            unit: row.inputsUnit,
+            pages: row.inputsPages,
+          })),
+        } : {
+          ...form,
+          inputsDate: dateStr,
+          inputsClasses: classKey,
+          progressInputsRequests: form.rows.map(row => ({
+            textbook: row.textbook,
+            inputsUnit: row.inputsUnit,
+            inputsPages: row.inputsPages,
+          })),
+        }
+
+        requestFn({
+          url: '/bgm-agit/inputs',
+          body,
+          ignoreHttpError: true,
+          onSuccess: () => {
+            toast.success('저장되었습니다.');
+            fetchAcademy({ year: dateStr, className: classKey, curriculumProgressId: form.curriculumProgressId});
+          },
+        });
       },
     });
   };
 
+
   //초기 랜더
   useEffect(() => {
     const year = selectedDate.getFullYear();
+    const yearStr = fmtDate(selectedDate);
+    console.log("yearStr", yearStr)
     console.log("selectedDate", selectedDate, "className",  year)
     fetchAcademyClass({className : classKey, year: year});
 
-  }, [classKey, selectedDate]);
+    if(form.curriculumProgressId){
+      fetchAcademy({className: classKey, year: yearStr, curriculumProgressId: form.curriculumProgressId})
+    }
+
+  }, [classKey, selectedDate, form.curriculumProgressId]);
+
+  useEffect(() => {
+    if (academyClassData.length > 0 && !form.curriculumProgressId) {
+      setField('curriculumProgressId', academyClassData[0].id);
+    }
+  }, [academyClassData]);
+
+  useEffect(() => {
+    if (academyData && academyData.id) {
+      setForm({
+        curriculumProgressId: academyData.curriculumProgressId ?? null,
+        inputsClasses: academyData.classesName ?? '',
+        inputsDate: academyData.inputsDate ?? '',
+        inputsTeacher: academyData.teacher ?? '',
+        inputsSubjects: academyData.subjects ?? '',
+        inputsProgress: academyData.progress ?? '',
+        inputsTests: academyData.tests ?? '',
+        inputsHomework: academyData.homework ?? '',
+        rows: (academyData.progressItems || []).map((item: any) => ({
+          textbook: item.textBook,
+          inputsUnit: item.unit,
+          inputsPages: item.pages,
+        })),
+      });
+    }
+  }, [academyData]);
+
 
   return (
     <Wrap>
@@ -211,7 +284,7 @@ export default function AcademyInput() {
                 <Label>진도구분</Label>
                 <Select value={form.curriculumProgressId} onChange={e => setField('curriculumProgressId', e.target.value)}>
                   {academyClassData?.map(opt => (
-                      <option key={opt.progressType} value={opt.progressType}>
+                      <option key={opt.id} value={opt.id}>
                         {opt.progressType}
                       </option>
 
