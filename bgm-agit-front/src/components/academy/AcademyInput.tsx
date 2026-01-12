@@ -4,10 +4,9 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import type { WithTheme } from '../../styles/styled-props';
 import type { ClassKey } from '../../pages/Academy';
-import { showConfirmModal } from '../confirmAlert.tsx';
 import {useInsertPost, useUpdatePost} from "../../recoil/fetch.ts";
 import {useAcademyClassFetch, useAcademyFetch} from "../../recoil/academyFetch.ts";
-import {useRecoilValue} from "recoil";
+import {useRecoilValue, useSetRecoilState} from "recoil";
 import {academyClassDataState, academyDataState} from "../../recoil/state/academy.ts";
 import {toast} from "react-toastify";
 
@@ -46,7 +45,7 @@ export default function AcademyInput() {
 
   const fetchAcademy = useAcademyFetch();
   const academyData = useRecoilValue(academyDataState);
-  console.log("academyData", academyData)
+  const setAcademyData = useSetRecoilState(academyDataState)
 
   const fetchAcademyClass = useAcademyClassFetch();
   const academyClassData = useRecoilValue(academyClassDataState);
@@ -131,6 +130,10 @@ export default function AcademyInput() {
     const requestFn = academyData?.id ? update : insert;
     const progressId = selectedProgressId ?? academyClassData[0]?.id ?? null;
 
+    if(!progressId) {
+      toast.error("진도 구분 값을 먼저 선택해주세요.")
+      return;
+    }
     const confirmed = window.confirm('저장하시겠습니까?');
 
     if(confirmed) {
@@ -185,23 +188,7 @@ export default function AcademyInput() {
         setSelectedProgressId(academyClassData[0].id);
       }else {
         //진도 구분이 존재하지 않을 경우
-        setForm({
-          curriculumProgressId: null,
-          inputsClasses: '',
-          inputsDate: '',
-          inputsTeacher: '',
-          inputsSubjects: '',
-          inputsProgress: '',
-          inputsTests: '',
-          inputsHomework: '',
-          rows:[
-                    {
-                      textbook: '',
-                      inputsUnit: '',
-                      inputsPages: '',
-                    },
-                  ],
-        });
+        setAcademyData(null);
       }
     }
   }, [academyClassData]);

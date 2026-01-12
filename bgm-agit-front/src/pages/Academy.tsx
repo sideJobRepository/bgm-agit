@@ -6,6 +6,7 @@ import AcademyInput from '../components/academy/AcademyInput.tsx';
 import AcademyView from '../components/academy/AcademyView.tsx';
 
 type AcademyTabKey = 'curriculum' | 'input' | 'view';
+export type ClassKey = '3g' | '3k' | '4g1';
 
 export default function Academy() {
   const [activeTab, setActiveTab] = useState<AcademyTabKey>('curriculum');
