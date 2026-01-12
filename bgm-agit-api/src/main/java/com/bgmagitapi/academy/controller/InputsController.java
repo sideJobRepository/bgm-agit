@@ -28,8 +28,8 @@ public class InputsController {
     }
     
     @GetMapping("/inputs")
-    public InputGetResponse inputs(@RequestParam String className , @RequestParam LocalDate year) {
-        return inputsService.getInputs(className, year);
+    public InputGetResponse inputs(@RequestParam String className , @RequestParam LocalDate year , @RequestParam Long curriculumProgressId) {
+        return inputsService.getInputs(className, year,curriculumProgressId);
     }
     
     @PostMapping("/inputs")

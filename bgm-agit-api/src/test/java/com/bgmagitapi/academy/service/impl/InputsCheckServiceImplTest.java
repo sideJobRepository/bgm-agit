@@ -23,7 +23,7 @@ class InputsCheckServiceImplTest extends RepositoryAndServiceTestSupport {
     void test1(){
         List<InputsCheckGetResponse> inputsChecks = inputsCheckService.getInputsChecks("3g");
         
-        
+        System.out.println("inputsChecks = " + inputsChecks);
         
     }
 }

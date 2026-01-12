@@ -12,7 +12,7 @@ import java.util.List;
 public interface InputsService {
     List<InputsCurriculumGetResponse> getCurriculum(String className, Integer year);
     
-    InputGetResponse getInputs(String className, LocalDate date);
+    InputGetResponse getInputs(String className, LocalDate date, Long curriculumProgressId);
     
     ApiResponse createInputs(InputsPostRequest request);
     

@@ -39,7 +39,7 @@ public class InputsRepositoryImpl implements InputsQueryRepository {
     }
     
     @Override
-    public List<ProgressInputs> findByInputs(String className, LocalDate date) {
+    public List<ProgressInputs> findByInputs(String className, LocalDate date, Long curriculumProgressId) {
         return queryFactory
                 .select(
                         progressInputs
@@ -47,7 +47,7 @@ public class InputsRepositoryImpl implements InputsQueryRepository {
                 .from(progressInputs)
                 .join(progressInputs.curriculumProgress, curriculumProgress).fetchJoin()
                 .join(progressInputs.inputs, inputs).fetchJoin()
-                .where(inputs.classes.eq(className), inputs.inputsDate.eq(date))
+                .where(inputs.classes.eq(className), inputs.inputsDate.eq(date) , progressInputs.curriculumProgress.id.eq(curriculumProgressId))
                 .fetch();
     }
     
@@ -56,8 +56,9 @@ public class InputsRepositoryImpl implements InputsQueryRepository {
         return queryFactory
                 .select(curriculumCont)
                 .from(curriculumCont)
-                .join(curriculumCont.curriculumProgress, curriculumProgress).fetchJoin()
-                .join(curriculumProgress.curriculum, curriculum).fetchJoin()
+                .join(curriculumCont.curriculumProgress, curriculumProgress)
+                .join(curriculumProgress.curriculum, curriculum)
+                .where(curriculum.classes.eq(className))
                 .fetch();
     }
     

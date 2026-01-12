@@ -70,7 +70,7 @@ class InputsServiceImplTest extends RepositoryAndServiceTestSupport {
     @Test
     void test3() {
         LocalDate date = LocalDate.now();
-        InputGetResponse inputs = inputsService.getInputs("3g",date);
+        InputGetResponse inputs = inputsService.getInputs("3g",date, 1L);
         System.out.println("inputs = " + inputs);
     }
     

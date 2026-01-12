@@ -37,10 +37,10 @@ public class InputsServiceImpl implements InputsService {
     }
     
     @Override
-    public InputGetResponse getInputs(String className,LocalDate date) {
+    public InputGetResponse getInputs(String className, LocalDate date, Long curriculumProgressId) {
       
         List<ProgressInputs> rows =
-                inputsRepository.findByInputs(className, date);
+                inputsRepository.findByInputs(className, date,curriculumProgressId);
         
         // inputs.id 기준으로 묶기
         Map<Long, InputGetResponse> resultMap = new LinkedHashMap<>();
