@@ -123,7 +123,6 @@ private String formatLabel(LocalDate start, LocalDate end) {
             + "(" + end.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN) + ")";
 }
 
-    
     private List<InputsCheckRowResponse> buildCheckRows(
             String className,
             InputsCheckDateHeader header
@@ -153,7 +152,6 @@ private String formatLabel(LocalDate start, LocalDate end) {
                             row.getUnit() + " " + row.getPages()
                     );
     
-            //  WeekGroup 안에 직접 넣는다
             for (InputsCheckRowResponse.WeekCheck week : parent.getWeeks()) {
     
                 if (date.equals(week.getStartDate())) {
@@ -168,8 +166,17 @@ private String formatLabel(LocalDate start, LocalDate end) {
             }
         }
     
+        // 여기서 null week 제거
+        for (InputsCheckRowResponse row : resultMap.values()) {
+            row.getWeeks().removeIf(
+                    week -> week.getStartItem() == null
+                         && week.getEndItem() == null
+            );
+        }
+    
         return new ArrayList<>(resultMap.values());
     }
+    
   
     
     private InputsCheckRowResponse createEmptyRow(
