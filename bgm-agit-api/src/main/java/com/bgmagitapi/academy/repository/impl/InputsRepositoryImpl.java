@@ -27,6 +27,7 @@ public class InputsRepositoryImpl implements InputsQueryRepository {
     public List<InputsCurriculumGetResponse> findByCurriculum(String className, Integer year) {
         return queryFactory
                 .select(new QInputsCurriculumGetResponse(
+                        curriculumProgress.id,
                         curriculum.years,
                         curriculum.classes,
                         curriculumProgress.progressGubun
@@ -46,7 +47,7 @@ public class InputsRepositoryImpl implements InputsQueryRepository {
                 .from(progressInputs)
                 .join(progressInputs.curriculumProgress, curriculumProgress).fetchJoin()
                 .join(progressInputs.inputs, inputs).fetchJoin()
-                .where(inputs.classes.eq(className) , inputs.inputsDate.eq(date))
+                .where(inputs.classes.eq(className), inputs.inputsDate.eq(date))
                 .fetch();
     }
     

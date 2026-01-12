@@ -9,12 +9,14 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class InputsCurriculumGetResponse {
+    private Long id;
     private Integer year;
     private String classesName;
     private String progressType;
     
     @QueryProjection
-    public InputsCurriculumGetResponse(Integer year, String classesName, String progressType) {
+    public InputsCurriculumGetResponse(Long id,Integer year, String classesName, String progressType) {
+        this.id = id;
         this.year = year;
         this.classesName = classesName;
         this.progressType = progressType;
