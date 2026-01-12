@@ -26,26 +26,32 @@ public class InputsCheckServiceImpl implements InputsCheckService {
     
     @Override
     public InputsCheckGetResponse getInputsChecks(String className) {
-        // 1) weekGroups 생성 (기존 createJanuaryHeader에서 뽑거나 그대로 써도 됨)
-        InputsCheckDateHeader tmpHeader = createJanuaryHeader(2026);
+        int year = LocalDate.now().getYear();
     
-        // 2) rows 생성 (weekGroups를 쓰든 header를 쓰든 기존 로직 그대로)
-        List<InputsCheckRowResponse> rows = buildCheckRows(className, tmpHeader);
+        List<InputsCheckDateHeader> headers = createYearHeaders(year);
+        for (int i = 0; i < headers.size(); i++) {
     
-        // 3)  rows 포함한 최종 header 생성
-        InputsCheckDateHeader header = new InputsCheckDateHeader(
-                tmpHeader.getMonth(),
-                tmpHeader.getWeekGroups(),
-                rows
-        );
+            InputsCheckDateHeader header = headers.get(i);
     
-        // 4) response는 header만
-        return new InputsCheckGetResponse(header);
+            List<InputsCheckRowResponse> rows =
+                    buildCheckRows(className, header);
+    
+            headers.set(
+                    i,
+                    new InputsCheckDateHeader(
+                            header.getMonth(),
+                            header.getWeekGroups(),
+                            rows
+                    )
+            );
+        }
+    
+        return new InputsCheckGetResponse(headers);
     }
     
-    private InputsCheckDateHeader createJanuaryHeader(int year) {
+    private InputsCheckDateHeader createMonthHeader(int year, int month) {
     
-        YearMonth yearMonth = YearMonth.of(year, 1);
+        YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate start = yearMonth.atDay(1);
         LocalDate end = yearMonth.atEndOfMonth();
     
@@ -71,28 +77,39 @@ public class InputsCheckServiceImpl implements InputsCheckService {
                 LocalDate next = cursor.plusDays(1);
     
                 if (next.isAfter(end) || next.getDayOfWeek() == DayOfWeek.SUNDAY) {
-                    groups.add(
-                            new InputsCheckDateHeader.WeekGroup(
-                                    cursor,
-                                    cursor,
-                                    formatLabel(cursor, cursor)
-                            )
-                    );
+                    groups.add(new InputsCheckDateHeader.WeekGroup(
+                            cursor,
+                            cursor,
+                            formatLabel(cursor, cursor)
+                    ));
                 } else {
-                    groups.add(
-                            new InputsCheckDateHeader.WeekGroup(
-                                    cursor,
-                                    next,
-                                    formatLabel(cursor, next)
-                            )
-                    );
+                    groups.add(new InputsCheckDateHeader.WeekGroup(
+                            cursor,
+                            next,
+                            formatLabel(cursor, next)
+                    ));
                 }
             }
     
             cursor = cursor.plusDays(1);
         }
     
-        return new InputsCheckDateHeader(1, groups,   new ArrayList<>());
+        // rows는 여기서 모름 → 빈 리스트
+        return new InputsCheckDateHeader(
+                month,
+                groups,
+                new ArrayList<>()
+        );
+    }
+    private List<InputsCheckDateHeader> createYearHeaders(int year) {
+    
+        List<InputsCheckDateHeader> headers = new ArrayList<>();
+    
+        for (int month = 1; month <= 12; month++) {
+            headers.add(createMonthHeader(year, month));
+        }
+    
+        return headers;
     }
     
 private String formatLabel(LocalDate start, LocalDate end) {
@@ -174,14 +191,5 @@ private String formatLabel(LocalDate start, LocalDate end) {
     
         return new InputsCheckRowResponse(gubun, weeks);
     }
-    
-    
-    private void ensureSize(List<InputsCheckRowResponse.CheckItem> list, int size) {
-        while (list.size() < size) {
-            list.add(null);
-        }
-    }
-    
-    
     
 }

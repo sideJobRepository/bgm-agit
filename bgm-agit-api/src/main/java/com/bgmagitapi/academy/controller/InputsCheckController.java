@@ -18,7 +18,7 @@ public class InputsCheckController {
     
     private final InputsCheckService inputsCheckService;
     
-    @GetMapping("/inputs/class")
+    @GetMapping("/inputsCheck")
     public InputsCheckGetResponse inputsCurriculum(@RequestParam String className) {
         return inputsCheckService.getInputsChecks(className);
     }
