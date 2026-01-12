@@ -156,21 +156,19 @@ export default function Curriculum() {
             classKey,
             title
         );
+        const confirmed = window.confirm('저장하시겠습니까?');
 
-        showConfirmModal({
-            message: '저장하시겠습니까?',
-            onConfirm: () => {
-                requestFn({
-                    url: '/bgm-agit/curriculum',
-                    body: payload,
-                    ignoreHttpError: true,
-                    onSuccess: () => {
-                        toast.success('저장되었습니다.');
-                        fetchCurriculum({ year: year, className: classKey });
-                    },
-                });
-            },
-        });
+        if (confirmed) {
+            requestFn({
+                url: '/bgm-agit/curriculum',
+                body: payload,
+                ignoreHttpError: true,
+                onSuccess: () => {
+                    toast.success('저장되었습니다.');
+                    fetchCurriculum({year: year, className: classKey});
+                },
+            });
+        }
     };
 
     console.log("curriculumData", curriculumData)

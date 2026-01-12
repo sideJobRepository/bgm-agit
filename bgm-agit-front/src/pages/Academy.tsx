@@ -79,12 +79,6 @@ export default function Academy() {
 
         {activeTab === 'view' && (
             <AcademyView
-                classKey={classKey}
-                onChangeClassKey={setClassKey}
-                curriculumState={curriculumState}
-                progressInputState={progressInputState}
-                year={2025}
-                month={12}
             />
         )}
     </Wrapper>
@@ -109,12 +103,14 @@ const AcademyTabBox = styled.section<WithTheme>`
   top: 0;
   height: 100px;
   width: 100%;
+  max-width: 1500px;
   display: flex;
   gap: 4px;
   margin-bottom: 12px;
   justify-content: space-between;
   align-items: center;
   padding: 0 24px;
+  background-color: white;
   border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
 `;
 

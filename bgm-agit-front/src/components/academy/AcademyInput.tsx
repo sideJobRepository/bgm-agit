@@ -131,43 +131,42 @@ export default function AcademyInput() {
     const requestFn = academyData?.id ? update : insert;
     const progressId = selectedProgressId ?? academyClassData[0]?.id ?? null;
 
-    showConfirmModal({
-      message: '저장하시겠습니까?',
-      onConfirm: () => {
-        const body = academyData?.id ? {
-          ...form,
-          id: academyData?.id,
-          curriculumProgressId: progressId,
-          inputsDate: dateStr,
-          inputsClasses: classKey,
-          progressItems: form.rows.map(row => ({
-            textbook: row.textbook,
-            unit: row.inputsUnit,
-            pages: row.inputsPages,
-          })),
-        } : {
-          ...form,
-          curriculumProgressId: progressId,
-          inputsDate: dateStr,
-          inputsClasses: classKey,
-          progressInputsRequests: form.rows.map(row => ({
-            textbook: row.textbook,
-            inputsUnit: row.inputsUnit,
-            inputsPages: row.inputsPages,
-          })),
-        }
+    const confirmed = window.confirm('저장하시겠습니까?');
 
-        requestFn({
-          url: '/bgm-agit/inputs',
-          body,
-          ignoreHttpError: true,
-          onSuccess: () => {
-            toast.success('저장되었습니다.');
-            fetchAcademy({ year: dateStr, className: classKey, curriculumProgressId: progressId});
-          },
-        });
-      },
-    });
+    if(confirmed) {
+      const body = academyData?.id ? {
+        ...form,
+        id: academyData?.id,
+        curriculumProgressId: progressId,
+        inputsDate: dateStr,
+        inputsClasses: classKey,
+        progressItems: form.rows.map(row => ({
+          textbook: row.textbook,
+          unit: row.inputsUnit,
+          pages: row.inputsPages,
+        })),
+      } : {
+        ...form,
+        curriculumProgressId: progressId,
+        inputsDate: dateStr,
+        inputsClasses: classKey,
+        progressInputsRequests: form.rows.map(row => ({
+          textbook: row.textbook,
+          inputsUnit: row.inputsUnit,
+          inputsPages: row.inputsPages,
+        })),
+      }
+
+      requestFn({
+        url: '/bgm-agit/inputs',
+        body,
+        ignoreHttpError: true,
+        onSuccess: () => {
+          toast.success('저장되었습니다.');
+          fetchAcademy({ year: dateStr, className: classKey, curriculumProgressId: progressId});
+        },
+      });
+    }
   };
 
   //초기 랜더
@@ -398,8 +397,12 @@ const TopBar = styled.div`
   align-items: center;
   justify-content: space-between;
   position: fixed;
-  top: 124px;
-  width: calc(100% - 48px);
+  top: 100px;
+  height: 50px;
+  max-width: 1500px;
+  padding: 0 48px 0 24px;
+  width: 100%;
+  background-color: white;
 `;
 
 const DateNav = styled.div<WithTheme>`
@@ -496,7 +499,7 @@ const Body = styled.div`
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 12px;
-  margin-top: 48px;
+  margin-top: 32px;
 `;
 
 const LeftPane = styled.div<WithTheme>`
