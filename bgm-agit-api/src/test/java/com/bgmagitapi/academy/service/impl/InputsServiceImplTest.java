@@ -71,29 +71,39 @@ class InputsServiceImplTest extends RepositoryAndServiceTestSupport {
     @Test
     void test3() {
         LocalDate date = LocalDate.now();
-        List<InputGetResponse> inputs = inputsService.getInputs("3g",date);
+        InputGetResponse inputs = inputsService.getInputs("3g",date);
         System.out.println("inputs = " + inputs);
     }
     
     @DisplayName("")
     @Test
     void test4() {
-        InputsPutRequest request = InputsPutRequest
-                .builder()
-                .id(1L)
+        InputsPutRequest request = InputsPutRequest.builder()
+                .id(4L)
                 .curriculumProgressId(2L)
                 .inputsClasses("3g")
                 .inputsTeacher("박sd지수")
                 .inputsSubjects("ssd수학")
-                .inputsUnit("단sd원")
-                .inputsPages("73페이지")
                 .inputsProgress("dddd")
                 .inputsTests("ddd")
                 .inputsHomework("sdsd숙제 많이해와라")
                 .inputsDate(LocalDate.now())
+                .progressItems(List.of(
+                        InputsPutRequest.ProgressItem.builder()
+                                .textbook("수학1")
+                                .unit("2단원")
+                                .pages("3페이지")
+                                .build(),
+                        InputsPutRequest.ProgressItem.builder()
+                                .textbook("수학1")
+                                .unit("3단원")
+                                .pages("4페이지")
+                                .build()
+                ))
                 .build();
-        
+    
         ApiResponse apiResponse = inputsService.modifyInputs(request);
+    
         System.out.println("apiResponse = " + apiResponse);
     }
 }

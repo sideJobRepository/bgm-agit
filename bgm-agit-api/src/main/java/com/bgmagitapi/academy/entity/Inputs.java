@@ -34,7 +34,6 @@ public class Inputs extends DateSuperClass {
     @Column(name = "INPUTS_SUBJECTS")
     private String subjects;
     
-    
     // 입력 진도
     @Column(name = "INPUTS_PROGRESS")
     private String progress;
@@ -51,5 +50,14 @@ public class Inputs extends DateSuperClass {
     @Column(name = "INPUTS_DATE")
     private LocalDate inputsDate;
     
+    
+    public void modify(InputsPutRequest request) {
+        this.classes = request.getInputsClasses();
+        this.teacher = request.getInputsTeacher();
+        this.subjects = request.getInputsSubjects();
+        this.tests = request.getInputsTests();
+        this.homework = request.getInputsHomework();
+        this.inputsDate = request.getInputsDate();
+    }
     
 }

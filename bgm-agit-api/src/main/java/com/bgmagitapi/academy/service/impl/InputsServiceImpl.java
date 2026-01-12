@@ -40,7 +40,7 @@ public class InputsServiceImpl implements InputsService {
     }
     
     @Override
-    public List<InputGetResponse> getInputs(String className,LocalDate date) {
+    public InputGetResponse getInputs(String className,LocalDate date) {
       
         List<ProgressInputs> rows =
                 inputsRepository.findByInputs(className, date);
@@ -84,7 +84,7 @@ public class InputsServiceImpl implements InputsService {
             );
         }
         
-        return new ArrayList<>(resultMap.values());
+        return resultMap.values();
     }
     
     @Override
@@ -123,11 +123,36 @@ public class InputsServiceImpl implements InputsService {
     
     @Override
     public ApiResponse modifyInputs(InputsPutRequest request) {
-        Long id = request.getId();
-        Long curriculumProgressId = request.getCurriculumProgressId();
-        Inputs findInputs = inputsRepository.findById(id).orElseThrow(() -> new RuntimeException("존재하지않는 id"));
-        CurriculumProgress findCurriculumProgress = progressRepository.findById(curriculumProgressId).orElseThrow(() -> new RuntimeException("존재하지않는 id"));
-        //findInputs.modifyInputs(request, findCurriculumProgress);
+
+        Inputs findInputs =
+                inputsRepository.findById(request.getId())
+                        .orElseThrow(() -> new RuntimeException("존재하지 않는 id"));
+    
+        CurriculumProgress findCurriculumProgress =
+                progressRepository.findById(request.getCurriculumProgressId())
+                        .orElseThrow(() -> new RuntimeException("존재하지 않는 id"));
+    
+        // 1. INPUTS 수정
+        findInputs.modify(request);
+    
+        // 2. 기존 단원 삭제
+        progressInputsRepository.deleteByInputs(findInputs);
+    
+        // 3. 단원 재등록
+        for (InputsPutRequest.ProgressItem item : request.getProgressItems()) {
+    
+            ProgressInputs progressInputs =
+                    ProgressInputs.builder()
+                            .inputs(findInputs)
+                            .curriculumProgress(findCurriculumProgress)
+                            .textBook(item.getTextbook())
+                            .unit(item.getUnit())
+                            .pages(item.getPages())
+                            .build();
+    
+            progressInputsRepository.save(progressInputs);
+        }
+    
         return new ApiResponse(200, true, "수정 되었습니다.");
     }
 }

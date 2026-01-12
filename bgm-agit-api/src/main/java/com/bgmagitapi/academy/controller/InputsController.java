@@ -28,7 +28,7 @@ public class InputsController {
     }
     
     @GetMapping("/inputs")
-    public List<InputGetResponse> inputs(@RequestParam String className , @RequestParam LocalDate year) {
+    public InputGetResponse inputs(@RequestParam String className , @RequestParam LocalDate year) {
         return inputsService.getInputs(className, year);
     }
     
