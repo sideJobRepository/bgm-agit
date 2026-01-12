@@ -22,11 +22,6 @@ public class Inputs extends DateSuperClass {
     @Column(name = "INPUTS_ID")
     private Long id;
     
-    // 커리큘럼 내용 ID
-    @JoinColumn(name = "CURRICULUM_PROGRESS_ID")
-    @ManyToOne(fetch = FetchType.LAZY)
-    private CurriculumProgress curriculumProgress;
-    
     // 입력 반
     @Column(name = "INPUTS_CLASSES")
     private String classes;
@@ -39,13 +34,6 @@ public class Inputs extends DateSuperClass {
     @Column(name = "INPUTS_SUBJECTS")
     private String subjects;
     
-    // 입력 단원
-    @Column(name = "INPUTS_UNIT")
-    private String unit;
-    
-    // 입력 페이지
-    @Column(name = "INPUTS_PAGES")
-    private String pages;
     
     // 입력 진도
     @Column(name = "INPUTS_PROGRESS")
@@ -58,29 +46,10 @@ public class Inputs extends DateSuperClass {
     // 입력 과제
     @Column(name = "INPUTS_HOMEWORK")
     private String homework;
-    // 입력 교재
-    @Column(name = "INPUTS_TEXTBOOK")
-    private String textbook;
     
     // 입력 일시
     @Column(name = "INPUTS_DATE")
     private LocalDate inputsDate;
     
-    public void modifyInputs(InputsPutRequest request, CurriculumProgress findCurriculumProgress) {
-        this.curriculumProgress = findCurriculumProgress;
-        this.classes = request.getInputsClasses();
-        this.teacher = request.getInputsTeacher();
-        this.subjects = request.getInputsSubjects();
-        this.unit = request.getInputsUnit();
-        this.pages = request.getInputsPages();
-        this.progress = request.getInputsProgress();
-        this.tests = request.getInputsTests();
-        this.textbook = request.getTextbook();
-        this.homework = request.getInputsHomework();
-        this.inputsDate = request.getInputsDate();
-    }
     
-    public void modifyInptsCurriculumProgressId() {
-        this.curriculumProgress = null;
-    }
 }

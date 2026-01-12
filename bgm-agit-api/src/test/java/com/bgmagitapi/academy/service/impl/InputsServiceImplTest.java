@@ -30,27 +30,48 @@ class InputsServiceImplTest extends RepositoryAndServiceTestSupport {
     @DisplayName("")
     @Test
     void test2() {
-        InputsPostRequest request = InputsPostRequest
+        
+        
+        InputsPostRequest.ProgressInputsRequest result1 = InputsPostRequest.ProgressInputsRequest
                 .builder()
                 .curriculumProgressId(1L)
+                .textbook("교재다다")
+                .inputsUnit("2단원")
+                .inputsPages("3페이지")
+                .build();
+        
+        
+        InputsPostRequest.ProgressInputsRequest result2 = InputsPostRequest.ProgressInputsRequest
+                .builder()
+                .curriculumProgressId(2L)
+                .textbook("교재ㅇㅇㅇㅇ다다")
+                .inputsUnit("3단원")
+                .inputsPages("4페이지")
+                .build();
+        
+        List<InputsPostRequest.ProgressInputsRequest> list = List.of(result1, result2);
+        
+        InputsPostRequest request = InputsPostRequest
+                .builder()
                 .inputsClasses("3g")
                 .inputsTeacher("박지수")
                 .inputsSubjects("수학")
-                .inputsUnit("단원")
-                .inputsPages("73페이지")
                 .inputsProgress("입력진도")
                 .inputsTests("시험보자")
                 .inputsHomework("숙제 많이해와라")
+                .progressInputsRequests(list)
                 .inputsDate(LocalDate.now())
                 .build();
         
         ApiResponse inputs = inputsService.createInputs(request);
+        System.out.println("inputs = " + inputs);
     }
     
     @DisplayName("")
     @Test
     void test3() {
-        List<InputGetResponse> inputs = inputsService.getInputs("3g");
+        LocalDate date = LocalDate.now();
+        List<InputGetResponse> inputs = inputsService.getInputs("3g",date);
         System.out.println("inputs = " + inputs);
     }
     

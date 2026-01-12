@@ -153,7 +153,7 @@ public class CurriculumServiceImpl implements CurriculumService {
                 );
         
         for (Inputs input : inputs) {
-            input.modifyInptsCurriculumProgressId();;
+         //   input.modifyInptsCurriculumProgressId();;
         }
         curriculumProgressRepository.deleteAll(progresses);
         curriculumRepository.delete(curriculum);

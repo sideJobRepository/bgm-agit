@@ -1,20 +1,22 @@
 package com.bgmagitapi.academy.repository.impl;
 
-import com.bgmagitapi.academy.dto.response.InputGetResponse;
 import com.bgmagitapi.academy.dto.response.InputsCurriculumGetResponse;
-import com.bgmagitapi.academy.dto.response.QInputGetResponse;
 import com.bgmagitapi.academy.dto.response.QInputsCurriculumGetResponse;
-import com.bgmagitapi.academy.entity.*;
+import com.bgmagitapi.academy.entity.CurriculumCont;
+import com.bgmagitapi.academy.entity.Inputs;
+import com.bgmagitapi.academy.entity.ProgressInputs;
 import com.bgmagitapi.academy.repository.query.InputsQueryRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static com.bgmagitapi.academy.entity.QCurriculum.curriculum;
-import static com.bgmagitapi.academy.entity.QCurriculumCont.*;
+import static com.bgmagitapi.academy.entity.QCurriculumCont.curriculumCont;
 import static com.bgmagitapi.academy.entity.QCurriculumProgress.curriculumProgress;
-import static com.bgmagitapi.academy.entity.QInputs.*;
+import static com.bgmagitapi.academy.entity.QInputs.inputs;
+import static com.bgmagitapi.academy.entity.QProgressInputs.progressInputs;
 
 @RequiredArgsConstructor
 public class InputsRepositoryImpl implements InputsQueryRepository {
@@ -31,32 +33,20 @@ public class InputsRepositoryImpl implements InputsQueryRepository {
                 ))
                 .from(curriculumProgress)
                 .join(curriculumProgress.curriculum, curriculum)
-                .where(curriculum.classes.eq(className) , curriculum.years.eq(year))
+                .where(curriculum.classes.eq(className), curriculum.years.eq(year))
                 .fetch();
     }
     
     @Override
-    public List<InputGetResponse> findByInputs(String className) {
+    public List<ProgressInputs> findByInputs(String className, LocalDate date) {
         return queryFactory
                 .select(
-                        new QInputGetResponse(
-                                inputs.id,
-                                curriculumProgress.id,
-                                inputs.classes,
-                                inputs.teacher,
-                                inputs.subjects,
-                                inputs.unit,
-                                inputs.pages,
-                                inputs.progress,
-                                inputs.tests,
-                                inputs.homework,
-                                inputs.inputsDate,
-                                inputs.progress
-                        )
+                        progressInputs
                 )
-                .from(inputs)
-                .join(inputs.curriculumProgress, curriculumProgress)
-                .where(inputs.classes.eq(className))
+                .from(progressInputs)
+                .join(progressInputs.curriculumProgress, curriculumProgress).fetchJoin()
+                .join(progressInputs.inputs, inputs).fetchJoin()
+                .where(inputs.classes.eq(className) , inputs.inputsDate.eq(date))
                 .fetch();
     }
     
@@ -72,9 +62,10 @@ public class InputsRepositoryImpl implements InputsQueryRepository {
     
     @Override
     public List<Inputs> findByCurriculumProgressIds(List<Long> list) {
-        return queryFactory
-                .selectFrom(inputs)
-                .where(inputs.curriculumProgress.id.in(list))
-                .fetch();
+        return null;
+//        return queryFactory
+//                .selectFrom(inputs)
+//                .where(inputs.curriculumProgress.id.in(list))
+//                .fetch();
     }
 }
