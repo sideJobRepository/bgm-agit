@@ -12,6 +12,8 @@ import java.util.List;
 @Data
 public class InputsCheckRowResponse {
 
+    private String teacher;
+    private String className;
     private String progressGubun;
     private List<WeekCheck> weeks;
 

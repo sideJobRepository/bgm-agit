@@ -13,8 +13,7 @@ public class InputsCheckDateHeader {
   
     private int month;
     private List<WeekGroup> weekGroups;
-    
-    private List<InputsCheckRowResponse> rows;
+    private List<InputsCheckClassResponse> rows;
 
     @Getter
     @AllArgsConstructor
