@@ -29,4 +29,10 @@ public class Curriculum extends DateSuperClass {
     
     @Column(name = "CURRICULUM_TITLE")
     private String title;
+    
+    public void modify(String title, Integer year, String className) {
+        this.title = title;
+        this.years = year;
+        this.classes = className;
+    }
 }

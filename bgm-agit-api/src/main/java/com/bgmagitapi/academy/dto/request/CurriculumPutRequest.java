@@ -24,19 +24,19 @@ public class CurriculumPutRequest {
               "id" : 1
               "progressType": "국어",
               "ranges": [
-                { id: 1 , "startMonth": 1, "endMonth": 3, "content": "받아쓰기" },
-                { id: 2 , "startMonth": 4, "endMonth": 4, "content": "문장 쓰기" },
-                { id: 3 , "startMonth": 5, "endMonth": 6, "content": "동화 읽기" }
-                { id: 4 , "startMonth": 7, "endMonth": 7, "content": "문장 읽기" }
+                {  "startMonth": 1, "endMonth": 3, "content": "받아쓰기" },
+                {  "startMonth": 4, "endMonth": 4, "content": "문장 쓰기" },
+                {  "startMonth": 5, "endMonth": 6, "content": "동화 읽기" }
+                {  "startMonth": 7, "endMonth": 7, "content": "문장 읽기" }
               ]
             },
             {
-              "id" : 2
+              "id" : null
               "progressType": "수학",
               "ranges": [
-                { id:5, "startMonth": 1, "endMonth": 2, "content": "덧셈" },
-                { id:6, "startMonth": 3, "endMonth": 5, "content": "뺄셈" }
-                { id:7, "startMonth": 6, "endMonth": 6, "content": "곱하기" }
+                {  "startMonth": 1, "endMonth": 2, "content": "덧셈" },
+                {  "startMonth": 3, "endMonth": 5, "content": "뺄셈" }
+                {  "startMonth": 6, "endMonth": 6, "content": "곱하기" }
               ]
             }
           ]
@@ -61,6 +61,7 @@ public class CurriculumPutRequest {
     @NoArgsConstructor
     @Builder
     public static class Row {
+        private Long id;
         private String progressType;
         private List<MonthContent> months;
         

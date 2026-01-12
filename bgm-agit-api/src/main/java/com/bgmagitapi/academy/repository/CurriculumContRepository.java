@@ -11,4 +11,11 @@ public interface CurriculumContRepository extends JpaRepository<CurriculumCont, 
     @Modifying
     @Query("delete from CurriculumCont c where c.curriculumProgress.curriculum.id = :curriculumId")
     void deleteByCurriculumId(@Param("curriculumId") Long curriculumId);
+    
+    @Modifying
+    @Query("""
+        delete from CurriculumCont c
+         where c.curriculumProgress.id = :progressId
+    """)
+    void deleteByCurriculumProgressId(@Param("progressId") Long progressId);
 }

@@ -1,10 +1,10 @@
 package com.bgmagitapi.academy.repository.query;
 
-import com.bgmagitapi.academy.entity.CurriculumCont;
+import com.querydsl.core.Tuple;
 
 import java.util.List;
 
 public interface CurriculumQueryRepository {
 
-    List<CurriculumCont> findByCurriculum(Integer year , String className);
+    List<Tuple> findByCurriculum(Integer year , String className);
 }
