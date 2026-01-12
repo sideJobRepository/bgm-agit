@@ -43,7 +43,7 @@ export default function HandsontableBase({
                     'remove_row',
                     {
                         key: 'row_above',
-                        name: 'row_above',
+                        name: 'Row above',
                         callback: () => {
                             const hot = hotRef.current?.hotInstance;
                             if (!hot) return;
@@ -59,7 +59,7 @@ export default function HandsontableBase({
                     },
                     {
                         key: 'row_below',
-                        name: 'row_below',
+                        name: 'Row below',
                         callback: () => {
                             const hot = hotRef.current?.hotInstance;
                             if (!hot) return;
@@ -74,8 +74,6 @@ export default function HandsontableBase({
                         },
 
                     },
-                    'undo',
-                    'redo',
                     {
                         key: 'mergeCells',
                         name: 'Merge cells',

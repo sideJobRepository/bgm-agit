@@ -15,3 +15,8 @@ export const academyClassDataState = atom<AcademyClass[] | []>({
     key: 'academyClassDataState',
     default: [],
 });
+
+export const academyViewDataState = atom({
+    key: 'academyViewDataState',
+    default: null,
+});
