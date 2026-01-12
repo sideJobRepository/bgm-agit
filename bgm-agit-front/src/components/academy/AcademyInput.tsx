@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -52,6 +52,7 @@ export default function AcademyInput() {
   const academyClassData = useRecoilValue(academyClassDataState);
   console.log("academyClassData", academyClassData);
 
+  const [selectedProgressId, setSelectedProgressId] = useState<number | null>(null);
 
   const categoryOptions = [
     { value: '3g', label: '3g' },
@@ -84,7 +85,7 @@ export default function AcademyInput() {
     ]
   });
 
-  const setField = (k: keyof typeof form, v: number) => setForm(prev => ({ ...prev, [k]: v }));
+  const setField = (k: keyof typeof form, v: string | number) => setForm(prev => ({ ...prev, [k]: v }));
 
   const moveDay = (delta: number) => {
     const next = new Date(selectedDate);
@@ -128,6 +129,7 @@ export default function AcademyInput() {
     console.log("curriculumProgressId", form)
 
     const requestFn = academyData?.id ? update : insert;
+    const progressId = selectedProgressId ?? academyClassData[0]?.id ?? null;
 
     showConfirmModal({
       message: '저장하시겠습니까?',
@@ -135,6 +137,7 @@ export default function AcademyInput() {
         const body = academyData?.id ? {
           ...form,
           id: academyData?.id,
+          curriculumProgressId: progressId,
           inputsDate: dateStr,
           inputsClasses: classKey,
           progressItems: form.rows.map(row => ({
@@ -144,6 +147,7 @@ export default function AcademyInput() {
           })),
         } : {
           ...form,
+          curriculumProgressId: progressId,
           inputsDate: dateStr,
           inputsClasses: classKey,
           progressInputsRequests: form.rows.map(row => ({
@@ -159,52 +163,67 @@ export default function AcademyInput() {
           ignoreHttpError: true,
           onSuccess: () => {
             toast.success('저장되었습니다.');
-            fetchAcademy({ year: dateStr, className: classKey, curriculumProgressId: form.curriculumProgressId});
+            fetchAcademy({ year: dateStr, className: classKey, curriculumProgressId: progressId});
           },
         });
       },
     });
   };
 
-
   //초기 랜더
   useEffect(() => {
     const year = selectedDate.getFullYear();
-    const yearStr = fmtDate(selectedDate);
-    console.log("yearStr", yearStr)
-    console.log("selectedDate", selectedDate, "className",  year)
-    fetchAcademyClass({className : classKey, year: year});
-
-    if(form.curriculumProgressId){
-      fetchAcademy({className: classKey, year: yearStr, curriculumProgressId: form.curriculumProgressId})
-    }
-
-  }, [classKey, selectedDate, form.curriculumProgressId]);
+    console.log("날짜 바뀌면 실행")
+    setSelectedProgressId(null);
+    fetchAcademyClass({ className: classKey, year });
+  }, [classKey, selectedDate]);
 
   useEffect(() => {
-    if (academyClassData.length > 0 && !form.curriculumProgressId) {
-      setField('curriculumProgressId', academyClassData[0].id);
+    if (academyClassData.length > 0 && selectedProgressId === null) {
+      setSelectedProgressId(academyClassData[0].id);
     }
   }, [academyClassData]);
 
+
   useEffect(() => {
-    if (academyData && academyData.id) {
-      setForm({
-        curriculumProgressId: academyData.curriculumProgressId ?? null,
-        inputsClasses: academyData.classesName ?? '',
-        inputsDate: academyData.inputsDate ?? '',
-        inputsTeacher: academyData.teacher ?? '',
-        inputsSubjects: academyData.subjects ?? '',
-        inputsProgress: academyData.progress ?? '',
-        inputsTests: academyData.tests ?? '',
-        inputsHomework: academyData.homework ?? '',
-        rows: (academyData.progressItems || []).map((item: any) => ({
-          textbook: item.textBook,
-          inputsUnit: item.unit,
-          inputsPages: item.pages,
-        })),
+    if (selectedProgressId) {
+      const yearStr = fmtDate(selectedDate);
+      fetchAcademy({
+        className: classKey,
+        year: yearStr,
+        curriculumProgressId: selectedProgressId,
       });
     }
+  }, [selectedProgressId]);
+
+
+  useEffect(() => {
+
+    setForm({
+      curriculumProgressId: academyData?.curriculumProgressId ?? null,
+      inputsClasses: academyData?.classesName ?? '',
+      inputsDate: academyData?.inputsDate ?? '',
+      inputsTeacher: academyData?.teacher ?? '',
+      inputsSubjects: academyData?.subjects ?? '',
+      inputsProgress: academyData?.progress ?? '',
+      inputsTests: academyData?.tests ?? '',
+      inputsHomework: academyData?.homework ?? '',
+      rows:
+          (academyData?.progressItems && academyData.progressItems.length > 0)
+              ? academyData.progressItems.map((item: any) => ({
+                textbook: item?.textBook ?? '',
+                inputsUnit: item?.unit ?? '',
+                inputsPages: item?.pages ?? '',
+              }))
+              : [
+                {
+                  textbook: '',
+                  inputsUnit: '',
+                  inputsPages: '',
+                },
+              ],
+    });
+
   }, [academyData]);
 
 
@@ -282,12 +301,14 @@ export default function AcademyInput() {
               </Field>
               <Field>
                 <Label>진도구분</Label>
-                <Select value={form.curriculumProgressId} onChange={e => setField('curriculumProgressId', e.target.value)}>
-                  {academyClassData?.map(opt => (
+                <Select
+                    value={selectedProgressId ?? ''}
+                    onChange={e => setSelectedProgressId(Number(e.target.value))}
+                >
+                  {academyClassData.map(opt => (
                       <option key={opt.id} value={opt.id}>
                         {opt.progressType}
                       </option>
-
                   ))}
                 </Select>
               </Field>
