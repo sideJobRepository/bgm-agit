@@ -55,13 +55,13 @@ public class InputsRepositoryImpl implements InputsQueryRepository {
     }
     
     @Override
-    public List<ProgressInputs> findByInputsCheck(String className) {
+    public List<ProgressInputs> findByInputsCheck() {
          return queryFactory.
                 selectFrom(progressInputs)
                         .join(progressInputs.inputs, inputs).fetchJoin()
                          .join(progressInputs.curriculumProgress, curriculumProgress).fetchJoin()
                          .join(curriculumProgress.curriculum, curriculum).fetchJoin()
-                 .where(curriculum.classes.eq(className)).fetch();
+                 .fetch();
     }
     
     @Override

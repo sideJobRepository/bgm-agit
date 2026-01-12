@@ -25,7 +25,7 @@ public class InputsCheckServiceImpl implements InputsCheckService {
     
     
     @Override
-    public InputsCheckGetResponse getInputsChecks(String className) {
+    public InputsCheckGetResponse getInputsChecks() {
         int year = LocalDate.now().getYear();
     
         List<InputsCheckDateHeader> headers = createYearHeaders(year);
@@ -34,8 +34,7 @@ public class InputsCheckServiceImpl implements InputsCheckService {
             InputsCheckDateHeader header = headers.get(i);
     
             List<InputsCheckRowResponse> rows =
-                    buildCheckRows(className, header);
-    
+                    buildCheckRows(header);
             headers.set(
                     i,
                     new InputsCheckDateHeader(
@@ -123,13 +122,10 @@ private String formatLabel(LocalDate start, LocalDate end) {
             + "(" + end.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN) + ")";
 }
 
-    private List<InputsCheckRowResponse> buildCheckRows(
-            String className,
-            InputsCheckDateHeader header
-    ) {
+    private List<InputsCheckRowResponse> buildCheckRows(InputsCheckDateHeader header) {
     
         List<ProgressInputs> rows =
-                inputsRepository.findByInputsCheck(className);
+                inputsRepository.findByInputsCheck();
     
         Map<String, InputsCheckRowResponse> resultMap = new LinkedHashMap<>();
     
@@ -153,15 +149,20 @@ private String formatLabel(LocalDate start, LocalDate end) {
                     );
     
             for (InputsCheckRowResponse.WeekCheck week : parent.getWeeks()) {
-    
+                boolean matched = false;
+            
                 if (date.equals(week.getStartDate())) {
                     week.setStartItem(item);
-                    break;
+                    matched = true;
                 }
-    
+            
                 if (date.equals(week.getEndDate())) {
                     week.setEndItem(item);
-                    break;
+                    matched = true;
+                }
+            
+                if (matched) {
+                    break; // 이 주에 들어갔으면 다음 week는 볼 필요 없음
                 }
             }
         }

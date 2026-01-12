@@ -21,7 +21,7 @@ class InputsCheckServiceImplTest extends RepositoryAndServiceTestSupport {
     @DisplayName("")
     @Test
     void test1(){
-        InputsCheckGetResponse inputsChecks = inputsCheckService.getInputsChecks("3g");
+        InputsCheckGetResponse inputsChecks = inputsCheckService.getInputsChecks();
         
         System.out.println("inputsChecks = " + inputsChecks);
         

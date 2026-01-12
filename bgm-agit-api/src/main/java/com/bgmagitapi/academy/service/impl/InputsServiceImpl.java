@@ -90,7 +90,6 @@ public class InputsServiceImpl implements InputsService {
     
     @Override
     public ApiResponse createInputs(InputsPostRequest request) {
-        
         Inputs inputs = Inputs
                           .builder()
                           .classes(request.getInputsClasses())
@@ -99,7 +98,7 @@ public class InputsServiceImpl implements InputsService {
                           .progress(request.getInputsProgress())
                           .tests(request.getInputsTests())
                           .homework(request.getInputsHomework())
-                          .inputsDate(LocalDate.now())
+                          .inputsDate(request.getInputsDate())
                           .build();
         inputsRepository.save(inputs);
         Long curriculumProgressId = request.getCurriculumProgressId();

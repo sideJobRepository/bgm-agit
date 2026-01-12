@@ -7,6 +7,6 @@ import java.util.List;
 public interface InputsCheckService {
 
     
-    InputsCheckGetResponse getInputsChecks(String className);
+    InputsCheckGetResponse getInputsChecks();
 
 }

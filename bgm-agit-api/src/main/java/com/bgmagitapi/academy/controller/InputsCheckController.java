@@ -20,6 +20,6 @@ public class InputsCheckController {
     
     @GetMapping("/inputsCheck")
     public InputsCheckGetResponse inputsCurriculum(@RequestParam String className) {
-        return inputsCheckService.getInputsChecks(className);
+        return inputsCheckService.getInputsChecks();
     }
 }

@@ -11,7 +11,7 @@ public interface InputsQueryRepository {
     
     List<ProgressInputs> findByInputs(String className, LocalDate date, Long curriculumProgressId);
     
-    List<ProgressInputs> findByInputsCheck(String className);
+    List<ProgressInputs> findByInputsCheck();
     
     List<ProgressInputs> findByCurriculumProgressIds(List<Long> list);
 }
