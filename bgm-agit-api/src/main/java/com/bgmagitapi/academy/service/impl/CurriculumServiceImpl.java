@@ -3,17 +3,13 @@ package com.bgmagitapi.academy.service.impl;
 import com.bgmagitapi.academy.dto.request.CurriculumPostRequest;
 import com.bgmagitapi.academy.dto.request.CurriculumPutRequest;
 import com.bgmagitapi.academy.dto.response.CurriculumGetResponse;
-import com.bgmagitapi.academy.entity.Curriculum;
-import com.bgmagitapi.academy.entity.CurriculumCont;
-import com.bgmagitapi.academy.entity.CurriculumProgress;
-import com.bgmagitapi.academy.entity.Inputs;
+import com.bgmagitapi.academy.entity.*;
 import com.bgmagitapi.academy.repository.CurriculumContRepository;
 import com.bgmagitapi.academy.repository.CurriculumProgressRepository;
 import com.bgmagitapi.academy.repository.CurriculumRepository;
 import com.bgmagitapi.academy.repository.InputsRepository;
 import com.bgmagitapi.academy.service.CurriculumService;
 import com.bgmagitapi.apiresponse.ApiResponse;
-import com.querydsl.codegen.ParameterizedTypeImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -153,7 +149,11 @@ public class CurriculumServiceImpl implements CurriculumService {
                 );
         
         for (Inputs input : inputs) {
-         //   input.modifyInptsCurriculumProgressId();;
+            List<ProgressInputs> bycurriculumProgress = curriculumProgressRepository.findBycurriculumProgress(input.getId());
+            for (ProgressInputs progress : bycurriculumProgress) {
+                progress.modifyCurriculumProgress();
+            }
+            
         }
         curriculumProgressRepository.deleteAll(progresses);
         curriculumRepository.delete(curriculum);

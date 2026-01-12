@@ -39,4 +39,8 @@ public class ProgressInputs extends DateSuperClass {
     // 입력 페이지
     @Column(name = "INPUTS_PAGES")
     private String pages;
+    
+    public void modifyCurriculumProgress() {
+        this.curriculumProgress = null;
+    }
 }
