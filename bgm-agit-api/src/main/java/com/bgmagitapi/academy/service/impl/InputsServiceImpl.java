@@ -102,12 +102,11 @@ public class InputsServiceImpl implements InputsService {
                           .inputsDate(LocalDate.now())
                           .build();
         inputsRepository.save(inputs);
+        Long curriculumProgressId = request.getCurriculumProgressId();
+                 CurriculumProgress curriculumProgress = progressRepository.findById(curriculumProgressId)
+                         .orElseThrow(() -> new RuntimeException("존재하지않는 커리큘럼 입니다."));
         List<InputsPostRequest.ProgressInputsRequest> progressInputsRequests = request.getProgressInputsRequests();
         for (InputsPostRequest.ProgressInputsRequest progressInputsRequest : progressInputsRequests) {
-            Long curriculumProgressId = progressInputsRequest.getCurriculumProgressId();
-            CurriculumProgress curriculumProgress = progressRepository.findById(curriculumProgressId)
-                    .orElseThrow(() -> new RuntimeException("존재하지않는 커리큘럼 입니다."));
-            
             ProgressInputs progressInputs = ProgressInputs
                     .builder()
                     .curriculumProgress(curriculumProgress)

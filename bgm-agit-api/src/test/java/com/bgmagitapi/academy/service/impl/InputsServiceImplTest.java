@@ -34,7 +34,6 @@ class InputsServiceImplTest extends RepositoryAndServiceTestSupport {
         
         InputsPostRequest.ProgressInputsRequest result1 = InputsPostRequest.ProgressInputsRequest
                 .builder()
-                .curriculumProgressId(1L)
                 .textbook("교재다다")
                 .inputsUnit("2단원")
                 .inputsPages("3페이지")
@@ -43,7 +42,6 @@ class InputsServiceImplTest extends RepositoryAndServiceTestSupport {
         
         InputsPostRequest.ProgressInputsRequest result2 = InputsPostRequest.ProgressInputsRequest
                 .builder()
-                .curriculumProgressId(2L)
                 .textbook("교재ㅇㅇㅇㅇ다다")
                 .inputsUnit("3단원")
                 .inputsPages("4페이지")
@@ -54,6 +52,7 @@ class InputsServiceImplTest extends RepositoryAndServiceTestSupport {
         InputsPostRequest request = InputsPostRequest
                 .builder()
                 .inputsClasses("3g")
+                .curriculumProgressId(1L)
                 .inputsTeacher("박지수")
                 .inputsSubjects("수학")
                 .inputsProgress("입력진도")

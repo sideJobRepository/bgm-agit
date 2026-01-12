@@ -16,6 +16,7 @@ import java.util.List;
 public class InputsPostRequest {
     
     
+    private Long curriculumProgressId;
     // 입력 반
     private String inputsClasses;
     
@@ -50,7 +51,6 @@ public class InputsPostRequest {
     @NoArgsConstructor
     @Builder
     public static class ProgressInputsRequest {
-        private Long curriculumProgressId;
         // 입력 교재
         private String textbook;
         // 입력 단원
