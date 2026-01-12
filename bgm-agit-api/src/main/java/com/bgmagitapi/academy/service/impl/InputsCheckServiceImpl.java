@@ -3,7 +3,6 @@ package com.bgmagitapi.academy.service.impl;
 import com.bgmagitapi.academy.dto.response.InputsCheckDateHeader;
 import com.bgmagitapi.academy.dto.response.InputsCheckGetResponse;
 import com.bgmagitapi.academy.dto.response.InputsCheckRowResponse;
-import com.bgmagitapi.academy.entity.CurriculumCont;
 import com.bgmagitapi.academy.entity.ProgressInputs;
 import com.bgmagitapi.academy.repository.InputsRepository;
 import com.bgmagitapi.academy.service.InputsCheckService;
@@ -27,11 +26,21 @@ public class InputsCheckServiceImpl implements InputsCheckService {
     
     @Override
     public InputsCheckGetResponse getInputsChecks(String className) {
-  
-        InputsCheckDateHeader header = createJanuaryHeader(2026);
-        List<InputsCheckRowResponse> rows = buildCheckRows(className,header);
+        // 1) weekGroups 생성 (기존 createJanuaryHeader에서 뽑거나 그대로 써도 됨)
+        InputsCheckDateHeader tmpHeader = createJanuaryHeader(2026);
     
-        return new InputsCheckGetResponse(header, rows);
+        // 2) rows 생성 (weekGroups를 쓰든 header를 쓰든 기존 로직 그대로)
+        List<InputsCheckRowResponse> rows = buildCheckRows(className, tmpHeader);
+    
+        // 3)  rows 포함한 최종 header 생성
+        InputsCheckDateHeader header = new InputsCheckDateHeader(
+                tmpHeader.getMonth(),
+                tmpHeader.getWeekGroups(),
+                rows
+        );
+    
+        // 4) response는 header만
+        return new InputsCheckGetResponse(header);
     }
     
     private InputsCheckDateHeader createJanuaryHeader(int year) {
@@ -83,85 +92,89 @@ public class InputsCheckServiceImpl implements InputsCheckService {
             cursor = cursor.plusDays(1);
         }
     
-        return new InputsCheckDateHeader(1, groups);
+        return new InputsCheckDateHeader(1, groups,   new ArrayList<>());
     }
     
-    private String formatLabel(LocalDate start, LocalDate end) {
-        if (start.equals(end)) {
-            return start.getMonthValue() + "/" + start.getDayOfMonth()
-                    + "(" + start.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN) + ")";
-        }
+private String formatLabel(LocalDate start, LocalDate end) {
+    if (start.equals(end)) {
         return start.getMonthValue() + "/" + start.getDayOfMonth()
-                + "(" + start.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN) + ")~"
-                + end.getMonthValue() + "/" + end.getDayOfMonth()
-                + "(" + end.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN) + ")";
+                + "(" + start.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN) + ")";
     }
+    return start.getMonthValue() + "/" + start.getDayOfMonth()
+            + "(" + start.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN) + ")~"
+            + end.getMonthValue() + "/" + end.getDayOfMonth()
+            + "(" + end.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN) + ")";
+}
+
     
-    private List<InputsCheckRowResponse> buildCheckRows(String className,  InputsCheckDateHeader header) {
-    
-        // 1. DB 조회 (ProgressInputs 기준)
-      List<ProgressInputs> rows =
-              inputsRepository.findByInputsCheck(className);
-  
-      // 2. 진도구분 기준으로 묶기
-      Map<String, InputsCheckRowResponse> resultMap = new LinkedHashMap<>();
-  
-      for (ProgressInputs row : rows) {
-  
-          String gubun =
-                  row.getCurriculumProgress()
-                          .getProgressGubun();
-  
-          InputsCheckRowResponse parent =
-                  resultMap.computeIfAbsent(
-                          gubun,
-                          key -> new InputsCheckRowResponse(
-                                  key,
-                                  new ArrayList<>()
-                          )
-                  );
-  
-          // 3. CheckItem 생성
-          InputsCheckRowResponse.CheckItem item =
-                  new InputsCheckRowResponse.CheckItem(
-                          row.getInputs().getInputsDate(),
-                          row.getUnit() + " " + row.getPages()
-                  );
-  
-          // 4. 날짜 기준 정확한 위치에 배치
-          addItemByWeekGroup(parent, header, item);
-      }
-  
-      return new ArrayList<>(resultMap.values());
-    }
-    
-    private void addItemByWeekGroup(
-            InputsCheckRowResponse row,
-            InputsCheckDateHeader header,
-            InputsCheckRowResponse.CheckItem item
+    private List<InputsCheckRowResponse> buildCheckRows(
+            String className,
+            InputsCheckDateHeader header
     ) {
-        LocalDate date = item.getDate();
+    
+        List<ProgressInputs> rows =
+                inputsRepository.findByInputsCheck(className);
+    
+        Map<String, InputsCheckRowResponse> resultMap = new LinkedHashMap<>();
+    
+        for (ProgressInputs row : rows) {
+    
+            String gubun =
+                    row.getCurriculumProgress().getProgressGubun();
+    
+            InputsCheckRowResponse parent =
+                    resultMap.computeIfAbsent(
+                            gubun,
+                            key -> createEmptyRow(key, header)
+                    );
+    
+            LocalDate date = row.getInputs().getInputsDate();
+    
+            InputsCheckRowResponse.CheckItem item =
+                    new InputsCheckRowResponse.CheckItem(
+                            date,
+                            row.getUnit() + " " + row.getPages()
+                    );
+    
+            //  WeekGroup 안에 직접 넣는다
+            for (InputsCheckRowResponse.WeekCheck week : parent.getWeeks()) {
+    
+                if (date.equals(week.getStartDate())) {
+                    week.setStartItem(item);
+                    break;
+                }
+    
+                if (date.equals(week.getEndDate())) {
+                    week.setEndItem(item);
+                    break;
+                }
+            }
+        }
+    
+        return new ArrayList<>(resultMap.values());
+    }
+  
+    
+    private InputsCheckRowResponse createEmptyRow(
+            String gubun,
+            InputsCheckDateHeader header
+    ) {
+        List<InputsCheckRowResponse.WeekCheck> weeks = new ArrayList<>();
     
         for (InputsCheckDateHeader.WeekGroup group : header.getWeekGroups()) {
-    
-            // startDate → 무조건 첫 칸 (월/수/금)
-            if (date.equals(group.getStartDate())) {
-                ensureSize(row.getItems(), 1);
-                row.getItems().set(0, item);
-                return;
-            }
-    
-            // endDate → 두 번째 칸 (화/목/토)
-            if (date.equals(group.getEndDate())) {
-                ensureSize(row.getItems(), 2);
-                row.getItems().set(1, item);
-                return;
-            }
+            weeks.add(
+                    new InputsCheckRowResponse.WeekCheck(
+                            group.getStartDate(),
+                            group.getEndDate(),
+                            null,
+                            null
+                    )
+            );
         }
     
-        // 어느 주에도 안 맞으면 뒤에 추가 (예외 케이스)
-        row.getItems().add(item);
+        return new InputsCheckRowResponse(gubun, weeks);
     }
+    
     
     private void ensureSize(List<InputsCheckRowResponse.CheckItem> list, int size) {
         while (list.size() < size) {

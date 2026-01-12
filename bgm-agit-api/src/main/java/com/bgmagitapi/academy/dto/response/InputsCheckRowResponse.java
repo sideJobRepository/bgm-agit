@@ -1,6 +1,7 @@
 package com.bgmagitapi.academy.dto.response;
 
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
 
 import java.time.LocalDate;
@@ -8,19 +9,25 @@ import java.util.List;
 
 @Getter
 @AllArgsConstructor
+@Data
 public class InputsCheckRowResponse {
 
-    // 진도 구분 (기본 / 실력 / 점프 / 유형 / step45 등)
     private String progressGubun;
+    private List<WeekCheck> weeks;
 
-    // 날짜별 체크 데이터
-    private List<CheckItem> items;
-
-    @Getter
     @AllArgsConstructor
-    public static class CheckItem {
+    @Data
+    public static class WeekCheck {
+        private LocalDate startDate;
+        private LocalDate endDate;
+        private CheckItem startItem; // 월/수/금
+        private CheckItem endItem;   // 화/목/토
+    }
 
-        private LocalDate date;   // 해당 날짜
-        private String content;   // 단원/페이지/텍스트
+    @AllArgsConstructor
+    @Data
+    public static class CheckItem {
+        private LocalDate date;
+        private String content;
     }
 }
