@@ -6,37 +6,10 @@ import AcademyInput from '../components/academy/AcademyInput.tsx';
 import AcademyView from '../components/academy/AcademyView.tsx';
 
 type AcademyTabKey = 'curriculum' | 'input' | 'view';
-export type ClassKey = '3g' | '3k' | '4g1';
-
-type CurriculumState = {
-  // 반별로 rows 저장
-  byClass: Record<ClassKey, any[]>;
-  titleByClass: Record<ClassKey, string>;
-};
-
-type ProgressInputState = { rows: any[] }; // 일단 가라
 
 export default function Academy() {
   const [activeTab, setActiveTab] = useState<AcademyTabKey>('curriculum');
 
-  // 부모가 최상위 키 관리
-  const [classKey, setClassKey] = useState<ClassKey>('3g');
-
-  // 부모가 탭별 데이터도 관리
-  const [curriculumState, setCurriculumState] = useState<CurriculumState>({
-    byClass: {
-      '3g': [],
-      '3k': [],
-      '4g1': [],
-    },
-    titleByClass: {
-      '3g': '',
-      '3k': '',
-      '4g1': '',
-    },
-  });
-
-  const [progressInputState, setProgressInputState] = useState<ProgressInputState>({ rows: [] });
 
   return (
     <Wrapper>
@@ -111,6 +84,7 @@ const AcademyTabBox = styled.section<WithTheme>`
   align-items: center;
   padding: 0 24px;
   background-color: white;
+  z-index: 999999;
   border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
 `;
 
