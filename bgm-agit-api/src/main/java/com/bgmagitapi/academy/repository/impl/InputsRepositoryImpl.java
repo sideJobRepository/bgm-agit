@@ -65,11 +65,10 @@ public class InputsRepositoryImpl implements InputsQueryRepository {
     }
     
     @Override
-    public List<Inputs> findByCurriculumProgressIds(List<Long> list) {
-        return null;
-//        return queryFactory
-//                .selectFrom(inputs)
-//                .where(inputs.curriculumProgress.id.in(list))
-//                .fetch();
+    public List<ProgressInputs> findByCurriculumProgressIds(List<Long> list) {
+        return queryFactory
+                .selectFrom(progressInputs)
+                .where(progressInputs.curriculumProgress.id.in (list))
+                .fetch();
     }
 }

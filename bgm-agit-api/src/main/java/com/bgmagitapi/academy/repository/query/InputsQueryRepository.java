@@ -1,8 +1,6 @@
 package com.bgmagitapi.academy.repository.query;
 
 import com.bgmagitapi.academy.dto.response.InputsCurriculumGetResponse;
-import com.bgmagitapi.academy.entity.CurriculumCont;
-import com.bgmagitapi.academy.entity.Inputs;
 import com.bgmagitapi.academy.entity.ProgressInputs;
 
 import java.time.LocalDate;
@@ -15,5 +13,5 @@ public interface InputsQueryRepository {
     
     List<ProgressInputs> findByInputsCheck(String className);
     
-    List<Inputs> findByCurriculumProgressIds(List<Long> list);
+    List<ProgressInputs> findByCurriculumProgressIds(List<Long> list);
 }
