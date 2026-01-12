@@ -84,7 +84,7 @@ const AcademyTabBox = styled.section<WithTheme>`
   align-items: center;
   padding: 0 24px;
   background-color: white;
-  z-index: 999999;
+  z-index: 1000;
   border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
 `;
 
