@@ -30,6 +30,7 @@ public class InputsCheckRowResponse {
     @Data
     public static class CheckItem {
         private LocalDate date;
+        private String curriculumContent;
         private String content;
     }
 }

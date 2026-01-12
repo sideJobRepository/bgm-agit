@@ -4,7 +4,10 @@ import com.bgmagitapi.academy.dto.response.InputsCheckClassResponse;
 import com.bgmagitapi.academy.dto.response.InputsCheckDateHeader;
 import com.bgmagitapi.academy.dto.response.InputsCheckGetResponse;
 import com.bgmagitapi.academy.dto.response.InputsCheckRowResponse;
+import com.bgmagitapi.academy.entity.CurriculumCont;
+import com.bgmagitapi.academy.entity.CurriculumProgress;
 import com.bgmagitapi.academy.entity.ProgressInputs;
+import com.bgmagitapi.academy.repository.CurriculumContRepository;
 import com.bgmagitapi.academy.repository.InputsRepository;
 import com.bgmagitapi.academy.service.InputsCheckService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +19,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.TextStyle;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -23,6 +27,7 @@ import java.util.*;
 public class InputsCheckServiceImpl implements InputsCheckService {
     
     private final InputsRepository inputsRepository;
+    private final CurriculumContRepository curriculumContRepository;
     
     
     @Override
@@ -131,7 +136,12 @@ public class InputsCheckServiceImpl implements InputsCheckService {
     
         // 1. (반 → 진도구분) 구조로 그룹핑
         Map<String, Map<String, InputsCheckRowResponse>> classMap = new LinkedHashMap<>();
-    
+        Map<Long, List<CurriculumCont>> contMap =
+                curriculumContRepository.findAll()
+                        .stream()
+                        .collect(Collectors.groupingBy(
+                                cc -> cc.getCurriculumProgress().getId()
+                        ));
         for (ProgressInputs row : rows) {
     
             String className =
@@ -144,7 +154,24 @@ public class InputsCheckServiceImpl implements InputsCheckService {
                        .getProgressGubun();
             
             String teacher = row.getInputs().getTeacher();
+            CurriculumProgress curriculumProgress = row.getCurriculumProgress();
+            LocalDate date = row.getInputs().getInputsDate();
+            int month = date.getMonthValue();
+            String curriculumContent = "";
             
+            List<CurriculumCont> contList =
+                    contMap.get(curriculumProgress.getId());
+            
+            if (contList != null) {
+                curriculumContent =
+                        contList.stream()
+                                .filter(cc ->
+                                        month >= cc.getStartMonths()
+                                     && month <= cc.getEndMonths()
+                                )
+                                .map(CurriculumCont::getCont)
+                                .collect(Collectors.joining(", "));
+            }
             Map<String, InputsCheckRowResponse> progressMap =
                     classMap.computeIfAbsent(
                             className,
@@ -156,12 +183,12 @@ public class InputsCheckServiceImpl implements InputsCheckService {
                             progressGubun,
                             k -> createEmptyRow(teacher,className, progressGubun, header)
                     );
-    
-            LocalDate date = row.getInputs().getInputsDate();
+            
     
             InputsCheckRowResponse.CheckItem item =
                     new InputsCheckRowResponse.CheckItem(
                             date,
+                            curriculumContent,
                             row.getTextBook() + " " + row.getUnit() + " " + row.getPages()
                     );
     
