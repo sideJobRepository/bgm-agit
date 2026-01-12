@@ -172,9 +172,10 @@ export default function AcademyInput() {
   //초기 랜더
   useEffect(() => {
     const year = selectedDate.getFullYear();
+    const month = selectedDate.getMonth() + 1;
     console.log("날짜 바뀌면 실행")
     setSelectedProgressId(null);
-    fetchAcademyClass({ className: classKey, year });
+    fetchAcademyClass({ className: classKey, year, month });
   }, [classKey, selectedDate]);
 
   useEffect(() => {
