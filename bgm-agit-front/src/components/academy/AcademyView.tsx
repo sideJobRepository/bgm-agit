@@ -19,8 +19,9 @@ export default function AcademyView() {
   const [calendarOpen, setCalendarOpen] = useState(false);
 
   useEffect(() => {
-    fetchViewAcademy();
-  }, []);
+    const year = selectedYearMonth.getFullYear();
+    fetchViewAcademy({ years: year }); // 연도 기준으로 데이터 재조회
+  }, [selectedYearMonth]);
 
   if (!academyViewData) return null;
 
@@ -146,6 +147,7 @@ export default function AcademyView() {
               </Table>
             </MonthSection>
         )}
+
       </Wrap>
   );
 }
