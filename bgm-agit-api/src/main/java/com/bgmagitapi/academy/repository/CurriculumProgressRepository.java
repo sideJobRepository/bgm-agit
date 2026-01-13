@@ -7,9 +7,12 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface CurriculumProgressRepository extends JpaRepository<CurriculumProgress, Long>, CurriculumProgressQueryRepository {
     @Modifying
     @Query("delete from CurriculumProgress p where p.curriculum.id = :curriculumId")
     void deleteByCurriculumId(@Param("curriculumId") Long curriculumId);
-
+    
+    List<CurriculumProgress> findByCurriculum_Classes(String curriculumClasses);
 }

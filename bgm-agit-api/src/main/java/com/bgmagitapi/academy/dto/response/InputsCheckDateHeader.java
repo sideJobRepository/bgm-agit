@@ -11,6 +11,7 @@ import java.util.List;
 public class InputsCheckDateHeader {
     
   
+    private int year;
     private int month;
     private List<WeekGroup> weekGroups;
     private List<InputsCheckClassResponse> rows;

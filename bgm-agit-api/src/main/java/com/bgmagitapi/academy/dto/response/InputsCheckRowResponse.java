@@ -12,11 +12,12 @@ import java.util.List;
 @Data
 public class InputsCheckRowResponse {
 
-    private String teacher;
-    private String className;
+ 
     private String progressGubun;
     private List<WeekCheck> weeks;
+    
 
+    
     @AllArgsConstructor
     @Data
     public static class WeekCheck {
@@ -31,6 +32,6 @@ public class InputsCheckRowResponse {
     public static class CheckItem {
         private LocalDate date;
         private String curriculumContent;
-        private String content;
+        private List<String> contents;
     }
 }

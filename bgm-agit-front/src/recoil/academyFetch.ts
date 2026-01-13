@@ -43,8 +43,8 @@ export function useAcademyViewFetch() {
   const { request } = useRequest();
   const setAcademyView = useSetRecoilState(academyViewDataState);
 
-  const fetchAcademyView = () => {
-    request(() => api.get('/bgm-agit/inputsCheck').then(res => res.data), setAcademyView);
+  const fetchAcademyView = (params: any) => {
+    request(() => api.get('/bgm-agit/inputsCheck', {params}).then(res => res.data), setAcademyView);
   };
 
   return fetchAcademyView;
