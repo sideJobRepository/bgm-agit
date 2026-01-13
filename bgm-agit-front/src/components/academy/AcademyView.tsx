@@ -2,7 +2,10 @@ import styled from "styled-components";
 import { useAcademyViewFetch } from "../../recoil/academyFetch";
 import { useRecoilValue } from "recoil";
 import { academyViewDataState } from "../../recoil/state/academy";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
+import type {WithTheme} from "../../styles/styled-props.ts";
 
 function makeWeekKey(w: any) {
   return `${w.startDate}~${w.endDate}`;
@@ -11,6 +14,9 @@ function makeWeekKey(w: any) {
 export default function AcademyView() {
   const fetchViewAcademy = useAcademyViewFetch();
   const academyViewData = useRecoilValue(academyViewDataState);
+  console.log("academyViewData", academyViewData)
+  const [selectedYearMonth, setSelectedYearMonth] = useState<Date>(new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   useEffect(() => {
     fetchViewAcademy();
@@ -18,82 +24,113 @@ export default function AcademyView() {
 
   if (!academyViewData) return null;
 
+  // 연도-월 형식 문자열
+  const selectedYear = selectedYearMonth.getFullYear();
+  const selectedMonth = selectedYearMonth.getMonth() + 1;
+  const dateYMStr = `${selectedYear}년 ${selectedMonth}월`;
+
+  // 현재 선택된 월에 해당하는 데이터만 필터링
+  const currentMonthData = academyViewData?.headers.find(
+      (m: any) => Number(m.month) === selectedMonth
+  );
+
   return (
       <Wrap>
-        {academyViewData.headers.map((monthData: any, mi: number) => {
-          const { month, weekGroups, rows } = monthData;
+        <TopBar>
+          <DateNav>
+            <IconBtn onClick={() => setCalendarOpen((v) => !v)}>{dateYMStr}</IconBtn>
+            {calendarOpen && (
+                <CalendarPopover>
+                  <Calendar
+                      value={selectedYearMonth}
+                      onClickMonth={(date) => {
+                        setSelectedYearMonth(date);
+                        setCalendarOpen(false);
+                      }}
+                      view="year"
+                      maxDetail="year"
+                      // tileDisabled={() => true} // 일자 선택 방지
+                  />
+                </CalendarPopover>
+            )}
+          </DateNav>
+        </TopBar>
 
-          return (
-              <MonthSection key={month}>
-                <MonthTitle>{month}월</MonthTitle>
+        {/* 현재 선택된 월만 렌더링 */}
+        {currentMonthData && (
+            <MonthSection key={currentMonthData.month}>
+              <Table>
+                <thead>
+                <tr>
+                  <th>반명</th>
+                  <th>담임</th>
+                  <th>진도구분</th>
+                  {currentMonthData.weekGroups.map((w: any, i: number) => (
+                      <th key={i}>{w.label}</th>
+                  ))}
+                </tr>
+                </thead>
 
-                <Table>
-                  <thead>
-                  <tr>
-                    <th >반명</th>
-                    <th>담임</th>
-                    <th>진도구분</th>
-                    {weekGroups.map((w: any, i: number) => (
-                        <th key={i}>{w.label}</th>
-                    ))}
-                  </tr>
-                  </thead>
-
-                  <tbody>
-                  {rows.map((classGroup: any, gi: number) => {
-                    // row 하나당 2줄 → *2
-                    const span = (classGroup.rows?.length ?? 0) * 2;
-
-                    return (classGroup.rows ?? []).flatMap((row: any, ri: number) => {
+                <tbody>
+                {currentMonthData.rows.map((classGroup: any, gi: number) => {
+                  return classGroup.teachers.flatMap((teacher: any, ti: number) => {
+                    return teacher.progresses.map((progress: any, pi: number) => {
                       const weekMap = new Map<string, any>();
-                      (row.weeks ?? []).forEach((w: any) => {
+                      (progress.weeks ?? []).forEach((w: any) => {
                         weekMap.set(makeWeekKey(w), w);
                       });
 
-                      // 커리큘럼 행
+                      const firstCurriculumContent =
+                          progress.weeks.find((w: any) => w.startItem?.curriculumContent)?.startItem?.curriculumContent ??
+                          progress.weeks.find((w: any) => w.endItem?.curriculumContent)?.endItem?.curriculumContent;
+
                       const curriculumRow = (
-                          <tr key={`${month}-${gi}-${ri}-cur`} className="tr-curriculum">
-                            {ri === 0 && (
-                                <td rowSpan={span} className="td-fixed className">
-                                  {row.className}
+                          <tr key={`${gi}-${ti}-${pi}-cur`} className="tr-curriculum">
+                            {/* 반명은 맨 처음만 출력 */}
+                            {ti === 0 && pi === 0 && (
+                                <td rowSpan={classGroup.teachers.length * teacher.progresses.length * 2}
+                                    className="td-fixed className">
+                                  {classGroup.className}
                                 </td>
                             )}
-                            {ri === 0 && (
-                                <td rowSpan={span} className="td-fixed teacher">
-                                  {row.teacher}
+
+                            {/* 강사명은 progresses 묶음별로 출력 */}
+                            {pi === 0 && (
+                                <td rowSpan={teacher.progresses.length * 2} className="td-fixed teacher">
+                                  {teacher.teacher}
                                 </td>
                             )}
 
                             <td rowSpan={2} className="td-progress">
-                              {row.progressGubun}
+                              {progress.progressGubun}
                             </td>
 
-                            {weekGroups.map((wg: any, wi: number) => {
-                              const week = weekMap.get(makeWeekKey(wg));
+                            {currentMonthData.weekGroups.map((wg: any, wi: number) => {
                               return (
                                   <td key={wi} className="td-week td-curriculum">
-                                    {week?.startItem?.curriculumContent && (
-                                        <div>{week.startItem.curriculumContent}</div>
-                                    )}
+                                    {firstCurriculumContent && <div>{firstCurriculumContent}</div>}
                                   </td>
                               );
                             })}
                           </tr>
                       );
 
-                      // 2️⃣ 내용 행
                       const contentRow = (
-                          <tr key={`${month}-${gi}-${ri}-con`} className="tr-content">
-                            {weekGroups.map((wg: any, wi: number) => {
+                          <tr key={`${gi}-${ti}-${pi}-con`} className="tr-content">
+                            {currentMonthData.weekGroups.map((wg: any, wi: number) => {
                               const week = weekMap.get(makeWeekKey(wg));
                               return (
                                   <td key={wi} className="td-week">
-                                    {week?.startItem?.content && (
-                                        <div>{week.startItem.content}</div>
-                                    )}
-                                    {week?.endItem?.content && (
-                                        <div>{week.endItem.content}</div>
-                                    )}
+                                    {week?.startItem?.contents?.length > 0 &&
+                                        week.startItem.contents.map((c: string, i: number) => (
+                                            <div key={`start-${i}`}>{c}</div>
+                                        ))}
+
+                                    {week?.endItem?.contents?.length > 0 &&
+                                        week.endItem.contents.map((c: string, i: number) => (
+                                            <div key={`end-${i}`}>{c}</div>
+                                        ))}
+
                                   </td>
                               );
                             })}
@@ -102,34 +139,60 @@ export default function AcademyView() {
 
                       return [curriculumRow, contentRow];
                     });
-                  })}
-                  </tbody>
-                </Table>
-              </MonthSection>
-          );
-        })}
+                  });
+                })}
+                </tbody>
+
+              </Table>
+            </MonthSection>
+        )}
       </Wrap>
   );
 }
+
 const Wrap = styled.div`
   padding: 24px;
   margin-top: 100px;
+`;
+
+const TopBar = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 24px;
+`;
+
+const DateNav = styled.div`
+  position: relative;
+`;
+
+const IconBtn = styled.button<WithTheme>`
+  background: #222;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  cursor: pointer;
+  font-size: ${({theme}) => theme.sizes.xsmall};
+`;
+
+const CalendarPopover = styled.div`
+  position: absolute;
+  top: 40px;
+  left: 0;
+  z-index: 100;
+  background: white;
+  border: 1px solid #d9d9d9;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 `;
 
 const MonthSection = styled.section`
   margin-bottom: 48px;
 `;
 
-const MonthTitle = styled.h2`
-  margin-bottom: 12px;
-  font-size: 18px;
-  font-weight: 700;
-`;
-
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  //table-layout: fixed;
 
   th,
   td {
@@ -141,43 +204,46 @@ const Table = styled.table`
   }
 
   th {
-    background: #f3f4f6;
+    background: #f8f9fa;
     text-align: center;
-    font-weight: 600;
+    font-weight: 500;
+    color: #424548;
   }
 
   .td-fixed {
     text-align: center;
     vertical-align: middle;
   }
-    
+
   .className {
-    background: #093A6E;
-    color: white;
+    background: #c0d6ad;
+    color: #424548;
     font-weight: 600;
   }
-  
+
   .teacher {
-    background: #2a7ecf;
-    color: white;
+    background: #dfead9;
+    color: #2E2E2E;
     font-weight: 600;
   }
 
   .td-progress {
-    background: #6098cf;
-    color: white;
+    background: #c3d9ef;
+    color: #2E2E2E;
     font-weight: 600;
     vertical-align: middle;
+    text-align: center;
   }
 
   .tr-curriculum td.td-week {
-    background: #6098cf;
-    font-weight: 600;
-    color: white;
+    background: #f3f6fd;
+    font-weight: 500;
+    color: #2E2E2E;
     text-align: center;
   }
 
   .tr-content td.td-week {
     background: #ffffff;
+    color: #424548;
   }
 `;
