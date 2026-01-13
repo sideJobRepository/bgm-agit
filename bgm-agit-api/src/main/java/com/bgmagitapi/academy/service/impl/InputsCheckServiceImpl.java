@@ -29,9 +29,9 @@ public class InputsCheckServiceImpl implements InputsCheckService {
     private final CurriculumProgressRepository curriculumProgressRepository;
 
     @Override
-    public InputsCheckGetResponse getInputsChecks() {
+    public InputsCheckGetResponse getInputsChecks(LocalDate years) {
 
-        int year = LocalDate.now().getYear();
+        int year = years.getYear();
         List<InputsCheckDateHeader> headers = createYearHeaders(year);
 
         for (int i = 0; i < headers.size(); i++) {
@@ -44,6 +44,7 @@ public class InputsCheckServiceImpl implements InputsCheckService {
             headers.set(
                     i,
                     new InputsCheckDateHeader(
+                            year,
                             header.getMonth(),
                             header.getWeekGroups(),
                             rows
@@ -105,7 +106,7 @@ public class InputsCheckServiceImpl implements InputsCheckService {
             cursor = cursor.plusDays(1);
         }
 
-        return new InputsCheckDateHeader(month, groups, new ArrayList<>());
+        return new InputsCheckDateHeader(year,month, groups, new ArrayList<>());
     }
 
     private String formatLabel(LocalDate start, LocalDate end) {
@@ -149,7 +150,7 @@ public class InputsCheckServiceImpl implements InputsCheckService {
     
         for (String className : classNames) {
     
-            // 🔥 이 반의 모든 진도구분
+            // 이 반의 모든 진도구분
             List<CurriculumProgress> progressList =
                     curriculumProgressRepository.findByCurriculum_Classes(className);
     

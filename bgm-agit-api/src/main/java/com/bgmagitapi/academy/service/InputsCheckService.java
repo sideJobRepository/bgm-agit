@@ -2,11 +2,11 @@ package com.bgmagitapi.academy.service;
 
 import com.bgmagitapi.academy.dto.response.InputsCheckGetResponse;
 
-import java.util.List;
+import java.time.LocalDate;
 
 public interface InputsCheckService {
 
     
-    InputsCheckGetResponse getInputsChecks();
+    InputsCheckGetResponse getInputsChecks(LocalDate years);
 
 }

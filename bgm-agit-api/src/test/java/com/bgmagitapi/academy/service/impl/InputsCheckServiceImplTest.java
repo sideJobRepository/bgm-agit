@@ -3,13 +3,12 @@ package com.bgmagitapi.academy.service.impl;
 import com.bgmagitapi.RepositoryAndServiceTestSupport;
 import com.bgmagitapi.academy.dto.response.InputsCheckGetResponse;
 import com.bgmagitapi.academy.service.InputsCheckService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import java.time.LocalDate;
 
 class InputsCheckServiceImplTest extends RepositoryAndServiceTestSupport {
     
@@ -20,10 +19,11 @@ class InputsCheckServiceImplTest extends RepositoryAndServiceTestSupport {
     
     @DisplayName("")
     @Test
-    void test1(){
-        InputsCheckGetResponse inputsChecks = inputsCheckService.getInputsChecks();
+    void test1() throws JsonProcessingException {
+        InputsCheckGetResponse inputsChecks = inputsCheckService.getInputsChecks(LocalDate.now());
         
-        System.out.println("inputsChecks = " + inputsChecks);
+        String s = objectMapper.writeValueAsString(inputsChecks);
+        System.out.println("inputsChecks = " + s);
         
     }
 }
