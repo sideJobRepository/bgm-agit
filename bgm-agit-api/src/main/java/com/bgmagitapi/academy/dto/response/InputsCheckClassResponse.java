@@ -10,6 +10,6 @@ import java.util.List;
 @NoArgsConstructor
 @Data
 public class InputsCheckClassResponse {
-    private String className; // 반
-    private List<InputsCheckRowResponse> rows;
+    private String className;
+    private List<InputsCheckTeacherResponse> teachers;
 }
