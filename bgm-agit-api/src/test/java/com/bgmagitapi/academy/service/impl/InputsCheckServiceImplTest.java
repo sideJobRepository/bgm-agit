@@ -22,8 +22,7 @@ class InputsCheckServiceImplTest extends RepositoryAndServiceTestSupport {
     void test1() throws JsonProcessingException {
         InputsCheckGetResponse inputsChecks = inputsCheckService.getInputsChecks(LocalDate.now());
         
-        String s = objectMapper.writeValueAsString(inputsChecks);
-        System.out.println("inputsChecks = " + s);
+        System.out.println("inputsChecks = " + inputsChecks);
         
     }
 }

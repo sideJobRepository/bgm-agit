@@ -178,7 +178,6 @@ public class InputsCheckServiceImpl implements InputsCheckService {
     
                     String progressGubun = cp.getProgressGubun();
     
-                    // progress row는 무조건 생성
                     InputsCheckRowResponse parent =
                             progressMap.computeIfAbsent(
                                     progressGubun,
@@ -211,7 +210,7 @@ public class InputsCheckServiceImpl implements InputsCheckService {
     
                         if (weekGroup == null) continue;
     
-                        // WeekCheck 재사용
+                        // WeekCheck 찾거나 생성
                         InputsCheckRowResponse.WeekCheck week =
                                 parent.getWeeks().stream()
                                         .filter(w ->
@@ -233,22 +232,18 @@ public class InputsCheckServiceImpl implements InputsCheckService {
                                                             .collect(Collectors.joining(", "));
     
                                             InputsCheckRowResponse.CheckItem startItem =
-                                                    date.equals(weekGroup.getStartDate())
-                                                            ? new InputsCheckRowResponse.CheckItem(
-                                                                    date,
-                                                                    curriculumContent,
-                                                                    new ArrayList<>()
-                                                            )
-                                                            : null;
+                                                    new InputsCheckRowResponse.CheckItem(
+                                                            weekGroup.getStartDate(),
+                                                            curriculumContent,
+                                                            new ArrayList<>()
+                                                    );
     
                                             InputsCheckRowResponse.CheckItem endItem =
-                                                    date.equals(weekGroup.getEndDate())
-                                                            ? new InputsCheckRowResponse.CheckItem(
-                                                                    date,
-                                                                    curriculumContent,
-                                                                    new ArrayList<>()
-                                                            )
-                                                            : null;
+                                                    new InputsCheckRowResponse.CheckItem(
+                                                            weekGroup.getEndDate(),
+                                                            curriculumContent,
+                                                            new ArrayList<>()
+                                                    );
     
                                             InputsCheckRowResponse.WeekCheck newWeek =
                                                     new InputsCheckRowResponse.WeekCheck(
@@ -262,7 +257,7 @@ public class InputsCheckServiceImpl implements InputsCheckService {
                                             return newWeek;
                                         });
     
-                        // content 문자열 배열에 누적
+                        // content 누적
                         String contentText =
                                 row.getTextBook()
                                         + " "
@@ -270,11 +265,11 @@ public class InputsCheckServiceImpl implements InputsCheckService {
                                         + " "
                                         + row.getPages();
     
-                        if (date.equals(week.getStartDate()) && week.getStartItem() != null) {
+                        if (date.equals(week.getStartDate())) {
                             week.getStartItem().getContents().add(contentText);
                         }
     
-                        if (date.equals(week.getEndDate()) && week.getEndItem() != null) {
+                        if (date.equals(week.getEndDate())) {
                             week.getEndItem().getContents().add(contentText);
                         }
                     }
@@ -308,6 +303,7 @@ public class InputsCheckServiceImpl implements InputsCheckService {
                     )
             );
         }
+    
         return result;
     }
 }
