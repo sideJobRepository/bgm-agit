@@ -196,7 +196,7 @@ const Table = styled.table`
 
   th,
   td {
-    border: 1px solid #d9d9d9;
+    border: 1px solid #D9D9D9;
     padding: 8px;
     vertical-align: top;
     font-size: 13px;

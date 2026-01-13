@@ -4,6 +4,8 @@ import type { WithTheme } from '../styles/styled-props';
 import Curriculum from '../components/academy/Curriculum.tsx';
 import AcademyInput from '../components/academy/AcademyInput.tsx';
 import AcademyView from '../components/academy/AcademyView.tsx';
+import logo from "/acLogo.png"
+
 
 type AcademyTabKey = 'curriculum' | 'input' | 'view';
 export type ClassKey = '3g' | '3k' | '4g1';
@@ -16,7 +18,7 @@ export default function Academy() {
     <Wrapper>
       <AcademyTabBox>
         <ImgBox>
-          <img src='http://www.yangyoung.com/images/logo.png' alt="로고"/>
+          <img src={logo} alt="로고"/>
         </ImgBox>
         <TabButtonBox>
           <TabButton
