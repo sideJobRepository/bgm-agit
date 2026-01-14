@@ -21,8 +21,8 @@ export default function RootLayout({
     <html lang="ko">
       <body>
       <ClientProviders>
-          <AuthListener/>
-        {children}
+
+          <main>{children}</main>
       </ClientProviders>
       </body>
     </html>

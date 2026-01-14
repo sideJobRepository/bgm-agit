@@ -1,8 +1,74 @@
-const theme = {
+export const theme = {
     colors: {
-        primary: "#111",
-        background: "#fff",
-    },
-};
+        sideBgColor: '#00002E',
+        mainBgColor: '#1D1E3D',
+        mainPageBgColor: '#0C0E42',
+        menuColor: '#A3A7AC',
+        subMenuColor: '#F8FAFC',
+        alertColor: '#F97316',
+        loginColor: '#D9D9D9',
+        loginBtColor: '#FF7113',
+        fileBgColor: '#00002E',
+        fileBorderColor: '#357AE9',
+        inputTitleBgColor: '#161825',
 
-export default theme;
+        subTextBoxColor: '#F1E7CE',
+        activeMenuColor: '#3D2D1E',
+        bottomBg: '#988271',
+        subColor: '#424548',
+        purpleColor: '#482768',
+        blueColor: '#093A6E',
+        redColor: '#FF5E57',
+        greenColor: '#1A7D55',
+        basicColor: '#F2EDEA',
+        bronzeColor: '#5C3A21',
+        yellowColor: '#FBE157',
+        noticeColor: '#988271',
+        softColor: '#F8F9FA',
+        lineColor: '#D9D9D9',
+        navColor: '#757575',
+        labelGb: 'rgba(66, 69, 72, 0.6)',
+        white: '#FFFFFF',
+        border: '#e5e5e5',
+        text: '#222',
+        kakao: '#FDDC3F',
+        black: '#000000',
+    },
+    desktop: {
+        sizes: {
+            h1Size: '28px',
+            h2Size: '24px',
+            h3Size: '20px',
+            h4Size: '18px',
+            h5Size: '16px',
+            strongSize: '16px',
+            menuSize: '14px',
+            TopButtonSize: '13px',
+            spanSize: '12px',
+        },
+    },
+    mobile: {
+        sizes: {
+            h1Size: '28px',
+            h2Size: '24px',
+            h3Size: '20px',
+            h4Size: '14px',
+            h5Size: '16px',
+            strongSize: '16px',
+            menuSize: '14px',
+            TopButtonSize: '13px',
+            spanSize: '12px',
+        },
+    },
+    weight: {
+        bold: '700',
+        semiBold: '600',
+    },
+    device: {
+        mobile: '(max-width: 844px)',
+        tablet: '(max-width: 1280px)',
+        desktop: '(min-width: 1281px)',
+    },
+} as const;
+
+export type themeThemeType = typeof theme;
