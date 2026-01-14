@@ -36,6 +36,9 @@ public class BgmAgitSecurityConfig {
     
     @Value("${cors.url}")
     private String corsUrl;
+    @Value("${cors.url2}")
+    private String corsUrl2;
+    
     
     private final AuthenticationSuccessHandler bgmAuthenticationSuccessHandler;
     private final AuthenticationFailureHandler bgmAuthenticationFailureHandler;
@@ -79,7 +82,7 @@ public class BgmAgitSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(List.of(corsUrl));
+        corsConfiguration.setAllowedOrigins(List.of(corsUrl,corsUrl2));
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
         corsConfiguration.setExposedHeaders(List.of("Set-Cookie", "Content-Disposition"));

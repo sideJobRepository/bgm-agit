@@ -47,6 +47,7 @@ logging:
 
 cors:
   url: https://bgmagit.co.kr
+  url2: https://bgmagit.co.kr/record
 
 kakao:
   redirecturi: https://bgmagit.co.kr/oauth/kakao/callback

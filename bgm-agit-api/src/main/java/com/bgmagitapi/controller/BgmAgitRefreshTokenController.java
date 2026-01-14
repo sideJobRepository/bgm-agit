@@ -24,23 +24,31 @@ public class BgmAgitRefreshTokenController {
     
     @PostMapping("/refresh")
     public Map<String, Object> refreshToken(@CookieValue(value = "refreshToken", required = false) String refreshToken
-         , HttpServletResponse response
+            , HttpServletResponse response
     ) {
-        if(refreshToken == null) {
+        if (refreshToken == null) {
             return null;
         }
         TokenAndUser tokenPair = refreshTokenService.reissueTokenWithUser(refreshToken);
-        if(tokenPair == null) {
+        if (tokenPair == null) {
             return null;
         }
-        ResponseCookie newRefreshCookie = ResponseCookie.from("refreshToken", tokenPair.token().getRefreshToken())
-                .httpOnly(true)
-                .secure(secure)
-                .path("/")
-                .maxAge(Duration.ofDays(1))
-                .sameSite("Strict")
-                .build();
-        response.addHeader("Set-Cookie", newRefreshCookie.toString());
+        ResponseCookie.ResponseCookieBuilder cookieBuilder =
+                ResponseCookie.from("refreshToken", tokenPair.token().getRefreshToken())
+                        .httpOnly(true)
+                        .secure(secure)
+                        .path("/")
+                        .maxAge(Duration.ofDays(1));
+        
+        // 환경별 SameSite 처리
+        if (secure) {
+            cookieBuilder.sameSite("Strict"); // 운영
+        } else {
+            cookieBuilder.sameSite("Lax");    // 로컬
+        }
+   
+        ResponseCookie cookie = cookieBuilder.build();
+        response.addHeader("Set-Cookie", cookie.toString());
         return Map.of(
                 "token", tokenPair.token().getAccessToken(),
                 "user", tokenPair.user()
