@@ -23,6 +23,7 @@ export default function RootLayout({
     <html lang="ko">
       <body>
       <ClientProviders>
+          {/*<AuthListener/>*/}
           <Wrapper>
               <Sidebar/>
               <Main>{children}</Main>
@@ -41,5 +42,5 @@ const Wrapper = styled.div`
 
 const Main = styled.main`
   flex: 1;
-  overflow: auto;
+    overflow-x: auto;
 `;

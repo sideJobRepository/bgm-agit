@@ -1,5 +1,10 @@
 export const theme = {
     colors: {
+        whiteColor: '#ffffff',
+        blackColor: '#000000',
+        lineColor: '#D9D9D9',
+        border: '#e5e5e5',
+
         sideBgColor: '#00002E',
         mainBgColor: '#1D1E3D',
         mainPageBgColor: '#0C0E42',
@@ -25,11 +30,9 @@ export const theme = {
         yellowColor: '#FBE157',
         noticeColor: '#988271',
         softColor: '#F8F9FA',
-        lineColor: '#D9D9D9',
         navColor: '#757575',
         labelGb: 'rgba(66, 69, 72, 0.6)',
         white: '#FFFFFF',
-        border: '#e5e5e5',
         text: '#222',
         kakao: '#FDDC3F',
         black: '#000000',
@@ -42,7 +45,7 @@ export const theme = {
             h4Size: '18px',
             h5Size: '16px',
             strongSize: '16px',
-            menuSize: '14px',
+            menuSize: '16px',
             TopButtonSize: '13px',
             spanSize: '12px',
         },

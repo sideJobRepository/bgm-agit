@@ -9,6 +9,9 @@ declare module 'styled-components' {
       desktop: string;
     };
     colors: {
+      whiteColor: string;
+      blackColor: string;
+
       sideBgColor: string;
       mainBgColor: string;
       mainPageBgColor: string;

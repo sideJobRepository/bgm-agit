@@ -4,6 +4,7 @@ const nextConfig = {
 
   // /record 로 베이스 경로 지정
   basePath: '/record',
+  assetPrefix: '/record',
 
   async rewrites() {
     return [
