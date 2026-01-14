@@ -2,12 +2,11 @@
 "use client";
 
 import Link from "next/link";
-import styles from "./Sidebar.module.css";
 import styled from "styled-components";
 
 export default function Sidebar() {
     return (
-        <SidebarWrapper className={styles.sidebar}>
+        <SidebarWrapper>
             <Link href="/">홈</Link>
             <Link href="/convert">변환</Link>
             <Link href="/notice">공지</Link>
@@ -18,5 +17,5 @@ export default function Sidebar() {
 const SidebarWrapper = styled.aside`
     width: 300px;
     height: 100dvh;
-    background: ${({ theme }) => theme.colors.primary};
+    background: ${({ theme }) => theme.colors.sideBgColor};
 `

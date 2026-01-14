@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ClientProviders from "./providers";
 import AuthListener from "./AuthListener";
+import Sidebar from "@/app/components/Sidebar";
+import styled from "styled-components";
 
 export const metadata: Metadata = {
   title: "BGM 아지트 kml",
@@ -21,10 +23,23 @@ export default function RootLayout({
     <html lang="ko">
       <body>
       <ClientProviders>
-
-          <main>{children}</main>
+          <Wrapper>
+              <Sidebar/>
+              <Main>{children}</Main>
+          </Wrapper>
       </ClientProviders>
       </body>
     </html>
   );
 }
+
+const Wrapper = styled.div`
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+`;
+
+const Main = styled.main`
+  flex: 1;
+  overflow: auto;
+`;
