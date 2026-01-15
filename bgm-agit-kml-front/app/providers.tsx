@@ -12,9 +12,7 @@ export default function ClientProviders({
 }) {
     return (
         <RecoilRoot>
-            <StyledComponentsRegistry>
                 <ThemeProvider theme={theme}>{children}</ThemeProvider>
-            </StyledComponentsRegistry>
         </RecoilRoot>
     );
 }

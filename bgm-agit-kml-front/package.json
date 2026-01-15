@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "axios": "^1.13.2",
+    "framer-motion": "^12.26.2",
     "next": "16.0.3",
     "phosphor-react": "^1.4.1",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "react-responsive": "^10.0.1",
     "recoil": "^0.7.7",
     "styled-components": "^6.3.6"
   },

@@ -1,44 +1,43 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import styled from "styled-components";
 
-/**
- * 카드 데이터 (색 + 내용이 함께 움직임)
- */
 const INITIAL_CARDS = [
-  { id: 1, title: "CARD 1", color: "#F6F7F9" }, // 회색
-  { id: 2, title: "CARD 2", color: "#EEF3FF" }, // 파랑
-  { id: 3, title: "CARD 3", color: "#FDF2F2" }, // 빨강
+  { id: 1, title: "CARD 1", color: "#F6F7F9" },
+  { id: 2, title: "CARD 2", color: "#EEF3FF" },
+  { id: 3, title: "CARD 3", color: "#FDF2F2" },
 ];
 
 export default function Home() {
   const [cards, setCards] = useState(INITIAL_CARDS);
+  const [dir, setDir] = useState(1); // 1 = next, -1 = prev
 
-  /** ▶ 우측 클릭 → 왼쪽으로 밀림 */
   const next = () => {
-    setCards((prev) => {
-      const [first, ...rest] = prev;
-      return [...rest, first];
-    });
+    setDir(1);
+    setCards(([a, b, c]) => [b, c, a]);
   };
 
-  /** ◀ 좌측 클릭 → 오른쪽으로 밀림 */
   const prev = () => {
-    setCards((prev) => {
-      const last = prev[prev.length - 1];
-      return [last, ...prev.slice(0, -1)];
-    });
+    setDir(-1);
+    setCards(([a, b, c]) => [c, a, b]);
   };
 
   return (
     <Wrapper>
-
       <Slider>
-        {cards.map((card, index) => (
+        {cards.map((card, i) => (
           <Card
             key={card.id}
-            $pos={index === 0 ? "left" : index === 1 ? "center" : "right"}
+            custom={{ i, dir }}
+            variants={variants}
+            initial={false}
+            animate="animate"
+            transition={{
+              duration: 0.45,
+              ease: [0.4, 0, 0.2, 1],
+            }}
             style={{ background: card.color }}
           >
             {card.title}
@@ -48,37 +47,48 @@ export default function Home() {
         <NavLeft onClick={prev} />
         <NavRight onClick={next} />
       </Slider>
-
     </Wrapper>
   );
 }
 
-/* ================== styles ================== */
+/* ================= styles ================= */
 
-const Wrapper = styled.div`
+export const Wrapper = styled.div`
+    display: flex;
     max-width: 1500px;
     min-width: 1280px;
     min-height: 600px;
     height: 100%;
-    margin: 0 auto;
-    @media ${({ theme }) => theme.device.mobile} {
+    margin: auto;
+    
+    @media ${({ theme }) => theme.device.tablet} {
+        width: 100vw;
         max-width: 100%;
         min-width: 100%;
         min-height: unset;
     }
 `;
 
+
 const Slider = styled.div`
-    position: relative;
-    width: 720px;
+    width: 90%;
+    max-width: 1100px;
     height: 420px;
+    margin: auto;
+    position: relative;
+    overflow: hidden;
 `;
 
-const Card = styled.div<{ $pos: "left" | "center" | "right" }>`
+const Card = styled(motion.div)`
     position: absolute;
     inset: 0;
-    border-radius: 20px;
-    transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    margin: auto;
+
+    width: 70%;
+    max-width: 860px;
+    height: 100%;
+
+    border-radius: 24px;
 
     display: flex;
     align-items: center;
@@ -86,38 +96,13 @@ const Card = styled.div<{ $pos: "left" | "center" | "right" }>`
 
     font-size: 32px;
     font-weight: 700;
-
-    ${({ $pos }) =>
-            $pos === "center" &&
-            `
-      transform: translateX(0) scale(1);
-      z-index: 3;
-      box-shadow: 0 30px 60px rgba(0,0,0,0.15);
-      opacity: 1;
-    `}
-
-    ${({ $pos }) =>
-            $pos === "left" &&
-            `
-      transform: translateX(-120px) scale(0.92);
-      z-index: 2;
-      opacity: 0.7;
-    `}
-
-    ${({ $pos }) =>
-            $pos === "right" &&
-            `
-      transform: translateX(120px) scale(0.92);
-      z-index: 2;
-      opacity: 0.7;
-    `}
 `;
 
 const NavLeft = styled.div`
     position: absolute;
-    left: -80px;
+    left: 0;
     top: 0;
-    width: 80px;
+    width: 15%;
     height: 100%;
     cursor: pointer;
     z-index: 10;
@@ -125,10 +110,62 @@ const NavLeft = styled.div`
 
 const NavRight = styled.div`
     position: absolute;
-    right: -80px;
+    right: 0;
     top: 0;
-    width: 80px;
+    width: 15%;
     height: 100%;
     cursor: pointer;
     z-index: 10;
 `;
+
+/* ================= animation ================= */
+
+const variants = {
+  initial: ({ dir }: { dir: number }) => ({
+    // 들어올 때 살짝 위에서 내려오게 (원하면 -20~-40 조절)
+    y: -24,
+    opacity: 0,
+    scale: 0.96,
+  }),
+
+  animate: ({ i }: { i: number }) => {
+    // center
+    if (i === 1) {
+      return {
+        x: 0,
+        y: 0,
+        scale: 1,
+        opacity: 1,
+        zIndex: 3,
+      };
+    }
+
+    // left
+    if (i === 0) {
+      return {
+        x: "-20%",
+        y: 0,
+        scale: 0.92,
+        opacity: 0.65,
+        zIndex: 2,
+      };
+    }
+
+    // right
+    return {
+      x: "20%",
+      y: 0,
+      scale: 0.92,
+      opacity: 0.65,
+      zIndex: 2,
+    };
+  },
+
+  exit: ({ dir }: { dir: number }) => ({
+    // 나갈 때도 살짝 위로/작게/희미하게
+    y: -24,
+    opacity: 0,
+    scale: 0.96,
+  }),
+};
+
