@@ -1,17 +1,13 @@
 // utils/axiosInstance.ts
-import axios, {
-  AxiosError,
-  type AxiosRequestConfig,
-  type InternalAxiosRequestConfig,
-} from "axios";
-import { tokenStore } from "@/services/tokenStore";
+import axios, { AxiosError, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
+import { tokenStore } from '@/services/tokenStore';
 
 interface AuthAxiosRequestConfig extends InternalAxiosRequestConfig {
   __hadAuth?: boolean;
 }
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL, //env의 API URL
+  baseURL: process.env.NEXT_PUBLIC_API_URL, //env의 API URL
   timeout: 15000,
 });
 
@@ -20,25 +16,23 @@ let refreshing: Promise<string | null> | null = null;
 //토큰 재발급
 export async function refreshToken(): Promise<string | null> {
   try {
-    const { data } = await axios.post("/api/refresh", null, {
+    const { data } = await axios.post('/bgm-agit/refresh', null, {
       baseURL: api.defaults.baseURL,
       withCredentials: true,
     });
     const newToken = data?.token ?? null;
 
     if (!newToken) {
-      localStorage.removeItem("login");
+      localStorage.removeItem('login');
     }
 
     tokenStore.set(newToken);
-    window.dispatchEvent(
-      new CustomEvent("auth:refreshed", { detail: { user: data?.user } }),
-    );
+    window.dispatchEvent(new CustomEvent('auth:refreshed', { detail: { user: data?.user } }));
 
     return newToken;
   } catch (e) {
     console.error(e);
-    localStorage.removeItem("login");
+    localStorage.removeItem('login');
     return null;
   } finally {
     refreshing = null; // 락 해제
@@ -46,7 +40,7 @@ export async function refreshToken(): Promise<string | null> {
 }
 
 api.interceptors.request.use(async (config: AuthAxiosRequestConfig) => {
-  if (config.url?.includes("/api/refresh")) return config; //api 수정 예정
+  if (config.url?.includes('/bgm-agit/refresh')) return config; //api 수정 예정
 
   let token = tokenStore.get();
   if (!token) {
@@ -66,12 +60,12 @@ let isRefreshing = false;
 let waiters: Array<(t: string) => void> = [];
 const addWaiter = (cb: (t: string) => void) => waiters.push(cb);
 const notifyAll = (t: string) => {
-  waiters.forEach((cb) => cb(t));
+  waiters.forEach(cb => cb(t));
   waiters = [];
 };
 
 api.interceptors.response.use(
-  (r) => r,
+  r => r,
   async (error: AxiosError) => {
     const original = error.config as AxiosRequestConfig & {
       __isRetryRequest?: boolean;
@@ -82,7 +76,7 @@ api.interceptors.response.use(
     const status = error.response.status;
 
     // refresh 자체 실패면 중단
-    if (original?.url?.includes("/api/refresh")) {
+    if (original?.url?.includes('/bgm-agit/refresh')) {
       //api 수정 예정
       return Promise.reject(error);
     }
@@ -110,18 +104,18 @@ api.interceptors.response.use(
     if (!isRefreshing) {
       isRefreshing = true;
       axios
-        .post("/api/refresh", null, {
+        .post('/bgm-agit/refresh', null, {
           //api 구조 변경 필요
           baseURL: api.defaults.baseURL,
           withCredentials: true,
         })
         .then(({ data }) => {
           const newToken = data?.token;
-          if (!newToken) throw new Error("No access token from refresh");
+          if (!newToken) throw new Error('No access token from refresh');
           tokenStore.set(newToken);
           notifyAll(newToken); // 등록된 모든 대기 요청 재시도
         })
-        .catch((e) => {
+        .catch(e => {
           waiters = []; // 실패 시 대기열 비움
           // 토큰 삭제
           tokenStore.clear();
@@ -133,7 +127,7 @@ api.interceptors.response.use(
 
     // 3) 내 요청은 큐에서 깨울 때까지 기다렸다가 재시도
     return retryPromise;
-  },
+  }
 );
 
 export default api;
