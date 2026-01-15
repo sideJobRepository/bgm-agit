@@ -38,4 +38,9 @@ public class KmlNoticeController {
         return null;
     }
     
+    @DeleteMapping("kml-notice/{id}")
+    public ApiResponse deleteKmlNotice(@PathVariable Long id) {
+        return kmlNoticeService.removeKmlNotice(id);
+    }
+    
 }

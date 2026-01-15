@@ -35,7 +35,7 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
     
     @Override
     public Page<KmlNoticeGetResponse> getKmlNotice(Pageable pageable, String titleAndCont) {
-        Page<KmlNoticeGetResponse> kmlNotices = kmlNoticeRepository.findByKmlNotice(pageable,titleAndCont);
+        Page<KmlNoticeGetResponse> kmlNotices = kmlNoticeRepository.findByKmlNotice(pageable, titleAndCont);
         
         List<Long> kmlNoticeIds = kmlNotices.stream()
                 .map(KmlNoticeGetResponse::getId)
@@ -59,7 +59,7 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
         
         for (KmlNoticeGetResponse kmlNotice : kmlNotices) {
             List<KmlNoticeGetResponse.KmlNoticeFile> kmlNoticeFiles = fileMap.get(kmlNotice.getId());
-            if(kmlNoticeFiles != null) {
+            if (kmlNoticeFiles != null) {
                 kmlNotice.getFiles().addAll(kmlNoticeFiles);
             }
         }
@@ -94,6 +94,21 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
             commonFileRepository.save(commonFile);
         }
         return new ApiResponse(200, true, "저장 되었습니다.");
+    }
+    
+    @Override
+    public ApiResponse removeKmlNotice(Long id) {
+        
+        List<BgmAgitCommonFile> noticeFiles = kmlNoticeRepository.findByKmlNoticeFiles(List.of(id));
+        
+        for (BgmAgitCommonFile noticeFile : noticeFiles) {
+            s3FileUtils.deleteFile(noticeFile.getBgmAgitCommonFileUrl());
+        }
+        commonFileRepository.deleteAll(noticeFiles);
+        
+        kmlNoticeRepository.deleteById(id);
+        
+        return new ApiResponse(200, true, "삭제 되었습니다.");
     }
     
 }

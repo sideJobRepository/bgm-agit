@@ -11,4 +11,5 @@ public interface KmlNoticeService {
     
     Page<KmlNoticeGetResponse> getKmlNotice(Pageable pageable, String titleAndCont);
     ApiResponse createKmlNotice(KmlNoticePostRequest request);
+    ApiResponse removeKmlNotice(Long id);
 }
