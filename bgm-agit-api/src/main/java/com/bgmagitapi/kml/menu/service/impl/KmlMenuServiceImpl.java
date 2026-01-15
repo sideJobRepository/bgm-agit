@@ -8,7 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,18 +23,17 @@ public class KmlMenuServiceImpl implements KmlMenuService {
     @Override
     public List<KmlMenuGetResponse> findByKmlMenu() {
         List<KmlMenu> findAllMenu = kmlMenuRepository.findAll();
-        
         return findAllMenu
                 .stream()
                 .map(item ->
                         KmlMenuGetResponse.builder()
-                        .id(item.getId())
-                        .menuName(item.getMenuName())
-                        .menuLink(item.getMenuLink())
-                        .menuOrders(item.getOrders())
-                        .icon(item.getIcon())
-                        .build()
-                ).toList();
-        
+                                .id(item.getId())
+                                .menuName(item.getMenuName())
+                                .menuLink(item.getMenuLink())
+                                .menuOrders(item.getOrders())
+                                .icon(item.getIcon())
+                                .build()
+                ).sorted(Comparator.comparing(KmlMenuGetResponse::getMenuOrders))
+                .toList();
     }
 }

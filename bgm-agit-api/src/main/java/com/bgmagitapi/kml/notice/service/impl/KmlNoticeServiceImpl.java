@@ -6,15 +6,17 @@ import com.bgmagitapi.config.UploadResult;
 import com.bgmagitapi.entity.BgmAgitCommonFile;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.kml.notice.dto.request.KmlNoticePostRequest;
+import com.bgmagitapi.kml.notice.dto.response.KmlNoticeGetResponse;
 import com.bgmagitapi.kml.notice.entity.KmlNotice;
 import com.bgmagitapi.kml.notice.repository.KmlNoticeRepository;
 import com.bgmagitapi.kml.notice.service.KmlNoticeService;
 import com.bgmagitapi.repository.BgmAgitCommonFileRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.services.s3.S3Client;
 
 import java.util.List;
 
@@ -28,6 +30,13 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
     private final BgmAgitCommonFileRepository commonFileRepository;
     private final S3FileUtils s3FileUtils;
     
+    
+    
+    @Override
+    public Page<KmlNoticeGetResponse> getKmlNotice(Pageable pageable) {
+        kmlNoticeRepository.findByKmlNotce(pageable);
+        return null;
+    }
     
     @Override
     public ApiResponse createKmlNotice(KmlNoticePostRequest request) {
@@ -57,4 +66,5 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
         }
         return new ApiResponse(200, true, "저장 되었습니다.");
     }
+    
 }
