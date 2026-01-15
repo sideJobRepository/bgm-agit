@@ -49,15 +49,22 @@ export default function Home() {
   };
   return (
     <Wrapper>
-      <Title>
-        <h1>Welcome to BGM KML</h1>
-        <span>
-          BGM 아지트의 보드게임 기록을 위한 전용 공간입니다.
-          <br />
-          여러분의 보드게임 이야기가 이곳에 쌓여갑니다.{' '}
-        </span>
-        <a></a>
-      </Title>
+      <Hero>
+        <HeroBg>
+          <img src={withBasePath('/bgmMain.jpeg')} alt="" />
+        </HeroBg>
+
+        <HeroOverlay />
+
+        <HeroContent>
+          <h1>Welcome to BGM KML</h1>
+          <span>
+            BGM 아지트의 보드게임 기록을 위한 전용 공간입니다.
+            <br />
+            여러분의 보드게임 이야기가 이곳에 쌓여갑니다.
+          </span>
+        </HeroContent>
+      </Hero>
       <Slider>
         {cards.slice(0, 3).map((card, i) => (
           <Card
@@ -82,7 +89,7 @@ export default function Home() {
             }}
           >
             <ContentSection>
-              <h3>{card.title}</h3>
+              <h4>{card.title}</h4>
               <span>{card?.content}</span>
               <Link href="/">
                 Read more
@@ -122,14 +129,52 @@ const Wrapper = styled.div`
   }
 `;
 
-const Title = styled.div`
+const Hero = styled.section`
+  position: relative;
+  width: 100vw;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 160px;
+  overflow: hidden;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    height: 120px;
+  }
+`;
+
+const HeroBg = styled.div`
+  position: absolute;
+  inset: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+
+    filter: blur(2px);
+    transform: scale(1);
+  }
+`;
+
+const HeroOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+`;
+
+const HeroContent = styled.div`
+  position: relative;
+  z-index: 2;
+
+  height: 100%;
   display: flex;
   flex-direction: column;
-  width: 90%;
-  max-width: 800px;
-  align-self: center;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+
   text-align: center;
-  gap: 12px;
+  color: ${({ theme }) => theme.colors.whiteColor};
 
   h1 {
     font-size: ${({ theme }) => theme.desktop.sizes.h1Size};
@@ -142,7 +187,7 @@ const Title = styled.div`
   span {
     font-size: ${({ theme }) => theme.desktop.sizes.md};
     font-weight: 600;
-    color: ${({ theme }) => theme.colors.grayColor};
+    opacity: 0.8;
 
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.desktop.sizes.md};
@@ -222,17 +267,17 @@ const ContentSection = styled.section`
   flex-direction: column;
   width: 100%;
   height: 50%;
-  padding: 16px;
+  padding: 28px 16px 16px 16px;
   color: ${({ theme }) => theme.colors.whiteColor};
 
-  h3 {
-    font-size: ${({ theme }) => theme.desktop.sizes.h3Size};
+  h4 {
+    font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
     font-weight: 800;
     word-break: keep-all;
     white-space: normal;
 
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.desktop.sizes.h3Size};
+      font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
     }
   }
 
