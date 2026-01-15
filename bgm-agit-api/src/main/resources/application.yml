@@ -38,7 +38,7 @@ spring:
         time-zone: Asia/Seoul
 cors:
   url: http://localhost:5173
-  url2: http://localhost:3000
+  url2: http://localhost:3000/record
 
 kakao:
   redirecturi: http://localhost:5173/oauth/kakao/callback
