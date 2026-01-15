@@ -6,6 +6,7 @@ import com.bgmagitapi.config.UploadResult;
 import com.bgmagitapi.entity.BgmAgitCommonFile;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.kml.notice.dto.request.KmlNoticePostRequest;
+import com.bgmagitapi.kml.notice.dto.response.KmlNoticeGetDetailResponse;
 import com.bgmagitapi.kml.notice.dto.response.KmlNoticeGetResponse;
 import com.bgmagitapi.kml.notice.entity.KmlNotice;
 import com.bgmagitapi.kml.notice.repository.KmlNoticeRepository;
@@ -20,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -35,36 +37,39 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
     
     @Override
     public Page<KmlNoticeGetResponse> getKmlNotice(Pageable pageable, String titleAndCont) {
-        Page<KmlNoticeGetResponse> kmlNotices = kmlNoticeRepository.findByKmlNotice(pageable, titleAndCont);
+        return kmlNoticeRepository.findByKmlNotice(pageable, titleAndCont);
+    }
+    
+    @Override
+    public KmlNoticeGetDetailResponse getDetailKmlNotice(Long id) {
+        KmlNotice kmlNotice = kmlNoticeRepository.findById(id).orElseThrow(() -> new RuntimeException("존재하지 않는 공지사항 입니다."));
+        List<BgmAgitCommonFile> noticeFiles = kmlNoticeRepository.findByKmlNoticeFiles(List.of(id));
         
-        List<Long> kmlNoticeIds = kmlNotices.stream()
-                .map(KmlNoticeGetResponse::getId)
-                .toList();
+        KmlNoticeGetDetailResponse result = KmlNoticeGetDetailResponse
+                .builder()
+                .id(kmlNotice.getId())
+                .title(kmlNotice.getNoticeTitle())
+                .cont(kmlNotice.getNoticeTitle())
+                .build();
         
-        List<BgmAgitCommonFile> noticeFiles = kmlNoticeRepository.findByKmlNoticeFiles(kmlNoticeIds);
-        
-        Map<Long, List<KmlNoticeGetResponse.KmlNoticeFile>> fileMap = noticeFiles.stream()
+        Map<Long, List<KmlNoticeGetDetailResponse.KmlNoticeFile>> files = noticeFiles.stream()
                 .collect(Collectors.groupingBy(
                         BgmAgitCommonFile::getBgmAgitCommonFileTargetId,
-                        Collectors.mapping(
-                                file -> KmlNoticeGetResponse.KmlNoticeFile.builder()
-                                        .id(file.getBgmAgitCommonFileId())
-                                        .fileName(file.getBgmAgitCommonFileName())
-                                        .fileUrl(file.getBgmAgitCommonFileUrl())
-                                        .build(),
+                        Collectors.mapping(item ->
+                                        KmlNoticeGetDetailResponse.KmlNoticeFile
+                                                .builder()
+                                                .id(item.getBgmAgitCommonFileId())
+                                                .fileName(item.getBgmAgitCommonFileName())
+                                                .fileUrl(item.getBgmAgitCommonFileUrl())
+                                                .build(),
                                 Collectors.toList()
                         )
                 ));
-        
-        
-        for (KmlNoticeGetResponse kmlNotice : kmlNotices) {
-            List<KmlNoticeGetResponse.KmlNoticeFile> kmlNoticeFiles = fileMap.get(kmlNotice.getId());
-            if (kmlNoticeFiles != null) {
-                kmlNotice.getFiles().addAll(kmlNoticeFiles);
-            }
+        List<KmlNoticeGetDetailResponse.KmlNoticeFile> kmlNoticeFiles = files.get(kmlNotice.getId());
+        if(kmlNoticeFiles != null) {
+            result.getFiles().addAll(kmlNoticeFiles);
         }
-        
-        return kmlNotices;
+        return result;
     }
     
     @Override

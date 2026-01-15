@@ -39,6 +39,7 @@ public class KmlNoticeRepositoryImpl implements KmlNoticeQueryRepository {
                 .where(whereTitleAndCont(titleAndCont))
                 .limit(pageable.getPageSize())
                 .offset(pageable.getOffset())
+                .orderBy(kmlNotice.registDate.desc())
                 .fetch();
         
         JPAQuery<Long> countQuery = queryFactory

@@ -3,6 +3,7 @@ package com.bgmagitapi.kml.notice.controller;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.notice.dto.request.KmlNoticePostRequest;
 import com.bgmagitapi.kml.notice.dto.request.KmlNoticePutRequest;
+import com.bgmagitapi.kml.notice.dto.response.KmlNoticeGetDetailResponse;
 import com.bgmagitapi.kml.notice.dto.response.KmlNoticeGetResponse;
 import com.bgmagitapi.kml.notice.service.KmlNoticeService;
 import com.bgmagitapi.page.PageResponse;
@@ -22,11 +23,17 @@ public class KmlNoticeController {
     
     @GetMapping("/kml-notice")
     public PageResponse<KmlNoticeGetResponse> getKmlNotice(@PageableDefault(size = 10) Pageable pageable
-            ,@RequestParam(name = "titleAndCont",required = false) String titleAndCont ) {
-        Page<KmlNoticeGetResponse> kmlNotice = kmlNoticeService.getKmlNotice(pageable,titleAndCont);
+            , @RequestParam(name = "titleAndCont", required = false) String titleAndCont) {
+        Page<KmlNoticeGetResponse> kmlNotice = kmlNoticeService.getKmlNotice(pageable, titleAndCont);
         return PageResponse.from(kmlNotice);
     }
     
+    
+    @GetMapping("/kml-notice/{id}")
+    public KmlNoticeGetDetailResponse getKmlNotice(@PathVariable Long id) {
+        return kmlNoticeService.getDetailKmlNotice(id);
+        
+    }
     
     @PostMapping("/kml-notice")
     public ApiResponse createKmlNotice(@ModelAttribute KmlNoticePostRequest request) {

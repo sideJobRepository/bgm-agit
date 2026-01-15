@@ -3,6 +3,7 @@ package com.bgmagitapi.kml.notice.service.impl;
 import com.bgmagitapi.RepositoryAndServiceTestSupport;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.notice.dto.request.KmlNoticePostRequest;
+import com.bgmagitapi.kml.notice.dto.response.KmlNoticeGetDetailResponse;
 import com.bgmagitapi.kml.notice.dto.response.KmlNoticeGetResponse;
 import com.bgmagitapi.kml.notice.service.KmlNoticeService;
 import org.junit.jupiter.api.DisplayName;
@@ -61,5 +62,14 @@ class KmlNoticeServiceImplTest extends RepositoryAndServiceTestSupport {
         
         ApiResponse kmlNotice = kmlNoticeService.createKmlNotice(result);
         System.out.println("kmlNotice = " + kmlNotice);
+    }
+    
+    @DisplayName("")
+    @Test
+    void test3(){
+        
+        KmlNoticeGetDetailResponse detailKmlNotice = kmlNoticeService.getDetailKmlNotice(1L);
+        System.out.println("detailKmlNotice = " + detailKmlNotice);
+        
     }
 }
