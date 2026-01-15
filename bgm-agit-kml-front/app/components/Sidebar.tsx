@@ -153,6 +153,7 @@ const MobileTop = styled.div`
     padding: 0 24px;
     width: 100%;
       z-index: 2;
+      border-bottom: 10px solid rgb(244 244 245);
       
       img {
           width: 80px;
