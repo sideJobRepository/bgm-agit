@@ -26,6 +26,10 @@ export default function Home() {
 
   return (
     <Wrapper>
+      <Title>
+        <h1>Welcome to BGM KML</h1>
+        <h5>BGM 아지트의 보드게임 기록을 위한 전용 공간입니다.</h5>
+      </Title>
       <Slider>
         {cards.map((card, i) => (
           <Card
@@ -60,6 +64,8 @@ export const Wrapper = styled.div`
     min-height: 600px;
     height: 100%;
     margin: auto;
+    flex-direction: column;
+    gap: 24px;
     
     @media ${({ theme }) => theme.device.tablet} {
         width: 100vw;
@@ -69,10 +75,31 @@ export const Wrapper = styled.div`
     }
 `;
 
+const Title = styled.div`
+    display: flex;
+    flex-direction: column;
+    width: 90%;
+    max-width: 800px;
+    align-self: center;
+    text-align: center;
+    gap: 12px;
+    background-color: blue;
+
+    h1 {
+        font-size: ${({ theme }) => theme.desktop.sizes.h1Size};
+        font-weight: 800;
+    }
+    
+    h3 {
+        font-size: ${({ theme }) => theme.desktop.sizes.h3Size};
+        font-weight: 600;
+    }
+    
+`
 
 const Slider = styled.div`
     width: 90%;
-    max-width: 1100px;
+    max-width: 800px;
     height: 420px;
     margin: auto;
     position: relative;

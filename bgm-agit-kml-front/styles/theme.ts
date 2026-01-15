@@ -39,11 +39,11 @@ export const theme = {
     },
     desktop: {
         sizes: {
-            h1Size: '28px',
-            h2Size: '24px',
-            h3Size: '20px',
-            h4Size: '18px',
-            h5Size: '16px',
+            h1Size: '36px',
+            h2Size: '32px',
+            h3Size: '28px',
+            h4Size: '24px',
+            h5Size: '20px',
             strongSize: '16px',
             menuSize: '16px',
             TopButtonSize: '13px',
