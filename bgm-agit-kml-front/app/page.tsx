@@ -151,7 +151,7 @@ const HeroBg = styled.div`
     height: 100%;
     object-fit: cover;
 
-    filter: blur(2px);
+    filter: blur(3px);
     transform: scale(1);
   }
 `;
