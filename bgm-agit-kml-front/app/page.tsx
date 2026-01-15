@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import { withBasePath } from '@/lib/path';
 import Link from 'next/link';
 import { ArrowRight } from 'phosphor-react';
+import { useMediaQuery } from 'react-responsive';
 
 const INITIAL_CARDS = [
   { id: 1, title: 'RED', color: '#D9625E' },
@@ -27,6 +28,8 @@ const INITIAL_CARDS = [
 export default function Home() {
   const [cards, setCards] = useState(INITIAL_CARDS);
   const [dir, setDir] = useState(1); // 1 = next, -1 = prev
+
+  const isMobile = useMediaQuery({ maxWidth: 844 });
 
   const next = () => {
     setDir(1);
@@ -60,7 +63,7 @@ export default function Home() {
           <Card
             key={card.id}
             custom={{ i, dir }}
-            variants={variants}
+            variants={variants(isMobile)}
             initial={false}
             animate="animate"
             transition={{
@@ -162,7 +165,7 @@ const Card = styled(motion.div)`
   margin: auto;
 
   width: 76%;
-  max-width: 860px;
+  max-width: 460px;
   height: 100%;
 
   border-radius: 24px;
@@ -269,7 +272,7 @@ const ContentSection = styled.section`
 
 /* ================= animation ================= */
 
-const variants = {
+const variants = (isMobile: boolean) => ({
   initial: ({ dir }: { dir: number }) => ({
     // 들어올 때 살짝 위에서 내려오게 (원하면 -20~-40 조절)
     y: -24,
@@ -278,6 +281,7 @@ const variants = {
   }),
 
   animate: ({ i }: { i: number }) => {
+    const sideX = isMobile ? '20%' : '40%';
     // center
     if (i === 1) {
       return {
@@ -292,7 +296,7 @@ const variants = {
     // left
     if (i === 0) {
       return {
-        x: '-20%',
+        x: `-${sideX}`,
         y: 0,
         scale: 0.92,
         opacity: 0.65,
@@ -302,7 +306,7 @@ const variants = {
 
     // right
     return {
-      x: '20%',
+      x: sideX,
       y: 0,
       scale: 0.92,
       opacity: 0.65,
@@ -316,4 +320,4 @@ const variants = {
     opacity: 0,
     scale: 0.96,
   }),
-};
+});
