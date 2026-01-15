@@ -228,20 +228,28 @@ const NavLeft = styled.div`
   position: absolute;
   left: 0;
   top: 0;
-  width: 10%;
+  width: 20%;
   height: 100%;
   cursor: pointer;
   z-index: 10;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 10%;
+  }
 `;
 
 const NavRight = styled.div`
   position: absolute;
   right: 0;
   top: 0;
-  width: 10%;
+  width: 20%;
   height: 100%;
   cursor: pointer;
   z-index: 10;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 10%;
+  }
 `;
 
 const ImageSection = styled.section`
