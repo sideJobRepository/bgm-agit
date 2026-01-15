@@ -50,12 +50,13 @@ declare module 'styled-components' {
     };
     desktop: {
       sizes: {
+        titleSize: string;
         h1Size: string;
         h2Size: string;
         h3Size: string;
         h4Size: string;
         h5Size: string;
-        xl : string;
+        xl: string;
         md: string;
         sm: string;
         xs: string;
@@ -63,12 +64,13 @@ declare module 'styled-components' {
     };
     mobile: {
       sizes: {
+        titleSize: string;
         h1Size: string;
         h2Size: string;
         h3Size: string;
         h4Size: string;
         h5Size: string;
-        xl : string;
+        xl: string;
         md: string;
         sm: string;
         xs: string;

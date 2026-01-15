@@ -40,6 +40,7 @@ export const theme = {
   },
   desktop: {
     sizes: {
+      titleSize: '52px',
       h1Size: '36px',
       h2Size: '30px',
       h3Size: '24px',
@@ -53,6 +54,7 @@ export const theme = {
   },
   mobile: {
     sizes: {
+      titleSize: '32px',
       h1Size: '32px',
       h2Size: '26px',
       h3Size: '20px',
