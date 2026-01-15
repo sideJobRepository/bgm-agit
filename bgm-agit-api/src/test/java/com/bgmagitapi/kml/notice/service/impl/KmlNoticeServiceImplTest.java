@@ -29,7 +29,7 @@ class KmlNoticeServiceImplTest extends RepositoryAndServiceTestSupport {
     void test1() {
         
         PageRequest pageRequest = PageRequest.of(0, 10);
-        Page<KmlNoticeGetResponse> kmlNotice = kmlNoticeService.getKmlNotice(pageRequest, titleAndCont);
+        Page<KmlNoticeGetResponse> kmlNotice = kmlNoticeService.getKmlNotice(pageRequest, null);
         System.out.println("kmlNotice = " + kmlNotice);
     }
     

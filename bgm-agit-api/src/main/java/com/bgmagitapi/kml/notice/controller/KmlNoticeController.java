@@ -22,7 +22,7 @@ public class KmlNoticeController {
     
     @GetMapping("/kml-notice")
     public PageResponse<KmlNoticeGetResponse> getKmlNotice(@PageableDefault(size = 10) Pageable pageable
-            ,@RequestParam(name = "titleAndCont") String titleAndCont ) {
+            ,@RequestParam(name = "titleAndCont",required = false) String titleAndCont ) {
         Page<KmlNoticeGetResponse> kmlNotice = kmlNoticeService.getKmlNotice(pageable,titleAndCont);
         return PageResponse.from(kmlNotice);
     }
