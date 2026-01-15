@@ -2,6 +2,7 @@ package com.bgmagitapi.kml.notice.entity;
 
 
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
+import com.bgmagitapi.kml.notice.dto.request.KmlNoticePutRequest;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,4 +29,8 @@ public class KmlNotice extends DateSuperClass {
     @Column(name = "BGM_AGIT_KML_NOTICE_CONT")
     private String noticeCont;
     
+    public void modify(KmlNoticePutRequest request) {
+        this.noticeTitle = request.getTitle();
+        this.noticeCont = request.getCont();
+    }
 }

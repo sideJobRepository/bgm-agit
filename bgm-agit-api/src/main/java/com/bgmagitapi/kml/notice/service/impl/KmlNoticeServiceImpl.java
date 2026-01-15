@@ -5,7 +5,9 @@ import com.bgmagitapi.config.S3FileUtils;
 import com.bgmagitapi.config.UploadResult;
 import com.bgmagitapi.entity.BgmAgitCommonFile;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
+import com.bgmagitapi.kml.notice.dto.enums.FileStatus;
 import com.bgmagitapi.kml.notice.dto.request.KmlNoticePostRequest;
+import com.bgmagitapi.kml.notice.dto.request.KmlNoticePutRequest;
 import com.bgmagitapi.kml.notice.dto.response.KmlNoticeGetDetailResponse;
 import com.bgmagitapi.kml.notice.dto.response.KmlNoticeGetResponse;
 import com.bgmagitapi.kml.notice.entity.KmlNotice;
@@ -21,7 +23,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -66,7 +67,7 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
                         )
                 ));
         List<KmlNoticeGetDetailResponse.KmlNoticeFile> kmlNoticeFiles = files.get(kmlNotice.getId());
-        if(kmlNoticeFiles != null) {
+        if (kmlNoticeFiles != null) {
             result.getFiles().addAll(kmlNoticeFiles);
         }
         return result;
@@ -99,6 +100,36 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
             commonFileRepository.save(commonFile);
         }
         return new ApiResponse(200, true, "저장 되었습니다.");
+    }
+    
+    @Override
+    public ApiResponse modifyKmlNotice(KmlNoticePutRequest request) {
+        Long kmlNoticeId = request.getId();
+        KmlNotice kmlNotice = kmlNoticeRepository.findById(kmlNoticeId).orElseThrow(() -> new RuntimeException("존재 하지 않는 공지사항 입니다."));
+        kmlNotice.modify(request);
+        
+        List<MultipartFile> files = request.getFiles();
+        List<KmlNoticePutRequest.KmlNoticeFilePutRequest> existingFiles = request.getExistingFiles();
+        List<UploadResult> uploadResults = s3FileUtils.storeFiles(files, "kml-notice");
+        for (UploadResult result : uploadResults) {
+            BgmAgitCommonFile commonFile = BgmAgitCommonFile
+                    .builder()
+                    .bgmAgitCommonFileTargetId(kmlNotice.getId())
+                    .bgmAgitCommonFileName(result.getOriginalFilename())
+                    .bgmAgitCommonFileUuidName(result.getUuid())
+                    .bgmAgitCommonFileUrl(result.getUrl())
+                    .bgmAgitCommonFileType(BgmAgitCommonType.KML_NOTICE)
+                    .build();
+            commonFileRepository.save(commonFile);
+        }
+        for (KmlNoticePutRequest.KmlNoticeFilePutRequest existingFile : existingFiles) {
+            if (existingFile.getStatus() == FileStatus.DELETED) {
+                BgmAgitCommonFile deleteFile = commonFileRepository.findById(existingFile.getId()).orElseThrow(() -> new RuntimeException("존재하지 않는 파일입니다."));
+                s3FileUtils.deleteFile(deleteFile.getBgmAgitCommonFileUrl());
+                commonFileRepository.delete(deleteFile);
+            }
+        }
+        return new ApiResponse(200,true,"수정 되었습니다.");
     }
     
     @Override

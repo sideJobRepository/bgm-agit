@@ -42,7 +42,7 @@ public class KmlNoticeController {
     
     @PutMapping("/kml-notice")
     public ApiResponse updateKmlNotice(@ModelAttribute KmlNoticePutRequest request) {
-        return null;
+        return kmlNoticeService.modifyKmlNotice(request);
     }
     
     @DeleteMapping("kml-notice/{id}")
