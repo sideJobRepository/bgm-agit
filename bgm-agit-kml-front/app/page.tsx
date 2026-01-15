@@ -10,7 +10,7 @@ import {ArrowRight} from "phosphor-react";
 const INITIAL_CARDS = [
   { id: 1, title: "RED", color: "#D9625E" },
   { id: 2, title: "시작은 BGM 아지트부터", content: 'BGM 아지트는 보드게임을 사랑하는 가지각색의 사람들이 모여, 따뜻한 즐거움을 제공하는 아늑한 공간입니다.\n' +
-      '잠깐의 시간으로 끝나지 않고 여러분의 일상이 될 수 있는, 최고의 친구들과 취미를 만들어보세요', color: "#4A90E2" },
+      '잠깐의 시간으로 끝나지 않고 여러분의 일상이 될 수 있는, 최고의 친구들과 취미를 만들어보세요.', color: "#4A90E2" },
   { id: 3, title: "YELLOW", color: "#EAC764" },
   { id: 4, title: "GREEN", color: "#6DAE81" },
   { id: 5, title: "ORANGE", color: "#E38B29" },
@@ -42,7 +42,8 @@ export default function Home() {
     <Wrapper>
       <Title>
         <h1>Welcome to BGM KML</h1>
-        <span>BGM 아지트의 보드게임 기록을 위한 전용 공간입니다.</span>
+        <span>BGM 아지트의 보드게임 기록을 위한 전용 공간입니다.<br/>
+        여러분의 보드게임 이야기가 이곳에 쌓여갑니다. </span>
         <a></a>
       </Title>
       <Slider>
