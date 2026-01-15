@@ -1,19 +1,19 @@
 package com.bgmagitapi.kml.notice.repository.impl;
 
 import com.bgmagitapi.entity.BgmAgitCommonFile;
-import com.bgmagitapi.entity.QBgmAgitCommonFile;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
-import com.bgmagitapi.kml.menu.dto.response.KmlMenuGetResponse;
 import com.bgmagitapi.kml.notice.dto.response.KmlNoticeGetResponse;
 import com.bgmagitapi.kml.notice.dto.response.QKmlNoticeGetResponse;
-import com.bgmagitapi.kml.notice.entity.QKmlNotice;
 import com.bgmagitapi.kml.notice.repository.query.KmlNoticeQueryRepository;
+import com.querydsl.core.types.Predicate;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -26,7 +26,7 @@ public class KmlNoticeRepositoryImpl implements KmlNoticeQueryRepository {
     private final JPAQueryFactory queryFactory;
     
     @Override
-    public Page<KmlNoticeGetResponse> findByKmlNotice(Pageable pageable) {
+    public Page<KmlNoticeGetResponse> findByKmlNotice(Pageable pageable, String titleAndCont) {
         List<KmlNoticeGetResponse> result = queryFactory
                 .select(
                         new QKmlNoticeGetResponse(
@@ -36,14 +36,26 @@ public class KmlNoticeRepositoryImpl implements KmlNoticeQueryRepository {
                         )
                 )
                 .from(kmlNotice)
+                .where(whereTitleAndCont(titleAndCont))
                 .limit(pageable.getPageSize())
                 .offset(pageable.getOffset())
                 .fetch();
         
         JPAQuery<Long> countQuery = queryFactory
                 .select(kmlNotice.count())
-                .from(kmlNotice);
+                .from(kmlNotice)
+                .where(whereTitleAndCont(titleAndCont));
         return PageableExecutionUtils.getPage(result, pageable, countQuery::fetchOne);
+    }
+    
+    private BooleanExpression whereTitleAndCont(String titleAndCont) {
+        if (!StringUtils.hasText(titleAndCont)) {
+            return null;
+        }
+        String value = "%" + titleAndCont.trim() + "%";
+    
+        return kmlNotice.noticeTitle.like(value)
+                .or(kmlNotice.noticeCont.like(value));
     }
     
     @Override

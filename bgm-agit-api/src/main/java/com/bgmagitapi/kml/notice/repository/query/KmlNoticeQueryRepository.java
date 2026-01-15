@@ -8,6 +8,6 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface KmlNoticeQueryRepository {
-    Page<KmlNoticeGetResponse> findByKmlNotice(Pageable pageable);
+    Page<KmlNoticeGetResponse> findByKmlNotice(Pageable pageable, String titleAndCont);
     List<BgmAgitCommonFile> findByKmlNoticeFiles(List<Long> noticeIds);
 }

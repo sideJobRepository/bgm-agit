@@ -34,8 +34,8 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
     
     
     @Override
-    public Page<KmlNoticeGetResponse> getKmlNotice(Pageable pageable) {
-        Page<KmlNoticeGetResponse> kmlNotices = kmlNoticeRepository.findByKmlNotice(pageable);
+    public Page<KmlNoticeGetResponse> getKmlNotice(Pageable pageable, String titleAndCont) {
+        Page<KmlNoticeGetResponse> kmlNotices = kmlNoticeRepository.findByKmlNotice(pageable,titleAndCont);
         
         List<Long> kmlNoticeIds = kmlNotices.stream()
                 .map(KmlNoticeGetResponse::getId)

@@ -18,8 +18,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class KmlNoticeServiceImplTest extends RepositoryAndServiceTestSupport {
     
     @Autowired
@@ -31,7 +29,7 @@ class KmlNoticeServiceImplTest extends RepositoryAndServiceTestSupport {
     void test1() {
         
         PageRequest pageRequest = PageRequest.of(0, 10);
-        Page<KmlNoticeGetResponse> kmlNotice = kmlNoticeService.getKmlNotice(pageRequest);
+        Page<KmlNoticeGetResponse> kmlNotice = kmlNoticeService.getKmlNotice(pageRequest, titleAndCont);
         System.out.println("kmlNotice = " + kmlNotice);
     }
     

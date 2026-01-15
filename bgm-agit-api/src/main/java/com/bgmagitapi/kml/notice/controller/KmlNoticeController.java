@@ -21,8 +21,9 @@ public class KmlNoticeController {
     
     
     @GetMapping("/kml-notice")
-    public PageResponse<KmlNoticeGetResponse> getKmlNotice(@PageableDefault(size = 10) Pageable pageable) {
-        Page<KmlNoticeGetResponse> kmlNotice = kmlNoticeService.getKmlNotice(pageable);
+    public PageResponse<KmlNoticeGetResponse> getKmlNotice(@PageableDefault(size = 10) Pageable pageable
+            ,@RequestParam(name = "titleAndCont") String titleAndCont ) {
+        Page<KmlNoticeGetResponse> kmlNotice = kmlNoticeService.getKmlNotice(pageable,titleAndCont);
         return PageResponse.from(kmlNotice);
     }
     

@@ -9,6 +9,6 @@ import org.springframework.data.domain.Pageable;
 public interface KmlNoticeService {
     
     
-    Page<KmlNoticeGetResponse> getKmlNotice(Pageable pageable);
+    Page<KmlNoticeGetResponse> getKmlNotice(Pageable pageable, String titleAndCont);
     ApiResponse createKmlNotice(KmlNoticePostRequest request);
 }
