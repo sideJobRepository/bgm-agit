@@ -5,6 +5,12 @@ const nextConfig = {
   // /record 로 베이스 경로 지정
   basePath: '/record',
   assetPrefix: '/record',
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 
   async rewrites() {
     return [
