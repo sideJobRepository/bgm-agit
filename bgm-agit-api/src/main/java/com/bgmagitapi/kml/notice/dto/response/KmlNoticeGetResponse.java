@@ -1,6 +1,7 @@
 package com.bgmagitapi.kml.notice.dto.response;
 
 
+import com.querydsl.core.annotations.QueryProjection;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,12 +28,19 @@ public class KmlNoticeGetResponse {
         return this.files;
     }
     
+    @QueryProjection
+    public KmlNoticeGetResponse(Long id, String title, String cont) {
+        this.id = id;
+        this.title = title;
+        this.cont = cont;
+    }
+    
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
     public static class KmlNoticeFile {
-        private String id;
+        private Long id;
         private String fileName;
         private String fileUrl;
     }

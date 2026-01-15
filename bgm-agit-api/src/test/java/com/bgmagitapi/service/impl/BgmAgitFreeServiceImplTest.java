@@ -59,13 +59,9 @@ class BgmAgitFreeServiceImplTest extends RepositoryAndServiceTestSupport {
         File file2 = new File("src/test/java/com/bgmagitapi/file/참새작.png");
         FileInputStream fis2 = new FileInputStream(file2);
         
-        MockMultipartFile multipartFile1 = new MockMultipartFile(
-                   "bgmAgitFree", file1.getName(), "image/jpeg",fis1
-           );
+        MockMultipartFile multipartFile1 = new MockMultipartFile("bgmAgitFree", file1.getName(), "image/jpeg",fis1);
         
-        MockMultipartFile multipartFile2 = new MockMultipartFile(
-                    "bgmAgitFree", file2.getName(), "png",fis2
-            );
+        MockMultipartFile multipartFile2 = new MockMultipartFile("bgmAgitFree", file2.getName(), "png",fis2);
         
         List<MultipartFile> multipartFile3 = List.of(multipartFile1, multipartFile2);
         request.setFiles(multipartFile3);

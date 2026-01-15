@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -31,11 +33,38 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
     private final S3FileUtils s3FileUtils;
     
     
-    
     @Override
     public Page<KmlNoticeGetResponse> getKmlNotice(Pageable pageable) {
-        kmlNoticeRepository.findByKmlNotce(pageable);
-        return null;
+        Page<KmlNoticeGetResponse> kmlNotices = kmlNoticeRepository.findByKmlNotice(pageable);
+        
+        List<Long> kmlNoticeIds = kmlNotices.stream()
+                .map(KmlNoticeGetResponse::getId)
+                .toList();
+        
+        List<BgmAgitCommonFile> noticeFiles = kmlNoticeRepository.findByKmlNoticeFiles(kmlNoticeIds);
+        
+        Map<Long, List<KmlNoticeGetResponse.KmlNoticeFile>> fileMap = noticeFiles.stream()
+                .collect(Collectors.groupingBy(
+                        BgmAgitCommonFile::getBgmAgitCommonFileTargetId,
+                        Collectors.mapping(
+                                file -> KmlNoticeGetResponse.KmlNoticeFile.builder()
+                                        .id(file.getBgmAgitCommonFileId())
+                                        .fileName(file.getBgmAgitCommonFileName())
+                                        .fileUrl(file.getBgmAgitCommonFileUrl())
+                                        .build(),
+                                Collectors.toList()
+                        )
+                ));
+        
+        
+        for (KmlNoticeGetResponse kmlNotice : kmlNotices) {
+            List<KmlNoticeGetResponse.KmlNoticeFile> kmlNoticeFiles = fileMap.get(kmlNotice.getId());
+            if(kmlNoticeFiles != null) {
+                kmlNotice.getFiles().addAll(kmlNoticeFiles);
+            }
+        }
+        
+        return kmlNotices;
     }
     
     @Override
