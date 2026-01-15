@@ -11,6 +11,9 @@ declare module 'styled-components' {
     colors: {
       whiteColor: string;
       blackColor: string;
+      lineColor: string;
+      border: string;
+      grayColor: string;
 
       sideBgColor: string;
       mainBgColor: string;
@@ -37,11 +40,9 @@ declare module 'styled-components' {
       yellowColor: string;
       noticeColor: string;
       softColor: string;
-      lineColor: string;
       navColor: string;
       labelGb: string;
       white: string;
-      border: string;
       text: string;
       kakao: string;
       black: string;
@@ -54,10 +55,10 @@ declare module 'styled-components' {
         h3Size: string;
         h4Size: string;
         h5Size: string;
-        strongSize: string;
-        menuSize: string;
-        TopButtonSize: string;
-        spanSize: string;
+        xl : string;
+        md: string;
+        sm: string;
+        xs: string;
       };
     };
     mobile: {
@@ -67,10 +68,10 @@ declare module 'styled-components' {
         h3Size: string;
         h4Size: string;
         h5Size: string;
-        strongSize: string;
-        menuSize: string;
-        TopButtonSize: string;
-        spanSize: string;
+        xl : string;
+        md: string;
+        sm: string;
+        xs: string;
       };
     };
     weight: {
