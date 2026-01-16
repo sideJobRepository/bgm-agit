@@ -7,8 +7,8 @@ public enum SocialLoginUrl {
     
     KAKAO("/bgm-agit/kakao-login"),
     NAVER("/bgm-agit/naver-login"),
-    NEXT_KAKAO("/bgm-agit/kakao-login"),
-    NEXT_NAVER("/bgm-agit/naver-login");
+    NEXT_KAKAO("/bgm-agit/next/kakao-login"),
+    NEXT_NAVER("/bgm-agit/next/naver-login");
     
     private final String path;
     
