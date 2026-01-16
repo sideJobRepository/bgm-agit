@@ -34,6 +34,20 @@ export default function Sidebar() {
 
   const [mounted, setMounted] = useState(false);
 
+  //아이콘
+  const iconMap = {
+    Bell,
+    BookOpen,
+    CalendarBlank,
+    Crown,
+    ChartLineUp,
+    SlidersHorizontal,
+    PencilSimple,
+    SignIn,
+    List,
+    X,
+  };
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -83,44 +97,40 @@ export default function Sidebar() {
         </TopSeticon>
         <MiddleSeciton>
           <ul>
-            <MenuLi>
-              <Link href="/">
-                <Bell weight="fill" />
-                공지사항
-              </Link>
-              <Link href="/convert">
-                <BookOpen weight="fill" />
-                마작/대회 룰
-              </Link>
-            </MenuLi>
+            {menuData
+              ?.filter(menu => menu.menuOrders < 3)
+              ?.map((menu) => {
+                const IconComponent = iconMap[menu.icon as keyof typeof iconMap];
+
+                return (
+                  <MenuLi key={menu.id} $active={location.pathname === menu.menuLink}>
+                    <Link href={menu.menuLink}>
+                      {IconComponent && <IconComponent weight="fill" />}
+                      {menu.menuName}
+                    </Link>
+                  </MenuLi>
+                );
+              })}
             <Divider />
-            <MenuLi>
-              <Link href="/notice">
-                <CalendarBlank weight="fill" />
-                월간/일간기록
-              </Link>
-              <Link href="/convert">
-                <Crown weight="fill" />
-                역만기록
-              </Link>
-              <Link href="/notice">
-                <ChartLineUp weight="fill" />
-                연간기록
-              </Link>
-              <Link href="/notice">
-                <SlidersHorizontal weight="fill" />
-                사용자지정 기록
-              </Link>
-              <Link href="/notice">
-                <ChartLineUp weight="fill" />
-                대회 기록
-              </Link>
-            </MenuLi>
+            {menuData
+              ?.filter(menu => menu.menuOrders > 2)
+              ?.map((menu) => {
+                const IconComponent = iconMap[menu.icon as keyof typeof iconMap];
+
+                return (
+                  <MenuLi key={menu.id} $active={location.pathname === menu.menuLink}>
+                    <Link href={menu.menuLink}>
+                      {IconComponent && <IconComponent weight="fill" />}
+                      {menu.menuName}
+                    </Link>
+                  </MenuLi>
+                );
+              })}
           </ul>
         </MiddleSeciton>
         <BottomSeciton>
           <ul>
-            <MenuLi>
+            <MenuLi $active={false}>
               <Link href="/convert">
                 <PencilSimple weight="fill" />
                 기록 입력
@@ -202,7 +212,7 @@ const SidebarWrapper = styled(motion.aside)`
   }
 `;
 
-const TopSeticon = styled.div<{ $open: boolean }>`
+const TopSeticon = styled.div`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -242,7 +252,7 @@ const MenuLi = styled.li<{ $active: boolean }>`
     width: 100%;
     color: ${({ theme }) => theme.colors.blackColor};
     font-weight: 500;
-    font-size: ${({ theme }) => theme.desktop.sizes.menuSize};
+    font-size: ${({ theme }) => theme.desktop.sizes.xl};
 
     svg {
       width: 16px;
