@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-
 import ClientLayout from '@/app/ClientLayout';
 import StyledComponentsRegistry from '@/app/registry';
 

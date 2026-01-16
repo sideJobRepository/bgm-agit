@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import axios, { AxiosError } from "axios";
+import { useLoadingStore } from '@/store/loading';
 
 interface RequestOptions {
   ignoreErrorRedirect?: boolean;
@@ -9,12 +10,14 @@ interface RequestOptions {
 
 export function useRequest() {
   const router = useRouter();
+  const setLoading = useLoadingStore((state) => state.setLoading);
 
   const request = async <T>(
     requestFn: () => Promise<T>,
     onSuccess?: (data: T) => void,
     options?: RequestOptions,
   ): Promise<T | undefined> => {
+    setLoading(true);
     try {
       const data = await requestFn();
       onSuccess?.(data);
@@ -39,6 +42,8 @@ export function useRequest() {
         }
       }
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 

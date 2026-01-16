@@ -17,8 +17,18 @@ import {
 } from 'phosphor-react';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import React from 'react';
+import { useFetchMainMenu } from '@/services/menu.service';
+import { useKmlMenuStore } from '@/store/menu';
+
 
 export default function Sidebar() {
+
+  useFetchMainMenu();
+  const menuData = useKmlMenuStore((state) => state.menu);
+  console.log("menuData", menuData);
+
+
   //모바일 토글
   const [isOpen, setIsOpen] = useState(false);
 

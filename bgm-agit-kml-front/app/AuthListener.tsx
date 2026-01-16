@@ -1,11 +1,10 @@
 "use client";
 import { useEffect } from "react";
-import { useSetRecoilState } from "recoil";
-import { userState } from "@/store/user";
+import { useUserStore } from '@/store/user';
 import { refreshToken } from "@/lib/axiosInstance";
 
 export default function AuthListener() {
-  const setUser = useSetRecoilState(userState);
+  const setUser = useUserStore((state) => state.setUser);
 
   useEffect(() => {
     const handler = (e: Event) => {

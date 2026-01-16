@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { withBasePath } from '@/lib/path';
@@ -26,6 +26,9 @@ const INITIAL_CARDS = [
 ];
 
 export default function Home() {
+
+  const [mounted, setMounted] = useState(false);
+
   const [cards, setCards] = useState(INITIAL_CARDS);
   const [dir, setDir] = useState(1); // 1 = next, -1 = prev
 
@@ -47,6 +50,10 @@ export default function Home() {
       return [last, ...rest]; // 뒤에서 빼서 앞으로
     });
   };
+
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) return null;
   return (
     <Wrapper>
       <Title>
