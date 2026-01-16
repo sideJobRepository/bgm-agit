@@ -1,4 +1,4 @@
-package com.bgmagitapi.kml.notice.down;
+package com.bgmagitapi.kml.down.controller;
 
 import com.bgmagitapi.config.S3FileUtils;
 import com.bgmagitapi.config.UploadResult;

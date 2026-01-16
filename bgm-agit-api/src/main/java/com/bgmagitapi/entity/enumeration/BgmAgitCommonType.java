@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 public enum BgmAgitCommonType {
     FREE("자유게시판"),
     INQUIRY("1:1문의"),
-    KML_NOTICE("KML 공지사항");
+    KML_NOTICE("KML 공지사항"),
+    RULE("룰");
     private final String fileValue;
 }
