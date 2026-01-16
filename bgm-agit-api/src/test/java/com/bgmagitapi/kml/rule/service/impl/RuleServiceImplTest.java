@@ -27,15 +27,15 @@ class RuleServiceImplTest extends RepositoryAndServiceTestSupport {
     void test1() throws IOException {
         
         
-        File file1 = new File("src/test/java/com/bgmagitapi/file/이건 모자가 아니잖아.jpg");
+        File file1 = new File("src/test/java/com/bgmagitapi/file/복합기.jpg");
         FileInputStream fis1 = new FileInputStream(file1);
         MockMultipartFile multipartFile1 = new MockMultipartFile("파일1", file1.getName(), "image/jpeg", fis1);
         List<MultipartFile> files = List.of(multipartFile1);
         
         RulePostRequest result = RulePostRequest
                 .builder()
-                .title("일반룰")
-                .tournamentStatus(false)
+                .title("대회룰")
+                .tournamentStatus(true)
                 .files(files)
                 .build();
         
