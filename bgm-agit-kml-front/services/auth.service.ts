@@ -24,7 +24,7 @@ export function useLoginPost() {
         setUser(user);
 
         onSuccess?.();
-        alertDialog('로그인에 성공하였습니다..', 'success');
+        alertDialog('로그인에 성공하였습니다.', 'success');
 
       }
     );
