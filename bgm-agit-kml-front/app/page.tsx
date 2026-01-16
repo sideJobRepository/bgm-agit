@@ -71,7 +71,7 @@ export default function Home() {
             key={card.id}
             custom={{ i, dir }}
             variants={variants(isMobile)}
-            initial={false}
+            initial="initial"
             animate="animate"
             transition={{
               duration: 0.45,
@@ -290,51 +290,49 @@ const ContentSection = styled.section`
 /* ================= animation ================= */
 
 const variants = (isMobile: boolean) => ({
-  initial: ({ dir }: { dir: number }) => ({
-    // 들어올 때 살짝 위에서 내려오게 (원하면 -20~-40 조절)
-    y: -24,
-    opacity: 0,
-    scale: 0.96,
-  }),
-
-  animate: ({ i }: { i: number }) => {
-    const sideX = isMobile ? '20%' : '40%';
-    // center
+  initial: ({ i }: { i: number }) => {
     if (i === 1) {
+      // 가운데 카드는 그대로
       return {
         x: 0,
-        y: 0,
-        scale: 1,
         opacity: 1,
+        scale: 1,
         zIndex: 3,
       };
     }
 
-    // left
-    if (i === 0) {
+    return {
+      x: 0, // 처음엔 겹치게
+      opacity: 0,
+      scale: 0.92,
+      zIndex: 2,
+    };
+  },
+
+  animate: ({ i }: { i: number }) => {
+    const sideX = isMobile ? '20%' : '40%';
+
+    if (i === 1) {
       return {
-        x: `-${sideX}`,
-        y: 0,
-        scale: 0.92,
-        opacity: 0.65,
-        zIndex: 2,
+        x: 0,
+        opacity: 1,
+        scale: 1,
+        zIndex: 3,
       };
     }
 
-    // right
     return {
-      x: sideX,
-      y: 0,
-      scale: 0.92,
+      x: i === 0 ? `-${sideX}` : sideX, // 양쪽으로 퍼지게
       opacity: 0.65,
+      scale: 0.92,
       zIndex: 2,
     };
   },
 
   exit: ({ dir }: { dir: number }) => ({
-    // 나갈 때도 살짝 위로/작게/희미하게
     y: -24,
     opacity: 0,
     scale: 0.96,
   }),
 });
+

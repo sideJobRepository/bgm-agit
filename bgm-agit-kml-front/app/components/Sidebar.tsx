@@ -22,9 +22,16 @@ import React from 'react';
 import { useFetchMainMenu } from '@/services/menu.service';
 import { useKmlMenuStore } from '@/store/menu';
 import { useUserStore } from '@/store/user';
+import { usePathname, useRouter } from 'next/navigation';
+
 
 
 export default function Sidebar() {
+
+  //navigation
+  const pathname = usePathname();
+  const router = useRouter();
+  console.log("pathname", pathname)
 
   useFetchMainMenu();
   const menuData = useKmlMenuStore((state) => state.menu);
@@ -68,6 +75,19 @@ export default function Sidebar() {
     return () => mediaQuery.removeEventListener('change', handleResize);
   }, []);
 
+  useEffect(() => {
+    // 모바일시 메뉴 이동시 메뉴 닫히게
+    if (isOpen) setIsOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if(pathname === '/login'){
+      if(user){
+          router.replace('/');
+      }
+    }
+  }, [pathname, user]);
+
   return (
     <>
       <MobileTop>
@@ -107,7 +127,7 @@ export default function Sidebar() {
                 const IconComponent = iconMap[menu.icon as keyof typeof iconMap];
 
                 return (
-                  <MenuLi key={menu.id} $active={location.pathname === menu.menuLink}>
+                  <MenuLi key={menu.id} $active={pathname === menu.menuLink}>
                     <Link href={menu.menuLink}>
                       {IconComponent && <IconComponent weight="fill" />}
                       {menu.menuName}
@@ -122,7 +142,7 @@ export default function Sidebar() {
                 const IconComponent = iconMap[menu.icon as keyof typeof iconMap];
 
                 return (
-                  <MenuLi key={menu.id} $active={location.pathname === menu.menuLink}>
+                  <MenuLi key={menu.id} $active={pathname === menu.menuLink}>
                     <Link href={menu.menuLink}>
                       {IconComponent && <IconComponent weight="fill" />}
                       {menu.menuName}
@@ -142,7 +162,8 @@ export default function Sidebar() {
               {user ? (    <Link href="/notice">
                 <SignOut weight="fill" />
                 로그아웃
-              </Link>) : (    <Link href="/notice">
+              </Link>) : (
+                <Link href="/login">
                 <SignIn weight="fill" />
                 로그인
               </Link>)}

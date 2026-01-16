@@ -24,15 +24,15 @@ public class BgmAgitSecurityDsl<H extends HttpSecurityBuilder<H>> extends Abstra
     private static final RequestMatcher LOGIN_MATCHER = new OrRequestMatcher(
             new AntPathRequestMatcher("/bgm-agit/kakao-login", "POST"),
             new AntPathRequestMatcher("/bgm-agit/naver-login", "POST"),
-            new AntPathRequestMatcher("/bgm-agit/google-login", "POST")
+            new AntPathRequestMatcher("/bgm-agit/next/kakao-login", "POST"),
+            new AntPathRequestMatcher("/bgm-agit/next/naver-login", "POST")
     );
     
     
     public BgmAgitSecurityDsl() {
-        super(new BgmAgitAuthenticationFilter(),null);
+        super(new BgmAgitAuthenticationFilter(), null);
     }
     
-
     
     @Override
     public void init(H http) throws Exception {
@@ -48,10 +48,10 @@ public class BgmAgitSecurityDsl<H extends HttpSecurityBuilder<H>> extends Abstra
         getAuthenticationFilter().setAuthenticationSuccessHandler(successHandler);
         getAuthenticationFilter().setAuthenticationFailureHandler(failureHandler);
         SessionAuthenticationStrategy sessionAuthenticationStrategy = http.getSharedObject(SessionAuthenticationStrategy.class);
-        if(sessionAuthenticationStrategy != null) {
+        if (sessionAuthenticationStrategy != null) {
             getAuthenticationFilter().setSessionAuthenticationStrategy(sessionAuthenticationStrategy);
         }
-        http.setSharedObject(BgmAgitAuthenticationFilter.class,getAuthenticationFilter());
+        http.setSharedObject(BgmAgitAuthenticationFilter.class, getAuthenticationFilter());
         http.addFilterBefore(getAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
     }
     
@@ -64,10 +64,12 @@ public class BgmAgitSecurityDsl<H extends HttpSecurityBuilder<H>> extends Abstra
         this.failureHandler = authenticationFailureHandler;
         return this;
     }
+    
     /**
      * 세션을 사용하지않음
+     *
      * @param loginProcessingUrl creates the {@link RequestMatcher} based upon the
-     * loginProcessingUrl
+     *                           loginProcessingUrl
      * @return
      */
 //    public BgmAgitSecurityDsl<H> setSecurityContextRepository(SecurityContextRepository securityContextRepository) {

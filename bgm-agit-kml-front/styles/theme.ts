@@ -35,7 +35,7 @@ export const theme = {
     labelGb: 'rgba(66, 69, 72, 0.6)',
     white: '#FFFFFF',
     text: '#222',
-    kakao: '#FDDC3F',
+    kakao: '#03a74d',
     black: '#000000',
   },
   desktop: {

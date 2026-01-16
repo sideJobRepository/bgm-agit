@@ -1,4 +1,4 @@
-package com.bgmagitapi.kml.notice.down;
+package com.bgmagitapi.kml.down.controller;
 
 import com.bgmagitapi.config.S3FileUtils;
 import com.bgmagitapi.config.UploadResult;
@@ -67,7 +67,7 @@ public class FileDownLoadController {
       
       
     @PostMapping("/ckEditor/file/{folder}")
-    public String CkEditorFileUpload(@RequestParam("file") MultipartFile file, @PathVariable String folder) {
+    public String ckEditorFileUpload(@RequestParam("file") MultipartFile file, @PathVariable String folder) {
         UploadResult notice = s3FileUtils.storeFile(file, folder);
         return notice.getUrl();
     }
