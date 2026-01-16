@@ -4,20 +4,10 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { withBasePath } from '@/lib/path';
-import Link from 'next/link';
-import { ArrowRight } from 'phosphor-react';
-import { useMediaQuery } from 'react-responsive';
-import modalLogo from '*.ico';
-import kakao from '*.png';
-import naver from '*.png';
 
 export default function Home() {
 
   const [mounted, setMounted] = useState(false);
-
-
-
-  const isMobile = useMediaQuery({ maxWidth: 844 });
 
 
   useEffect(() => setMounted(true), []);
@@ -28,7 +18,7 @@ export default function Home() {
     <Wrapper>
       <Title    initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1.2, ease: 'easeOut' }}>
+                transition={{ duration: 0.8, ease: 'easeOut' }}>
         <h1>Sign In to Continue</h1>
         <span>
           기록은 시작의 첫 걸음입니다.
@@ -37,7 +27,7 @@ export default function Home() {
       </Title>
       <LoginBox  initial={{ opacity: 0, y: 20 }}
                  animate={{ opacity: 1, y: 0 }}
-                 transition={{ delay: 1.4, duration: 1.2, ease: 'easeOut' }}>
+                 transition={{ delay: 1, duration: 1, ease: 'easeOut' }}>
         <Top>
           <img src={withBasePath('/kmlMain.png')} alt="로고" />
         </Top>
