@@ -299,8 +299,8 @@ const MenuLi = styled.li<{ $active: boolean }>`
   flex-direction: column;
   gap: 32px;
   padding: 12px 16px;
-  background-color: ${({ $active }) => ($active ? '#ffffff26' : 'transparent')};
-  color: ${({ $active, theme }) => ($active ? '#ffffff' : theme.colors.menuColor)};
+  background-color: ${({ $active }) => ($active ? '#000000' : 'transparent')};
+  color: ${({ $active, theme }) => ($active ? '#ffffff' : theme.colors.blackColor)};
   border-radius: 99px;
 
   a {
@@ -309,7 +309,6 @@ const MenuLi = styled.li<{ $active: boolean }>`
     align-items: center;
     gap: 8px;
     width: 100%;
-    color: ${({ theme }) => theme.colors.blackColor};
     font-weight: 500;
     font-size: ${({ theme }) => theme.desktop.sizes.xl};
 

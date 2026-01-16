@@ -4,11 +4,8 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { withBasePath } from '@/lib/path';
-import { useUserStore } from '@/store/user';
-import api from '@/lib/axiosInstance';
-import { tokenStore } from '@/services/tokenStore';
 
-export default function Home() {
+export default function Login() {
 
   const [mounted, setMounted] = useState(false);
 
