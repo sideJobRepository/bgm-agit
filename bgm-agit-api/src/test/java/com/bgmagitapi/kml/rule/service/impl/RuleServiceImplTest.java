@@ -3,6 +3,7 @@ package com.bgmagitapi.kml.rule.service.impl;
 import com.bgmagitapi.RepositoryAndServiceTestSupport;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.rule.dto.request.RulePostRequest;
+import com.bgmagitapi.kml.rule.dto.response.RuleGetResponse;
 import com.bgmagitapi.kml.rule.service.RuleService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,5 +42,13 @@ class RuleServiceImplTest extends RepositoryAndServiceTestSupport {
         
         ApiResponse rule = ruleService.createRule(result);
         System.out.println("rule = " + rule);
+    }
+    
+    @DisplayName("")
+    @Test
+    void test2(){
+        List<RuleGetResponse> rules = ruleService.getRules();
+        System.out.println("rules = " + rules);
+        
     }
 }
