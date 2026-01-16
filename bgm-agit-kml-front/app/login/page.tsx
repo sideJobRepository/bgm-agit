@@ -49,7 +49,7 @@ export default function Home() {
       </Title>
       <LoginBox  initial={{ opacity: 0, y: 20 }}
                  animate={{ opacity: 1, y: 0 }}
-                 transition={{ delay: 1, duration: 1, ease: 'easeOut' }}>
+                 transition={{ delay: 0.8, duration: 0.8, ease: 'easeOut' }}>
         <Top>
           <img src={withBasePath('/kmlMain.png')} alt="로고" />
         </Top>

@@ -2,6 +2,8 @@ import { useUserStore } from '@/store/user';
 import { useRequest } from '@/hooks/useRequest';
 import api from '@/lib/axiosInstance';
 import { tokenStore } from '@/services/tokenStore';
+import Swal from 'sweetalert2';
+import { alertDialog } from '@/utils/alert';
 
 export function useLoginPost() {
   const { request } = useRequest();
@@ -22,7 +24,8 @@ export function useLoginPost() {
         setUser(user);
 
         onSuccess?.();
-        alert('로그인에 성공하였습니다.');
+        alertDialog('로그인에 성공하였습니다..', 'success');
+
       }
     );
   };

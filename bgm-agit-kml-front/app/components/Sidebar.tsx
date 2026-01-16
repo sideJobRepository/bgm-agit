@@ -25,6 +25,8 @@ import { useUserStore } from '@/store/user';
 import { usePathname, useRouter } from 'next/navigation';
 import api from '@/lib/axiosInstance';
 import { tokenStore } from '@/services/tokenStore';
+import Swal from 'sweetalert2';
+import { alertDialog, confirmDialog } from '@/utils/alert';
 
 
 
@@ -62,22 +64,27 @@ export default function Sidebar() {
 
   const resetUser = useUserStore((state) => state.clearUser)
 
-  const logout = async() => {
-    const channel = new BroadcastChannel('auth');
-    channel.postMessage('logout');
-    channel.close();
+  const logout = async () => {
+    const result = await confirmDialog('로그아웃 하시겠습니까?', 'warning');
 
-    try {
-      await api.delete('/bgm-agit/refresh', { withCredentials: true });
-    } catch (err) {
-      console.error('서버 리프레시 토큰 삭제 실패:', err);
+    if (result.isConfirmed) {
+      const channel = new BroadcastChannel('auth');
+      channel.postMessage('logout');
+      channel.close();
+
+      try {
+        await api.delete('/bgm-agit/refresh', { withCredentials: true });
+      } catch (err) {
+        console.error('서버 리프레시 토큰 삭제 실패:', err);
+      }
+
+      await alertDialog('로그아웃 되었습니다.', 'success');
+
+      tokenStore.clear();
+      resetUser();
+      setIsOpen(false);
     }
-
-    alert("로그아웃 되었습니다.")
-    tokenStore.clear(); // 메모리 Access Token 제거
-    resetUser();
-    setIsOpen(false);
-  }
+  };
 
   useEffect(() => {
     setMounted(true);

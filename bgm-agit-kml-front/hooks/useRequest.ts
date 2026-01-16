@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import axios, { AxiosError } from "axios";
 import { useLoadingStore } from '@/store/loading';
+import { alertDialog } from '@/utils/alert';
 
 interface RequestOptions {
   ignoreErrorRedirect?: boolean;
@@ -36,9 +37,9 @@ export function useRequest() {
           const messages = errData.validation
             .map((v: any) => Object.values(v).join("\n"))
             .join("\n");
-          alert(messages);
+          await alertDialog(messages, 'error');
         } else {
-          alert(err.response?.data?.message ?? "오류가 발생했습니다.");
+          await alertDialog(err.response?.data?.message ?? "오류가 발생했습니다.");
         }
       }
       throw error;
