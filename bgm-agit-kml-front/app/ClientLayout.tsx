@@ -4,6 +4,7 @@ import React from "react";
 import styled from "styled-components";
 import ClientProviders from "./providers";
 import Sidebar from "./components/Sidebar";
+import AuthListener from '@/app/AuthListener';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
 
@@ -11,6 +12,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   console.log('ClientLayout styled ===', styled);
   return (
     <ClientProviders>
+      <AuthListener/>
       <Wrapper>
         <Inner>
         <LeftArea>
