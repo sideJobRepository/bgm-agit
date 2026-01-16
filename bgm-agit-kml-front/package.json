@@ -9,14 +9,22 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "next": "16.0.3",
+    "@emotion/is-prop-valid": "^1.4.0",
+    "axios": "^1.13.2",
+    "framer-motion": "^12.26.2",
+    "next": "^16.0.3",
+    "phosphor-react": "^1.4.1",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "react-responsive": "^10.0.1",
+    "styled-components": "^6.3.6",
+    "zustand": "^5.0.10"
   },
   "devDependencies": {
-    "@types/node": "^20",
-    "@types/react": "^19",
+    "@types/node": "^20.19.29",
+    "@types/react": "^19.2.8",
     "@types/react-dom": "^19",
+    "babel-plugin-styled-components": "^2.1.4",
     "eslint": "^9",
     "eslint-config-next": "16.0.3",
     "typescript": "^5"

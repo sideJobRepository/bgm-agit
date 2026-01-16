@@ -24,17 +24,23 @@ public class NaverServiceImpl implements SocialService{
     private String naverClientId;
     @Value("${naver.redirecturi}")
     private String naverRedirectUri;
+    @Value("${naver.redirecturi2}")
+    private String naverRedirectUri2;
     @Value("${naver.client-secret}")
     private String naverClientSecret;
     @Override
-    public AccessTokenResponse getAccessToken(String code) {
+    public AccessTokenResponse getAccessToken(String code, String socialType) {
         RestClient restClient = RestClient.create();
         
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         
         params.add("code", code);
         params.add("client_id", naverClientId);
-        params.add("redirect_uri", naverRedirectUri);
+        if("NAVER".equals(socialType)){
+            params.add("redirect_uri", naverRedirectUri);
+        }else {
+            params.add("redirect_uri", naverRedirectUri2);
+        }
         params.add("grant_type", "authorization_code");
         params.add("client_secret",naverClientSecret);
         params.add("state", UUID.randomUUID().toString());

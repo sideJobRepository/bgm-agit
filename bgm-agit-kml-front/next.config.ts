@@ -1,9 +1,16 @@
-
 const nextConfig = {
   reactStrictMode: true,
 
-  // /record 로 베이스 경로 지정
+  compiler: {
+    styledComponents: true
+  },
+
   basePath: '/record',
+  assetPrefix: '/record',
+
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 
   async rewrites() {
     return [

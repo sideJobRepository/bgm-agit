@@ -14,9 +14,12 @@ import {TabWrap} from "../../pages/Academy.tsx";
 export default function Curriculum() {
 
     const categoryOptions = [
-        { value: '3g', label: '3g' },
-        { value: '3k', label: '3k' },
-        { value: '4g1', label: '4g1' },
+        {value: '3G', label: '3G'},
+        {value: '4K\'', label: '4K\''},
+        {value: '5G1', label: '5G1'},
+        {value: '5G2\'', label: '5G2\''},
+        {value: '6G2', label: '6G2'},
+        {value: '6G5\'', label: '6G5\''},
     ];
 
 
@@ -29,18 +32,18 @@ export default function Curriculum() {
 
     const headers = [
         '진도구분',
-        ...Array.from({ length: 12 }, (_, i) => `${i + 1}월`),
+        ...Array.from({length: 12}, (_, i) => `${i + 1}월`),
     ];
 
     //기본
     function createEmptyTable(rowCount = 2): string[][] {
-        return Array.from({ length: rowCount }, () =>
+        return Array.from({length: rowCount}, () =>
             Array(13).fill('') // 진도구분 + 12개월
         );
     }
 
-    const { insert } = useInsertPost();
-    const { update } = useUpdatePost();
+    const {insert} = useInsertPost();
+    const {update} = useUpdatePost();
 
     const fetchCurriculum = useCurriiculumFetch();
 
@@ -123,7 +126,7 @@ export default function Curriculum() {
     //역변환 함수
     function transformJSONToTable(curriculumData: any) {
         if (!curriculumData?.rows) {
-            return { data: [], merges: [] };
+            return {data: [], merges: []};
         }
 
         const data: string[][] = [];
@@ -152,9 +155,8 @@ export default function Curriculum() {
             data.push(tableRow);
         });
 
-        return { data, merges };
+        return {data, merges};
     }
-
 
 
     const handleSubmit = async () => {
@@ -202,7 +204,7 @@ export default function Curriculum() {
         }
 
         // 2. 데이터 있음 → 서버 데이터 바인딩
-        const { data, merges } = transformJSONToTable(curriculumData);
+        const {data, merges} = transformJSONToTable(curriculumData);
 
         setTableData(data);
         setTableMerges(merges);
@@ -215,10 +217,9 @@ export default function Curriculum() {
     }, [curriculumData]);
 
 
-
     //반 기준
     useEffect(() => {
-        fetchCurriculum({ year: year, className: classKey });
+        fetchCurriculum({year: year, className: classKey});
     }, [classKey, year]);
 
     return (
@@ -226,7 +227,7 @@ export default function Curriculum() {
             <TopBox>
                 <div>
                     <YearBox>
-                        <YearButton  color="#222" onClick={() => setShowCalendar(prev => !prev)}>
+                        <YearButton color="#222" onClick={() => setShowCalendar(prev => !prev)}>
                             {year}
                         </YearButton>
 
@@ -288,66 +289,68 @@ const TopBox = styled.div<WithTheme>`
     width: 100%;
     margin-bottom: 16px;
     justify-content: space-between;
+
     > div {
         display: inline-flex;
         gap: 8px;
+
         input {
             border: none;
             width: 100%;
             padding: 4px 8px;
-            font-size: ${({ theme }) => theme.sizes.small};
+            font-size: ${({theme}) => theme.sizes.small};
             outline: none;
-            color: ${({ theme }) => theme.colors.subColor};
+            color: ${({theme}) => theme.colors.subColor};
             background: transparent;
         }
     }
 `
 
 const YearBox = styled.div`
- position: relative;
+    position: relative;
     height: 100%;
     z-index: 10000;
 `
 
 const YearButton = styled.button<WithTheme & { color: string }>`
-  padding: 4px 8px;
+    padding: 4px 8px;
     width: 60px;
     height: 100%;
-  background-color: ${({ color }) => color};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.xsmall};
-  border: none;
-  cursor: pointer;
-    
+    background-color: ${({color}) => color};
+    color: ${({theme}) => theme.colors.white};
+    font-size: ${({theme}) => theme.sizes.xsmall};
+    border: none;
+    cursor: pointer;
+
     &:hover {
         opacity: 0.8;
     }
 
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.xsmall};
-  }
+    @media ${({theme}) => theme.device.mobile} {
+        font-size: ${({theme}) => theme.sizes.xsmall};
+    }
 `;
 
 const Button = styled.button<WithTheme & { color: string }>`
-  padding: 4px 8px;
-  background-color: ${({ color }) => color};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.xsmall};
-  border: none;
-  cursor: pointer;
-    
+    padding: 4px 8px;
+    background-color: ${({color}) => color};
+    color: ${({theme}) => theme.colors.white};
+    font-size: ${({theme}) => theme.sizes.xsmall};
+    border: none;
+    cursor: pointer;
+
     &:hover {
         opacity: 0.8;
     }
 
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.xsmall};
-  }
+    @media ${({theme}) => theme.device.mobile} {
+        font-size: ${({theme}) => theme.sizes.xsmall};
+    }
 `;
 
 const SelectBox = styled.select<WithTheme>`
     width: 72px;
-    border: 1px solid  ${({theme}) => theme.colors.navColor};
+    border: 1px solid ${({theme}) => theme.colors.navColor};
     color: ${({theme}) => theme.colors.subColor};
     padding: 4px 8px;
     font-size: ${({theme}) => theme.sizes.xsmall};
