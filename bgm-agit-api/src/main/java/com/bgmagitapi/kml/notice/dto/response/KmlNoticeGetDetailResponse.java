@@ -43,5 +43,6 @@ public class KmlNoticeGetDetailResponse {
         private Long id;
         private String fileName;
         private String fileUrl;
+        private String fileFolder;
     }
 }

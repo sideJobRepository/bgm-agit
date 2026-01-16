@@ -62,6 +62,7 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
                                                 .id(item.getBgmAgitCommonFileId())
                                                 .fileName(item.getBgmAgitCommonFileName())
                                                 .fileUrl(item.getBgmAgitCommonFileUrl())
+                                                .fileFolder("kml-notice")
                                                 .build(),
                                 Collectors.toList()
                         )
