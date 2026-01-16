@@ -5,10 +5,29 @@ import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { withBasePath } from '@/lib/path';
 
-export default function Home() {
+export default function Login() {
 
   const [mounted, setMounted] = useState(false);
 
+  function login(name: string) {
+    let CLIENT_ID;
+    let REDIRECT_URL;
+
+    let authUrl;
+
+    if (name === 'KAKAO') {
+      CLIENT_ID = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID!;
+      REDIRECT_URL = process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URL!;
+      authUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URL}&response_type=code`;
+    } else if (name === 'NAVER') {
+      CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID!;
+      REDIRECT_URL = process.env.NEXT_PUBLIC_NAVER_REDIRECT_URL!;
+      const STATE = crypto.randomUUID();
+      authUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URL)}&state=${STATE}`;
+    }
+
+    if (authUrl) window.location.href = authUrl;
+  }
 
   useEffect(() => setMounted(true), []);
 
@@ -27,16 +46,16 @@ export default function Home() {
       </Title>
       <LoginBox  initial={{ opacity: 0, y: 20 }}
                  animate={{ opacity: 1, y: 0 }}
-                 transition={{ delay: 1, duration: 1, ease: 'easeOut' }}>
+                 transition={{ delay: 0.8, duration: 0.8, ease: 'easeOut' }}>
         <Top>
           <img src={withBasePath('/kmlMain.png')} alt="로고" />
         </Top>
         <Bottom>
-          <Button $bgColor="#f3d911" $color="#2f250c">
+          <Button onClick={() => login('KAKAO')} $bgColor="#f3d911" $color="#2f250c">
             <img src={withBasePath('/kakao.png')} alt="카카오 로그인 로고" />
             카카오로 계속하기
           </Button>
-          <Button $bgColor="#03a74d" $color="#ffffff">
+          <Button onClick={() => login('NAVER')} $bgColor="#03a74d" $color="#ffffff">
             <img src={withBasePath('/naver.png')} alt="네이버 로그인 로고" />
             네이버로 계속하기
           </Button>

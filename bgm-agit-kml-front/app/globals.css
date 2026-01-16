@@ -28,3 +28,12 @@ a {
 ul, ol {
   list-style: none;
 }
+
+
+.swal2-popup {
+  font-size: 14px;
+}
+
+.swal2-title {
+  font-size: 18px;
+}

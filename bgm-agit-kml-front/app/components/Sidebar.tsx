@@ -23,6 +23,10 @@ import { useFetchMainMenu } from '@/services/menu.service';
 import { useKmlMenuStore } from '@/store/menu';
 import { useUserStore } from '@/store/user';
 import { usePathname, useRouter } from 'next/navigation';
+import api from '@/lib/axiosInstance';
+import { tokenStore } from '@/services/tokenStore';
+import Swal from 'sweetalert2';
+import { alertDialog, confirmDialog } from '@/utils/alert';
 
 
 
@@ -35,7 +39,6 @@ export default function Sidebar() {
 
   useFetchMainMenu();
   const menuData = useKmlMenuStore((state) => state.menu);
-  console.log("menuData", menuData);
 
   const user = useUserStore((state) =>state.user);
 
@@ -57,6 +60,30 @@ export default function Sidebar() {
     SignIn,
     List,
     X,
+  };
+
+  const resetUser = useUserStore((state) => state.clearUser)
+
+  const logout = async () => {
+    const result = await confirmDialog('로그아웃 하시겠습니까?', 'warning');
+
+    if (result.isConfirmed) {
+      const channel = new BroadcastChannel('auth');
+      channel.postMessage('logout');
+      channel.close();
+
+      try {
+        await api.delete('/bgm-agit/refresh', { withCredentials: true });
+      } catch (err) {
+        console.error('서버 리프레시 토큰 삭제 실패:', err);
+      }
+
+      await alertDialog('로그아웃 되었습니다.', 'success');
+
+      tokenStore.clear();
+      resetUser();
+      setIsOpen(false);
+    }
   };
 
   useEffect(() => {
@@ -159,12 +186,16 @@ export default function Sidebar() {
                 <PencilSimple weight="fill" />
                 기록 입력
               </Link>
-              {user ? (    <Link href="/notice">
-                <SignOut weight="fill" />
-                로그아웃
-              </Link>) : (
+              {user ? (
+                <a href="#" onClick={(e) => {
+                  e.preventDefault();
+                  logout();
+                }}>
+                  <SignOut weight="fill" />
+                  로그아웃
+                </a>) : (
                 <Link href="/login">
-                <SignIn weight="fill" />
+                  <SignIn weight="fill" />
                 로그인
               </Link>)}
             </MenuLi>
@@ -268,8 +299,8 @@ const MenuLi = styled.li<{ $active: boolean }>`
   flex-direction: column;
   gap: 32px;
   padding: 12px 16px;
-  background-color: ${({ $active }) => ($active ? '#ffffff26' : 'transparent')};
-  color: ${({ $active, theme }) => ($active ? '#ffffff' : theme.colors.menuColor)};
+  background-color: ${({ $active }) => ($active ? '#000000' : 'transparent')};
+  color: ${({ $active, theme }) => ($active ? '#ffffff' : theme.colors.blackColor)};
   border-radius: 99px;
 
   a {
@@ -278,7 +309,6 @@ const MenuLi = styled.li<{ $active: boolean }>`
     align-items: center;
     gap: 8px;
     width: 100%;
-    color: ${({ theme }) => theme.colors.blackColor};
     font-weight: 500;
     font-size: ${({ theme }) => theme.desktop.sizes.xl};
 

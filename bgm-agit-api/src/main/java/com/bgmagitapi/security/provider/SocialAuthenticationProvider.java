@@ -52,8 +52,8 @@ public class SocialAuthenticationProvider implements AuthenticationProvider {
     
     private SocialService getSocialService(String socialType) {
         return switch (socialType) {
-            case "KAKAO", "NEXT-KAKAO" -> kakaoService;
-            case "NAVER", "NEXT-NAVER" -> naverService;
+            case "KAKAO", "NEXT_KAKAO" -> kakaoService;
+            case "NAVER", "NEXT_NAVER" -> naverService;
             default -> throw new BadCredentialsException("존재하지 않는 소셜 로그인 url입니다: " + socialType);
         };
     }

@@ -56,6 +56,7 @@ export default function TopHeader() {
     //오픈 채팅방 링크로 이동
     if ([9, 17, 19, 23].includes(item.bgmAgitMainMenuId)) {
       window.open(item.link, '_blank');
+
     } else if ([20].includes(item.bgmAgitMainMenuId)) {
       //내정보 팝업
       setIsMyPageModalOpen(true);
