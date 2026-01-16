@@ -9,6 +9,7 @@ interface AuthAxiosRequestConfig extends InternalAxiosRequestConfig {
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL, //env의 API URL
   timeout: 15000,
+  withCredentials: true,
 });
 
 let refreshing: Promise<string | null> | null = null;
