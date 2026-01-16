@@ -54,9 +54,12 @@ export default function AcademyInput() {
   const [selectedProgressId, setSelectedProgressId] = useState<number | null>(null);
 
   const categoryOptions = [
-    { value: '3g', label: '3g' },
-    { value: '3k', label: '3k' },
-    { value: '4g1', label: '4g1' },
+    { value: '3G', label: '3G' },
+    { value: '4K\'', label: '4K\'' },
+    { value: '5G1', label: '5G1' },
+    { value: '5G2\'', label: '5G2\'' },
+    { value: '6G2', label: '6G2' },
+    { value: '6G5\'', label: '6G5\'' },
   ];
   const [classKey, setClassKey] = useState(categoryOptions[0].value);
 
