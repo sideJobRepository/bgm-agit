@@ -144,6 +144,7 @@ const Bottom = styled.section`
   flex-direction: column;
   align-items: center;
   gap: 16px;
+    padding: 0 12px;
 `;
 
 const Button = styled.button<{$color : string, $bgColor: string}>`
