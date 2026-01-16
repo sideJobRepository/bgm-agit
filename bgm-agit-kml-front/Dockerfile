@@ -1,16 +1,27 @@
-# 1Build Stage (Next.js 빌드)
 FROM node:20-alpine AS builder
+
 WORKDIR /app
- # npm install 보다 안정성/속도 좋음
+
 COPY package*.json ./
 RUN npm ci
 
-# .next/ 폴더 생김 (SSR 빌드 완성)
 COPY . .
+
+# 어떤 env 파일을 쓸지 선택 (기본: production)
+ARG ENV_FILE=.env.production
+
+# 같은 파일이면 복사 안 함
+RUN if [ "$ENV_FILE" != ".env.production" ]; then \
+      cp "$ENV_FILE" .env.production ; \
+    fi
+
+ENV NODE_ENV=production
+
 RUN npm run build
 
-# 2️Run Stage (실행 단계: 서버 모드)
+
 FROM node:20-alpine
+
 WORKDIR /app
 
 COPY --from=builder /app ./
@@ -19,5 +30,5 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 EXPOSE 3000
-# ← 운영용 SSR 실행
+
 CMD ["npm", "run", "start"]

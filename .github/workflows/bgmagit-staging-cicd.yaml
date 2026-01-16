@@ -160,7 +160,18 @@ jobs:
       - name: Docker Build Next.js
         run: |
           cd bgm-agit-kml-front
-          docker build -t peachcoolpis/bgmagit-staging-kml-front .
+          
+          if [ "${{ github.ref_name }}" = "main" ]; then
+          ENV_FILE=.env.production
+          else
+          ENV_FILE=.env.staging
+          fi
+          
+          echo "Using ENV_FILE=$ENV_FILE"
+          
+          docker build \
+          --build-arg ENV_FILE=$ENV_FILE \
+          -t peachcoolpis/bgmagit-kml-front .
 
       - name: Docker Hub Login
         uses: docker/login-action@v3
