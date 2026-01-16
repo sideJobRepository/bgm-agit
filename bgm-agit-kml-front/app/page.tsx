@@ -17,6 +17,7 @@ const INITIAL_CARDS = [
       'BGM 아지트는 보드게임을 사랑하는 가지각색의 사람들이 모여, 따뜻한 즐거움을 제공하는 아늑한 공간입니다.\n' +
       '잠깐의 시간으로 끝나지 않고 여러분의 일상이 될 수 있는, 최고의 친구들과 취미를 만들어보세요.',
     color: '#4A90E2',
+    link: process.env.NEXT_PUBLIC_FRONT_BGM_URL
   },
   { id: 3, title: 'YELLOW', color: '#EAC764' },
   { id: 4, title: 'GREEN', color: '#6DAE81' },
@@ -91,10 +92,10 @@ export default function Home() {
             <ContentSection>
               <h4>{card.title}</h4>
               <span>{card?.content}</span>
-              <Link href="/">
+              <a href={card?.link} target="_blank" rel="noopener noreferrer">
                 Read more
                 <ArrowRight weight="bold" />
-              </Link>
+              </a>
             </ContentSection>
             <ImageSection>
               <img src={withBasePath('/2.png')} alt="로고" />

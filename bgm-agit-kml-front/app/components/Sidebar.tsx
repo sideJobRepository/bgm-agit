@@ -186,6 +186,8 @@ export default function Sidebar() {
                 <PencilSimple weight="fill" />
                 기록 입력
               </Link>
+            </MenuLi>
+            <MenuLi $active={pathname === '/login'}>
               {user ? (
                 <a href="#" onClick={(e) => {
                   e.preventDefault();
@@ -196,8 +198,8 @@ export default function Sidebar() {
                 </a>) : (
                 <Link href="/login">
                   <SignIn weight="fill" />
-                로그인
-              </Link>)}
+                  로그인
+                </Link>)}
             </MenuLi>
           </ul>
         </BottomSeciton>
