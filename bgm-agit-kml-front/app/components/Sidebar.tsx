@@ -23,6 +23,8 @@ import { useFetchMainMenu } from '@/services/menu.service';
 import { useKmlMenuStore } from '@/store/menu';
 import { useUserStore } from '@/store/user';
 import { usePathname, useRouter } from 'next/navigation';
+import api from '@/lib/axiosInstance';
+import { tokenStore } from '@/services/tokenStore';
 
 
 
@@ -35,7 +37,6 @@ export default function Sidebar() {
 
   useFetchMainMenu();
   const menuData = useKmlMenuStore((state) => state.menu);
-  console.log("menuData", menuData);
 
   const user = useUserStore((state) =>state.user);
 
@@ -58,6 +59,25 @@ export default function Sidebar() {
     List,
     X,
   };
+
+  const resetUser = useUserStore((state) => state.clearUser)
+
+  const logout = async() => {
+    const channel = new BroadcastChannel('auth');
+    channel.postMessage('logout');
+    channel.close();
+
+    try {
+      await api.delete('/bgm-agit/refresh', { withCredentials: true });
+    } catch (err) {
+      console.error('서버 리프레시 토큰 삭제 실패:', err);
+    }
+
+    alert("로그아웃 되었습니다.")
+    tokenStore.clear(); // 메모리 Access Token 제거
+    resetUser();
+    setIsOpen(false);
+  }
 
   useEffect(() => {
     setMounted(true);
@@ -159,12 +179,16 @@ export default function Sidebar() {
                 <PencilSimple weight="fill" />
                 기록 입력
               </Link>
-              {user ? (    <Link href="/notice">
-                <SignOut weight="fill" />
-                로그아웃
-              </Link>) : (
+              {user ? (
+                <a href="#" onClick={(e) => {
+                  e.preventDefault();
+                  logout();
+                }}>
+                  <SignOut weight="fill" />
+                  로그아웃
+                </a>) : (
                 <Link href="/login">
-                <SignIn weight="fill" />
+                  <SignIn weight="fill" />
                 로그인
               </Link>)}
             </MenuLi>
