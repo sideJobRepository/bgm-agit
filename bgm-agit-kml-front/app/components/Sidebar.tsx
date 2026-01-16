@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
   PencilSimple,
   SignIn,
+  SignOut,
   List,
   X,
 } from 'phosphor-react';
@@ -20,6 +21,7 @@ import { motion } from 'framer-motion';
 import React from 'react';
 import { useFetchMainMenu } from '@/services/menu.service';
 import { useKmlMenuStore } from '@/store/menu';
+import { useUserStore } from '@/store/user';
 
 
 export default function Sidebar() {
@@ -27,6 +29,8 @@ export default function Sidebar() {
   useFetchMainMenu();
   const menuData = useKmlMenuStore((state) => state.menu);
   console.log("menuData", menuData);
+
+  const user = useUserStore((state) =>state.user);
 
 
   //모바일 토글
@@ -135,10 +139,13 @@ export default function Sidebar() {
                 <PencilSimple weight="fill" />
                 기록 입력
               </Link>
-              <Link href="/notice">
+              {user ? (    <Link href="/notice">
+                <SignOut weight="fill" />
+                로그아웃
+              </Link>) : (    <Link href="/notice">
                 <SignIn weight="fill" />
                 로그인
-              </Link>
+              </Link>)}
             </MenuLi>
           </ul>
         </BottomSeciton>

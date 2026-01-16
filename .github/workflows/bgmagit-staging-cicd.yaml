@@ -160,7 +160,18 @@ jobs:
       - name: Docker Build Next.js
         run: |
           cd bgm-agit-kml-front
-          docker build -t peachcoolpis/bgmagit-staging-kml-front .
+          
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            ENV_FILE=.env.production
+          else
+            ENV_FILE=.env.staging
+          fi
+          
+          echo "Using ENV_FILE=$ENV_FILE"
+          
+          docker build \
+          --build-arg ENV_FILE=$ENV_FILE \
+          -t peachcoolpis/bgmagit-staging-kml-front .
 
       - name: Docker Hub Login
         uses: docker/login-action@v3
@@ -184,9 +195,6 @@ jobs:
               docker pull peachcoolpis/bgmagit-staging-kml-front:latest
               docker run -d --name bgmagit-staging-kml-front \
                 --network bgm-staging-network \
-                -e NODE_ENV=staging \
-                -e NEXT_PUBLIC_API_URL=http://14.50.43.75:8080 \
-                -e NEXT_PUBLIC_SITE_URL=http://14.50.43.75:3000 \
                 -p 127.0.0.1:3000:3000 \
                 peachcoolpis/bgmagit-staging-kml-front:latest
               docker image prune -f
