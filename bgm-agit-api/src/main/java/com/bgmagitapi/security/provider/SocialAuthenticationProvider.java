@@ -26,23 +26,22 @@ public class SocialAuthenticationProvider implements AuthenticationProvider {
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         
         SocialAuthenticationToken token = (SocialAuthenticationToken) authentication;
-      
-          String socialType = token.getSocialLoginUrl().name();
-          String authorizeCode = (String) token.getPrincipal();
-      
-          SocialService socialService = getSocialService(socialType);
-          AccessTokenResponse accessToken = socialService.getAccessToken(authorizeCode);
-          SocialProfile profile = socialService.getProfile(accessToken.getAccessToken());
-      
-          BgmAgitMemberContext memberContext =
-                  (BgmAgitMemberContext) bgmAgitMemberDetailService.loadUserByUsername(profile);
-      
-          return new SocialAuthenticationToken(
-                  memberContext.getBgmAgitMember(),
-                  null,
-                  null,
-                  memberContext.getAuthorities()
-          );
+        
+        String socialType = token.getSocialLoginUrl().name();
+        String authorizeCode = (String) token.getPrincipal();
+        
+        SocialService socialService = getSocialService(socialType);
+        AccessTokenResponse accessToken = socialService.getAccessToken(authorizeCode,socialType);
+        SocialProfile profile = socialService.getProfile(accessToken.getAccessToken());
+        
+        BgmAgitMemberContext memberContext = (BgmAgitMemberContext) bgmAgitMemberDetailService.loadUserByUsername(profile);
+        
+        return new SocialAuthenticationToken(
+                memberContext.getBgmAgitMember(),
+                null,
+                null,
+                memberContext.getAuthorities()
+        );
         
     }
     
@@ -53,8 +52,8 @@ public class SocialAuthenticationProvider implements AuthenticationProvider {
     
     private SocialService getSocialService(String socialType) {
         return switch (socialType) {
-            case "KAKAO" -> kakaoService;
-            case "NAVER" -> naverService;
+            case "KAKAO", "NEXT-KAKAO" -> kakaoService;
+            case "NAVER", "NEXT-NAVER" -> naverService;
             default -> throw new BadCredentialsException("존재하지 않는 소셜 로그인 url입니다: " + socialType);
         };
     }

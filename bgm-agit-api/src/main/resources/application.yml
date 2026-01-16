@@ -42,11 +42,13 @@ cors:
 
 kakao:
   redirecturi: http://localhost:5173/oauth/kakao/callback
+  redirecturi2: http://localhost:3000/record/oauth/kakao/callback
   clientId: 1c41b5cad9dceea3074ad92a6d496215
   client-secret: ${CLIENT_SECRET}
 
 naver:
   redirecturi: http://localhost:5173/oauth/naver/callback
+  redirecturi2: http://localhost:3000/record/oauth/naver/callback
   clientId: PsFKP7NZFE16cvAOX80d
   client-secret: ${NAVER_CLIENT_SECRET}
 

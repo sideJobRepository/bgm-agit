@@ -3,7 +3,6 @@ package com.bgmagitapi.security.service;
 import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.security.service.response.AccessTokenResponse;
 import com.bgmagitapi.security.service.response.KaKaoProfileResponse;
-import com.bgmagitapi.security.service.social.SocialLoginUrl;
 import com.bgmagitapi.security.service.social.SocialProfile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,9 +25,11 @@ public class KaKaoServiceImpl implements SocialService {
     private String kakaoRedirectUri;
     @Value("${kakao.client-secret}")
     private String kakaoClientSecret;
+    @Value("${kakao.redirecturi2}")
+    private String kakaoRedirectUri2;
     
     @Override
-    public AccessTokenResponse getAccessToken(String code) {
+    public AccessTokenResponse getAccessToken(String code, String socialType) {
         
         RestClient restClient = RestClient.create();
         
@@ -36,7 +37,11 @@ public class KaKaoServiceImpl implements SocialService {
         
         params.add("code",code);
         params.add("client_id",kakaoClientId);
-        params.add("redirect_uri",kakaoRedirectUri);
+        if("KAKAO".equals(socialType)){
+            params.add("redirect_uri",kakaoRedirectUri);
+        }else {
+            params.add("redirect_uri",kakaoRedirectUri2);
+        }
         params.add("grant_type", "authorization_code");
         params.add("client_secret",kakaoClientSecret);
         

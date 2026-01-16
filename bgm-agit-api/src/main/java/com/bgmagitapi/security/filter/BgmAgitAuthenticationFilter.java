@@ -16,14 +16,15 @@ import org.springframework.security.web.util.matcher.OrRequestMatcher;
 
 import java.io.IOException;
 
-public class BgmAgitAuthenticationFilter  extends AbstractAuthenticationProcessingFilter {
+public class BgmAgitAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
     
     
     public BgmAgitAuthenticationFilter() {
         super(new OrRequestMatcher(
                 new AntPathRequestMatcher("/bgm-agit/kakao-login", "POST"),
                 new AntPathRequestMatcher("/bgm-agit/naver-login", "POST"),
-                new AntPathRequestMatcher("/bgm-agit/google-login", "POST")
+                new AntPathRequestMatcher("/bgm-agit/next/kakao-login", "POST"),
+                new AntPathRequestMatcher("/bgm-agit/next/naver-login", "POST")
         ));
     }
     
