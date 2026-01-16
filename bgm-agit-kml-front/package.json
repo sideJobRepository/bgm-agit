@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@emotion/is-prop-valid": "^1.4.0",
+    "@tanstack/react-table": "^8.21.3",
     "axios": "^1.13.2",
     "framer-motion": "^12.26.2",
     "next": "^16.0.3",
