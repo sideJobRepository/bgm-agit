@@ -258,8 +258,9 @@ const SidebarWrapper = styled(motion.aside)`
     position: fixed;
     left: 0;
     right: 0;
-    top: 64px;
-    height: calc(100dvh - 64px);
+    top: 64px;  
+      height: calc(100dvh - 64px);
+      overflow-y: auto;
     padding-top: 20px;
     z-index: 1;
   }
@@ -293,6 +294,7 @@ const MiddleSeciton = styled.div`
   justify-content: center;
   display: flex;
   flex-direction: column;
+
 `;
 
 const MenuLi = styled.li<{ $active: boolean }>`
