@@ -38,7 +38,7 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
     
     @Override
     public Page<KmlNoticeGetResponse> getKmlNotice(Pageable pageable, String titleAndCont) {
-        return kmlNoticeRepository.findByKmlNotice(pageable, titleAndCont);
+         return kmlNoticeRepository.findByKmlNotice(pageable, titleAndCont);
     }
     
     @Override
