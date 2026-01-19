@@ -1,12 +1,12 @@
 package com.bgmagitapi.kml.notice.dto.response;
 
 
-import com.querydsl.core.annotations.QueryProjection;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +19,9 @@ public class KmlNoticeGetDetailResponse {
     private Long id;
     private String title;
     private String cont;
+    private LocalDate registDate;
     private List<KmlNoticeFile> files;
+    
     
     public List<KmlNoticeFile> getFiles() {
         if (this.files == null) {
@@ -28,12 +30,7 @@ public class KmlNoticeGetDetailResponse {
         return this.files;
     }
     
-    @QueryProjection
-    public KmlNoticeGetDetailResponse(Long id, String title, String cont) {
-        this.id = id;
-        this.title = title;
-        this.cont = cont;
-    }
+    
     
     @Data
     @AllArgsConstructor

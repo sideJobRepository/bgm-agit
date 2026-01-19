@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -46,11 +47,13 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
         KmlNotice kmlNotice = kmlNoticeRepository.findById(id).orElseThrow(() -> new RuntimeException("존재하지 않는 공지사항 입니다."));
         List<BgmAgitCommonFile> noticeFiles = kmlNoticeRepository.findByKmlNoticeFiles(List.of(id));
         
+        LocalDate localDate = kmlNotice.getRegistDate().toLocalDate();
         KmlNoticeGetDetailResponse result = KmlNoticeGetDetailResponse
                 .builder()
                 .id(kmlNotice.getId())
                 .title(kmlNotice.getNoticeTitle())
                 .cont(kmlNotice.getNoticeTitle())
+                .registDate(localDate)
                 .build();
         
         Map<Long, List<KmlNoticeGetDetailResponse.KmlNoticeFile>> files = noticeFiles.stream()

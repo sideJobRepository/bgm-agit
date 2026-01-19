@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 
 class KmlNoticeServiceImplTest extends RepositoryAndServiceTestSupport {
@@ -35,41 +36,52 @@ class KmlNoticeServiceImplTest extends RepositoryAndServiceTestSupport {
         PageRequest pageRequest = PageRequest.of(0, 10);
         Page<KmlNoticeGetResponse> kmlNotice = kmlNoticeService.getKmlNotice(pageRequest, null);
         System.out.println("kmlNotice = " + kmlNotice);
+        
+        LocalDate localDate = LocalDate.of(2026, 1, 9);
+        LocalDate localDate1 = localDate.plusDays(30);
+        System.out.println("localDate1 = " + localDate1);
+        
+        
     }
     
     @DisplayName("")
     @Test
     void test2() throws IOException {
+
+//        File file1 = new File("src/test/java/com/bgmagitapi/file/이건 모자가 아니잖아.jpg");
+//        FileInputStream fis1 = new FileInputStream(file1);
+//        File file2 = new File("src/test/java/com/bgmagitapi/file/참새작.png");
+//        FileInputStream fis2 = new FileInputStream(file2);
+//
+//        File file3 = new File("src/test/java/com/bgmagitapi/file/복합기.jpg");
+//        FileInputStream fis3 = new FileInputStream(file3);
+//
+//        MockMultipartFile multipartFile1 = new MockMultipartFile("파일1", file1.getName(), "image/jpeg", fis1);
+//        MockMultipartFile multipartFile2 = new MockMultipartFile("파일2", file2.getName(), "png", fis2);
+//        MockMultipartFile multipartFile3 = new MockMultipartFile("파일3", file3.getName(), "png", fis3);
+//
+//        //List<MultipartFile> files = List.of(multipartFile1, multipartFile2);
+//        List<MultipartFile> files = List.of(multipartFile3);
         
-        File file1 = new File("src/test/java/com/bgmagitapi/file/이건 모자가 아니잖아.jpg");
-        FileInputStream fis1 = new FileInputStream(file1);
-        File file2 = new File("src/test/java/com/bgmagitapi/file/참새작.png");
-        FileInputStream fis2 = new FileInputStream(file2);
+        for (int i = 0; i < 30; i++) {
+            KmlNoticePostRequest result = KmlNoticePostRequest
+                    .builder()
+                    .title("제목길~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~게" + i)
+                    .cont("내용길~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~게" + i)
+                    .files(null)
+                    .build();
+            
+            ApiResponse kmlNotice = kmlNoticeService.createKmlNotice(result);
+            System.out.println("kmlNotice = " + kmlNotice);
+        }
         
-        File file3 = new File("src/test/java/com/bgmagitapi/file/복합기.jpg");
-        FileInputStream fis3 = new FileInputStream(file3);
         
-        MockMultipartFile multipartFile1 = new MockMultipartFile("파일1", file1.getName(), "image/jpeg", fis1);
-        MockMultipartFile multipartFile2 = new MockMultipartFile("파일2", file2.getName(), "png", fis2);
-        MockMultipartFile multipartFile3 = new MockMultipartFile("파일3", file3.getName(), "png", fis3);
-        
-        //List<MultipartFile> files = List.of(multipartFile1, multipartFile2);
-        List<MultipartFile> files = List.of(multipartFile3);
-        KmlNoticePostRequest result = KmlNoticePostRequest
-                .builder()
-                .title("제목3")
-                .cont("테스트3")
-                .files(files)
-                .build();
-        
-        ApiResponse kmlNotice = kmlNoticeService.createKmlNotice(result);
-        System.out.println("kmlNotice = " + kmlNotice);
     }
     
     @DisplayName("")
     @Test
     void test3() {
-        KmlNoticeGetDetailResponse detailKmlNotice = kmlNoticeService.getDetailKmlNotice(1L);
+        KmlNoticeGetDetailResponse detailKmlNotice = kmlNoticeService.getDetailKmlNotice(20L);
         System.out.println("detailKmlNotice = " + detailKmlNotice);
     }
     
