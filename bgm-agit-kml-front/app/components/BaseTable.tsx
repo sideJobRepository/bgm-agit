@@ -46,7 +46,6 @@ export function BaseTable<T>({
                                onSearch
                              }: BaseTableProps<T>) {
   const user = useUserStore((state) =>state.user);
-  console.log("user", user)
 
   return (
     <TableBox>
