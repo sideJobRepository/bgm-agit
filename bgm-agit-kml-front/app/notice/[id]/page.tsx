@@ -4,43 +4,119 @@ import { useUserStore } from '@/store/user';
 import { useFetchNoticeDetailL } from '@/services/notice.service';
 import { use, useEffect, useState } from 'react';
 import { useNoticeDetailStore } from '@/store/notice';
-import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import dynamic from 'next/dynamic';
 import styled from 'styled-components';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  ArrowLeft
-} from 'phosphor-react';
+import { ArrowLeft } from 'phosphor-react';
+import { useDeletePost, useInsertPost, useUpdatePost } from '@/services/main.service';
+import { alertDialog, confirmDialog } from '@/utils/alert';
+
+const NoticeEditor = dynamic(() => import('../../components/NoticeEditor'), {
+  ssr: false,
+});
+
+type NewNoticeState = {
+  id: number | null;
+  title: string;
+  content: string;
+};
 
 export default function NoticeDetail({
-                                             params,
-                                           }: {
+                                       params,
+                                     }: {
   params: Promise<{ id: string }>;
 }) {
-
   const { id } = use(params);
   const router = useRouter();
 
-  const user = useUserStore((state) =>state.user);
+  const { insert } = useInsertPost();
+  const { update } = useUpdatePost();
+  const { remove } = useDeletePost();
+
+  const user = useUserStore((state) => state.user);
   const fetchDetailNotice = useFetchNoticeDetailL();
   const detailNotice = useNoticeDetailStore((state) => state.noticeDetail);
-  console.log("detailNotice", detailNotice);
+  const clearDetail = useNoticeDetailStore((state) => state.clearDetail);
 
-  //수정상태
   const [isEditMode, setIsEditMode] = useState(false);
+  const [newNotice, setNewNotice] = useState<NewNoticeState>({
+    id: null,
+    title: '',
+    content: '',
+  });
+
+  const handleSubmit = async () => {
+    const formData = new FormData();
+    formData.append('title', newNotice.title);
+    formData.append('cont', newNotice.content);
+
+    if (isEditMode) {
+      formData.append('id', id);
+    }
+
+    const requestFn = isEditMode ? update : insert;
+    const result = await confirmDialog('저장 하시겠습니까?', 'warning');
+
+    if (result.isConfirmed) {
+      requestFn({
+        url: '/bgm-agit/kml-notice',
+        body: formData,
+        ignoreErrorRedirect: true,
+        onSuccess: async () => {
+          if (!isEditMode) {
+            router.push(`/notice`);
+            await alertDialog('공지사항이 작성되었습니다.', 'success');
+          } else {
+            const result = await confirmDialog(
+              '공지사항이 저장되었습니다.\n목록으로 이동하시겠습니까?',
+              'success'
+            );
+            if (result.isConfirmed) router.push(`/notice`);
+          }
+          setIsEditMode(false);
+        },
+      });
+    }
+  };
+
+  const deleteData = async () => {
+    const deleteId = newNotice.id!.toString();
+    const result = await confirmDialog('삭제 하시겠습니까?', 'warning');
+
+    if (result.isConfirmed) {
+      remove({
+        url: `/bgm-agit/kml-notice/${deleteId}`,
+        ignoreErrorRedirect: true,
+        onSuccess: async () => {
+          await alertDialog('공지사항이 삭제되었습니다.', 'success');
+          router.push(`/notice`);
+        },
+      });
+    }
+  };
 
   useEffect(() => {
-    fetchDetailNotice(id)
+    if (id && id !== 'new') fetchDetailNotice(id);
+    else clearDetail();
   }, [id]);
 
-  //동영상 변환 함수
-  function convertOembedToIframe(html: string): string {
+  useEffect(() => {
+    if (detailNotice) {
+      setNewNotice({
+        id: detailNotice.id,
+        title: detailNotice.title,
+        content: detailNotice.cont,
+      });
+    }
+  }, [detailNotice]);
+
+  const convertOembedToIframe = (html: string): string => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
     const oembeds = doc.querySelectorAll('oembed');
 
-    oembeds.forEach(oembed => {
+    oembeds.forEach((oembed) => {
       const url = oembed.getAttribute('url')!;
       if (url.includes('youtube.com') || url.includes('youtu.be')) {
         const videoId = extractYoutubeVideoId(url);
@@ -55,78 +131,114 @@ export default function NoticeDetail({
     });
 
     return doc.body.innerHTML;
-  }
+  };
 
-  function extractYoutubeVideoId(url: string): string {
+  const extractYoutubeVideoId = (url: string): string => {
     try {
       const u = new URL(url);
-      if (u.hostname === 'youtu.be') {
-        return u.pathname.substring(1);
-      } else if (u.hostname.includes('youtube.com')) {
-        return u.searchParams.get('v') || '';
-      }
+      if (u.hostname === 'youtu.be') return u.pathname.substring(1);
+      if (u.hostname.includes('youtube.com')) return u.searchParams.get('v') || '';
       return '';
     } catch {
       return '';
     }
-  }
+  };
 
-  return <Wrapper>
-    <>
-    <TitleBox>
-      <div>
-        <span>{detailNotice?.registDate} </span>
-        <ButtonBox>
-          {user?.roles.includes('ROLE_ADMIN') && (
-            <>
-              <Button
-                onClick={() => {
-                  setIsEditMode(true);
+  return (
+    <Wrapper>
+      {id && id !== 'new' && !isEditMode ? (
+        <>
+          <TitleBox>
+            <div>
+              <span>{detailNotice?.registDate}</span>
+              <ButtonBox>
+                {user?.roles.includes('ROLE_ADMIN') && (
+                  <>
+                    <Button onClick={() => setIsEditMode(true)} color="#415B9C">
+                      수정
+                    </Button>
+                    <Button onClick={deleteData} color="#D9625E">
+                      삭제
+                    </Button>
+                  </>
+                )}
+                <Link href="/notice">
+                  <ArrowLeft weight="bold" />
+                  돌아가기
+                </Link>
+              </ButtonBox>
+            </div>
+            <h5>{detailNotice?.title}</h5>
+          </TitleBox>
+          <ContentBox
+            className="ck-content"
+            dangerouslySetInnerHTML={{
+              __html: convertOembedToIframe(String(detailNotice?.cont)),
+            }}
+          />
+        </>
+      ) : (
+        <>
+          <ButtonBox>
+            <Button onClick={handleSubmit} color="#4A90E2">
+              저장
+            </Button>
+            <Button
+              onClick={() => {
+                if (isEditMode) {
+                  setIsEditMode(false);
+                  if (detailNotice) {
+                    setNewNotice({
+                      id: detailNotice.id,
+                      title: detailNotice.title,
+                      content: detailNotice.cont,
+                    });
+                  }
+                } else {
+                  router.push('/notice');
+                }
+              }}
+              color="#D9625E"
+            >
+              취소
+            </Button>
+          </ButtonBox>
+          <EditorWrapper>
+            <InputBox
+              type="text"
+              placeholder="제목을 입력해주세요."
+              value={newNotice.title}
+              onChange={(e) =>
+                setNewNotice((prev) => ({ ...prev, title: e.target.value }))
+              }
+            />
+            <EditorBox>
+              <NoticeEditor
+                value={newNotice.content}
+                onChange={(content) =>
+                  setNewNotice((prev) => ({ ...prev, content }))
+                }
+                onUpload={(file) => {
+                  const formData = new FormData();
+                  formData.append('file', file);
+                  return new Promise<string>((resolve) => {
+                    insert<FormData>({
+                      url: '/bgm-agit/notice/file',
+                      body: formData,
+                      ignoreErrorRedirect: true,
+                      onSuccess: (data: unknown) => {
+                        resolve(data as string);
+                      },
+                    });
+                  });
                 }}
-                color="#415B9C"
-              >
-                수정
-              </Button>
-              <Button color="#D9625E" >
-                삭제
-              </Button>
-            </>
-          )}
-          <Link
-            href="/notice"
-          >
-            <ArrowLeft weight="bold"/>
-            돌아가기
-          </Link>
-        </ButtonBox>
-      </div>
-      <h5>{detailNotice?.title}</h5>
-    </TitleBox>
-    {/*{attachedFiles.length > 0 && (*/}
-    {/*  <StyledFileUl>*/}
-    {/*    {attachedFiles.map((file, idx) => (*/}
-    {/*      <li key={idx}>*/}
-    {/*        <a*/}
-    {/*          onClick={() => {*/}
-    {/*            fileDownload(file.url);*/}
-    {/*          }}*/}
-    {/*        >*/}
-    {/*          {file.fileName}*/}
-    {/*          <FaDownload />*/}
-    {/*        </a>*/}
-    {/*      </li>*/}
-    {/*    ))}*/}
-    {/*  </StyledFileUl>*/}
-    {/*)}*/}
-
-    <ContentBox
-      className="ck-content"
-      dangerouslySetInnerHTML={{
-        __html: convertOembedToIframe(String(detailNotice?.cont)),
-      }}
-    />
-  </>
-  </Wrapper>;
+              />
+            </EditorBox>
+          </EditorWrapper>
+        </>
+      )}
+    </Wrapper>
+  );
 }
 
 export const Wrapper = styled.div`
@@ -145,8 +257,9 @@ export const Wrapper = styled.div`
 
 const EditorWrapper = styled.div`
   display: flex;
+    margin-top: 12px; 
   flex-direction: column;
-  height: calc(100vh - 150px);
+  height: calc(100vh - 160px);
   box-sizing: border-box;
   padding-bottom: 40px;
 `;
@@ -322,7 +435,7 @@ const TitleBox = styled.div`
 const ContentBox = styled.div`
   height: 100%;
   width: 100%;
-  min-height: calc(100vh - 360px);
+  min-height: calc(100vh - 260px);
   padding: 20px 10px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.bronzeColor};
   margin-bottom: 20px;

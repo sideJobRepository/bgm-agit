@@ -74,7 +74,7 @@ export function BaseTable<T>({
         </SearchGroup>
         {user?.roles?.includes('ROLE_ADMIN') && (
           <Button
-            color="#988271"
+            onClick={onWriteClick ? () => onWriteClick() : undefined}
           >
             <PencilSimpleLine weight="bold" />
             작성

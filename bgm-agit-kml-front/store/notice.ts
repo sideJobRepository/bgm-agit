@@ -39,9 +39,11 @@ export const useNoticeListStore = create<NoticeStore>((set) => ({
 interface NoticeDetailStore {
   noticeDetail: DetailNoticeStore | null
   setDetailNotice: (noticeDetail: DetailNoticeStore) => void;
+  clearDetail: () => void;
 }
 
 export const useNoticeDetailStore = create<NoticeDetailStore>((set) => ({
   noticeDetail: null,
   setDetailNotice: (noticeDetail) => set({noticeDetail}),
+  clearDetail: () => set({noticeDetail: null}),
 }))

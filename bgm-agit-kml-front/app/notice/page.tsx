@@ -67,7 +67,7 @@ export default function Notice() {
           totalPages={noticeList.totalPages}
           onPageChange={setPage}
           showWriteButton
-          onWriteClick={() => router.push('/noticeDetail')}
+          onWriteClick={() =>   router.push(`/notice/new`)}
           onRowClick={(row) =>
             router.push(`/notice/${row.id}`)
           }
