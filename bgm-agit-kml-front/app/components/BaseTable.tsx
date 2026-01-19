@@ -198,7 +198,7 @@ const SearchGroup = styled.form`
   flex: 1;
   align-items: center;
   justify-content: space-between;
-  padding: 2px 4px 2px 20px;
+  padding: 2px 16px;
   border: 2px solid rgb(244 244 245);
   border-radius: 999px;
   flex-wrap: nowrap;
