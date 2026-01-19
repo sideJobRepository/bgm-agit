@@ -128,7 +128,7 @@ export function BaseTable<T>({
 const TableBox = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 24px;
     padding: 24px 8px;
 `;
 
