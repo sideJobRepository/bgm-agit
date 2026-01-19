@@ -138,6 +138,31 @@ const Table = styled.table`
     font-size: ${({ theme }) => theme.desktop.sizes.sm};
     color: ${({ theme }) => theme.colors.inputColor};
 
+    thead {
+        position: relative;
+        border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: ${({ theme }) => theme.colors.lineColor};
+        }
+
+        &::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 32px;
+            height: 2px;
+            background: ${({ theme }) => theme.colors.blackColor};
+        }
+    }
+    
     th,
     td {
         padding: 14px;
@@ -153,10 +178,11 @@ const Table = styled.table`
 `;
 
 const Th = styled.th`
+    position: relative;
     white-space: nowrap;
-    border-top: 1px solid ${({ theme }) => theme.colors.grayColor};
-    border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
     font-weight: 600;
+    
+
 `;
 
 const Td = styled.td<{$wrap : boolean}>`
@@ -183,7 +209,7 @@ const EmptyTd = styled.td`
 
 const PaginationWrapper = styled.div`
     text-align: center;
-    margin-top: 20px;
+    margin-top: 4px;
 `;
 
 const TopBox = styled.section`

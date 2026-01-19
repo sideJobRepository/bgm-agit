@@ -17,6 +17,14 @@ export interface NoticePage {
   last: boolean;
 }
 
+interface DetailNoticeStore {
+  cont: string;
+  files: []
+  id: number;
+  title: string;
+  registDate: string;
+}
+
 interface NoticeStore {
   notice: NoticePage | null
   setNotice: (notice: NoticePage) => void;
@@ -26,4 +34,14 @@ interface NoticeStore {
 export const useNoticeListStore = create<NoticeStore>((set) => ({
   notice: null,
   setNotice: (notice) => set({notice}),
+}))
+
+interface NoticeDetailStore {
+  noticeDetail: DetailNoticeStore | null
+  setDetailNotice: (noticeDetail: DetailNoticeStore) => void;
+}
+
+export const useNoticeDetailStore = create<NoticeDetailStore>((set) => ({
+  noticeDetail: null,
+  setDetailNotice: (noticeDetail) => set({noticeDetail}),
 }))

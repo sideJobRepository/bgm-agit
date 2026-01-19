@@ -7,7 +7,6 @@ import { useFetchNoticeList } from '@/services/notice.service';
 import { useEffect, useMemo, useState } from 'react';
 import { NoticeItem, useNoticeListStore } from '@/store/notice';
 import { BaseColumn, BaseTable } from '@/app/components/BaseTable';
-import { ColumnDef } from '@tanstack/react-table';
 import { useRouter } from 'next/navigation';
 
 
@@ -70,7 +69,7 @@ export default function Notice() {
           showWriteButton
           onWriteClick={() => router.push('/noticeDetail')}
           onRowClick={(row) =>
-            router.push(`/noticeDetail?id=${row.id}`)
+            router.push(`/notice/${row.id}`)
           }
           searchKeyword={searchKeyword}
           onSearchKeywordChange={setSearchKeyword}
