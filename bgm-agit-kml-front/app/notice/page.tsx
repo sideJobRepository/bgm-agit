@@ -3,9 +3,45 @@
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { withBasePath } from '@/lib/path';
+import { useFetchNoticeList } from '@/services/notice.service';
+import { useEffect, useMemo, useState } from 'react';
+import { NoticeItem, useNoticeListStore } from '@/store/notice';
+import { BaseColumn, BaseTable } from '@/app/components/BaseTable';
+import { ColumnDef } from '@tanstack/react-table';
+import { useRouter } from 'next/navigation';
 
 
 export default function Notice() {
+  const router = useRouter();
+  const fetchNotice = useFetchNoticeList();
+  const noticeList =  useNoticeListStore((state) => state.notice);
+
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [page, setPage] = useState(0);
+
+  const columns = useMemo<BaseColumn<NoticeItem>[]>(() => [
+    {
+      key: 'no',
+      header: '번호',
+      render: (_, index) => index + 1,
+    },
+    {
+      key: 'title',
+      header: '제목',
+      render: row => row.title,
+    },
+    {
+      key: 'content',
+      header: '내용',
+      render: row => row.cont,
+    },
+  ], []);
+
+  console.log("noticeList", noticeList);
+
+  useEffect(() => {
+    fetchNotice({ page, titleOrCont: searchKeyword })
+  }, [page, searchKeyword]);
 
   return (
     <Wrapper>
@@ -28,15 +64,25 @@ export default function Notice() {
           </span>
         </HeroContent>
       </Hero>
-      <Slider>
+      <TableBox>
+        {noticeList && (       <BaseTable
+          columns={columns}
+          data={noticeList.content}
+          page={page}
+          searchLabel="제목 및 내용"
+          totalPages={noticeList.totalPages}
+          onPageChange={setPage}
+          showWriteButton
+          onWriteClick={() => router.push('/noticeDetail')}
+          onRowClick={(row) =>
+            router.push(`/noticeDetail?id=${row.id}`)
+          }
+        />)}
 
-
-      </Slider>
+      </TableBox>
     </Wrapper>
   );
 }
-
-/* ================= styles ================= */
 
 const Wrapper = styled.div`
   display: flex;
@@ -44,7 +90,7 @@ const Wrapper = styled.div`
   min-width: 1280px;
   min-height: 600px;
   height: 100%;
-  margin: auto;
+  margin: 0 auto;
   flex-direction: column;
   gap: 36px;
 
@@ -58,9 +104,7 @@ const Wrapper = styled.div`
 
 const Hero = styled.section`
   position: relative;
-  width: 100vw;
-  left: 50%;
-  transform: translateX(-50%);
+  width: 100%;
   height: 160px;
   overflow: hidden;
 
@@ -129,12 +173,8 @@ const HeroContent = styled.div`
   }
 `;
 
-const Slider = styled.div`
-  width: 96%;
-  max-width: 800px;
-  height: 420px;
-  margin: auto;
-  position: relative;
+const TableBox = styled.div`
+  width: 100%;
   overflow: hidden;
 `;
 

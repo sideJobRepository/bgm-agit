@@ -5,6 +5,8 @@ export const theme = {
     lineColor: '#D9D9D9',
     border: '#e5e5e5',
     grayColor: '#757575',
+    inputColor: '#1d1d1f',
+    writeBgColor: '#4A90E2',
 
     sideBgColor: '#00002E',
     mainBgColor: '#1D1E3D',

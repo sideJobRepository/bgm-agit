@@ -25,7 +25,6 @@ import { useUserStore } from '@/store/user';
 import { usePathname, useRouter } from 'next/navigation';
 import api from '@/lib/axiosInstance';
 import { tokenStore } from '@/services/tokenStore';
-import Swal from 'sweetalert2';
 import { alertDialog, confirmDialog } from '@/utils/alert';
 
 
