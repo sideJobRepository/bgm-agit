@@ -128,7 +128,7 @@ export function BaseTable<T>({
 const TableBox = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
     padding: 24px 8px;
 `;
 
@@ -198,10 +198,11 @@ const Button = styled.button`
     display: flex;
     align-items: center;
     gap: 6px;
-  padding: 0 16px;
+  padding: 0 14px;
     height: 32px;
   background-color: ${({ theme }) => theme.colors.writeBgColor};
   color: ${({ theme }) => theme.colors.whiteColor};
+    font-size: ${({ theme }) => theme.desktop.sizes.sm};
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -278,4 +279,7 @@ const SearchButton = styled.button`
   border-radius: 999px;
   cursor: pointer;
   white-space: nowrap;
+    &:hover {
+        opacity: 0.8;
+    }
 `;
