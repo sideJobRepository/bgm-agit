@@ -100,7 +100,7 @@ export default function NoticeDetail({
           </Link>
         </ButtonBox>
       </div>
-      <h4>{detailNotice?.title}</h4>
+      <h5>{detailNotice?.title}</h5>
     </TitleBox>
     {/*{attachedFiles.length > 0 && (*/}
     {/*  <StyledFileUl>*/}
@@ -301,21 +301,20 @@ const TitleBox = styled.div`
     }
   }
 
-  h4 {
+  h5 {
     display: flex;
     height: 100%;
     align-items: center;
     padding: 20px 10px;
-    color: ${({ theme }) => theme.colors.subColor};
-    font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
-    font-weight: ${({ theme }) => theme.weight.bold};
-    font-family: 'Jua', sans-serif;
+    color: ${({ theme }) => theme.colors.inputColor};
+    font-size: ${({ theme }) => theme.desktop.sizes.h5Size};
+    font-weight: 600;
       white-space: normal;
       word-break: break-word;
       overflow-wrap: anywhere;
 
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
+      font-size: ${({ theme }) => theme.mobile.sizes.h5Size};
     }
   }
 `;

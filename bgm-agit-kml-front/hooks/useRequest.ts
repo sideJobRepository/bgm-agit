@@ -39,7 +39,7 @@ export function useRequest() {
             .join("\n");
           await alertDialog(messages, 'error');
         } else {
-          await alertDialog(err.response?.data?.message ?? "오류가 발생했습니다.");
+          await alertDialog(err.response?.data?.message ?? "오류가 발생했습니다.", 'error');
         }
       }
       throw error;
