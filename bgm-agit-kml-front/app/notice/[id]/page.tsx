@@ -8,6 +8,10 @@ import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import styled from 'styled-components';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import {
+  ArrowLeft
+} from 'phosphor-react';
 
 export default function NoticeDetail({
                                              params,
@@ -75,30 +79,28 @@ export default function NoticeDetail({
         <ButtonBox>
           {user?.roles.includes('ROLE_ADMIN') && (
             <>
-              {/*<Button*/}
-              {/*  onClick={() => {*/}
-              {/*    setIsEditMode(true);*/}
-              {/*  }}*/}
-              {/*  color="#093A6E"*/}
-              {/*>*/}
-              {/*  수정*/}
-              {/*</Button>*/}
-              {/*<Button color="#FF5E57" onClick={() => deleteData()}>*/}
-              {/*  삭제*/}
-              {/*</Button>*/}
+              <Button
+                onClick={() => {
+                  setIsEditMode(true);
+                }}
+                color="#415B9C"
+              >
+                수정
+              </Button>
+              <Button color="#D9625E" >
+                삭제
+              </Button>
             </>
           )}
-          <Button
-            onClick={() => {
-              router.push(`/notice`)
-            }}
-            color="#988271"
+          <Link
+            href="/notice"
           >
+            <ArrowLeft weight="bold"/>
             돌아가기
-          </Button>
+          </Link>
         </ButtonBox>
       </div>
-      <h2>{detailNotice?.title}</h2>
+      <h4>{detailNotice?.title}</h4>
     </TitleBox>
     {/*{attachedFiles.length > 0 && (*/}
     {/*  <StyledFileUl>*/}
@@ -198,6 +200,23 @@ const ButtonBox = styled.div`
     justify-content: flex-end;
   gap: 4px;
     flex: 1;
+
+    a {
+        display: flex;
+        position: relative;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        width: 100%;
+        font-weight: 500;
+        color: ${({ theme }) => theme.colors.grayColor};
+        font-size: ${({ theme }) => theme.desktop.sizes.sm};
+
+        svg {
+            width: 12px;
+            height: 12px;
+        }
+    }
 `;
 
 const Button = styled.button<{ color: string }>`
@@ -266,7 +285,7 @@ const TitleBox = styled.div`
     align-items: center;
       justify-content: space-between;
     gap: 12px;
-    padding: 14px 20px;
+    padding: 12px 8px;
     width: 100%;
     background-color: rgb(253, 253, 255);
       
@@ -282,18 +301,21 @@ const TitleBox = styled.div`
     }
   }
 
-  h2 {
+  h4 {
     display: flex;
     height: 100%;
     align-items: center;
     padding: 20px 10px;
     color: ${({ theme }) => theme.colors.subColor};
-    font-size: ${({ theme }) => theme.desktop.sizes.xl};
+    font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
     font-weight: ${({ theme }) => theme.weight.bold};
     font-family: 'Jua', sans-serif;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
 
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.mobile.sizes.xl};
+      font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
     }
   }
 `;
