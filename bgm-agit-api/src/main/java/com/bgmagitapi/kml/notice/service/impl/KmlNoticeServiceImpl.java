@@ -52,7 +52,7 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
                 .builder()
                 .id(kmlNotice.getId())
                 .title(kmlNotice.getNoticeTitle())
-                .cont(kmlNotice.getNoticeTitle())
+                .cont(kmlNotice.getNoticeCont())
                 .registDate(localDate)
                 .build();
         
