@@ -136,30 +136,29 @@ const Table = styled.table`
     border-collapse: collapse;
     font-size: ${({ theme }) => theme.desktop.sizes.sm};
     color: ${({ theme }) => theme.colors.inputColor};
+    position: relative;
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: ${({ theme }) => theme.colors.lineColor};
+    }
 
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 32px;
+        height: 2px;
+        background: ${({ theme }) => theme.colors.blackColor};
+    }
+    
     thead {
-        position: relative;
         border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
-
-        &::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: ${({ theme }) => theme.colors.lineColor};
-        }
-
-        &::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 32px;
-            height: 2px;
-            background: ${({ theme }) => theme.colors.blackColor};
-        }
     }
     
     th,
