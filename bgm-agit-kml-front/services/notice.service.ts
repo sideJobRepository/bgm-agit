@@ -4,7 +4,7 @@ import api from '@/lib/axiosInstance';
 
 export type params = {
   page?: number;
-  titleOrCont?: string;
+  titleAndCont?: string;
 };
 
 export function useFetchNoticeList() {
@@ -12,7 +12,7 @@ export function useFetchNoticeList() {
   const setNotice = useNoticeListStore((state) => state.setNotice);
 
   const fetchNotice = (params: params) => {
-    request(() => api.get('/bgm-agit/kml-notice', { params }).then(res => res.data), setNotice);
+    request(() => api.get(`/bgm-agit/kml-notice?size=5`, { params }).then(res => res.data), setNotice);
   };
 
   return fetchNotice;

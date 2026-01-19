@@ -21,27 +21,22 @@ export default function Notice() {
 
   const columns = useMemo<BaseColumn<NoticeItem>[]>(() => [
     {
-      key: 'no',
-      header: '번호',
-      render: (_, index) => index + 1,
+      key: 'registDate',
+      header: '날짜',
+      render: row => row.registDate,
     },
     {
       key: 'title',
       header: '제목',
       render: row => row.title,
     },
-    {
-      key: 'content',
-      header: '내용',
-      render: row => row.cont,
-    },
   ], []);
 
   console.log("noticeList", noticeList);
 
   useEffect(() => {
-    fetchNotice({ page, titleOrCont: searchKeyword })
-  }, [page, searchKeyword]);
+    fetchNotice({ page, titleAndCont: searchKeyword })
+  }, [page]);
 
   return (
     <Wrapper>
@@ -77,6 +72,12 @@ export default function Notice() {
           onRowClick={(row) =>
             router.push(`/noticeDetail?id=${row.id}`)
           }
+          searchKeyword={searchKeyword}
+          onSearchKeywordChange={setSearchKeyword}
+          onSearch={() => {
+            setPage(0);
+            fetchNotice({ page: 0, titleAndCont: searchKeyword });
+          }}
         />)}
 
       </TableBox>

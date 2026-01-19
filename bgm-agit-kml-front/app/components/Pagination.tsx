@@ -104,7 +104,6 @@ const Nav = styled.nav`
 const PageNumberBox = styled.div`
   display: flex;
   gap: 8px;
-  padding: 8px 0;
 `;
 
 const PageButton = styled.button`
@@ -113,10 +112,12 @@ const PageButton = styled.button`
   cursor: pointer;
   color: ${({ theme }) => theme.colors.subColor};
   padding: 4px 8px;
+    font-size: ${({ theme }) => theme.desktop.sizes.sm};
 
   &.active {
-    background-color: ${({ theme }) => theme.colors.noticeColor};
+    background-color: ${({ theme }) => theme.colors.blackColor};
     color: ${({ theme }) => theme.colors.white};
+      border-radius: 4px;
   }
 
   &:hover:not(.active) {

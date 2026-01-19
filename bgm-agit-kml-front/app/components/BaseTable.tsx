@@ -4,7 +4,7 @@
 import styled from 'styled-components';
 import Pagination from '@/app/components/Pagination';
 import { useUserStore } from '@/store/user';
-import { PencilSimpleLine } from 'phosphor-react';
+import { PencilSimpleLine, MagnifyingGlass } from 'phosphor-react';
 
 export interface BaseColumn<T> {
   key: string;
@@ -25,6 +25,9 @@ interface BaseTableProps<T> {
   onWriteClick?: () => void;
   emptyMessage?: string;
   searchLabel?: string;
+  searchKeyword?: string;
+  onSearchKeywordChange?: (value: string) => void;
+  onSearch?: () => void;
 }
 
 export function BaseTable<T>({
@@ -38,6 +41,9 @@ export function BaseTable<T>({
                                onWriteClick,
                                emptyMessage = '검색된 결과가 없습니다.',
                                searchLabel,
+                               searchKeyword,
+                               onSearchKeywordChange,
+                               onSearch
                              }: BaseTableProps<T>) {
   const user = useUserStore((state) =>state.user);
   console.log("user", user)
@@ -45,18 +51,27 @@ export function BaseTable<T>({
   return (
     <TableBox>
       <TopBox>
-        <SearchGroup>
+        <SearchGroup onSubmit={(e) => {
+          e.preventDefault();
+          onSearch?.();
+        }}>
           <FieldsWrapper>
             <Field>
               <label>{searchLabel}</label>
               <input
                 type="text"
                 placeholder="검색어를 입력해주세요."
-                // value={keyword}
-                // onChange={e => setKeyword(e.target.value)}
+                value={searchKeyword ?? ''}
+                onChange={(e) =>
+                  onSearchKeywordChange?.(e.target.value)
+                }
               />
             </Field>
           </FieldsWrapper>
+          <SearchButton type="submit">
+            <MagnifyingGlass weight="bold"/>
+            검색
+          </SearchButton>
         </SearchGroup>
         {user?.roles?.includes('ROLE_ADMIN') && (
           <Button
@@ -90,7 +105,7 @@ export function BaseTable<T>({
               onClick={onRowClick ? () => onRowClick(row) : undefined}
             >
               {columns.map(col => (
-                <Td key={col.key}>
+                <Td key={col.key} $wrap={col.key === 'registDate'}>
                   {col.render(row, index)}
                 </Td>
               ))}
@@ -111,7 +126,7 @@ export function BaseTable<T>({
 }
 
 const TableBox = styled.div`
-    display: inline-flex;
+    display: flex;
     flex-direction: column;
     gap: 16px;
     padding: 24px 8px;
@@ -120,13 +135,12 @@ const TableBox = styled.div`
 const Table = styled.table`
     width: 100%;
     border-collapse: collapse;
-    font-size: ${({ theme }) => theme.desktop.sizes.md};
+    font-size: ${({ theme }) => theme.desktop.sizes.sm};
     color: ${({ theme }) => theme.colors.inputColor};
 
     th,
     td {
         padding: 14px;
-        text-align: center;
     }
 
     tbody tr:hover {
@@ -134,25 +148,32 @@ const Table = styled.table`
     }
 
     td {
-        border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
+        border-bottom: 1px solid ${({ theme }) => theme.colors.border};
     }
 `;
 
 const Th = styled.th`
     white-space: nowrap;
-    border-top: 1px solid ${({ theme }) => theme.colors.blackColor};
-    border-bottom: 1px solid ${({ theme }) => theme.colors.grayColor};
+    border-top: 1px solid ${({ theme }) => theme.colors.grayColor};
+    border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
     font-weight: 600;
 `;
 
-const Td = styled.td`
-    white-space: normal;
+const Td = styled.td<{$wrap : boolean}>`
+    white-space: ${({ $wrap }) => ($wrap ? 'nowrap' : 'normal')};
     word-break: break-word; 
     overflow-wrap: anywhere;
+    
 `;
 
 const Tr = styled.tr<{ $clickable: boolean }>`
     cursor: ${({ $clickable }) => ($clickable ? 'pointer' : 'default')};
+
+    &:nth-child(even) {
+        background-color: rgb(253, 253, 255);
+
+
+    }
 `;
 
 const EmptyTd = styled.td`
@@ -171,7 +192,6 @@ const TopBox = styled.section`
     gap: 24px;
     padding: 12px 0;
     justify-content: space-between;
-    // border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
 `
 
 const Button = styled.button`
@@ -198,11 +218,11 @@ const SearchGroup = styled.form`
   flex: 1;
   align-items: center;
   justify-content: space-between;
-  padding: 2px 16px;
-  border: 2px solid rgb(244 244 245);
+    padding: 2px 4px 2px 20px;
+  border: 1px solid ${({ theme }) => theme.colors.lineColor};
   border-radius: 999px;
   flex-wrap: nowrap;
-    max-width: 240px;
+    max-width: 260px;
 
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
@@ -242,4 +262,20 @@ const Field = styled.div`
     color: ${({ theme }) => theme.colors.inputColor};
     background: transparent;
   }
+`;
+
+const SearchButton = styled.button`
+  display: flex;
+  align-items: center;
+    gap: 6px;
+  background: #6DAE81;
+    font-size: ${({ theme }) => theme.desktop.sizes.sm};
+  box-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
+  border: none;
+  color: white;
+  font-weight: 500;
+  padding: 10px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
 `;

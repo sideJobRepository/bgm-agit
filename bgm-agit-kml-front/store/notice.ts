@@ -4,6 +4,7 @@ export interface NoticeItem {
   id: number;
   title: string;
   cont: string;
+  registDate: string;
 }
 
 export interface NoticePage {
