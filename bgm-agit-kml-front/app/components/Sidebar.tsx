@@ -34,10 +34,11 @@ export default function Sidebar() {
   //navigation
   const pathname = usePathname();
   const router = useRouter();
-  console.log("pathname", pathname)
 
   useFetchMainMenu();
   const menuData = useKmlMenuStore((state) => state.menu);
+
+  console.log("menu", menuData)
 
   const user = useUserStore((state) =>state.user);
 
