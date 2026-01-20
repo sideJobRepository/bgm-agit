@@ -64,7 +64,6 @@ export default function Home() {
           <br />
           여러분의 보드게임 이야기가 이곳에 쌓여갑니다.{' '}
         </span>
-        <a></a>
       </Title>
       <Slider>
         {cards.slice(0, 3).map((card, i) => (
