@@ -5,12 +5,13 @@ import { useFetchNoticeDetailL, useNoticeDownloadFetch } from '@/services/notice
 import { use, useEffect, useRef, useState } from 'react';
 import { NoticeFiles, useNoticeDetailStore } from '@/store/notice';
 import dynamic from 'next/dynamic';
-import styled from 'styled-components';
+import styled, {keyframes} from 'styled-components';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, TrashSimple, FileText, Check, FilePlus, DownloadSimple   } from 'phosphor-react';
 import { useDeletePost, useInsertPost, useUpdatePost } from '@/services/main.service';
 import { alertDialog, confirmDialog } from '@/utils/alert';
+import { useLoadingStore } from '@/store/loading';
 
 const NoticeEditor = dynamic(() => import('../../components/NoticeEditor'), {
   ssr: false,
@@ -182,6 +183,10 @@ export default function NoticeDetail({
     );
   };
 
+  //로딩
+  const loading = useLoadingStore((state) => state.loading)
+  const isReady = !loading && detailNotice;
+
   useEffect(() => {
     if (id && id !== 'new') fetchDetailNotice(id);
     else clearDetail();
@@ -245,54 +250,80 @@ export default function NoticeDetail({
   return (
     <Wrapper>
       {id && id !== 'new' && !isEditMode ? (
-        <>
-          <ButtonBox>
-            {user?.roles.includes('ROLE_ADMIN') && (
-              <>
-                <Button onClick={() => setIsEditMode(true)} color="#415B9C">
-                  <FileText weight="bold"/>
-                </Button>
-                <Button onClick={deleteData} color="#D9625E">
-                  <TrashSimple weight="bold"/>
-                </Button>
-              </>
-            )}
-          </ButtonBox>
-          <TitleBox>
-            <div>
-              <span>{detailNotice?.registDate}</span>
-              <Link href="/notice">
-                <ArrowLeft weight="bold" />
-                돌아가기
-              </Link>
-            </div>
-            <h3>{detailNotice?.title}</h3>
-          </TitleBox>
-          {attachedFiles.length > 0 && (
+        !isReady ? (
+          <>
+            <TitleBox>
+              <div>
+                <SkeletonBox style={{ width: '100px', height: '20px' }} />
+                <SkeletonBox style={{ width: '60px', height: '20px' }} />
+              </div>
+              <h3>
+                <SkeletonBox style={{ width: '50%', height: '28px' }} />
+              </h3>
+            </TitleBox>
+
             <StyledFileUl>
-              {attachedFiles.map((file, idx) => (
-                <li key={idx}>
-                  <a
-                    onClick={() => {
-                      fileDownload(file);
-                    }}
-                  >
-                    {file.fileName}
-                    <FileSvgBox $color="#6DAE81">
-                      <DownloadSimple  weight="bold" onClick={() => fileDownload(file)}/>
-                    </FileSvgBox>
-                  </a>
+              {[...Array(2)].map((_, i) => (
+                <li key={i}>
+                  <SkeletonBox style={{ width: '200px', height: '20px' }} />
                 </li>
               ))}
             </StyledFileUl>
-          )}
-          <ContentBox
-            className="ck-content"
-            dangerouslySetInnerHTML={{
-              __html: convertOembedToIframe(String(detailNotice?.cont)),
-            }}
-          />
-        </>
+
+            <ContentBox>
+              <SkeletonBox style={{ width: '100%', height: '300px' }} />
+            </ContentBox>
+          </>
+          ) : (
+          <>
+            {user?.roles.includes('ROLE_ADMIN') && (
+              <ButtonBox>
+                  <>
+                    <Button onClick={() => setIsEditMode(true)} color="#415B9C">
+                      <FileText weight="bold"/>
+                    </Button>
+                    <Button onClick={deleteData} color="#D9625E">
+                      <TrashSimple weight="bold"/>
+                    </Button>
+                  </>
+              </ButtonBox>
+              )}
+            <TitleBox>
+              <div>
+                <span>{detailNotice?.registDate}</span>
+                <Link href="/notice">
+                  <ArrowLeft weight="bold" />
+                  돌아가기
+                </Link>
+              </div>
+              <h3>{detailNotice?.title}</h3>
+            </TitleBox>
+            {attachedFiles.length > 0 && (
+              <StyledFileUl>
+                {attachedFiles.map((file, idx) => (
+                  <li key={idx}>
+                    <a
+                      onClick={() => {
+                        fileDownload(file);
+                      }}
+                    >
+                      {file.fileName}
+                      <FileSvgBox $color="#6DAE81">
+                        <DownloadSimple  weight="bold" onClick={() => fileDownload(file)}/>
+                      </FileSvgBox>
+                    </a>
+                  </li>
+                ))}
+              </StyledFileUl>
+            )}
+            <ContentBox
+              className="ck-content"
+              dangerouslySetInnerHTML={{
+                __html: convertOembedToIframe(String(detailNotice?.cont)),
+              }}
+            />
+          </>
+        )
       ) : (
         <>
           <ButtonBox>
@@ -661,4 +692,17 @@ const StyledFileUl = styled.ul`
     }
   }
 `;
+
+const shimmer = keyframes`
+  0% { background-position: -100% 0; }
+  100% { background-position: 100% 0; }
+`;
+
+const SkeletonBox = styled.div`
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: ${shimmer} 1.5s infinite;
+  border-radius: 4px;
+`;
+
 
