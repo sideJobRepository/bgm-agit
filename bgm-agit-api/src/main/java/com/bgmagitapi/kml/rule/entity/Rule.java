@@ -1,6 +1,7 @@
 package com.bgmagitapi.kml.rule.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,4 +28,8 @@ public class Rule {
     // BGM 아지트 대회 여부
     @Column(name = "BGM_AGIT_TOURNAMENT_STATUS")
     private Boolean tournamentStatus;
+    
+    public void modifyTitle(String title) {
+        this.title = title;
+    }
 }

@@ -21,6 +21,7 @@ public class RuleGetResponse {
     @AllArgsConstructor
     @Builder
     public static class RuleFileResponse {
+        private Long id;
         private String fileName;
         private String fileUrl;
         private String fileFolder;

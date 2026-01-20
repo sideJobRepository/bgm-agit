@@ -7,6 +7,7 @@ import com.bgmagitapi.config.UploadResult;
 import com.bgmagitapi.entity.BgmAgitCommonFile;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.kml.rule.dto.request.RulePostRequest;
+import com.bgmagitapi.kml.rule.dto.request.RulePutRequest;
 import com.bgmagitapi.kml.rule.dto.response.RuleGetResponse;
 import com.bgmagitapi.kml.rule.entity.Rule;
 import com.bgmagitapi.kml.rule.repository.RuleRepository;
@@ -34,19 +35,20 @@ public class RuleServiceImpl implements RuleService {
         List<BgmAgitCommonFile> file = ruleRepository.getRuleFiles();
         List<RuleGetResponse> result = ruleRepository.findAll()
                 .stream()
-                .map(item -> {
-                    return RuleGetResponse
+                .map(item ->
+                     RuleGetResponse
                             .builder()
                             .id(item.getId())
                             .title(item.getTitle())
-                            .build();
-                }).collect(Collectors.toList());
+                            .build()
+                ).collect(Collectors.toList());
         
         Map<Long, List<RuleGetResponse.RuleFileResponse>> ruleFiles = file.stream()
                 .collect(Collectors.groupingBy(
                         BgmAgitCommonFile::getBgmAgitCommonFileTargetId,
                         Collectors.mapping(
                                 item -> RuleGetResponse.RuleFileResponse.builder()
+                                        .id(item.getBgmAgitCommonFileId())
                                         .fileName(item.getBgmAgitCommonFileName())
                                         .fileUrl(item.getBgmAgitCommonFileUrl())
                                         .fileFolder("rule")
@@ -79,18 +81,44 @@ public class RuleServiceImpl implements RuleService {
         
         ruleRepository.save(rule);
         
-        List<UploadResult> uploadResults = s3FileUtils.storeFiles(request.getFiles(), "rule");
-        for (UploadResult result : uploadResults) {
-            BgmAgitCommonFile commonFile = BgmAgitCommonFile
-                    .builder()
-                    .bgmAgitCommonFileTargetId(rule.getId())
-                    .bgmAgitCommonFileName(result.getOriginalFilename())
-                    .bgmAgitCommonFileUuidName(result.getUuid())
-                    .bgmAgitCommonFileUrl(result.getUrl())
-                    .bgmAgitCommonFileType(BgmAgitCommonType.RULE)
-                    .build();
-            commonFileRepository.save(commonFile);
-        }
+        UploadResult result = s3FileUtils.storeFile(request.getFile(), "rule");
+        
+        BgmAgitCommonFile commonFile = BgmAgitCommonFile
+                .builder()
+                .bgmAgitCommonFileTargetId(rule.getId())
+                .bgmAgitCommonFileName(result.getOriginalFilename())
+                .bgmAgitCommonFileUuidName(result.getUuid())
+                .bgmAgitCommonFileUrl(result.getUrl())
+                .bgmAgitCommonFileType(BgmAgitCommonType.RULE)
+                .build();
+        commonFileRepository.save(commonFile);
         return new ApiResponse(200, true, "저장 되었습니다.");
+    }
+    
+    @Override
+    public ApiResponse modifyRule(RulePutRequest request) {
+        
+        Long id = request.getId();
+        Rule rule = ruleRepository.findById(id).orElseThrow(() -> new RuntimeException("존재하지 않는 룰 입니다."));
+        rule.modifyTitle(request.getTitle());
+        
+        Long deleteFileId = request.getDeleteFileId();
+        
+        BgmAgitCommonFile deleteFile = commonFileRepository.findById(deleteFileId).orElseThrow(() -> new RuntimeException("존재하지 않는 파일입니다."));
+        s3FileUtils.deleteFile(deleteFile.getBgmAgitCommonFileUrl());
+        commonFileRepository.delete(deleteFile);
+        
+        UploadResult result = s3FileUtils.storeFile(request.getFile(), "rule");
+        
+        BgmAgitCommonFile commonFile = BgmAgitCommonFile
+                .builder()
+                .bgmAgitCommonFileTargetId(rule.getId())
+                .bgmAgitCommonFileName(result.getOriginalFilename())
+                .bgmAgitCommonFileUuidName(result.getUuid())
+                .bgmAgitCommonFileUrl(result.getUrl())
+                .bgmAgitCommonFileType(BgmAgitCommonType.RULE)
+                .build();
+        commonFileRepository.save(commonFile);
+        return new ApiResponse(200, true, "수정 되었습니다.");
     }
 }
