@@ -63,19 +63,19 @@ export function useNoticeDownloadFetch() {
               }
             }
 
-            if (isIOS && navigator.canShare) {
-              const file = new File([blob], fileName, { type: blob.type });
-              if (navigator.canShare({ files: [file] })) {
-                navigator
-                  .share({
-                    files: [file],
-                    title: '파일 다운로드',
-                    text: '공지사항 첨부파일입니다.',
-                  })
-                  .catch(err => console.error('iOS 공유 실패:', err));
-                return;
-              }
-            }
+            // if (isIOS && navigator.canShare) {
+            //   const file = new File([blob], fileName, { type: blob.type });
+            //   if (navigator.canShare({ files: [file] })) {
+            //     navigator
+            //       .share({
+            //         files: [file],
+            //         title: '파일 다운로드',
+            //         text: '공지사항 첨부파일입니다.',
+            //       })
+            //       .catch(err => console.error('iOS 공유 실패:', err));
+            //     return;
+            //   }
+            // }
 
             // 일반 브라우저 다운로드
             const url = window.URL.createObjectURL(blob);
@@ -87,7 +87,7 @@ export function useNoticeDownloadFetch() {
             URL.revokeObjectURL(url);
           }),
       () => {},
-      { ignoreErrorRedirect: true }
+      { ignoreErrorRedirect: true,  disableLoading: true },
     );
   };
 

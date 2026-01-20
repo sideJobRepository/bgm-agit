@@ -7,6 +7,7 @@ import { alertDialog } from '@/utils/alert';
 
 interface RequestOptions {
   ignoreErrorRedirect?: boolean;
+  disableLoading?: boolean;
 }
 
 
@@ -19,7 +20,10 @@ export function useRequest() {
     onSuccess?: (data: T) => void,
     options?: RequestOptions,
   ): Promise<T | undefined> => {
-    setLoading(true);
+
+    if(!options?.disableLoading){
+      setLoading(true);
+    }
     try {
       const data = await requestFn();
       onSuccess?.(data);
@@ -45,7 +49,9 @@ export function useRequest() {
       }
       throw error;
     } finally {
-      setLoading(false);
+      if (!options?.disableLoading) {
+        setLoading(false);
+      }
     }
   };
 
