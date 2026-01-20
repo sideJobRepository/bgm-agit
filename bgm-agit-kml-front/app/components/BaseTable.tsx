@@ -77,7 +77,6 @@ export function BaseTable<T>({
             onClick={onWriteClick ? () => onWriteClick() : undefined}
           >
             <PencilSimpleLine weight="bold" />
-            작성
           </Button>
         )}
       </TopBox>
@@ -221,19 +220,22 @@ const TopBox = styled.section`
 const Button = styled.button`
     display: flex;
     align-items: center;
-    gap: 6px;
-  padding: 0 14px;
-    height: 32px;
+    padding: 8px;
   background-color: ${({ theme }) => theme.colors.writeBgColor};
   color: ${({ theme }) => theme.colors.whiteColor};
     font-size: ${({ theme }) => theme.desktop.sizes.sm};
   border: none;
-  border-radius: 4px;
+    border-radius: 999px;
   cursor: pointer;
-    font-weight: 500;
+    box-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
     
     &:hover {
         opacity: 0.8;
+    }
+
+    svg {
+        width: 16px;
+        height: 16px;
     }
 `;
 
@@ -244,8 +246,8 @@ const SearchGroup = styled.form`
   align-items: center;
   justify-content: space-between;
     padding: 2px 4px 2px 20px;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 999px;
+  border: 1px solid  ${({ theme }) => theme.colors.lineColor};
+  border-radius: 4px;
   flex-wrap: nowrap;
     max-width: 260px;
 
@@ -275,13 +277,12 @@ const Field = styled.div`
     color: ${({ theme }) => theme.colors.blackColor};
     font-weight: 600;
     text-align: left;
-    margin-left: 6px;
   }
 
   input {
     border: none;
     width: 100%;
-    padding: 4px 4px;
+    padding: 4px 0;
     font-size: ${({ theme }) => theme.desktop.sizes.sm};
     outline: none;
     color: ${({ theme }) => theme.colors.inputColor};
@@ -299,8 +300,9 @@ const SearchButton = styled.button`
   border: none;
   color: white;
   font-weight: 500;
-  padding: 10px 16px;
-  border-radius: 999px;
+  padding: 0 16px;
+    height: 32px;
+  border-radius: 4px;
   cursor: pointer;
   white-space: nowrap;
     &:hover {

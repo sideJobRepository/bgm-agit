@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 import styled from 'styled-components';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft } from 'phosphor-react';
+import { ArrowLeft, TrashSimple, FileText, Check } from 'phosphor-react';
 import { useDeletePost, useInsertPost, useUpdatePost } from '@/services/main.service';
 import { alertDialog, confirmDialog } from '@/utils/alert';
 
@@ -96,6 +96,26 @@ export default function NoticeDetail({
     }
   };
 
+  const cancleClick = async () => {
+
+    const result = await confirmDialog('정말 이전으로 되돌아 가시겠습니까?', 'warning');
+
+    if (result.isConfirmed) {
+      if (isEditMode) {
+        setIsEditMode(false);
+        if (detailNotice) {
+          setNewNotice({
+            id: detailNotice.id,
+            title: detailNotice.title,
+            content: detailNotice.cont,
+          });
+        }
+      } else {
+        router.push('/notice');
+      }
+    }
+  }
+
   useEffect(() => {
     if (id && id !== 'new') fetchDetailNotice(id);
     else clearDetail();
@@ -112,6 +132,8 @@ export default function NoticeDetail({
   }, [detailNotice]);
 
   const convertOembedToIframe = (html: string): string => {
+    if (typeof window === 'undefined') return html; // SSR에서는 그냥 원본 반환
+
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
     const oembeds = doc.querySelectorAll('oembed');
@@ -148,27 +170,27 @@ export default function NoticeDetail({
     <Wrapper>
       {id && id !== 'new' && !isEditMode ? (
         <>
+          <ButtonBox>
+            {user?.roles.includes('ROLE_ADMIN') && (
+              <>
+                <Button onClick={() => setIsEditMode(true)} color="#415B9C">
+                  <FileText weight="bold"/>
+                </Button>
+                <Button onClick={deleteData} color="#D9625E">
+                  <TrashSimple weight="bold"/>
+                </Button>
+              </>
+            )}
+          </ButtonBox>
           <TitleBox>
             <div>
               <span>{detailNotice?.registDate}</span>
-              <ButtonBox>
-                {user?.roles.includes('ROLE_ADMIN') && (
-                  <>
-                    <Button onClick={() => setIsEditMode(true)} color="#415B9C">
-                      수정
-                    </Button>
-                    <Button onClick={deleteData} color="#D9625E">
-                      삭제
-                    </Button>
-                  </>
-                )}
-                <Link href="/notice">
-                  <ArrowLeft weight="bold" />
-                  돌아가기
-                </Link>
-              </ButtonBox>
+              <Link href="/notice">
+                <ArrowLeft weight="bold" />
+                돌아가기
+              </Link>
             </div>
-            <h5>{detailNotice?.title}</h5>
+            <h2>{detailNotice?.title}</h2>
           </TitleBox>
           <ContentBox
             className="ck-content"
@@ -181,26 +203,15 @@ export default function NoticeDetail({
         <>
           <ButtonBox>
             <Button onClick={handleSubmit} color="#4A90E2">
-              저장
+              <Check weight="bold"/>
             </Button>
             <Button
-              onClick={() => {
-                if (isEditMode) {
-                  setIsEditMode(false);
-                  if (detailNotice) {
-                    setNewNotice({
-                      id: detailNotice.id,
-                      title: detailNotice.title,
-                      content: detailNotice.cont,
-                    });
-                  }
-                } else {
-                  router.push('/notice');
-                }
-              }}
+              onClick={() =>
+                cancleClick()
+              }
               color="#D9625E"
             >
-              취소
+              <ArrowLeft weight="bold"/>
             </Button>
           </ButtonBox>
           <EditorWrapper>
@@ -223,10 +234,11 @@ export default function NoticeDetail({
                   formData.append('file', file);
                   return new Promise<string>((resolve) => {
                     insert<FormData>({
-                      url: '/bgm-agit/notice/file',
+                      url: '/bgm-agit/ckEditor/file/kml-notice',
                       body: formData,
                       ignoreErrorRedirect: true,
                       onSuccess: (data: unknown) => {
+                        console.log("data", data)
                         resolve(data as string);
                       },
                     });
@@ -269,15 +281,20 @@ const InputBox = styled.input`
   width: 100%;
   margin-bottom: 10px;
   padding: 0 8px;
-
+    color: ${({ theme }) => theme.colors.inputColor};
   border: 1px solid #c4c4c4; /* CKEditor 기본 테두리 색상 */
   border-radius: 4px;
   box-shadow: none;
-
+    font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
+    
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.colors.noticeColor};
+    border-color: ${({ theme }) => theme.colors.inputColor};
   }
+
+    @media ${({ theme }) => theme.device.mobile} {
+        font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
+    }
 `;
 
 const EditorBox = styled.section`
@@ -302,7 +319,7 @@ const EditorBox = styled.section`
   }
 
   .ck.ck-editor__editable.ck-focused:not(.ck-editor__nested-editable) {
-    border-color: ${({ theme }) => theme.colors.noticeColor} !important;
+    border-color: ${({ theme }) => theme.colors.inputColor} !important;
     box-shadow: none !important;
   }
 `;
@@ -311,40 +328,35 @@ const ButtonBox = styled.div`
   display: flex;
   align-items: center;
     justify-content: flex-end;
-  gap: 4px;
+  gap: 8px;
     flex: 1;
-
-    a {
-        display: flex;
-        position: relative;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 4px;
-        font-weight: 500;
-        margin-left: 8px;
-        color: ${({ theme }) => theme.colors.grayColor};
-        font-size: ${({ theme }) => theme.desktop.sizes.sm};
-
-        svg {
-            width: 12px;
-            height: 12px;
-        }
-    }
+    margin-bottom: 16px;
 `;
 
 const Button = styled.button<{ color: string }>`
-  padding:0 16px;
-    height: 32px;
+    display: flex;
+    align-items: center;
+    padding: 8px;
   background-color: ${({ color }) => color};
   color: ${({ theme }) => theme.colors.white};
   font-size: ${({ theme }) => theme.desktop.sizes.md};
   border: none;
-  border-radius: 4px;
+  border-radius: 999px;
   cursor: pointer;
     white-space: nowrap;
+    box-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.mobile.sizes.md};
   }
+    
+    svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    &:hover {
+        opacity: 0.8;
+    }
 `;
 
 const StyledRadioGroup = styled.div`
@@ -367,11 +379,11 @@ const StyledRadioLabel = styled.label`
 `;
 
 const TitleBox = styled.div`
-  display: flex;
+    display: flex;
     position: relative;
-  flex-direction: column;
-  width: 100%;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
+    flex-direction: column;
+    width: 100%;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
 
     &::before {
         content: '';
@@ -382,62 +394,78 @@ const TitleBox = styled.div`
         height: 2px;
         background: ${({ theme }) => theme.colors.lineColor};
     }
-    
+
     &::after {
         content: '';
         position: absolute;
-        top: 0;        
-        left: 0;        
-        width: 32px;      
-        height: 2px;      
+        top: 0;
+        left: 0;
+        width: 32px;
+        height: 2px;
         background: ${({ theme }) => theme.colors.blackColor};
     }
-    
-  > div {
-    display: flex;
-    align-items: center;
-      justify-content: space-between;
-    gap: 12px;
-    padding: 12px 8px;
-    width: 100%;
-    background-color: rgb(253, 253, 255);
-      
-    span {
-      margin-left: auto;
-      color: ${({ theme }) => theme.colors.grayColor};
-      font-size: ${({ theme }) => theme.desktop.sizes.xl};
+
+    > div {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 8px;
+        width: 100%;
+        background-color: rgb(242, 242, 243);
+
+        span {
+            color: ${({ theme }) => theme.colors.grayColor};
+            font-size: ${({ theme }) => theme.desktop.sizes.xl};
+            font-weight: 600;
+
+            @media ${({ theme }) => theme.device.mobile} {
+                font-size: ${({ theme }) => theme.mobile.sizes.xl};
+            }
+        }
+
+        a {
+            display: flex;
+            position: relative;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            font-weight: 500;
+            margin-left: 8px;
+            color: ${({ theme }) => theme.colors.grayColor};
+            font-size: ${({ theme }) => theme.desktop.sizes.sm};
+
+            svg {
+                width: 12px;
+                height: 12px;
+            }
+        }
+    }
+
+    h2 {
+        display: flex;
+        height: 100%;
+        align-items: center;
+        padding: 20px 10px;
+        color: ${({ theme }) => theme.colors.inputColor};
+        font-size: ${({ theme }) => theme.desktop.sizes.h2Size};
         font-weight: 600;
-      
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+
         @media ${({ theme }) => theme.device.mobile} {
-        font-size: ${({ theme }) => theme.mobile.sizes.xl};
-      }
+            font-size: ${({ theme }) => theme.mobile.sizes.h2Size};
+        }
     }
-  }
-
-  h5 {
-    display: flex;
-    height: 100%;
-    align-items: center;
-    padding: 20px 10px;
-    color: ${({ theme }) => theme.colors.inputColor};
-    font-size: ${({ theme }) => theme.desktop.sizes.h5Size};
-    font-weight: 600;
-      white-space: normal;
-      word-break: break-word;
-      overflow-wrap: anywhere;
-
-    @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.mobile.sizes.h5Size};
-    }
-  }
 `;
 
 const ContentBox = styled.div`
   height: 100%;
   width: 100%;
-  min-height: calc(100vh - 260px);
+  min-height: calc(100vh - 300px);
   padding: 20px 10px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.bronzeColor};
+  border-bottom: 2px solid ${({ theme }) => theme.colors.lineColor};
   margin-bottom: 20px;
 
   iframe {
@@ -454,6 +482,12 @@ const ContentBox = styled.div`
     max-height: unset;
     overflow: visible;
   }
+
+    img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+    }
 `;
 
 const StyledFileUl = styled.ul`
