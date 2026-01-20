@@ -7,6 +7,7 @@ export const theme = {
     grayColor: '#757575',
     inputColor: '#1d1d1f',
     writeBgColor: '#4A90E2',
+    softColor: '#F8F9FA',
 
     sideBgColor: '#00002E',
     mainBgColor: '#1D1E3D',
@@ -32,7 +33,7 @@ export const theme = {
     bronzeColor: '#5C3A21',
     yellowColor: '#FBE157',
     noticeColor: '#988271',
-    softColor: '#F8F9FA',
+
     navColor: '#757575',
     labelGb: 'rgba(66, 69, 72, 0.6)',
     white: '#FFFFFF',

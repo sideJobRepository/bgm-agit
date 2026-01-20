@@ -17,9 +17,17 @@ export interface NoticePage {
   last: boolean;
 }
 
+export interface NoticeFiles {
+  id: number;
+  fileName: string;
+  fileUrl: string;
+  status: string;
+  fileFolder: string;
+}
+
 interface DetailNoticeStore {
   cont: string;
-  files: []
+  files: NoticeFiles[]
   id: number;
   title: string;
   registDate: string;
