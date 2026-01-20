@@ -71,4 +71,10 @@ public class FileDownLoadController {
         UploadResult notice = s3FileUtils.storeFile(file, folder);
         return notice.getUrl();
     }
+    
+    @PostMapping("/ckEditor/file/{folder}")
+    public String noticeFile(@RequestParam("file") MultipartFile file, @PathVariable String folder) {
+        UploadResult notice = s3FileUtils.storeFile(file, folder);
+        return notice.getUrl();
+    }
 }
