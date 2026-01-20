@@ -8,6 +8,7 @@ import com.bgmagitapi.kml.rule.entity.Rule;
 import com.bgmagitapi.kml.rule.service.RuleService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,7 +27,7 @@ public class RuleController {
     }
     
     @PostMapping("/rule")
-    public ApiResponse rule(@RequestBody RulePostRequest request) {
+    public ApiResponse rule(@Validated @ModelAttribute RulePostRequest request) {
         return ruleService.createRule(request);
     }
     
