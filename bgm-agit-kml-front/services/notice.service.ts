@@ -34,58 +34,44 @@ export function useNoticeDownloadFetch() {
 
   const fetchNoticeDownload = (file: NoticeFiles) => {
     const sliceId = file.fileUrl.split('/').pop()!;
+    const downloadUrl =
+      `${process.env.NEXT_PUBLIC_API_URL}` +
+      `/bgm-agit/download/${file.fileFolder}/${sliceId}`;
 
     const isIOS =
       /iP(hone|od|ad)/.test(navigator.userAgent) ||
       (navigator.userAgent.includes('Macintosh') && 'ontouchend' in document);
 
-    // iOS면 먼저 창을 연다 (동기 구간)
-    const popup = isIOS ? window.open('', '_blank') : null;
+    // iOS는 Blob 절대 금지
+    if (isIOS) {
+      window.open(downloadUrl, '_blank');
+      return;
+    }
 
+    // PC / Android만 Blob 다운로드
     request(
       () =>
-        api
-          .get(`/bgm-agit/download/${file.fileFolder}/${sliceId}`, {
-            responseType: 'blob',
-          })
-          .then(res => {
-            const blob = new Blob([res.data], {
-              type: res.headers['content-type'],
-            });
+        api.get(downloadUrl, { responseType: 'blob' }).then(res => {
+          const blob = new Blob([res.data], {
+            type: res.headers['content-type'],
+          });
 
-            // 파일명 파싱
-            let fileName = 'download.bin';
-            const disposition = res.headers['content-disposition'];
-            if (disposition) {
-              const rfcMatch = disposition.match(/filename\*=UTF-8''(.+?)(?:;|$)/);
-              if (rfcMatch?.[1]) fileName = decodeURIComponent(rfcMatch[1]);
-              else {
-                const normalMatch = disposition.match(/filename="?([^"]+)"?/);
-                if (normalMatch?.[1]) fileName = decodeURIComponent(normalMatch[1]);
-              }
-            }
+          let fileName = 'download.bin';
+          const disposition = res.headers['content-disposition'];
+          if (disposition) {
+            const rfc = disposition.match(/filename\*=UTF-8''(.+)/);
+            if (rfc?.[1]) fileName = decodeURIComponent(rfc[1]);
+          }
 
-            // iOS 처리
-            if (isIOS && popup) {
-              const url = URL.createObjectURL(blob);
-              popup.location.href = url;
-              setTimeout(() => URL.revokeObjectURL(url), 5000);
-              return;
-            }
-
-            // 그 외 브라우저
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(url);
-          }),
-      () => {
-        if (popup) popup.close();
-      },
-      { ignoreErrorRedirect: true, disableLoading: true },
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          a.click();
+          URL.revokeObjectURL(url);
+        }),
+      undefined,
+      { disableLoading: true },
     );
   };
 

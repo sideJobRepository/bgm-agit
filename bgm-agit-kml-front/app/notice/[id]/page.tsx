@@ -309,7 +309,7 @@ export default function NoticeDetail({
                     >
                       {file.fileName}
                       <FileSvgBox $color="#6DAE81">
-                        <DownloadSimple  weight="bold" onClick={() => fileDownload(file)}/>
+                        <DownloadSimple  weight="bold"/>
                       </FileSvgBox>
                     </a>
                   </li>
