@@ -24,20 +24,11 @@ export default function Rule() {
     <>
       {showIntro && (
         <IntroOverlay
-          initial={{
-            clipPath: 'ellipse(0% 0% at 0% 20%)',
-          }}
-          animate={{
-            clipPath: [
-              'ellipse(30% 20% at 0% 20%)',
-              'ellipse(60% 40% at 10% 30%)',
-              'ellipse(100% 80% at 20% 40%)',
-              'ellipse(150% 120% at 30% 50%)',
-            ],
-          }}
+          initial={{ clipPath: 'circle(0% at 0% 0%)' }}
+          animate={{ clipPath: 'circle(150% at 0% 0%)' }}
           transition={{
             duration: 1.1,
-            ease: 'easeInOut',
+            ease: [0.4, 0, 0.2, 1],
           }}
         />
       )}
