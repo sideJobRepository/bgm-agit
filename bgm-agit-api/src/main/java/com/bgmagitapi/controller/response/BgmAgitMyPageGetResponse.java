@@ -18,17 +18,19 @@ public class BgmAgitMyPageGetResponse {
     private String nickName;
     private String phoneNo;
     private String nickNameUseStatus;
+    private String mahjongUseStatus;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDateTime registDate;
     
     @QueryProjection
-    public BgmAgitMyPageGetResponse(Long id, String mail, String name, String nickName, String phoneNo, String nickNameUseStatus, LocalDateTime registDate) {
+    public BgmAgitMyPageGetResponse(Long id, String mail, String name, String nickName, String phoneNo, String nickNameUseStatus, String mahjongUseStatus, LocalDateTime registDate) {
         this.id = id;
         this.mail = mail;
         this.name = name;
         this.nickName = nickName;
         this.phoneNo = phoneNo;
         this.nickNameUseStatus = nickNameUseStatus;
+        this.mahjongUseStatus = mahjongUseStatus;
         this.registDate = registDate;
     }
 }
