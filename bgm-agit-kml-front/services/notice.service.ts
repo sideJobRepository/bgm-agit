@@ -33,8 +33,14 @@ export function useNoticeDownloadFetch() {
   const { request } = useRequest();
 
   const fetchNoticeDownload = (file: NoticeFiles) => {
-
     const sliceId = file.fileUrl.split('/').pop()!;
+
+    const isIOS =
+      /iP(hone|od|ad)/.test(navigator.userAgent) ||
+      (navigator.userAgent.includes('Macintosh') && 'ontouchend' in document);
+
+    // iOS면 먼저 창을 연다 (동기 구간)
+    const popup = isIOS ? window.open('', '_blank') : null;
 
     request(
       () =>
@@ -47,11 +53,7 @@ export function useNoticeDownloadFetch() {
               type: res.headers['content-type'],
             });
 
-            const isIOS =
-              /iP(hone|od|ad)/.test(navigator.userAgent) ||
-              (navigator.userAgent.includes('Macintosh') && 'ontouchend' in document);
-
-            // 파일 이름 파싱
+            // 파일명 파싱
             let fileName = 'download.bin';
             const disposition = res.headers['content-disposition'];
             if (disposition) {
@@ -63,19 +65,16 @@ export function useNoticeDownloadFetch() {
               }
             }
 
-            if (isIOS) {
-              const popup = window.open('', '_blank');
-
+            // iOS 처리
+            if (isIOS && popup) {
               const url = URL.createObjectURL(blob);
-              if (popup) {
-                popup.location.href = url;
-                setTimeout(() => URL.revokeObjectURL(url), 3000);
-              }
+              popup.location.href = url;
+              setTimeout(() => URL.revokeObjectURL(url), 5000);
               return;
             }
 
-            // 일반 브라우저 다운로드
-            const url = window.URL.createObjectURL(blob);
+            // 그 외 브라우저
+            const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = fileName;
@@ -83,8 +82,10 @@ export function useNoticeDownloadFetch() {
             a.remove();
             URL.revokeObjectURL(url);
           }),
-      () => {},
-      { ignoreErrorRedirect: true,  disableLoading: true },
+      () => {
+        if (popup) popup.close();
+      },
+      { ignoreErrorRedirect: true, disableLoading: true },
     );
   };
 
