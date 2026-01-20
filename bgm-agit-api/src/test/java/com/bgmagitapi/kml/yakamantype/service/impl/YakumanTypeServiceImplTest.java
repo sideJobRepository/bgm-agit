@@ -1,6 +1,7 @@
 package com.bgmagitapi.kml.yakamantype.service.impl;
 
 import com.bgmagitapi.RepositoryAndServiceTestSupport;
+import com.bgmagitapi.kml.yakamantype.dto.response.MembersGetResponse;
 import com.bgmagitapi.kml.yakamantype.dto.response.YakumanTypeGetResponse;
 import com.bgmagitapi.kml.yakamantype.service.YakumanTypeService;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +23,15 @@ class YakumanTypeServiceImplTest extends RepositoryAndServiceTestSupport {
     void test(){
         List<YakumanTypeGetResponse> yakumanType = yakumanTypeService.getYakumanType();
         System.out.println("yakumanType = " + yakumanType);
-        
     }
+    
+    
+    @DisplayName("")
+    @Test
+    void test2(){
+        List<MembersGetResponse> nickName = yakumanTypeService.getNickName();
+        System.out.println("nickName = " + nickName);
+    }
+    
+    
 }

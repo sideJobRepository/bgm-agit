@@ -1,5 +1,6 @@
 package com.bgmagitapi.kml.yakamantype.service.impl;
 
+import com.bgmagitapi.kml.yakamantype.dto.response.MembersGetResponse;
 import com.bgmagitapi.kml.yakamantype.dto.response.YakumanTypeGetResponse;
 import com.bgmagitapi.kml.yakamantype.entity.YakumanType;
 import com.bgmagitapi.kml.yakamantype.repository.YakumanTypeRepository;
@@ -31,6 +32,18 @@ public class YakumanTypeServiceImpl implements YakumanTypeService {
                                 .yakumanName(item.getYakumanName())
                                 .orders(item.getOrders())
                                 .build()
+                ).toList();
+    }
+    
+    @Override
+    public List<MembersGetResponse> getNickName() {
+        return yakumanTypeRepository.getMembers()
+                .stream()
+                .map(item -> MembersGetResponse
+                        .builder()
+                        .id(item.getBgmAgitMemberId())
+                        .nickName(item.getBgmAgitMemberNickname())
+                        .build()
                 ).toList();
     }
 }

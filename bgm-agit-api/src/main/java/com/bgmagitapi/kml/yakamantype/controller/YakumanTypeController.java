@@ -1,6 +1,7 @@
 package com.bgmagitapi.kml.yakamantype.controller;
 
 
+import com.bgmagitapi.kml.yakamantype.dto.response.MembersGetResponse;
 import com.bgmagitapi.kml.yakamantype.dto.response.YakumanTypeGetResponse;
 import com.bgmagitapi.kml.yakamantype.service.YakumanTypeService;
 import lombok.RequiredArgsConstructor;
@@ -18,9 +19,15 @@ public class YakumanTypeController {
     
     private final YakumanTypeService yakumanTypeService;
     
+    
     @GetMapping("/yakumanType")
     public List<YakumanTypeGetResponse> getYakumanType() {
         return yakumanTypeService.getYakumanType();
+    }
+    
+    @GetMapping("/mahjong-members")
+    public List<MembersGetResponse> getMembers() {
+        return yakumanTypeService.getNickName();
     }
     
 }
