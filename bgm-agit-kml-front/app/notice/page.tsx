@@ -22,6 +22,9 @@ export default function Notice() {
     {
       key: 'registDate',
       header: '날짜',
+      width: '140px',
+      align: 'center',
+      nowrap: true,
       render: row => row.registDate,
     },
     {

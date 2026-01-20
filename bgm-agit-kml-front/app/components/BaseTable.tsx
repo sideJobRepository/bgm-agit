@@ -10,6 +10,9 @@ export interface BaseColumn<T> {
   key: string;
   header: React.ReactNode;
   render: (row: T, index: number) => React.ReactNode;
+  width?: string;
+  align?: 'left' | 'center' | 'right';
+  nowrap?: boolean;
 }
 
 interface BaseTableProps<T> {
@@ -84,7 +87,7 @@ export function BaseTable<T>({
         <thead>
         <tr>
           {columns.map(col => (
-            <Th key={col.key}>{col.header}</Th>
+            <Th key={col.key}  $width={col.width}>{col.header}</Th>
           ))}
         </tr>
         </thead>
@@ -103,7 +106,8 @@ export function BaseTable<T>({
               onClick={onRowClick ? () => onRowClick(row) : undefined}
             >
               {columns.map(col => (
-                <Td key={col.key} $wrap={col.key === 'registDate'}>
+                <Td key={col.key}    $align={col.align}
+                    $nowrap={col.nowrap}>
                   {col.render(row, index)}
                 </Td>
               ))}
@@ -174,20 +178,26 @@ const Table = styled.table`
     }
 `;
 
-const Th = styled.th`
-    position: relative;
+const Th = styled.th<{
+  $width?: string;
+  $align?: 'left' | 'center' | 'right';
+}>`
     white-space: nowrap;
     font-weight: 600;
-    
-
+    text-align: center;
+    width: ${({ $width }) => $width ?? 'auto'};
 `;
 
-const Td = styled.td<{$wrap : boolean}>`
-    white-space: ${({ $wrap }) => ($wrap ? 'nowrap' : 'normal')};
-    word-break: break-word; 
+const Td = styled.td<{
+  $align?: 'left' | 'center' | 'right';
+  $nowrap?: boolean;
+}>`
+    text-align: ${({ $align }) => $align ?? 'left'};
+    white-space: ${({ $nowrap }) => ($nowrap ? 'nowrap' : 'normal')};
+    word-break: break-word;
     overflow-wrap: anywhere;
-    
 `;
+
 
 const Tr = styled.tr<{ $clickable: boolean }>`
     cursor: ${({ $clickable }) => ($clickable ? 'pointer' : 'default')};
