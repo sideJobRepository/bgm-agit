@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -36,12 +37,12 @@ public class KmlNoticeController {
     }
     
     @PostMapping("/kml-notice")
-    public ApiResponse createKmlNotice(@ModelAttribute KmlNoticePostRequest request) {
+    public ApiResponse createKmlNotice(@Validated @ModelAttribute KmlNoticePostRequest request) {
         return kmlNoticeService.createKmlNotice(request);
     }
     
     @PutMapping("/kml-notice")
-    public ApiResponse updateKmlNotice(@ModelAttribute KmlNoticePutRequest request) {
+    public ApiResponse updateKmlNotice(@Validated @ModelAttribute KmlNoticePutRequest request) {
         return kmlNoticeService.modifyKmlNotice(request);
     }
     
