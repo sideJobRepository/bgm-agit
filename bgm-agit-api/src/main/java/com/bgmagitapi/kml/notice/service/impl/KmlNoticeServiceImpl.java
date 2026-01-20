@@ -39,7 +39,7 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
     
     @Override
     public Page<KmlNoticeGetResponse> getKmlNotice(Pageable pageable, String titleAndCont) {
-         return kmlNoticeRepository.findByKmlNotice(pageable, titleAndCont);
+        return kmlNoticeRepository.findByKmlNotice(pageable, titleAndCont);
     }
     
     @Override
@@ -113,7 +113,7 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
         kmlNotice.modify(request);
         
         List<MultipartFile> files = request.getFiles();
-        List<KmlNoticePutRequest.KmlNoticeFilePutRequest> existingFiles = request.getExistingFiles();
+        List<Long> deleteFileIds = request.getDeleteFileIds();
         List<UploadResult> uploadResults = s3FileUtils.storeFiles(files, "kml-notice");
         for (UploadResult result : uploadResults) {
             BgmAgitCommonFile commonFile = BgmAgitCommonFile
@@ -126,14 +126,14 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
                     .build();
             commonFileRepository.save(commonFile);
         }
-        for (KmlNoticePutRequest.KmlNoticeFilePutRequest existingFile : existingFiles) {
-            if (existingFile.getStatus() == FileStatus.DELETED) {
-                BgmAgitCommonFile deleteFile = commonFileRepository.findById(existingFile.getId()).orElseThrow(() -> new RuntimeException("존재하지 않는 파일입니다."));
-                s3FileUtils.deleteFile(deleteFile.getBgmAgitCommonFileUrl());
-                commonFileRepository.delete(deleteFile);
-            }
+        
+        for (Long deleteFileId : deleteFileIds) {
+            BgmAgitCommonFile deleteFile = commonFileRepository.findById(deleteFileId).orElseThrow(() -> new RuntimeException("존재하지 않는 파일입니다."));
+            s3FileUtils.deleteFile(deleteFile.getBgmAgitCommonFileUrl());
+            commonFileRepository.delete(deleteFile);
         }
-        return new ApiResponse(200,true,"수정 되었습니다.");
+        
+        return new ApiResponse(200, true, "수정 되었습니다.");
     }
     
     @Override

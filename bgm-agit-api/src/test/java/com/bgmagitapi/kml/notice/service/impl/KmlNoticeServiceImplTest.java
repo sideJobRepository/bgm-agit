@@ -103,21 +103,14 @@ class KmlNoticeServiceImplTest extends RepositoryAndServiceTestSupport {
         MockMultipartFile multipartFile1 = new MockMultipartFile("파일1", file1.getName(), "image/jpeg", fis1);
         MockMultipartFile multipartFile2 = new MockMultipartFile("파일2", file2.getName(), "png", fis2);
         List<MultipartFile> files = List.of(multipartFile1, multipartFile2);
-        KmlNoticePutRequest.KmlNoticeFilePutRequest build = KmlNoticePutRequest.KmlNoticeFilePutRequest
-                .builder()
-                .id(46L)
-                .status(FileStatus.DELETED)
-                .build();
-        List<KmlNoticePutRequest.KmlNoticeFilePutRequest> build1 = List.of(build);
         KmlNoticePutRequest build2 = KmlNoticePutRequest
                 .builder()
                 .id(3L)
                 .title("수정")
                 .cont("수정내용")
                 .files(files)
-                .existingFiles(build1)
+                .deleteFileIds(null)
                 .build();
-        
         ApiResponse result = kmlNoticeService.modifyKmlNotice(build2);
         System.out.println("result = " + result);
     }
