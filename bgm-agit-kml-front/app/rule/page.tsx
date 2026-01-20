@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { withBasePath } from '@/lib/path';
 import { CaretLeft, CaretRight } from 'phosphor-react';
+import PdfViewer from '@/app/components/PdfViewer';
 
 export default function Rule() {
   const [showIntro, setShowIntro] = useState(true);
@@ -75,11 +76,11 @@ export default function Rule() {
             )}
             </Title>
             <PdfContainer>
-              <PdfFrame
-                src={
+              <PdfViewer
+                url={
                   pageIndex === 0
-                    ? `${withBasePath('/testPdf.pdf')}`
-                    : `${withBasePath('/testPdf2.pdf')}`
+                    ? withBasePath('/testPdf.pdf')
+                    : withBasePath('/testPdf2.pdf')
                 }
               />
             </PdfContainer>
@@ -159,23 +160,9 @@ const MotionBox = styled(motion.div)`
 `
 
 const PdfContainer = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: center;
+  width: 90vw;
 `;
 
-const PdfFrame = styled.iframe`
-  width: 100%;
-  height: 70vh;
-  border: none;
-  background: #111;
-`;
-
-const Nav = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-top: 12px;
-`;
 
 const NavRightButton = styled.button`
     position: absolute;
