@@ -14,4 +14,6 @@ public interface RuleService {
     ApiResponse createRule(RulePostRequest request);
     
     ApiResponse modifyRule(RulePutRequest request);
+    
+    ApiResponse deleteRule(Long id);
 }

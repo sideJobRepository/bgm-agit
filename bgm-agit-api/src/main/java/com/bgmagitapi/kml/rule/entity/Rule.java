@@ -1,5 +1,6 @@
 package com.bgmagitapi.kml.rule.entity;
 
+import com.bgmagitapi.kml.rule.dto.request.RulePutRequest;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -31,5 +32,10 @@ public class Rule {
     
     public void modifyTitle(String title) {
         this.title = title;
+    }
+    
+    public void modify(RulePutRequest request) {
+        this.title = request.getTitle();
+        this.tournamentStatus = request.getTournamentStatus();
     }
 }

@@ -36,11 +36,11 @@ public class RuleServiceImpl implements RuleService {
         List<RuleGetResponse> result = ruleRepository.findAll()
                 .stream()
                 .map(item ->
-                     RuleGetResponse
-                            .builder()
-                            .id(item.getId())
-                            .title(item.getTitle())
-                            .build()
+                        RuleGetResponse
+                                .builder()
+                                .id(item.getId())
+                                .title(item.getTitle())
+                                .build()
                 ).collect(Collectors.toList());
         
         Map<Long, List<RuleGetResponse.RuleFileResponse>> ruleFiles = file.stream()
@@ -100,7 +100,7 @@ public class RuleServiceImpl implements RuleService {
         
         Long id = request.getId();
         Rule rule = ruleRepository.findById(id).orElseThrow(() -> new RuntimeException("존재하지 않는 룰 입니다."));
-        rule.modifyTitle(request.getTitle());
+        rule.modify(request);
         
         Long deleteFileId = request.getDeleteFileId();
         
@@ -120,5 +120,17 @@ public class RuleServiceImpl implements RuleService {
                 .build();
         commonFileRepository.save(commonFile);
         return new ApiResponse(200, true, "수정 되었습니다.");
+    }
+    
+    @Override
+    public ApiResponse deleteRule(Long id) {
+        
+        Rule rule = ruleRepository.findById(id).orElseThrow(() -> new RuntimeException("존재 하지 않는 룰 입니다."));
+        ruleRepository.delete(rule);
+        
+        BgmAgitCommonFile deleteFile = ruleRepository.getRuleFile(id);
+        s3FileUtils.deleteFile(deleteFile.getBgmAgitCommonFileUrl());
+        commonFileRepository.delete(deleteFile);
+        return new ApiResponse(200,true,"삭제되었습니다.");
     }
 }
