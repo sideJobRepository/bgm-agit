@@ -39,6 +39,7 @@ public class RuleServiceImpl implements RuleService {
                         RuleGetResponse
                                 .builder()
                                 .id(item.getId())
+                                .tournamentStatus(item.getTournamentStatus())
                                 .build()
                 ).collect(Collectors.toList());
         

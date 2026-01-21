@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class RuleGetResponse {
     
     private Long id;
-    private String title;
+    private String tournamentStatus;
     private RuleFileResponse file;
     
     @Data
