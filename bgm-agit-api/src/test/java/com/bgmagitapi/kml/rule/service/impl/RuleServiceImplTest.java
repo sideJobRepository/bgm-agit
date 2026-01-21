@@ -36,7 +36,7 @@ class RuleServiceImplTest extends RepositoryAndServiceTestSupport {
         
         RulePostRequest result = RulePostRequest
                 .builder()
-                .tournamentStatus(true)
+                .tournamentStatus("Y")
                 .file(multipartFile1)
                 .build();
         

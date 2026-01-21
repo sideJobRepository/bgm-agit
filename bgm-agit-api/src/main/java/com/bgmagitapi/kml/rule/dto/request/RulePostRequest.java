@@ -15,8 +15,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class RulePostRequest {
 
    
-    @NotNull(message = "룰 대회여부는 필수입니다.")
-    private Boolean tournamentStatus;
+    @NotBlank(message = "룰 대회여부는 필수입니다.")
+    private String tournamentStatus;
     private MultipartFile file;
     
 }

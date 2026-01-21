@@ -69,7 +69,7 @@ public class RuleServiceImpl implements RuleService {
     @Override
     public ApiResponse createRule(RulePostRequest request) {
         
-        Boolean tournamentStatus = request.getTournamentStatus();
+        String tournamentStatus = request.getTournamentStatus();
         
         Rule rule = Rule
                 .builder()

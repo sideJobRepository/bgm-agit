@@ -25,7 +25,7 @@ public class Rule {
 
     // BGM 아지트 대회 여부
     @Column(name = "BGM_AGIT_TOURNAMENT_STATUS")
-    private Boolean tournamentStatus;
+    private String tournamentStatus;
     
     
     public void modify(RulePutRequest request) {
