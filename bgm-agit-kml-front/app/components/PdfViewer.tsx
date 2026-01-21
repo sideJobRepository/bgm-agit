@@ -21,6 +21,9 @@ export default function PdfViewer({ fileUrl }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const pdfDocRef = useRef<PDFDocumentProxy | null>(null);
 
+
+  const [pdfReady, setPdfReady] = useState(false);
+
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(1);
@@ -31,18 +34,15 @@ export default function PdfViewer({ fileUrl }: Props) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
 
   const renderPage = async (pageNum: number, scale: number) => {
-    if (!pdfDocRef.current || !containerRef.current) return;
+    if (!pdfDocRef.current || !containerRef.current || !viewportWidth) return;
 
     setLoading(true);
     containerRef.current.innerHTML = '';
 
     const page = await pdfDocRef.current.getPage(pageNum);
 
-    // 컨테이너 폭 기준 자동 스케일 (모바일 대응)
-    const containerWidth = viewportWidth || 800;
     const baseViewport = page.getViewport({ scale: 1 });
-    const fitScale = (containerWidth / baseViewport.width) * scale;
-
+    const fitScale = (viewportWidth / baseViewport.width) * scale;
     const viewport = page.getViewport({ scale: fitScale });
 
     const canvas = document.createElement('canvas');
@@ -59,6 +59,7 @@ export default function PdfViewer({ fileUrl }: Props) {
     containerRef.current.appendChild(canvas);
     setLoading(false);
   };
+
 
   /* =========================
      PDF LOAD
@@ -81,9 +82,8 @@ export default function PdfViewer({ fileUrl }: Props) {
 
       pdfDocRef.current = pdf;
       setTotalPages(pdf.numPages);
-
-      await renderPage(1, 1);
       setCurrentPage(1);
+      setPdfReady(true);
     };
 
     loadPdf();
@@ -92,15 +92,6 @@ export default function PdfViewer({ fileUrl }: Props) {
       cancelled = true;
     };
   }, [fileUrl]);
-
-
-  /* =========================
-     PAGE / ZOOM CHANGE
-  ========================= */
-  useEffect(() => {
-    if (!pdfDocRef.current) return;
-    renderPage(currentPage, zoom);
-  }, [currentPage, zoom]);
 
   /* =========================
      CONTROLS
@@ -131,12 +122,13 @@ export default function PdfViewer({ fileUrl }: Props) {
 
 
   useEffect(() => {
-    if (!pdfDocRef.current || !viewportWidth) return;
+    if (!pdfReady || !viewportWidth) return;
     renderPage(currentPage, zoom);
-  }, [viewportWidth, currentPage, zoom]);
+  }, [pdfReady, viewportWidth, currentPage, zoom]);
+
 
   return (
-    <div style={{ width: '100%', background: '#282828' }}>
+    <PdfWrap>
       {/* TOOLBAR */}
       <ToolBox
       >
@@ -166,29 +158,40 @@ export default function PdfViewer({ fileUrl }: Props) {
       </ToolBox>
 
       {/* CANVAS */}
-      <div
+      <CanvasBox
         ref={viewportRef}
-        style={{
-          position: 'relative',
-          overflow: 'auto',
-          display: 'flex',
-          justifyContent: 'center',
-          padding: 12,
-        }}
       >
         {loading && (
           <div style={{ color: '#fff', position: 'absolute' }}>
             Loading...
           </div>
         )}
-        <div
+        <Canvas
           ref={containerRef}
-          style={{ width: '100%'}}
         />
-      </div>
-    </div>
+      </CanvasBox>
+    </PdfWrap>
   );
 }
+
+const PdfWrap = styled.div`
+    width: 100%;
+    background: #282828;
+`
+
+const CanvasBox = styled.div`
+    position: relative;
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+    padding: 12;
+`
+
+const Canvas = styled.div`
+    width: fit-content;
+    margin: 0 auto;
+    overflow: auto;
+`
 
 const ToolBox = styled.div`
     display: flex;
