@@ -104,7 +104,7 @@ const Wrapper = styled.div`
   min-width: 1280px;
   min-height: 600px;
   height: 100%;
-  margin: auto;
+  margin: 0 auto;
   flex-direction: column;
     z-index: 2;
 
@@ -126,6 +126,7 @@ const Title = styled.div`
   text-align: center;
   gap: 8px;
   margin-bottom: 24px;
+    padding: 24px 0;
 
   h1 {
     font-size: ${({ theme }) => theme.desktop.sizes.titleSize};
@@ -161,12 +162,13 @@ const MotionBox = styled(motion.div)`
 
 const PdfContainer = styled.div`
   width: 90vw;
+    flex: 1;
 `;
 
 
 const NavRightButton = styled.button`
     position: absolute;
-    right: 8px;
+    right: 0;
     display: flex;
     align-items: center;
     top: 50%;
@@ -186,7 +188,7 @@ const NavRightButton = styled.button`
 
 const NavLeftButton = styled.button`
     position: absolute;
-    left: 8px;
+    left: 0;
     display: flex;
     align-items: center;
     top: 50%;

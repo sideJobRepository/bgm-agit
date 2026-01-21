@@ -46,7 +46,7 @@ export default function PdfViewer({ fileUrl }: Props) {
     canvas.height = viewport.height;
 
     await page.render({
-      canvasContext: ctx,
+      canvas,
       viewport,
     }).promise;
 
@@ -156,7 +156,6 @@ export default function PdfViewer({ fileUrl }: Props) {
           display: 'flex',
           justifyContent: 'center',
           padding: 12,
-          minHeight: '70dvh',
         }}
       >
         {loading && (
