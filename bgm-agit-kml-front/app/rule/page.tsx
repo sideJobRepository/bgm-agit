@@ -92,12 +92,10 @@ export default function Rule() {
             </span>
             </Title>
             <PdfContainer>
-              {currentRule?.file?.fileUrl && (
                 <PdfViewer
                   pageIndex={pageIndex}
                   fileUrl={currentRule?.file?.fileUrl}
                 />
-              )}
             </PdfContainer>
           </MotionBox>
         </SlideViewport>

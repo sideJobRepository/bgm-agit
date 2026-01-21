@@ -22,7 +22,7 @@ type Props = {
 export default function PdfViewer({ fileUrl, pageIndex }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const pdfDocRef = useRef<PDFDocumentProxy | null>(null);
-
+  console.log("fileUrl", fileUrl)
   const { insert } = useInsertPost();
 
 
@@ -273,6 +273,7 @@ const Button = styled.button`
         width: 16px;
         height: 16px;
     }
+    z-index: 2;
 `;
 
 
