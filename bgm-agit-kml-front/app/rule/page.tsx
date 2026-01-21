@@ -20,8 +20,12 @@ export default function Rule() {
     <>
       {showIntro && (
         <IntroOverlay
-          initial={{ clipPath: 'circle(0% at 0% 0%)' }}
-          animate={{ clipPath: 'circle(150% at 0% 0%)' }}
+          initial={{
+            clipPath: 'polygon(0 0, 0 0, 0 0, 0 0)',
+          }}
+          animate={{
+            clipPath: 'polygon(0 0, 120% 0, 120% 120%, 0 120%)',
+          }}
           transition={{
             duration: 1.1,
             ease: [0.4, 0, 0.2, 1],
@@ -37,14 +41,14 @@ export default function Rule() {
               setPageIndex(0);
             }}>
               <CaretLeft weight="bold"/>
-              대회 운영 규정 보기
+              마작 규칙 안내 보기
             </NavLeftButton>)}
           {pageIndex === 0 && (
             <NavRightButton onClick={() => {
               setDirection(1);
               setPageIndex(1);
             }}>
-              마작 규칙 안내 보기
+              대회 운영 규정 보기
               <CaretRight weight="bold"/>
             </NavRightButton>
           )}
@@ -107,8 +111,9 @@ const Wrapper = styled.div`
   @media ${({ theme }) => theme.device.tablet} {
     width: 100vw;
     max-width: 100%;
-    min-width: 100%;
-    min-height: unset;
+    min-width: 100%;  
+      height: calc(100vh - 76px);
+      min-height: unset;
   }
 `;
 
@@ -143,6 +148,9 @@ const Title = styled.div`
 `;
 
 const SlideViewport = styled.div`
+    flex: 1;
+    display: flex;
+    flex-direction: column;
   position: relative;
   overflow: hidden;
   width: 100%;
@@ -153,6 +161,7 @@ const MotionBox = styled(motion.div)`
     display: flex;
     flex-direction: column;
     align-items: center;
+    flex: 1;
 `
 
 const PdfContainer = styled.div`

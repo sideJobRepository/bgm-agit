@@ -467,7 +467,7 @@ const InputBox = styled.input`
 
 const EditorBox = styled.section`
   flex: 1;
-  min-height: 0; /* 이게 핵심! */
+  min-height: 0; 
 
   .ck-editor {
     height: 100% !important;

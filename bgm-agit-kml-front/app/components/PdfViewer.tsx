@@ -42,7 +42,12 @@ export default function PdfViewer({ fileUrl }: Props) {
     const page = await pdfDocRef.current.getPage(pageNum);
 
     const baseViewport = page.getViewport({ scale: 1 });
-    const fitScale = (viewportWidth / baseViewport.width) * scale;
+    const viewportHeight = viewportRef.current!.clientHeight;
+
+    const scaleByWidth = viewportWidth / baseViewport.width;
+    const scaleByHeight = viewportHeight / baseViewport.height;
+
+    const fitScale = Math.min(scaleByWidth, scaleByHeight) * scale;
     const viewport = page.getViewport({ scale: fitScale });
 
     const canvas = document.createElement('canvas');
@@ -174,14 +179,19 @@ export default function PdfViewer({ fileUrl }: Props) {
 const PdfWrap = styled.div`
     width: 100%;
     background: #282828;
+    display: flex;
+    height: 100%;
+    flex-direction: column;
 `
 
 const CanvasBox = styled.div`
     position: relative;
+    flex: 1;          
+    min-height: 0;
     overflow: auto;
     display: flex;
     justify-content: center;
-    padding: 12;
+    padding: 12px;
 `
 
 const Canvas = styled.div`
@@ -212,8 +222,8 @@ const ToolBox = styled.div`
         svg {
             color: white;
             cursor: pointer;
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
         }
     }
 `
