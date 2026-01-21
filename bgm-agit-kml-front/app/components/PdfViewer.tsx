@@ -1,13 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import * as pdfjsLib from 'pdfjs-dist';
 import { withBasePath } from '@/lib/path';
 import styled from 'styled-components';
-
-// worker 경로 (basePath 대응)
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  withBasePath('/pdf.worker.min.mjs');
+import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 type Props = {
   fileUrl: string;
@@ -15,7 +11,7 @@ type Props = {
 
 export default function PdfViewer({ fileUrl }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const pdfDocRef = useRef<pdfjsLib.PDFDocumentProxy | null>(null);
+  const pdfDocRef = useRef<PDFDocumentProxy | null>(null);
 
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
@@ -66,6 +62,10 @@ export default function PdfViewer({ fileUrl }: Props) {
     const loadPdf = async () => {
       setLoading(true);
 
+      const pdfjsLib = await import('pdfjs-dist');
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        withBasePath('/pdf.worker.min.mjs');
+
       const task = pdfjsLib.getDocument({ url: fileUrl });
       const pdf = await task.promise;
       if (cancelled) return;
@@ -73,7 +73,6 @@ export default function PdfViewer({ fileUrl }: Props) {
       pdfDocRef.current = pdf;
       setTotalPages(pdf.numPages);
 
-      // ⭐ 핵심: 로드 직후 직접 렌더
       await renderPage(1, 1);
       setCurrentPage(1);
     };
@@ -84,6 +83,7 @@ export default function PdfViewer({ fileUrl }: Props) {
       cancelled = true;
     };
   }, [fileUrl]);
+
 
   /* =========================
      PAGE / ZOOM CHANGE

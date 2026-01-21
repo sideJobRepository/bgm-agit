@@ -71,13 +71,13 @@ export default function Rule() {
             )}
             </Title>
             <PdfContainer>
-              {/*<PdfViewer*/}
-              {/*  fileUrl={*/}
-              {/*    pageIndex === 0*/}
-              {/*      ? withBasePath('/testPdf.pdf')*/}
-              {/*      : withBasePath('/testPdf2.pdf')*/}
-              {/*  }*/}
-              {/*/>*/}
+              <PdfViewer
+                fileUrl={
+                  pageIndex === 0
+                    ? withBasePath('/testPdf.pdf')
+                    : withBasePath('/testPdf2.pdf')
+                }
+              />
             </PdfContainer>
           </MotionBox>
         </SlideViewport>
