@@ -103,7 +103,7 @@ const Wrapper = styled.div`
   max-width: 1500px;
   min-width: 1280px;
   min-height: 600px;
-  height: 100%;
+    height: calc(100vh - 76px);
   margin: 0 auto;
   flex-direction: column;
     z-index: 2;
@@ -111,8 +111,7 @@ const Wrapper = styled.div`
   @media ${({ theme }) => theme.device.tablet} {
     width: 100vw;
     max-width: 100%;
-    min-width: 100%;  
-      height: calc(100vh - 76px);
+    min-width: 100%;
       min-height: unset;
   }
 `;
@@ -121,7 +120,6 @@ const Title = styled.div`
   display: flex;
   flex-direction: column;
   width: 90%;
-  max-width: 800px;
   align-self: center;
   text-align: center;
   gap: 8px;
@@ -152,7 +150,6 @@ const SlideViewport = styled.div`
     display: flex;
     flex-direction: column;
   position: relative;
-  overflow: hidden;
   width: 100%;
     padding-top: 12px;
 `;
@@ -166,6 +163,7 @@ const MotionBox = styled(motion.div)`
 
 const PdfContainer = styled.div`
   width: 90%;
+    display: flex;
     padding: 24px 0;
     flex: 1;
 `;

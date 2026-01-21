@@ -426,7 +426,7 @@ export const Wrapper = styled.div`
   min-width: 1280px;
   min-height: 600px;
   height: 100%;
-  margin: 0 auto;
+  margin: auto;
     padding: 24px 8px;
   @media ${({ theme }) => theme.device.mobile} {
     max-width: 100%;

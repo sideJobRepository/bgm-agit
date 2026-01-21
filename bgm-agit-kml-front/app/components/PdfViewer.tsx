@@ -30,6 +30,7 @@ export default function PdfViewer({ fileUrl }: Props) {
   const [loading, setLoading] = useState(true);
 
   //사이즈 감지
+  const [viewportHeight, setViewportHeight] = useState<number | null>(null)
   const [viewportWidth, setViewportWidth] = useState<number | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
 
@@ -117,19 +118,22 @@ export default function PdfViewer({ fileUrl }: Props) {
     if (!viewportRef.current) return;
 
     const observer = new ResizeObserver(([entry]) => {
-      setViewportWidth(Math.floor(entry.contentRect.width));
+      const { width, height } = entry.contentRect;
+
+      setViewportWidth(Math.floor(width));
+      setViewportHeight(Math.floor(height));
     });
 
     observer.observe(viewportRef.current);
-
     return () => observer.disconnect();
   }, []);
+
 
 
   useEffect(() => {
     if (!pdfReady || !viewportWidth) return;
     renderPage(currentPage, zoom);
-  }, [pdfReady, viewportWidth, currentPage, zoom]);
+  }, [pdfReady, viewportWidth, viewportHeight, currentPage, zoom]);
 
 
   return (
@@ -180,7 +184,7 @@ const PdfWrap = styled.div`
     width: 100%;
     background: #282828;
     display: flex;
-    height: 100%;
+    flex: 1;
     flex-direction: column;
 `
 
@@ -191,7 +195,8 @@ const CanvasBox = styled.div`
     overflow: auto;
     display: flex;
     justify-content: center;
-    padding: 12px;
+    align-items: center;
+    padding: 8px;
 `
 
 const Canvas = styled.div`
@@ -203,13 +208,13 @@ const Canvas = styled.div`
 const ToolBox = styled.div`
     display: flex;
     gap: 8px;
-    padding: 8px 12px;
+    padding: 8px;
     background: #3c3c3c;
     color: #ffffff;
 
     span {
         background-color: #282828;
-        padding: 4px 8px;
+        padding: 8px;
     }
 
     button {
@@ -232,7 +237,7 @@ const Start = styled.section`
     display: inline-flex;
     align-items: center;
     justify-content: start;
-    gap: 4px;
+    gap: 6px;
     width: 33%;
     font-size: ${({ theme }) => theme.desktop.sizes.sm};
 `
