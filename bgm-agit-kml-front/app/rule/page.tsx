@@ -77,7 +77,7 @@ export default function Rule() {
             </Title>
             <PdfContainer>
               <PdfViewer
-                url={
+                fileUrl={
                   pageIndex === 0
                     ? withBasePath('/testPdf.pdf')
                     : withBasePath('/testPdf2.pdf')
