@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { withBasePath } from '@/lib/path';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import {
   CaretLeft,
@@ -161,11 +161,8 @@ export default function PdfViewer({ fileUrl }: Props) {
       <CanvasBox
         ref={viewportRef}
       >
-        {loading && (
-          <div style={{ color: '#fff', position: 'absolute' }}>
-            Loading...
-          </div>
-        )}
+
+          {loading && <SkeletonOverlay />}
         <Canvas
           ref={containerRef}
         />
@@ -247,3 +244,26 @@ const End = styled.section`
     justify-content: center;
     font-size: ${({ theme }) => theme.desktop.sizes.sm};
 `
+const shimmer = keyframes`
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+`;
+
+const SkeletonOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    rgba(40, 40, 40, 0.8) 40%,
+    rgba(60, 60, 60, 0.8) 50%,
+    rgba(40, 40, 40, 0.8) 60%
+  );
+  background-size: 200% 100%;
+  animation: ${shimmer} 1.4s ease infinite;
+  z-index: 2;
+  pointer-events: none;
+`;

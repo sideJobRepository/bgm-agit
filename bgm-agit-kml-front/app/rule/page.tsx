@@ -31,13 +31,30 @@ export default function Rule() {
 
       <Wrapper>
         <SlideViewport>
+          {pageIndex === 1 && (
+            <NavLeftButton onClick={() => {
+              setDirection(-1);
+              setPageIndex(0);
+            }}>
+              <CaretLeft weight="bold"/>
+              대회 운영 규정 보기
+            </NavLeftButton>)}
+          {pageIndex === 0 && (
+            <NavRightButton onClick={() => {
+              setDirection(1);
+              setPageIndex(1);
+            }}>
+              마작 규칙 안내 보기
+              <CaretRight weight="bold"/>
+            </NavRightButton>
+          )}
           <MotionBox
             key={pageIndex}
             initial={{ x: `${direction * 100}%`, opacity: 0 }}
             animate={{ x: '0%', opacity: 1 }}
             exit={{ x: `${direction * -100}%`, opacity: 0 }}
             transition={{
-              delay: isFirstRender ? 1.1 : 0,   // ⭐ 여기
+              delay: isFirstRender ? 1.1 : 0,
               duration: 0.45,
               ease: [0.4, 0, 0.2, 1],
             }}
@@ -45,30 +62,14 @@ export default function Rule() {
               if (isFirstRender) setIsFirstRender(false);
             }}
           >
-
           <Title>
-            {pageIndex === 1 && (
-              <NavLeftButton onClick={() => {
-              setDirection(-1);
-              setPageIndex(0);
-            }}>
-              <CaretLeft weight="bold"/>
-            </NavLeftButton>)}
               <h1>{pageIndex === 0 ? '마작 규칙 안내' : '대회 운영 규정'}</h1>
 
             <span>
-  {pageIndex === 0
-    ? '마작의 기본 규칙과 진행 방식을 정리한 공식 가이드입니다.'
-    : '대회 진행을 위한 운영 기준과 참가 규정을 안내합니다.'}
-</span>
-            {pageIndex === 0 && (
-              <NavRightButton onClick={() => {
-                setDirection(1);
-                setPageIndex(1);
-              }}>
-                <CaretRight weight="bold"/>
-                </NavRightButton>
-            )}
+              {pageIndex === 0
+                ? '마작의 기본 규칙과 진행 방식을 정리한 공식 가이드입니다.'
+                : '대회 진행을 위한 운영 기준과 참가 규정을 안내합니다.'}
+            </span>
             </Title>
             <PdfContainer>
               <PdfViewer
@@ -113,14 +114,12 @@ const Wrapper = styled.div`
 
 const Title = styled.div`
   display: flex;
-    position: relative;
   flex-direction: column;
   width: 90%;
   max-width: 800px;
   align-self: center;
   text-align: center;
   gap: 8px;
-  //margin-bottom: 12px;
     padding: 24px 0;
 
   h1 {
@@ -147,6 +146,7 @@ const SlideViewport = styled.div`
   position: relative;
   overflow: hidden;
   width: 100%;
+    padding-top: 12px;
 `;
 
 const MotionBox = styled(motion.div)`
@@ -163,41 +163,45 @@ const PdfContainer = styled.div`
 
 
 const NavRightButton = styled.button`
-    position: absolute;
-    right: 0;
     display: flex;
+    width: 160px;
     align-items: center;
-    top: 50%;
-    transform: translateY(-50%);
-    background: transparent;
-  border: none;
-    padding: 6px;
-    border-radius: 999px;
-  cursor: pointer;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 12px;
+    margin-left: auto;
+    border: none;
+    padding: 6px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: transparent;
+    font-size: ${({ theme }) => theme.desktop.sizes.sm};
+    color: ${({ theme }) => theme.colors.lineColor};;
 
   svg {
-      width: 24px;
-      height: 24px;
-      color: white;
+      width: 12px;
+      height: 12px;
   }
 `;
 
 const NavLeftButton = styled.button`
-    position: absolute;
-    left: 0;
     display: flex;
+    width: 160px;
     align-items: center;
-    top: 50%;
-    transform: translateY(-50%);
-    background: transparent;
-  border: none;
-    padding: 6px;
-    border-radius: 999px;
-  cursor: pointer;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 12px;
+    margin-right: auto;
+    border: none;
+    padding: 6px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: transparent;
+    font-size: ${({ theme }) => theme.desktop.sizes.sm};
+    color: ${({ theme }) => theme.colors.lineColor};;
 
   svg {
-      width: 24px;
-      height: 24px;
-      color: white;
+      width: 12px;
+      height: 12px;
   }
 `;
