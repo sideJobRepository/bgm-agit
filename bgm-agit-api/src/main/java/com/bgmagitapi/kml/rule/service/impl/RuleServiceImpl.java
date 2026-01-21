@@ -39,7 +39,6 @@ public class RuleServiceImpl implements RuleService {
                         RuleGetResponse
                                 .builder()
                                 .id(item.getId())
-                                .title(item.getTitle())
                                 .build()
                 ).collect(Collectors.toList());
         
@@ -70,12 +69,10 @@ public class RuleServiceImpl implements RuleService {
     @Override
     public ApiResponse createRule(RulePostRequest request) {
         
-        String title = request.getTitle();
         Boolean tournamentStatus = request.getTournamentStatus();
         
         Rule rule = Rule
                 .builder()
-                .title(title)
                 .tournamentStatus(tournamentStatus)
                 .build();
         

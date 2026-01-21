@@ -36,7 +36,6 @@ class RuleServiceImplTest extends RepositoryAndServiceTestSupport {
         
         RulePostRequest result = RulePostRequest
                 .builder()
-                .title("대회룰")
                 .tournamentStatus(true)
                 .file(multipartFile1)
                 .build();
@@ -63,7 +62,6 @@ class RuleServiceImplTest extends RepositoryAndServiceTestSupport {
         RulePutRequest result = RulePutRequest
                 .builder()
                 .id(2L)
-                .title("타이틀 수정")
                 .deleteFileId(50L)
                 .file(multipartFile1)
                 .build();

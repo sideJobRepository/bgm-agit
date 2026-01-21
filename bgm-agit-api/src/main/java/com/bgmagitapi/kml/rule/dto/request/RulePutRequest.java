@@ -20,9 +20,6 @@ public class RulePutRequest {
     @NotNull(message = "대회 룰 id는 필수입니다.")
     private Long id;
     
-    @NotBlank(message = "룰 제목은 필수입니다.")
-    private String title;
-    @NotNull(message = "룰 대회여부는 필수입니다.")
     private Boolean tournamentStatus;
     private Long deleteFileId;
     private MultipartFile file;
