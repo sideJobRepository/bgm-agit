@@ -9,17 +9,21 @@ import {
   CaretRight,
   MagnifyingGlassPlus,
   MagnifyingGlassMinus,
-  ArrowsOut,
-  ArrowsIn,
+  FilePlus,
 } from 'phosphor-react';
+import { alertDialog, confirmDialog } from '@/utils/alert';
+import { useInsertPost } from '@/services/main.service';
 
 type Props = {
   fileUrl: string;
+  pageIndex: number;
 };
 
-export default function PdfViewer({ fileUrl }: Props) {
+export default function PdfViewer({ fileUrl, pageIndex }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const pdfDocRef = useRef<PDFDocumentProxy | null>(null);
+
+  const { insert } = useInsertPost();
 
 
   const [pdfReady, setPdfReady] = useState(false);
@@ -33,6 +37,34 @@ export default function PdfViewer({ fileUrl }: Props) {
   const [viewportHeight, setViewportHeight] = useState<number | null>(null)
   const [viewportWidth, setViewportWidth] = useState<number | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
+
+  //파일 업로드
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [file, setFile] = useState<File>();
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+   console.log(" e.target.files?.[0];",  e.target.files?.[0])
+    const f = e.target.files?.[0];
+    if (!f) return;
+
+    const result = await confirmDialog('PDF를 저장 하시겠습니까?', 'warning');
+    if (f && result.isConfirmed) {
+      setFile(f);
+      const formData = new FormData();
+      const tournamentStatus = pageIndex === 1 ? 'Y' : 'N';
+      formData.append('tournamentStatus',tournamentStatus);
+      formData.append('file', f);
+
+      insert({
+        url: '/bgm-agit/rule',
+        body: formData,
+        ignoreErrorRedirect: true,
+        onSuccess: async () => {
+            await alertDialog('PDF가 저장되었습니다.', 'success');
+        },
+      });
+    }
+  };
 
   const renderPage = async (pageNum: number, scale: number) => {
     if (!pdfDocRef.current || !containerRef.current || !viewportWidth) return;
@@ -171,9 +203,21 @@ export default function PdfViewer({ fileUrl }: Props) {
         ref={viewportRef}
       >
 
-          {loading && <SkeletonOverlay />}
+        {loading && <SkeletonOverlay />}
         <Canvas
           ref={containerRef}
+        />
+        <Button
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <FilePlus weight="bold" />
+        </Button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          hidden
+          accept="application/pdf"
+          onChange={handleFileChange}
         />
       </CanvasBox>
     </PdfWrap>
@@ -186,7 +230,7 @@ const PdfWrap = styled.div`
     display: flex;
     flex: 1;
     flex-direction: column;
-`
+`;
 
 const CanvasBox = styled.div`
     position: relative;
@@ -204,6 +248,33 @@ const Canvas = styled.div`
     margin: 0 auto;
     overflow: auto;
 `
+
+const Button = styled.button`
+    position: absolute;
+    top: 50%;
+    right: 4%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    background-color: ${({ theme }) => theme.colors.writeBgColor};
+    color: ${({ theme }) => theme.colors.whiteColor};
+    font-size: ${({ theme }) => theme.desktop.sizes.sm};
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
+
+    &:hover {
+        opacity: 0.8;
+    }
+
+    svg {
+        width: 16px;
+        height: 16px;
+    }
+`;
+
 
 const ToolBox = styled.div`
     display: flex;

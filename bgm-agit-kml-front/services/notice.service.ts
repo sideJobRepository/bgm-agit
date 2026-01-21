@@ -12,7 +12,7 @@ export function useFetchNoticeList() {
   const setNotice = useNoticeListStore((state) => state.setNotice);
 
   const fetchNotice = (params: params) => {
-    request(() => api.get(`/bgm-agit/kml-notice?size=5`, { params }).then(res => res.data), setNotice);
+    request(() => api.get(`/bgm-agit/kml-notice?size=5`, { params }).then(res => res.data), setNotice,  {ignoreErrorRedirect: true});
   };
 
   return fetchNotice;
@@ -23,7 +23,7 @@ export function useFetchNoticeDetailL() {
   const setDetailNotice = useNoticeDetailStore((state) => state.setDetailNotice);
 
   const fetchDetailNotice = (id: string) => {
-    request(() => api.get(`/bgm-agit/kml-notice/${id}`).then(res => res.data), setDetailNotice);
+    request(() => api.get(`/bgm-agit/kml-notice/${id}`).then(res => res.data), setDetailNotice, {ignoreErrorRedirect: true});
   };
 
   return fetchDetailNotice;

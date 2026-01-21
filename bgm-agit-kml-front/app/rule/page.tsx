@@ -2,19 +2,35 @@
 
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { withBasePath } from '@/lib/path';
 import { CaretLeft, CaretRight } from 'phosphor-react';
 import PdfViewer from '@/app/components/PdfViewer';
+import { useFetchRule } from '@/services/rule.service';
+import { useRuleStore } from '@/store/rule';
 
 export default function Rule() {
   const [showIntro, setShowIntro] = useState(true);
 
   const [isFirstRender, setIsFirstRender] = useState(true);
 
+  const fetchRule = useFetchRule();
+  const ruleData = useRuleStore((state) => state.rule);
+
+  console.log("fetchRule", ruleData)
 
   const [pageIndex, setPageIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
+
+  const currentStatus = pageIndex === 1 ? 'Y' : 'N';
+
+  const currentRule = ruleData?.find(
+    (item) => item.tournamentStatus === currentStatus
+  );
+
+  useEffect(() => {
+    fetchRule();
+  }, []);
 
   return (
     <>
@@ -76,13 +92,12 @@ export default function Rule() {
             </span>
             </Title>
             <PdfContainer>
-              <PdfViewer
-                fileUrl={
-                  pageIndex === 0
-                    ? withBasePath('/testPdf.pdf')
-                    : withBasePath('/testPdf2.pdf')
-                }
-              />
+              {currentRule?.file?.fileUrl && (
+                <PdfViewer
+                  pageIndex={pageIndex}
+                  fileUrl={currentRule?.file?.fileUrl}
+                />
+              )}
             </PdfContainer>
           </MotionBox>
         </SlideViewport>
