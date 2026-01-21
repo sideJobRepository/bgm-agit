@@ -2,7 +2,7 @@
 
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { withBasePath } from '@/lib/path';
 import { CaretLeft, CaretRight } from 'phosphor-react';
 import PdfViewer from '@/app/components/PdfViewer';
@@ -15,11 +15,6 @@ export default function Rule() {
 
   const [pageIndex, setPageIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
-
-  // useEffect(() => {
-  //   const timer = setTimeout(() => setShowIntro(false), 1200);
-  //   return () => clearTimeout(timer);
-  // }, []);
 
   return (
     <>
@@ -76,13 +71,13 @@ export default function Rule() {
             )}
             </Title>
             <PdfContainer>
-              <PdfViewer
-                fileUrl={
-                  pageIndex === 0
-                    ? withBasePath('/testPdf.pdf')
-                    : withBasePath('/testPdf2.pdf')
-                }
-              />
+              {/*<PdfViewer*/}
+              {/*  fileUrl={*/}
+              {/*    pageIndex === 0*/}
+              {/*      ? withBasePath('/testPdf.pdf')*/}
+              {/*      : withBasePath('/testPdf2.pdf')*/}
+              {/*  }*/}
+              {/*/>*/}
             </PdfContainer>
           </MotionBox>
         </SlideViewport>

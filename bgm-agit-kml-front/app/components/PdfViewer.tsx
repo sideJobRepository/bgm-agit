@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { withBasePath } from '@/lib/path';
+import styled from 'styled-components';
 
-// ✅ worker 경로 (basePath 대응)
+// worker 경로 (basePath 대응)
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   withBasePath('/pdf.worker.min.mjs');
 
@@ -121,15 +122,7 @@ export default function PdfViewer({ fileUrl }: Props) {
   return (
     <div style={{ width: '100%', background: '#282828' }}>
       {/* TOOLBAR */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: 8,
-          background: '#3c3c3c',
-          color: '#fff',
-        }}
+      <ToolBox
       >
         <button onClick={prevPage}>‹</button>
         <span>
@@ -146,7 +139,7 @@ export default function PdfViewer({ fileUrl }: Props) {
         <span style={{ marginLeft: 12 }} />
 
         <button onClick={fullscreen}>⛶</button>
-      </div>
+      </ToolBox>
 
       {/* CANVAS */}
       <div
@@ -171,3 +164,11 @@ export default function PdfViewer({ fileUrl }: Props) {
     </div>
   );
 }
+
+const ToolBox = styled.div`
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    background: #3c3c3c;
+    color: #ffffff;
+`
