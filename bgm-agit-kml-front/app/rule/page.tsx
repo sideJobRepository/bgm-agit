@@ -120,7 +120,7 @@ const Title = styled.div`
   align-self: center;
   text-align: center;
   gap: 8px;
-  margin-bottom: 24px;
+  //margin-bottom: 12px;
     padding: 24px 0;
 
   h1 {
@@ -135,7 +135,7 @@ const Title = styled.div`
   span {
     font-size: ${({ theme }) => theme.desktop.sizes.md};
     font-weight: 600;
-    color: ${({ theme }) => theme.colors.grayColor};
+    color: ${({ theme }) => theme.colors.lineColor};
 
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.desktop.sizes.md};
@@ -156,7 +156,8 @@ const MotionBox = styled(motion.div)`
 `
 
 const PdfContainer = styled.div`
-  width: 90vw;
+  width: 90%;
+    padding: 24px 0;
     flex: 1;
 `;
 

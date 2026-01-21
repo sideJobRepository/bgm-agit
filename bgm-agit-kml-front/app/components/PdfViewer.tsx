@@ -4,6 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 import { withBasePath } from '@/lib/path';
 import styled from 'styled-components';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
+import {
+  CaretLeft,
+  CaretRight,
+  MagnifyingGlassPlus,
+  MagnifyingGlassMinus,
+  ArrowsOut,
+  ArrowsIn,
+} from 'phosphor-react';
 
 type Props = {
   fileUrl: string;
@@ -18,9 +26,10 @@ export default function PdfViewer({ fileUrl }: Props) {
   const [zoom, setZoom] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  /* =========================
-     PAGE RENDER
-  ========================= */
+  //사이즈 감지
+  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+
   const renderPage = async (pageNum: number, scale: number) => {
     if (!pdfDocRef.current || !containerRef.current) return;
 
@@ -29,8 +38,8 @@ export default function PdfViewer({ fileUrl }: Props) {
 
     const page = await pdfDocRef.current.getPage(pageNum);
 
-    // 👉 컨테이너 폭 기준 자동 스케일 (모바일 대응)
-    const containerWidth = containerRef.current.clientWidth || 800;
+    // 컨테이너 폭 기준 자동 스케일 (모바일 대응)
+    const containerWidth = viewportWidth || 800;
     const baseViewport = page.getViewport({ scale: 1 });
     const fitScale = (containerWidth / baseViewport.width) * scale;
 
@@ -108,41 +117,57 @@ export default function PdfViewer({ fileUrl }: Props) {
   const zoomOut = () =>
     setZoom((z) => Math.max(0.5, z - 0.1));
 
-  const fullscreen = () => {
-    const el = containerRef.current?.parentElement;
-    if (!el) return;
+  useEffect(() => {
+    if (!viewportRef.current) return;
 
-    if (!document.fullscreenElement) el.requestFullscreen();
-    else document.exitFullscreen();
-  };
+    const observer = new ResizeObserver(([entry]) => {
+      setViewportWidth(Math.floor(entry.contentRect.width));
+    });
 
-  /* =========================
-     UI
-  ========================= */
+    observer.observe(viewportRef.current);
+
+    return () => observer.disconnect();
+  }, []);
+
+
+  useEffect(() => {
+    if (!pdfDocRef.current || !viewportWidth) return;
+    renderPage(currentPage, zoom);
+  }, [viewportWidth, currentPage, zoom]);
+
   return (
     <div style={{ width: '100%', background: '#282828' }}>
       {/* TOOLBAR */}
       <ToolBox
       >
-        <button onClick={prevPage}>‹</button>
-        <span>
+        <Start/>
+        <Center>
+          <button onClick={prevPage}>
+            <CaretLeft weight="bold"/>
+          </button>
+          <span>
           {currentPage} / {totalPages}
         </span>
-        <button onClick={nextPage}>›</button>
+          <button onClick={nextPage}>
+            <CaretRight weight="bold"/>
+          </button>
+        </Center>
 
-        <span style={{ marginLeft: 12 }} />
+        <End>
+          <button onClick={zoomOut}>
+            <MagnifyingGlassMinus weight="bold"/>
+          </button>
+          <span>{Math.round(zoom * 100)}%</span>
+          <button onClick={zoomIn}>
+            <MagnifyingGlassPlus weight="bold"/>
+          </button>
+        </End>
 
-        <button onClick={zoomOut}>−</button>
-        <span>{Math.round(zoom * 100)}%</span>
-        <button onClick={zoomIn}>＋</button>
-
-        <span style={{ marginLeft: 12 }} />
-
-        <button onClick={fullscreen}>⛶</button>
       </ToolBox>
 
       {/* CANVAS */}
       <div
+        ref={viewportRef}
         style={{
           position: 'relative',
           overflow: 'auto',
@@ -158,7 +183,7 @@ export default function PdfViewer({ fileUrl }: Props) {
         )}
         <div
           ref={containerRef}
-          style={{ width: '100%', maxWidth: 900 }}
+          style={{ width: '100%'}}
         />
       </div>
     </div>
@@ -168,7 +193,54 @@ export default function PdfViewer({ fileUrl }: Props) {
 const ToolBox = styled.div`
     display: flex;
     gap: 8px;
-    padding: 8px;
+    padding: 8px 12px;
     background: #3c3c3c;
     color: #ffffff;
+
+    span {
+        background-color: #282828;
+        padding: 4px 8px;
+    }
+
+    button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        background-color: transparent;
+
+        svg {
+            color: white;
+            cursor: pointer;
+            width: 12px;
+            height: 12px;
+        }
+    }
+`
+
+const Start = styled.section`
+    display: inline-flex;
+    align-items: center;
+    justify-content: start;
+    gap: 4px;
+    width: 33%;
+    font-size: ${({ theme }) => theme.desktop.sizes.sm};
+`
+
+const Center = styled.section`
+    width: 33%;
+    gap: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: ${({ theme }) => theme.desktop.sizes.sm};
+`
+
+const End = styled.section`
+    width: 33%;
+    gap: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: ${({ theme }) => theme.desktop.sizes.sm};
 `
