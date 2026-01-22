@@ -12,19 +12,34 @@ import {
   FilePlus,
 } from 'phosphor-react';
 import { alertDialog, confirmDialog } from '@/utils/alert';
-import { useInsertPost } from '@/services/main.service';
+import { useInsertPost, useUpdatePost } from '@/services/main.service';
+import { useFetchRule } from '@/services/rule.service';
+
+type CurrentRule = {
+  id: number;
+  tournamentStatus: string;
+  file: {
+    id: number;
+    fileName: string;
+    fileUrl: string;
+    fileFolder: string;
+  }
+}
 
 type Props = {
   fileUrl: string;
   pageIndex: number;
+  currentRule: CurrentRule
 };
 
-export default function PdfViewer({ fileUrl, pageIndex }: Props) {
+export default function PdfViewer({ fileUrl, pageIndex, currentRule }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const pdfDocRef = useRef<PDFDocumentProxy | null>(null);
-  console.log("fileUrl", fileUrl)
-  const { insert } = useInsertPost();
+  console.log("pdf내의 fileurl", fileUrl);
 
+  const fetchRule = useFetchRule();
+  const { insert } = useInsertPost();
+  const { update } = useUpdatePost();
 
   const [pdfReady, setPdfReady] = useState(false);
 
@@ -38,29 +53,48 @@ export default function PdfViewer({ fileUrl, pageIndex }: Props) {
   const [viewportWidth, setViewportWidth] = useState<number | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
 
+  const measureViewport = () => {
+    if (!viewportRef.current) return;
+
+    const rect = viewportRef.current.getBoundingClientRect();
+    setViewportWidth(Math.floor(rect.width));
+    setViewportHeight(Math.floor(rect.height));
+  };
+
   //파일 업로드
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File>();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-   console.log(" e.target.files?.[0];",  e.target.files?.[0])
+    console.log(" e.target.files?.[0];",  e.target.files?.[0])
     const f = e.target.files?.[0];
     if (!f) return;
 
-    const result = await confirmDialog('PDF를 저장 하시겠습니까?', 'warning');
+    const formData = new FormData();
+
+    let message = 'PDF를 저장 하시겠습니까?';
+    let requestFn = insert;
+    console.log("currentRule", currentRule)
+    if(fileUrl){
+      message = 'PDF를 수정 하시겠습니까?'
+      requestFn = update;
+      formData.append('id', String(currentRule?.id));
+      formData.append('deleteFileId', String(currentRule?.file?.id));
+    }
+    const result = await confirmDialog(message, 'warning');
     if (f && result.isConfirmed) {
       setFile(f);
-      const formData = new FormData();
       const tournamentStatus = pageIndex === 1 ? 'Y' : 'N';
       formData.append('tournamentStatus',tournamentStatus);
       formData.append('file', f);
 
-      insert({
+      requestFn({
         url: '/bgm-agit/rule',
         body: formData,
         ignoreErrorRedirect: true,
         onSuccess: async () => {
-            await alertDialog('PDF가 저장되었습니다.', 'success');
+          fetchRule();
+          await alertDialog('PDF가 저장되었습니다.', 'success');
         },
       });
     }
@@ -147,20 +181,11 @@ export default function PdfViewer({ fileUrl, pageIndex }: Props) {
     setZoom((z) => Math.max(0.5, z - 0.1));
 
   useEffect(() => {
-    if (!viewportRef.current) return;
+    measureViewport();
 
-    const observer = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect;
-
-      setViewportWidth(Math.floor(width));
-      setViewportHeight(Math.floor(height));
-    });
-
-    observer.observe(viewportRef.current);
-    return () => observer.disconnect();
+    window.addEventListener('resize', measureViewport);
+    return () => window.removeEventListener('resize', measureViewport);
   }, []);
-
-
 
   useEffect(() => {
     if (!pdfReady || !viewportWidth) return;
@@ -234,7 +259,7 @@ const PdfWrap = styled.div`
 
 const CanvasBox = styled.div`
     position: relative;
-    flex: 1;          
+    flex: 1;
     min-height: 0;
     overflow: auto;
     display: flex;
@@ -332,25 +357,25 @@ const End = styled.section`
     font-size: ${({ theme }) => theme.desktop.sizes.sm};
 `
 const shimmer = keyframes`
-  0% {
-    background-position: -100% 0;
-  }
-  100% {
-    background-position: 100% 0;
-  }
+    0% {
+        background-position: -100% 0;
+    }
+    100% {
+        background-position: 100% 0;
+    }
 `;
 
 const SkeletonOverlay = styled.div`
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    100deg,
-    rgba(40, 40, 40, 0.8) 40%,
-    rgba(60, 60, 60, 0.8) 50%,
-    rgba(40, 40, 40, 0.8) 60%
-  );
-  background-size: 200% 100%;
-  animation: ${shimmer} 1.4s ease infinite;
-  z-index: 2;
-  pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+            100deg,
+            rgba(40, 40, 40, 0.8) 40%,
+            rgba(60, 60, 60, 0.8) 50%,
+            rgba(40, 40, 40, 0.8) 60%
+    );
+    background-size: 200% 100%;
+    animation: ${shimmer} 1.4s ease infinite;
+    z-index: 2;
+    pointer-events: none;
 `;

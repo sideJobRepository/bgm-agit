@@ -28,6 +28,7 @@ export default function Rule() {
     (item) => item.tournamentStatus === currentStatus
   );
 
+
   useEffect(() => {
     fetchRule();
   }, []);
@@ -51,23 +52,23 @@ export default function Rule() {
 
       <Wrapper>
         <SlideViewport>
-          {pageIndex === 1 && (
-            <NavLeftButton onClick={() => {
-              setDirection(-1);
-              setPageIndex(0);
-            }}>
-              <CaretLeft weight="bold"/>
-              마작 규칙 안내 보기
-            </NavLeftButton>)}
-          {pageIndex === 0 && (
-            <NavRightButton onClick={() => {
-              setDirection(1);
-              setPageIndex(1);
-            }}>
-              대회 운영 규정 보기
-              <CaretRight weight="bold"/>
-            </NavRightButton>
-          )}
+          {/*{pageIndex === 1 && (*/}
+          {/*  <NavLeftButton onClick={() => {*/}
+          {/*    setDirection(-1);*/}
+          {/*    setPageIndex(0);*/}
+          {/*  }}>*/}
+          {/*    <CaretLeft weight="bold"/>*/}
+          {/*    마작 규칙 안내 보기*/}
+          {/*  </NavLeftButton>)}*/}
+          {/*{pageIndex === 0 && (*/}
+          {/*  <NavRightButton onClick={() => {*/}
+          {/*    setDirection(1);*/}
+          {/*    setPageIndex(1);*/}
+          {/*  }}>*/}
+          {/*    대회 운영 규정 보기*/}
+          {/*    <CaretRight weight="bold"/>*/}
+          {/*  </NavRightButton>*/}
+          {/*)}*/}
           <MotionBox
             key={pageIndex}
             initial={{ x: `${direction * 100}%`, opacity: 0 }}
@@ -95,6 +96,7 @@ export default function Rule() {
                 <PdfViewer
                   pageIndex={pageIndex}
                   fileUrl={currentRule?.file?.fileUrl}
+                  currentRule={currentRule}
                 />
             </PdfContainer>
           </MotionBox>
@@ -120,6 +122,7 @@ const Wrapper = styled.div`
   margin: 0 auto;
   flex-direction: column;
     z-index: 2;
+    overflow: hidden;
 
   @media ${({ theme }) => theme.device.tablet} {
     width: 100vw;
@@ -136,6 +139,7 @@ const Title = styled.div`
   align-self: center;
   text-align: center;
   gap: 8px;
+    margin-top: 12px;
     padding: 24px 0;
 
   h1 {
@@ -183,13 +187,13 @@ const PdfContainer = styled.div`
 
 
 const NavRightButton = styled.button`
+    position: absolute;
+    right: 0;
     display: flex;
     width: 160px;
     align-items: center;
     justify-content: center;
     gap: 4px;
-    margin-bottom: 12px;
-    margin-left: auto;
     border: none;
     padding: 6px 0;
     border-radius: 4px;
@@ -205,13 +209,13 @@ const NavRightButton = styled.button`
 `;
 
 const NavLeftButton = styled.button`
+    position: absolute;
+    left: 0;
     display: flex;
     width: 160px;
     align-items: center;
     justify-content: center;
     gap: 4px;
-    margin-bottom: 12px;
-    margin-right: auto;
     border: none;
     padding: 6px 0;
     border-radius: 4px;
