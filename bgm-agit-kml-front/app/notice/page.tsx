@@ -1,13 +1,15 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { withBasePath } from '@/lib/path';
 import { useFetchNoticeList } from '@/services/notice.service';
 import { useEffect, useMemo, useState } from 'react';
 import { NoticeItem, useNoticeListStore } from '@/store/notice';
 import { BaseColumn, BaseTable } from '@/app/components/BaseTable';
 import { useRouter } from 'next/navigation';
+import { useLoadingStore } from '@/store/loading';
+import BaseTableSkeleton from '@/app/components/BaseTableSkeleton';
 
 
 export default function Notice() {
@@ -17,6 +19,10 @@ export default function Notice() {
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);
+
+  const loading = useLoadingStore((state) => state.loading)
+  const isReady = !loading && noticeList;
+
 
   const columns = useMemo<BaseColumn<NoticeItem>[]>(() => [
     {
@@ -62,7 +68,7 @@ export default function Notice() {
         </HeroContent>
       </Hero>
       <TableBox>
-        {noticeList && (       <BaseTable
+        {isReady ? (       <BaseTable
           columns={columns}
           data={noticeList.content}
           page={page}
@@ -80,7 +86,9 @@ export default function Notice() {
             setPage(0);
             fetchNotice({ page: 0, titleAndCont: searchKeyword });
           }}
-        />)}
+        />) : (
+          <BaseTableSkeleton columns={columns} />
+        )}
 
       </TableBox>
     </Wrapper>
@@ -181,5 +189,16 @@ const TableBox = styled.div`
   overflow: hidden;
 `;
 
+const shimmer = keyframes`
+  0% { background-position: -100% 0; }
+  100% { background-position: 100% 0; }
+`;
+
+const SkeletonBox = styled.div`
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: ${shimmer} 1.5s infinite;
+  border-radius: 4px;
+`;
 
 
