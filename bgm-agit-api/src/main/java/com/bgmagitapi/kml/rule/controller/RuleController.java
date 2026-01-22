@@ -35,7 +35,7 @@ public class RuleController {
         return ruleService.modifyRule(request);
     }
     
-    @PutMapping("/rule/{id}")
+    @DeleteMapping("/rule/{id}")
     public ApiResponse removeRule(@PathVariable Long id) {
         return ruleService.deleteRule(id);
     }
