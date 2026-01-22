@@ -35,7 +35,6 @@ type Props = {
 export default function PdfViewer({ fileUrl, pageIndex, currentRule }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const pdfDocRef = useRef<PDFDocumentProxy | null>(null);
-  console.log("pdf내의 fileurl", fileUrl);
 
   const fetchRule = useFetchRule();
   const { insert } = useInsertPost();
@@ -66,7 +65,6 @@ export default function PdfViewer({ fileUrl, pageIndex, currentRule }: Props) {
   const [file, setFile] = useState<File>();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(" e.target.files?.[0];",  e.target.files?.[0])
     const f = e.target.files?.[0];
     if (!f) return;
 
@@ -74,7 +72,7 @@ export default function PdfViewer({ fileUrl, pageIndex, currentRule }: Props) {
 
     let message = 'PDF를 저장 하시겠습니까?';
     let requestFn = insert;
-    console.log("currentRule", currentRule)
+
     if(fileUrl){
       message = 'PDF를 수정 하시겠습니까?'
       requestFn = update;
@@ -102,9 +100,9 @@ export default function PdfViewer({ fileUrl, pageIndex, currentRule }: Props) {
   };
 
   const renderPage = async (pageNum: number, scale: number) => {
-    console.log("renderPage")
+
     if (!pdfDocRef.current || !containerRef.current || !viewportWidth) return;
-    console.log("renderPage2")
+
     setLoading(true);
     containerRef.current.innerHTML = '';
 
@@ -190,7 +188,6 @@ export default function PdfViewer({ fileUrl, pageIndex, currentRule }: Props) {
   }, []);
 
   useEffect(() => {
-    console.log("랜더 이펙트")
     if (!pdfReady || !viewportWidth) return;
     renderPage(currentPage, zoom);
 
