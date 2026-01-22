@@ -81,6 +81,7 @@ export default function PdfViewer({ fileUrl, pageIndex, currentRule }: Props) {
     }
     const result = await confirmDialog(message, 'warning');
     if (f && result.isConfirmed) {
+      setPdfReady(false);
       setFile(f);
       const tournamentStatus = pageIndex === 1 ? 'Y' : 'N';
       formData.append('tournamentStatus',tournamentStatus);
@@ -92,7 +93,6 @@ export default function PdfViewer({ fileUrl, pageIndex, currentRule }: Props) {
         ignoreErrorRedirect: true,
         onSuccess: async () => {
           fetchRule();
-          setPdfReady(false);
           await alertDialog('PDF가 저장되었습니다.', 'success');
         },
       });
