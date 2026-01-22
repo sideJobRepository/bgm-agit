@@ -190,6 +190,30 @@ export default function PdfViewer({ fileUrl, pageIndex, currentRule }: Props) {
   useEffect(() => {
     if (!pdfReady || !viewportWidth) return;
     renderPage(currentPage, zoom);
+
+    const nextPage = currentPage + 1;
+    if (nextPage <= totalPages) {
+      pdfDocRef.current
+        ?.getPage(nextPage)
+        .then((page) => {
+          // ⚠️ DOM에 안 붙임
+          const baseViewport = page.getViewport({ scale: 1 });
+          const viewportHeight = viewportRef.current!.clientHeight;
+
+          const scaleByWidth = viewportWidth / baseViewport.width;
+          const scaleByHeight = viewportHeight / baseViewport.height;
+          const fitScale = Math.min(scaleByWidth, scaleByHeight) * zoom;
+
+          const viewport = page.getViewport({ scale: fitScale });
+
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d')!;
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+
+          page.render({ canvas, viewport });
+        });
+    }
   }, [pdfReady, viewportWidth, viewportHeight, currentPage, zoom]);
 
 
