@@ -226,7 +226,7 @@ const MobileTop = styled.div`
     border-bottom: 10px solid rgb(244 244 245);
 
     img {
-      width: 100px;
+      width: 124px;
     }
   }
 `;
