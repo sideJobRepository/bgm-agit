@@ -7,4 +7,6 @@ import java.util.List;
 public interface RuleQueryRepository {
 
     List<BgmAgitCommonFile> getRuleFiles();
+    
+    BgmAgitCommonFile getRuleFile(Long id);
 }

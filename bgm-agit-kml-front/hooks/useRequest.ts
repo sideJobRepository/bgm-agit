@@ -7,7 +7,9 @@ import { alertDialog } from '@/utils/alert';
 
 interface RequestOptions {
   ignoreErrorRedirect?: boolean;
+  disableLoading?: boolean;
 }
+
 
 export function useRequest() {
   const router = useRouter();
@@ -18,7 +20,10 @@ export function useRequest() {
     onSuccess?: (data: T) => void,
     options?: RequestOptions,
   ): Promise<T | undefined> => {
-    setLoading(true);
+
+    if(!options?.disableLoading){
+      setLoading(true);
+    }
     try {
       const data = await requestFn();
       onSuccess?.(data);
@@ -39,12 +44,14 @@ export function useRequest() {
             .join("\n");
           await alertDialog(messages, 'error');
         } else {
-          await alertDialog(err.response?.data?.message ?? "오류가 발생했습니다.");
+          await alertDialog(err.response?.data?.message ?? "오류가 발생했습니다.", 'error');
         }
       }
       throw error;
     } finally {
-      setLoading(false);
+      if (!options?.disableLoading) {
+        setLoading(false);
+      }
     }
   };
 

@@ -1,11 +1,50 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { withBasePath } from '@/lib/path';
+import { useFetchNoticeList } from '@/services/notice.service';
+import { useEffect, useMemo, useState } from 'react';
+import { NoticeItem, useNoticeListStore } from '@/store/notice';
+import { BaseColumn, BaseTable } from '@/app/components/BaseTable';
+import { useRouter } from 'next/navigation';
+import { useLoadingStore } from '@/store/loading';
+import BaseTableSkeleton from '@/app/components/BaseTableSkeleton';
 
 
 export default function Notice() {
+  const router = useRouter();
+  const fetchNotice = useFetchNoticeList();
+  const noticeList =  useNoticeListStore((state) => state.notice);
+
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [page, setPage] = useState(0);
+
+  const loading = useLoadingStore((state) => state.loading)
+  const isReady = !loading && noticeList;
+
+
+  const columns = useMemo<BaseColumn<NoticeItem>[]>(() => [
+    {
+      key: 'registDate',
+      header: '날짜',
+      width: '140px',
+      align: 'center',
+      nowrap: true,
+      render: row => row.registDate,
+    },
+    {
+      key: 'title',
+      header: '제목',
+      render: row => row.title,
+    },
+  ], []);
+
+  console.log("noticeList", noticeList);
+
+  useEffect(() => {
+    fetchNotice({ page, titleAndCont: searchKeyword })
+  }, [page]);
 
   return (
     <Wrapper>
@@ -28,15 +67,33 @@ export default function Notice() {
           </span>
         </HeroContent>
       </Hero>
-      <Slider>
+      <TableBox>
+        {isReady ? (       <BaseTable
+          columns={columns}
+          data={noticeList.content}
+          page={page}
+          searchLabel="제목 및 내용"
+          totalPages={noticeList.totalPages}
+          onPageChange={setPage}
+          showWriteButton
+          onWriteClick={() =>   router.push(`/notice/new`)}
+          onRowClick={(row) =>
+            router.push(`/notice/${row.id}`)
+          }
+          searchKeyword={searchKeyword}
+          onSearchKeywordChange={setSearchKeyword}
+          onSearch={() => {
+            setPage(0);
+            fetchNotice({ page: 0, titleAndCont: searchKeyword });
+          }}
+        />) : (
+          <BaseTableSkeleton columns={columns} />
+        )}
 
-
-      </Slider>
+      </TableBox>
     </Wrapper>
   );
 }
-
-/* ================= styles ================= */
 
 const Wrapper = styled.div`
   display: flex;
@@ -58,9 +115,7 @@ const Wrapper = styled.div`
 
 const Hero = styled.section`
   position: relative;
-  width: 100vw;
-  left: 50%;
-  transform: translateX(-50%);
+  width: 100%;
   height: 160px;
   overflow: hidden;
 
@@ -129,14 +184,21 @@ const HeroContent = styled.div`
   }
 `;
 
-const Slider = styled.div`
-  width: 96%;
-  max-width: 800px;
-  height: 420px;
-  margin: auto;
-  position: relative;
+const TableBox = styled.div`
+  width: 100%;
   overflow: hidden;
 `;
 
+const shimmer = keyframes`
+  0% { background-position: -100% 0; }
+  100% { background-position: 100% 0; }
+`;
+
+const SkeletonBox = styled.div`
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: ${shimmer} 1.5s infinite;
+  border-radius: 4px;
+`;
 
 

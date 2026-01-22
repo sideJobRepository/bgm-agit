@@ -47,6 +47,8 @@ public class BgmAgitMember extends DateSuperClass {
     @Column(name = "BGM_AGIT_MEMBER_NICKNAME_USE_STATUS")
     private String bgmAgitMemberNicknameUseStatus;
     
+    @Column(name = "BGM_AGIT_MEMBER_MAHJONG_USE_STATUS")
+    private String bgmAgitMemberMahjongUseStatus;
     
     
     
@@ -75,6 +77,7 @@ public class BgmAgitMember extends DateSuperClass {
         this.bgmAgitMemberNickname =  request.getNickName();
         this.bgmAgitMemberPhoneNo =  request.getPhoneNo();
         this.bgmAgitMemberNicknameUseStatus =  request.getNickNameUseStatus();
+        this.bgmAgitMemberMahjongUseStatus = request.getMahjongUseStatus();
     }
     
     private String normalizePhone(String phone) {

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -46,11 +47,13 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
         KmlNotice kmlNotice = kmlNoticeRepository.findById(id).orElseThrow(() -> new RuntimeException("존재하지 않는 공지사항 입니다."));
         List<BgmAgitCommonFile> noticeFiles = kmlNoticeRepository.findByKmlNoticeFiles(List.of(id));
         
+        LocalDate localDate = kmlNotice.getRegistDate().toLocalDate();
         KmlNoticeGetDetailResponse result = KmlNoticeGetDetailResponse
                 .builder()
                 .id(kmlNotice.getId())
                 .title(kmlNotice.getNoticeTitle())
-                .cont(kmlNotice.getNoticeTitle())
+                .cont(kmlNotice.getNoticeCont())
+                .registDate(localDate)
                 .build();
         
         Map<Long, List<KmlNoticeGetDetailResponse.KmlNoticeFile>> files = noticeFiles.stream()
@@ -110,7 +113,7 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
         kmlNotice.modify(request);
         
         List<MultipartFile> files = request.getFiles();
-        List<KmlNoticePutRequest.KmlNoticeFilePutRequest> existingFiles = request.getExistingFiles();
+        List<Long> deleteFileIds = request.getDeleteFileIds();
         List<UploadResult> uploadResults = s3FileUtils.storeFiles(files, "kml-notice");
         for (UploadResult result : uploadResults) {
             BgmAgitCommonFile commonFile = BgmAgitCommonFile
@@ -123,14 +126,14 @@ public class KmlNoticeServiceImpl implements KmlNoticeService {
                     .build();
             commonFileRepository.save(commonFile);
         }
-        for (KmlNoticePutRequest.KmlNoticeFilePutRequest existingFile : existingFiles) {
-            if (existingFile.getStatus() == FileStatus.DELETED) {
-                BgmAgitCommonFile deleteFile = commonFileRepository.findById(existingFile.getId()).orElseThrow(() -> new RuntimeException("존재하지 않는 파일입니다."));
-                s3FileUtils.deleteFile(deleteFile.getBgmAgitCommonFileUrl());
-                commonFileRepository.delete(deleteFile);
-            }
+        
+        for (Long deleteFileId : deleteFileIds) {
+            BgmAgitCommonFile deleteFile = commonFileRepository.findById(deleteFileId).orElseThrow(() -> new RuntimeException("존재하지 않는 파일입니다."));
+            s3FileUtils.deleteFile(deleteFile.getBgmAgitCommonFileUrl());
+            commonFileRepository.delete(deleteFile);
         }
-        return new ApiResponse(200,true,"수정 되었습니다.");
+        
+        return new ApiResponse(200, true, "수정 되었습니다.");
     }
     
     @Override

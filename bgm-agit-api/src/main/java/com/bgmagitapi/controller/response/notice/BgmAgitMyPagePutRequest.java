@@ -17,4 +17,5 @@ public class BgmAgitMyPagePutRequest {
     @PhoneValid(message = "휴대폰 번호 형식이 올바르지 않습니다. (예: 010-1234-5678)")
     private String phoneNo;
     private String nickNameUseStatus;
+    private String mahjongUseStatus;
 }

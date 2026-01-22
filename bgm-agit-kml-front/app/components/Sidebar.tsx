@@ -25,7 +25,6 @@ import { useUserStore } from '@/store/user';
 import { usePathname, useRouter } from 'next/navigation';
 import api from '@/lib/axiosInstance';
 import { tokenStore } from '@/services/tokenStore';
-import Swal from 'sweetalert2';
 import { alertDialog, confirmDialog } from '@/utils/alert';
 
 
@@ -35,10 +34,11 @@ export default function Sidebar() {
   //navigation
   const pathname = usePathname();
   const router = useRouter();
-  console.log("pathname", pathname)
 
   useFetchMainMenu();
   const menuData = useKmlMenuStore((state) => state.menu);
+
+  console.log("menu", menuData)
 
   const user = useUserStore((state) =>state.user);
 
@@ -225,9 +225,14 @@ const MobileTop = styled.div`
     z-index: 2;
     border-bottom: 10px solid rgb(244 244 245);
 
-    img {
-      width: 86px;
-    }
+      a {
+          display: flex;
+          
+          img {
+              width: 124px;
+          }
+      }
+
   }
 `;
 
@@ -254,13 +259,14 @@ const SidebarWrapper = styled(motion.aside)`
   flex-direction: column;
   border: 20px solid rgb(244 244 245);
   background: ${({ theme }) => theme.colors.whiteColor};
-
+    overflow-y: auto;
+    
   @media ${({ theme }) => theme.device.tablet} {
     position: fixed;
     left: 0;
     right: 0;
-    top: 64px;
-    height: calc(100dvh - 64px);
+    top: 64px;  
+      height: calc(100dvh - 64px);
     padding-top: 20px;
     z-index: 1;
   }
@@ -294,6 +300,8 @@ const MiddleSeciton = styled.div`
   justify-content: center;
   display: flex;
   flex-direction: column;
+    padding: 16px 0;
+
 `;
 
 const MenuLi = styled.li<{ $active: boolean }>`

@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class RuleGetResponse {
     
     private Long id;
-    private String title;
+    private String tournamentStatus;
     private RuleFileResponse file;
     
     @Data
@@ -21,6 +21,7 @@ public class RuleGetResponse {
     @AllArgsConstructor
     @Builder
     public static class RuleFileResponse {
+        private Long id;
         private String fileName;
         private String fileUrl;
         private String fileFolder;

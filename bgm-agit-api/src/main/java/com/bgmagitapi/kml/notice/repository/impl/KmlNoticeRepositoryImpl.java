@@ -7,6 +7,7 @@ import com.bgmagitapi.kml.notice.dto.response.QKmlNoticeGetResponse;
 import com.bgmagitapi.kml.notice.repository.query.KmlNoticeQueryRepository;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.bgmagitapi.entity.QBgmAgitCommonFile.*;
@@ -29,11 +32,12 @@ public class KmlNoticeRepositoryImpl implements KmlNoticeQueryRepository {
     public Page<KmlNoticeGetResponse> findByKmlNotice(Pageable pageable, String titleAndCont) {
         List<KmlNoticeGetResponse> result = queryFactory
                 .select(
-                        new QKmlNoticeGetResponse(
-                                kmlNotice.id,
-                                kmlNotice.noticeTitle,
-                                kmlNotice.noticeCont
-                        )
+                    new QKmlNoticeGetResponse(
+                        kmlNotice.id,
+                        kmlNotice.noticeTitle,
+                        kmlNotice.noticeCont,
+                        kmlNotice.registDate
+                    )
                 )
                 .from(kmlNotice)
                 .where(whereTitleAndCont(titleAndCont))
@@ -54,7 +58,7 @@ public class KmlNoticeRepositoryImpl implements KmlNoticeQueryRepository {
             return null;
         }
         String value = "%" + titleAndCont.trim() + "%";
-    
+        
         return kmlNotice.noticeTitle.like(value)
                 .or(kmlNotice.noticeCont.like(value));
     }

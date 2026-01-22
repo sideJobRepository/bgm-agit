@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { withBasePath } from '@/lib/path';
 import Link from 'next/link';
-import { ArrowRight } from 'phosphor-react';
+import { ArrowRight, HandPointing  } from 'phosphor-react';
 import { useMediaQuery } from 'react-responsive';
 
 const INITIAL_CARDS = [
@@ -33,6 +33,9 @@ export default function Home() {
   const [cards, setCards] = useState(INITIAL_CARDS);
   const [dir, setDir] = useState(1); // 1 = next, -1 = prev
 
+  //힌트
+  const [showSwipeHint, setShowSwipeHint] = useState(true);
+
   const isMobile = useMediaQuery({ maxWidth: 844 });
 
   const next = () => {
@@ -54,17 +57,26 @@ export default function Home() {
 
   useEffect(() => setMounted(true), []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSwipeHint(false);
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   if (!mounted) return null;
   return (
     <Wrapper>
       <Title>
-        <h1>Welcome to BGM KML</h1>
+        <h1>Welcome to
+          <img src={withBasePath('/headerLogo.png')} alt="로고" />
+        </h1>
         <span>
           BGM 아지트의 보드게임 기록을 위한 전용 공간입니다.
           <br />
           여러분의 보드게임 이야기가 이곳에 쌓여갑니다.{' '}
         </span>
-        <a></a>
       </Title>
       <Slider>
         {cards.slice(0, 3).map((card, i) => (
@@ -83,12 +95,43 @@ export default function Home() {
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.2}
             onDragEnd={(_, info) => {
+              setShowSwipeHint(false);
+
               const swipe = info.offset.x;
 
-              if (swipe < -80) next();
-              else if (swipe > 80) prev();
+              if (swipe < -40) next();
+              else if (swipe > 40) prev();
             }}
           >
+            {showSwipeHint && (
+              <SwipeHint
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <SwipeFinger
+                  animate={{ x: [-28, 28, -28] }}
+                  transition={{
+                    duration: 1.4,
+                    ease: 'easeInOut',
+                    repeat: Infinity,
+                  }}
+                >
+                  <HandPointing weight="bold" />
+                </SwipeFinger>
+                <SwipeMessage
+                  animate={{ x: [-28, 28, -28] }}
+                  transition={{
+                    duration: 1.4,
+                    ease: 'easeInOut',
+                    repeat: Infinity,
+                  }}
+                >
+                  <span>카드를 좌우로 넘겨보세요.</span>
+                </SwipeMessage>
+
+              </SwipeHint>
+            )}
             <ContentSection>
               <h4>{card.title}</h4>
               <span>{card?.content}</span>
@@ -121,6 +164,7 @@ const Wrapper = styled.div`
   margin: auto;
   flex-direction: column;
   gap: 36px;
+    padding: 12px 0;
 
   @media ${({ theme }) => theme.device.tablet} {
     width: 100vw;
@@ -137,14 +181,27 @@ const Title = styled.div`
   max-width: 800px;
   align-self: center;
   text-align: center;
-  gap: 8px;
+  gap: 12px;
   margin-bottom: 24px;
 
   h1 {
+      display: flex;
+      gap: 4px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     font-size: ${({ theme }) => theme.desktop.sizes.titleSize};
     font-weight: 800;
+
+      img {
+          width: 260px;
+      }
+      
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.mobile.sizes.titleSize};
+        img {
+            width: 240px;
+        }
     }
   }
 
@@ -186,6 +243,7 @@ const Card = styled(motion.div)`
 
   font-size: 32px;
   font-weight: 700;
+    touch-action: pan-y;
 `;
 
 const NavLeft = styled.div`
@@ -336,4 +394,51 @@ const variants = (isMobile: boolean) => ({
     scale: 0.96,
   }),
 });
+
+const SwipeHint = styled(motion.div)`
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    pointer-events: none;
+`;
+
+
+const SwipeFinger = styled(motion.div)`
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+
+    svg {
+        width: 26px;
+        height: 26px;
+        color: ${({ theme }) => theme.colors.whiteColor};
+    }
+    
+`;
+
+const SwipeMessage = styled(motion.div)`
+    border-radius: 4px;
+    padding: 6px 8px;
+    background: rgba(0, 0, 0, 0.45); 
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    font-size: ${({ theme }) => theme.desktop.sizes.sm};
+    color: ${({ theme }) => theme.colors.whiteColor};
+`;
 

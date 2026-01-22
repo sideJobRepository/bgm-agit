@@ -1,13 +1,12 @@
 package com.bgmagitapi.kml.rule.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,14 +14,9 @@ import java.util.List;
 @Builder
 public class RulePostRequest {
 
-    private String title;
-    private Boolean tournamentStatus;
-    private List<MultipartFile> files;
+   
+    @NotBlank(message = "룰 대회여부는 필수입니다.")
+    private String tournamentStatus;
+    private MultipartFile file;
     
-    public List<MultipartFile> getFiles() {
-        if (this.files == null) {
-            this.files = new ArrayList<>();
-        }
-        return this.files;
-    }
 }
