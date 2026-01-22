@@ -94,6 +94,7 @@ export default function PdfViewer({ fileUrl, pageIndex, currentRule }: Props) {
         ignoreErrorRedirect: true,
         onSuccess: async () => {
           fetchRule();
+          setPdfReady(false);
           await alertDialog('PDF가 저장되었습니다.', 'success');
         },
       });
@@ -101,8 +102,9 @@ export default function PdfViewer({ fileUrl, pageIndex, currentRule }: Props) {
   };
 
   const renderPage = async (pageNum: number, scale: number) => {
+    console.log("renderPage")
     if (!pdfDocRef.current || !containerRef.current || !viewportWidth) return;
-
+    console.log("renderPage2")
     setLoading(true);
     containerRef.current.innerHTML = '';
 
@@ -188,6 +190,7 @@ export default function PdfViewer({ fileUrl, pageIndex, currentRule }: Props) {
   }, []);
 
   useEffect(() => {
+    console.log("랜더 이펙트")
     if (!pdfReady || !viewportWidth) return;
     renderPage(currentPage, zoom);
 
@@ -196,7 +199,7 @@ export default function PdfViewer({ fileUrl, pageIndex, currentRule }: Props) {
       pdfDocRef.current
         ?.getPage(nextPage)
         .then((page) => {
-          // ⚠️ DOM에 안 붙임
+          // DOM에 안 붙임
           const baseViewport = page.getViewport({ scale: 1 });
           const viewportHeight = viewportRef.current!.clientHeight;
 
