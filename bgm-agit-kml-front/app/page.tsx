@@ -194,7 +194,7 @@ const Title = styled.div`
     font-weight: 800;
 
       img {
-          width: 260px;
+          width: 400px;
       }
       
     @media ${({ theme }) => theme.device.mobile} {
@@ -206,12 +206,12 @@ const Title = styled.div`
   }
 
   span {
-    font-size: ${({ theme }) => theme.desktop.sizes.md};
+    font-size: ${({ theme }) => theme.desktop.sizes.xl};
     font-weight: 600;
     color: ${({ theme }) => theme.colors.grayColor};
 
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.desktop.sizes.md};
+      font-size: ${({ theme }) => theme.mobile.sizes.xl};
     }
   }
 `;
@@ -307,7 +307,7 @@ const ContentSection = styled.section`
     color: ${({ theme }) => theme.colors.softColor};
 
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
+      font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
     }
   }
 
@@ -320,7 +320,7 @@ const ContentSection = styled.section`
     color: ${({ theme }) => theme.colors.basicColor};
 
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.desktop.sizes.md};
+      font-size: ${({ theme }) => theme.mobile.sizes.md};
     }
   }
 
@@ -333,7 +333,7 @@ const ContentSection = styled.section`
     color: ${({ theme }) => theme.colors.border};
 
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.desktop.sizes.xl};
+      font-size: ${({ theme }) => theme.mobile.sizes.xl};
     }
 
     svg {
