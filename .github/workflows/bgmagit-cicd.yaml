@@ -190,7 +190,7 @@ jobs:
       - name: SSH 접속 후 Next 컨테이너 실행
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.STAGING_HOST }}
+          host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME  }}
           password: ${{ secrets.PASSWORD }}
           port: 22

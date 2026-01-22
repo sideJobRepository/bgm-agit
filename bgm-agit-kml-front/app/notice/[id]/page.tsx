@@ -40,6 +40,8 @@ export default function NoticeDetail({
   const { id } = use(params);
   const router = useRouter();
 
+  console.log("id", id)
+
   const { insert } = useInsertPost();
   const { update } = useUpdatePost();
   const { remove } = useDeletePost();
@@ -47,7 +49,7 @@ export default function NoticeDetail({
   const user = useUserStore((state) => state.user);
   const fetchDetailNotice = useFetchNoticeDetailL();
   const detailNotice = useNoticeDetailStore((state) => state.noticeDetail);
-  const clearDetail = useNoticeDetailStore((state) => state.clearDetail);
+
   const fetchFileDownload =useNoticeDownloadFetch();
 
   const [isEditMode, setIsEditMode] = useState(false);
@@ -189,7 +191,6 @@ export default function NoticeDetail({
 
   useEffect(() => {
     if (id && id !== 'new') fetchDetailNotice(id);
-    else clearDetail();
   }, [id]);
 
   useEffect(() => {
@@ -208,7 +209,6 @@ export default function NoticeDetail({
           fileFolder: file.fileFolder
         }))
       );
-      console.log("파일 테스트", detailNotice.files)
     }
   }, [detailNotice]);
 
@@ -406,7 +406,7 @@ export default function NoticeDetail({
                       body: formData,
                       ignoreErrorRedirect: true,
                       onSuccess: (data: unknown) => {
-                        console.log('data', data);
+
                         resolve(data as string);
                       },
                     });

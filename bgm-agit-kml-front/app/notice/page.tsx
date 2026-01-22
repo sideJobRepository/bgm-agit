@@ -5,7 +5,7 @@ import styled, { keyframes } from 'styled-components';
 import { withBasePath } from '@/lib/path';
 import { useFetchNoticeList } from '@/services/notice.service';
 import { useEffect, useMemo, useState } from 'react';
-import { NoticeItem, useNoticeListStore } from '@/store/notice';
+import { NoticeItem, useNoticeDetailStore, useNoticeListStore } from '@/store/notice';
 import { BaseColumn, BaseTable } from '@/app/components/BaseTable';
 import { useRouter } from 'next/navigation';
 import { useLoadingStore } from '@/store/loading';
@@ -16,6 +16,7 @@ export default function Notice() {
   const router = useRouter();
   const fetchNotice = useFetchNoticeList();
   const noticeList =  useNoticeListStore((state) => state.notice);
+  const clearDetail = useNoticeDetailStore((state) => state.clearDetail);
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);
@@ -39,8 +40,6 @@ export default function Notice() {
       render: row => row.title,
     },
   ], []);
-
-  console.log("noticeList", noticeList);
 
   useEffect(() => {
     fetchNotice({ page, titleAndCont: searchKeyword })
@@ -76,7 +75,10 @@ export default function Notice() {
           totalPages={noticeList.totalPages}
           onPageChange={setPage}
           showWriteButton
-          onWriteClick={() =>   router.push(`/notice/new`)}
+          onWriteClick={() => {
+            clearDetail();
+            router.push(`/notice/new`);
+          }}
           onRowClick={(row) =>
             router.push(`/notice/${row.id}`)
           }
