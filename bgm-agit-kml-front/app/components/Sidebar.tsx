@@ -225,9 +225,14 @@ const MobileTop = styled.div`
     z-index: 2;
     border-bottom: 10px solid rgb(244 244 245);
 
-    img {
-      width: 124px;
-    }
+      a {
+          display: flex;
+          
+          img {
+              width: 124px;
+          }
+      }
+
   }
 `;
 
