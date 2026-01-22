@@ -17,8 +17,6 @@ export default function Rule() {
   const fetchRule = useFetchRule();
   const ruleData = useRuleStore((state) => state.rule);
 
-  console.log("fetchRule", ruleData)
-
   const [pageIndex, setPageIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
 
