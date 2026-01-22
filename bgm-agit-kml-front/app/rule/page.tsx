@@ -52,23 +52,23 @@ export default function Rule() {
 
       <Wrapper>
         <SlideViewport>
-          {/*{pageIndex === 1 && (*/}
-          {/*  <NavLeftButton onClick={() => {*/}
-          {/*    setDirection(-1);*/}
-          {/*    setPageIndex(0);*/}
-          {/*  }}>*/}
-          {/*    <CaretLeft weight="bold"/>*/}
-          {/*    마작 규칙 안내 보기*/}
-          {/*  </NavLeftButton>)}*/}
-          {/*{pageIndex === 0 && (*/}
-          {/*  <NavRightButton onClick={() => {*/}
-          {/*    setDirection(1);*/}
-          {/*    setPageIndex(1);*/}
-          {/*  }}>*/}
-          {/*    대회 운영 규정 보기*/}
-          {/*    <CaretRight weight="bold"/>*/}
-          {/*  </NavRightButton>*/}
-          {/*)}*/}
+          {pageIndex === 1 && (
+            <NavLeftButton onClick={() => {
+              setDirection(-1);
+              setPageIndex(0);
+            }}>
+              <CaretLeft weight="bold"/>
+              마작 규칙 안내 보기
+            </NavLeftButton>)}
+          {pageIndex === 0 && (
+            <NavRightButton onClick={() => {
+              setDirection(1);
+              setPageIndex(1);
+            }}>
+              대회 운영 규정 보기
+              <CaretRight weight="bold"/>
+            </NavRightButton>
+          )}
           <MotionBox
             key={pageIndex}
             initial={{ x: `${direction * 100}%`, opacity: 0 }}
