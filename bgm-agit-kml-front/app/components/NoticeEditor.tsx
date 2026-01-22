@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic'; // ✅ 이렇게 정적 import
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import type { Editor } from '@ckeditor/ckeditor5-core';
 import type { FileLoader } from '@ckeditor/ckeditor5-upload';
 

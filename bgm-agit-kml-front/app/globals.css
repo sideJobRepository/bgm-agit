@@ -37,3 +37,59 @@ ul, ol {
 .swal2-title {
   font-size: 18px;
 }
+
+
+/*CK 에디터 css*/
+.ck-content p {
+  margin: 0 0 1em;
+}
+
+.ck-content ul,
+.ck-content ol {
+  padding-left: 1.5em;
+  margin: 0 0 1em;
+}
+
+.ck-content ul {
+  list-style: disc;
+}
+
+.ck-content ol {
+  list-style: decimal;
+}
+
+.ck-content li {
+  margin-bottom: 0.25em;
+}
+
+/* 이미지 side */
+.ck-content .image-style-side {
+  float: right;
+  margin-left: 16px;
+  margin-bottom: 16px;
+}
+
+/* 이미지 정렬 */
+.ck-content .image-style-align-center {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ck-content .image-style-align-right {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+/* 이미지 기본 */
+.ck-content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* float 해제 */
+.ck-content::after {
+  content: '';
+  display: block;
+  clear: both;
+}
