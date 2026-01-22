@@ -254,14 +254,14 @@ const SidebarWrapper = styled(motion.aside)`
   flex-direction: column;
   border: 20px solid rgb(244 244 245);
   background: ${({ theme }) => theme.colors.whiteColor};
-
+    overflow-y: auto;
+    
   @media ${({ theme }) => theme.device.tablet} {
     position: fixed;
     left: 0;
     right: 0;
     top: 64px;  
       height: calc(100dvh - 64px);
-      overflow-y: auto;
     padding-top: 20px;
     z-index: 1;
   }
@@ -295,6 +295,7 @@ const MiddleSeciton = styled.div`
   justify-content: center;
   display: flex;
   flex-direction: column;
+    padding: 16px 0;
 
 `;
 
