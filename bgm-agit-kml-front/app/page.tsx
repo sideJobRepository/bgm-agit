@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { withBasePath } from '@/lib/path';
@@ -58,7 +58,9 @@ export default function Home() {
   return (
     <Wrapper>
       <Title>
-        <h1>Welcome to BGM KML</h1>
+        <h1>Welcome to
+          <img src={withBasePath('/headerLogo.png')} alt="로고" />
+        </h1>
         <span>
           BGM 아지트의 보드게임 기록을 위한 전용 공간입니다.
           <br />
@@ -120,6 +122,7 @@ const Wrapper = styled.div`
   margin: auto;
   flex-direction: column;
   gap: 36px;
+    padding: 12px 0;
 
   @media ${({ theme }) => theme.device.tablet} {
     width: 100vw;
@@ -136,14 +139,27 @@ const Title = styled.div`
   max-width: 800px;
   align-self: center;
   text-align: center;
-  gap: 8px;
+  gap: 12px;
   margin-bottom: 24px;
 
   h1 {
+      display: flex;
+      gap: 4px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     font-size: ${({ theme }) => theme.desktop.sizes.titleSize};
     font-weight: 800;
+
+      img {
+          width: 260px;
+      }
+      
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.mobile.sizes.titleSize};
+        img {
+            width: 240px;
+        }
     }
   }
 
