@@ -119,7 +119,7 @@ export default function Sidebar() {
     <>
       <MobileTop>
         <Link href="/">
-          <img src={withBasePath('/headerLogo.png')} alt="로고" />
+          <img src={withBasePath('/logo.png')} alt="로고" />
         </Link>
         <ToggleButton onClick={() => setIsOpen(v => !v)}>
           {isOpen ? <X weight="bold" /> : <List weight="bold" />}
@@ -143,7 +143,7 @@ export default function Sidebar() {
       >
         <TopSeticon>
           <Link href="/">
-            <img src={withBasePath('/headerLogo.png')} alt="로고" />
+            <img src={withBasePath('/logo.png')} alt="로고" />
           </Link>
         </TopSeticon>
         <MiddleSeciton>

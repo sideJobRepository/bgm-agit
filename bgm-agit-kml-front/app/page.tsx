@@ -70,7 +70,7 @@ export default function Home() {
     <Wrapper>
       <Title>
         <h1>Welcome to
-          <img src={withBasePath('/headerLogo.png')} alt="로고" />
+          <img src={withBasePath('/logo.png')} alt="로고" />
         </h1>
         <h5>
           BGM 아지트의 보드게임 기록을 위한 전용 공간입니다.
@@ -103,7 +103,7 @@ export default function Home() {
               else if (swipe > 40) prev();
             }}
           >
-            {showSwipeHint && (
+            {showSwipeHint && i === 1 && (
               <SwipeHint
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
