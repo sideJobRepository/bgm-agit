@@ -150,12 +150,12 @@ const Title = styled.div`
   }
 
   span {
-    font-size: ${({ theme }) => theme.desktop.sizes.md};
+    font-size: ${({ theme }) => theme.desktop.sizes.xl};
     font-weight: 600;
     color: ${({ theme }) => theme.colors.lineColor};
 
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.desktop.sizes.md};
+      font-size: ${({ theme }) => theme.mobile.sizes.xl};
     }
   }
 `;

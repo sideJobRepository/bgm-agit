@@ -176,12 +176,12 @@ const HeroContent = styled.div`
   }
 
   span {
-    font-size: ${({ theme }) => theme.desktop.sizes.md};
+    font-size: ${({ theme }) => theme.desktop.sizes.xl};
     font-weight: 600;
     opacity: 0.8;
 
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.desktop.sizes.md};
+      font-size: ${({ theme }) => theme.mobile.sizes.xl};
     }
   }
 `;

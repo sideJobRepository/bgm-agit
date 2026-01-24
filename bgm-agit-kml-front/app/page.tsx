@@ -70,13 +70,13 @@ export default function Home() {
     <Wrapper>
       <Title>
         <h1>Welcome to
-          <img src={withBasePath('/headerLogo.png')} alt="로고" />
+          <img src={withBasePath('/logo.png')} alt="로고" />
         </h1>
-        <span>
+        <h5>
           BGM 아지트의 보드게임 기록을 위한 전용 공간입니다.
           <br />
-          여러분의 보드게임 이야기가 이곳에 쌓여갑니다.{' '}
-        </span>
+          여러분의 보드게임 이야기가 이곳에 쌓여갑니다.
+        </h5>
       </Title>
       <Slider>
         {cards.slice(0, 3).map((card, i) => (
@@ -103,7 +103,7 @@ export default function Home() {
               else if (swipe > 40) prev();
             }}
           >
-            {showSwipeHint && (
+            {showSwipeHint && i === 1 && (
               <SwipeHint
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -194,7 +194,7 @@ const Title = styled.div`
     font-weight: 800;
 
       img {
-          width: 260px;
+          width: 400px;
       }
       
     @media ${({ theme }) => theme.device.mobile} {
@@ -205,13 +205,13 @@ const Title = styled.div`
     }
   }
 
-  span {
-    font-size: ${({ theme }) => theme.desktop.sizes.md};
+  h5 {
+    font-size: ${({ theme }) => theme.desktop.sizes.h5Size};
     font-weight: 600;
     color: ${({ theme }) => theme.colors.grayColor};
 
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.desktop.sizes.md};
+      font-size: ${({ theme }) => theme.mobile.sizes.h5Size};
     }
   }
 `;
@@ -307,20 +307,20 @@ const ContentSection = styled.section`
     color: ${({ theme }) => theme.colors.softColor};
 
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
+      font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
     }
   }
 
   span {
     margin: auto;
-    font-size: ${({ theme }) => theme.desktop.sizes.md};
+    font-size: ${({ theme }) => theme.desktop.sizes.xl};
     font-weight: 600;
     word-break: keep-all;
     white-space: normal;
     color: ${({ theme }) => theme.colors.basicColor};
 
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.desktop.sizes.md};
+      font-size: ${({ theme }) => theme.mobile.sizes.xl};
     }
   }
 
@@ -333,7 +333,7 @@ const ContentSection = styled.section`
     color: ${({ theme }) => theme.colors.border};
 
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.desktop.sizes.xl};
+      font-size: ${({ theme }) => theme.mobile.sizes.xl};
     }
 
     svg {
