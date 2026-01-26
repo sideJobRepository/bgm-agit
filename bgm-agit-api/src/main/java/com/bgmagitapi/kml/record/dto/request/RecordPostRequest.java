@@ -44,6 +44,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -60,6 +61,19 @@ public class RecordPostRequest {
     
     private List<Yakumans> yakumans;
     
+    public List<Records> getRecords() {
+        if(this.records == null) {
+            this.records = new ArrayList<>();
+        }
+        return this.records;
+    }
+    
+    public List<Yakumans> getYakumans() {
+        if(this.yakumans == null) {
+            this.yakumans = new ArrayList<>();
+        }
+        return this.yakumans;
+    }
     
     @Data
     @AllArgsConstructor
