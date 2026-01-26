@@ -38,7 +38,4 @@ public class Record extends DateSuperClass {
     
     @Column(name = "BGM_AGIT_RECORD_SEAT")
     private String recordSeat;
-    
-    @Column(name = "BGM_AGIT_RECORD_TOURNAMENT_STATUS")
-    private String tournamentStatus;
 }
