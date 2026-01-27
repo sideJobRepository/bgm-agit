@@ -4,11 +4,14 @@ import com.bgmagitapi.RepositoryAndServiceTestSupport;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.record.dto.request.RecordPostRequest;
+import com.bgmagitapi.kml.record.dto.response.RecordGetResponse;
 import com.bgmagitapi.kml.record.enums.Wind;
 import com.bgmagitapi.kml.record.service.RecordService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.Arrays;
 import java.util.List;
@@ -76,6 +79,15 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
                 .yakumans(list2)
                 .build();
         ApiResponse record = recordService.createRecord(y);
+        
+    }
+    @DisplayName("")
+    @Test
+    void test2(){
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        Page<RecordGetResponse> records = recordService.getRecords(pageRequest);
+        
+        System.out.println("records = " + records);
         
     }
 }

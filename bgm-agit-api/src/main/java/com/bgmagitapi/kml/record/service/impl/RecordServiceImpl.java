@@ -6,6 +6,7 @@ import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.matchs.repository.MatchsRepository;
 import com.bgmagitapi.kml.record.dto.request.RecordPostRequest;
+import com.bgmagitapi.kml.record.dto.response.RecordGetResponse;
 import com.bgmagitapi.kml.record.entity.Record;
 import com.bgmagitapi.kml.record.enums.Wind;
 import com.bgmagitapi.kml.record.repository.RecordRepository;
@@ -17,14 +18,16 @@ import com.bgmagitapi.kml.yakuman.repository.YakumanRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.util.CalculateUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -47,6 +50,66 @@ public class RecordServiceImpl implements RecordService {
             Wind.WEST, 2,
             Wind.NORTH, 3
     );
+    
+    
+    @Override
+    public Page<RecordGetResponse> getRecords(Pageable pageable) {
+        Page<Record> records = recordRepository.findByRecords(pageable);
+        
+        Map<Long, List<Record>> groupedByMatch = records.getContent().stream()
+                .filter(r -> r.getMatchs() != null) // 방어
+                .collect(Collectors.groupingBy(r -> r.getMatchs().getId()));
+        
+        List<RecordGetResponse> list = groupedByMatch.entrySet().stream()
+                .map(entry -> {
+                    Long matchId = entry.getKey();
+                    List<Record> group = new ArrayList<>(entry.getValue()); // 정렬용 복사(안전)
+        
+                    // 점수 내림차순
+                    group.sort(Comparator.comparing(Record::getRecordScore).reversed());
+        
+                    // group 비면 응답 만들 이유 없음
+                    if (group.isEmpty()) {
+                        return null;
+                    }
+        
+                    Record first = group.get(0);
+        
+                    RecordGetResponse response = new RecordGetResponse();
+                    response.setMatchsId(matchId);
+        
+                    MatchsWind wind = first.getMatchs().getWind();
+                    LocalDateTime registDate = first.getRegistDate();
+        
+                    response.setWind(wind != null ? wind.getValue() : null);
+                    response.setRegistDate(registDate);
+        
+                    for (int i = 0; i < group.size() && i < 4; i++) {
+                        Record rec = group.get(i);
+                        String nickname = rec.getMember() != null ? rec.getMember().getBgmAgitMemberNickname() : "";
+                        String data = rec.toFormattedString(nickname);
+        
+                        switch (i) {
+                            case 0 -> response.setFirst(data);
+                            case 1 -> response.setSecond(data);
+                            case 2 -> response.setThird(data);
+                            case 3 -> response.setFourth(data);
+                        }
+                    }
+        
+                    return response;
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        
+        // 최신순 정렬 (null 방어)
+        list.sort(Comparator.comparing(
+                RecordGetResponse::getRegistDate,
+                Comparator.nullsLast(Comparator.naturalOrder())
+        ).reversed());
+        
+        return new PageImpl<>(list, pageable, list.size());
+    }
     
     @Override
     public ApiResponse createRecord(RecordPostRequest request) {
@@ -102,4 +165,5 @@ public class RecordServiceImpl implements RecordService {
         
         return new ApiResponse(200,true,"기록이 저장되었습니다.");
     }
+ 
 }

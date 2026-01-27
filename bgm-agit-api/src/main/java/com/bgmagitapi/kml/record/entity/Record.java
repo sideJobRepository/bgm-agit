@@ -3,13 +3,10 @@ package com.bgmagitapi.kml.record.entity;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import com.bgmagitapi.kml.matchs.entity.Matchs;
-import com.bgmagitapi.kml.record.dto.request.RecordPostRequest;
 import com.bgmagitapi.kml.record.enums.Wind;
 import com.bgmagitapi.kml.setting.entity.Setting;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.LocalDateTime;
 
 @Table(name = "BGM_AGIT_RECORD")
 @Entity
@@ -18,7 +15,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 public class Record extends DateSuperClass {
-
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "BGM_AGIT_RECORD_ID")
@@ -49,4 +46,8 @@ public class Record extends DateSuperClass {
     @Column(name = "BGM_AGIT_RECORD_SEAT")
     private Wind recordSeat;
     
+    public String toFormattedString(String nickname) {
+        String point = "(승점:" + this.recordPoint + ")";
+        return String.format("[%s]%s: %d %s", recordSeat.getValue(), nickname, recordScore, point);
+    }
 }
