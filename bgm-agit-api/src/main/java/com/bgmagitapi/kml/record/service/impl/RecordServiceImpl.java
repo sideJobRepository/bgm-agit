@@ -20,8 +20,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @Transactional
@@ -38,12 +41,19 @@ public class RecordServiceImpl implements RecordService {
     
     private final YakumanRepository yakumanRepository;
     
+    private static final Map<Wind, Integer> WIND_ORDER = Map.of(
+            Wind.EAST, 0,
+            Wind.SOUTH, 1,
+            Wind.WEST, 2,
+            Wind.NORTH, 3
+    );
+    
     @Override
     public ApiResponse createRecord(RecordPostRequest request) {
         
         MatchsWind wind = request.getWind();
         String tournamentStatus = request.getTournamentStatus();
-        
+        AtomicInteger rankCount = new AtomicInteger(1);
         Matchs matchs = Matchs.builder()
                 .wind(wind)
                 .tournamentStatus(tournamentStatus)
@@ -54,9 +64,18 @@ public class RecordServiceImpl implements RecordService {
         Setting setting = settingRepository.findBySetting();
         
         List<RecordPostRequest.Records> records = request.getRecords();
+        records.sort(
+            Comparator.comparing(
+                RecordPostRequest.Records::getRecordScore,
+                Comparator.reverseOrder()
+            ).thenComparing(r -> WIND_ORDER.get(r.getRecordSeat())));
+        
+        records.forEach(item ->
+            item.setRecordRank(rankCount.getAndIncrement())
+        );
+        int multiplier = CalculateUtil.seatMultiplier(matchs.getWind());
         for (RecordPostRequest.Records record : records) {
             BgmAgitMember member = memberRepository.findById(record.getMemberId()).orElseThrow(() -> new RuntimeException("존재 하지 않는 회원입니다."));
-            int multiplier = CalculateUtil.seatMultiplier(record.getRecordSeat());
             Double recordPoint = CalculateUtil.calculatePlayerPoint(record, setting, multiplier);
             Record saveRecord = Record.builder()
                     .matchs(matchs)

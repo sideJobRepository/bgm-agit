@@ -81,8 +81,8 @@ public class RecordPostRequest {
     @Builder
     public static class Records {
         private Long memberId;
-        private Integer recordRank;
         private Integer recordScore;
+        private Integer recordRank;
         private Wind recordSeat;
     }
     

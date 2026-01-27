@@ -22,6 +22,6 @@ public class Matchs {
     private MatchsWind wind;
     
     
-    @Column(name = "BGM_AGIT_RECORD_TOURNAMENT_STATUS")
+    @Column(name = "BGM_AGIT_MATCHS_TOURNAMENT_STATUS")
     private String tournamentStatus;
 }

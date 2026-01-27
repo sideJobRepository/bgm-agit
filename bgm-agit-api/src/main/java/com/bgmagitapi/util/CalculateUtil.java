@@ -1,7 +1,7 @@
 package com.bgmagitapi.util;
 
+import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.record.dto.request.RecordPostRequest;
-import com.bgmagitapi.kml.record.enums.Wind;
 import com.bgmagitapi.kml.setting.entity.Setting;
 
 public class CalculateUtil {
@@ -20,7 +20,7 @@ public class CalculateUtil {
     }
     
     
-    public static int seatMultiplier(Wind wind) {
+    public static int seatMultiplier(MatchsWind wind) {
         return switch (wind) {
             case EAST -> 1;
             case SOUTH -> 2;
