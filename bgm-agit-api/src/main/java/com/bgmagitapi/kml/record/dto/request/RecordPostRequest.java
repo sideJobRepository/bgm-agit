@@ -6,25 +6,21 @@ package com.bgmagitapi.kml.record.dto.request;
 //  "records": [
 //    {
 //      "memberId": 1,
-//      "recordRank": 1,
 //      "recordScore": 60000,
 //      "recordSeat": "EAST"
 //    },
 //    {
 //      "memberId": 2,
-//      "recordRank": 2,
 //      "recordScore": -10000,
 //      "recordSeat": "SOUTH"
 //    },
 //    {
 //      "memberId": 3,
-//      "recordRank": 3,
 //      "recordScore": -20000,
 //      "recordSeat": "WEST"
 //    },
 //    {
 //      "memberId": 4,
-//      "recordRank": 4,
 //      "recordScore": -30000,
 //      "recordSeat": "NORTH"
 //    }
@@ -32,10 +28,12 @@ package com.bgmagitapi.kml.record.dto.request;
 //  "yakuman" : [
 //    {
 //      "memberId" : 1,
-//      "yakumanName" : "구련보등"
+//      "yakumanName" : "구련보등",
+//      "yakumanCont" : "동1국 진하친 구련보등 쯔모"
 //    }
 //  ]
 //}
+
 
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.record.enums.Wind;
@@ -93,5 +91,6 @@ public class RecordPostRequest {
     public static class Yakumans {
         private Long memberId;
         private String yakumanName;
+        private String yakumanCont;
     }
 }

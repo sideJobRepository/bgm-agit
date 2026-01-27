@@ -11,7 +11,7 @@ import lombok.*;
 @Getter
 @Builder
 public class Yakuman extends DateSuperClass {
-
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "BGM_AGIT_YAKUMAN_ID")
@@ -22,4 +22,7 @@ public class Yakuman extends DateSuperClass {
     
     @Column(name = "BGM_AGIT_YAKUMAN_NAME")
     private String yakumanName;
+    
+    @Column(name = "BGM_AGIT_YAKUMAN_CONT")
+    private String yakumanCont;
 }
