@@ -54,7 +54,7 @@ public class YakumanTypeServiceImpl implements YakumanTypeService {
         Setting setting = yakumanTypeRepository.getSetting();
         return SettingGetResponse
                 .builder()
-                .settingTurning(setting.getTurning())
+                .settingTurning(setting.getTurning() * 4)
                 .build();
     }
 }
