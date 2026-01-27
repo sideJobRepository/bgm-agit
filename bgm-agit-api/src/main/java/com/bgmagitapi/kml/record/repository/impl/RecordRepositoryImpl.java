@@ -1,5 +1,8 @@
 package com.bgmagitapi.kml.record.repository.impl;
 
+import com.bgmagitapi.kml.matchs.entity.Matchs;
+import com.bgmagitapi.kml.record.dto.response.QRecordGetDetailResponse_RecordList;
+import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
 import com.bgmagitapi.kml.record.entity.Record;
 import com.bgmagitapi.kml.record.repository.query.RecordQueryRepository;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -17,7 +20,7 @@ import static com.bgmagitapi.kml.record.entity.QRecord.*;
 
 @RequiredArgsConstructor
 public class RecordRepositoryImpl implements RecordQueryRepository {
-
+    
     private final JPAQueryFactory queryFactory;
     
     @Override
@@ -34,6 +37,31 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                 .select(matchs.count())
                 .from(matchs);
         
-        return PageableExecutionUtils.getPage(result,pageable,countQuery::fetchOne);
+        return PageableExecutionUtils.getPage(result, pageable, countQuery::fetchOne);
+    }
+    
+    @Override
+    public Matchs findByMatchs(Long id) {
+        return queryFactory
+                .selectFrom(matchs)
+                .where(matchs.id.eq(id))
+                .fetchOne();
+    }
+    
+    @Override
+    public List<RecordGetDetailResponse.RecordList> findByRecord(Long id) {
+        return queryFactory
+                .select(
+                        new QRecordGetDetailResponse_RecordList(
+                                record.id,
+                                record.recordScore,
+                                record.member.bgmAgitMemberNickname,
+                                record.recordSeat
+                        )
+                )
+                .from(record)
+                .join(record.member, bgmAgitMember)
+                .where(record.matchs.id.eq(id))
+                .fetch();
     }
 }

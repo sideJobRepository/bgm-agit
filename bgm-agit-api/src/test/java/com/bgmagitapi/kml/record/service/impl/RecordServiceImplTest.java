@@ -4,6 +4,7 @@ import com.bgmagitapi.RepositoryAndServiceTestSupport;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.record.dto.request.RecordPostRequest;
+import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
 import com.bgmagitapi.kml.record.dto.response.RecordGetResponse;
 import com.bgmagitapi.kml.record.enums.Wind;
 import com.bgmagitapi.kml.record.service.RecordService;
@@ -88,6 +89,13 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
         Page<RecordGetResponse> records = recordService.getRecords(pageRequest);
         
         System.out.println("records = " + records);
+        
+    }
+    @DisplayName("")
+    @Test
+    void test3(){
+        RecordGetDetailResponse recordDetail = recordService.getRecordDetail(7L);
+        System.out.println("recordDetail = " + recordDetail);
         
     }
 }

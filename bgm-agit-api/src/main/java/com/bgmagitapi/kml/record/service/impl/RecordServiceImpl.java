@@ -6,6 +6,7 @@ import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.matchs.repository.MatchsRepository;
 import com.bgmagitapi.kml.record.dto.request.RecordPostRequest;
+import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
 import com.bgmagitapi.kml.record.dto.response.RecordGetResponse;
 import com.bgmagitapi.kml.record.entity.Record;
 import com.bgmagitapi.kml.record.enums.Wind;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
 @Transactional
 @RequiredArgsConstructor
 public class RecordServiceImpl implements RecordService {
-
+    
     private final RecordRepository recordRepository;
     
     private final MatchsRepository matchsRepository;
@@ -64,31 +65,31 @@ public class RecordServiceImpl implements RecordService {
                 .map(entry -> {
                     Long matchId = entry.getKey();
                     List<Record> group = new ArrayList<>(entry.getValue()); // 정렬용 복사(안전)
-        
+                    
                     // 점수 내림차순
                     group.sort(Comparator.comparing(Record::getRecordScore).reversed());
-        
+                    
                     // group 비면 응답 만들 이유 없음
                     if (group.isEmpty()) {
                         return null;
                     }
-        
+                    
                     Record first = group.get(0);
-        
+                    
                     RecordGetResponse response = new RecordGetResponse();
                     response.setMatchsId(matchId);
-        
+                    
                     MatchsWind wind = first.getMatchs().getWind();
                     LocalDateTime registDate = first.getRegistDate();
-        
+                    
                     response.setWind(wind != null ? wind.getValue() : null);
                     response.setRegistDate(registDate);
-        
+                    
                     for (int i = 0; i < group.size() && i < 4; i++) {
                         Record rec = group.get(i);
                         String nickname = rec.getMember() != null ? rec.getMember().getBgmAgitMemberNickname() : "";
                         String data = rec.toFormattedString(nickname);
-        
+                        
                         switch (i) {
                             case 0 -> response.setFirst(data);
                             case 1 -> response.setSecond(data);
@@ -96,7 +97,7 @@ public class RecordServiceImpl implements RecordService {
                             case 3 -> response.setFourth(data);
                         }
                     }
-        
+                    
                     return response;
                 })
                 .filter(Objects::nonNull)
@@ -109,6 +110,18 @@ public class RecordServiceImpl implements RecordService {
         ).reversed());
         
         return new PageImpl<>(list, pageable, list.size());
+    }
+    
+    @Override
+    public RecordGetDetailResponse getRecordDetail(Long id) {
+        
+        Matchs matchs = recordRepository.findByMatchs(id);
+        
+        List<RecordGetDetailResponse.RecordList> result = recordRepository.findByRecord(id);
+        
+        return new RecordGetDetailResponse(matchs.getId()
+                , matchs.getWind()
+                , result);
     }
     
     @Override
@@ -128,13 +141,13 @@ public class RecordServiceImpl implements RecordService {
         
         List<RecordPostRequest.Records> records = request.getRecords();
         records.sort(
-            Comparator.comparing(
-                RecordPostRequest.Records::getRecordScore,
-                Comparator.reverseOrder()
-            ).thenComparing(r -> WIND_ORDER.get(r.getRecordSeat())));
+                Comparator.comparing(
+                        RecordPostRequest.Records::getRecordScore,
+                        Comparator.reverseOrder()
+                ).thenComparing(r -> WIND_ORDER.get(r.getRecordSeat())));
         
         records.forEach(item ->
-            item.setRecordRank(rankCount.getAndIncrement())
+                item.setRecordRank(rankCount.getAndIncrement())
         );
         int multiplier = CalculateUtil.seatMultiplier(matchs.getWind());
         for (RecordPostRequest.Records record : records) {
@@ -163,7 +176,7 @@ public class RecordServiceImpl implements RecordService {
             yakumanRepository.save(saveYakuman);
         }
         
-        return new ApiResponse(200,true,"기록이 저장되었습니다.");
+        return new ApiResponse(200, true, "기록이 저장되었습니다.");
     }
- 
+    
 }

@@ -25,6 +25,10 @@ public class RecordController {
         Page<RecordGetResponse> records = recordService.getRecords(pageable);
         return PageResponse.from(records);
     }
+    @GetMapping("/record/{id}")
+    public String getDetailRecord(@PathVariable Long id){
+        return null;
+    }
     
     @PostMapping("/record")
     public ApiResponse createRecord(@Validated @RequestBody RecordPostRequest request) {
