@@ -74,51 +74,39 @@ public class RecordServiceImpl implements RecordService {
         
         List<RecordGetResponse> list = groupedByMatch.entrySet().stream()
                 .map(entry -> {
-                    Long matchId = entry.getKey();
-                    List<Record> group = new ArrayList<>(entry.getValue()); // 정렬용 복사(안전)
-                    
+                    List<Record> group = new ArrayList<>(entry.getValue());
+        
                     // 점수 내림차순
                     group.sort(Comparator.comparing(Record::getRecordScore).reversed());
-                    
-                    // group 비면 응답 만들 이유 없음
-                    if (group.isEmpty()) {
-                        return null;
-                    }
-                    
-                    Record first = group.get(0);
-                    
+        
+                    if (group.isEmpty()) return null;
+        
                     RecordGetResponse response = new RecordGetResponse();
-                    response.setMatchsId(matchId);
-                    
-                    MatchsWind wind = first.getMatchs().getWind();
-                    LocalDateTime registDate = first.getRegistDate();
-                    
-                    response.setWind(wind != null ? wind.getValue() : null);
-                    response.setRegistDate(registDate);
-                    
+                    response.setMatchsId(entry.getKey());
+                    response.setRegistDate(group.get(0).getRegistDate());
+        
                     for (int i = 0; i < group.size() && i < 4; i++) {
                         Record rec = group.get(i);
-                        String nickname = rec.getMember() != null ? rec.getMember().getBgmAgitMemberNickname() : "";
-                        String data = rec.toFormattedString(nickname);
-                        
-                        switch (i) {
-                            case 0 -> response.setFirst(data);
-                            case 1 -> response.setSecond(data);
-                            case 2 -> response.setThird(data);
-                            case 3 -> response.setFourth(data);
-                        }
+        
+                        RecordGetResponse.Row row = new RecordGetResponse.Row();
+                        row.setSeat(rec.getRecordSeat().getValue());
+                        row.setRank(i + 1);
+                        row.setNickname(rec.getMember() != null ? rec.getMember().getBgmAgitMemberNickname() : "");
+                        row.setScore(rec.getRecordScore());
+                        row.setPoint(rec.getRecordPoint());
+                        row.setWinner(i == 0); // 1등만 true
+        
+                        response.getRows().add(row);
                     }
-                    
+        
                     return response;
                 })
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-        
-        // 최신순 정렬 (null 방어)
-        list.sort(Comparator.comparing(
-                RecordGetResponse::getRegistDate,
-                Comparator.nullsLast(Comparator.naturalOrder())
-        ).reversed());
+                .sorted(Comparator.comparing(
+                        RecordGetResponse::getRegistDate
+                ).reversed())
+                .toList();
+
         
         return new PageImpl<>(list, pageable, list.size());
     }
@@ -157,8 +145,6 @@ public class RecordServiceImpl implements RecordService {
                 .build();
         
         matchsRepository.save(matchs);
-        
-        
         
         List<RecordPostRequest.Records> records = request.getRecords();
         records.sort(

@@ -8,6 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -15,12 +17,25 @@ import java.time.LocalDateTime;
 @Builder
 public class RecordGetResponse {
     
+
     private Long matchsId;
-    private String wind;
-    private String first;
-    private String second;
-    private String third;
-    private String fourth;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime registDate;
+    private List<Row> rows;
+    
+    public List<Row> getRows() {
+        if(this.rows == null) {
+            this.rows = new ArrayList<>();
+        }
+        return this.rows;
+    }
+    
+    @Data
+    public static class Row {
+        private String seat;      // 東 / 南 / 西 / 北
+        private Integer rank;
+        private String nickname;
+        private Integer score;
+        private Double point;
+        private boolean winner;   // 1등 강조용
+    }
 }

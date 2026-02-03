@@ -125,6 +125,5 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
     void test3(){
         RecordGetDetailResponse recordDetail = recordService.getRecordDetail(1L);
         System.out.println("recordDetail = " + recordDetail);
-        
     }
 }

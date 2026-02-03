@@ -46,8 +46,4 @@ public class Record extends DateSuperClass {
     @Column(name = "BGM_AGIT_RECORD_SEAT")
     private Wind recordSeat;
     
-    public String toFormattedString(String nickname) {
-        String point = "(승점:" + this.recordPoint + ")";
-        return String.format("[%s]%s: %d %s", recordSeat.getValue(), nickname, recordScore, point);
-    }
 }
