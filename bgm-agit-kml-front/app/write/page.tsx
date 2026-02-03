@@ -385,7 +385,7 @@ export default function Write() {
                 <textarea
                   value={memo}
                   onChange={(e) => setMemo(e.target.value)}
-                  placeholder="예) 동 1국 진하린 수련활동 3코모"
+                  placeholder="예) 동 1국 진하친 이지금 사암각 단기 론 오름 -진하쏘임"
                   rows={5}
                 />
               </Field>
