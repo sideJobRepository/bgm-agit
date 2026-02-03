@@ -36,12 +36,23 @@ export default function Write() {
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
+  //이미지
+  const [heroImages, setHeroImages] = useState<string[]>([]);
+
+  const handleImageChange = (idx: number, file: File) => {
+    const url = URL.createObjectURL(file);
+
+    setHeroImages((prev) => {
+      const next = [...prev];
+      next[idx] = url;
+      return next;
+    });
+  };
+
   const fetchRecordUser = useFetchRecordUser();
   const fetchYakuman = useFetchYakuman();
   const recordUser = useRecordUserStore((state) => state.recordUser);
   const yakumanData = useYakumanStore((state) => state.yakuman);
-  console.log('recordUser', recordUser);
-  console.log('yakumanData', yakumanData);
 
   /** 장 선택 */
   const [leader, setLeader] = useState('');
@@ -104,42 +115,42 @@ export default function Write() {
     const result = await confirmDialog('저장 하시겠습니까?', 'warning');
     if (!result.isConfirmed) return;
 
-    // records → rank 계산
-    const rankedRecords = Object.entries(records)
-      .map(([seat, data]) => ({
-        seat,
-        ...data,
-      }))
-      .sort((a, b) => b.score - a.score)
-      .map((r, idx) => ({
-        memberId: r.userId,
-        recordScore: r.score,
-        recordRank: idx + 1,
-        recordSeat: r.seat, // EAST | SOUTH | WEST | NORTH
-      }));
+    const formData = new FormData();
 
-    // yakumans
-    const yakumans = yakumanRows
-      .filter((r) => r.userId && r.yakumanId)
-      .map((r) => {
-        const yakuman = yakumanData.find((y) => y.id === r.yakumanId);
-        return {
-          memberId: r.userId,
-          yakumanName: yakuman?.yakumanName,
-        };
-      });
+    /** 기본 값 */
+    formData.append('wind', leader);
+    formData.append('tournamentStatus', 'N');
 
-    //body 완성
-    const body = {
-      wind: leader,
-      tournamentStatus: 'N',
-      records: rankedRecords,
-      yakumans,
-    };
+    /** records */
+    rankedRecords.forEach((r, idx) => {
+      if (!r.memberId) return;
+
+      formData.append(`records[${idx}].memberId`, String(r.memberId));
+      formData.append(`records[${idx}].recordScore`, String(r.recordScore));
+      formData.append(`records[${idx}].recordRank`, String(r.recordRank));
+      formData.append(`records[${idx}].recordSeat`, r.recordSeat);
+    });
+
+    /** yakumans */
+    yakumanRows.forEach((row, idx) => {
+      if (!row.userId || !row.yakumanId) return;
+
+      const yakuman = yakumanData.find((y) => y.id === row.yakumanId);
+      if (!yakuman) return;
+
+      formData.append(`yakumans[${idx}].memberId`, String(row.userId));
+      formData.append(`yakumans[${idx}].yakumanName`, yakuman.yakumanName);
+
+      formData.append(`yakumans[${idx}].yakumanCont`, memo || `${yakuman.yakumanName} 역만`);
+
+      if (row.file) {
+        formData.append(`yakumans[${idx}].files`, row.file);
+      }
+    });
 
     insert({
       url: '/bgm-agit/record',
-      body,
+      body: formData,
       ignoreErrorRedirect: true,
       onSuccess: async () => {
         await alertDialog('기록이 작성되었습니다.', 'success');
@@ -272,6 +283,8 @@ export default function Write() {
             ? recordUser
             : recordUser.filter((u) => u.nickName.toLowerCase().includes(row.search.toLowerCase()));
 
+          const inputId = `yakuman-file-${idx}`;
+
           return (
             <Center key={`yakuman-${idx}`} $color="#f3f3f3">
               <WriteCroup>
@@ -342,21 +355,24 @@ export default function Write() {
                 </FieldsWrapper>
               </WriteCroup>
               <ImageOverlay>
-                <UploadButton onClick={() => inputRef.current?.click()}>
+                {heroImages[idx] && <Img src={heroImages[idx]} alt="상단 이미지" />}
+
+                <UploadLabel htmlFor={inputId}>
                   <h5>이미지 첨부</h5>
                   <span>드래그하거나 클릭하세요.</span>
-                </UploadButton>
+                </UploadLabel>
+
                 <HiddenInput
-                  ref={inputRef}
+                  id={inputId}
                   type="file"
                   accept="image/*"
-                  onChange={(e) =>
-                    setYakumanRows((prev) =>
-                      prev.map((r, i) =>
-                        i === idx ? { ...r, file: e.target.files?.[0] ?? null } : r
-                      )
-                    )
-                  }
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+
+                    setYakumanRows((prev) => prev.map((r, i) => (i === idx ? { ...r, file } : r)));
+
+                    if (file) handleImageChange(idx, file);
+                  }}
                 />
               </ImageOverlay>
 
@@ -492,6 +508,8 @@ const TableBox = styled.div`
   flex-direction: column;
   gap: 24px;
   padding: 24px 8px;
+  max-width: 800px;
+  margin: 0 auto;
 
   select {
     border: none;
@@ -741,7 +759,8 @@ const ImageOverlay = styled.div`
   border-radius: 4px;
 `;
 
-const UploadButton = styled.button`
+const UploadLabel = styled.label`
+  position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -786,4 +805,10 @@ const UploadButton = styled.button`
 
 const HiddenInput = styled.input`
   display: none;
+`;
+
+const Img = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 `;

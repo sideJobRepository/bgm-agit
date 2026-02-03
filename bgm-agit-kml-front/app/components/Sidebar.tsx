@@ -15,6 +15,7 @@ import {
   SignOut,
   List,
   X,
+  Gear,
 } from 'phosphor-react';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -27,10 +28,7 @@ import api from '@/lib/axiosInstance';
 import { tokenStore } from '@/services/tokenStore';
 import { alertDialog, confirmDialog } from '@/utils/alert';
 
-
-
 export default function Sidebar() {
-
   //navigation
   const pathname = usePathname();
   const router = useRouter();
@@ -38,10 +36,9 @@ export default function Sidebar() {
   useFetchMainMenu();
   const menuData = useKmlMenuStore((state) => state.menu);
 
-  console.log("menu", menuData)
+  console.log('menu', menuData);
 
-  const user = useUserStore((state) =>state.user);
-
+  const user = useUserStore((state) => state.user);
 
   //모바일 토글
   const [isOpen, setIsOpen] = useState(false);
@@ -60,9 +57,10 @@ export default function Sidebar() {
     SignIn,
     List,
     X,
+    Gear,
   };
 
-  const resetUser = useUserStore((state) => state.clearUser)
+  const resetUser = useUserStore((state) => state.clearUser);
 
   const logout = async () => {
     const result = await confirmDialog('로그아웃 하시겠습니까?', 'warning');
@@ -108,9 +106,9 @@ export default function Sidebar() {
   }, [pathname]);
 
   useEffect(() => {
-    if(pathname === '/login'){
-      if(user){
-          router.replace('/');
+    if (pathname === '/login') {
+      if (user) {
+        router.replace('/');
       }
     }
   }, [pathname, user]);
@@ -121,7 +119,7 @@ export default function Sidebar() {
         <Link href="/">
           <img src={withBasePath('/logo.png')} alt="로고" />
         </Link>
-        <ToggleButton onClick={() => setIsOpen(v => !v)}>
+        <ToggleButton onClick={() => setIsOpen((v) => !v)}>
           {isOpen ? <X weight="bold" /> : <List weight="bold" />}
         </ToggleButton>
       </MobileTop>
@@ -149,7 +147,7 @@ export default function Sidebar() {
         <MiddleSeciton>
           <ul>
             {menuData
-              ?.filter(menu => menu.menuOrders < 3)
+              ?.filter((menu) => menu.menuOrders < 3)
               ?.map((menu) => {
                 const IconComponent = iconMap[menu.icon as keyof typeof iconMap];
 
@@ -164,7 +162,7 @@ export default function Sidebar() {
               })}
             <Divider />
             {menuData
-              ?.filter(menu => menu.menuOrders > 2)
+              ?.filter((menu) => menu.menuOrders > 2)
               ?.map((menu) => {
                 const IconComponent = iconMap[menu.icon as keyof typeof iconMap];
 
@@ -189,17 +187,22 @@ export default function Sidebar() {
             </MenuLi>
             <MenuLi $active={pathname === '/login'}>
               {user ? (
-                <a href="#" onClick={(e) => {
-                  e.preventDefault();
-                  logout();
-                }}>
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    logout();
+                  }}
+                >
                   <SignOut weight="fill" />
                   로그아웃
-                </a>) : (
+                </a>
+              ) : (
                 <Link href="/login">
                   <SignIn weight="fill" />
                   로그인
-                </Link>)}
+                </Link>
+              )}
             </MenuLi>
           </ul>
         </BottomSeciton>
@@ -225,14 +228,13 @@ const MobileTop = styled.div`
     z-index: 2;
     border-bottom: 10px solid rgb(244 244 245);
 
-      a {
-          display: flex;
-          
-          img {
-              width: 124px;
-          }
-      }
+    a {
+      display: flex;
 
+      img {
+        width: 124px;
+      }
+    }
   }
 `;
 
@@ -259,14 +261,14 @@ const SidebarWrapper = styled(motion.aside)`
   flex-direction: column;
   border: 20px solid rgb(244 244 245);
   background: ${({ theme }) => theme.colors.whiteColor};
-    overflow-y: auto;
-    
+  overflow-y: auto;
+
   @media ${({ theme }) => theme.device.tablet} {
     position: fixed;
     left: 0;
     right: 0;
-    top: 64px;  
-      height: calc(100dvh - 64px);
+    top: 64px;
+    height: calc(100dvh - 64px);
     padding-top: 20px;
     z-index: 1;
   }
@@ -300,8 +302,7 @@ const MiddleSeciton = styled.div`
   justify-content: center;
   display: flex;
   flex-direction: column;
-    padding: 16px 0;
-
+  padding: 16px 0;
 `;
 
 const MenuLi = styled.li<{ $active: boolean }>`
