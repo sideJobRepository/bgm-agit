@@ -2,6 +2,7 @@ package com.bgmagitapi.advice;
 
 import com.bgmagitapi.advice.exception.CustomException;
 import com.bgmagitapi.advice.exception.ReservationConflictException;
+import com.bgmagitapi.advice.exception.ValidException;
 import com.bgmagitapi.advice.response.ErrorMessageResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -21,7 +22,6 @@ import java.util.List;
 public class ExceptionController {
     
     /**
-     * 
      * 검증 예외 처리
      */
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -35,8 +35,8 @@ public class ExceptionController {
         return errorResponse;
     }
     
-     /**
-     * 데이터베이스 관련 예외 처리 
+    /**
+     * 데이터베이스 관련 예외 처리
      */
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(DataAccessException.class)
@@ -60,15 +60,6 @@ public class ExceptionController {
                 "잠시후 다시 시도해 주세요"
         );
     }
-    @ResponseStatus(HttpStatus.CONFLICT)
-    @ExceptionHandler(ReservationConflictException.class)
-    public ErrorMessageResponse handleReservationConflictException(CustomException e) {
-        log.info("공통 예외 ", e);
-        return new ErrorMessageResponse(
-                String.valueOf(HttpStatus.CONFLICT.value()),
-                e.getMessage()
-        );
-    }
     
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(CustomException.class)
@@ -82,11 +73,18 @@ public class ExceptionController {
     
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(NoResourceFoundException.class)
-    public ErrorMessageResponse handleNoResourceFoundException(NoResourceFoundException  e) {
+    public ErrorMessageResponse handleNoResourceFoundException(NoResourceFoundException e) {
         log.info("404 {}", e.getMessage());
         return new ErrorMessageResponse(
                 String.valueOf(HttpStatus.NOT_FOUND.value()),
                 e.getMessage()
         );
+    }
+    
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(ValidException.class)
+    public ErrorMessageResponse customException(ValidException e) {
+        log.info("공통 예외 ", e);
+        return new ErrorMessageResponse(String.valueOf(e.getStatus()), e.getMessage());
     }
 }

@@ -1,5 +1,6 @@
 package com.bgmagitapi.kml.record.service.impl;
 
+import com.bgmagitapi.advice.exception.ValidException;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.config.S3FileUtils;
 import com.bgmagitapi.config.UploadResult;
@@ -136,6 +137,17 @@ public class RecordServiceImpl implements RecordService {
     @Override
     public ApiResponse createRecord(RecordPostRequest request) {
         
+        Integer sum = request.getRecords()
+                .stream()
+                .mapToInt(RecordPostRequest.Records::getRecordScore).sum();
+        Setting setting = settingRepository.findBySetting();
+        Integer turning = setting.getTurning() * 4;
+        if(!sum.equals(turning)){
+            String message = String.format("입력된 점수 합계(%d)가 기준 점수(%d)와 일치하지 않습니다.", sum, turning);
+            throw new ValidException(message);
+        }
+        
+        
         MatchsWind wind = request.getWind();
         String tournamentStatus = request.getTournamentStatus();
         AtomicInteger rankCount = new AtomicInteger(1);
@@ -146,7 +158,7 @@ public class RecordServiceImpl implements RecordService {
         
         matchsRepository.save(matchs);
         
-        Setting setting = settingRepository.findBySetting();
+        
         
         List<RecordPostRequest.Records> records = request.getRecords();
         records.sort(
