@@ -182,7 +182,7 @@ export default function Sidebar() {
         <BottomSeciton>
           <ul>
             <MenuLi $active={false}>
-              <Link href="/convert">
+              <Link href="/write">
                 <PencilSimple weight="fill" />
                 기록 입력
               </Link>
