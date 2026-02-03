@@ -73,7 +73,12 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
         File file1 = new File("src/test/java/com/bgmagitapi/file/사암각.png");
         FileInputStream fis1 = new FileInputStream(file1);
         
+          
+        File file2 = new File("src/test/java/com/bgmagitapi/file/구련보등.png");
+        FileInputStream fis2 = new FileInputStream(file1);
+        
         MockMultipartFile multipartFile1 = new MockMultipartFile("파일1", file1.getName(), "image/jpeg", fis1);
+        MockMultipartFile multipartFile2 = new MockMultipartFile("파일1", file2.getName(), "image/jpeg", fis2);
         
         
         RecordPostRequest.Yakumans list = RecordPostRequest
@@ -81,16 +86,27 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
                 .builder()
                 .memberId(1L)
                 .yakumanName("사암각")
+                .yakumanCont("사암각 쯔모")
                 .files(multipartFile1)
                 .build();
-        List<RecordPostRequest.Yakumans> list2 = Arrays.asList(list);
+        
+        
+        RecordPostRequest.Yakumans list2 = RecordPostRequest
+                .Yakumans
+                .builder()
+                .memberId(6L)
+                .yakumanName("구련보등")
+                .yakumanCont("구련보등 쯔모")
+                .files(null)
+                .build();
+        List<RecordPostRequest.Yakumans> result = Arrays.asList(list,list2);
         
         RecordPostRequest y = RecordPostRequest
                 .builder()
                 .wind(MatchsWind.SOUTH)
                 .tournamentStatus("Y")
                 .records(list1)
-                .yakumans(list2)
+                .yakumans(result)
                 .build();
         ApiResponse record = recordService.createRecord(y);
         System.out.println("record = " + record);
@@ -107,7 +123,7 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
     @DisplayName("")
     @Test
     void test3(){
-        RecordGetDetailResponse recordDetail = recordService.getRecordDetail(7L);
+        RecordGetDetailResponse recordDetail = recordService.getRecordDetail(1L);
         System.out.println("recordDetail = " + recordDetail);
         
     }

@@ -3,6 +3,7 @@ package com.bgmagitapi.kml.record.controller;
 
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.record.dto.request.RecordPostRequest;
+import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
 import com.bgmagitapi.kml.record.dto.response.RecordGetResponse;
 import com.bgmagitapi.kml.record.service.RecordService;
 import com.bgmagitapi.page.PageResponse;
@@ -26,8 +27,8 @@ public class RecordController {
         return PageResponse.from(records);
     }
     @GetMapping("/record/{id}")
-    public String getDetailRecord(@PathVariable Long id){
-        return null;
+    public RecordGetDetailResponse getDetailRecord(@PathVariable Long id){
+        return recordService.getRecordDetail(id);
     }
     
     @PostMapping("/record")

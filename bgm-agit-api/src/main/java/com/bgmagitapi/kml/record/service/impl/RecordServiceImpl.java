@@ -127,9 +127,10 @@ public class RecordServiceImpl implements RecordService {
         
         Matchs matchs = recordRepository.findByMatchs(id);
         
-        List<RecordGetDetailResponse.RecordList> result = recordRepository.findByRecord(id);
+        List<RecordGetDetailResponse.RecordList> records = recordRepository.findByRecord(id);
+        List<RecordGetDetailResponse.YakumanList> yakumanLists =  yakumanRepository.findByMatchsYakuman(id);
         
-        return new RecordGetDetailResponse(matchs.getId(), matchs.getWind(), result);
+        return new RecordGetDetailResponse(matchs.getId(), matchs.getWind(), records,yakumanLists);
     }
     
     @Override
@@ -178,8 +179,10 @@ public class RecordServiceImpl implements RecordService {
             String yakumanName = yakuman.getYakumanName();
             Yakuman saveYakuman = Yakuman
                     .builder()
-                    .memberId(member.getBgmAgitMemberId())
+                    .member(member)
+                    .matchs(matchs)
                     .yakumanName(yakumanName)
+                    .yakumanCont(yakuman.getYakumanCont())
                     .build();
             yakumanRepository.save(saveYakuman);
             UploadResult result = s3FileUtils.storeFile(yakuman.getFiles(), "yakuman");

@@ -20,6 +20,7 @@ public class RecordGetDetailResponse {
     private Long matchsId;
     private MatchsWind wind;
     private List<RecordList> records;
+    private List<YakumanList> yakumans;
     
     @Data
     @NoArgsConstructor
@@ -36,6 +37,24 @@ public class RecordGetDetailResponse {
             this.recordScore = recordScore;
             this.nickName = nickName;
             this.recordSeat = recordSeat;
+        }
+    }
+    
+    
+    @Data
+    @NoArgsConstructor
+    public static class YakumanList{
+        private Long yakumanId;
+        private String yakumanName;
+        private String yakumanCont;
+        private String imageUrl;
+        
+        @QueryProjection
+        public YakumanList(Long yakumanId, String yakumanName, String yakumanCont, String imageUrl) {
+            this.yakumanId = yakumanId;
+            this.yakumanName = yakumanName;
+            this.yakumanCont = yakumanCont;
+            this.imageUrl = imageUrl;
         }
     }
 }

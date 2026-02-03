@@ -1,6 +1,8 @@
 package com.bgmagitapi.kml.yakuman.entity;
 
+import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
+import com.bgmagitapi.kml.matchs.entity.Matchs;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,8 +19,13 @@ public class Yakuman extends DateSuperClass {
     @Column(name = "BGM_AGIT_YAKUMAN_ID")
     private Long id;
     
-    @Column(name = "BGM_AGIT_MEMBER_ID")
-    private Long memberId;
+    @JoinColumn(name = "BGM_AGIT_MEMBER_ID")
+    @ManyToOne(fetch = FetchType.LAZY)
+    private BgmAgitMember member;
+    
+    @JoinColumn(name = "BGM_AGIT_MATCHS_ID")
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Matchs matchs;
     
     @Column(name = "BGM_AGIT_YAKUMAN_NAME")
     private String yakumanName;
