@@ -24,4 +24,9 @@ public class Matchs {
     
     @Column(name = "BGM_AGIT_MATCHS_TOURNAMENT_STATUS")
     private String tournamentStatus;
+    
+    public void modify(MatchsWind wind, String tournamentStatus) {
+        this.wind = wind;
+        this.tournamentStatus = tournamentStatus;
+    }
 }

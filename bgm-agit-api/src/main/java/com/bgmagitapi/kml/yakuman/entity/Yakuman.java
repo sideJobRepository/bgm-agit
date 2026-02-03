@@ -3,6 +3,7 @@ package com.bgmagitapi.kml.yakuman.entity;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import com.bgmagitapi.kml.matchs.entity.Matchs;
+import com.bgmagitapi.kml.record.dto.request.RecordPutRequest;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,4 +33,10 @@ public class Yakuman extends DateSuperClass {
     
     @Column(name = "BGM_AGIT_YAKUMAN_CONT")
     private String yakumanCont;
+    
+    public void modify(RecordPutRequest.Yakumans dto, BgmAgitMember bgmAgitMember) {
+        this.yakumanName = dto.getYakumanName();
+        this.yakumanCont = dto.getYakumanCont();
+        this.member = bgmAgitMember;
+    }
 }

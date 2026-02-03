@@ -11,6 +11,7 @@ import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.matchs.repository.MatchsRepository;
 import com.bgmagitapi.kml.record.dto.request.RecordPostRequest;
+import com.bgmagitapi.kml.record.dto.request.RecordPutRequest;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
 import com.bgmagitapi.kml.record.dto.response.RecordGetResponse;
 import com.bgmagitapi.kml.record.entity.Record;
@@ -200,8 +201,132 @@ public class RecordServiceImpl implements RecordService {
     }
     
     @Override
-    public ApiResponse updateRecord(RecordPostRequest request) {
-        return null;
+    public ApiResponse updateRecord(RecordPutRequest request) {
+        Long matchsId = request.getMatchsId();
+        //  Match 조회
+        Matchs matchs = matchsRepository.findById(matchsId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 경기입니다."));
+    
+        // 점수 합 검증
+        Integer sum = request.getRecords().stream()
+                .mapToInt(RecordPutRequest.Records::getRecordScore)
+                .sum();
+    
+        Setting setting = settingRepository.findBySetting();
+        Integer turning = setting.getTurning() * 4;
+    
+        if (!sum.equals(turning)) {
+            throw new ValidException(
+                    String.format(
+                            "입력된 점수 합계(%d)가 기준 점수(%d)와 일치하지 않습니다.",
+                            sum, turning
+                    )
+            );
+        }
+    
+        // Match 기본 정보 수정
+        matchs.modify(request.getWind(),request.getTournamentStatus());
+    
+        // =========================
+        // Record 수정
+        // =========================
+        List<Record> records = recordRepository.findByRecordByMatchsId(matchsId);
+        Map<Long, Record> recordMap = records.stream()
+                .collect(Collectors.toMap(Record::getId, r -> r));
+    
+        // 정렬 + rank 재계산
+        List<RecordPutRequest.Records> sorted =
+                new ArrayList<>(request.getRecords());
+    
+        sorted.sort(
+                Comparator.comparing(
+                        RecordPutRequest.Records::getRecordScore,
+                        Comparator.reverseOrder()
+                ).thenComparing(r -> WIND_ORDER.get(r.getRecordSeat()))
+        );
+    
+        AtomicInteger rankCounter = new AtomicInteger(1);
+        int multiplier = CalculateUtil.seatMultiplier(matchs.getWind());
+    
+        Set<Long> requestRecordIds = new HashSet<>();
+    
+        for (RecordPutRequest.Records dto : sorted) {
+    
+            dto.setRecordRank(rankCounter.getAndIncrement());
+    
+            Record record = recordMap.get(dto.getRecordId());
+            if (record == null) {
+                throw new RuntimeException("존재하지 않는 Record ID: " + dto.getRecordId());
+            }
+    
+            Double point = CalculateUtil.calculatePlayerPoint(dto, setting, multiplier);
+    
+            
+            record.modify(dto,point);
+            
+            requestRecordIds.add(record.getId());
+        }
+    
+        // 삭제 대상 Record
+        records.stream()
+                .filter(r -> !requestRecordIds.contains(r.getId()))
+                .forEach(recordRepository::delete);
+    
+        // =========================
+        // Yakuman 수정
+        // =========================
+        List<Yakuman> existingYakumans = yakumanRepository.findByYakumanMatchesId(matchsId);
+        Map<Long, Yakuman> yakumanMap = existingYakumans.stream()
+                .collect(Collectors.toMap(Yakuman::getId, y -> y));
+    
+        Set<Long> requestYakumanIds = new HashSet<>();
+    
+        for (RecordPutRequest.Yakumans dto : request.getYakumans()) {
+    
+            Yakuman yakuman = yakumanMap.get(dto.getYakumanId());
+            if (yakuman == null) {
+                throw new RuntimeException("존재하지 않는 Yakuman ID: " + dto.getYakumanId());
+            }
+            
+            BgmAgitMember bgmAgitMember = memberRepository.findById(dto.getMemberId()).orElseThrow(() -> new RuntimeException("존재하지않는 회원입니다."));
+            yakuman.modify(dto,bgmAgitMember);
+    
+            // 파일 교체 시
+            if (dto.getFiles() != null && !dto.getFiles().isEmpty()) {
+    
+                // 기존 파일 삭제
+                commonFileRepository.findByDeleteFile(
+                        yakuman.getId(), BgmAgitCommonType.YAKUMAN
+                );
+    
+                UploadResult result =
+                        s3FileUtils.storeFile(dto.getFiles(), "yakuman");
+    
+                if (result != null) {
+                    commonFileRepository.save(
+                            BgmAgitCommonFile.builder()
+                                    .bgmAgitCommonFileTargetId(yakuman.getId())
+                                    .bgmAgitCommonFileType(BgmAgitCommonType.YAKUMAN)
+                                    .bgmAgitCommonFileUrl(result.getUrl())
+                                    .bgmAgitCommonFileUuidName(result.getUuid())
+                                    .bgmAgitCommonFileName(result.getOriginalFilename())
+                                    .build()
+                    );
+                }
+            }
+    
+            requestYakumanIds.add(yakuman.getId());
+        }
+    
+        // 삭제 대상 Yakuman
+        existingYakumans.stream()
+                .filter(y -> !requestYakumanIds.contains(y.getId()))
+                .forEach(y -> {
+                    commonFileRepository.findByDeleteFile(y.getId(), BgmAgitCommonType.YAKUMAN);
+                    yakumanRepository.delete(y);
+                });
+    
+        return new ApiResponse(200, true, "기록이 수정되었습니다.");
     }
     
 }

@@ -15,4 +15,6 @@ public interface RecordQueryRepository {
     Matchs findByMatchs(Long id);
     
     List<RecordGetDetailResponse.RecordList> findByRecord(Long id);
+    
+    List<Record> findByRecordByMatchsId(Long id);
 }

@@ -65,4 +65,12 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                 .where(record.matchs.id.eq(id))
                 .fetch();
     }
+    
+    @Override
+    public List<Record> findByRecordByMatchsId(Long id) {
+        return queryFactory
+                .selectFrom(record)
+                .where(record.matchs.id.eq(id))
+                .fetch();
+    }
 }

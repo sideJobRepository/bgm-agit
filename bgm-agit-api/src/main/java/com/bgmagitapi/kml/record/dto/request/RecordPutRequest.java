@@ -54,6 +54,8 @@ import java.util.List;
 @Builder
 public class RecordPutRequest {
 
+    private Long matchsId;
+    
     private MatchsWind wind;
     
     private String tournamentStatus;
@@ -82,6 +84,7 @@ public class RecordPutRequest {
     @Builder
     public static class Records {
         private Long recordId;
+        private Long memberId;
         private Integer recordScore;
         private Integer recordRank;
         private Wind recordSeat;
@@ -93,6 +96,7 @@ public class RecordPutRequest {
     @Builder
     public static class Yakumans {
         private Long yakumanId;
+        private Long memberId;
         private String yakumanName;
         @NotBlank(message = "내용을 입력해주세요")
         private String yakumanCont;

@@ -4,6 +4,7 @@ import com.bgmagitapi.entity.QBgmAgitMember;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.kml.record.dto.response.QRecordGetDetailResponse_YakumanList;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
+import com.bgmagitapi.kml.yakuman.entity.Yakuman;
 import com.bgmagitapi.kml.yakuman.repository.query.YakumanQueryRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,14 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
                 .on(yakuman.id.eq(bgmAgitCommonFile.bgmAgitCommonFileTargetId), bgmAgitCommonFile.bgmAgitCommonFileType.eq(BgmAgitCommonType.YAKUMAN))
                 .leftJoin(yakuman.member,bgmAgitMember)
                 .where(yakuman.matchs.id.eq(id))
+                .fetch();
+    }
+    
+    @Override
+    public List<Yakuman> findByYakumanMatchesId(Long matchsId) {
+        return queryFactory
+                .selectFrom(yakuman)
+                .where(yakuman.matchs.id.eq(matchsId))
                 .fetch();
     }
 }
