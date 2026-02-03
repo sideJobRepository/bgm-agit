@@ -13,7 +13,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,7 +31,7 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
     
     @DisplayName("")
     @Test
-    void test1(){
+    void test1() throws IOException {
     // [동]진하: 41700,[남]만두: 36900,[서]민준: 24500,[북]쵸리: 16900
         
         RecordPostRequest.Records build1 = RecordPostRequest.
@@ -64,11 +69,19 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
                 .build();
         
         List<RecordPostRequest.Records> list1 = Arrays.asList(build1, build2, build3, build4);
+        
+        File file1 = new File("src/test/java/com/bgmagitapi/file/사암각.png");
+        FileInputStream fis1 = new FileInputStream(file1);
+        
+        MockMultipartFile multipartFile1 = new MockMultipartFile("파일1", file1.getName(), "image/jpeg", fis1);
+        
+        
         RecordPostRequest.Yakumans list = RecordPostRequest
                 .Yakumans
                 .builder()
                 .memberId(1L)
-                .yakumanName("구련보등")
+                .yakumanName("사암각")
+                .files(multipartFile1)
                 .build();
         List<RecordPostRequest.Yakumans> list2 = Arrays.asList(list);
         
@@ -80,7 +93,7 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
                 .yakumans(list2)
                 .build();
         ApiResponse record = recordService.createRecord(y);
-        
+        System.out.println("record = " + record);
     }
     @DisplayName("")
     @Test

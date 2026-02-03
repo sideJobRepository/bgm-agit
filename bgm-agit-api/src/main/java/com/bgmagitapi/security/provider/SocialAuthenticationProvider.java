@@ -31,7 +31,7 @@ public class SocialAuthenticationProvider implements AuthenticationProvider {
         String authorizeCode = (String) token.getPrincipal();
         
         SocialService socialService = getSocialService(socialType);
-        AccessTokenResponse accessToken = socialService.getAccessToken(authorizeCode,socialType);
+        AccessTokenResponse accessToken = socialService.getAccessToken(authorizeCode, socialType);
         SocialProfile profile = socialService.getProfile(accessToken.getAccessToken());
         
         BgmAgitMemberContext memberContext = (BgmAgitMemberContext) bgmAgitMemberDetailService.loadUserByUsername(profile);

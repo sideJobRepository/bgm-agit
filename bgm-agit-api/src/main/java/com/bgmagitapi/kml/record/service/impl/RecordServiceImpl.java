@@ -1,7 +1,11 @@
 package com.bgmagitapi.kml.record.service.impl;
 
 import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.config.S3FileUtils;
+import com.bgmagitapi.config.UploadResult;
+import com.bgmagitapi.entity.BgmAgitCommonFile;
 import com.bgmagitapi.entity.BgmAgitMember;
+import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.matchs.repository.MatchsRepository;
@@ -16,6 +20,7 @@ import com.bgmagitapi.kml.setting.entity.Setting;
 import com.bgmagitapi.kml.setting.repository.SettingRepository;
 import com.bgmagitapi.kml.yakuman.entity.Yakuman;
 import com.bgmagitapi.kml.yakuman.repository.YakumanRepository;
+import com.bgmagitapi.repository.BgmAgitCommonFileRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.util.CalculateUtil;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +29,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -44,6 +50,10 @@ public class RecordServiceImpl implements RecordService {
     private final SettingRepository settingRepository;
     
     private final YakumanRepository yakumanRepository;
+    
+    private final BgmAgitCommonFileRepository commonFileRepository;
+    
+    private final S3FileUtils s3FileUtils;
     
     private static final Map<Wind, Integer> WIND_ORDER = Map.of(
             Wind.EAST, 0,
@@ -119,9 +129,7 @@ public class RecordServiceImpl implements RecordService {
         
         List<RecordGetDetailResponse.RecordList> result = recordRepository.findByRecord(id);
         
-        return new RecordGetDetailResponse(matchs.getId()
-                , matchs.getWind()
-                , result);
+        return new RecordGetDetailResponse(matchs.getId(), matchs.getWind(), result);
     }
     
     @Override
@@ -174,8 +182,19 @@ public class RecordServiceImpl implements RecordService {
                     .yakumanName(yakumanName)
                     .build();
             yakumanRepository.save(saveYakuman);
+            UploadResult result = s3FileUtils.storeFile(yakuman.getFiles(), "yakuman");
+            if (result != null) {
+                BgmAgitCommonFile commonFile = BgmAgitCommonFile
+                        .builder()
+                        .bgmAgitCommonFileTargetId(saveYakuman.getId())
+                        .bgmAgitCommonFileType(BgmAgitCommonType.YAKUMAN)
+                        .bgmAgitCommonFileUrl(result.getUrl())
+                        .bgmAgitCommonFileUuidName(result.getUuid())
+                        .bgmAgitCommonFileName(result.getOriginalFilename())
+                        .build();
+                commonFileRepository.save(commonFile);
+            }
         }
-        
         return new ApiResponse(200, true, "기록이 저장되었습니다.");
     }
     

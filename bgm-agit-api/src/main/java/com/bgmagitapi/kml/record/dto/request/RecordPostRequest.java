@@ -37,10 +37,13 @@ package com.bgmagitapi.kml.record.dto.request;
 
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.record.enums.Wind;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,9 +57,9 @@ public class RecordPostRequest {
     private MatchsWind wind;
     
     private String tournamentStatus;
-    
+    @Valid
     private List<Records> records;
-    
+    @Valid
     private List<Yakumans> yakumans;
     
     public List<Records> getRecords() {
@@ -91,6 +94,9 @@ public class RecordPostRequest {
     public static class Yakumans {
         private Long memberId;
         private String yakumanName;
+        @NotBlank(message = "내용을 입력해주세요")
         private String yakumanCont;
+        private MultipartFile files;
+        
     }
 }

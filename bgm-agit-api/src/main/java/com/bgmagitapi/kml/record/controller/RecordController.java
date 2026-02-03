@@ -31,7 +31,7 @@ public class RecordController {
     }
     
     @PostMapping("/record")
-    public ApiResponse createRecord(@Validated @RequestBody RecordPostRequest request) {
+    public ApiResponse createRecord(@Validated @ModelAttribute RecordPostRequest request) {
         return recordService.createRecord(request);
     }
 }
