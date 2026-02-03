@@ -28,15 +28,15 @@ public class RecordGetDetailResponse {
     public static class RecordList {
         private Long recordId;
         private Long memberId;
-        private String memberName;
+        private String nickName;
         private Integer recordScore;
         private Wind recordSeat;
         
         @QueryProjection
-        public RecordList(Long recordId, Long memberId, String memberName, Integer recordScore, Wind recordSeat) {
+        public RecordList(Long recordId, Long memberId, String nickName, Integer recordScore, Wind recordSeat) {
             this.recordId = recordId;
             this.memberId = memberId;
-            this.memberName = memberName;
+            this.nickName = nickName;
             this.recordScore = recordScore;
             this.recordSeat = recordSeat;
         }
@@ -48,16 +48,16 @@ public class RecordGetDetailResponse {
     public static class YakumanList{
         private Long yakumanId;
         private Long memberId;
-        private String memberName;
+        private String nickName;
         private String yakumanName;
         private String yakumanCont;
         private String imageUrl;
         
         @QueryProjection
-        public YakumanList(Long yakumanId, Long memberId, String memberName, String yakumanName, String yakumanCont, String imageUrl) {
+        public YakumanList(Long yakumanId, Long memberId, String nickName, String yakumanName, String yakumanCont, String imageUrl) {
             this.yakumanId = yakumanId;
             this.memberId = memberId;
-            this.memberName = memberName;
+            this.nickName = nickName;
             this.yakumanName = yakumanName;
             this.yakumanCont = yakumanCont;
             this.imageUrl = imageUrl;
