@@ -201,4 +201,9 @@ public class RecordServiceImpl implements RecordService {
         return new ApiResponse(200, true, "기록이 저장되었습니다.");
     }
     
+    @Override
+    public ApiResponse updateRecord(RecordPostRequest request) {
+        return null;
+    }
+    
 }

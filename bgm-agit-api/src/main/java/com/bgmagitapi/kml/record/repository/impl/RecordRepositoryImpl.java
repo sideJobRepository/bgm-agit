@@ -54,8 +54,9 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                 .select(
                         new QRecordGetDetailResponse_RecordList(
                                 record.id,
+                                bgmAgitMember.bgmAgitMemberId,
+                                bgmAgitMember.bgmAgitMemberNickname,
                                 record.recordScore,
-                                record.member.bgmAgitMemberNickname,
                                 record.recordSeat
                         )
                 )

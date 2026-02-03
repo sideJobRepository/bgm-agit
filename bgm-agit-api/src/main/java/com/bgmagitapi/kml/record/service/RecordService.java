@@ -13,4 +13,5 @@ public interface RecordService {
     Page<RecordGetResponse> getRecords(Pageable pageable);
     RecordGetDetailResponse getRecordDetail(Long id);
     ApiResponse createRecord(RecordPostRequest request);
+    ApiResponse updateRecord(RecordPostRequest request);
 }
