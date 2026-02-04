@@ -116,7 +116,7 @@ public class RecordServiceImpl implements RecordService {
     @Override
     public RecordGetDetailResponse getRecordDetail(Long id) {
         
-        Matchs matchs = recordRepository.findByMatchs(id);
+        Matchs matchs = matchsRepository.findById(id).orElseThrow(() -> new RuntimeException("존재 하지 않은 대국입니다."));
         
         List<RecordGetDetailResponse.RecordList> records = recordRepository.findByRecord(id);
         List<RecordGetDetailResponse.YakumanList> yakumanLists = yakumanRepository.findByMatchsYakuman(id);

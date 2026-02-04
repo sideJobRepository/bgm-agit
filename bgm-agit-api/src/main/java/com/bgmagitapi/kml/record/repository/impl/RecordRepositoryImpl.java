@@ -1,6 +1,5 @@
 package com.bgmagitapi.kml.record.repository.impl;
 
-import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.record.dto.response.QRecordGetDetailResponse_RecordList;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
 import com.bgmagitapi.kml.record.entity.Record;
@@ -14,9 +13,9 @@ import org.springframework.data.support.PageableExecutionUtils;
 
 import java.util.List;
 
-import static com.bgmagitapi.entity.QBgmAgitMember.*;
-import static com.bgmagitapi.kml.matchs.entity.QMatchs.*;
-import static com.bgmagitapi.kml.record.entity.QRecord.*;
+import static com.bgmagitapi.entity.QBgmAgitMember.bgmAgitMember;
+import static com.bgmagitapi.kml.matchs.entity.QMatchs.matchs;
+import static com.bgmagitapi.kml.record.entity.QRecord.record;
 
 @RequiredArgsConstructor
 public class RecordRepositoryImpl implements RecordQueryRepository {
@@ -40,14 +39,6 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                 .where(matchs.delStatus.eq("N"));
         
         return PageableExecutionUtils.getPage(result, pageable, countQuery::fetchOne);
-    }
-    
-    @Override
-    public Matchs findByMatchs(Long id) {
-        return queryFactory
-                .selectFrom(matchs)
-                .where(matchs.id.eq(id))
-                .fetchOne();
     }
     
     @Override
