@@ -2,12 +2,17 @@ package com.bgmagitapi.kml.record.service.impl;
 
 import com.bgmagitapi.RepositoryAndServiceTestSupport;
 import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.record.dto.request.RecordPostRequest;
+import com.bgmagitapi.kml.record.dto.request.RecordPutRequest;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
 import com.bgmagitapi.kml.record.dto.response.RecordGetResponse;
+import com.bgmagitapi.kml.record.entity.Record;
 import com.bgmagitapi.kml.record.enums.Wind;
+import com.bgmagitapi.kml.record.repository.RecordRepository;
 import com.bgmagitapi.kml.record.service.RecordService;
+import com.bgmagitapi.kml.yakuman.entity.Yakuman;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +33,9 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
     
     @Autowired
     private RecordService recordService;
+    
+    @Autowired
+    private RecordRepository recordRepository;
     
     @DisplayName("")
     @Test
@@ -97,7 +105,7 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
                 .memberId(6L)
                 .yakumanName("구련보등")
                 .yakumanCont("구련보등 쯔모")
-                .files(null)
+                .files(multipartFile2)
                 .build();
         List<RecordPostRequest.Yakumans> result = Arrays.asList(list,list2);
         
@@ -113,17 +121,77 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
     }
     @DisplayName("")
     @Test
-    void test2(){
-        PageRequest pageRequest = PageRequest.of(0, 10);
-        Page<RecordGetResponse> records = recordService.getRecords(pageRequest);
-        
-        System.out.println("records = " + records);
-        
-    }
-    @DisplayName("")
-    @Test
     void test3(){
         RecordGetDetailResponse recordDetail = recordService.getRecordDetail(1L);
         System.out.println("recordDetail = " + recordDetail);
     }
+    
+    @DisplayName("기록 수정 - 점수/순위/야쿠만 수정")
+    @Test
+    void update_record_success() throws IOException {
+        
+        RecordPutRequest.Records u1 = RecordPutRequest.Records.builder()
+                .recordId(1L)
+                .recordScore(45000) // 점수 변경
+                .recordSeat(Wind.EAST)
+                .build();
+    
+        RecordPutRequest.Records u2 = RecordPutRequest.Records.builder()
+                .recordId(2L)
+                .recordScore(35000)
+                .recordSeat(Wind.NORTH)
+                .build();
+    
+        RecordPutRequest.Records u3 = RecordPutRequest.Records.builder()
+                .recordId(3L)
+                .recordScore(25000)
+                .recordSeat(Wind.SOUTH)
+                .build();
+    
+        RecordPutRequest.Records u4 = RecordPutRequest.Records.builder()
+                .recordId(4L)
+                .recordScore(15000)
+                .recordSeat(Wind.WEST)
+                .build();
+    
+        File file = new File("src/test/java/com/bgmagitapi/file/사암각.png");
+        MockMultipartFile newFile =
+                new MockMultipartFile(
+                        "file",
+                        file.getName(),
+                        "image/png",
+                        new FileInputStream(file)
+                );
+    
+        RecordPutRequest.Yakumans y1 = RecordPutRequest.Yakumans.builder()
+                .yakumanId(1L)
+                .memberId(1L)
+                .yakumanName("사암각")
+                .yakumanCont("사암각 수정됨")
+                .files(newFile)
+                .build();
+    
+        RecordPutRequest updateRequest = RecordPutRequest.builder()
+                .matchsId(1L)
+                .wind(MatchsWind.SOUTH) // wind 변경
+                .tournamentStatus("N")
+                .records(List.of(u1, u2, u3, u4))
+                .yakumans(List.of(y1))
+                .build();
+    
+        // ===== 수정 실행 =====
+        ApiResponse response = recordService.updateRecord(updateRequest);
+        System.out.println("response = " + response);
+    }
+    
+    @DisplayName("")
+      @Test
+      void test2(){
+          PageRequest pageRequest = PageRequest.of(0, 10);
+          Page<RecordGetResponse> records = recordService.getRecords(pageRequest);
+          
+          System.out.println("records = " + records);
+          
+      }
+    
 }

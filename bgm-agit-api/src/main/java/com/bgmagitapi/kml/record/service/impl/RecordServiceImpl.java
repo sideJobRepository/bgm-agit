@@ -26,6 +26,7 @@ import com.bgmagitapi.repository.BgmAgitCommonFileRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.util.CalculateUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -76,19 +77,19 @@ public class RecordServiceImpl implements RecordService {
         List<RecordGetResponse> list = groupedByMatch.entrySet().stream()
                 .map(entry -> {
                     List<Record> group = new ArrayList<>(entry.getValue());
-        
+                    
                     // 점수 내림차순
                     group.sort(Comparator.comparing(Record::getRecordScore).reversed());
-        
+                    
                     if (group.isEmpty()) return null;
-        
+                    
                     RecordGetResponse response = new RecordGetResponse();
                     response.setMatchsId(entry.getKey());
                     response.setRegistDate(group.get(0).getRegistDate());
-        
+                    
                     for (int i = 0; i < group.size() && i < 4; i++) {
                         Record rec = group.get(i);
-        
+                        
                         RecordGetResponse.Row row = new RecordGetResponse.Row();
                         row.setSeat(rec.getRecordSeat().getValue());
                         row.setRank(i + 1);
@@ -96,10 +97,10 @@ public class RecordServiceImpl implements RecordService {
                         row.setScore(rec.getRecordScore());
                         row.setPoint(rec.getRecordPoint());
                         row.setWinner(i == 0); // 1등만 true
-        
+                        
                         response.getRows().add(row);
                     }
-        
+                    
                     return response;
                 })
                 .filter(Objects::nonNull)
@@ -107,7 +108,7 @@ public class RecordServiceImpl implements RecordService {
                         RecordGetResponse::getRegistDate
                 ).reversed())
                 .toList();
-
+        
         
         return new PageImpl<>(list, pageable, list.size());
     }
@@ -118,9 +119,9 @@ public class RecordServiceImpl implements RecordService {
         Matchs matchs = recordRepository.findByMatchs(id);
         
         List<RecordGetDetailResponse.RecordList> records = recordRepository.findByRecord(id);
-        List<RecordGetDetailResponse.YakumanList> yakumanLists =  yakumanRepository.findByMatchsYakuman(id);
+        List<RecordGetDetailResponse.YakumanList> yakumanLists = yakumanRepository.findByMatchsYakuman(id);
         
-        return new RecordGetDetailResponse(matchs.getId(), matchs.getWind(), records,yakumanLists);
+        return new RecordGetDetailResponse(matchs.getId(), matchs.getWind(), records, yakumanLists);
     }
     
     @Override
@@ -131,7 +132,7 @@ public class RecordServiceImpl implements RecordService {
                 .mapToInt(RecordPostRequest.Records::getRecordScore).sum();
         Setting setting = settingRepository.findBySetting();
         Integer turning = setting.getTurning() * 4;
-        if(!sum.equals(turning)){
+        if (!sum.equals(turning)) {
             String message = String.format("입력된 점수 합계(%d)가 기준 점수(%d)와 일치하지 않습니다.", sum, turning);
             throw new ValidException(message);
         }
@@ -143,6 +144,7 @@ public class RecordServiceImpl implements RecordService {
         Matchs matchs = Matchs.builder()
                 .wind(wind)
                 .tournamentStatus(tournamentStatus)
+                .setting(setting)
                 .build();
         
         matchsRepository.save(matchs);
@@ -164,7 +166,6 @@ public class RecordServiceImpl implements RecordService {
             Record saveRecord = Record.builder()
                     .matchs(matchs)
                     .member(member)
-                    .setting(setting)
                     .recordRank(record.getRecordRank())
                     .recordScore(record.getRecordScore())
                     .recordPoint(recordPoint)
@@ -206,102 +207,101 @@ public class RecordServiceImpl implements RecordService {
         //  Match 조회
         Matchs matchs = matchsRepository.findById(matchsId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 경기입니다."));
-    
+        
+        Long settingId = matchs.getSetting().getId();
+        Setting setting = settingRepository.findById(settingId).orElseThrow(() -> new RuntimeException("존재하지않는 세팅값입니다."));
+        
         // 점수 합 검증
         Integer sum = request.getRecords().stream()
                 .mapToInt(RecordPutRequest.Records::getRecordScore)
                 .sum();
-    
-        Setting setting = settingRepository.findBySetting();
-        Integer turning = setting.getTurning() * 4;
-    
+        
+        
+        
+        Integer turning =  setting.getTurning() * 4;
+        
         if (!sum.equals(turning)) {
-            throw new ValidException(
-                    String.format(
-                            "입력된 점수 합계(%d)가 기준 점수(%d)와 일치하지 않습니다.",
-                            sum, turning
-                    )
-            );
+            throw new ValidException(String.format("입력된 점수 합계(%d)가 기준 점수(%d)와 일치하지 않습니다.", sum, turning));
         }
-    
+        
         // Match 기본 정보 수정
-        matchs.modify(request.getWind(),request.getTournamentStatus());
-    
+        matchs.modify(request.getWind(), request.getTournamentStatus());
+        
         // =========================
         // Record 수정
         // =========================
         List<Record> records = recordRepository.findByRecordByMatchsId(matchsId);
         Map<Long, Record> recordMap = records.stream()
                 .collect(Collectors.toMap(Record::getId, r -> r));
-    
+        
         // 정렬 + rank 재계산
-        List<RecordPutRequest.Records> sorted =
-                new ArrayList<>(request.getRecords());
-    
+        List<RecordPutRequest.Records> sorted = new ArrayList<>(request.getRecords());
+        
         sorted.sort(
                 Comparator.comparing(
                         RecordPutRequest.Records::getRecordScore,
                         Comparator.reverseOrder()
                 ).thenComparing(r -> WIND_ORDER.get(r.getRecordSeat()))
         );
-    
+        
         AtomicInteger rankCounter = new AtomicInteger(1);
         int multiplier = CalculateUtil.seatMultiplier(matchs.getWind());
-    
+        
         Set<Long> requestRecordIds = new HashSet<>();
-    
+        
         for (RecordPutRequest.Records dto : sorted) {
-    
+            
             dto.setRecordRank(rankCounter.getAndIncrement());
-    
+            
             Record record = recordMap.get(dto.getRecordId());
             if (record == null) {
                 throw new RuntimeException("존재하지 않는 Record ID: " + dto.getRecordId());
             }
-    
             Double point = CalculateUtil.calculatePlayerPoint(dto, setting, multiplier);
-    
             
-            record.modify(dto,point);
+            
+            record.modify(dto, point);
             
             requestRecordIds.add(record.getId());
         }
-    
+        
         // 삭제 대상 Record
         records.stream()
                 .filter(r -> !requestRecordIds.contains(r.getId()))
                 .forEach(recordRepository::delete);
-    
+        
         // =========================
         // Yakuman 수정
         // =========================
         List<Yakuman> existingYakumans = yakumanRepository.findByYakumanMatchesId(matchsId);
         Map<Long, Yakuman> yakumanMap = existingYakumans.stream()
                 .collect(Collectors.toMap(Yakuman::getId, y -> y));
-    
+        
         Set<Long> requestYakumanIds = new HashSet<>();
-    
+        
         for (RecordPutRequest.Yakumans dto : request.getYakumans()) {
-    
+            
             Yakuman yakuman = yakumanMap.get(dto.getYakumanId());
             if (yakuman == null) {
                 throw new RuntimeException("존재하지 않는 Yakuman ID: " + dto.getYakumanId());
             }
             
             BgmAgitMember bgmAgitMember = memberRepository.findById(dto.getMemberId()).orElseThrow(() -> new RuntimeException("존재하지않는 회원입니다."));
-            yakuman.modify(dto,bgmAgitMember);
-    
+            yakuman.modify(dto, bgmAgitMember);
+            
             // 파일 교체 시
             if (dto.getFiles() != null && !dto.getFiles().isEmpty()) {
-    
+                
                 // 기존 파일 삭제
-                commonFileRepository.findByDeleteFile(
+                List<BgmAgitCommonFile> byDeleteFile = commonFileRepository.findByDeleteFile(
                         yakuman.getId(), BgmAgitCommonType.YAKUMAN
                 );
-    
-                UploadResult result =
-                        s3FileUtils.storeFile(dto.getFiles(), "yakuman");
-    
+                commonFileRepository.deleteAll(byDeleteFile);
+                for (BgmAgitCommonFile bgmAgitCommonFile : byDeleteFile) {
+                    s3FileUtils.deleteFile(bgmAgitCommonFile.getBgmAgitCommonFileUrl());
+                }
+                
+                UploadResult result = s3FileUtils.storeFile(dto.getFiles(), "yakuman");
                 if (result != null) {
                     commonFileRepository.save(
                             BgmAgitCommonFile.builder()
@@ -314,18 +314,23 @@ public class RecordServiceImpl implements RecordService {
                     );
                 }
             }
-    
+            
             requestYakumanIds.add(yakuman.getId());
         }
-    
+        
+        
         // 삭제 대상 Yakuman
         existingYakumans.stream()
                 .filter(y -> !requestYakumanIds.contains(y.getId()))
                 .forEach(y -> {
-                    commonFileRepository.findByDeleteFile(y.getId(), BgmAgitCommonType.YAKUMAN);
+                    List<BgmAgitCommonFile> byDeleteFile = commonFileRepository.findByDeleteFile(y.getId(), BgmAgitCommonType.YAKUMAN);
                     yakumanRepository.delete(y);
+                    commonFileRepository.deleteAll(byDeleteFile);
+                    for (BgmAgitCommonFile bgmAgitCommonFile : byDeleteFile) {
+                        s3FileUtils.deleteFile(bgmAgitCommonFile.getBgmAgitCommonFileUrl());
+                    }
                 });
-    
+        
         return new ApiResponse(200, true, "기록이 수정되었습니다.");
     }
     

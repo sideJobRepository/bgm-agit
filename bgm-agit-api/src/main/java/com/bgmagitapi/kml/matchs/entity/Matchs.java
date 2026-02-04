@@ -1,6 +1,7 @@
 package com.bgmagitapi.kml.matchs.entity;
 
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
+import com.bgmagitapi.kml.setting.entity.Setting;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,6 +17,10 @@ public class Matchs {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "BGM_AGIT_MATCHS_ID")
     private Long id;
+    
+    @JoinColumn(name = "BGM_AGIT_SETTING_ID")
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Setting setting;
     
     @Enumerated(EnumType.STRING)
     @Column(name = "BGM_AGIT_MATCHS_WIND")
