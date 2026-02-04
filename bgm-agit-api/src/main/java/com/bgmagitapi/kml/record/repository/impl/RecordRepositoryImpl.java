@@ -36,7 +36,8 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
         
         JPAQuery<Long> countQuery = queryFactory
                 .select(matchs.count())
-                .from(matchs);
+                .from(matchs)
+                .where(matchs.delStatus.eq("N"));
         
         return PageableExecutionUtils.getPage(result, pageable, countQuery::fetchOne);
     }
