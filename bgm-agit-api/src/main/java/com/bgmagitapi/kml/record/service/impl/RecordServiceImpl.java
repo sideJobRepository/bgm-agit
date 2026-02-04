@@ -145,6 +145,7 @@ public class RecordServiceImpl implements RecordService {
                 .wind(wind)
                 .tournamentStatus(tournamentStatus)
                 .setting(setting)
+                .delStatus("N")
                 .build();
         
         matchsRepository.save(matchs);
@@ -216,8 +217,6 @@ public class RecordServiceImpl implements RecordService {
                 .mapToInt(RecordPutRequest.Records::getRecordScore)
                 .sum();
         
-        
-        
         Integer turning =  setting.getTurning() * 4;
         
         if (!sum.equals(turning)) {
@@ -259,8 +258,10 @@ public class RecordServiceImpl implements RecordService {
             }
             Double point = CalculateUtil.calculatePlayerPoint(dto, setting, multiplier);
             
+            Long memberId = dto.getMemberId();
+            BgmAgitMember bgmAgitMember = memberRepository.findById(memberId).orElseThrow(() -> new RuntimeException("존재 하지 않은 사업자입니다."));
             
-            record.modify(dto, point);
+            record.modify(dto, point,bgmAgitMember);
             
             requestRecordIds.add(record.getId());
         }

@@ -5,8 +5,6 @@ import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.record.dto.request.RecordPutRequest;
 import com.bgmagitapi.kml.record.enums.Wind;
-import com.bgmagitapi.kml.setting.entity.Setting;
-import com.bgmagitapi.util.CalculateUtil;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -45,10 +43,11 @@ public class Record extends DateSuperClass {
     @Column(name = "BGM_AGIT_RECORD_SEAT")
     private Wind recordSeat;
     
-    public void modify(RecordPutRequest.Records dto, Double point) {
+    public void modify(RecordPutRequest.Records dto, Double point, BgmAgitMember bgmAgitMember) {
         this.recordScore = dto.getRecordScore();
         this.recordRank = dto.getRecordRank();
         this.recordPoint = point;
+        this.member = bgmAgitMember;
         this.recordSeat = dto.getRecordSeat();
     }
 }

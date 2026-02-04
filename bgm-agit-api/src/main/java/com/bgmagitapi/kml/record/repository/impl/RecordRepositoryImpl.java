@@ -29,6 +29,7 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                 .selectFrom(record)
                 .join(record.matchs, matchs).fetchJoin()
                 .join(record.member, bgmAgitMember).fetchJoin()
+                .where(matchs.delStatus.eq("N"))
                 .limit(pageable.getPageSize())
                 .offset(pageable.getOffset())
                 .fetch();

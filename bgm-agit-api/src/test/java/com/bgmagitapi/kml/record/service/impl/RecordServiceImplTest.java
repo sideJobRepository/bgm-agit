@@ -34,8 +34,6 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
     @Autowired
     private RecordService recordService;
     
-    @Autowired
-    private RecordRepository recordRepository;
     
     @DisplayName("")
     @Test
@@ -134,24 +132,28 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
                 .recordId(1L)
                 .recordScore(45000) // 점수 변경
                 .recordSeat(Wind.EAST)
+                .memberId(11L)
                 .build();
     
         RecordPutRequest.Records u2 = RecordPutRequest.Records.builder()
                 .recordId(2L)
                 .recordScore(35000)
                 .recordSeat(Wind.NORTH)
+                .memberId(1L)
                 .build();
     
         RecordPutRequest.Records u3 = RecordPutRequest.Records.builder()
                 .recordId(3L)
                 .recordScore(25000)
                 .recordSeat(Wind.SOUTH)
+                .memberId(3L)
                 .build();
     
         RecordPutRequest.Records u4 = RecordPutRequest.Records.builder()
                 .recordId(4L)
                 .recordScore(15000)
                 .recordSeat(Wind.WEST)
+                .memberId(5L)
                 .build();
     
         File file = new File("src/test/java/com/bgmagitapi/file/사암각.png");
@@ -189,9 +191,7 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
       void test2(){
           PageRequest pageRequest = PageRequest.of(0, 10);
           Page<RecordGetResponse> records = recordService.getRecords(pageRequest);
-          
           System.out.println("records = " + records);
-          
       }
     
 }
