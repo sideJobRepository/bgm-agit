@@ -61,7 +61,7 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
                 Records
                 .builder()
                 .memberId(5L)
-                .recordScore(24500)
+                .recordScore(500)
                 .recordSeat(Wind.WEST)
                 .build();
         

@@ -20,4 +20,12 @@ public class SettingRepositoryImpl implements SettingQueryRepository {
                 .where(setting.useStatus.eq("Y"))
                 .fetchFirst();
     }
+    
+    @Override
+    public void updateUseStatusN() {
+        queryFactory
+                .update(setting)
+                .set(setting.useStatus,"N")
+                .execute();
+    }
 }
