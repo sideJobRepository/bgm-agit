@@ -36,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Transactional
@@ -85,13 +86,14 @@ public class RecordServiceImpl implements RecordService {
                     
                     RecordGetResponse response = new RecordGetResponse();
                     response.setMatchsId(entry.getKey());
+                    response.setCreateNicname(group.get(0).getMatchs().getMember().getBgmAgitMemberNickname());
                     response.setRegistDate(group.get(0).getRegistDate());
                     
                     for (int i = 0; i < group.size() && i < 4; i++) {
                         Record rec = group.get(i);
                         
                         RecordGetResponse.Row row = new RecordGetResponse.Row();
-                        row.setSeat(rec.getRecordSeat().getValue());
+                        row.setSeat(rec.getRecordSeat());
                         row.setRank(i + 1);
                         row.setNickname(rec.getMember() != null ? rec.getMember().getBgmAgitMemberNickname() : "");
                         row.setScore(rec.getRecordScore());
@@ -135,6 +137,19 @@ public class RecordServiceImpl implements RecordService {
         if (!sum.equals(turning)) {
             String message = String.format("입력된 점수 합계(%d)가 기준 점수(%d)와 일치하지 않습니다.", sum, turning);
             throw new ValidException(message);
+        }
+        
+        Set<Long> recordMemberSet = request.getRecords().stream()
+                .map(RecordPostRequest.Records::getMemberId)
+                .collect(Collectors.toSet());
+        
+        List<Long> invalidMemberIds = request.getYakumans().stream()
+                .map(RecordPostRequest.Yakumans::getMemberId)
+                .filter(id -> !recordMemberSet.contains(id))
+                .toList();
+        
+        if (!invalidMemberIds.isEmpty()) {
+            throw new ValidException("대국 참가자가 아닌 회원이 역만 기록에 포함되어 있습니다.");
         }
         
         
@@ -203,12 +218,12 @@ public class RecordServiceImpl implements RecordService {
                 commonFileRepository.save(commonFile);
             }
         }
-        matchsAndRecordHistoryService.createMatchsAndRecordHistory(matchs,recordList);
+        matchsAndRecordHistoryService.createMatchsAndRecordHistory(matchs, recordList);
         return new ApiResponse(200, true, "기록이 저장되었습니다.");
     }
     
     @Override
-    public ApiResponse updateRecord(RecordPutRequest request,Long requestMemberId) {
+    public ApiResponse updateRecord(RecordPutRequest request, Long requestMemberId) {
         Long matchsId = request.getMatchsId();
         //  Match 조회
         Matchs matchs = matchsRepository.findById(matchsId)
@@ -217,12 +232,26 @@ public class RecordServiceImpl implements RecordService {
         Long settingId = matchs.getSetting().getId();
         Setting setting = settingRepository.findById(settingId).orElseThrow(() -> new RuntimeException("존재하지않는 세팅값입니다."));
         
+        Set<Long> recordMemberSet = request.getRecords().stream()
+                .map(RecordPutRequest.Records::getMemberId)
+                .collect(Collectors.toSet());
+        
+        List<Long> invalidMemberIds = request.getYakumans().stream()
+                .map(RecordPutRequest.Yakumans::getMemberId)
+                .filter(id -> !recordMemberSet.contains(id))
+                .toList();
+        
+        if (!invalidMemberIds.isEmpty()) {
+            throw new ValidException("대국 참가자가 아닌 회원이 역만 기록에 포함되어 있습니다.");
+        }
+        
+        
         // 점수 합 검증
         Integer sum = request.getRecords().stream()
                 .mapToInt(RecordPutRequest.Records::getRecordScore)
                 .sum();
         
-        Integer turning =  setting.getTurning() * 4;
+        Integer turning = setting.getTurning() * 4;
         
         if (!sum.equals(turning)) {
             throw new ValidException(String.format("입력된 점수 합계(%d)가 기준 점수(%d)와 일치하지 않습니다.", sum, turning));
@@ -266,7 +295,7 @@ public class RecordServiceImpl implements RecordService {
             Long memberId = dto.getMemberId();
             BgmAgitMember bgmAgitMember = memberRepository.findById(memberId).orElseThrow(() -> new RuntimeException("존재 하지 않은 사업자입니다."));
             
-            record.modify(dto, point,bgmAgitMember);
+            record.modify(dto, point, bgmAgitMember);
             
             requestRecordIds.add(record.getId());
         }
@@ -336,7 +365,7 @@ public class RecordServiceImpl implements RecordService {
                         s3FileUtils.deleteFile(bgmAgitCommonFile.getBgmAgitCommonFileUrl());
                     }
                 });
-        matchsAndRecordHistoryService.updateMatchsAndRecordHistory(matchs,records,request.getChangeReason(),requestMemberId);
+        matchsAndRecordHistoryService.updateMatchsAndRecordHistory(matchs, records, request.getChangeReason(), requestMemberId);
         return new ApiResponse(200, true, "기록이 수정되었습니다.");
     }
     

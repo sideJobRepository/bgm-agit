@@ -20,6 +20,7 @@ public class RecordGetResponse {
 
     private Long matchsId;
     private LocalDateTime registDate;
+    private String createNicname;
     private List<Row> rows;
     
     public List<Row> getRows() {
@@ -31,7 +32,7 @@ public class RecordGetResponse {
     
     @Data
     public static class Row {
-        private String seat;      // 東 / 南 / 西 / 北
+        private Wind seat;      // 東 / 南 / 西 / 北
         private Integer rank;
         private String nickname;
         private Integer score;

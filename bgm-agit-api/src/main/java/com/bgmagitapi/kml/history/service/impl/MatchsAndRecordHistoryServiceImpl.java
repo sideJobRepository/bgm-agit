@@ -2,6 +2,7 @@ package com.bgmagitapi.kml.history.service.impl;
 
 
 import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.kml.history.dto.MatchsAndRecordHistoryResponse;
 import com.bgmagitapi.kml.history.entity.MatchsHistory;
 import com.bgmagitapi.kml.history.entity.RecordHistory;
 import com.bgmagitapi.kml.history.enums.ChangeType;
@@ -86,5 +87,10 @@ public class MatchsAndRecordHistoryServiceImpl implements MatchsAndRecordHistory
               recordHistoryRepository.save(recordHistory);
           }
           return new ApiResponse(200,true,"이력 수정");
+    }
+    
+    @Override
+    public List<MatchsAndRecordHistoryResponse> getMatchsAndRecordHistory(Long matchsId) {
+        return matchsHistoryRepository.findByHistory(matchsId);
     }
 }
