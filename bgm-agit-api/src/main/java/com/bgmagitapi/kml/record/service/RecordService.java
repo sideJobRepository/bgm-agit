@@ -8,13 +8,11 @@ import com.bgmagitapi.kml.record.dto.response.RecordGetResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
-
 public interface RecordService {
     Page<RecordGetResponse> getRecords(Pageable pageable);
     RecordGetDetailResponse getRecordDetail(Long id);
-    ApiResponse createRecord(RecordPostRequest request);
-    ApiResponse updateRecord(RecordPutRequest request);
+    ApiResponse createRecord(RecordPostRequest request, Long memberId);
+    ApiResponse updateRecord(RecordPutRequest request,Long memberId);
     
     ApiResponse removeRecord(Long id);
 }

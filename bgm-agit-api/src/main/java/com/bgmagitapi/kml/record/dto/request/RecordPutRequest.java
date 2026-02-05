@@ -59,6 +59,10 @@ public class RecordPutRequest {
     private MatchsWind wind;
     
     private String tournamentStatus;
+    
+    @NotBlank(message = "수정 사유를 입력해주세요")
+    private String changeReason;
+    
     @Valid
     private List<Records> records;
     @Valid

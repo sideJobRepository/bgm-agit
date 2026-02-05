@@ -7,6 +7,7 @@ import com.bgmagitapi.config.UploadResult;
 import com.bgmagitapi.entity.BgmAgitCommonFile;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
+import com.bgmagitapi.kml.history.service.MatchsAndRecordHistoryService;
 import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.matchs.repository.MatchsRepository;
@@ -26,15 +27,12 @@ import com.bgmagitapi.repository.BgmAgitCommonFileRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.util.CalculateUtil;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -55,6 +53,8 @@ public class RecordServiceImpl implements RecordService {
     private final YakumanRepository yakumanRepository;
     
     private final BgmAgitCommonFileRepository commonFileRepository;
+    
+    private final MatchsAndRecordHistoryService matchsAndRecordHistoryService;
     
     private final S3FileUtils s3FileUtils;
     
@@ -125,7 +125,7 @@ public class RecordServiceImpl implements RecordService {
     }
     
     @Override
-    public ApiResponse createRecord(RecordPostRequest request) {
+    public ApiResponse createRecord(RecordPostRequest request, Long memberId) {
         
         Integer sum = request.getRecords()
                 .stream()
@@ -141,11 +141,13 @@ public class RecordServiceImpl implements RecordService {
         MatchsWind wind = request.getWind();
         String tournamentStatus = request.getTournamentStatus();
         AtomicInteger rankCount = new AtomicInteger(1);
+        BgmAgitMember bgmAgitMember = memberRepository.findById(memberId).orElseThrow(() -> new ValidException("다시 로그인 해주세요"));
         Matchs matchs = Matchs.builder()
                 .wind(wind)
                 .tournamentStatus(tournamentStatus)
                 .setting(setting)
                 .delStatus("N")
+                .member(bgmAgitMember)
                 .build();
         
         matchsRepository.save(matchs);
@@ -161,6 +163,7 @@ public class RecordServiceImpl implements RecordService {
                 item.setRecordRank(rankCount.getAndIncrement())
         );
         int multiplier = CalculateUtil.seatMultiplier(matchs.getWind());
+        List<Record> recordList = new ArrayList<>();
         for (RecordPostRequest.Records record : records) {
             BgmAgitMember member = memberRepository.findById(record.getMemberId()).orElseThrow(() -> new RuntimeException("존재 하지 않는 회원입니다."));
             Double recordPoint = CalculateUtil.calculatePlayerPoint(record, setting, multiplier);
@@ -173,6 +176,7 @@ public class RecordServiceImpl implements RecordService {
                     .recordSeat(record.getRecordSeat())
                     .build();
             recordRepository.save(saveRecord);
+            recordList.add(saveRecord);
         }
         List<RecordPostRequest.Yakumans> yakumans = request.getYakumans();
         for (RecordPostRequest.Yakumans yakuman : yakumans) {
@@ -199,11 +203,12 @@ public class RecordServiceImpl implements RecordService {
                 commonFileRepository.save(commonFile);
             }
         }
+        matchsAndRecordHistoryService.createMatchsAndRecordHistory(matchs,recordList);
         return new ApiResponse(200, true, "기록이 저장되었습니다.");
     }
     
     @Override
-    public ApiResponse updateRecord(RecordPutRequest request) {
+    public ApiResponse updateRecord(RecordPutRequest request,Long requestMemberId) {
         Long matchsId = request.getMatchsId();
         //  Match 조회
         Matchs matchs = matchsRepository.findById(matchsId)
@@ -331,7 +336,7 @@ public class RecordServiceImpl implements RecordService {
                         s3FileUtils.deleteFile(bgmAgitCommonFile.getBgmAgitCommonFileUrl());
                     }
                 });
-        
+        matchsAndRecordHistoryService.updateMatchsAndRecordHistory(matchs,records,request.getChangeReason(),requestMemberId);
         return new ApiResponse(200, true, "기록이 수정되었습니다.");
     }
     
