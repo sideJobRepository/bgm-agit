@@ -15,4 +15,6 @@ public interface RecordService {
     RecordGetDetailResponse getRecordDetail(Long id);
     ApiResponse createRecord(RecordPostRequest request);
     ApiResponse updateRecord(RecordPutRequest request);
+    
+    ApiResponse removeRecord(Long id);
 }

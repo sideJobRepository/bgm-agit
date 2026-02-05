@@ -335,4 +335,9 @@ public class RecordServiceImpl implements RecordService {
         return new ApiResponse(200, true, "기록이 수정되었습니다.");
     }
     
+    @Override
+    public ApiResponse removeRecord(Long id) {
+        return null;
+    }
+    
 }

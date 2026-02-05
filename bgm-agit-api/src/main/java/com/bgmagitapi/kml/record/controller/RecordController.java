@@ -35,4 +35,9 @@ public class RecordController {
     public ApiResponse createRecord(@Validated @ModelAttribute RecordPostRequest request) {
         return recordService.createRecord(request);
     }
+    
+    @DeleteMapping("/record")
+    public ApiResponse deleteRecord(@RequestParam Long id){
+        return recordService.removeRecord(id);
+    }
 }

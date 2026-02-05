@@ -21,7 +21,11 @@ public class KmlMenu extends DateSuperClass {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "BGM_AGIT_KML_MENU_ID")
     private Long id;
-
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "BGM_AGIT_KML_SUB_MENU_ID")
+    private KmlMenu parentMenuId;
+    
     // BGM 아지트 KML 메뉴 이름
     @Column(name = "BGM_AGIT_KML_MENU_NAME")
     private String menuName;
