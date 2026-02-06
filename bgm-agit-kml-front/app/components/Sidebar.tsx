@@ -153,10 +153,17 @@ export default function Sidebar() {
 
                 return (
                   <MenuLi key={menu.id} $active={pathname === menu.menuLink}>
-                    <Link href={menu.menuLink}>
-                      {IconComponent && <IconComponent weight="fill" />}
-                      {menu.menuName}
-                    </Link>
+                    {menu.menuLink !== '/sub' ? (
+                      <Link href={menu?.menuLink}>
+                        {IconComponent && <IconComponent weight="fill" />}
+                        {menu.menuName}
+                      </Link>
+                    ) : (
+                      <a>
+                        {IconComponent && <IconComponent weight="fill" />}
+                        {menu.menuName}
+                      </a>
+                    )}
                   </MenuLi>
                 );
               })}
