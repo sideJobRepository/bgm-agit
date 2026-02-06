@@ -16,6 +16,11 @@ import {
   List,
   X,
   Gear,
+  GraduationCap,
+  Compass,
+  Student,
+  Handshake,
+  ChatsCircle,
 } from 'phosphor-react';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -35,8 +40,6 @@ export default function Sidebar() {
 
   useFetchMainMenu();
   const menuData = useKmlMenuStore((state) => state.menu);
-
-  console.log('menu', menuData);
 
   const user = useUserStore((state) => state.user);
 
@@ -58,6 +61,11 @@ export default function Sidebar() {
     List,
     X,
     Gear,
+    GraduationCap,
+    Compass,
+    Student,
+    Handshake,
+    ChatsCircle,
   };
 
   const resetUser = useUserStore((state) => state.clearUser);
