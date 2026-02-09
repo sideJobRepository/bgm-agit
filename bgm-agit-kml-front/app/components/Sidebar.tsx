@@ -25,7 +25,7 @@ import {
   CaretDown,
 } from 'phosphor-react';
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import { useFetchMainMenu } from '@/services/menu.service';
 import { useKmlMenuStore } from '@/store/menu';
@@ -209,21 +209,29 @@ export default function Sidebar() {
                             <CaretDown weight="bold" />
                           )}
                         </a>
-                        {openSubMenuId === menu.id && (
-                          <SubUl>
-                            {menu.subMenus?.map((sub: any) => {
-                              const SubIcon = iconMap[sub.icon as keyof typeof iconMap];
-                              return (
-                                <MenuLi key={sub.id} $active={pathname === sub.menuLink}>
-                                  <Link href={sub.menuLink}>
-                                    {SubIcon && <SubIcon weight="fill" />}
-                                    {sub.menuName}
-                                  </Link>
-                                </MenuLi>
-                              );
-                            })}
-                          </SubUl>
-                        )}
+                        <AnimatePresence initial={false}>
+                          {openSubMenuId === menu.id && (
+                            <SubUl
+                              key="submenu"
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.25, ease: 'easeInOut' }}
+                            >
+                              {menu.subMenus?.map((sub: any) => {
+                                const SubIcon = iconMap[sub.icon as keyof typeof iconMap];
+                                return (
+                                  <MenuLi key={sub.id} $active={pathname === sub.menuLink}>
+                                    <Link href={sub.menuLink}>
+                                      {SubIcon && <SubIcon weight="fill" />}
+                                      {sub.menuName}
+                                    </Link>
+                                  </MenuLi>
+                                );
+                              })}
+                            </SubUl>
+                          )}
+                        </AnimatePresence>
                       </>
                     )}
                   </MenuLi>
@@ -335,11 +343,12 @@ const MainUl = styled.ul`
   gap: 12px;
 `;
 
-const SubUl = styled.ul`
+const SubUl = styled(motion.ul)`
   display: flex;
   flex-direction: column;
   // padding: 0 24px;
   gap: 12px;
+  overflow: hidden;
 
   a {
     font-size: ${({ theme }) => theme.desktop.sizes.md};
