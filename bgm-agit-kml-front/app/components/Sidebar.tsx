@@ -21,6 +21,8 @@ import {
   Student,
   Handshake,
   ChatsCircle,
+  CaretUp,
+  CaretDown,
 } from 'phosphor-react';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -40,6 +42,10 @@ export default function Sidebar() {
 
   useFetchMainMenu();
   const menuData = useKmlMenuStore((state) => state.menu);
+  console.log('menu', menuData);
+
+  //subMenu
+  const [openSubMenuId, setOpenSubMenuId] = useState<string | null>(null);
 
   const user = useUserStore((state) => state.user);
 
@@ -153,7 +159,7 @@ export default function Sidebar() {
           </Link>
         </TopSeticon>
         <MiddleSeciton>
-          <ul>
+          <MainUl>
             {menuData
               ?.filter((menu) => menu.menuOrders < 3)
               ?.map((menu) => {
@@ -161,17 +167,10 @@ export default function Sidebar() {
 
                 return (
                   <MenuLi key={menu.id} $active={pathname === menu.menuLink}>
-                    {menu.menuLink !== '/sub' ? (
-                      <Link href={menu?.menuLink}>
-                        {IconComponent && <IconComponent weight="fill" />}
-                        {menu.menuName}
-                      </Link>
-                    ) : (
-                      <a>
-                        {IconComponent && <IconComponent weight="fill" />}
-                        {menu.menuName}
-                      </a>
-                    )}
+                    <Link href={menu?.menuLink}>
+                      {IconComponent && <IconComponent weight="fill" />}
+                      {menu.menuName}
+                    </Link>
                   </MenuLi>
                 );
               })}
@@ -183,14 +182,54 @@ export default function Sidebar() {
 
                 return (
                   <MenuLi key={menu.id} $active={pathname === menu.menuLink}>
-                    <Link href={menu.menuLink}>
-                      {IconComponent && <IconComponent weight="fill" />}
-                      {menu.menuName}
-                    </Link>
+                    {/*<Link href={menu.menuLink}>*/}
+                    {/*  {IconComponent && <IconComponent weight="fill" />}*/}
+                    {/*  {menu.menuName}*/}
+                    {/*</Link>*/}
+
+                    {menu.menuLink !== '/sub' ? (
+                      <Link href={menu?.menuLink}>
+                        {IconComponent && <IconComponent weight="fill" />}
+                        {menu.menuName}
+                      </Link>
+                    ) : (
+                      <>
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setOpenSubMenuId(openSubMenuId === menu.id ? null : menu.id);
+                          }}
+                        >
+                          {IconComponent && <IconComponent weight="fill" />}
+                          {menu.menuName}
+                          {openSubMenuId === menu.id ? (
+                            <CaretUp weight="bold" />
+                          ) : (
+                            <CaretDown weight="bold" />
+                          )}
+                        </a>
+                        {openSubMenuId === menu.id && (
+                          <SubUl>
+                            {menu.subMenus?.map((sub: any) => {
+                              const SubIcon = iconMap[sub.icon as keyof typeof iconMap];
+                              return (
+                                <MenuLi key={sub.id} $active={pathname === sub.menuLink}>
+                                  <Link href={sub.menuLink}>
+                                    {SubIcon && <SubIcon weight="fill" />}
+                                    {sub.menuName}
+                                  </Link>
+                                </MenuLi>
+                              );
+                            })}
+                          </SubUl>
+                        )}
+                      </>
+                    )}
                   </MenuLi>
                 );
               })}
-          </ul>
+          </MainUl>
         </MiddleSeciton>
         <BottomSeciton>
           <ul>
@@ -287,12 +326,28 @@ const SidebarWrapper = styled(motion.aside)`
     padding-top: 20px;
     z-index: 1;
   }
+`;
 
-  ul {
-    display: flex;
-    flex-direction: column;
-    padding: 0 24px;
-    gap: 12px;
+const MainUl = styled.ul`
+  display: flex;
+  flex-direction: column;
+  padding: 0 24px;
+  gap: 12px;
+`;
+
+const SubUl = styled.ul`
+  display: flex;
+  flex-direction: column;
+  // padding: 0 24px;
+  gap: 12px;
+
+  a {
+    font-size: ${({ theme }) => theme.desktop.sizes.md};
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
   }
 `;
 
@@ -323,7 +378,7 @@ const MiddleSeciton = styled.div`
 const MenuLi = styled.li<{ $active: boolean }>`
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
   padding: 12px 16px;
   background-color: ${({ $active }) => ($active ? '#000000' : 'transparent')};
   color: ${({ $active, theme }) => ($active ? '#ffffff' : theme.colors.blackColor)};
