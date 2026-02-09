@@ -49,7 +49,8 @@ public class RecordController {
     }
     
     @DeleteMapping("/record")
-    public ApiResponse deleteRecord(@RequestParam Long id) {
-        return recordService.removeRecord(id);
+    public ApiResponse deleteRecord(@RequestParam Long id,@AuthenticationPrincipal Jwt jwt) {
+        Long memberId = JwtParserUtil.extractMemberId(jwt);
+        return recordService.removeRecord(id,memberId);
     }
 }

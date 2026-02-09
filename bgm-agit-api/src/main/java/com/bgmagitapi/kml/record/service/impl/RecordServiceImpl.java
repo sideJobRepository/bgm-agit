@@ -36,7 +36,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Transactional
@@ -260,9 +259,7 @@ public class RecordServiceImpl implements RecordService {
         // Match 기본 정보 수정
         matchs.modify(request.getWind(), request.getTournamentStatus());
         
-        // =========================
         // Record 수정
-        // =========================
         List<Record> records = recordRepository.findByRecordByMatchsId(matchsId);
         Map<Long, Record> recordMap = records.stream()
                 .collect(Collectors.toMap(Record::getId, r -> r));
@@ -305,9 +302,7 @@ public class RecordServiceImpl implements RecordService {
                 .filter(r -> !requestRecordIds.contains(r.getId()))
                 .forEach(recordRepository::delete);
         
-        // =========================
         // Yakuman 수정
-        // =========================
         List<Yakuman> existingYakumans = yakumanRepository.findByYakumanMatchesId(matchsId);
         Map<Long, Yakuman> yakumanMap = existingYakumans.stream()
                 .collect(Collectors.toMap(Yakuman::getId, y -> y));
@@ -356,10 +351,10 @@ public class RecordServiceImpl implements RecordService {
         
         // 삭제 대상 Yakuman
         existingYakumans.stream()
-                .filter(y -> !requestYakumanIds.contains(y.getId()))
-                .forEach(y -> {
-                    List<BgmAgitCommonFile> byDeleteFile = commonFileRepository.findByDeleteFile(y.getId(), BgmAgitCommonType.YAKUMAN);
-                    yakumanRepository.delete(y);
+                .filter(item -> !requestYakumanIds.contains(item.getId()))
+                .forEach(item -> {
+                    List<BgmAgitCommonFile> byDeleteFile = commonFileRepository.findByDeleteFile(item.getId(), BgmAgitCommonType.YAKUMAN);
+                    yakumanRepository.delete(item);
                     commonFileRepository.deleteAll(byDeleteFile);
                     for (BgmAgitCommonFile bgmAgitCommonFile : byDeleteFile) {
                         s3FileUtils.deleteFile(bgmAgitCommonFile.getBgmAgitCommonFileUrl());
@@ -370,8 +365,12 @@ public class RecordServiceImpl implements RecordService {
     }
     
     @Override
-    public ApiResponse removeRecord(Long id) {
-        return null;
+    public ApiResponse removeRecord(Long id, Long memberId) {
+        Matchs matchs = matchsRepository.findById(id).orElseThrow(() -> new RuntimeException("존재하지 않은 대국입니다."));
+        matchs.modifyDelStatus();
+        List<Record> findRecord = recordRepository.findByRecordByMatchsId(matchs.getId());
+        matchsAndRecordHistoryService.updateMatchsAndRecordHistory(matchs,findRecord,"삭제",memberId);
+        return new ApiResponse(200,true,"삭제 되었습니다.");
     }
     
 }

@@ -42,4 +42,8 @@ public class Matchs {
         this.wind = wind;
         this.tournamentStatus = tournamentStatus;
     }
+    
+    public void modifyDelStatus() {
+        this.delStatus = "Y";
+    }
 }
