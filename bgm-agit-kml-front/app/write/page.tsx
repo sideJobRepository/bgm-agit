@@ -7,11 +7,12 @@ import { withBasePath } from '@/lib/path';
 import React, { useEffect, useState } from 'react';
 
 import { useFetchRecordUser, useFetchYakuman } from '@/services/recordStore';
-import { useRecordUserStore } from '@/store/user';
+import { useRecordUserStore, useUserStore } from '@/store/user';
 import { Check, Plus } from 'phosphor-react';
 import { useYakumanStore } from '@/store/record';
 import { useInsertPost } from '@/services/main.service';
 import { alertDialog, confirmDialog } from '@/utils/alert';
+import { useRouter } from 'next/navigation';
 
 const DIRECTIONS = [
   { key: 'EAST', label: '동', color: '#415B9C' },
@@ -43,6 +44,9 @@ type YakumanRow = {
 
 export default function Write() {
   const { insert } = useInsertPost();
+
+  const user = useUserStore((state) => state.user);
+  const router = useRouter();
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -125,6 +129,11 @@ export default function Write() {
   };
 
   const handleSubmit = async () => {
+    if (!user) {
+      await alertDialog('유저 정보가 없습니다. \n 로그인 후 이용해주세요.', 'error');
+      router.push('/login');
+    }
+
     const result = await confirmDialog('저장 하시겠습니까?', 'warning');
     if (!result.isConfirmed) return;
 
