@@ -20,7 +20,17 @@ const DIRECTIONS = [
   { key: 'NORTH', label: '북', color: '#6DAE81' },
 ] as const;
 
-const LEADER_POSITIONS = ['동장', '남장', '서장', '북장'];
+const LEADER_POSITIONS = [
+  { label: '동장', value: 'EAST' },
+  { label: '남장', value: 'SOUTH' },
+  { label: '서장', value: 'WEST' },
+  { label: '북장', value: 'NORTH' },
+];
+
+const TOURNAMENT_OPTIONS = [
+  { label: '예', value: 'Y' },
+  { label: '아니오', value: 'N' },
+];
 
 type DirectionKey = (typeof DIRECTIONS)[number]['key'];
 
@@ -56,6 +66,9 @@ export default function Write() {
 
   /** 장 선택 */
   const [leader, setLeader] = useState('');
+
+  /** 토너먼트 여부 선택 */
+  const [tournament, setTournament] = useState('');
 
   /** 각 방향 기록 */
   const [records, setRecords] = useState<
@@ -115,11 +128,13 @@ export default function Write() {
     const result = await confirmDialog('저장 하시겠습니까?', 'warning');
     if (!result.isConfirmed) return;
 
+    if (!validateForm()) return;
+
     const formData = new FormData();
 
     /** 기본 값 */
     formData.append('wind', leader);
-    formData.append('tournamentStatus', 'N');
+    formData.append('tournamentStatus', tournament);
 
     /** records */
     rankedRecords.forEach((r, idx) => {
@@ -158,6 +173,51 @@ export default function Write() {
     });
   };
 
+  const validateForm = () => {
+    // 장 선택
+    if (!leader) {
+      alertDialog('장을 선택해주세요.', 'error');
+      return false;
+    }
+
+    // 대회 여부
+    if (!tournament) {
+      alertDialog('대회 여부를 선택해주세요.', 'error');
+      return false;
+    }
+
+    // records: 4명 전부 선택됐는지
+    const selectedUsers = Object.values(records).filter((r) => r.userId);
+    if (selectedUsers.length !== 4) {
+      alertDialog('동·서·남·북 모든 플레이어를 선택해주세요.', 'error');
+      return false;
+    }
+
+    // yakuman 검증
+    if (yakumanRows.length > 0) {
+      for (let i = 0; i < yakumanRows.length; i++) {
+        const row = yakumanRows[i];
+
+        if (!row.userId) {
+          alertDialog(`역만 ${i + 1}번: 닉네임을 선택해주세요.`, 'error');
+          return false;
+        }
+
+        if (!row.yakumanId) {
+          alertDialog(`역만 ${i + 1}번: 역만을 선택해주세요.`, 'error');
+          return false;
+        }
+
+        if (!memo.trim()) {
+          alertDialog('역만이 있을 경우 비고(내용)는 필수입니다.', 'error');
+          return false;
+        }
+      }
+    }
+
+    return true;
+  };
+
   return (
     <Wrapper>
       <Hero>
@@ -185,11 +245,25 @@ export default function Write() {
           <TopGroup>
             <FieldsWrapper>
               <Field className="top">
+                <label>대회여부</label>
+                <select value={tournament} onChange={(e) => setTournament(e.target.value)}>
+                  <option value="">선택</option>
+                  {TOURNAMENT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </FieldsWrapper>
+            <FieldsWrapper>
+              <Field className="top">
                 <label>장</label>
                 <select value={leader} onChange={(e) => setLeader(e.target.value)}>
-                  {LEADER_POSITIONS.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
+                  <option value="">선택</option>
+                  {LEADER_POSITIONS.map((pos) => (
+                    <option key={pos.value} value={pos.value}>
+                      {pos.label}
                     </option>
                   ))}
                 </select>
@@ -583,12 +657,13 @@ const TopGroup = styled.div`
   display: flex;
   background-color: transparent;
   flex: 1;
+  gap: 4px;
   align-items: center;
   padding: 4px 6px;
   border: none;
   border-radius: 4px;
   flex-wrap: nowrap;
-  max-width: 100px;
+  max-width: 240px;
 
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;

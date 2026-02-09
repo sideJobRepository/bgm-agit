@@ -240,12 +240,28 @@ export default function Sidebar() {
           </MainUl>
         </MiddleSeciton>
         <BottomSeciton>
-          <ul>
+          <MainUl>
             <MenuLi $active={false}>
-              <Link href="/write">
+              <a
+                href="#"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  if (!user) {
+                    const result = await confirmDialog(
+                      '로그인 후 이용 가능합니다.\n 로그인 페이지로 이동하시겠습니까?',
+                      'warning'
+                    );
+                    if (result.isConfirmed) {
+                      router.push('/login');
+                    }
+                  } else {
+                    router.push('/write');
+                  }
+                }}
+              >
                 <PencilSimple weight="fill" />
                 기록 입력
-              </Link>
+              </a>
             </MenuLi>
             <MenuLi $active={pathname === '/login'}>
               {user ? (
@@ -266,7 +282,7 @@ export default function Sidebar() {
                 </Link>
               )}
             </MenuLi>
-          </ul>
+          </MainUl>
         </BottomSeciton>
       </SidebarWrapper>
     </>
