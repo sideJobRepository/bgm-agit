@@ -1,6 +1,5 @@
 package com.bgmagitapi.kml.record.repository.impl;
 
-import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.record.dto.response.QRecordGetDetailResponse_RecordList;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
 import com.bgmagitapi.kml.record.entity.Record;
@@ -47,7 +46,7 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                 .join(record.member, bgmAgitMember).fetchJoin()
                 .where(matchs.id.in(matchIds))
                 .fetch();
-
+            
         // Match 기준 count
         JPAQuery<Long> countQuery = queryFactory
                 .select(matchs.count())

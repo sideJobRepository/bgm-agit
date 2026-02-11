@@ -19,6 +19,7 @@ public class RecordGetResponse {
     
 
     private Long matchsId;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime registDate;
     private String createNicname;
     private List<Row> rows;
