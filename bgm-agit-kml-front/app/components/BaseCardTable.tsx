@@ -2,6 +2,8 @@
 
 import styled from 'styled-components';
 import Pagination from '@/app/components/Pagination';
+import { useUserStore } from '@/store/user';
+import { FileText, TrashSimple } from 'phosphor-react';
 
 type RowType = {
   seat: string;
@@ -27,11 +29,25 @@ type BaseCardTableProps = {
 };
 
 export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) {
+  const user = useUserStore((state) => state.user);
+  console.log('user', user);
   return (
     <>
       <CardGrid>
         {data.content.map((item) => (
           <Card key={item.matchsId}>
+            {(user?.roles.includes('ROLE_ADMIN') || user?.roles.includes('MENTOR')) && (
+              <ButtonBox>
+                <>
+                  <Button color="#415B9C">
+                    <FileText weight="bold" />
+                  </Button>
+                  <Button color="#D9625E">
+                    <TrashSimple weight="bold" />
+                  </Button>
+                </>
+              </ButtonBox>
+            )}
             <Header>
               <span>ID: {item.matchsId}</span>
               <span>{item.registDate}</span>
@@ -145,4 +161,39 @@ const PaginationWrapper = styled.div`
   margin: 32px auto;
   display: flex;
   justify-content: center;
+`;
+
+const ButtonBox = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 1;
+  margin-bottom: 8px;
+`;
+
+const Button = styled.button<{ color: string }>`
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  background-color: ${({ color }) => color};
+  color: ${({ theme }) => theme.colors.white};
+  font-size: ${({ theme }) => theme.desktop.sizes.md};
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.mobile.sizes.md};
+  }
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  &:hover {
+    opacity: 0.8;
+  }
 `;
