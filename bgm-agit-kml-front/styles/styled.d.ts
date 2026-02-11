@@ -16,6 +16,7 @@ declare module 'styled-components' {
       grayColor: string;
       inputColor: string;
       writeBgColor: string;
+      recordBgColor: string;
 
       sideBgColor: string;
       mainBgColor: string;

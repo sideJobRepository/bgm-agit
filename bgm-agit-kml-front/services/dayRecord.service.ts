@@ -12,7 +12,7 @@ export function useFetchDayRecordList() {
 
   const fetchNotice = (params: params) => {
     request(
-      () => api.get(`/bgm-agit/record?size=5`, { params }).then((res) => res.data),
+      () => api.get(`/bgm-agit/record?size=6`, { params }).then((res) => res.data),
       setDayRecord,
       { ignoreErrorRedirect: true }
     );

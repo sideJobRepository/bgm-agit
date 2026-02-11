@@ -701,7 +701,7 @@ const Center = styled.section<{ $color: string }>`
   overflow: hidden;
   text-align: center;
   align-items: center;
-  background-color: #f3f3f3;
+  background-color: ${({ theme }) => theme.colors.recordBgColor};
   border-radius: 4px;
 
   h4 {

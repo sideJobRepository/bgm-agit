@@ -33,13 +33,13 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
         {data.content.map((item) => (
           <Card key={item.matchsId}>
             <Header>
-              <span>ID</span>
-              <span>날짜</span>
-            </Header>
-            <HeaderData>
-              <span>{item.matchsId}</span>
+              <span>ID: {item.matchsId}</span>
               <span>{item.registDate}</span>
-            </HeaderData>
+            </Header>
+            {/*<HeaderData>*/}
+            {/*  <span>{item.matchsId}</span>*/}
+            {/*  <span>{item.registDate}</span>*/}
+            {/*</HeaderData>*/}
             {item.rows.map((row, idx) => (
               <Row key={idx} $highlight={row.rank === 1}>
                 <span>{row.seat}</span>
@@ -60,46 +60,77 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
   );
 }
 
-// 스타일
 const CardGrid = styled.div`
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); // 한 줄에 3개
   gap: 16px;
-  justify-content: flex-start;
+  padding: 0 12px;
+
+  @media ${({ theme }) => theme.device.tablet} {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const Card = styled.div`
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 12px;
-  width: 320px;
+  background-color: ${({ theme }) => theme.colors.recordBgColor};
+  border-radius: 4px;
+  padding: 8px;
+  width: 100%;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 `;
 
 const Header = styled.div`
-  background: #e6dbff;
+  background-color: ${({ theme }) => theme.colors.blueColor};
+  color: ${({ theme }) => theme.colors.whiteColor};
   display: flex;
   justify-content: space-between;
   padding: 6px 8px;
-  font-weight: bold;
-  font-size: 13px;
-`;
+  font-size: ${({ theme }) => theme.desktop.sizes.md};
+  font-weight: 600;
 
-const HeaderData = styled.div`
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 8px;
-  font-size: 13px;
-  margin-bottom: 6px;
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.mobile.sizes.md};
+  }
 `;
 
 const Row = styled.div<{ $highlight?: boolean }>`
   display: flex;
   justify-content: space-between;
   padding: 6px 8px;
-  font-size: 13px;
-  background-color: ${({ $highlight }) => ($highlight ? '#fffecd' : '#f9f9f9')};
-  border-bottom: 1px solid #eee;
+  background-color: ${({ $highlight }) => ($highlight ? '#4A90E2' : '#ffffff')};
+  color: ${({ $highlight }) => ($highlight ? '#ffffff' : '#1d1d1f')};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+  font-size: ${({ theme }) => theme.desktop.sizes.md};
+  font-weight: 400;
+
+  span:nth-child(1) {
+    flex: 1; // seat (EAST/SOUTH 등)
+    text-align: left;
+  }
+  span:nth-child(2) {
+    flex: 0.5; // rank
+    text-align: center;
+  }
+  span:nth-child(3) {
+    flex: 2; // nickname
+    text-align: left;
+  }
+  span:nth-child(4) {
+    flex: 1.5; // score
+    text-align: right;
+  }
+  span:nth-child(5) {
+    flex: 1; // point
+    text-align: right;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.mobile.sizes.md};
+  }
 `;
 
 const PaginationWrapper = styled.div`

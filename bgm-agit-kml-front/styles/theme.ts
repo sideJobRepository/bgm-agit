@@ -8,6 +8,7 @@ export const theme = {
     inputColor: '#1d1d1f',
     writeBgColor: '#4A90E2',
     softColor: '#F8F9FA',
+    recordBgColor: '#f3f3f3',
 
     sideBgColor: '#00002E',
     mainBgColor: '#1D1E3D',
