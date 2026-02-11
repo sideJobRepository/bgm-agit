@@ -1,5 +1,6 @@
 package com.bgmagitapi.kml.record.repository.impl;
 
+import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.record.dto.response.QRecordGetDetailResponse_RecordList;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
 import com.bgmagitapi.kml.record.entity.Record;
@@ -8,6 +9,7 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 
@@ -24,21 +26,36 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
     
     @Override
     public Page<Record> findByRecords(Pageable pageable) {
-        List<Record> result = queryFactory
+        //  Match 먼저 페이징
+        List<Long> matchIds = queryFactory
+                .select(matchs.id)
+                .from(matchs)
+                .where(matchs.delStatus.eq("N"))
+                .orderBy(matchs.registDate.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        if (matchIds.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
+
+        // 해당 Match에 속한 Record 전부 조회
+        List<Record> records = queryFactory
                 .selectFrom(record)
                 .join(record.matchs, matchs).fetchJoin()
                 .join(record.member, bgmAgitMember).fetchJoin()
-                .where(matchs.delStatus.eq("N"))
-                .limit(pageable.getPageSize())
-                .offset(pageable.getOffset())
+                .where(matchs.id.in(matchIds))
                 .fetch();
-        
-        JPAQuery<Long> countQuery = queryFactory
+
+        // Match 기준 count
+        Long total = queryFactory
                 .select(matchs.count())
                 .from(matchs)
-                .where(matchs.delStatus.eq("N"));
-        
-        return PageableExecutionUtils.getPage(result, pageable, countQuery::fetchOne);
+                .where(matchs.delStatus.eq("N"))
+                .fetchOne();
+
+        return new PageImpl<>(records, pageable, total == null ? 0 : total);
     }
     
     @Override

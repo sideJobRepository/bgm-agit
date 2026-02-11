@@ -1,6 +1,7 @@
 package com.bgmagitapi.kml.matchs.entity;
 
 import com.bgmagitapi.entity.BgmAgitMember;
+import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.setting.entity.Setting;
 import jakarta.persistence.*;
@@ -12,7 +13,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Builder
-public class Matchs {
+public class Matchs extends DateSuperClass {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
