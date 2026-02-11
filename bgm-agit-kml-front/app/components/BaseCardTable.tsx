@@ -107,25 +107,33 @@ const Row = styled.div<{ $highlight?: boolean }>`
   font-size: ${({ theme }) => theme.desktop.sizes.md};
   font-weight: 400;
 
+  span {
+    padding: 0 8px;
+  }
+
   span:nth-child(1) {
     flex: 1; // seat (EAST/SOUTH 등)
-    text-align: left;
+    text-align: center;
+    border-right: 1px solid ${({ theme }) => theme.colors.border};
   }
   span:nth-child(2) {
     flex: 0.5; // rank
     text-align: center;
+    border-right: 1px solid ${({ theme }) => theme.colors.border};
   }
   span:nth-child(3) {
     flex: 2; // nickname
     text-align: left;
+    border-right: 1px solid ${({ theme }) => theme.colors.border};
   }
   span:nth-child(4) {
     flex: 1.5; // score
-    text-align: right;
+    text-align: center;
+    border-right: 1px solid ${({ theme }) => theme.colors.border};
   }
   span:nth-child(5) {
     flex: 1; // point
-    text-align: right;
+    text-align: center;
   }
 
   @media ${({ theme }) => theme.device.mobile} {
