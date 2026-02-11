@@ -80,15 +80,15 @@ export default function Write() {
       DirectionKey,
       {
         userId: number | null;
-        score: number;
+        score: string;
         search: string;
       }
     >
   >({
-    EAST: { userId: null, score: 0, search: '' },
-    SOUTH: { userId: null, score: 0, search: '' },
-    WEST: { userId: null, score: 0, search: '' },
-    NORTH: { userId: null, score: 0, search: '' },
+    EAST: { userId: null, score: '', search: '' },
+    SOUTH: { userId: null, score: '', search: '' },
+    WEST: { userId: null, score: '', search: '' },
+    NORTH: { userId: null, score: '', search: '' },
   });
 
   const [yakumanRows, setYakumanRows] = useState<YakumanRow[]>([]);
@@ -98,11 +98,12 @@ export default function Write() {
     .map(([seat, data]) => ({
       seat,
       ...data,
+      score: Number(data.score), // 👈 숫자로 변환
     }))
     .sort((a, b) => b.score - a.score)
     .map((r, idx) => ({
       memberId: r.userId,
-      recordScore: r.score,
+      recordScore: r.score, // 이미 숫자
       recordRank: idx + 1,
       recordSeat: r.seat, // EAST | SOUTH | WEST | NORTH
     }));
@@ -332,13 +333,14 @@ export default function Write() {
                     <label>점수</label>
                     <input
                       type="number"
+                      step="1"
                       value={row.score}
                       onChange={(e) =>
                         setRecords((prev) => ({
                           ...prev,
                           [key]: {
                             ...prev[key],
-                            score: Number(e.target.value),
+                            score: e.target.value, // 그대로 string 저장
                           },
                         }))
                       }
@@ -666,7 +668,7 @@ const TopGroup = styled.div`
   display: flex;
   background-color: transparent;
   flex: 1;
-  gap: 4px;
+  gap: 8px;
   align-items: center;
   padding: 4px 6px;
   border: none;

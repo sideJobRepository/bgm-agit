@@ -1,6 +1,6 @@
 import { create } from 'zustand/index';
 
-interface Yakuman{
+interface Yakuman {
   id: number;
   orders: number;
   yakumanName: string;
@@ -13,5 +13,5 @@ interface YakumanStore {
 
 export const useYakumanStore = create<YakumanStore>((set) => ({
   yakuman: [],
-  setYakuman: (yakuman) => set({yakuman})
-}))
+  setYakuman: (yakuman) => set({ yakuman }),
+}));
