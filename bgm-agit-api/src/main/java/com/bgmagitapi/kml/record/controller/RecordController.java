@@ -48,8 +48,8 @@ public class RecordController {
         return recordService.updateRecord(request, memberId);
     }
     
-    @DeleteMapping("/record")
-    public ApiResponse deleteRecord(@RequestParam Long id,@AuthenticationPrincipal Jwt jwt) {
+    @DeleteMapping("/record/{id}")
+    public ApiResponse deleteRecord(@PathVariable Long id,@AuthenticationPrincipal Jwt jwt) {
         Long memberId = JwtParserUtil.extractMemberId(jwt);
         return recordService.removeRecord(id,memberId);
     }
