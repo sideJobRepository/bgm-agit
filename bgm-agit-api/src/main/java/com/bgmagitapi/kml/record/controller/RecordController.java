@@ -42,7 +42,7 @@ public class RecordController {
         return recordService.createRecord(request, memberId);
     }
     
-    @PutMapping
+    @PutMapping("/record")
     ApiResponse modifyRecord(@Validated @ModelAttribute RecordPutRequest request, @AuthenticationPrincipal Jwt jwt) {
         Long memberId = JwtParserUtil.extractMemberId(jwt);
         return recordService.updateRecord(request, memberId);
