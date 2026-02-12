@@ -26,6 +26,7 @@ import com.bgmagitapi.kml.yakuman.repository.YakumanRepository;
 import com.bgmagitapi.repository.BgmAgitCommonFileRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.util.CalculateUtil;
+import jakarta.validation.constraints.Null;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -70,48 +71,55 @@ public class RecordServiceImpl implements RecordService {
     @Override
     public Page<RecordGetResponse> getRecords(Pageable pageable) {
         Page<Record> records = recordRepository.findByRecords(pageable);
-        
+    
         Map<Long, List<Record>> groupedByMatch = records.getContent().stream()
-                .filter(r -> r.getMatchs() != null) // 방어
-                .collect(Collectors.groupingBy(r -> r.getMatchs().getId()));
-        
+                        .filter(r -> r.getMatchs() != null)
+                        .collect(Collectors.groupingBy(r -> r.getMatchs().getId()));
+    
         List<RecordGetResponse> list = groupedByMatch.entrySet().stream()
                 .map(entry -> {
+    
                     List<Record> group = new ArrayList<>(entry.getValue());
-                    
-                    // 점수 내림차순
-                    group.sort(Comparator.comparing(Record::getRecordScore).reversed());
-                    
                     if (group.isEmpty()) return null;
                     
+                    // 1단계: 점수 기준 정렬 → rank 계산
+                    group.sort(Comparator.comparing(Record::getRecordScore).reversed());
+    
+                    Map<Long, Integer> rankMap = new HashMap<>();
+                    for (int i = 0; i < group.size(); i++) {
+                        rankMap.put(group.get(i).getId(), i + 1);
+                    }
+                    
+                    // 2단계: 동남서북 순 정렬 (enum 선언 순서)
+                    group.sort(Comparator.comparing(r -> r.getRecordSeat().ordinal()));
+    
                     RecordGetResponse response = new RecordGetResponse();
                     response.setMatchsId(entry.getKey());
                     response.setCreateNicname(group.get(0).getMatchs().getMember().getBgmAgitMemberNickname());
                     response.setRegistDate(group.get(0).getRegistDate());
-                    
-                    for (int i = 0; i < group.size() && i < 4; i++) {
-                        Record rec = group.get(i);
-                        
+    
+                    for (Record rec : group) {
+    
                         RecordGetResponse.Row row = new RecordGetResponse.Row();
-                        row.setSeat(rec.getRecordSeat());
-                        row.setRank(i + 1);
+    
+                        // enum value
+                        row.setSeat(rec.getRecordSeat().getValue());
+    
+                        row.setRank(rankMap.get(rec.getId()));
                         row.setNickname(rec.getMember() != null ? rec.getMember().getBgmAgitMemberNickname() : "");
                         row.setScore(rec.getRecordScore());
                         row.setPoint(rec.getRecordPoint());
-                        row.setWinner(i == 0); // 1등만 true
-                        
+                        row.setWinner(rankMap.get(rec.getId()) == 1);
+    
                         response.getRows().add(row);
                     }
-                    
+    
                     return response;
                 })
                 .filter(Objects::nonNull)
-                .sorted(Comparator.comparing(
-                        RecordGetResponse::getRegistDate
-                ).reversed())
+                .sorted(Comparator.comparing(RecordGetResponse::getRegistDate).reversed())
                 .toList();
-        
-        
+    
         return new PageImpl<>(list, pageable, list.size());
     }
     

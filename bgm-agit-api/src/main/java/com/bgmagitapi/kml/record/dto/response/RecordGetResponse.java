@@ -33,7 +33,7 @@ public class RecordGetResponse {
     
     @Data
     public static class Row {
-        private Wind seat;      // 東 / 南 / 西 / 北
+        private String seat;      // 東 / 南 / 西 / 北
         private Integer rank;
         private String nickname;
         private Integer score;

@@ -7,10 +7,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum Wind {
     
-    EAST("동"),
-    SOUTH("남"),
-    WEST("서"),
-    NORTH("북");
+    EAST("東"),
+    SOUTH("南"),
+    WEST("西"),
+    NORTH("北");
     
     private final String value;
 }
