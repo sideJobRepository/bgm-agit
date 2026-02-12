@@ -143,6 +143,10 @@ public class RecordServiceImpl implements RecordService {
                 .map(RecordPostRequest.Records::getMemberId)
                 .collect(Collectors.toSet());
         
+        if (recordMemberSet.size() != 4) {
+            throw new ValidException("동일 사용자가 기록에 포함되어 있습니다.");
+        }
+        
         List<Long> invalidMemberIds = request.getYakumans().stream()
                 .map(RecordPostRequest.Yakumans::getMemberId)
                 .filter(id -> !recordMemberSet.contains(id))
