@@ -39,6 +39,7 @@ import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.record.enums.Wind;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -82,6 +83,7 @@ public class RecordPostRequest {
     @Builder
     public static class Records {
         private Long memberId;
+        @NotNull(message = "점수를 입력해주세요")
         private Integer recordScore;
         private Integer recordRank;
         private Wind recordSeat;
