@@ -4,6 +4,10 @@ import styled from 'styled-components';
 import Pagination from '@/app/components/Pagination';
 import { useUserStore } from '@/store/user';
 import { FileText, TrashSimple } from 'phosphor-react';
+import { alertDialog, confirmDialog } from '@/utils/alert';
+import { useDeletePost } from '@/services/main.service';
+import { useRouter } from 'next/navigation';
+import { useFetchDayRecordList } from '@/services/dayRecord.service';
 
 type RowType = {
   seat: string;
@@ -29,8 +33,25 @@ type BaseCardTableProps = {
 };
 
 export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) {
+  const { remove } = useDeletePost();
+  const router = useRouter();
+  const fetchDayRecord = useFetchDayRecordList();
+
   const user = useUserStore((state) => state.user);
-  console.log('user', user);
+  const deleteData = async (id: number) => {
+    const result = await confirmDialog('해당 기록을 삭제 하시겠습니까?', 'warning');
+
+    if (result.isConfirmed) {
+      remove({
+        url: `/bgm-agit/record/${id}`,
+        ignoreErrorRedirect: true,
+        onSuccess: async () => {
+          await alertDialog('기록이 삭제되었습니다.', 'success');
+          fetchDayRecord({ page });
+        },
+      });
+    }
+  };
   return (
     <>
       <CardGrid>
@@ -42,7 +63,7 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
                   <Button color="#415B9C">
                     <FileText weight="bold" />
                   </Button>
-                  <Button color="#D9625E">
+                  <Button onClick={() => deleteData(item.matchsId)} color="#D9625E">
                     <TrashSimple weight="bold" />
                   </Button>
                 </>
