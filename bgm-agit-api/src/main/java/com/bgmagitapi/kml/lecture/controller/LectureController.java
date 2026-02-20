@@ -27,7 +27,7 @@ public class LectureController {
         return lectureService.getLectureGetResponse(year, month, day, memberId);
     }
     
-    @PostMapping("/Lecture")
+    @PostMapping("/lecture")
     public ApiResponse createLecture(@RequestBody LecturePostRequest request,@AuthenticationPrincipal Jwt jwt) {
         Long memberId = JwtParserUtil.extractMemberId(jwt);
         return lectureService.createLecture(request, memberId);
