@@ -42,8 +42,31 @@ export default function Guide() {
             <img src={withBasePath('/guide/rexx3.jpg')} alt="마작 테이블" />
           </ImageBox>
           <TextBox>
-            대전 유일의 REXX-3 도입:일본 정품 최첨단 전동 탁자 ‘REXX-3’ 완비. 소음은 줄이고 게임의
-            몰입도는 높였습니다.
+            <strong>대전 유일의 REXX-3 도입</strong>
+            <br />
+            일본 정품 최첨단 전동 탁자 ‘REXX-3’ 완비. 소음은 줄이고 게임의 몰입도는 높였습니다.
+          </TextBox>
+        </SubContent>
+        <SubContent>
+          <ImageBox>
+            <img src={withBasePath('/guide/celanRoom.png')} alt="마작 테이블" />
+          </ImageBox>
+          <TextBox>
+            <strong>철저한 ‘클린 매너’ 원칙</strong>
+            <br />
+            BGM 아지트는 비흡연, 비도박, 비욕설을 원칙으로 합니다. 오직 게임 그 자체에만 집중할 수
+            있는 건전한 커뮤니티를 지향합니다.
+          </TextBox>
+        </SubContent>
+        <SubContent>
+          <ImageBox>
+            <img src={withBasePath('/guide/all.jpg')} alt="마작 테이블" />
+          </ImageBox>
+          <TextBox>
+            <strong>프리미엄 환경</strong>
+            <br />
+            BGM 아지트는 비흡연, 비도박, 비욕설을 원칙으로 합니다. 오직 게임 그 자체에만 집중할 수
+            있는 건전한 커뮤니티를 지향합니다.
           </TextBox>
         </SubContent>
       </ContentBox>
@@ -136,8 +159,7 @@ const ContentBox = styled.div`
   flex-direction: column;
   gap: 24px;
   width: 100%;
-  overflow: hidden;
-  padding: 12px 0;
+  padding-bottom: 48px;
 
   strong {
     font-size: ${({ theme }) => theme.desktop.sizes.h3Size};
@@ -177,7 +199,9 @@ const MainContent = styled.div`
 const SubContent = styled.div`
   display: flex;
   border-radius: 4px;
-  padding: 12px;
+  gap: 24px;
+  padding: 12px 0;
+  flex-direction: column;
   span {
     font-size: ${({ theme }) => theme.desktop.sizes.xl};
     font-weight: 600;
@@ -186,10 +210,6 @@ const SubContent = styled.div`
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.mobile.sizes.xl};
     }
-  }
-
-  @media ${({ theme }) => theme.device.tablet} {
-    flex-direction: column;
   }
 `;
 
@@ -204,4 +224,27 @@ const ImageBox = styled.div`
 
 const TextBox = styled.div`
   display: flex;
+  flex-direction: column;
+  padding: 0 12px;
+  gap: 12px;
+  font-size: ${({ theme }) => theme.desktop.sizes.xl};
+  opacity: 0.8;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-align: center;
+  color: ${({ theme }) => theme.colors.inputColor};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.mobile.sizes.xl};
+  }
+
+  strong {
+    font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
+    font-weight: 600;
+    line-height: 1.4;
+    color: ${({ theme }) => theme.colors.blackColor};
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
+    }
+  }
 `;
