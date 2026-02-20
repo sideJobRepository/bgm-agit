@@ -2,6 +2,7 @@ package com.bgmagitapi.kml.lecture.entity;
 
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
+import com.bgmagitapi.kml.slot.entity.LectureSlot;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,6 +28,10 @@ public class Lecture extends DateSuperClass {
     @JoinColumn(name = "BGM_AGIT_MEMBER_ID")
     @ManyToOne(fetch = FetchType.LAZY)
     private BgmAgitMember member;
+    
+    @JoinColumn(name = "BGM_AGIT_LECTURE_SLOT_ID")
+    @ManyToOne(fetch = FetchType.LAZY)
+    private LectureSlot lectureSlot;
     
     // BGM 아지트 강의 승인 여부 'N'
     @Column(name = "BGM_AGIT_LECTURE_APPROVAL_STATUS")

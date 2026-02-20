@@ -18,6 +18,12 @@ public class LectureGetResponse {
     @AllArgsConstructor
     public static class TimeSlotByDate {
         private LocalDate date;
-        private List<String> timeSlots;
+        private List<SlotItem> timeSlots;
+    }
+    @Getter
+    @AllArgsConstructor
+    public static class SlotItem {
+        private String time;      // "18:00~20:00"
+        private boolean enabled;  // true/false (비활성화 내려주기)
     }
 }
