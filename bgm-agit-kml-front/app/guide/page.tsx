@@ -65,8 +65,7 @@ export default function Guide() {
           <TextBox>
             <strong>프리미엄 환경</strong>
             <br />
-            BGM 아지트는 비흡연, 비도박, 비욕설을 원칙으로 합니다. 오직 게임 그 자체에만 집중할 수
-            있는 건전한 커뮤니티를 지향합니다.
+            쾌적한 공기 질 관리와 세련된 인테리어로 대전 마작의 새로운 기준을 제시합니다.
           </TextBox>
         </SubContent>
       </ContentBox>
