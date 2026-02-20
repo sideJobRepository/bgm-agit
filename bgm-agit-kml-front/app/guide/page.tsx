@@ -38,8 +38,13 @@ export default function Guide() {
           </h5>
         </MainContent>
         <SubContent>
-          <ImageBox></ImageBox>
-          <TextBox></TextBox>
+          <ImageBox>
+            <img src={withBasePath('/guide/rexx3.jpg')} alt="마작 테이블" />
+          </ImageBox>
+          <TextBox>
+            대전 유일의 REXX-3 도입:일본 정품 최첨단 전동 탁자 ‘REXX-3’ 완비. 소음은 줄이고 게임의
+            몰입도는 높였습니다.
+          </TextBox>
         </SubContent>
       </ContentBox>
     </Wrapper>
@@ -132,7 +137,6 @@ const ContentBox = styled.div`
   gap: 24px;
   width: 100%;
   overflow: hidden;
-  background-color: ${({ theme }) => theme.colors.softColor};
   padding: 12px 0;
 
   strong {
@@ -165,16 +169,15 @@ const ContentBox = styled.div`
 const MainContent = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 0 12px;
-  gap: 12px;
+  padding: 48px 12px;
+  gap: 24px;
+  background-color: ${({ theme }) => theme.colors.softColor};
 `;
 
 const SubContent = styled.div`
   display: flex;
-  margin: 0 12px 0 12px;
-  padding: 12px;
   border-radius: 4px;
-  background-color: ${({ theme }) => theme.colors.writeBgColor};
+  padding: 12px;
   span {
     font-size: ${({ theme }) => theme.desktop.sizes.xl};
     font-weight: 600;
@@ -184,10 +187,19 @@ const SubContent = styled.div`
       font-size: ${({ theme }) => theme.mobile.sizes.xl};
     }
   }
+
+  @media ${({ theme }) => theme.device.tablet} {
+    flex-direction: column;
+  }
 `;
 
 const ImageBox = styled.div`
   display: flex;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 const TextBox = styled.div`
