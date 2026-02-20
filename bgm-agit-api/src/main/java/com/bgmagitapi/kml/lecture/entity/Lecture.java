@@ -48,7 +48,4 @@ public class Lecture extends DateSuperClass {
     @Column(name = "BGM_AGIT_LECTURE_CANCEL_STATUS")
     private String lectureCancelStatus;
     
-    // BGM 아지트 강의 인원
-    @Column(name = "BGM_AGIT_LECTURE_PEOPLE")
-    private Integer lecturePeople;
 }

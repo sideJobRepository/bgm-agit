@@ -1,6 +1,7 @@
 package com.bgmagitapi.kml.lecture.service.impl;
 
 import com.bgmagitapi.kml.lecture.dto.response.LectureGetResponse;
+import com.bgmagitapi.kml.lecture.repository.LectureRepository;
 import com.bgmagitapi.kml.lecture.service.LectureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,8 @@ import java.util.List;
 @Service
 public class LectureServiceImpl implements LectureService {
     
+    
+    private final LectureRepository lectureRepository;
     
     @Override
     public LectureGetResponse getLectureGetResponse(int year,int month) {
