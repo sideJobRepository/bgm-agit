@@ -19,7 +19,7 @@ class LectureServiceImplTest extends RepositoryAndServiceTestSupport {
     @Test
     void test(){
         
-        LectureGetResponse lectureGetResponse = lectureService.getLectureGetResponse(2026);
+        LectureGetResponse lectureGetResponse = lectureService.getLectureGetResponse(2026,2);
         System.out.println("lectureGetResponse = " + lectureGetResponse);
     }
 }

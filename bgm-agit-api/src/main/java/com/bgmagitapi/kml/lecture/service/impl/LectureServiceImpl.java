@@ -18,14 +18,14 @@ public class LectureServiceImpl implements LectureService {
     
     
     @Override
-    public LectureGetResponse getLectureGetResponse(int year) {
+    public LectureGetResponse getLectureGetResponse(int year,int month) {
     
         List<LectureGetResponse.TimeSlotByDate> result = new ArrayList<>();
     
         LocalDate today = LocalDate.now();
     
-        LocalDate start = LocalDate.of(year, today.getMonth(), 1);
-        LocalDate end = start.plusMonths(4);
+        LocalDate start = LocalDate.of(year, month, 1);
+        LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
     
         for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
     
