@@ -25,7 +25,7 @@ public class LectureServiceImpl implements LectureService {
         LocalDate today = LocalDate.now();
     
         LocalDate start = LocalDate.of(year, today.getMonth(), 1);
-        LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
+        LocalDate end = start.plusMonths(4);
     
         for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
     
