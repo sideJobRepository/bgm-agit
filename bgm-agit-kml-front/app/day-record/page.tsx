@@ -30,7 +30,7 @@ export default function DayRecord() {
     <Wrapper>
       <Hero>
         <HeroBg>
-          <img src={withBasePath('/bgmMain.jpeg')} alt="" />
+          <img src={withBasePath('/dayHero.jpg')} alt="" />
         </HeroBg>
         <FixedDarkOverlay />
         <HeroOverlay
@@ -43,8 +43,8 @@ export default function DayRecord() {
         />
 
         <HeroContent>
-          <h1>What’s New</h1>
-          <span>새로운 소식과 중요 안내를 확인하세요.</span>
+          <h1>Monthly Summary</h1>
+          <span>이번 달의 기록과 변화 추이를 확인하세요.</span>
         </HeroContent>
       </Hero>
       <TableBox>
@@ -92,7 +92,7 @@ const HeroBg = styled.div`
     height: 100%;
     object-fit: cover;
 
-    filter: blur(3px);
+    filter: blur(2px);
     transform: scale(1);
   }
 `;
