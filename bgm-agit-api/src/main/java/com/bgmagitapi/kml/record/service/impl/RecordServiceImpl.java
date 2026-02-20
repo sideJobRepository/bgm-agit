@@ -26,7 +26,6 @@ import com.bgmagitapi.kml.yakuman.repository.YakumanRepository;
 import com.bgmagitapi.repository.BgmAgitCommonFileRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.util.CalculateUtil;
-import jakarta.validation.constraints.Null;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -34,7 +33,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -186,9 +184,7 @@ public class RecordServiceImpl implements RecordService {
                         Comparator.reverseOrder()
                 ).thenComparing(r -> WIND_ORDER.get(r.getRecordSeat())));
         
-        records.forEach(item ->
-                item.setRecordRank(rankCount.getAndIncrement())
-        );
+        records.forEach(item -> item.setRecordRank(rankCount.getAndIncrement()));
         int multiplier = CalculateUtil.seatMultiplier(matchs.getWind());
         List<Record> recordList = new ArrayList<>();
         for (RecordPostRequest.Records record : records) {
