@@ -4,11 +4,14 @@ import com.bgmagitapi.RepositoryAndServiceTestSupport;
 import com.bgmagitapi.kml.yakamantype.dto.response.MembersGetResponse;
 import com.bgmagitapi.kml.yakamantype.dto.response.YakumanTypeGetResponse;
 import com.bgmagitapi.kml.yakamantype.service.YakumanTypeService;
+import com.bgmagitapi.kml.yakuman.dto.response.YakumanDetailGetResponse;
 import com.bgmagitapi.kml.yakuman.dto.response.YakumanGetResponse;
 import com.bgmagitapi.kml.yakuman.service.YakumanService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 
@@ -43,6 +46,14 @@ class YakumanTypeServiceImplTest extends RepositoryAndServiceTestSupport {
     void test3(){
         List<YakumanGetResponse> pivotYakuman = yakumanService.getPivotYakuman();
         System.out.println("pivotYakuman = " + pivotYakuman);
+    }
+    
+    @DisplayName("")
+    @Test
+    void test4(){
+        PageRequest request = PageRequest.of(0, 10);
+        Page<YakumanDetailGetResponse> detailYakuman = yakumanService.getDetailYakuman(request);
+        System.out.println("detailYakuman = " + detailYakuman);
     }
     
     

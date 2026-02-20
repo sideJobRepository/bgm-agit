@@ -1,10 +1,11 @@
 package com.bgmagitapi.kml.yakuman.repository.impl;
 
-import com.bgmagitapi.entity.QBgmAgitMember;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.kml.record.dto.response.QRecordGetDetailResponse_YakumanList;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
+import com.bgmagitapi.kml.yakuman.dto.response.QYakumanDetailGetResponse;
 import com.bgmagitapi.kml.yakuman.dto.response.QYakumanGetResponse;
+import com.bgmagitapi.kml.yakuman.dto.response.YakumanDetailGetResponse;
 import com.bgmagitapi.kml.yakuman.dto.response.YakumanGetResponse;
 import com.bgmagitapi.kml.yakuman.entity.Yakuman;
 import com.bgmagitapi.kml.yakuman.repository.query.YakumanQueryRepository;
@@ -13,13 +14,18 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
+
 
 import java.util.List;
 
 import static com.bgmagitapi.entity.QBgmAgitCommonFile.bgmAgitCommonFile;
-import static com.bgmagitapi.entity.QBgmAgitMember.*;
 import static com.bgmagitapi.entity.QBgmAgitMember.bgmAgitMember;
 import static com.bgmagitapi.kml.yakuman.entity.QYakuman.yakuman;
 
@@ -108,6 +114,49 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
                 .orderBy(yakuman.count().desc())
                 .fetch();
     }
+    
+    @Override
+    public Page<YakumanDetailGetResponse> getYakuman(Pageable pageable) {
+        
+        // 1) 페이지에 해당하는 yakuman id만 먼저 가져오기
+        List<Long> ids = queryFactory
+                .select(yakuman.id)
+                .from(yakuman)
+                .orderBy(yakuman.id.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+        
+        if (ids.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
+        
+        JPAQuery<Long> countQuery = queryFactory
+                .select(yakuman.count())
+                .from(yakuman);
+        
+        
+        List<YakumanDetailGetResponse> content = queryFactory
+                .select(new QYakumanDetailGetResponse(
+                        bgmAgitMember.bgmAgitMemberNickname,
+                        yakuman.yakumanName,
+                        yakuman.yakumanCont,
+                        bgmAgitCommonFile.bgmAgitCommonFileUrl
+                ))
+                .from(yakuman)
+                .join(yakuman.member, bgmAgitMember)
+                .leftJoin(bgmAgitCommonFile)
+                .on(
+                        bgmAgitCommonFile.bgmAgitCommonFileTargetId.eq(yakuman.id),
+                        bgmAgitCommonFile.bgmAgitCommonFileType.eq(BgmAgitCommonType.YAKUMAN)
+                )
+                .where(yakuman.id.in(ids))
+                .orderBy(yakuman.id.desc())
+                .fetch();
+        
+        return PageableExecutionUtils.getPage(content,pageable,countQuery::fetchOne);
+    }
+    
     private NumberExpression<Long> sumCase(BooleanExpression cond) {
         return Expressions.numberOperation(Long.class, Ops.AggOps.SUM_AGG, new CaseBuilder().when(cond).then(1L).otherwise(0L));
     }
