@@ -28,18 +28,6 @@ public class Lecture extends DateSuperClass {
     @ManyToOne(fetch = FetchType.LAZY)
     private BgmAgitMember member;
     
-    // BGM 아지트 강의 시작 일시
-    @Column(name = "BGM_AGIT_LECTURE_START_DATE")
-    private LocalDate lectureStartDate;
-    
-    // BGM 아지트 강의 시작 시간
-    @Column(name = "BGM_AGIT_LECTURE_START_TIME")
-    private LocalTime lectureStartTime;
-    
-    // BGM 아지트 강의 종료 시간
-    @Column(name = "BGM_AGIT_LECTURE_END_TIME")
-    private LocalTime lectureEndTime;
-    
     // BGM 아지트 강의 승인 여부 'N'
     @Column(name = "BGM_AGIT_LECTURE_APPROVAL_STATUS")
     private String lectureApprovalStatus;
