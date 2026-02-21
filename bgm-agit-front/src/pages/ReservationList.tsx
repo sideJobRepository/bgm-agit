@@ -126,6 +126,7 @@ export default function ReservationList() {
                 <tr>
                   <Th>번호</Th>
                   <Th>예약 장소</Th>
+                  <Th>신청 일자</Th>
                   <Th>예약 일자</Th>
                   <Th>예약 시간</Th>
                   <Th>예약자</Th>
@@ -140,6 +141,7 @@ export default function ReservationList() {
                   <tr key={item.reservationNo}>
                     <Td>{index + 1}</Td>
                     <Td>{item.reservationAddr}</Td>
+                    <Td>{item.registDate}</Td>
                     <Td>{item.reservationDate}</Td>
                     <Td>
                       {item.timeSlots.map((slot, idx) => (

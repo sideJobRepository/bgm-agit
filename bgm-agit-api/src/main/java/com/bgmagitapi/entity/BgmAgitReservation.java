@@ -1,6 +1,7 @@
 package com.bgmagitapi.entity;
 
 import com.bgmagitapi.entity.enumeration.Reservation;
+import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -13,7 +14,7 @@ import java.time.LocalTime;
 @Table(name = "BGM_AGIT_RESERVATION")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BgmAgitReservation {
+public class BgmAgitReservation extends DateSuperClass {
     // BGM 아지트 예약 ID
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
