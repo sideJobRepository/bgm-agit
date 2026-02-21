@@ -1,7 +1,6 @@
 package com.bgmagitapi.entity;
 
 
-import com.bgmagitapi.controller.request.BgmAgitCommonCommentPutRequest;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
