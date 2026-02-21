@@ -22,7 +22,7 @@ export default function ReservationCalendar({ id }: { id?: number }) {
   const reservation = useRecoilValue<ReservationDatas>(reservationState);
 
   const fetchReservation = useReservationFetch();
-   const reservationData = useRecoilValue(reservationDataState);
+  const reservationData = useRecoilValue(reservationDataState);
 
   //로그인 모달
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -36,7 +36,7 @@ export default function ReservationCalendar({ id }: { id?: number }) {
   //insert
   const { insert } = useInsertPost();
 
-  //useer 정보
+  //user 정보
   const user = useRecoilValue(userState);
   const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID;
   const KAKAO_REDIRECT_URL = import.meta.env.VITE_KAKAO_REDIRECT_URL;
@@ -213,29 +213,28 @@ export default function ReservationCalendar({ id }: { id?: number }) {
             onChange={e => setReason(e.target.value)}
           />
         </div>
-        {reservationData?.id === 18 && (
-          <div>
+        <MessageBox>
+          <p>
+            <strong>※ 당일 예약은 불가합니다.</strong>
+          </p>
+          {reservationData?.id === 18 && (
             <p>
               <strong>※ 예약하는 날짜에 한 팀당 한 개의 시간대만 선택이 가능합니다.</strong>
             </p>
-          </div>
-        )}
-        {reservationData?.id === 19 && (
-          <div>
+          )}
+          {reservationData?.id === 19 && (
             <p>
               <strong>※ 최소 3일전 최소인원 15명 이어야지만 예약이 가능합니다.</strong>
             </p>
-          </div>
-        )}
-        {reservationData?.link === '/detail/mahjongRental' && (
-          <div>
+          )}
+          {reservationData?.link === '/detail/mahjongRental' && (
             <p>
               <strong>
                 ※ 대탁 예약시 3시간 4만원, 5시간에 6만원, 1시간 추가시 만원의 금액이 발생합니다.
               </strong>
             </p>
-          </div>
-        )}
+          )}
+        </MessageBox>
       </TitleBox>
 
       <StyledCalendar
@@ -369,7 +368,7 @@ const TitleBox = styled.div<WithTheme>`
     }
 
     p {
-      padding: 8px 0;
+      padding: 4px 0;
       color: ${({ theme }) => theme.colors.redColor};
       font-size: ${({ theme }) => theme.sizes.small};
     }
@@ -516,4 +515,8 @@ const Button = styled.button<WithTheme>`
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
   }
+`;
+
+const MessageBox = styled.div`
+  flex-direction: column;
 `;

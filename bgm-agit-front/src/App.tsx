@@ -21,7 +21,6 @@ import Free from './pages/Free.tsx';
 import FreeDetail from './pages/FreeDetail.tsx';
 import Inquiry from './pages/Inquiry.tsx';
 import InquiryDetail from './pages/InquiryDetail.tsx';
-import Academy from './pages/Academy.tsx';
 
 function App() {
   return (
@@ -35,7 +34,6 @@ function App() {
             <Route path="/oauth/:provider/callback" element={<RedirectPage />} />
             <Route path="/error" element={<Error />} />
             <Route path="/privacy" element={<Privacy />} />
-            <Route path="/academy" element={<Academy />} />
             <Route path="/" element={<Layout />}>
               <Route index element={<MainPage />} />
               <Route path="about" element={<About />} />
