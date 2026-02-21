@@ -8,13 +8,11 @@ import com.bgmagitapi.kml.review.dto.response.ReviewGetResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
-
 public interface ReviewService {
     
     Page<ReviewGetResponse> getReviews(Pageable pageable,String titleOrCont);
-    ReviewGetDetailResponse getReviewDetail(Long reviewId);
+    ReviewGetDetailResponse getReviewDetail(Long reviewId,Long memberId);
     ApiResponse createReview(ReviewPostRequest request);
     ApiResponse modifyReview(ReviewPutRequest request);
-    ApiResponse deleteReview(Long id);
+    ApiResponse deleteReview(Long id,Long memberId);
 }
