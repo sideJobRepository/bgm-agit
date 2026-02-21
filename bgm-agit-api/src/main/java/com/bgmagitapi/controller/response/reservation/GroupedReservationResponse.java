@@ -1,9 +1,11 @@
 package com.bgmagitapi.controller.response.reservation;
 
 import com.bgmagitapi.entity.BgmAgitReservation;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -13,7 +15,8 @@ import java.util.List;
 public class GroupedReservationResponse {
     private Long reservationNo;
     private LocalDate reservationDate;
-    
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
+    private LocalDateTime registDate;
     private String approvalStatus;
     private String cancelStatus;
     private String reservationMemberName;
@@ -34,6 +37,7 @@ public class GroupedReservationResponse {
         
         for (BgmAgitReservation reservation : list) {
             this.reservationDate =  reservation.getBgmAgitReservationStartDate();
+            this.registDate = reservation.getRegistDate();
             this.approvalStatus =   reservation.getBgmAgitReservationApprovalStatus();
             this.cancelStatus =   reservation.getBgmAgitReservationCancelStatus();
             this.reservationMemberName =  reservation.getBgmAgitMember().getBgmAgitMemberName();

@@ -80,6 +80,14 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         List<BgmAgitReservationResponse.TimeSlotByDate> timeSlots = new ArrayList<>();
         
         for (LocalDate d = today; !d.isAfter(endOfYear); d = d.plusDays(1)) {
+            if (d.isEqual(LocalDate.now())) {
+                timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(
+                        d,
+                        List.of(),
+                        "당일 예약은 불가능합니다."
+                ));
+                continue;
+            }
             SlotSchedule schedule = SlotSchedule.of(bgmAgitImage.getBgmAgitImageCategory() , bgmAgitImage.getBgmAgitImageLabel(), d);
             
             LocalDateTime open = schedule.open();
@@ -276,8 +284,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         }
         
         // 4) total count
-        JPAQuery<Long> countQuery = bgmAgitReservationRepository
-                .countReservationsDistinctForDetail(memberId, isUser, start, end);
+        JPAQuery<Long> countQuery = bgmAgitReservationRepository.countReservationsDistinctForDetail(memberId, isUser, start, end);
         
         
         return  PageableExecutionUtils.getPage(content, pageable,countQuery::fetchOne);

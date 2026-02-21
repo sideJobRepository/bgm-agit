@@ -18,3 +18,18 @@ export const useUserStore = create<UserStore>((set) => ({
   setUser: (user) => set({ user }),
   clearUser: () => set({ user: null }),
 }));
+
+interface RecordUser {
+  id: number;
+  nickName: string;
+}
+
+interface RecordUserStore {
+  recordUser: RecordUser[] | [];
+  setRecordUser: (recordUser: RecordUser[]) => void;
+}
+
+export const useRecordUserStore = create<RecordUserStore>((set) => ({
+  recordUser: [],
+  setRecordUser: (recordUser) => set({recordUser})
+}))

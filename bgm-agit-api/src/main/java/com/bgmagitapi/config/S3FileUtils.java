@@ -37,7 +37,7 @@ public class S3FileUtils {
     
     public UploadResult storeFile(MultipartFile multipartFile, String folder) {
         
-        if (multipartFile.isEmpty()) return null;
+        if (multipartFile == null ||multipartFile.isEmpty()) return null;
         
         String originalFilename = multipartFile.getOriginalFilename();
         String uuid = UUID.randomUUID().toString();
