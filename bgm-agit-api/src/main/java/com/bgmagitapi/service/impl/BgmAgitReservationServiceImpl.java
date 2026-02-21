@@ -160,9 +160,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         int endYear = endOfYear.getYear();
         
         for (int y = startYear; y <= endYear; y++) {
-            holidaySet.addAll(
-                    new LunarCalendar().getHolidaySet(String.valueOf(y))
-            );
+            holidaySet.addAll(new LunarCalendar().getHolidaySet(String.valueOf(y)));
         }
         
         DateTimeFormatter formatterYY = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -170,6 +168,9 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         List<BgmAgitReservationResponse.PriceByDate> prices = new ArrayList<>();
         
         for (LocalDate d = today; !d.isAfter(endOfYear); d = d.plusDays(1)) {
+            if (d.isEqual(LocalDate.now())) {
+                continue;
+            }
             String dateStr = d.format(formatterYY);
             boolean isWeekend = d.getDayOfWeek() == DayOfWeek.SATURDAY || d.getDayOfWeek() == DayOfWeek.SUNDAY;
             boolean isHoliday = holidaySet.contains(dateStr);
