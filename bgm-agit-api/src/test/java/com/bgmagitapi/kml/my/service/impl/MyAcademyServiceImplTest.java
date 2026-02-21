@@ -19,7 +19,7 @@ class MyAcademyServiceImplTest extends RepositoryAndServiceTestSupport {
     @Test
     void test1() {
         PageRequest request = PageRequest.of(0, 10);
-        Page<MyAcademyGetResponse> roleUser = myAcademyService.getMyAcademy(request, 5L, "ROLE_ADMIN");
+        Page<MyAcademyGetResponse> roleUser = myAcademyService.getMyAcademy(request, 1L, "ROLE_ADMIN");
         System.out.println("roleUser = " + roleUser);
     }
 }

@@ -2,7 +2,6 @@ package com.bgmagitapi.kml.my.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.querydsl.core.annotations.QueryProjection;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -29,6 +28,8 @@ public class MyAcademyGetResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime registDate;
     
+    private Boolean cancelBtnEnabled;
+    private Boolean approvalBtnEnabled;
     
     @QueryProjection
     public MyAcademyGetResponse(Long lectureId, Long memberId, String memberName, String approvalStatus, String cancelStatus, LocalDate startDate, LocalTime startTime, LocalTime endTime, String phoneNo, LocalDateTime registDate) {
