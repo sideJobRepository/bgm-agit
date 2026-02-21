@@ -41,4 +41,11 @@ public class Lecture extends DateSuperClass {
     @Column(name = "BGM_AGIT_LECTURE_CANCEL_STATUS")
     private String lectureCancelStatus;
     
+    public void modifyApproval(String value) {
+        this.lectureApprovalStatus = value;
+    }
+    
+    public void modifyCancel(String value) {
+        this.lectureCancelStatus = value;
+    }
 }

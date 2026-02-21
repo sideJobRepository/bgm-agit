@@ -1,5 +1,7 @@
 package com.bgmagitapi.kml.my.service.impl;
 
+import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.kml.lecture.entity.Lecture;
 import com.bgmagitapi.kml.lecture.repository.LectureRepository;
 import com.bgmagitapi.kml.my.dto.response.MyAcademyGetResponse;
 import com.bgmagitapi.kml.my.service.MyAcademyService;
@@ -63,7 +65,23 @@ public class MyAcademyServiceImpl implements MyAcademyService {
             
             dto.setApprovalBtnEnabled(canApprove);
         }
-        
         return page;
+    }
+    
+    @Override
+    public ApiResponse approvalMyAcademy(Long lectureId) {
+        Lecture findLecture = lectureRepository.findById(lectureId).orElseThrow(() -> new RuntimeException("존재 하지 않는 강습 입니다"));
+        findLecture.modifyApproval("Y");
+        //알림톡 해야함
+        return new ApiResponse(200,true,"강의 예약이 승인되었습니다.");
+    }
+    
+    @Override
+    public ApiResponse cancelMyAcademy(Long lectureId) {
+        Lecture findLecture = lectureRepository.findById(lectureId).orElseThrow(() -> new RuntimeException("존재 하지 않는 강습 입니다"));
+        findLecture.modifyCancel("Y");
+        findLecture.modifyApproval("Y");
+        //알림톡 해야함
+        return new ApiResponse(200,true,"강의 예약이 취소 되었습니다.");
     }
 }
