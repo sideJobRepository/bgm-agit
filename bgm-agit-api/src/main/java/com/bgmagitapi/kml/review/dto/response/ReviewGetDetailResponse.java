@@ -65,6 +65,19 @@ public class ReviewGetDetailResponse {
         private LocalDateTime registDate;
         private String delStatus;
         
+        public ReviewGetDetailResponseComment(String commentId, String memberName, String nickname, String cont, Integer depth, Boolean isAuthor, String parentId, LocalDateTime registDate, String delStatus) {
+            this.commentId = commentId;
+            this.memberName = memberName;
+            this.nickname = nickname;
+            this.cont = cont;
+            this.depth = depth;
+            this.isAuthor = isAuthor;
+            this.parentId = parentId;
+            this.registDate = registDate;
+            this.delStatus = delStatus;
+            this.children = new ArrayList<>();
+        }
+        
         public List<ReviewGetDetailResponse.ReviewGetDetailResponseComment> getChildren() {
             if(this.children == null) {
                 this.children = new ArrayList<>();

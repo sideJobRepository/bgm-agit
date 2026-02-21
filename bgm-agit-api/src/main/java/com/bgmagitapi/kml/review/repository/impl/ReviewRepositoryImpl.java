@@ -1,6 +1,5 @@
 package com.bgmagitapi.kml.review.repository.impl;
 
-import com.bgmagitapi.controller.response.BgmAgitFreeGetDetailResponse;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.kml.review.dto.response.QReviewGetDetailResponse;
@@ -27,7 +26,6 @@ import java.util.List;
 
 import static com.bgmagitapi.entity.QBgmAgitCommonComment.bgmAgitCommonComment;
 import static com.bgmagitapi.entity.QBgmAgitCommonFile.bgmAgitCommonFile;
-import static com.bgmagitapi.entity.QBgmAgitFree.bgmAgitFree;
 import static com.bgmagitapi.entity.QBgmAgitMember.bgmAgitMember;
 import static com.bgmagitapi.kml.review.entity.QReview.review;
 
@@ -110,7 +108,7 @@ public class ReviewRepositoryImpl implements ReviewQueryRepository {
                         bgmAgitCommonFile.bgmAgitCommonFileUrl
                 ))
                 .from(bgmAgitCommonFile)
-                .where(bgmAgitCommonFile.bgmAgitCommonFileTargetId.eq(reviewId))
+                .where(bgmAgitCommonFile.bgmAgitCommonFileTargetId.eq(reviewId),bgmAgitCommonFile.bgmAgitCommonFileType.eq(BgmAgitCommonType.REVIEW))
                 .fetch();
         result
                 .forEach(item -> {
@@ -140,7 +138,7 @@ public class ReviewRepositoryImpl implements ReviewQueryRepository {
                         bgmAgitCommonComment.delStatus
                 ))
                 .from(bgmAgitCommonComment)
-                .where(bgmAgitCommonComment.targetId.eq(reviewId))
+                .where(bgmAgitCommonComment.targetId.eq(reviewId) , bgmAgitCommonComment.bgmAgitCommonType.eq(BgmAgitCommonType.REVIEW))
                 .orderBy(
                         bgmAgitCommonComment.depth.asc(),
                         bgmAgitCommonComment.id.asc()

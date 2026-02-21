@@ -108,7 +108,7 @@ public class BgmAgitFreeRepositoryImpl implements BgmAgitFreeCustomRepository {
                         bgmAgitCommonFile.bgmAgitCommonFileUrl
                 ))
                 .from(bgmAgitCommonFile)
-                .where(bgmAgitCommonFile.bgmAgitCommonFileTargetId.eq(id))
+                .where(bgmAgitCommonFile.bgmAgitCommonFileTargetId.eq(id),bgmAgitCommonComment.bgmAgitCommonType.eq(BgmAgitCommonType.FREE))
                 .fetch();
         result
                 .forEach(item -> {
@@ -137,7 +137,7 @@ public class BgmAgitFreeRepositoryImpl implements BgmAgitFreeCustomRepository {
                         bgmAgitCommonComment.delStatus
                 ))
                 .from(bgmAgitCommonComment)
-                .where(bgmAgitCommonComment.targetId.eq(id))
+                .where(bgmAgitCommonComment.targetId.eq(id),bgmAgitCommonComment.bgmAgitCommonType.eq(BgmAgitCommonType.FREE))
                 .orderBy(
                         bgmAgitCommonComment.depth.asc(),
                         bgmAgitCommonComment.id.asc()
