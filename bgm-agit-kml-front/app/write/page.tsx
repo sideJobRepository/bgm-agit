@@ -184,9 +184,9 @@ export default function Write() {
   };
 
   const validateForm = () => {
-    // 장 선택
+    // 국길이 선택
     if (!leader) {
-      alertDialog('장을 선택해주세요.', 'error');
+      alertDialog('국 길이를 선택해주세요.', 'error');
       return false;
     }
 
@@ -268,7 +268,7 @@ export default function Write() {
             </FieldsWrapper>
             <FieldsWrapper>
               <Field className="top">
-                <label>장</label>
+                <label>국 길이</label>
                 <select value={leader} onChange={(e) => setLeader(e.target.value)}>
                   <option value="">선택</option>
                   {LEADER_POSITIONS.map((pos) => (

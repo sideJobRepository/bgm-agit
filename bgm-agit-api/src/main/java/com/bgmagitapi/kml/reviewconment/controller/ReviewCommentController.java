@@ -34,9 +34,9 @@ public class ReviewCommentController {
     public ApiResponse modifyComment(@Validated @RequestBody ReviewCommentPutRequest request) {
         return reviewCommentService.modifyComment(request);
     }
-    @DeleteMapping("/review-comment/{id}")
-    public ApiResponse removeComment(@PathVariable Long id) {
-        return reviewCommentService.removeComment(id);
+    @DeleteMapping("/review-comment/{commentId}")
+    public ApiResponse removeComment(@PathVariable Long commentId) {
+        return reviewCommentService.removeComment(commentId);
     }
 }
 
