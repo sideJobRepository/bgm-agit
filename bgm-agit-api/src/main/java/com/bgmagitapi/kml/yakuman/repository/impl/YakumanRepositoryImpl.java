@@ -10,6 +10,7 @@ import com.bgmagitapi.kml.yakuman.dto.response.YakumanGetResponse;
 import com.bgmagitapi.kml.yakuman.entity.Yakuman;
 import com.bgmagitapi.kml.yakuman.repository.query.YakumanQueryRepository;
 import com.querydsl.core.types.Ops;
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.util.StringUtils;
 
 
 import java.util.List;
@@ -64,7 +66,7 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
     }
     
     @Override
-    public List<YakumanGetResponse> getPivotYakuman() {
+    public List<YakumanGetResponse> getPivotYakuman(String nickName) {
         NumberExpression<Long> countedYakuman = sumCase(yakuman.yakumanName.eq("헤아림 역만"));
         NumberExpression<Long> suuankou       = sumCase(yakuman.yakumanName.eq("사암각"));
         NumberExpression<Long> suukantsu      = sumCase(yakuman.yakumanName.eq("사깡즈"));
@@ -109,11 +111,12 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
                 .from(bgmAgitMember)
                 .leftJoin(yakuman)
                 .on(yakuman.member.bgmAgitMemberId.eq(bgmAgitMember.bgmAgitMemberId))
-                .where(bgmAgitMember.bgmAgitMemberMahjongUseStatus.eq("Y"))
+                .where(bgmAgitMember.bgmAgitMemberMahjongUseStatus.eq("Y"), whereNickName(nickName))
                 .groupBy(bgmAgitMember.bgmAgitMemberId, bgmAgitMember.bgmAgitMemberNickname)
                 .orderBy(yakuman.count().desc())
                 .fetch();
     }
+    
     
     @Override
     public Page<YakumanDetailGetResponse> getYakuman(Pageable pageable) {
@@ -159,5 +162,12 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
     
     private NumberExpression<Long> sumCase(BooleanExpression cond) {
         return Expressions.numberOperation(Long.class, Ops.AggOps.SUM_AGG, new CaseBuilder().when(cond).then(1L).otherwise(0L));
+    }
+    
+    private BooleanExpression whereNickName(String nickName) {
+        if(!StringUtils.hasText(nickName)){
+            return null;
+        }
+        return bgmAgitMember.bgmAgitMemberNickname.like("%"+nickName+"%");
     }
 }

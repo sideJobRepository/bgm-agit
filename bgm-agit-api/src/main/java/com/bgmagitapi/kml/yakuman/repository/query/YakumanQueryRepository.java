@@ -14,7 +14,7 @@ public interface YakumanQueryRepository {
     
     List<Yakuman> findByYakumanMatchesId(Long matchsId);
     
-    List<YakumanGetResponse> getPivotYakuman();
+    List<YakumanGetResponse> getPivotYakuman(String nickName);
     
     Page<YakumanDetailGetResponse> getYakuman(Pageable pageable);
 }

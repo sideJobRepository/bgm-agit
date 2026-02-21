@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface YakumanService {
 
-    List<YakumanGetResponse> getPivotYakuman();
+    List<YakumanGetResponse> getPivotYakuman(String nickName);
     
     Page<YakumanDetailGetResponse> getDetailYakuman(Pageable pageable);
 }

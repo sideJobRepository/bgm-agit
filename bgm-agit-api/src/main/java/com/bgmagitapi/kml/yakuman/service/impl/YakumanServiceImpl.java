@@ -22,11 +22,12 @@ public class YakumanServiceImpl implements YakumanService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<YakumanGetResponse> getPivotYakuman() {
-         return yakumanRepository.getPivotYakuman();
+    public List<YakumanGetResponse> getPivotYakuman(String nickName) {
+         return yakumanRepository.getPivotYakuman(nickName);
     }
     
     @Override
+    @Transactional(readOnly = true)
     public Page<YakumanDetailGetResponse> getDetailYakuman(Pageable pageable) {
         return yakumanRepository.getYakuman(pageable);
     }

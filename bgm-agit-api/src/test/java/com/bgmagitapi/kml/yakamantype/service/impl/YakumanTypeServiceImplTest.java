@@ -15,8 +15,6 @@ import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class YakumanTypeServiceImplTest extends RepositoryAndServiceTestSupport {
     
     
@@ -44,7 +42,7 @@ class YakumanTypeServiceImplTest extends RepositoryAndServiceTestSupport {
     @DisplayName("")
     @Test
     void test3(){
-        List<YakumanGetResponse> pivotYakuman = yakumanService.getPivotYakuman();
+        List<YakumanGetResponse> pivotYakuman = yakumanService.getPivotYakuman("배성환");
         System.out.println("pivotYakuman = " + pivotYakuman);
     }
     
