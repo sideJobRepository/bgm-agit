@@ -172,6 +172,8 @@ const StyledCalendar = styled(Calendar)`
   border: 1px solid #ccc;
   border-radius: 12px;
   padding: 10px;
+  width: 100%;
+  max-width: 600px;
 
   .react-calendar__tile--now {
     //오늘날짜 표시 제거
@@ -310,6 +312,8 @@ const InstructorInfo = styled.div`
 const Button = styled.button`
   padding: 12px 24px;
   border-radius: 4px;
+  width: 100%;
+  max-width: 600px;
   background-color: ${({ theme }) => theme.colors.blueColor};
   border: none;
   color: ${({ theme }) => theme.colors.white};
