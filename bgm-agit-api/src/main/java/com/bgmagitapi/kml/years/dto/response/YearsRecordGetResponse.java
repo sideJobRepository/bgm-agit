@@ -39,8 +39,7 @@ public class YearsRecordGetResponse {
         private String third;
         private String fourth;
         
-        @JsonFormat(shape = JsonFormat.Shape.STRING,
-                pattern = "yyyy-MM-dd HH:mm:ss")
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime registDate;
     }
 }
