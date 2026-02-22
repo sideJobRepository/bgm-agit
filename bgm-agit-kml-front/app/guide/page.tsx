@@ -30,6 +30,7 @@ export default function Guide() {
           </h1>
           <h5>
             <strong>“아직도 마작을 영화 속 어두운 뒷골목의 전유물로 생각하시나요?” </strong>
+            <br />
             마작은 전 세계 1억 명 이상이 즐기는 정교한 ‘두뇌 스포츠’입니다. <br /> 확률과 전략,
             그리고 심리전이 결합된 이 매력적인 게임을 이제 가장 쾌적한 환경에서 시작해보세요.
           </h5>
@@ -223,12 +224,11 @@ const TextBox = styled.div`
   padding: 24px 12px;
   gap: 4px;
   font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
-  opacity: 0.8;
   word-break: keep-all;
   overflow-wrap: break-word;
   text-align: center;
   line-height: 2;
-  font-weight: 800;
+  font-weight: 600;
   color: ${({ theme }) => theme.colors.inputColor};
 
   @media ${({ theme }) => theme.device.mobile} {
