@@ -1,6 +1,7 @@
 package com.bgmagitapi.kml.lecture.controller;
 
 
+import com.bgmagitapi.advice.exception.ValidException;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.lecture.dto.request.LecturePostRequest;
 import com.bgmagitapi.kml.lecture.dto.response.LectureGetResponse;
@@ -30,6 +31,9 @@ public class LectureController {
     @PostMapping("/lecture")
     public ApiResponse createLecture(@RequestBody LecturePostRequest request,@AuthenticationPrincipal Jwt jwt) {
         Long memberId = JwtParserUtil.extractMemberId(jwt);
+        if(memberId == null){
+            throw new ValidException("로그인후 이용해주세요");
+        }
         return lectureService.createLecture(request, memberId);
     }
 }
