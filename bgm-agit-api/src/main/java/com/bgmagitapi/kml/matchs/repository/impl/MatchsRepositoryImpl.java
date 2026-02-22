@@ -1,9 +1,6 @@
 package com.bgmagitapi.kml.matchs.repository.impl;
 
-import com.bgmagitapi.entity.QBgmAgitMember;
-import com.bgmagitapi.kml.matchs.entity.QMatchs;
 import com.bgmagitapi.kml.matchs.repository.query.MatchsQueryRepository;
-import com.bgmagitapi.kml.record.entity.QRecord;
 import com.bgmagitapi.kml.years.dto.response.YearRankGetResponse;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Ops;
@@ -19,9 +16,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.bgmagitapi.entity.QBgmAgitMember.*;
-import static com.bgmagitapi.kml.matchs.entity.QMatchs.*;
-import static com.bgmagitapi.kml.record.entity.QRecord.*;
+import static com.bgmagitapi.entity.QBgmAgitMember.bgmAgitMember;
+import static com.bgmagitapi.kml.matchs.entity.QMatchs.matchs;
+import static com.bgmagitapi.kml.record.entity.QRecord.record;
 
 @RequiredArgsConstructor
 public class MatchsRepositoryImpl implements MatchsQueryRepository {

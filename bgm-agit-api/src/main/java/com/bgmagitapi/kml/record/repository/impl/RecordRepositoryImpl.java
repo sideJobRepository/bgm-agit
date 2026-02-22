@@ -16,6 +16,7 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.bgmagitapi.entity.QBgmAgitMember.bgmAgitMember;
@@ -98,6 +99,51 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                 .where(record.matchs.id.eq(id))
                 .fetch();
     }
+    
+    @Override
+    public Page<Long> findMatchIdsByYear(Pageable pageable, Integer year) {
+        if (year == null) year = LocalDate.now().getYear();
+        
+        LocalDateTime from = LocalDate.of(year, 1, 1).atStartOfDay();
+        LocalDateTime to   = LocalDate.of(year + 1, 1, 1).atStartOfDay();
+        
+        List<Long> ids = queryFactory
+                .select(matchs.id)
+                .from(matchs)
+                .where(
+                        matchs.registDate.goe(from),
+                        matchs.registDate.lt(to)
+                )
+                .orderBy(matchs.registDate.desc(), matchs.id.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+        
+        if (ids.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
+        
+        JPAQuery<Long> countQuery = queryFactory
+                .select(matchs.count())
+                .from(matchs)
+                .where(
+                        matchs.registDate.goe(from),
+                        matchs.registDate.lt(to)
+                );
+        
+        return PageableExecutionUtils.getPage(ids, pageable, countQuery::fetchOne);
+    }
+    
+    @Override
+    public List<Record> findRecordsByMatchIds(List<Long> matchIds) {
+        return queryFactory
+                .selectFrom(record)
+                .join(record.matchs, matchs).fetchJoin()
+                .join(record.member, bgmAgitMember).fetchJoin()
+                .where(matchs.id.in(matchIds))
+                .fetch();
+    }
+    
     private BooleanExpression whereDateGoe(String startDate) {
         if (!StringUtils.hasText(startDate)) {
             return null;

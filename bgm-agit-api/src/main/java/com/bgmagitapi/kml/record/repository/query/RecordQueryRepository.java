@@ -14,4 +14,8 @@ public interface RecordQueryRepository {
     List<RecordGetDetailResponse.RecordList> findByRecord(Long id);
     
     List<Record> findByRecordByMatchsId(Long id);
+    
+    Page<Long> findMatchIdsByYear(Pageable pageable, Integer year);
+    
+    List<Record> findRecordsByMatchIds(List<Long> matchIds);
 }
