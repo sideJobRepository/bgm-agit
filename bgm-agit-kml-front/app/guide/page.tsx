@@ -10,7 +10,7 @@ export default function Guide() {
     <Wrapper>
       <Hero>
         <HeroBg>
-          <img src={withBasePath('/guide/guideHero.png')} alt="" />
+          <img src={withBasePath('/guide/guideHero.png')} alt="상단 이미지" />
         </HeroBg>
         <FixedDarkOverlay />
         <HeroOverlay
@@ -53,7 +53,7 @@ export default function Guide() {
         </SubContent>
         <SubContent>
           <ImageBox>
-            <img src={withBasePath('/guide/celanRoom.png')} alt="마작 테이블" />
+            <img src={withBasePath('/guide/celanRoom.png')} alt="클린매너 사진" />
           </ImageBox>
           <TextBox>
             <strong>“철저한 ‘클린 매너’ 원칙”</strong>
@@ -69,7 +69,7 @@ export default function Guide() {
         </SubContent>
         <SubContent>
           <ImageBox>
-            <img src={withBasePath('/guide/all.jpg')} alt="마작 테이블" />
+            <img src={withBasePath('/guide/all.jpg')} alt="프리미엄 환경 사진" />
           </ImageBox>
           <TextBox>
             <strong>“프리미엄 환경”</strong>
