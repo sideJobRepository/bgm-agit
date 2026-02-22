@@ -19,6 +19,17 @@ export default function Matches() {
   const getLocalDateStr = (date: Date) => date.toLocaleDateString('sv-SE');
   const dateStr = getLocalDateStr(value);
 
+  type LectureSlotItem = { time: string; enabled: boolean };
+  type LectureSlotByDate = { date: string; timeSlots: LectureSlotItem[] };
+
+  // 선택한 날짜의 슬롯들
+  const [slots, setSlots] = useState<LectureSlotItem[]>([]);
+  // 선택한 시간(단일 선택 기준)
+  const [selectedTime, setSelectedTime] = useState<string>('');
+
+  // 클릭한 날짜 문자열
+  const selectedDateStr = getLocalDateStr(value);
+
   useEffect(() => {
     if (value) {
       fetchLecture({
@@ -28,6 +39,14 @@ export default function Matches() {
       });
     }
   }, [value]);
+
+  useEffect(() => {
+    const curDateStr = getLocalDateStr(value);
+    const matched = (lectureData?.timeSlot as LectureSlotByDate[] | undefined)?.find(
+      (d) => d.date === curDateStr
+    );
+    setSlots(matched?.timeSlots ?? []);
+  }, [lectureData]);
   return (
     <Wrapper>
       <Hero>
@@ -67,20 +86,54 @@ export default function Matches() {
 
         <StyledCalendar
           value={value}
+          locale="ko-KR"
           className="custom-calender"
-          onChange={(val) => setValue(val as Date)}
+          onChange={(val) => {
+            const next = val as Date;
+            setValue(next);
+            setSelectedTime(''); // 날짜 바뀌면 시간 선택 초기화
+
+            const nextDateStr = getLocalDateStr(next);
+
+            // lectureData.timeSlot에서 날짜 매칭
+            const matched = (lectureData?.timeSlot as LectureSlotByDate[] | undefined)?.find(
+              (d) => d.date === nextDateStr
+            );
+
+            setSlots(matched?.timeSlots ?? []);
+          }}
           tileClassName={({ date, view }) => {
             const tileDateStr = getLocalDateStr(date);
             if (view === 'month' && tileDateStr === dateStr) return 'selected';
             return '';
           }}
+          tileContent={({ date, view }) => {
+            if (view !== 'month') return null;
+
+            const dateStr = getLocalDateStr(date);
+
+            const isAvailable = lectureData?.timeSlot?.some((d) => d.date === dateStr);
+
+            return isAvailable && <div className="date-available">예약 가능</div>;
+          }}
         />
-        <Button
-        // disabled={!matchedSlots?.timeSlots.length || !selectedTimes.length}
-        // onClick={reservationSave}
-        >
-          예약하기
-        </Button>
+        <TimeBox>
+          {slots.length ? (
+            slots.map((slot) => (
+              <TimeSlotButton
+                key={slot.time}
+                selected={selectedTime === slot.time}
+                disabled={!slot.enabled}
+                onClick={() => slot.enabled && setSelectedTime(slot.time)}
+              >
+                {slot.time}
+              </TimeSlotButton>
+            ))
+          ) : (
+            <EmptySlot>가능한 교육 시간이 없습니다.</EmptySlot>
+          )}
+        </TimeBox>
+        <Button disabled={!selectedTime}>예약하기</Button>
       </ContentBox>
     </Wrapper>
   );
@@ -262,8 +315,9 @@ const StyledCalendar = styled(Calendar)`
     color: ${({ theme }) => theme.colors.greenColor};
   }
 
-  .date-price.weekend {
-    color: ${({ theme }) => theme.colors.redColor};
+  .date-available {
+    font-weight: 700;
+    color: ${({ theme }) => theme.colors.greenColor};
   }
 `;
 
@@ -349,4 +403,54 @@ const Button = styled.button`
     width: 100%;
     font-size: ${({ theme }) => theme.mobile.sizes.xl};
   }
+`;
+
+const TimeBox = styled.div`
+  width: 100%;
+  max-width: 600px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const TimeSlotButton = styled.button<{ selected: boolean }>`
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  font-size: ${({ theme }) => theme.desktop.sizes.xl};
+  background: ${({ selected, theme }) =>
+    selected ? theme.colors.blueColor : theme.colors.whiteColor};
+  color: ${({ selected, theme }) => (selected ? theme.colors.whiteColor : theme.colors.inputColor)};
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
+
+  &:hover {
+    opacity: 0.9;
+  }
+
+  &:active {
+    transform: scale(0.99);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+    background: ${({ theme }) => theme.colors.softColor};
+    color: ${({ theme }) => theme.colors.grayColor};
+  }
+`;
+
+const EmptySlot = styled.div`
+  width: 100%;
+  padding: 14px 12px;
+  border-radius: 12px;
+  text-align: center;
+  color: ${({ theme }) => theme.colors.grayColor};
+  background: ${({ theme }) => theme.colors.softColor};
 `;
