@@ -197,12 +197,99 @@ public class AlimtalkUtils {
                  .toString();
     }
     
-
+    /**
+     *	bgmagit-res-lecture
+     * 마작강의 예약
+     * @param userName
+     * @param date
+     * @param times
+     * @return
+     */
+    public static String buildLectureMessage(String userName, String date, String times) {
+        return new StringBuilder()
+                .append("안녕하세요.").append(userName).append("님\n")
+                .append("BGM 아지트 마작 강의 예약 내역을 안내드립니다.\n\n")
+                .append("예약자: ").append(userName).append("\n")
+                .append("예약 일자: ").append(date).append("\n")
+                .append("예약 시간: ").append(times).append("\n")
+                .append("예약 상태: 예약 대기\n\n")
+                .append("예약은 예약금 10,000원이 입금 확인되는 시점에 최종 확정됩니다.\n")
+                .append("가급적 예약자명으로 입금해 주시기 바랍니다.\n\n")
+                .append("확정 이후 취소가 필요한 경우에는 0507-1445-3503으로 문의해 주시면 안내해 드리겠습니다.\n\n")
+                .append("[입금 계좌 안내]\n")
+                .append("카카오뱅크: 79795151308\n")
+                .append("예금주 : 박범후\n\n")
+                .append("자세한 예약내역은 BGM 마작 기록사이트 홈페이지 로그인 후 아카데미 예약내역에서 확인하실 수 있습니다.")
+                .toString();
+    }
+    
+    /**
+     * 마작강의 예약완료
+     * @param userName
+     * @param date
+     * @param times
+     * @return
+     */
+    public static String buildLectureMessageComplete(String userName, String date, String times) {
+        return new StringBuilder()
+                .append("안녕하세요.").append(userName).append("님\n\n")
+                .append("BGM 아지트 마작 강의 예약 완료 내역을 알려드립니다.\n\n")
+                .append("예약자: ").append(userName).append("\n")
+                .append("예약 일자: ").append(date).append("\n")
+                .append("예약 시간: ").append(times).append("\n")
+                .append("예약 상태: 예약 완료\n")
+                .append("취소는 3일전까지 가능하며, 당일 취소나 노쇼시 예약금은 환불되지 않습니다.\n")
+                .append("자세한 예약내역은 BGM 마작 기록사이트 홈페이지 로그인 후 아카데미 예약내역에서 확인하실 수 있습니다.")
+                .toString();
+    }
+    
+    public static String buildLectureMessageCancel1(String userName, String date, String times) {
+        return new StringBuilder()
+                .append("안녕하세요.").append(userName).append("님\n\n")
+                .append("BGM 아지트 마작 강의 예약 취소 내역을 알려드립니다.\n\n")
+                .append("예약자: ").append(userName).append("\n")
+                .append("예약 일자: ").append(date).append("\n")
+                .append("예약 시간: ").append(times).append("\n")
+                .append("예약 상태: 예약 취소\n\n")
+                .append("자세한 예약내역은 BGM 마작 기록사이트 홈페이지 로그인 후 아카데미 예약내역에서 확인하실 수 있습니다.")
+                .toString();
+    }
+    
+    public static String buildLectureMessageCancel2(String userName, String date, String times) {
+        return new StringBuilder()
+                .append("안녕하세요.").append(userName).append("님\n\n")
+                .append("예약하신 BGM 아지트 마작 강의가 관리자에 의해 취소되었음을 안내드립니다.\n\n")
+                .append("예약자: ").append(userName).append("\n")
+                .append("예약 일자: ").append(date).append("\n")
+                .append("예약 시간: ").append(times).append("\n")
+                .append("예약 상태: 예약 취소\n\n")
+                .append("자세한 예약내역은 BGM 마작 기록사이트 홈페이지 로그인 후 아카데미 예약내역에서 확인하실 수 있습니다.")
+                .toString();
+    }
+    
+    
+    public static String buildReviewMessage(String userName, String title,String date, String times) {
+        return new StringBuilder()
+                .append(("[BGM 아지트 리뷰 알림]\n\n"))
+                .append("BGM 아지트 마작 강의 리뷰가 등록되었습니다.\n\n")
+                .append("후기 등록하신 회원: ").append(userName).append("\n")
+                .append("후기 제목: ").append(title).append("\n")
+                .append("후기 등록일: ").append(date).append("\n")
+                .append("후기 등록시간: ").append(times).append("\n\n")
+                .append("자세한 문의 내역은 BGM 아지트 기록 홈페이지 마작아카데미 > 마작 아카데미 후기 에서 확인하실 수 있습니다.")
+                .toString();
+    }
+    
     
     /** 기본 버튼 세트(필요 시 수정) */
     public static Attach defaultAttach(String message) {
         return new Attach(List.of(
                 Attach.Button.wl(message, "https://bgmagit.co.kr")
+        ));
+    }
+    public static Attach defaultAttachRecord(String message) {
+        return new Attach(List.of(
+                Attach.Button.wl(message, "https://bgmagit.co.kr/record")
         ));
     }
     
