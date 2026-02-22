@@ -179,7 +179,7 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
     @Test
     void test2() {
         PageRequest pageRequest = PageRequest.of(0, 10);
-        Page<RecordGetResponse> records = recordService.getRecords(pageRequest);
+        Page<RecordGetResponse> records = recordService.getRecords(pageRequest, "2026-02-21", "2026-02-21", "정진");
         System.out.println("records = " + records);
     }
     

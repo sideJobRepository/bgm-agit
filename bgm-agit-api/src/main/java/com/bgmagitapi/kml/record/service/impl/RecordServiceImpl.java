@@ -67,8 +67,8 @@ public class RecordServiceImpl implements RecordService {
     
     
     @Override
-    public Page<RecordGetResponse> getRecords(Pageable pageable) {
-        Page<Record> records = recordRepository.findByRecords(pageable);
+    public Page<RecordGetResponse> getRecords(Pageable pageable, String startDate, String endDate, String nickName) {
+        Page<Record> records = recordRepository.findByRecords(pageable,startDate,endDate,nickName);
     
         Map<Long, List<Record>> groupedByMatch = records.getContent().stream()
                         .filter(r -> r.getMatchs() != null)
