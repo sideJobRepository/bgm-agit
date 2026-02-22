@@ -4,14 +4,30 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useFetchLectureList } from '@/services/lecture.service';
+import { useLectureStore } from '@/store/lecture';
 
 export default function Matches() {
+  const fetchLecture = useFetchLectureList();
+  const lectureData = useLectureStore((state) => state.lecture);
+  console.log('lectureData', lectureData);
+
   const today = new Date();
   const [value, setValue] = useState<Date>(today);
 
   const getLocalDateStr = (date: Date) => date.toLocaleDateString('sv-SE');
   const dateStr = getLocalDateStr(value);
+
+  useEffect(() => {
+    if (value) {
+      fetchLecture({
+        year: value.getFullYear(),
+        month: value.getMonth() + 1,
+        day: value.getDate(),
+      });
+    }
+  }, [value]);
   return (
     <Wrapper>
       <Hero>
