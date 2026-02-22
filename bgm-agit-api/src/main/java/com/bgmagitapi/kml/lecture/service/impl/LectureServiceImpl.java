@@ -3,6 +3,8 @@ package com.bgmagitapi.kml.lecture.service.impl;
 import com.bgmagitapi.advice.exception.ValidException;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.entity.BgmAgitMember;
+import com.bgmagitapi.entity.enumeration.BgmAgitSubject;
+import com.bgmagitapi.kml.lecture.dto.event.LecturePostEvent;
 import com.bgmagitapi.kml.lecture.dto.request.LecturePostRequest;
 import com.bgmagitapi.kml.lecture.dto.response.LectureGetResponse;
 import com.bgmagitapi.kml.lecture.entity.Lecture;
@@ -12,6 +14,7 @@ import com.bgmagitapi.kml.slot.entity.LectureSlot;
 import com.bgmagitapi.kml.slot.repository.LectureSlotRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,12 +33,13 @@ public class LectureServiceImpl implements LectureService {
     
     private final BgmAgitMemberRepository memberRepository;
     private final LectureRepository lectureRepository;
-    private final LectureSlotRepository  lectureSlotRepository;
+    private final LectureSlotRepository lectureSlotRepository;
+    private final ApplicationEventPublisher eventPublisher;
     
     
     @Override
     @Transactional(readOnly = true)
-    public LectureGetResponse getLectureGetResponse(int year,int month,int day,Long memberId) {
+    public LectureGetResponse getLectureGetResponse(int year, int month, int day, Long memberId) {
         
         List<LectureGetResponse.TimeSlotByDate> result = new ArrayList<>();
         
@@ -123,14 +127,14 @@ public class LectureServiceImpl implements LectureService {
     
     @Override
     public ApiResponse createLecture(LecturePostRequest request, Long memberId) {
-        
+        //중복코드 좀 있어서 리팩토링좀 해야함..
         BgmAgitMember bgmAgitMember = memberRepository.findById(memberId).orElseThrow(() -> new RuntimeException("존재 하지 않는 회원입니다."));
         LocalDate date = request.getDate();
         String time = request.getTime();
         String[] split = time.split("~");
         LocalTime startTime = LocalTime.parse(split[0]);
-        LocalTime endTime   = LocalTime.parse(split[1]);
-        
+        LocalTime endTime = LocalTime.parse(split[1]);
+      
         LectureSlot lectureSlot = lectureSlotRepository.findByLectureTime(date, startTime, endTime);
         if (lectureSlot == null) {
             LectureSlot slot = LectureSlot.builder()
@@ -150,11 +154,21 @@ public class LectureServiceImpl implements LectureService {
                     .lectureCancelStatus("N")
                     .build();
             lectureRepository.save(lecture);
-            return new ApiResponse(200,true,"예약이 신청되었습니다.");
+            LecturePostEvent event = LecturePostEvent
+                    .builder()
+                    .id(lecture.getId())
+                    .subject(BgmAgitSubject.LECTURE)
+                    .memberName(bgmAgitMember.getBgmAgitMemberName())
+                    .date(date)
+                    .time(time)
+                    .phoneNo(bgmAgitMember.getBgmAgitMemberPhoneNo())
+                    .build();
+            eventPublisher.publishEvent(event);
+            return new ApiResponse(200, true, "예약이 신청되었습니다.");
         }
         
         Boolean success = lectureSlotRepository.updateLectureSlotCapacity(lectureSlot.getId());
-        if(!success){
+        if (!success) {
             throw new ValidException("정원이 만료 되어 예약이 불가능 합니다.");
         }
         
@@ -166,7 +180,17 @@ public class LectureServiceImpl implements LectureService {
                 .lectureCancelStatus("N")
                 .build();
         lectureRepository.save(lecture);
+        LecturePostEvent event = LecturePostEvent
+                .builder()
+                .id(lecture.getId())
+                .subject(BgmAgitSubject.LECTURE)
+                .memberName(bgmAgitMember.getBgmAgitMemberName())
+                .date(date)
+                .time(time)
+                .phoneNo(bgmAgitMember.getBgmAgitMemberPhoneNo())
+                .build();
+        eventPublisher.publishEvent(event);
         
-        return new ApiResponse(200,true,"예약이 신청되었습니다.");
+        return new ApiResponse(200, true, "예약이 신청되었습니다.");
     }
 }

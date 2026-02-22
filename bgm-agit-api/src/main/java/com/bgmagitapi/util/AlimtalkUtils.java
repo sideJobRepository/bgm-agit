@@ -207,7 +207,7 @@ public class AlimtalkUtils {
      */
     public static String buildLectureMessage(String userName, String date, String times) {
         return new StringBuilder()
-                .append("안녕하세요.").append(userName).append("님\n")
+                .append("안녕하세요.").append(userName).append("님\n\n")
                 .append("BGM 아지트 마작 강의 예약 내역을 안내드립니다.\n\n")
                 .append("예약자: ").append(userName).append("\n")
                 .append("예약 일자: ").append(date).append("\n")
@@ -282,14 +282,9 @@ public class AlimtalkUtils {
     
     
     /** 기본 버튼 세트(필요 시 수정) */
-    public static Attach defaultAttach(String message) {
+    public static Attach defaultAttach(String message,String url) {
         return new Attach(List.of(
-                Attach.Button.wl(message, "https://bgmagit.co.kr")
-        ));
-    }
-    public static Attach defaultAttachRecord(String message) {
-        return new Attach(List.of(
-                Attach.Button.wl(message, "https://bgmagit.co.kr/record")
+                Attach.Button.wl(message, url)
         ));
     }
     
