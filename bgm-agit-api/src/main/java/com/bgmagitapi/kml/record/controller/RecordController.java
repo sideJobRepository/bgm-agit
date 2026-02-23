@@ -26,8 +26,12 @@ public class RecordController {
     private final RecordService recordService;
     
     @GetMapping("/record")
-    public PageResponse<RecordGetResponse> getRecord(@PageableDefault(size = 10) Pageable pageable) {
-        Page<RecordGetResponse> records = recordService.getRecords(pageable);
+    public PageResponse<RecordGetResponse> getRecord(@PageableDefault(size = 10) Pageable pageable
+            ,@RequestParam(name = "startDate", required = false) String startDate
+            ,@RequestParam(name = "endDate" , required = false) String endDate
+            ,@RequestParam(name= "nickName", required = false) String nickName
+    ) {
+        Page<RecordGetResponse> records = recordService.getRecords(pageable,startDate,endDate,nickName);
         return PageResponse.from(records);
     }
     

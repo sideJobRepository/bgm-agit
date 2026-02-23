@@ -5,6 +5,7 @@ import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitReservation;
 import com.bgmagitapi.event.dto.InquiryEvent;
+import com.bgmagitapi.kml.lecture.dto.event.LecturePostEvent;
 import com.bgmagitapi.service.response.ReservationTalkContext;
 
 import java.util.List;
@@ -17,4 +18,5 @@ public interface BgmAgitBizTalkSandService {
     ApiResponse sendInquiry(InquiryEvent event);
     ApiResponse sendInquiryComplete(InquiryEvent event);
     
+    void sendLecturePost(LecturePostEvent e);
 }

@@ -1,6 +1,7 @@
 package com.bgmagitapi.kml.lecture.controller;
 
 
+import com.bgmagitapi.advice.exception.ValidException;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.lecture.dto.request.LecturePostRequest;
 import com.bgmagitapi.kml.lecture.dto.response.LectureGetResponse;
@@ -9,6 +10,7 @@ import com.bgmagitapi.util.JwtParserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -28,8 +30,11 @@ public class LectureController {
     }
     
     @PostMapping("/lecture")
-    public ApiResponse createLecture(@RequestBody LecturePostRequest request,@AuthenticationPrincipal Jwt jwt) {
+    public ApiResponse createLecture(@Validated @RequestBody LecturePostRequest request, @AuthenticationPrincipal Jwt jwt) {
         Long memberId = JwtParserUtil.extractMemberId(jwt);
+        if(memberId == null){
+            throw new ValidException("로그인후 이용해주세요");
+        }
         return lectureService.createLecture(request, memberId);
     }
 }

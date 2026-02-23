@@ -8,6 +8,7 @@ import com.bgmagitapi.event.dto.InquiryEvent;
 import com.bgmagitapi.event.dto.MemberJoinedEvent;
 import com.bgmagitapi.event.dto.ReservationTalkEvent;
 import com.bgmagitapi.event.dto.ReservationWaitingEvent;
+import com.bgmagitapi.kml.lecture.dto.event.LecturePostEvent;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.service.BgmAgitBizTalkSandService;
 import lombok.RequiredArgsConstructor;
@@ -94,6 +95,16 @@ public class BizTalkEventListener {
                 default -> {
                 }
             }
+        }
+    }
+    
+    @Async("bizTalkExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onLecturePost(LecturePostEvent e) {
+        try {
+            bgmAgitBizTalkSandService.sendLecturePost(e);
+        } catch (Exception ex) {
+            bgmAgitBizTalkSandService.sendLecturePost(e);
         }
     }
 }

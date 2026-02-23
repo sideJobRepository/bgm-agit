@@ -23,6 +23,7 @@ import {
   ChatsCircle,
   CaretUp,
   CaretDown,
+  ListChecks,
 } from 'phosphor-react';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -81,7 +82,7 @@ export default function Sidebar() {
 
     if (result.isConfirmed) {
       const channel = new BroadcastChannel('auth');
-      channel.postMessage('logout');
+      channel.postMessage({ type: 'LOGOUT' });
       channel.close();
 
       try {
@@ -263,6 +264,20 @@ export default function Sidebar() {
                 기록 입력
               </a>
             </MenuLi>
+            {user && (
+              <MenuLi $active={pathname === '/myPage'}>
+                <a
+                  href="#"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    router.push('/myPage');
+                  }}
+                >
+                  <ListChecks weight="fill" />
+                  예약 내역
+                </a>
+              </MenuLi>
+            )}
             <MenuLi $active={pathname === '/login'}>
               {user ? (
                 <a

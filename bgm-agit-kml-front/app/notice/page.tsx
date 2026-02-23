@@ -11,87 +11,87 @@ import { useRouter } from 'next/navigation';
 import { useLoadingStore } from '@/store/loading';
 import BaseTableSkeleton from '@/app/components/BaseTableSkeleton';
 
-
 export default function Notice() {
   const router = useRouter();
   const fetchNotice = useFetchNoticeList();
-  const noticeList =  useNoticeListStore((state) => state.notice);
+  const noticeList = useNoticeListStore((state) => state.notice);
   const clearDetail = useNoticeDetailStore((state) => state.clearDetail);
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);
 
-  const loading = useLoadingStore((state) => state.loading)
+  const loading = useLoadingStore((state) => state.loading);
   const isReady = !loading && noticeList;
 
-
-  const columns = useMemo<BaseColumn<NoticeItem>[]>(() => [
-    {
-      key: 'registDate',
-      header: '날짜',
-      width: '140px',
-      align: 'center',
-      nowrap: true,
-      render: row => row.registDate,
-    },
-    {
-      key: 'title',
-      header: '제목',
-      render: row => row.title,
-    },
-  ], []);
+  const columns = useMemo<BaseColumn<NoticeItem>[]>(
+    () => [
+      {
+        key: 'registDate',
+        header: '날짜',
+        width: '140px',
+        align: 'center',
+        nowrap: true,
+        render: (row) => row.registDate,
+      },
+      {
+        key: 'title',
+        header: '제목',
+        render: (row) => row.title,
+      },
+    ],
+    []
+  );
 
   useEffect(() => {
-    fetchNotice({ page, titleAndCont: searchKeyword })
+    fetchNotice({ page, titleAndCont: searchKeyword });
   }, [page]);
 
   return (
     <Wrapper>
       <Hero>
         <HeroBg>
-          <img src={withBasePath('/bgmMain.jpeg')} alt="" />
+          <img src={withBasePath('/bgmMain.jpeg')} alt="상단 이미지" />
         </HeroBg>
         <FixedDarkOverlay />
-        <HeroOverlay   initial={{ width: '0%' }}
-                       animate={{ width: '100%' }}
-                       transition={{
-                         duration: 1.2,
-                         ease: [0.65, 0, 0.35, 1],
-                       }} />
+        <HeroOverlay
+          initial={{ width: '0%' }}
+          animate={{ width: '100%' }}
+          transition={{
+            duration: 1.2,
+            ease: [0.65, 0, 0.35, 1],
+          }}
+        />
 
         <HeroContent>
           <h1>What’s New</h1>
-          <span>
-            새로운 소식과 중요 안내를 확인하세요.
-          </span>
+          <span>새로운 소식과 중요 안내를 확인하세요.</span>
         </HeroContent>
       </Hero>
       <TableBox>
-        {isReady ? (       <BaseTable
-          columns={columns}
-          data={noticeList.content}
-          page={page}
-          searchLabel="제목 및 내용"
-          totalPages={noticeList.totalPages}
-          onPageChange={setPage}
-          showWriteButton
-          onWriteClick={() => {
-            clearDetail();
-            router.push(`/notice/new`);
-          }}
-          onRowClick={(row) =>
-            router.push(`/notice/${row.id}`)
-          }
-          searchKeyword={searchKeyword}
-          onSearchKeywordChange={setSearchKeyword}
-          onSearch={() => {
-            setPage(0);
-            fetchNotice({ page: 0, titleAndCont: searchKeyword });
-          }}
-        />) : (
+        {isReady ? (
+          <BaseTable
+            columns={columns}
+            data={noticeList.content}
+            page={page}
+            searchLabel="제목 및 내용"
+            totalPages={noticeList.totalPages}
+            onPageChange={setPage}
+            showWriteButton
+            onWriteClick={() => {
+              clearDetail();
+              router.push(`/notice/new`);
+            }}
+            onRowClick={(row) => router.push(`/notice/${row.id}`)}
+            searchKeyword={searchKeyword}
+            onSearchKeywordChange={setSearchKeyword}
+            onSearch={() => {
+              setPage(0);
+              fetchNotice({ page: 0, titleAndCont: searchKeyword });
+            }}
+          />
+        ) : (
           <BaseTableSkeleton columns={columns} />
         )}
-
       </TableBox>
     </Wrapper>
   );
@@ -143,7 +143,7 @@ const HeroBg = styled.div`
 const FixedDarkOverlay = styled.div`
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.20); 
+  background: rgba(0, 0, 0, 0.2);
   z-index: 0;
 `;
 
@@ -202,5 +202,3 @@ const SkeletonBox = styled.div`
   animation: ${shimmer} 1.5s infinite;
   border-radius: 4px;
 `;
-
-

@@ -12,17 +12,22 @@ export default function RedirectPage() {
   const router = useRouter();
 
   useEffect(() => {
+    const storedRedirect = sessionStorage.getItem('post_login_redirect');
+    const redirectPath =
+      storedRedirect && storedRedirect.startsWith('/') ? storedRedirect : '/';
     const code = new URL(window.location.href).searchParams.get('code');
 
     const provider = pathname.split('/')[2];
 
     if (!code) {
+      sessionStorage.removeItem('post_login_redirect');
       router.replace('/');
       return;
     }
 
     postUser(code, provider, () => {
-      router.replace('/');
+      sessionStorage.removeItem('post_login_redirect');
+      router.replace(redirectPath);
     });
   }, []);
 

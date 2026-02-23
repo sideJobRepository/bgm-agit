@@ -14,6 +14,9 @@ export default function Login() {
     let REDIRECT_URL;
 
     let authUrl;
+    const rawRedirect = new URLSearchParams(window.location.search).get('redirect') || '/';
+    const redirectPath = rawRedirect.startsWith('/') ? rawRedirect : '/';
+    sessionStorage.setItem('post_login_redirect', redirectPath);
 
     if (name === 'KAKAO') {
       CLIENT_ID = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID!;

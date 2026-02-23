@@ -10,7 +10,7 @@ export default function Guide() {
     <Wrapper>
       <Hero>
         <HeroBg>
-          <img src={withBasePath('/dayHero.jpg')} alt="" />
+          <img src={withBasePath('/guide/guideHero.png')} alt="상단 이미지" />
         </HeroBg>
         <FixedDarkOverlay />
         <HeroOverlay
@@ -21,18 +21,16 @@ export default function Guide() {
             ease: [0.65, 0, 0.35, 1],
           }}
         />
-
-        <HeroContent>
-          <span>
-            도박이 아닌 지적 유희, 대전 유일의 <br />
-            프리미엄 마작 라운지
-          </span>
-        </HeroContent>
       </Hero>
       <ContentBox>
         <MainContent>
-          <strong>“아직도 마작을 영화 속 어두운 뒷골목의 전유물로 생각하시나요?”</strong>
+          <h1>
+            도박이 아닌 지적 유희, 대전 유일의 <br />
+            프리미엄 마작 라운지
+          </h1>
           <h5>
+            <strong>“아직도 마작을 영화 속 어두운 뒷골목의 전유물로 생각하시나요?” </strong>
+            <br />
             마작은 전 세계 1억 명 이상이 즐기는 정교한 ‘두뇌 스포츠’입니다. <br /> 확률과 전략,
             그리고 심리전이 결합된 이 매력적인 게임을 이제 가장 쾌적한 환경에서 시작해보세요.
           </h5>
@@ -42,30 +40,47 @@ export default function Guide() {
             <img src={withBasePath('/guide/rexx3.jpg')} alt="마작 테이블" />
           </ImageBox>
           <TextBox>
-            <strong>대전 유일의 REXX-3 도입</strong>
+            <strong>“대전 유일의 REXX-3 도입”</strong>
             <br />
-            일본 정품 최첨단 전동 탁자 ‘REXX-3’ 완비. 소음은 줄이고 게임의 몰입도는 높였습니다.
+            <span>
+              일본 정품 전동 마작 탁자 REXX-3를 정식 도입했습니다.
+              <br />
+              정밀한 자동 패 세팅과 저소음 설계로 쾌적한 환경을 구현하여,
+              <br />
+              불필요한 소음을 줄이고 오직 게임의 전략과 몰입에만 집중할 수 있도록 합니다.
+            </span>
           </TextBox>
         </SubContent>
         <SubContent>
           <ImageBox>
-            <img src={withBasePath('/guide/celanRoom.png')} alt="마작 테이블" />
+            <img src={withBasePath('/guide/celanRoom.png')} alt="클린매너 사진" />
           </ImageBox>
           <TextBox>
-            <strong>철저한 ‘클린 매너’ 원칙</strong>
+            <strong>“철저한 ‘클린 매너’ 원칙”</strong>
             <br />
-            BGM 아지트는 비흡연, 비도박, 비욕설을 원칙으로 합니다. 오직 게임 그 자체에만 집중할 수
-            있는 건전한 커뮤니티를 지향합니다.
+            <span>
+              BGM 아지트는 비흡연, 비도박, 비욕설을 기본 원칙으로 운영됩니다.
+              <br />
+              불필요한 요소를 배제하고, 오직 게임과 전략에만 집중할 수 있는
+              <br />
+              건전하고 품격 있는 커뮤니티를 지향합니다.
+            </span>
           </TextBox>
         </SubContent>
         <SubContent>
           <ImageBox>
-            <img src={withBasePath('/guide/all.jpg')} alt="마작 테이블" />
+            <img src={withBasePath('/guide/all.jpg')} alt="프리미엄 환경 사진" />
           </ImageBox>
           <TextBox>
-            <strong>프리미엄 환경</strong>
+            <strong>“프리미엄 환경”</strong>
             <br />
-            쾌적한 공기 질 관리와 세련된 인테리어로 대전 마작의 새로운 기준을 제시합니다.
+            <span>
+              쾌적한 공기 질 관리 시스템과 세련된 공간 설계를 통해
+              <br />
+              머무는 시간 자체가 편안한 플레이 환경을 제공합니다.
+              <br />
+              대전 마작 라운지의 새로운 기준을 제시합니다.
+            </span>
           </TextBox>
         </SubContent>
       </ContentBox>
@@ -93,11 +108,11 @@ const Wrapper = styled.div`
 const Hero = styled.section`
   position: relative;
   width: 100%;
-  height: 240px;
+  height: 520px;
   overflow: hidden;
 
   @media ${({ theme }) => theme.device.mobile} {
-    height: 200px;
+    height: 320px;
   }
 `;
 
@@ -109,48 +124,20 @@ const HeroBg = styled.div`
     width: 100%;
     height: 100%;
     object-fit: cover;
-
-    filter: blur(2px);
-    transform: scale(1);
   }
 `;
 
 const FixedDarkOverlay = styled.div`
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.02);
   z-index: 0;
 `;
 
 const HeroOverlay = styled(motion.div)`
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.25);
-`;
-
-const HeroContent = styled.div`
-  position: relative;
-  z-index: 2;
-
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-
-  text-align: center;
-  color: ${({ theme }) => theme.colors.whiteColor};
-
-  span {
-    font-size: ${({ theme }) => theme.desktop.sizes.h2Size};
-    font-weight: 800;
-    word-break: keep-all;
-    overflow-wrap: break-word;
-    @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.mobile.sizes.h2Size};
-    }
-  }
+  background: rgba(0, 0, 0, 0.2);
 `;
 
 const ContentBox = styled.div`
@@ -160,17 +147,27 @@ const ContentBox = styled.div`
   width: 100%;
   padding-bottom: 48px;
 
+  h1 {
+    font-size: ${({ theme }) => theme.desktop.sizes.h1Size};
+    font-weight: 800;
+    word-break: keep-all;
+    text-align: center;
+    overflow-wrap: break-word;
+    line-height: 1.4;
+    letter-spacing: 4px;
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: ${({ theme }) => theme.mobile.sizes.h1Size};
+    }
+  }
+
   strong {
-    font-size: ${({ theme }) => theme.desktop.sizes.h3Size};
     font-weight: 800;
     word-break: keep-all;
     overflow-wrap: break-word;
     text-align: center;
     line-height: 2;
+    letter-spacing: 1px;
     color: ${({ theme }) => theme.colors.inputColor};
-    @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.mobile.sizes.h3Size};
-    }
   }
 
   h5 {
@@ -180,7 +177,7 @@ const ContentBox = styled.div`
     overflow-wrap: break-word;
     line-height: 1.4;
     color: ${({ theme }) => theme.colors.grayColor};
-    text-align: left;
+    text-align: center;
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.mobile.sizes.h5Size};
     }
@@ -190,7 +187,7 @@ const ContentBox = styled.div`
 const MainContent = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 48px 12px;
+  padding: 64px 12px;
   gap: 24px;
   background-color: ${({ theme }) => theme.colors.softColor};
 `;
@@ -224,26 +221,27 @@ const ImageBox = styled.div`
 const TextBox = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 0 12px;
-  gap: 12px;
-  font-size: ${({ theme }) => theme.desktop.sizes.xl};
-  opacity: 0.8;
+  padding: 24px 12px;
+  gap: 4px;
+  font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
   word-break: keep-all;
   overflow-wrap: break-word;
   text-align: center;
+  line-height: 2;
+  font-weight: 600;
   color: ${({ theme }) => theme.colors.inputColor};
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.mobile.sizes.xl};
+    font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
   }
 
   strong {
-    font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
-    font-weight: 600;
+    font-size: ${({ theme }) => theme.desktop.sizes.h2Size};
     line-height: 1.4;
+    letter-spacing: 2px;
     color: ${({ theme }) => theme.colors.blackColor};
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
+      font-size: ${({ theme }) => theme.mobile.sizes.h2Size};
     }
   }
 `;

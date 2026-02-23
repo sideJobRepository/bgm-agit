@@ -50,4 +50,9 @@ public class Record extends DateSuperClass {
         this.member = bgmAgitMember;
         this.recordSeat = dto.getRecordSeat();
     }
+    
+    public String toFormattedString(String nickname) {
+        String point = "(승점:" + this.recordPoint + ")";
+        return String.format("[%s]%s: %d %s", recordSeat.getValue(), nickname, recordScore, point);
+    }
 }
