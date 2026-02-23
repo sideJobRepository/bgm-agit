@@ -200,9 +200,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         RestClient rest = RestClient.create();
         BizTalkTokenResponse token = bgmAgitBizTalkService.getBizTalkToken();
         
-        Map<String, Object> req = AlimtalkUtils.buildSendRequest(
-                senderKey, phone, message, templateName, attach
-        );
+        Map<String, Object> req = AlimtalkUtils.buildSendRequest(senderKey, phone, message, templateName, attach);
         
         // 발송
         rest.post()
@@ -237,12 +235,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
                 ));
         
         String resultCode = codeByIdx.getOrDefault(msgIdx, "PENDING");
-        
-        BgmAgitBiztalkSendHistory history = new BgmAgitBiztalkSendHistory(
-                bgmAgitSubject, subjectId, message, msgIdx
-        );
-        history.settingResultCode(resultCode);
-        bgmAgitBiztalkSendHistoryRepository.save(history);
+        bgmAgitBiztalkSendHistoryRepository.save(new BgmAgitBiztalkSendHistory(bgmAgitSubject, subjectId, message, msgIdx,resultCode));
         
         return new ApiResponse(200, true, okMsg);
     }
