@@ -4,16 +4,21 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { withBasePath } from '@/lib/path';
+import { useSearchParams } from 'next/navigation';
 
 export default function Login() {
 
   const [mounted, setMounted] = useState(false);
+  const searchParams = useSearchParams();
 
   function login(name: string) {
     let CLIENT_ID;
     let REDIRECT_URL;
 
     let authUrl;
+    const rawRedirect = searchParams.get('redirect') || '/';
+    const redirectPath = rawRedirect.startsWith('/') ? rawRedirect : '/';
+    sessionStorage.setItem('post_login_redirect', redirectPath);
 
     if (name === 'KAKAO') {
       CLIENT_ID = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID!;

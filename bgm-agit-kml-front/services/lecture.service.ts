@@ -5,7 +5,7 @@ import { useLectureStore } from '@/store/lecture';
 export type params = {
   year?: number;
   month?: number;
-  day?: string;
+  day?: number;
 };
 
 export function useFetchLectureList() {

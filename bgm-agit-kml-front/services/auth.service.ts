@@ -12,7 +12,7 @@ export function useLoginPost() {
   const postUser = (code: string, name: string, onSuccess?: () => void) => {
     request(
       () =>
-        api.post(`/bgm-agit/next/${name}-login`, { code }).then(res => {
+        api.post(`/bgm-agit/next/${name}-login`, { code }).then((res) => {
           const token = res.data.token as string;
           tokenStore.set(token);
 
@@ -20,12 +20,14 @@ export function useLoginPost() {
 
           return user;
         }),
-      user => {
+      (user) => {
         setUser(user);
 
         onSuccess?.();
         alertDialog('로그인에 성공하였습니다.', 'success');
-
+        const channel = new BroadcastChannel('auth');
+        channel.postMessage({ type: 'LOGIN' });
+        channel.close();
       }
     );
   };

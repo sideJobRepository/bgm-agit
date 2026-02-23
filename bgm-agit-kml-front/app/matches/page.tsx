@@ -7,8 +7,17 @@ import 'react-calendar/dist/Calendar.css';
 import React, { useEffect, useState } from 'react';
 import { useFetchLectureList } from '@/services/lecture.service';
 import { useLectureStore } from '@/store/lecture';
+import { useUserStore } from '@/store/user';
+import { alertDialog, confirmDialog } from '@/utils/alert';
+import { useInsertPost } from '@/services/main.service';
+import { useRouter } from 'next/navigation';
 
 export default function Matches() {
+  const { insert } = useInsertPost();
+
+  const user = useUserStore((state) => state.user);
+  const router = useRouter();
+
   const fetchLecture = useFetchLectureList();
   const lectureData = useLectureStore((state) => state.lecture);
   console.log('lectureData', lectureData);
@@ -29,6 +38,38 @@ export default function Matches() {
 
   // 클릭한 날짜 문자열
   const selectedDateStr = getLocalDateStr(value);
+
+  const handleSubmit = async () => {
+    if (!user) {
+      await alertDialog('유저 정보가 없습니다. \n 로그인 후 이용해주세요.', 'error');
+      router.push('/login');
+      return;
+    }
+
+    const result = await confirmDialog('예약 하시겠습니까?', 'warning');
+    if (!result.isConfirmed) return;
+
+    insert({
+      url: '/bgm-agit/lecture',
+      body: {
+        date: selectedDateStr,
+        time: selectedTime,
+      },
+      ignoreErrorRedirect: true,
+      onSuccess: async () => {
+        fetchLecture({
+          year: value.getFullYear(),
+          month: value.getMonth() + 1,
+          day: value.getDate(),
+        });
+        const result = await confirmDialog(
+          '예약이 되었습니다. \n 예약 내역으로 이동하시겠습니까?',
+          'success'
+        );
+        if (!result.isConfirmed) return;
+      },
+    });
+  };
 
   useEffect(() => {
     if (value) {
@@ -112,9 +153,11 @@ export default function Matches() {
 
             const dateStr = getLocalDateStr(date);
 
-            const isAvailable = lectureData?.timeSlot?.some((d) => d.date === dateStr);
+            const isAvailable = lectureData?.timeSlot?.some(
+              (d) => d.date === dateStr && d.timeSlots?.some((s) => s.enabled)
+            );
 
-            return isAvailable && <div className="date-available">예약 가능</div>;
+            return isAvailable ? <div className="date-available">예약 가능</div> : null;
           }}
         />
         <TimeBox>
@@ -133,7 +176,9 @@ export default function Matches() {
             <EmptySlot>가능한 교육 시간이 없습니다.</EmptySlot>
           )}
         </TimeBox>
-        <Button disabled={!selectedTime}>예약하기</Button>
+        <Button onClick={handleSubmit} disabled={!selectedTime}>
+          예약하기
+        </Button>
       </ContentBox>
     </Wrapper>
   );
