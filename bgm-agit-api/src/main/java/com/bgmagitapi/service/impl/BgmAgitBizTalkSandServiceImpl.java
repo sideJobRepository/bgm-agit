@@ -55,7 +55,6 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     
     @Override
     public ApiResponse sandBizTalk(BgmAgitMember member, BgmAgitImage image, List<BgmAgitReservation> list) {
-        validateList(list);
         
         BgmAgitReservation bgmAgitReservation = list.get(0);
         String formattedTimes = AlimtalkUtils.formatTimes(list);
@@ -96,7 +95,6 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     
     @Override
     public ApiResponse sendCancelBizTalk(ReservationTalkContext ctx) {
-        validateCtx(ctx);
         List<BgmAgitReservation> list = ctx.getReservations();
         BgmAgitImage bgmAgitImage = ctx.getReservations().get(0).getBgmAgitImage();
         boolean isRoom = bgmAgitImage.getBgmAgitImageCategory() == BgmAgitImageCategory.ROOM;
@@ -124,7 +122,6 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     
     @Override
     public ApiResponse sendCompleteBizTalk(ReservationTalkContext ctx) {
-        validateCtx(ctx);
         List<BgmAgitReservation> list = ctx.getReservations();
         BgmAgitImage bgmAgitImage = ctx.getReservations().get(0).getBgmAgitImage();
         boolean isRoom = bgmAgitImage.getBgmAgitImageCategory() == BgmAgitImageCategory.ROOM;
@@ -249,23 +246,4 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         
         return new ApiResponse(200, true, okMsg);
     }
-    
-    /**
-     * NPE/빈 리스트 방지
-     */
-    private void validateCtx(ReservationTalkContext ctx) {
-        if (ctx == null || ctx.getReservations() == null || ctx.getReservations().isEmpty()) {
-            throw new IllegalArgumentException("전송 대상이 없습니다.");
-        }
-    }
-    
-    /**
-     * 리스트 유효성 검사 (null 또는 empty 방지)
-     */
-    private void validateList(List<BgmAgitReservation> list) {
-        if (list == null || list.isEmpty()) {
-            throw new IllegalArgumentException("예약 데이터가 없습니다.");
-        }
-    }
-    
 }
