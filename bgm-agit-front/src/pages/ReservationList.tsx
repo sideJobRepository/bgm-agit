@@ -113,7 +113,7 @@ export default function ReservationList() {
         <TableBox>
           <TextBox>
             <p>
-              • 계좌 : 하나은행 60891052636607 <br />• 예금주 : 박x후
+              • 계좌 : 카카오뱅크 79795151308 <br />• 예금주 : 박x후
             </p>
             <span>
               ※ 예약금은 10,000원이며, 반드시 예약자명으로 입금해주시기 바랍니다.
