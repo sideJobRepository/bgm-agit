@@ -2,20 +2,19 @@ package com.bgmagitapi.kml.my.controller;
 
 
 import com.bgmagitapi.advice.exception.ValidException;
+import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.kml.my.dto.request.MyAcademyApprovalRequest;
 import com.bgmagitapi.kml.my.dto.response.MyAcademyGetResponse;
 import com.bgmagitapi.kml.my.service.MyAcademyService;
 import com.bgmagitapi.page.PageResponse;
 import com.bgmagitapi.util.JwtParserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,5 +33,15 @@ public class MyAcademyController {
         String role = JwtParserUtil.extractRole(jwt);
         Page<MyAcademyGetResponse> myAcademy = myAcademyService.getMyAcademy(pageable, memberId, role);
         return PageResponse.from(myAcademy);
+    }
+    
+    @PostMapping("/my-academy/approval")
+    public ApiResponse completeAcademy(@RequestBody MyAcademyApprovalRequest request) {
+        return myAcademyService.approvalMyAcademy(request);
+    }
+    
+    @PostMapping("/my-academy/complete")
+    public ApiResponse cancelAcademy(){
+        return null;
     }
 }

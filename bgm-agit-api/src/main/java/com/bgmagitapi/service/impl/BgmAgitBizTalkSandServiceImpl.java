@@ -8,6 +8,7 @@ import com.bgmagitapi.entity.enumeration.BgmAgitImageCategory;
 import com.bgmagitapi.entity.enumeration.BgmAgitSubject;
 import com.bgmagitapi.event.dto.InquiryEvent;
 import com.bgmagitapi.kml.lecture.dto.event.LecturePostEvent;
+import com.bgmagitapi.kml.my.dto.events.MyAcademyApprovalEvent;
 import com.bgmagitapi.repository.BgmAgitBiztalkSendHistoryRepository;
 import com.bgmagitapi.repository.BgmAgitImageRepository;
 import com.bgmagitapi.service.BgmAgitBizTalkSandService;
@@ -179,9 +180,23 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(event.getDate());
         String time = event.getTime();
         String message = AlimtalkUtils.buildLectureMessage(memberName, date, time);
-     //    sendTalk(message, template, PHONE1, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
-     //   sendTalk(message, template, PHONE2, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
-     //   sendTalk(message, template, memberPhoneNo, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+        //    sendTalk(message, template, PHONE1, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+        //   sendTalk(message, template, PHONE2, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+        //   sendTalk(message, template, memberPhoneNo, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+    }
+    
+    @Override
+    public void sendLecturePostComplete(MyAcademyApprovalEvent event) {
+        String template = AlimtalkTemplate.BGMAGIT_RES_LECTURE_COMPLETE;
+        Long id = event.getId();
+        String memberName = event.getMemberName();
+        String memberPhoneNo = event.getPhoneNo();
+        String date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(event.getDate());
+        String time = event.getTime();
+        String message = AlimtalkUtils.buildLectureMessageComplete(memberName, date, time);
+        sendTalk(message, template, PHONE1, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+        sendTalk(message, template, PHONE2, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+        sendTalk(message, template, memberPhoneNo, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
     }
     
     /**

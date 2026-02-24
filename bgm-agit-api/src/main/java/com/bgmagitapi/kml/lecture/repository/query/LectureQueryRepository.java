@@ -1,5 +1,6 @@
 package com.bgmagitapi.kml.lecture.repository.query;
 
+import com.bgmagitapi.kml.lecture.entity.Lecture;
 import com.bgmagitapi.kml.my.dto.response.MyAcademyGetResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,4 +15,6 @@ public interface LectureQueryRepository {
     boolean existsMyActiveReservation(Long memberId, LocalDate today);
     
     Page<MyAcademyGetResponse> findByMyAcademy(Pageable pageable, Long memberId);
+    
+    Lecture findByLectureDate(Long lectureId);
 }
