@@ -146,7 +146,8 @@ export function BaseTable<T>({
                 검색
               </SearchButton>
             </SearchGroup>
-            {user?.roles?.includes('ROLE_ADMIN') && (
+            {((pathname === '/notice' && user?.roles?.includes('ROLE_ADMIN')) ||
+              (pathname === '/review' && user)) && (
               <Button onClick={onWriteClick ? () => onWriteClick() : undefined}>
                 <PencilSimpleLine weight="bold" />
               </Button>

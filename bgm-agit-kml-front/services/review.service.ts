@@ -1,7 +1,7 @@
 import { useRequest } from '@/hooks/useRequest';
-import { useNoticeListStore } from '@/store/notice';
+import { useNoticeDetailStore, useNoticeListStore } from '@/store/notice';
 import api from '@/lib/axiosInstance';
-import { useReviewListStore } from '@/store/review';
+import { useReviewDetailStore, useReviewListStore } from '@/store/review';
 
 export type params = {
   page?: number;
@@ -21,4 +21,17 @@ export function useFetchReviewList() {
   };
 
   return fetchReview;
+}
+
+export function useFetchReviewDetail() {
+  const { request } = useRequest();
+  const setDetailReview = useReviewDetailStore((state) => state.setDetailReview);
+
+  const fetchDetailReview = (id: string) => {
+    request(() => api.get(`/bgm-agit/review/${id}`).then((res) => res.data), setDetailReview, {
+      ignoreErrorRedirect: true,
+    });
+  };
+
+  return fetchDetailReview;
 }
