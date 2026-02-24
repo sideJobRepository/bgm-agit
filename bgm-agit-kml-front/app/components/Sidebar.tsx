@@ -274,7 +274,7 @@ export default function Sidebar() {
                   }}
                 >
                   <ListChecks weight="fill" />
-                  예약 내역
+                  아카데미 예약 내역
                 </a>
               </MenuLi>
             )}
