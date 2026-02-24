@@ -85,7 +85,7 @@ class ReviewServiceImplTest extends RepositoryAndServiceTestSupport {
     @DisplayName("")
     @Test
     void test4(){
-        ReviewGetDetailResponse reviewDetail = reviewService.getReviewDetail(3L, 1L);
+        ReviewGetDetailResponse reviewDetail = reviewService.getReviewDetail(1L, 1L);
         System.out.println("reviewDetail = " + reviewDetail);
     }
     

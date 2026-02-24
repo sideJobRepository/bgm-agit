@@ -45,9 +45,16 @@ public class ReviewGetDetailResponse {
     public static class ReviewGetDetailResponseFile{
         private Long id;
         private String fileName;
-        private String fileFolder;
         private String uuidName;
         private String fileUrl;
+        private String fileFolder;
+        
+        public ReviewGetDetailResponseFile(Long id, String fileName, String uuidName, String fileUrl) {
+            this.id = id;
+            this.fileName = fileName;
+            this.uuidName = uuidName;
+            this.fileUrl = fileUrl;
+        }
     }
     
     @Data
