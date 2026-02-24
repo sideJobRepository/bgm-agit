@@ -4,6 +4,7 @@ package com.bgmagitapi.kml.my.controller;
 import com.bgmagitapi.advice.exception.ValidException;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.my.dto.request.MyAcademyApprovalRequest;
+import com.bgmagitapi.kml.my.dto.request.MyAcademyCancelRequest;
 import com.bgmagitapi.kml.my.dto.response.MyAcademyGetResponse;
 import com.bgmagitapi.kml.my.service.MyAcademyService;
 import com.bgmagitapi.page.PageResponse;
@@ -40,8 +41,9 @@ public class MyAcademyController {
         return myAcademyService.approvalMyAcademy(request);
     }
     
-    @PostMapping("/my-academy/complete")
-    public ApiResponse cancelAcademy(){
-        return null;
+    @PostMapping("/my-academy/cancel")
+    public ApiResponse cancelAcademy(@RequestBody MyAcademyCancelRequest request,@AuthenticationPrincipal Jwt jwt){
+        String role = JwtParserUtil.extractRole(jwt);
+        return myAcademyService.cancelMyAcademy(request,role);
     }
 }
