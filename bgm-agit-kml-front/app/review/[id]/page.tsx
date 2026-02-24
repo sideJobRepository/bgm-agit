@@ -81,6 +81,7 @@ export default function ReviewDetail({ params }: { params: Promise<{ id: string 
     const formData = new FormData();
     formData.append('title', newReview.title);
     formData.append('cont', newReview.content);
+    if (user) formData.append('memberId', user.id);
 
     if (isEditMode) {
       formData.append('id', id);
@@ -101,12 +102,12 @@ export default function ReviewDetail({ params }: { params: Promise<{ id: string 
 
     if (result.isConfirmed) {
       requestFn({
-        url: '/bgm-agit/kml-notice',
+        url: '/bgm-agit/review',
         body: formData,
         ignoreErrorRedirect: true,
         onSuccess: async () => {
           if (!isEditMode) {
-            router.push(`/notice`);
+            router.push(`/review`);
             await alertDialog('후기가 작성되었습니다.', 'success');
             setFiles([]);
           } else {
@@ -265,7 +266,7 @@ export default function ReviewDetail({ params }: { params: Promise<{ id: string 
           </>
         ) : (
           <>
-            {user?.roles.includes('ROLE_ADMIN') && (
+            {detailReview?.isAuthor && (
               <ButtonBox>
                 <>
                   <Button onClick={() => setIsEditMode(true)} color="#415B9C">
