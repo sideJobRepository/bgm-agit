@@ -122,7 +122,7 @@ export function BaseTable<T>({
   return (
     <TableBox>
       <TopBox>
-        {pathname === '/notice' ? (
+        {['/notice', '/review'].includes(pathname) ? (
           <>
             <SearchGroup
               onSubmit={(e) => {
