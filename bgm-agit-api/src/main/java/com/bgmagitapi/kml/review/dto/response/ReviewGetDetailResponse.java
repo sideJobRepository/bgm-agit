@@ -45,6 +45,7 @@ public class ReviewGetDetailResponse {
     public static class ReviewGetDetailResponseFile{
         private Long id;
         private String fileName;
+        private String fileFolder;
         private String uuidName;
         private String fileUrl;
     }

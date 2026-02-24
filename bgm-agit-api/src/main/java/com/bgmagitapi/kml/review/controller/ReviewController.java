@@ -88,40 +88,4 @@ public class ReviewController {
         return reviewService.deleteReview(reviewId,memberId);
     }
     
-    
-    @GetMapping("/review/download/{folder}/{fileName}")
-    public ResponseEntity<Resource> download(@PathVariable String fileName, @PathVariable String folder) {
-        String key = folder + "/" + fileName;
-        ResponseInputStream<GetObjectResponse> object = s3Client.getObject(
-                GetObjectRequest.builder()
-                        .bucket(bucketName)
-                        .key(key)
-                        .build()
-        );
-        
-        // 메타데이터에서 원본 파일명 가져오기
-        String encodedFilenameInMetadata = object.response().metadata().get("original-filename");
-        
-        // 원래 이름 복원 (디코딩)
-        String decodedFilename = encodedFilenameInMetadata != null
-                ? URLDecoder.decode(encodedFilenameInMetadata, StandardCharsets.UTF_8)
-                : fileName;
-        
-        // 다시 Content-Disposition용으로 인코딩 (한 번만)
-        String encodedFilename = UriUtils.encode(decodedFilename, StandardCharsets.UTF_8);
-        String contentDisposition = "attachment; filename*=UTF-8''" + encodedFilename;
-        
-        InputStreamResource resource = new InputStreamResource(object);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(resource);
-    }
-    
-    @PostMapping("/review/file")
-    public String noticeFile(@RequestParam("file") MultipartFile file) {
-        UploadResult notice = s3FileUtils.storeFile(file, "review");
-        return notice.getUrl();
-    }
-    
 }
