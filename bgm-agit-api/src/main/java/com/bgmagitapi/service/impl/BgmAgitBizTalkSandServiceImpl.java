@@ -182,9 +182,9 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(event.getDate());
         String time = event.getTime();
         String message = AlimtalkUtils.buildLectureMessage(memberName, date, time);
-        //    sendTalk(message, template, PHONE1, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
-        //   sendTalk(message, template, PHONE2, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
-        //   sendTalk(message, template, memberPhoneNo, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+        sendTalk(message, template, PHONE1, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+        sendTalk(message, template, PHONE2, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+        sendTalk(message, template, memberPhoneNo, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
     }
     
     @Override
