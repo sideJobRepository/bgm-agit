@@ -130,7 +130,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String people = String.valueOf(bgmAgitReservation.getBgmAgitReservationPeople());
         String request = bgmAgitReservation.getBgmAgitReservationRequest();
         String message1 = AlimtalkUtils.buildReservationCompleteMessage(ctx.getMemberName(), date, times, ctx.getLabel(), people, request);
-        String message2 = AlimtalkUtils.buildReservationCompleteMessage("관리자", date, times, ctx.getLabel(), people, request);
+        String message2 = AlimtalkUtils.buildReservationCompleteMessage(ctx.getMemberName(), date, times, ctx.getLabel(), people, request);
         String template = "bgmagit-res-complete";
         Long subjectId = list.get(0).getBgmAgitReservationNo();
         
