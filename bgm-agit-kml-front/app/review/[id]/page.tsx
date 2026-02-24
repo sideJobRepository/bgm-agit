@@ -280,7 +280,10 @@ export default function ReviewDetail({ params }: { params: Promise<{ id: string 
             )}
             <TitleBox>
               <div>
-                <span>{detailReview?.registDate}</span>
+                <span>
+                  {detailReview?.registDate}
+                  <strong>{detailReview?.nickName}</strong>
+                </span>
                 <Link href="/review">
                   <ArrowLeft weight="bold" />
                   돌아가기
@@ -549,6 +552,10 @@ const TitleBox = styled.div`
 
       @media ${({ theme }) => theme.device.mobile} {
         font-size: ${({ theme }) => theme.mobile.sizes.xl};
+      }
+
+      strong {
+        margin-left: 8px;
       }
     }
 
