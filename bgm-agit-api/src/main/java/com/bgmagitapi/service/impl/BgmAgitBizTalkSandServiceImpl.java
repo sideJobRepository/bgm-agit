@@ -10,6 +10,7 @@ import com.bgmagitapi.event.dto.InquiryEvent;
 import com.bgmagitapi.kml.lecture.dto.event.LecturePostEvent;
 import com.bgmagitapi.kml.my.dto.events.MyAcademyApprovalEvent;
 import com.bgmagitapi.kml.my.dto.events.MyAcademyCancelEvent;
+import com.bgmagitapi.kml.review.dto.events.ReviewPostEvents;
 import com.bgmagitapi.repository.BgmAgitBiztalkSendHistoryRepository;
 import com.bgmagitapi.repository.BgmAgitImageRepository;
 import com.bgmagitapi.service.BgmAgitBizTalkSandService;
@@ -226,6 +227,19 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         sendTalk(message, template, PHONE1, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
         sendTalk(message, template, PHONE2, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
         sendTalk(message, template, memberPhoneNo, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+    }
+    
+    @Override
+    public void sendReview(ReviewPostEvents event) {
+        String template = AlimtalkTemplate.BGMAGIT_REVIEW;
+        Long id = event.getId();
+        String memberName = event.getMemberName();
+        String title = event.getTitle();
+        String date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(event.getDate());
+        String time = DateTimeFormatter.ofPattern("HH:mm").format(event.getDate());
+        String message = AlimtalkUtils.buildReviewMessage(memberName, title, date, time);
+        sendTalk(message, template, PHONE1, id, event.getSubject(), "리뷰 내역 확인 하기", "https://bgmagit.co.kr/record");
+        sendTalk(message, template, PHONE2, id, event.getSubject(), "리뷰 내역 확인 하기", "https://bgmagit.co.kr/record");
     }
     
     /**

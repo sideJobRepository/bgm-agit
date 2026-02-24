@@ -7,6 +7,7 @@ import com.bgmagitapi.event.dto.InquiryEvent;
 import com.bgmagitapi.kml.lecture.dto.event.LecturePostEvent;
 import com.bgmagitapi.kml.my.dto.events.MyAcademyApprovalEvent;
 import com.bgmagitapi.kml.my.dto.events.MyAcademyCancelEvent;
+import com.bgmagitapi.kml.review.dto.events.ReviewPostEvents;
 import com.bgmagitapi.service.response.ReservationTalkContext;
 
 import java.util.List;
@@ -23,4 +24,5 @@ public interface BgmAgitBizTalkSandService {
     void sendLecturePostComplete(MyAcademyApprovalEvent event);
     void sendLectureCancel1(MyAcademyCancelEvent event);
     void sendLectureCancel2(MyAcademyCancelEvent event);
+    void sendReview(ReviewPostEvents e);
 }
