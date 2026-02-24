@@ -40,14 +40,11 @@ public class BgmAgitBiztalkSendHistory extends DateSuperClass {
     private String bgmAgitBiztalkSendHistoryResultCode;
     
     
-    public BgmAgitBiztalkSendHistory(BgmAgitSubject bgmAgitSubject, Long bgmAgitBiztalkSendHistorySubjectId, String bgmAgitBiztalkSendHistoryCont, String bgmAgitBiztalkSendHistoryMsgIdx) {
+    public BgmAgitBiztalkSendHistory(BgmAgitSubject bgmAgitSubject, Long bgmAgitBiztalkSendHistorySubjectId, String bgmAgitBiztalkSendHistoryCont, String bgmAgitBiztalkSendHistoryMsgIdx,String bgmAgitBiztalkSendHistoryResultCode) {
         this.bgmAgitSubject = bgmAgitSubject;
         this.bgmAgitBiztalkSendHistorySubjectId = bgmAgitBiztalkSendHistorySubjectId;
         this.bgmAgitBiztalkSendHistoryCont = bgmAgitBiztalkSendHistoryCont;
         this.bgmAgitBiztalkSendHistoryMsgIdx = bgmAgitBiztalkSendHistoryMsgIdx;
-    }
-    
-    public void settingResultCode(String resultCode) {
-        this.bgmAgitBiztalkSendHistoryResultCode = resultCode;
+        this.bgmAgitBiztalkSendHistoryResultCode = bgmAgitBiztalkSendHistoryResultCode;
     }
 }

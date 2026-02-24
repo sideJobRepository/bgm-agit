@@ -117,7 +117,7 @@ public class AlimtalkUtils {
     
     public static String buildReservationCompleteMessage(String userName, String date, String times, String roomName,String people,String request) {
         return new StringBuilder()
-                .append("안녕하세요.").append(userName).append("님\n")
+                .append("안녕하세요.").append("관리자").append("님\n")
                 .append("BGM 아지트 예약 완료 내역을 알려드립니다.\n\n")
                 .append("예약자: ").append(userName).append("\n")
                 .append("예약 일자: ").append(date).append("\n")

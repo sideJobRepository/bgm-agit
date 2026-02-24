@@ -4,53 +4,83 @@ import { motion } from 'framer-motion';
 import styled, { keyframes } from 'styled-components';
 import { withBasePath } from '@/lib/path';
 import { useFetchNoticeList } from '@/services/notice.service';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { NoticeItem, useNoticeDetailStore, useNoticeListStore } from '@/store/notice';
 import { BaseColumn, BaseTable } from '@/app/components/BaseTable';
 import { useRouter } from 'next/navigation';
 import { useLoadingStore } from '@/store/loading';
 import BaseTableSkeleton from '@/app/components/BaseTableSkeleton';
+import { useFetchMyPageList } from '@/services/myPage.service';
+import { MyPageItem, useMyPageStore } from '@/store/myPage';
 
 export default function Mypage() {
   const router = useRouter();
-  const fetchNotice = useFetchNoticeList();
-  const noticeList = useNoticeListStore((state) => state.notice);
-  const clearDetail = useNoticeDetailStore((state) => state.clearDetail);
+  const fetchMyPage = useFetchMyPageList();
+  const myPageList = useMyPageStore((state) => state.myPage);
+
+  console.log('myPageList', myPageList);
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);
 
   const loading = useLoadingStore((state) => state.loading);
-  const isReady = !loading && noticeList;
+  const isReady = !loading && myPageList;
 
-  const columns = useMemo<BaseColumn<NoticeItem>[]>(
+  const columns = useMemo<BaseColumn<MyPageItem>[]>(
     () => [
       {
         key: 'registDate',
-        header: '날짜',
+        header: '신청 일자',
         width: '140px',
         align: 'center',
         nowrap: true,
         render: (row) => row.registDate,
       },
       {
-        key: 'title',
-        header: '제목',
-        render: (row) => row.title,
+        key: 'startDate',
+        header: '예약 일자',
+        width: '140px',
+        align: 'center',
+        nowrap: true,
+        render: (row) => row.startDate,
+      },
+      {
+        key: 'startTime',
+        header: '예약 시간',
+        width: '140px',
+        align: 'center',
+        nowrap: true,
+        render: (row) => `${row.startTime} ~ ${row.endTime}`,
+      },
+      {
+        key: 'memberName',
+        header: '예약자명',
+        width: '140px',
+        align: 'center',
+        nowrap: true,
+        render: (row) => row.memberName,
+      },
+      {
+        key: 'phoneNo',
+        header: '연락처',
+        width: '140px',
+        align: 'center',
+        nowrap: true,
+        render: (row) => row.phoneNo,
       },
     ],
     []
   );
 
   useEffect(() => {
-    fetchNotice({ page, titleAndCont: searchKeyword });
+    fetchMyPage({ page, titleAndCont: searchKeyword });
   }, [page]);
 
   return (
     <Wrapper>
       <Hero>
         <HeroBg>
-          <img src={withBasePath('/bgmMain.jpeg')} alt="상단 이미지" />
+          <img src={withBasePath('/matches/hero.jpg')} alt="상단 이미지" />
         </HeroBg>
         <FixedDarkOverlay />
         <HeroOverlay
@@ -63,30 +93,25 @@ export default function Mypage() {
         />
 
         <HeroContent>
-          <h1>What’s New</h1>
-          <span>새로운 소식과 중요 안내를 확인하세요.</span>
+          <h1>My Reservation</h1>
+          <span>마작 강의 예약 정보를 확인하세요.</span>
         </HeroContent>
       </Hero>
       <TableBox>
         {isReady ? (
           <BaseTable
             columns={columns}
-            data={noticeList.content}
+            data={myPageList?.content}
             page={page}
             searchLabel="제목 및 내용"
-            totalPages={noticeList.totalPages}
+            totalPages={myPageList?.totalPages}
             onPageChange={setPage}
             showWriteButton
-            onWriteClick={() => {
-              clearDetail();
-              router.push(`/notice/new`);
-            }}
-            onRowClick={(row) => router.push(`/notice/${row.id}`)}
             searchKeyword={searchKeyword}
             onSearchKeywordChange={setSearchKeyword}
             onSearch={() => {
               setPage(0);
-              fetchNotice({ page: 0, titleAndCont: searchKeyword });
+              fetchMyPage({ page: 0, titleAndCont: searchKeyword });
             }}
           />
         ) : (
@@ -103,7 +128,7 @@ const Wrapper = styled.div`
   min-width: 1280px;
   min-height: 600px;
   height: 100%;
-  margin: auto;
+  margin: 0 auto;
   flex-direction: column;
   gap: 36px;
 
@@ -118,11 +143,11 @@ const Wrapper = styled.div`
 const Hero = styled.section`
   position: relative;
   width: 100%;
-  height: 160px;
+  height: 240px;
   overflow: hidden;
 
   @media ${({ theme }) => theme.device.mobile} {
-    height: 120px;
+    height: 140px;
   }
 `;
 
@@ -135,7 +160,7 @@ const HeroBg = styled.div`
     height: 100%;
     object-fit: cover;
 
-    filter: blur(3px);
+    filter: blur(2px);
     transform: scale(1);
   }
 `;

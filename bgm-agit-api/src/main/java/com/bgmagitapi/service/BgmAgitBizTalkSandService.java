@@ -1,22 +1,28 @@
 package com.bgmagitapi.service;
 
-import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitReservation;
 import com.bgmagitapi.event.dto.InquiryEvent;
 import com.bgmagitapi.kml.lecture.dto.event.LecturePostEvent;
+import com.bgmagitapi.kml.my.dto.events.MyAcademyApprovalEvent;
+import com.bgmagitapi.kml.my.dto.events.MyAcademyCancelEvent;
+import com.bgmagitapi.kml.review.dto.events.ReviewPostEvents;
 import com.bgmagitapi.service.response.ReservationTalkContext;
 
 import java.util.List;
 
 public interface BgmAgitBizTalkSandService {
-    ApiResponse sandBizTalk(BgmAgitMember member, BgmAgitImage image, List<BgmAgitReservation> list);
-    ApiResponse sendCancelBizTalk(ReservationTalkContext ctx);
-    ApiResponse sendCompleteBizTalk(ReservationTalkContext ctx);
-    ApiResponse sendJoinMemberBizTalk(BgmAgitMember member);
-    ApiResponse sendInquiry(InquiryEvent event);
-    ApiResponse sendInquiryComplete(InquiryEvent event);
+    void sandBizTalk(BgmAgitMember member, BgmAgitImage image, List<BgmAgitReservation> list);
+    void sendCancelBizTalk(ReservationTalkContext ctx);
+    void sendCompleteBizTalk(ReservationTalkContext ctx);
+    void sendJoinMemberBizTalk(BgmAgitMember member);
+    void sendInquiry(InquiryEvent event);
+    void sendInquiryComplete(InquiryEvent event);
     
     void sendLecturePost(LecturePostEvent e);
+    void sendLecturePostComplete(MyAcademyApprovalEvent event);
+    void sendLectureCancel1(MyAcademyCancelEvent event);
+    void sendLectureCancel2(MyAcademyCancelEvent event);
+    void sendReview(ReviewPostEvents e);
 }

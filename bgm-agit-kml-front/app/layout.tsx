@@ -1,21 +1,28 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type { Metadata } from 'next';
+import './globals.css';
 import ClientLayout from '@/app/ClientLayout';
 import StyledComponentsRegistry from '@/app/registry';
+import KakaoProvider from '@/app/components/KakaoProvider';
+
+declare global {
+  interface Window {
+    Kakao: any;
+  }
+}
 
 export const metadata: Metadata = {
-  title: "BGM 아지트 BML",
-  description: "BGM 아지트 BML 사이트",
+  title: 'BGM 아지트 BML',
+  description: 'BGM 아지트 BML 사이트',
   openGraph: {
-    title: "BGM 아지트 BML",
-    description: "BGM 아지트 BML 사이트",
-    url: "https://bgmagit.co.kr/record",
+    title: 'BGM 아지트 BML',
+    description: 'BGM 아지트 BML 사이트',
+    url: 'https://bgmagit.co.kr/record',
     images: [
       {
-        url: "https://bgmagit.co.kr/record/logo.png?v=20260122",
+        url: 'https://bgmagit.co.kr/record/logo.png?v=20260122',
         width: 1200,
         height: 630,
-        alt: "BGM 아지트 BML",
+        alt: 'BGM 아지트 BML',
       },
     ],
   },
@@ -28,9 +35,10 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
-      <StyledComponentsRegistry>
-       <ClientLayout>{children}</ClientLayout>
-      </StyledComponentsRegistry>
+        <StyledComponentsRegistry>
+          <ClientLayout>{children}</ClientLayout>
+        </StyledComponentsRegistry>
+        <KakaoProvider />
       </body>
     </html>
   );

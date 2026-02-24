@@ -9,6 +9,9 @@ import com.bgmagitapi.event.dto.MemberJoinedEvent;
 import com.bgmagitapi.event.dto.ReservationTalkEvent;
 import com.bgmagitapi.event.dto.ReservationWaitingEvent;
 import com.bgmagitapi.kml.lecture.dto.event.LecturePostEvent;
+import com.bgmagitapi.kml.my.dto.events.MyAcademyApprovalEvent;
+import com.bgmagitapi.kml.my.dto.events.MyAcademyCancelEvent;
+import com.bgmagitapi.kml.review.dto.events.ReviewPostEvents;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.service.BgmAgitBizTalkSandService;
 import lombok.RequiredArgsConstructor;
@@ -107,4 +110,42 @@ public class BizTalkEventListener {
             bgmAgitBizTalkSandService.sendLecturePost(e);
         }
     }
+    
+    @Async("bizTalkExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onMyAcademyApprovalEvent(MyAcademyApprovalEvent e) {
+        try {
+            bgmAgitBizTalkSandService.sendLecturePostComplete(e);
+        } catch (Exception ex) {
+            bgmAgitBizTalkSandService.sendLecturePostComplete(e);
+        }
+    }
+    
+    @Async("bizTalkExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onMyAcademyCancelEvent(MyAcademyCancelEvent e) {
+        try {
+            if (e.getIsAdmin()) {
+                bgmAgitBizTalkSandService.sendLectureCancel2(e);
+            } else {
+                bgmAgitBizTalkSandService.sendLectureCancel1(e);
+            }
+        } catch (Exception ex) {
+            if (e.getIsAdmin()) {
+                bgmAgitBizTalkSandService.sendLectureCancel2(e);
+            } else {
+                bgmAgitBizTalkSandService.sendLectureCancel1(e);
+            }
+        }
+    }
+    
+    @Async("bizTalkExecutor")
+      @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+      public void onReviewEvent(ReviewPostEvents e) {
+          try {
+              bgmAgitBizTalkSandService.sendReview(e);
+          } catch (Exception ex) {
+              bgmAgitBizTalkSandService.sendReview(e);
+          }
+      }
 }

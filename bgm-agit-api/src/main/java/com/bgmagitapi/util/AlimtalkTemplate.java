@@ -10,6 +10,8 @@ public interface AlimtalkTemplate {
     
     String BGMAGIT_RES_LECTURE =  "bgmagit-res-lecture"; // 사용자가 마작강의 신청했을때
     
+    String BGMAGIT_RES_LECTURE_COMPLETE = "bgmagit-res-lecture-complete";
+    
     String 	BGMAGIT_RES_LECTURE_CANCEL1 = "bgmagit-res-lecture-cancel1"; // 사용자가 마작강의 취소했을때
     
     String 	BGMAGIT_RES_LECTURE_CANCEL2 = "bgmagit-res-lecture-cancel2"; // 관리자가 마작강의 취소했을때

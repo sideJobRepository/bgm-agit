@@ -5,12 +5,11 @@ import com.bgmagitapi.advice.exception.ValidException;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.config.S3FileUtils;
 import com.bgmagitapi.config.UploadResult;
-import com.bgmagitapi.controller.response.BgmAgitFreeGetDetailResponse;
-import com.bgmagitapi.controller.response.BgmAgitFreeGetResponse;
 import com.bgmagitapi.entity.BgmAgitCommonFile;
-import com.bgmagitapi.entity.BgmAgitFree;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
+import com.bgmagitapi.entity.enumeration.BgmAgitSubject;
+import com.bgmagitapi.kml.review.dto.events.ReviewPostEvents;
 import com.bgmagitapi.kml.review.dto.request.ReviewPostRequest;
 import com.bgmagitapi.kml.review.dto.request.ReviewPutRequest;
 import com.bgmagitapi.kml.review.dto.response.ReviewGetDetailResponse;
@@ -18,12 +17,12 @@ import com.bgmagitapi.kml.review.dto.response.ReviewGetResponse;
 import com.bgmagitapi.kml.review.entity.Review;
 import com.bgmagitapi.kml.review.repository.ReviewRepository;
 import com.bgmagitapi.kml.review.service.ReviewService;
-import com.bgmagitapi.page.PageResponse;
 import com.bgmagitapi.repository.BgmAgitCommonCommentRepository;
 import com.bgmagitapi.repository.BgmAgitCommonFileRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -50,6 +49,8 @@ public class ReviewServiceImpl implements ReviewService {
     private final BgmAgitCommonCommentRepository commonCommentRepository;
     
     private final S3FileUtils s3FileUtils;
+    
+    private final ApplicationEventPublisher eventPublisher;
     
     @Override
     public Page<ReviewGetResponse> getReviews(Pageable pageable, String titleOrCont) {
@@ -123,6 +124,15 @@ public class ReviewServiceImpl implements ReviewService {
             commonFileRepository.save(commonFile);
         }
         
+        ReviewPostEvents events = ReviewPostEvents.builder()
+                .id(review.getId())
+                .title(request.getTitle())
+                .memberName(bgmAgitMember.getBgmAgitMemberName())
+                .date(review.getRegistDate())
+                .subject(BgmAgitSubject.REVIEW)
+                .build();
+        eventPublisher.publishEvent(events);
+        
         return new ApiResponse(200,true,"리뷰가 작성되었습니다.");
     }
     
@@ -189,7 +199,4 @@ public class ReviewServiceImpl implements ReviewService {
         
         return new ApiResponse(200,true,"삭제 되었습니다.");
     }
-    
-    
-    
 }

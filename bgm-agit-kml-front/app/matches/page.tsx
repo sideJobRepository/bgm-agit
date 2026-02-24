@@ -60,13 +60,17 @@ export default function Matches() {
         fetchLecture({
           year: value.getFullYear(),
           month: value.getMonth() + 1,
-          day: value.getDate(),
         });
+
+        setSelectedTime('');
+
         const result = await confirmDialog(
           '예약이 되었습니다. \n 예약 내역으로 이동하시겠습니까?',
           'success'
         );
         if (!result.isConfirmed) return;
+
+        router.push('/myPage');
       },
     });
   };
@@ -362,6 +366,7 @@ const StyledCalendar = styled(Calendar)`
 
   .date-available {
     font-weight: 700;
+    font-size: ${({ theme }) => theme.desktop.sizes.xs};
     color: ${({ theme }) => theme.colors.greenColor};
   }
 `;

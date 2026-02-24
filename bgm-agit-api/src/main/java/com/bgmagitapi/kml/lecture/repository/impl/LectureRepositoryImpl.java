@@ -2,6 +2,7 @@ package com.bgmagitapi.kml.lecture.repository.impl;
 
 import com.bgmagitapi.controller.response.QBgmAgitMyPageGetResponse;
 import com.bgmagitapi.entity.QBgmAgitMember;
+import com.bgmagitapi.kml.lecture.entity.Lecture;
 import com.bgmagitapi.kml.lecture.repository.query.LectureQueryRepository;
 import com.bgmagitapi.kml.my.dto.response.MyAcademyGetResponse;
 import com.bgmagitapi.kml.my.dto.response.QMyAcademyGetResponse;
@@ -92,8 +93,18 @@ public class LectureRepositoryImpl implements LectureQueryRepository {
                 .where(memberIdEq(memberId));
         return PageableExecutionUtils.getPage(result, pageable, countQuery::fetchOne);
     }
-        
-        private BooleanExpression memberIdEq(Long memberId) {
+    
+    @Override
+    public Lecture findByLectureDate(Long lectureId) {
+        return queryFactory
+                .select(lecture)
+                .from(lecture)
+                .join(lecture.lectureSlot, lectureSlot)
+                .where(lecture.id.eq(lectureId))
+                .fetchFirst();
+    }
+    
+    private BooleanExpression memberIdEq(Long memberId) {
             if (memberId == null) {
                 return null;
             }

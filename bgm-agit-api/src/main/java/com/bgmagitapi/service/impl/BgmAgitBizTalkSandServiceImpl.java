@@ -1,6 +1,5 @@
 package com.bgmagitapi.service.impl;
 
-import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.entity.BgmAgitBiztalkSendHistory;
 import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitMember;
@@ -9,6 +8,9 @@ import com.bgmagitapi.entity.enumeration.BgmAgitImageCategory;
 import com.bgmagitapi.entity.enumeration.BgmAgitSubject;
 import com.bgmagitapi.event.dto.InquiryEvent;
 import com.bgmagitapi.kml.lecture.dto.event.LecturePostEvent;
+import com.bgmagitapi.kml.my.dto.events.MyAcademyApprovalEvent;
+import com.bgmagitapi.kml.my.dto.events.MyAcademyCancelEvent;
+import com.bgmagitapi.kml.review.dto.events.ReviewPostEvents;
 import com.bgmagitapi.repository.BgmAgitBiztalkSendHistoryRepository;
 import com.bgmagitapi.repository.BgmAgitImageRepository;
 import com.bgmagitapi.service.BgmAgitBizTalkSandService;
@@ -25,7 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -54,8 +55,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     private final String bizTalkUrl = "https://www.biztalk-api.com";
     
     @Override
-    public ApiResponse sandBizTalk(BgmAgitMember member, BgmAgitImage image, List<BgmAgitReservation> list) {
-        validateList(list);
+    public void sandBizTalk(BgmAgitMember member, BgmAgitImage image, List<BgmAgitReservation> list) {
         
         BgmAgitReservation bgmAgitReservation = list.get(0);
         String formattedTimes = AlimtalkUtils.formatTimes(list);
@@ -85,18 +85,16 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         BgmAgitSubject subject = isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL;
         
         // 사용자에게 발송
-        sendTalk(message, template, member.getBgmAgitMemberPhoneNo(), subjectId, "알림톡 발송 완료", subject, buttonName,"https://bgmagit.co.kr");
+        sendTalk(message, template, member.getBgmAgitMemberPhoneNo(), subjectId, subject, buttonName, "https://bgmagit.co.kr");
         
         // 관리자에게 발송
-        sendTalk(ownerMessage, template, PHONE1, subjectId, "알림톡 발송 완료", subject, buttonName,"https://bgmagit.co.kr");
-        sendTalk(ownerMessage, template, PHONE2, subjectId, "알림톡 발송 완료", subject, buttonName,"https://bgmagit.co.kr");
+        sendTalk(ownerMessage, template, PHONE1, subjectId, subject, buttonName, "https://bgmagit.co.kr");
+        sendTalk(ownerMessage, template, PHONE2, subjectId, subject, buttonName, "https://bgmagit.co.kr");
         
-        return new ApiResponse(200, true, "성공");
     }
     
     @Override
-    public ApiResponse sendCancelBizTalk(ReservationTalkContext ctx) {
-        validateCtx(ctx);
+    public void sendCancelBizTalk(ReservationTalkContext ctx) {
         List<BgmAgitReservation> list = ctx.getReservations();
         BgmAgitImage bgmAgitImage = ctx.getReservations().get(0).getBgmAgitImage();
         boolean isRoom = bgmAgitImage.getBgmAgitImageCategory() == BgmAgitImageCategory.ROOM;
@@ -111,20 +109,18 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String template = isAdmin ? "bgmagit-reservation-cancel-2" : "bgmagit-res-cancel";
         Long subjectId = list.get(0).getBgmAgitReservationNo();
         
-        ApiResponse apiResponse = sendTalk(message, template, ctx.getPhone(), subjectId, "수정 되었습니다.", isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기","https://bgmagit.co.kr");
+        sendTalk(message, template, ctx.getPhone(), subjectId, isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기", "https://bgmagit.co.kr");
         
         if ("bgmagit-res-cancel".equals(template)) {
             String cancelMessage3 = AlimtalkUtils.reservationCancelMessage3(ctx.getMemberName(), date, times, ctx.getLabel(), bgmAgitReservationPeople, bgmAgitReservationRequest);
-            sendTalk(cancelMessage3, "bgmagit-res-cancel", PHONE1, subjectId, "수정 되었습니다.", isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기","https://bgmagit.co.kr");
-            sendTalk(cancelMessage3, "bgmagit-res-cancel", PHONE2, subjectId, "수정 되었습니다.", isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기","https://bgmagit.co.kr");
+            sendTalk(cancelMessage3, "bgmagit-res-cancel", PHONE1, subjectId, isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기", "https://bgmagit.co.kr");
+            sendTalk(cancelMessage3, "bgmagit-res-cancel", PHONE2, subjectId, isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기", "https://bgmagit.co.kr");
         }
-        return apiResponse;
         
     }
     
     @Override
-    public ApiResponse sendCompleteBizTalk(ReservationTalkContext ctx) {
-        validateCtx(ctx);
+    public void sendCompleteBizTalk(ReservationTalkContext ctx) {
         List<BgmAgitReservation> list = ctx.getReservations();
         BgmAgitImage bgmAgitImage = ctx.getReservations().get(0).getBgmAgitImage();
         boolean isRoom = bgmAgitImage.getBgmAgitImageCategory() == BgmAgitImageCategory.ROOM;
@@ -134,28 +130,28 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String people = String.valueOf(bgmAgitReservation.getBgmAgitReservationPeople());
         String request = bgmAgitReservation.getBgmAgitReservationRequest();
         String message1 = AlimtalkUtils.buildReservationCompleteMessage(ctx.getMemberName(), date, times, ctx.getLabel(), people, request);
-        String message2 = AlimtalkUtils.buildReservationCompleteMessage("관리자", date, times, ctx.getLabel(), people, request);
+        String message2 = AlimtalkUtils.buildReservationCompleteMessage(ctx.getMemberName(), date, times, ctx.getLabel(), people, request);
         String template = "bgmagit-res-complete";
         Long subjectId = list.get(0).getBgmAgitReservationNo();
         
-        sendTalk(message1, template, ctx.getPhone(), subjectId, "알림톡 발송 완료", isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기","https://bgmagit.co.kr");
-        sendTalk(message2, template, PHONE1, subjectId, "알림톡 발송 완료", isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기","https://bgmagit.co.kr");
-        return sendTalk(message2, template, PHONE2, subjectId, "알림톡 발송 완료", isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기","https://bgmagit.co.kr");
+        sendTalk(message1, template, ctx.getPhone(), subjectId, isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기", "https://bgmagit.co.kr");
+        sendTalk(message2, template, PHONE1, subjectId, isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기", "https://bgmagit.co.kr");
+        sendTalk(message2, template, PHONE2, subjectId, isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기", "https://bgmagit.co.kr");
     }
     
     @Override
-    public ApiResponse sendJoinMemberBizTalk(BgmAgitMember member) {
+    public void sendJoinMemberBizTalk(BgmAgitMember member) {
         String template = "bgmagit-member";
         String memberJoinDate = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(member.getRegistDate());
         String memberJoinTime = DateTimeFormatter.ofPattern("HH:mm").format(member.getRegistDate());
         String memberName = member.getBgmAgitMemberName();
         String message = AlimtalkUtils.memberJoinMessage(memberName, memberJoinDate, memberJoinTime);
-        sendTalk(message, template, PHONE1, null, "알림톡 발송 완료", BgmAgitSubject.SIGN_UP, "확인 하기","https://bgmagit.co.kr");
-        return sendTalk(message, template, PHONE2, null, "알림톡 발송 완료", BgmAgitSubject.SIGN_UP, "확인 하기","https://bgmagit.co.kr");
+        sendTalk(message, template, PHONE1, null, BgmAgitSubject.SIGN_UP, "확인 하기", "https://bgmagit.co.kr");
+        sendTalk(message, template, PHONE2, null, BgmAgitSubject.SIGN_UP, "확인 하기", "https://bgmagit.co.kr");
     }
     
     @Override
-    public ApiResponse sendInquiry(InquiryEvent event) {
+    public void sendInquiry(InquiryEvent event) {
         String template = "bgmagit-inquiry";
         Long id = event.getId();
         String memberName = event.getMemberName();
@@ -163,18 +159,18 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String inquiryDate = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(event.getRegistDate());
         String inquiryTime = DateTimeFormatter.ofPattern("HH:mm").format(event.getRegistDate());
         String message = AlimtalkUtils.oneToOneInquiry(memberName, title, inquiryDate, inquiryTime);
-        sendTalk(message, template, PHONE1, id, "알림톡 발송 완료", BgmAgitSubject.INQUIRY, "사이트 바로가기","https://bgmagit.co.kr");
-        return sendTalk(message, template, PHONE2, id, "알림톡 발송 완료", BgmAgitSubject.INQUIRY, "사이트 바로가기","https://bgmagit.co.kr");
+        sendTalk(message, template, PHONE1, id, BgmAgitSubject.INQUIRY, "사이트 바로가기", "https://bgmagit.co.kr");
+        sendTalk(message, template, PHONE2, id, BgmAgitSubject.INQUIRY, "사이트 바로가기", "https://bgmagit.co.kr");
     }
     
     @Override
-    public ApiResponse sendInquiryComplete(InquiryEvent event) {
+    public void sendInquiryComplete(InquiryEvent event) {
         String template = "bgmagit-inquiry-ans";
         Long id = event.getId();
         String memberName = event.getMemberName();
         String memberPhoneNo = event.getMemberPhoneNo();
         String message = AlimtalkUtils.oneToOneInquiryAns(memberName);
-        return sendTalk(message, template, memberPhoneNo, id, "알림톡 발송 완료", BgmAgitSubject.INQUIRY, "사이트 바로가기","https://bgmagit.co.kr");
+        sendTalk(message, template, memberPhoneNo, id, BgmAgitSubject.INQUIRY, "사이트 바로가기", "https://bgmagit.co.kr");
     }
     
     @Override
@@ -183,29 +179,81 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         Long id = event.getId();
         String memberName = event.getMemberName();
         String memberPhoneNo = event.getPhoneNo();
-        String date =DateTimeFormatter.ofPattern("yyyy-MM-dd").format(event.getDate());
+        String date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(event.getDate());
         String time = event.getTime();
-        String message = AlimtalkUtils.buildLectureMessage(memberName,date,time);
-        sendTalk(message, template, PHONE1, id, "알림톡 발송 완료", event.getSubject(), "사이트 바로가기","https://bgmagit.co.kr/record");
-        sendTalk(message, template, PHONE2, id, "알림톡 발송 완료", event.getSubject(), "사이트 바로가기","https://bgmagit.co.kr/record");
-        sendTalk(message, template, memberPhoneNo, id, "알림톡 발송 완료", event.getSubject(), "사이트 바로가기","https://bgmagit.co.kr/record");
+        String message = AlimtalkUtils.buildLectureMessage(memberName, date, time);
+        sendTalk(message, template, PHONE1, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+        sendTalk(message, template, PHONE2, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+        sendTalk(message, template, memberPhoneNo, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+    }
+    
+    @Override
+    public void sendLecturePostComplete(MyAcademyApprovalEvent event) {
+        String template = AlimtalkTemplate.BGMAGIT_RES_LECTURE_COMPLETE;
+        Long id = event.getId();
+        String memberName = event.getMemberName();
+        String memberPhoneNo = event.getPhoneNo();
+        String date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(event.getDate());
+        String time = event.getTime();
+        String message = AlimtalkUtils.buildLectureMessageComplete(memberName, date, time);
+        sendTalk(message, template, PHONE1, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+        sendTalk(message, template, PHONE2, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+        sendTalk(message, template, memberPhoneNo, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+    }
+    
+    @Override
+    public void sendLectureCancel1(MyAcademyCancelEvent event) {
+        String template = AlimtalkTemplate.BGMAGIT_RES_LECTURE_CANCEL1;
+        Long id = event.getId();
+        String memberName = event.getMemberName();
+        String memberPhoneNo = event.getPhoneNo();
+        String date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(event.getDate());
+        String time = event.getTime();
+        String message = AlimtalkUtils.buildLectureMessageCancel1(memberName, date, time);
+        sendTalk(message, template, PHONE1, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+        sendTalk(message, template, PHONE2, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+        sendTalk(message, template, memberPhoneNo, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+    }
+    
+    @Override
+    public void sendLectureCancel2(MyAcademyCancelEvent event) {
+        String template = AlimtalkTemplate.BGMAGIT_RES_LECTURE_CANCEL2;
+        Long id = event.getId();
+        String memberName = event.getMemberName();
+        String memberPhoneNo = event.getPhoneNo();
+        String date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(event.getDate());
+        String time = event.getTime();
+        String message = AlimtalkUtils.buildLectureMessageCancel2(memberName, date, time);
+        sendTalk(message, template, PHONE1, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+        sendTalk(message, template, PHONE2, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+        sendTalk(message, template, memberPhoneNo, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr/record");
+    }
+    
+    @Override
+    public void sendReview(ReviewPostEvents event) {
+        String template = AlimtalkTemplate.BGMAGIT_REVIEW;
+        Long id = event.getId();
+        String memberName = event.getMemberName();
+        String title = event.getTitle();
+        String date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(event.getDate());
+        String time = DateTimeFormatter.ofPattern("HH:mm").format(event.getDate());
+        String message = AlimtalkUtils.buildReviewMessage(memberName, title, date, time);
+        sendTalk(message, template, PHONE1, id, event.getSubject(), "리뷰 내역 확인 하기", "https://bgmagit.co.kr/record");
+        sendTalk(message, template, PHONE2, id, event.getSubject(), "리뷰 내역 확인 하기", "https://bgmagit.co.kr/record");
     }
     
     /**
      * 공통 전송 + 히스토리 저장
      */
-    private ApiResponse sendTalk(String message, String templateName, String rawPhone,
-                                 Long subjectId, String okMsg, BgmAgitSubject bgmAgitSubject, String buttonName,String url) {
+    private void sendTalk(String message, String templateName, String rawPhone, Long subjectId, BgmAgitSubject bgmAgitSubject, String buttonName, String url) {
         
         String phone = AlimtalkUtils.formatRecipientKr(rawPhone);
-        Attach attach = AlimtalkUtils.defaultAttach(buttonName,url);
+        Attach attach = AlimtalkUtils.defaultAttach(buttonName, url);
         
         RestClient rest = RestClient.create();
         BizTalkTokenResponse token = bgmAgitBizTalkService.getBizTalkToken();
         
-        Map<String, Object> req = AlimtalkUtils.buildSendRequest(
-                senderKey, phone, message, templateName, attach
-        );
+        Map<String, Object> req = AlimtalkUtils.buildSendRequest(senderKey, phone, message, templateName, attach);
         
         // 발송
         rest.post()
@@ -240,32 +288,6 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
                 ));
         
         String resultCode = codeByIdx.getOrDefault(msgIdx, "PENDING");
-        
-        BgmAgitBiztalkSendHistory history = new BgmAgitBiztalkSendHistory(
-                bgmAgitSubject, subjectId, message, msgIdx
-        );
-        history.settingResultCode(resultCode);
-        bgmAgitBiztalkSendHistoryRepository.save(history);
-        
-        return new ApiResponse(200, true, okMsg);
+        bgmAgitBiztalkSendHistoryRepository.save(new BgmAgitBiztalkSendHistory(bgmAgitSubject, subjectId, message, msgIdx, resultCode));
     }
-    
-    /**
-     * NPE/빈 리스트 방지
-     */
-    private void validateCtx(ReservationTalkContext ctx) {
-        if (ctx == null || ctx.getReservations() == null || ctx.getReservations().isEmpty()) {
-            throw new IllegalArgumentException("전송 대상이 없습니다.");
-        }
-    }
-    
-    /**
-     * 리스트 유효성 검사 (null 또는 empty 방지)
-     */
-    private void validateList(List<BgmAgitReservation> list) {
-        if (list == null || list.isEmpty()) {
-            throw new IllegalArgumentException("예약 데이터가 없습니다.");
-        }
-    }
-    
 }

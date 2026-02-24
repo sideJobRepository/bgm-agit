@@ -23,7 +23,7 @@ class LectureServiceImplTest extends RepositoryAndServiceTestSupport {
     @DisplayName("")
     @Test
     void test() {
-        LectureGetResponse lectureGetResponse = lectureService.getLectureGetResponse(2026, 2,22,null);
+        LectureGetResponse lectureGetResponse = lectureService.getLectureGetResponse(2026, 2,null);
         System.out.println("lectureGetResponse = " + lectureGetResponse);
     }
     
@@ -31,10 +31,10 @@ class LectureServiceImplTest extends RepositoryAndServiceTestSupport {
     @Test
     void test2() {
         
-        LocalDate localDate = LocalDate.of(2026, 2, 22);
+        LocalDate localDate = LocalDate.of(2026, 2, 28);
         LecturePostRequest request = new LecturePostRequest(localDate, "16:00~18:00");
         
-        List<Long> longs = List.of(1L);
+        List<Long> longs = List.of(11L);
         
         for (Long aLong : longs) {
             ApiResponse lecture = lectureService.createLecture(request, aLong);
