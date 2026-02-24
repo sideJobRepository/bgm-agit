@@ -39,90 +39,90 @@ public class LectureServiceImpl implements LectureService {
     
     @Override
     @Transactional(readOnly = true)
-    public LectureGetResponse getLectureGetResponse(int year, int month, int day, Long memberId) {
+    public LectureGetResponse getLectureGetResponse(int year, int month, Long memberId) {
         
         List<LectureGetResponse.TimeSlotByDate> result = new ArrayList<>();
-        
-        LocalDate today = LocalDate.now();
-        
-        LocalDate start = LocalDate.of(year, month, day);
-        LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
-        
-        // 로그인 사용자만: "내 예약 살아있으면 전부 비활성" 정책용
-        boolean hasMyActiveReservation = false;
-        if (memberId != null) {
-            hasMyActiveReservation = lectureRepository.existsMyActiveReservation(memberId, today);
-        }
-        
-        // 예약 존재 슬롯ID (대기 포함, 취소 제외)
-        Set<Long> reservedSlotIds = new HashSet<>(lectureRepository.findByReservedSlotIds(start, end));
-        
-        for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
-            
-            if (date.isBefore(today)) continue;
-            
-            DayOfWeek dayOfWeek = date.getDayOfWeek();
-            List<String> times = new ArrayList<>();
-            
-            if (dayOfWeek == DayOfWeek.SATURDAY) {
-                times.add("18:00~20:00");
-                times.add("20:00~22:00");
-            }
-            
-            if (dayOfWeek == DayOfWeek.SUNDAY) {
-                times.add("14:00~16:00");
-                times.add("16:00~18:00");
-                times.add("18:00~20:00");
-                times.add("20:00~22:00");
-            }
-            
-            if (times.isEmpty()) continue;
-            
-            // 1) 이 날짜에서 "예약된 슬롯 인덱스" 찾기 (대기 포함)
-            int reservedIdx = -1;
-            
-            for (int i = 0; i < times.size(); i++) {
-                String time = times.get(i);
-                
-                String[] split = time.split("~");
-                LocalTime startTime = LocalTime.parse(split[0].trim());
-                LocalTime endTime = LocalTime.parse(split[1].trim());
-                
-                LectureSlot slot = lectureSlotRepository.findByLectureTime(date, startTime, endTime);
-                
-                boolean hasReservation = (slot != null) && reservedSlotIds.contains(slot.getId());
-                
-                if (hasReservation) {
-                    reservedIdx = i;
-                    break; // 첫 예약 슬롯만
-                }
-            }
-            
-            // 2) enabled 세팅
-            List<LectureGetResponse.SlotItem> slotItems = new ArrayList<>();
-            
-            for (int i = 0; i < times.size(); i++) {
-                
-                boolean enabled;
-                
-                if (hasMyActiveReservation) {
-                    // 내가 취소 안 한 미래 예약이 있으면 전부 비활성
-                    enabled = false;
-                } else if (reservedIdx == -1) {
-                    // 예약 없음 -> 전부 가능
-                    enabled = true;
-                } else {
-                    // 예약 있음 -> 예약된 슬롯만 가능, 나머지 전부 비활성
-                    enabled = (i == reservedIdx);
-                }
-                
-                slotItems.add(new LectureGetResponse.SlotItem(times.get(i), enabled));
-            }
-            
-            result.add(new LectureGetResponse.TimeSlotByDate(date, slotItems));
-        }
-        
-        return new LectureGetResponse(result);
+     
+         LocalDate today = LocalDate.now();
+     
+         // 시작: 요청한 월 1일
+         LocalDate start = LocalDate.of(year, month, 1);
+     
+         // 끝: start 기준 3개월치의 마지막 날 (ex: 2월이면 2,3,4월 -> 4월 말일)
+         LocalDate end = start.plusMonths(2).withDayOfMonth(start.plusMonths(2).lengthOfMonth());
+     
+         // 로그인 사용자만: "내 예약 살아있으면 전부 비활성"
+         boolean hasMyActiveReservation = false;
+         if (memberId != null) {
+             hasMyActiveReservation = lectureRepository.existsMyActiveReservation(memberId, today);
+         }
+     
+         // 3개월 범위 내 예약 존재 슬롯ID (대기 포함, 취소 제외)
+         Set<Long> reservedSlotIds = new HashSet<>(lectureRepository.findByReservedSlotIds(start, end));
+     
+         for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
+     
+             if (date.isBefore(today)) continue;
+     
+             DayOfWeek dayOfWeek = date.getDayOfWeek();
+             List<String> times = new ArrayList<>();
+     
+             if (dayOfWeek == DayOfWeek.SATURDAY) {
+                 times.add("18:00~20:00");
+                 times.add("20:00~22:00");
+             }
+     
+             if (dayOfWeek == DayOfWeek.SUNDAY) {
+                 times.add("14:00~16:00");
+                 times.add("16:00~18:00");
+                 times.add("18:00~20:00");
+                 times.add("20:00~22:00");
+             }
+     
+             if (times.isEmpty()) continue;
+     
+             // 1) 이 날짜에서 "예약된 슬롯 인덱스" 찾기 (대기 포함)
+             int reservedIdx = -1;
+     
+             for (int i = 0; i < times.size(); i++) {
+                 String time = times.get(i);
+     
+                 String[] split = time.split("~");
+                 LocalTime startTime = LocalTime.parse(split[0].trim());
+                 LocalTime endTime = LocalTime.parse(split[1].trim());
+     
+                 LectureSlot slot = lectureSlotRepository.findByLectureTime(date, startTime, endTime);
+     
+                 boolean hasReservation = (slot != null) && reservedSlotIds.contains(slot.getId());
+     
+                 if (hasReservation) {
+                     reservedIdx = i;
+                     break; // 첫 예약 슬롯만
+                 }
+             }
+     
+             // 2) enabled 세팅
+             List<LectureGetResponse.SlotItem> slotItems = new ArrayList<>();
+     
+             for (int i = 0; i < times.size(); i++) {
+     
+                 boolean enabled;
+     
+                 if (hasMyActiveReservation) {
+                     enabled = false;
+                 } else if (reservedIdx == -1) {
+                     enabled = true;
+                 } else {
+                     enabled = (i == reservedIdx);
+                 }
+     
+                 slotItems.add(new LectureGetResponse.SlotItem(times.get(i), enabled));
+             }
+     
+             result.add(new LectureGetResponse.TimeSlotByDate(date, slotItems));
+         }
+     
+         return new LectureGetResponse(result);
     }
     
     @Override

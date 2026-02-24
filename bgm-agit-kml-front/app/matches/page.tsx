@@ -60,7 +60,6 @@ export default function Matches() {
         fetchLecture({
           year: value.getFullYear(),
           month: value.getMonth() + 1,
-          day: value.getDate(),
         });
         const result = await confirmDialog(
           '예약이 되었습니다. \n 예약 내역으로 이동하시겠습니까?',
