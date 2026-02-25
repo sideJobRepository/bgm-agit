@@ -39,14 +39,15 @@ public class LectureServiceImpl implements LectureService {
     
     @Override
     @Transactional(readOnly = true)
-    public LectureGetResponse getLectureGetResponse(int year, int month, Long memberId) {
+    public LectureGetResponse getLectureGetResponse(Long memberId) {
         
         List<LectureGetResponse.TimeSlotByDate> result = new ArrayList<>();
      
          LocalDate today = LocalDate.now();
      
          // 시작: 요청한 월 1일
-         LocalDate start = LocalDate.of(year, month, 1);
+        LocalDate now = LocalDate.now();
+        LocalDate start = now.withDayOfMonth(1);
      
          // 끝: start 기준 3개월치의 마지막 날 (ex: 2월이면 2,3,4월 -> 4월 말일)
          LocalDate end = start.plusMonths(2).withDayOfMonth(start.plusMonths(2).lengthOfMonth());
