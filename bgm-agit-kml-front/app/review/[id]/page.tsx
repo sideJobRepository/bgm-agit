@@ -388,16 +388,16 @@ export default function ReviewDetail({ params }: { params: Promise<{ id: string 
               {writeReplyMdoe && (
                 <div className="textarea-box">
                   <div className="reply-button-box">
-                    <Button color="#1A7D55" onClick={() => handleReplySubmit(null, true)}>
-                      저장
+                    <Button color="#4A90E2" onClick={() => handleReplySubmit(null, true)}>
+                      <Check weight="bold" />
                     </Button>
                     <Button
                       onClick={() => {
                         setWriteReplyMode(false);
                       }}
-                      color="#FF5E57"
+                      color="#D9625E"
                     >
-                      취소
+                      <ArrowLeft weight="bold" />
                     </Button>
                   </div>
                   <TextArea
@@ -784,11 +784,16 @@ const ReplyBox = styled.div`
   gap: 16px;
   padding: 10px;
 
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+
   .textarea-box {
     display: flex;
     padding: 10px 0;
     flex-direction: column;
-    gap: 4px;
+    gap: 12px;
     justify-content: right;
     border-bottom: 1px solid ${({ theme }) => theme.colors.border};
 
@@ -801,12 +806,6 @@ const ReplyBox = styled.div`
     display: flex;
     margin-top: 6px;
     gap: 4px;
-
-    button {
-      font-family: 'Jua', sans-serif;
-      font-size: ${({ theme }) => theme.desktop.sizes.xs};
-      padding: 4px 6px;
-    }
   }
 
   .reply-header-box {
@@ -828,11 +827,11 @@ const ReplyBox = styled.div`
       }
 
       span {
-        font-size: ${({ theme }) => theme.desktop.sizes.md};
+        font-size: ${({ theme }) => theme.desktop.sizes.xl};
         color: ${({ theme }) => theme.colors.inputColor};
 
         @media ${({ theme }) => theme.device.mobile} {
-          font-size: ${({ theme }) => theme.mobile.sizes.md};
+          font-size: ${({ theme }) => theme.mobile.sizes.xl};
         }
       }
     }
@@ -877,12 +876,13 @@ const TextArea = styled.textarea`
   width: 100%;
   padding: 8px;
   resize: none;
-  font-size: ${({ theme }) => theme.desktop.sizes.xs};
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  font-size: ${({ theme }) => theme.desktop.sizes.sm};
+  color: ${({ theme }) => theme.colors.inputColor};
+  border: 1px solid ${({ theme }) => theme.colors.grayColor};
   border-radius: 6px;
   margin-bottom: 20px;
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.colors.noticeColor};
+    border-color: ${({ theme }) => theme.colors.inputColor};
   }
 `;
