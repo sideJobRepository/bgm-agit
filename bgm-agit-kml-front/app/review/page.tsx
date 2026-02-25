@@ -4,13 +4,12 @@ import { motion } from 'framer-motion';
 import styled, { keyframes } from 'styled-components';
 import { withBasePath } from '@/lib/path';
 import { useEffect, useMemo, useState } from 'react';
-import { useNoticeDetailStore } from '@/store/notice';
 import { BaseColumn, BaseTable } from '@/app/components/BaseTable';
 import { useRouter } from 'next/navigation';
 import { useLoadingStore } from '@/store/loading';
 import BaseTableSkeleton from '@/app/components/BaseTableSkeleton';
 import { useFetchReviewList } from '@/services/review.service';
-import { ReviewItem, useReviewListStore } from '@/store/review';
+import { ReviewItem, useReviewDetailStore, useReviewListStore } from '@/store/review';
 import { Chats } from 'phosphor-react';
 
 export default function Review() {
@@ -18,7 +17,7 @@ export default function Review() {
   const fetchReview = useFetchReviewList();
   const reviewList = useReviewListStore((state) => state.review);
   console.log('reviewList', reviewList);
-  const clearDetail = useNoticeDetailStore((state) => state.clearDetail);
+  const clearDetail = useReviewDetailStore((state) => state.clearDetail);
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);
@@ -98,9 +97,9 @@ export default function Review() {
             showWriteButton
             onWriteClick={() => {
               clearDetail();
-              router.push(`/notice/new`);
+              router.push(`/review/new`);
             }}
-            onRowClick={(row) => router.push(`/notice/${row.id}`)}
+            onRowClick={(row) => router.push(`/review/${row.id}`)}
             searchKeyword={searchKeyword}
             onSearchKeywordChange={setSearchKeyword}
             onSearch={() => {

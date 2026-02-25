@@ -108,7 +108,7 @@ public class BgmAgitFreeRepositoryImpl implements BgmAgitFreeCustomRepository {
                         bgmAgitCommonFile.bgmAgitCommonFileUrl
                 ))
                 .from(bgmAgitCommonFile)
-                .where(bgmAgitCommonFile.bgmAgitCommonFileTargetId.eq(id),bgmAgitCommonComment.bgmAgitCommonType.eq(BgmAgitCommonType.FREE))
+                .where(bgmAgitCommonFile.bgmAgitCommonFileTargetId.eq(id),bgmAgitCommonFile.bgmAgitCommonFileType.eq(BgmAgitCommonType.FREE))
                 .fetch();
         result
                 .forEach(item -> {

@@ -114,6 +114,7 @@ public class ReviewRepositoryImpl implements ReviewQueryRepository {
                 .forEach(item -> {
                     String extension = FilenameUtils.getExtension(item.getFileName());
                     item.setUuidName(item.getUuidName() + "." + extension);
+                    item.setFileFolder("review");
                 });
         return result;
     }
