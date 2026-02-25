@@ -3,12 +3,21 @@
 import { useUserStore } from '@/store/user';
 import { useNoticeDownloadFetch } from '@/services/notice.service';
 import { use, useEffect, useRef, useState } from 'react';
-import { NoticeFiles, useNoticeDetailStore } from '@/store/notice';
+import { NoticeFiles } from '@/store/notice';
 import dynamic from 'next/dynamic';
 import styled, { keyframes } from 'styled-components';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, TrashSimple, FileText, Check, FilePlus, DownloadSimple } from 'phosphor-react';
+import {
+  Chats,
+  ArrowLeft,
+  TrashSimple,
+  FileText,
+  Check,
+  FilePlus,
+  DownloadSimple,
+  PencilSimpleLine,
+} from 'phosphor-react';
 import { useDeletePost, useInsertPost, useUpdatePost } from '@/services/main.service';
 import { alertDialog, confirmDialog } from '@/utils/alert';
 import { useLoadingStore } from '@/store/loading';
@@ -61,6 +70,49 @@ export default function ReviewDetail({ params }: { params: Promise<{ id: string 
 
   const [files, setFiles] = useState<File[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<ExistingFile[]>([]);
+
+  //댓글
+  const [writeReplyMdoe, setWriteReplyMode] = useState(false);
+  const [replyToId, setReplyToId] = useState<number | null>(null);
+  const [editCommentId, setEditCommentId] = useState<number | null>(null);
+
+  //댓글 입력 모드
+  const [writeConent, setWriteConent] = useState('');
+
+  //댓글 저장
+  const handleReplySubmit = async (commentId: number | null, mode: boolean) => {
+    //로그인 체크
+
+    let requestFn = insert;
+    const param = {
+      cont: writeConent,
+      reviewerId: detailReview?.id,
+      memberId: user?.id,
+      commentId: commentId,
+    };
+
+    if (!mode) {
+      requestFn = update;
+    }
+
+    const result = await confirmDialog('댓글을 저장 하시겠습니까?', 'warning');
+
+    if (result.isConfirmed) {
+      requestFn({
+        url: '/bgm-agit/review-comment',
+        body: param,
+        ignoreErrorRedirect: true,
+        onSuccess: async () => {
+          await alertDialog('댓글이 작성되었습니다.', 'success');
+          setWriteReplyMode(false);
+          setReplyToId(null);
+          setWriteConent('');
+          setEditCommentId(null);
+          if (id) fetchDetailReview(id);
+        },
+      });
+    }
+  };
 
   function fileDownload(file: NoticeFiles) {
     fetchFileDownload(file);
@@ -134,7 +186,7 @@ export default function ReviewDetail({ params }: { params: Promise<{ id: string 
 
     if (result.isConfirmed) {
       remove({
-        url: `/bgm-agit/kml-notice/${deleteId}`,
+        url: `/bgm-agit/review/${deleteId}`,
         ignoreErrorRedirect: true,
         onSuccess: async () => {
           await alertDialog('후기가 삭제되었습니다.', 'success');
@@ -315,6 +367,47 @@ export default function ReviewDetail({ params }: { params: Promise<{ id: string 
                 __html: convertOembedToIframe(String(detailReview?.cont)),
               }}
             />
+            <ReplyBox>
+              <div className="reply-header-box">
+                <h4>
+                  <Chats weight="bold" /> 댓글 <span>{detailReview?.comments?.length}</span>
+                </h4>
+                {!writeReplyMdoe && (
+                  <Button
+                    color="#4A90E2"
+                    onClick={() => {
+                      setWriteReplyMode(true);
+                      setReplyToId(null);
+                      setEditCommentId(null);
+                    }}
+                  >
+                    <PencilSimpleLine weight="bold" />
+                  </Button>
+                )}
+              </div>
+              {writeReplyMdoe && (
+                <div className="textarea-box">
+                  <div className="reply-button-box">
+                    <Button color="#1A7D55" onClick={() => handleReplySubmit(null, true)}>
+                      저장
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setWriteReplyMode(false);
+                      }}
+                      color="#FF5E57"
+                    >
+                      취소
+                    </Button>
+                  </div>
+                  <TextArea
+                    value={writeConent}
+                    onChange={(e) => setWriteConent(e.target.value)}
+                    placeholder="댓글을 입력해주세요."
+                  />
+                </div>
+              )}
+            </ReplyBox>
           </>
         )
       ) : (
@@ -682,4 +775,114 @@ const SkeletonBox = styled.div`
   background-size: 200% 100%;
   animation: ${shimmer} 1.5s infinite;
   border-radius: 4px;
+`;
+
+const ReplyBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 16px;
+  padding: 10px;
+
+  .textarea-box {
+    display: flex;
+    padding: 10px 0;
+    flex-direction: column;
+    gap: 4px;
+    justify-content: right;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+
+    .reply-button-box {
+      justify-content: right;
+    }
+  }
+
+  .reply-button-box {
+    display: flex;
+    margin-top: 6px;
+    gap: 4px;
+
+    button {
+      font-family: 'Jua', sans-serif;
+      font-size: ${({ theme }) => theme.desktop.sizes.xs};
+      padding: 4px 6px;
+    }
+  }
+
+  .reply-header-box {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+    font-family: 'Jua', sans-serif;
+
+    h4 {
+      display: flex;
+      font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
+      color: ${({ theme }) => theme.colors.inputColor};
+      gap: 6px;
+      align-items: center;
+
+      @media ${({ theme }) => theme.device.mobile} {
+        font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
+      }
+
+      span {
+        font-size: ${({ theme }) => theme.desktop.sizes.md};
+        color: ${({ theme }) => theme.colors.inputColor};
+
+        @media ${({ theme }) => theme.device.mobile} {
+          font-size: ${({ theme }) => theme.mobile.sizes.md};
+        }
+      }
+    }
+  }
+
+  .reply-box {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 10px;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+  }
+
+  .reply-children-box {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .reply-top {
+    font-size: ${({ theme }) => theme.desktop.sizes.xs};
+    color: ${({ theme }) => theme.colors.navColor};
+    margin-bottom: 12px;
+
+    strong {
+      font-family: 'Jua', sans-serif;
+      color: ${({ theme }) => theme.colors.text};
+      font-size: ${({ theme }) => theme.desktop.sizes.md};
+      margin-right: 8px;
+    }
+  }
+  .reply-center {
+    color: ${({ theme }) => theme.colors.subColor};
+    font-size: ${({ theme }) => theme.desktop.sizes.xs};
+
+    button {
+      color: ${({ theme }) => theme.colors.bronzeColor};
+    }
+  }
+`;
+
+const TextArea = styled.textarea`
+  width: 100%;
+  padding: 8px;
+  resize: none;
+  font-size: ${({ theme }) => theme.desktop.sizes.xs};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 6px;
+  margin-bottom: 20px;
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.noticeColor};
+  }
 `;
