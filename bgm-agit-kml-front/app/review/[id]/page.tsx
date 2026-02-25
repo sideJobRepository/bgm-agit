@@ -78,6 +78,7 @@ export default function ReviewDetail({ params }: { params: Promise<{ id: string 
 
   //댓글 입력 모드
   const [writeConent, setWriteConent] = useState('');
+  const replyInputRef = useRef<HTMLTextAreaElement | null>(null);
 
   //댓글 저장
   const handleReplySubmit = async (commentId: number | null, mode: boolean) => {
@@ -113,6 +114,21 @@ export default function ReviewDetail({ params }: { params: Promise<{ id: string 
       });
     }
   };
+
+  async function deleteReplyData(deleteId: number) {
+    const result = await confirmDialog('댓글을 삭제 하시겠습니까?', 'warning');
+
+    if (result.isConfirmed) {
+      remove({
+        url: `/bgm-agit/review-comment/${deleteId}`,
+        ignoreErrorRedirect: true,
+        onSuccess: async () => {
+          await alertDialog('댓글이 삭제되었습니다.', 'success');
+          if (id) fetchDetailReview(id);
+        },
+      });
+    }
+  }
 
   function fileDownload(file: NoticeFiles) {
     fetchFileDownload(file);
@@ -372,7 +388,7 @@ export default function ReviewDetail({ params }: { params: Promise<{ id: string 
                 <h4>
                   <Chats weight="bold" /> 댓글 <span>{detailReview?.comments?.length}</span>
                 </h4>
-                {!writeReplyMdoe && (
+                {user?.roles.includes('ROLE_ADMIN') && !writeReplyMdoe && (
                   <Button
                     color="#4A90E2"
                     onClick={() => {
@@ -407,6 +423,93 @@ export default function ReviewDetail({ params }: { params: Promise<{ id: string 
                   />
                 </div>
               )}
+              {detailReview?.comments?.map((item) => (
+                <div className="reply-box" key={item.commentId}>
+                  <div className="reply-top">
+                    <span>
+                      <strong>{item.nickname}</strong> {item.registDate}
+                      {(item.isAuthor || user?.roles.includes('ROLE_ADMIN')) &&
+                        item.delStatus === 'N' && (
+                          <div className="reply-button-box">
+                            {editCommentId === item.commentId ? (
+                              <>
+                                <Button
+                                  color="#4A90E2"
+                                  onClick={() => handleReplySubmit(item.commentId, false)}
+                                >
+                                  <Check weight="bold" />
+                                </Button>
+                                <Button
+                                  color="#D9625E"
+                                  onClick={() => {
+                                    setEditCommentId(null);
+                                    setWriteConent('');
+                                  }}
+                                >
+                                  <ArrowLeft weight="bold" />
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button
+                                  color="#415B9C"
+                                  onClick={() => {
+                                    setEditCommentId(item.commentId);
+                                    setWriteConent(item.cont);
+                                    setWriteReplyMode(false);
+                                    setReplyToId(null);
+                                  }}
+                                >
+                                  <FileText weight="bold" />
+                                </Button>
+                                <Button
+                                  color="#D9625E"
+                                  onClick={() => deleteReplyData(item.commentId)}
+                                >
+                                  <TrashSimple weight="bold" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                    </span>
+                  </div>
+                  <div className="reply-center">
+                    {editCommentId === item.commentId ? (
+                      <div className="textarea-box">
+                        <TextArea
+                          value={writeConent}
+                          onChange={(e) => setWriteConent(e.target.value)}
+                          placeholder="댓글을 수정해주세요."
+                        />
+                      </div>
+                    ) : (
+                      <div className="reply-center">{item.cont}</div>
+                    )}
+                  </div>
+                  {replyToId === item.commentId && (
+                    <div className="textarea-box">
+                      <div className="reply-button-box">
+                        <Button
+                          color="#1A7D55"
+                          onClick={() => handleReplySubmit(item.commentId, true)}
+                        >
+                          저장
+                        </Button>
+                        <Button color="#FF5E57" onClick={() => setReplyToId(null)}>
+                          취소
+                        </Button>
+                      </div>
+                      <TextArea
+                        ref={replyInputRef}
+                        value={writeConent}
+                        onChange={(e) => setWriteConent(e.target.value)}
+                        placeholder="답글을 입력해주세요."
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
             </ReplyBox>
           </>
         )
@@ -796,16 +899,13 @@ const ReplyBox = styled.div`
     gap: 12px;
     justify-content: right;
     border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-
-    .reply-button-box {
-      justify-content: right;
-    }
   }
 
   .reply-button-box {
     display: flex;
     margin-top: 6px;
     gap: 4px;
+    justify-content: right;
   }
 
   .reply-header-box {
@@ -851,20 +951,31 @@ const ReplyBox = styled.div`
   }
 
   .reply-top {
-    font-size: ${({ theme }) => theme.desktop.sizes.xs};
+    font-size: ${({ theme }) => theme.desktop.sizes.md};
     color: ${({ theme }) => theme.colors.navColor};
     margin-bottom: 12px;
+
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: ${({ theme }) => theme.mobile.sizes.md};
+    }
 
     strong {
       font-family: 'Jua', sans-serif;
       color: ${({ theme }) => theme.colors.text};
-      font-size: ${({ theme }) => theme.desktop.sizes.md};
+      font-size: ${({ theme }) => theme.desktop.sizes.xl};
       margin-right: 8px;
+
+      @media ${({ theme }) => theme.device.mobile} {
+        font-size: ${({ theme }) => theme.mobile.sizes.xl};
+      }
     }
   }
   .reply-center {
     color: ${({ theme }) => theme.colors.subColor};
-    font-size: ${({ theme }) => theme.desktop.sizes.xs};
+    font-size: ${({ theme }) => theme.desktop.sizes.xl};
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: ${({ theme }) => theme.mobile.sizes.xl};
+    }
 
     button {
       color: ${({ theme }) => theme.colors.bronzeColor};

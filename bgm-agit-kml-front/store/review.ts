@@ -31,7 +31,7 @@ export const useReviewListStore = create<ReviewStore>((set) => ({
 }));
 
 export interface ReviewComment {
-  commentId: string;
+  commentId: number;
   cont: string;
   delStatus: string;
   depth: number;
