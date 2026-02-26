@@ -33,6 +33,9 @@ public class BgmAgitMainMenu extends DateSuperClass {
     @Column(name = "BGM_AGIT_MENU_LINK")
     private String bgmAgitMenuLink;
     
+    @Column(name = "BGM_AGIT_USE_STATUS")
+    private Boolean bgmAgitUseStatus;
+    
     
     public Long getParentMenuId() {
         return parentMenu != null ? parentMenu.getBgmAgitMainMenuId() : null;
