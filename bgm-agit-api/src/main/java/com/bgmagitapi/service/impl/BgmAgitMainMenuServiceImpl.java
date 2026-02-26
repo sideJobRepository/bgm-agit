@@ -51,7 +51,7 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
         List<Long> menuIds = bgmAgitMenuRoleRepository.findMenuIdByRoleNames(expandedRoleNames);
         
         // 4. 전체 메뉴 조회 (권한 있는 메뉴만 필터링할 경우 이 시점에 filter 가능)
-        List<BgmAgitMainMenu> allMenus = bgmAgitMainMenuRepository.findAll();
+        List<BgmAgitMainMenu> allMenus = bgmAgitMainMenuRepository.findByBgmAgitUseStatusTrue();
         
         // 5. Response 변환 + Map 구성
         Map<Long, BgmAgitMainMenuResponse> responseMap = new HashMap<>();
