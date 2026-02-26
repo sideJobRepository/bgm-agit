@@ -21,11 +21,9 @@ public class LectureController {
     private final LectureService lectureService;
     
     @GetMapping("/lecture")
-    public LectureGetResponse getLecture(@RequestParam Integer year
-            , @RequestParam Integer month
-            , @AuthenticationPrincipal Jwt jwt) {
+    public LectureGetResponse getLecture(@AuthenticationPrincipal Jwt jwt) {
         Long memberId = JwtParserUtil.extractMemberId(jwt);
-        return lectureService.getLectureGetResponse(year, month, memberId);
+        return lectureService.getLectureGetResponse( memberId);
     }
     
     @PostMapping("/lecture")

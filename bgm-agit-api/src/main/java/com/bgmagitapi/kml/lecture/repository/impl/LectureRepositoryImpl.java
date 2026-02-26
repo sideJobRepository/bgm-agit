@@ -63,6 +63,7 @@ public class LectureRepositoryImpl implements LectureQueryRepository {
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .where(memberIdEq(memberId))
+                .orderBy(lecture.registDate.desc())
                 .fetch();
         
         List<MyAcademyGetResponse> result = queryFactory
@@ -85,6 +86,7 @@ public class LectureRepositoryImpl implements LectureQueryRepository {
                 .join(lecture.lectureSlot, lectureSlot)
                 .join(lecture.member, bgmAgitMember)
                 .where(lecture.id.in(longList))
+                .orderBy(lecture.registDate.desc())
                 .fetch();
         
         JPAQuery<Long> countQuery = queryFactory

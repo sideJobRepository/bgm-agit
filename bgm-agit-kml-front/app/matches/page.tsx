@@ -57,10 +57,7 @@ export default function Matches() {
       },
       ignoreErrorRedirect: true,
       onSuccess: async () => {
-        fetchLecture({
-          year: value.getFullYear(),
-          month: value.getMonth() + 1,
-        });
+        fetchLecture({});
 
         setSelectedTime('');
 

@@ -6,7 +6,7 @@ import com.bgmagitapi.kml.lecture.dto.response.LectureGetResponse;
 
 public interface LectureService {
 
-    LectureGetResponse getLectureGetResponse(int year,int month,Long memberId);
+    LectureGetResponse getLectureGetResponse(Long memberId);
     ApiResponse createLecture(LecturePostRequest lecturePostRequest,Long memberId);
     
 }

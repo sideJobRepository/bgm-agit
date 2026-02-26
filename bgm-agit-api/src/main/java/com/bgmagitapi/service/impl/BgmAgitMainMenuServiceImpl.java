@@ -89,6 +89,7 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
         
         return roots.stream()
                 .filter(root -> root.getSubMenus() != null && !root.getSubMenus().isEmpty())
+                .sorted(Comparator.comparing(BgmAgitMainMenuResponse::getBgmAgitAreaId))
                 .map(root -> {
                     BgmAgitMainMenuResponse copy = new BgmAgitMainMenuResponse();
                     copy.setBgmAgitMainMenuId(root.getBgmAgitMainMenuId());
@@ -97,8 +98,8 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
                     copy.setBgmAgitAreaId(root.getBgmAgitAreaId());
                     copy.setLink(root.getLink());
                     
-                    // 하위 메뉴 복사
                     List<BgmAgitMainMenuResponse> copiedChildren = root.getSubMenus().stream()
+                            .sorted(Comparator.comparing(BgmAgitMainMenuResponse::getBgmAgitAreaId))
                             .map(child -> {
                                 BgmAgitMainMenuResponse childCopy = new BgmAgitMainMenuResponse();
                                 childCopy.setBgmAgitMainMenuId(child.getBgmAgitMainMenuId());
@@ -109,7 +110,7 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
                                 return childCopy;
                             })
                             .toList();
-                    
+        
                     copy.setSubMenu(copiedChildren);
                     return copy;
                 })
