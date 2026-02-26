@@ -18,7 +18,7 @@ public class BgmAgitMenuRoleRepositoryImpl implements BgmAgitMenuRoleCustomRepos
     @Override
     public List<Long> findMenuIdByRoleNames(List<String> roles) {
         return queryFactory
-                .select(bgmAgitMenuRole.bgmAgitMenuRoleId)
+                .select(bgmAgitMenuRole.bgmAgitMainMenu.bgmAgitMainMenuId)
                 .from(bgmAgitMenuRole)
                 .join(bgmAgitMenuRole.bgmAgitRole , bgmAgitRole)
                 .where(bgmAgitRole.bgmAgitRoleName.in(roles))
