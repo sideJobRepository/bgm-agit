@@ -235,7 +235,7 @@ public class AlimtalkUtils {
                 .append("[입금 계좌 안내]\n")
                 .append("카카오뱅크: 79795151308\n")
                 .append("예금주 : 박범후\n\n")
-                .append("자세한 예약내역은 BGM 마작 기록사이트 홈페이지 로그인 후 아카데미 예약내역에서 확인하실 수 있습니다.")
+                .append("자세한 예약내역은 BGM 아지트 홈페이지 사이트 에서 로그인 후 마이페이지 > 마작 아카데미 예약내역에서 확인하실 수 있습니다.")
                 .toString();
     }
     
@@ -254,8 +254,8 @@ public class AlimtalkUtils {
                 .append("예약 일자: ").append(date).append("\n")
                 .append("예약 시간: ").append(times).append("\n")
                 .append("예약 상태: 예약 완료\n")
-                .append("취소는 3일전까지 가능하며, 당일 취소나 노쇼시 예약금은 환불되지 않습니다.\n")
-                .append("자세한 예약내역은 BGM 마작 기록사이트 홈페이지 로그인 후 아카데미 예약내역에서 확인하실 수 있습니다.")
+                .append("취소는 3일전까지 가능하며, 당일 취소나 노쇼시 예약금은 환불되지 않습니다.\n\n")
+                .append("자세한 예약내역은 BGM 아지트 홈페이지 사이트 에서 로그인 후 마이페이지 > 마작 아카데미 예약내역에서 확인하실 수 있습니다.")
                 .toString();
     }
     
@@ -267,7 +267,7 @@ public class AlimtalkUtils {
                 .append("예약 일자: ").append(date).append("\n")
                 .append("예약 시간: ").append(times).append("\n")
                 .append("예약 상태: 예약 취소\n\n")
-                .append("자세한 예약내역은 BGM 마작 기록사이트 홈페이지 로그인 후 아카데미 예약내역에서 확인하실 수 있습니다.")
+                .append("자세한 예약내역은 BGM 아지트 홈페이지 사이트 에서 로그인 후 마이페이지 > 마작 아카데미 예약내역에서 확인하실 수 있습니다.")
                 .toString();
     }
     
@@ -279,7 +279,7 @@ public class AlimtalkUtils {
                 .append("예약 일자: ").append(date).append("\n")
                 .append("예약 시간: ").append(times).append("\n")
                 .append("예약 상태: 예약 취소\n\n")
-                .append("자세한 예약내역은 BGM 마작 기록사이트 홈페이지 로그인 후 아카데미 예약내역에서 확인하실 수 있습니다.")
+                .append("자세한 예약내역은 BGM 아지트 홈페이지 사이트 에서 로그인 후 마이페이지 > 마작 아카데미 예약내역에서 확인하실 수 있습니다.")
                 .toString();
     }
     
