@@ -230,8 +230,8 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String message = AlimtalkUtils.buildLectureMessageCancel2(memberName, date, time);
         String message2 = AlimtalkUtils.buildLectureMessageCancel2Admin(memberName, date, time);
         sendTalk(message, template, memberPhoneNo, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr");
-        sendTalk(message, template, PHONE1, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr");
-        sendTalk(message, template, PHONE2, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr");
+        sendTalk(message2, template, PHONE1, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr");
+        sendTalk(message2, template, PHONE2, id, event.getSubject(), "예약 내역 확인 하기", "https://bgmagit.co.kr");
         
     }
     
