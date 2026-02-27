@@ -239,6 +239,9 @@ export default function ReservationCalendar({ id }: { id?: number }) {
 
       <StyledCalendar
         value={value}
+        locale="ko-KR"
+        calendarType="gregory"
+        formatShortWeekday={(_, date) => ['일', '월', '화', '수', '목', '금', '토'][date.getDay()]}
         className="custom-calender"
         onChange={val => {
           setValue(val as Date);
