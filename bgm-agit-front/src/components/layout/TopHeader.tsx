@@ -26,6 +26,8 @@ export default function TopHeader() {
 
   const menus = useRecoilValue(mainMenuState);
 
+  console.log('menus', menus);
+
   const navigate = useNavigate();
 
   const location = useLocation();
@@ -54,13 +56,13 @@ export default function TopHeader() {
   //메뉴 이동 이벤트
   function subMoveEnvent(item: SubMenu) {
     //오픈 채팅방 링크로 이동
-    if ([9, 17, 19, 23].includes(item.bgmAgitMainMenuId)) {
+    if ([9, 17, 19].includes(item.bgmAgitMainMenuId)) {
       window.open(item.link, '_blank');
-
     } else if ([20].includes(item.bgmAgitMainMenuId)) {
       //내정보 팝업
       setIsMyPageModalOpen(true);
     } else {
+      console.log('탔나보자');
       navigate(item.link);
     }
   }
@@ -174,14 +176,14 @@ export default function TopHeader() {
       </Center>
       <Right>
         <ul>
-          <li
-            onClick={() => {
-              callClick();
-            }}
-          >
-            <PhoneIcon />
-            <a>0507-1445-3503</a>
-          </li>
+          {/*<li*/}
+          {/*  onClick={() => {*/}
+          {/*    callClick();*/}
+          {/*  }}*/}
+          {/*>*/}
+          {/*  <PhoneIcon />*/}
+          {/*  <a>0507-1445-3503</a>*/}
+          {/*</li>*/}
           <li onClick={() => loginEvent()}>
             {user ? (
               <>

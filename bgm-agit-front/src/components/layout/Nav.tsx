@@ -10,8 +10,10 @@ export default function Nav() {
   const location = useLocation();
   const navigate = useNavigate();
   const menus = useRecoilValue(mainMenuState);
+  const pathname = location.pathname;
 
-  const { mainMenu, subMenu } = findMenuByPath(location.pathname, menus);
+  const { mainMenu, subMenu } = findMenuByPath(pathname, menus);
+  const isReviewDetailPath = pathname.startsWith('/review/');
 
   function findMenuByPath(path: string, menus: MainMenu[]) {
     for (const main of menus) {
@@ -43,7 +45,7 @@ export default function Nav() {
             <span>{subMenu?.name}</span>
           </>
         )}
-        {!mainMenu && location.pathname !== '/' && (
+        {!mainMenu && pathname !== '/' && (
           <>
             <a
               onClick={() => {
@@ -58,19 +60,22 @@ export default function Nav() {
             <a
               onClick={() => {
                 let path = '/notice';
-                if (location.pathname === '/noticeDetail') {
+                if (pathname === '/noticeDetail') {
                   path = '/notice';
-                } else if (location.pathname === '/freeDetail') {
+                } else if (pathname === '/freeDetail') {
                   path = '/free';
-                } else if (location.pathname === '/inquiryDetail') {
+                } else if (pathname === '/inquiryDetail') {
                   path = '/inquiry';
+                } else if (pathname === '/review/new' || isReviewDetailPath) {
+                  path = '/review';
                 }
                 navigate(path);
               }}
             >
-              {location.pathname === '/noticeDetail' && '공지사항'}
-              {location.pathname === '/freeDetail' && '자유 게시판'}
-              {location.pathname === '/inquiryDetail' && '1:1문의'}
+              {pathname === '/noticeDetail' && '공지사항'}
+              {pathname === '/freeDetail' && '자유 게시판'}
+              {pathname === '/inquiryDetail' && '1:1문의'}
+              {(pathname === '/review/new' || isReviewDetailPath) && '후기'}
             </a>
           </>
         )}
