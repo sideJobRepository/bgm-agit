@@ -73,7 +73,7 @@ export default function MyPage() {
     <Wrapper>
       <Hero>
         <HeroBg>
-          <img src="/matches/hero.jpg" alt="상단 이미지" />
+          <img src="/matches-assets/hero.jpg" alt="상단 이미지" />
         </HeroBg>
         <FixedDarkOverlay />
         <HeroOverlay
