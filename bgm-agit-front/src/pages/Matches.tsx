@@ -105,7 +105,7 @@ export default function Matches() {
     <Wrapper>
       <Hero>
         <HeroBg>
-          <img src={'/matches/hero.jpg'} alt="상단 이미지" />
+          <img src={'/matches-assets/hero.jpg'} alt="상단 이미지" />
         </HeroBg>
         <FixedDarkOverlay />
         <HeroOverlay
@@ -125,7 +125,7 @@ export default function Matches() {
       <ContentBox>
         <TopBox>
           <InstructorImage>
-            <img src={'/matches/matches.png'} alt="마작 강사" />
+            <img src={'/matches-assets/matches.png'} alt="마작 강사" />
           </InstructorImage>
 
           <InstructorInfo>

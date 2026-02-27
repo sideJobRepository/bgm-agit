@@ -64,7 +64,7 @@ export default function Review() {
     <Wrapper>
       <Hero>
         <HeroBg>
-          <img src={'/review/review.png'} alt="상단 이미지" />
+          <img src={'/review-assets/review.png'} alt="상단 이미지" />
         </HeroBg>
         <FixedDarkOverlay />
         <HeroOverlay
