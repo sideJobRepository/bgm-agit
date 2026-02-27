@@ -30,6 +30,7 @@ export const theme = {
     blackColor: '#000000',
     grayColor: '#757575',
     inputColor: '#1d1d1f',
+    writeBgColor: '#4A90E2',
   },
   sizes: {
     ultra: '32px',
