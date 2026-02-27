@@ -25,6 +25,7 @@ import Guide from './pages/Guide.tsx';
 import Matches from './pages/Matches.tsx';
 import Review from './pages/Review.tsx';
 import ReviewDetail from './pages/ReviewDetail.tsx';
+import MyPage from './pages/MyPage.tsx';
 
 function App() {
   return (
@@ -52,6 +53,7 @@ function App() {
               <Route path="/inquiryDetail" element={<InquiryDetail />} />
               <Route path="guide" element={<Guide />} />
               <Route path="matches" element={<Matches />} />
+              <Route path="my-academy" element={<MyPage />} />
               <Route path="review" element={<Review />} />
               <Route path="review/:id" element={<ReviewDetail />} />
             </Route>

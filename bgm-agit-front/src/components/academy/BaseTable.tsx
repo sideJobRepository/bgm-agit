@@ -6,6 +6,10 @@ import { userState } from '../../recoil/state/userState.ts';
 import { useInsertPost } from '../../recoil/fetch.ts';
 import Pagination from './Pagination.tsx';
 import { useLocation } from 'react-router-dom';
+import type { MyPageItem } from '../../types/myPage.ts';
+import { useMyPageFetch } from '../../recoil/myPageFetch.ts';
+import { showConfirmModal } from '../confirmAlert.tsx';
+import { toast } from 'react-toastify';
 
 export interface BaseColumn<T> {
   key: string;
@@ -57,7 +61,7 @@ export function BaseTable<T>({
   onSearch,
 }: BaseTableProps<T>) {
   const { insert } = useInsertPost();
-  // const fetchMyPage = useFetchMyPageList();
+  const fetchMyPage = useMyPageFetch();
 
   const user = useRecoilValue(userState);
 
@@ -87,35 +91,37 @@ export function BaseTable<T>({
       연락처: ${item.phoneNo}
     `.trim(),
       link: {
-        mobileWebUrl: 'https://bgmagit.co.kr/record',
-        webUrl: 'https://bgmagit.co.kr/record',
+        mobileWebUrl: 'https://bgmagit.co.kr',
+        webUrl: 'https://bgmagit.co.kr',
       },
     });
   }
 
   //업데이트
-  async function updateData(item: MyPageItem, gb: boolean) {
-    // const param = {
-    //   lectureId: item.lectureId,
-    //   memberId: user?.id,
-    // };
-    //
-    // const url = gb ? `/my-academy/approval` : `/my-academy/cancel`;
-    // const message = gb ? '해당 예약을 확정하시겠습니까?' : '해당 예약을 취소하시겠습니까?';
-    // const message2 = gb ? '예약이 확정되었습니다.' : '예약이 취소되었습니다.';
-    //
-    // const result = await confirmDialog(message, 'warning');
-    // if (result.isConfirmed) {
-    //   insert({
-    //     url: `/bgm-agit${url}`,
-    //     body: param,
-    //     ignoreHttpError: true,
-    //     onSuccess: async () => {
-    //       // await alertDialog(message2, 'success');
-    //       // fetchMyPage({ page, titleAndCont: searchKeyword });
-    //     },
-    //   });
-    // }
+  function updateData(item: MyPageItem, gb: boolean) {
+    const param = {
+      lectureId: item.lectureId,
+      memberId: user?.id,
+    };
+
+    const url = gb ? '/my-academy/approval' : '/my-academy/cancel';
+    const message = gb ? '해당 예약을 확정하시겠습니까?' : '해당 예약을 취소하시겠습니까?';
+    const message2 = gb ? '예약이 확정되었습니다.' : '예약이 취소되었습니다.';
+
+    showConfirmModal({
+      message,
+      onConfirm: () => {
+        insert({
+          url: `/bgm-agit${url}`,
+          body: param,
+          ignoreHttpError: true,
+          onSuccess: async () => {
+            toast.success(message2);
+            fetchMyPage({ page, titleAndCont: searchKeyword ?? '' });
+          },
+        });
+      },
+    });
   }
   return (
     <TableBox>
@@ -172,7 +178,7 @@ export function BaseTable<T>({
                   {col.header}
                 </Th>
               ))}
-              {pathname === '/myPage' && <Th>예약 상태</Th>}
+              {pathname === '/my-academy' && <Th>예약 상태</Th>}
             </tr>
           </thead>
           <tbody>
@@ -192,33 +198,48 @@ export function BaseTable<T>({
                       {col.render(row, index)}
                     </Td>
                   ))}
-                  {/*{pathname === '/myPage' && isMyPageRow(row) && (*/}
-                  {/*  <Td $nowrap $align="center">*/}
-                  {/*    <div>*/}
-                  {/*      {row.cancelStatus === 'Y'*/}
-                  {/*        ? '예약 취소'*/}
-                  {/*        : row.approvalStatus === 'Y'*/}
-                  {/*          ? '예약 확정'*/}
-                  {/*          : '예약 대기'}*/}
-                  {/*      /!* 승인 버튼 *!/*/}
-                  {/*      {row.approvalBtnEnabled && (*/}
-                  {/*        <StatusButton color="#1A7D55" onClick={() => updateData(row, true)}>*/}
-                  {/*          확정*/}
-                  {/*        </StatusButton>*/}
-                  {/*      )}*/}
-
-                  {/*      /!* 취소 버튼 *!/*/}
-                  {/*      {row.cancelBtnEnabled && (*/}
-                  {/*        <StatusButton onClick={() => updateData(row, false)} color="#FF5E57">*/}
-                  {/*          취소*/}
-                  {/*        </StatusButton>*/}
-                  {/*      )}*/}
-                  {/*      <StatusButton color="#093A6E" onClick={() => shareReservation(row)}>*/}
-                  {/*        공유*/}
-                  {/*      </StatusButton>*/}
-                  {/*    </div>*/}
-                  {/*  </Td>*/}
-                  {/*)}*/}
+                  {pathname === '/my-academy' && isMyPageRow(row) && (
+                    <Td $nowrap $align="center">
+                      <div>
+                        {row.cancelStatus === 'Y'
+                          ? '예약 취소'
+                          : row.approvalStatus === 'Y'
+                            ? '예약 확정'
+                            : '예약 대기'}
+                        {row.approvalBtnEnabled && (
+                          <StatusButton
+                            color="#1A7D55"
+                            onClick={e => {
+                              e.stopPropagation();
+                              updateData(row, true);
+                            }}
+                          >
+                            확정
+                          </StatusButton>
+                        )}
+                        {row.cancelBtnEnabled && (
+                          <StatusButton
+                            onClick={e => {
+                              e.stopPropagation();
+                              updateData(row, false);
+                            }}
+                            color="#FF5E57"
+                          >
+                            취소
+                          </StatusButton>
+                        )}
+                        <StatusButton
+                          color="#093A6E"
+                          onClick={e => {
+                            e.stopPropagation();
+                            shareReservation(row);
+                          }}
+                        >
+                          공유
+                        </StatusButton>
+                      </div>
+                    </Td>
+                  )}
                 </Tr>
               ))
             )}
