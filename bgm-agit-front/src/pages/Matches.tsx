@@ -141,8 +141,10 @@ export default function Matches() {
         <StyledCalendar
           value={value}
           locale="ko-KR"
-          calendarType="islamic"
-          formatShortWeekday={(_, date) => ['일', '월', '화', '수', '목', '금', '토'][date.getDay()]}
+          calendarType="gregory"
+          formatShortWeekday={(_, date) =>
+            ['일', '월', '화', '수', '목', '금', '토'][date.getDay()]
+          }
           className="custom-calender"
           onChange={val => {
             const next = val as Date;
