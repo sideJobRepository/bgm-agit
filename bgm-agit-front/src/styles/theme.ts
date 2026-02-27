@@ -25,6 +25,11 @@ export const theme = {
     text: '#222',
     kakao: '#FDDC3F',
     black: '#000000',
+
+    whiteColor: '#ffffff',
+    blackColor: '#000000',
+    grayColor: '#757575',
+    inputColor: '#1d1d1f',
   },
   sizes: {
     ultra: '32px',
@@ -38,6 +43,34 @@ export const theme = {
     small: '14px',
     xsmall: '12px',
     xxsmall: '10px',
+  },
+  desktop: {
+    sizes: {
+      titleSize: '52px',
+      h1Size: '36px',
+      h2Size: '30px',
+      h3Size: '24px',
+      h4Size: '20px',
+      h5Size: '18px',
+      xl: '16px',
+      md: '14px',
+      sm: '12px',
+      xs: '10px',
+    },
+  },
+  mobile: {
+    sizes: {
+      titleSize: '32px',
+      h1Size: '32px',
+      h2Size: '26px',
+      h3Size: '20px',
+      h4Size: '16px',
+      h5Size: '14px',
+      xl: '12px',
+      md: '10px',
+      sm: '8px',
+      xs: '6px',
+    },
   },
   weight: {
     bold: '700',

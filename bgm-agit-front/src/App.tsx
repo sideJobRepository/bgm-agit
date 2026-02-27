@@ -21,6 +21,8 @@ import Free from './pages/Free.tsx';
 import FreeDetail from './pages/FreeDetail.tsx';
 import Inquiry from './pages/Inquiry.tsx';
 import InquiryDetail from './pages/InquiryDetail.tsx';
+import Guide from './pages/Guide.tsx';
+import Matches from './pages/Matches.tsx';
 
 function App() {
   return (
@@ -46,6 +48,8 @@ function App() {
               <Route path="/freeDetail" element={<FreeDetail />} />
               <Route path="inquiry" element={<Inquiry />} />
               <Route path="/inquiryDetail" element={<InquiryDetail />} />
+              <Route path="guide" element={<Guide />} />
+              <Route path="matches" element={<Matches />} />
             </Route>
           </Routes>
         </BrowserRouter>
