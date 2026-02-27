@@ -75,7 +75,7 @@ export default function Matches() {
             showConfirmModal({
               message: '예약 되었습니다. \n 예약 내역으로 이동하시겠습니까?',
               onConfirm: () => {
-                navigate(`/myPage`);
+                navigate(`/my-academy`);
               },
             });
           },
