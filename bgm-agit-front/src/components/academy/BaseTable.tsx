@@ -101,7 +101,7 @@ export function BaseTable<T>({
   function updateData(item: MyPageItem, gb: boolean) {
     const param = {
       lectureId: item.lectureId,
-      memberId: user?.id,
+      memberId: item.memberId,
     };
 
     const url = gb ? '/my-academy/approval' : '/my-academy/cancel';
