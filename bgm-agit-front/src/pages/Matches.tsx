@@ -92,7 +92,7 @@ export default function Matches() {
         day: value.getDate(),
       });
     }
-  }, [value]);
+  }, []);
 
   useEffect(() => {
     const curDateStr = getLocalDateStr(value);
@@ -145,6 +145,8 @@ export default function Matches() {
           formatShortWeekday={(_, date) =>
             ['일', '월', '화', '수', '목', '금', '토'][date.getDay()]
           }
+          showNeighboringMonth={false}
+          showFixedNumberOfWeeks={false}
           className="custom-calender"
           onChange={val => {
             const next = val as Date;
@@ -162,8 +164,13 @@ export default function Matches() {
           }}
           tileClassName={({ date, view }) => {
             const tileDateStr = getLocalDateStr(date);
-            if (view === 'month' && tileDateStr === dateStr) return 'selected';
-            return '';
+            if (view !== 'month') return '';
+
+            const classes = [];
+            if (tileDateStr === dateStr) classes.push('selected');
+            if (date.getDay() === 0) classes.push('sunday');
+            if (date.getDay() === 6) classes.push('saturday');
+            return classes.join(' ');
           }}
           tileContent={({ date, view }) => {
             if (view !== 'month') return null;
@@ -327,7 +334,26 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
     abbr {
       text-decoration: unset;
     }
+
+    &:first-child abbr {
+      color: ${({ theme }) => theme.colors.redColor};
+    }
+
+    &:last-child abbr {
+      color: ${({ theme }) => theme.colors.blueColor};
+    }
   }
+
+  .react-calendar__tile.sunday,
+  .react-calendar__tile.sunday abbr {
+    color: ${({ theme }) => theme.colors.redColor};
+  }
+
+  .react-calendar__tile.saturday,
+  .react-calendar__tile.saturday abbr {
+    color: ${({ theme }) => theme.colors.blueColor};
+  }
+
   .react-calendar__tile {
     display: flex;
     flex-direction: column;

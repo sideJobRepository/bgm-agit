@@ -242,6 +242,8 @@ export default function ReservationCalendar({ id }: { id?: number }) {
         locale="ko-KR"
         calendarType="gregory"
         formatShortWeekday={(_, date) => ['일', '월', '화', '수', '목', '금', '토'][date.getDay()]}
+        showNeighboringMonth={false}
+        showFixedNumberOfWeeks={false}
         className="custom-calender"
         onChange={val => {
           setValue(val as Date);
@@ -263,9 +265,14 @@ export default function ReservationCalendar({ id }: { id?: number }) {
           return null;
         }}
         tileClassName={({ date, view }) => {
+          if (view !== 'month') return '';
+
           const tileDateStr = getLocalDateStr(date);
-          if (view === 'month' && tileDateStr === dateStr) return 'selected';
-          return '';
+          const classes = [];
+          if (tileDateStr === dateStr) classes.push('selected');
+          if (date.getDay() === 0) classes.push('sunday');
+          if (date.getDay() === 6) classes.push('saturday');
+          return classes.join(' ');
         }}
       />
 
@@ -403,7 +410,26 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
     abbr {
       text-decoration: unset;
     }
+
+    &:first-child abbr {
+      color: ${({ theme }) => theme.colors.redColor};
+    }
+
+    &:last-child abbr {
+      color: ${({ theme }) => theme.colors.blueColor};
+    }
   }
+
+  .react-calendar__tile.sunday,
+  .react-calendar__tile.sunday abbr {
+    color: ${({ theme }) => theme.colors.redColor};
+  }
+
+  .react-calendar__tile.saturday,
+  .react-calendar__tile.saturday abbr {
+    color: ${({ theme }) => theme.colors.blueColor};
+  }
+
   .react-calendar__tile {
     display: flex;
     flex-direction: column;
