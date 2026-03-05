@@ -52,6 +52,10 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
       });
     }
   };
+
+  const editWriteMove = (id: number) => {
+    window.open(`/record/write?id=${id}`, '_blank');
+  };
   return (
     <>
       <CardGrid>
@@ -61,7 +65,7 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
               <ButtonBox>
                 <>
                   <Button color="#415B9C">
-                    <FileText weight="bold" />
+                    <FileText weight="bold" onClick={() => editWriteMove(item.matchsId)} />
                   </Button>
                   <Button onClick={() => deleteData(item.matchsId)} color="#D9625E">
                     <TrashSimple weight="bold" />
