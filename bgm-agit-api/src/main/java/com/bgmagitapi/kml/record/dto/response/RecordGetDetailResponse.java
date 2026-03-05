@@ -18,6 +18,7 @@ import java.util.List;
 public class RecordGetDetailResponse {
     
     private Long matchsId;
+    private String tournamentStatus;
     private MatchsWind wind;
     private List<RecordList> records;
     private List<YakumanList> yakumans;

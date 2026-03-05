@@ -129,7 +129,7 @@ public class RecordServiceImpl implements RecordService {
         List<RecordGetDetailResponse.RecordList> records = recordRepository.findByRecord(id);
         List<RecordGetDetailResponse.YakumanList> yakumanLists = yakumanRepository.findByMatchsYakuman(id);
         
-        return new RecordGetDetailResponse(matchs.getId(), matchs.getWind(), records, yakumanLists);
+        return new RecordGetDetailResponse(matchs.getId(),matchs.getTournamentStatus(), matchs.getWind(), records, yakumanLists);
     }
     
     @Override
