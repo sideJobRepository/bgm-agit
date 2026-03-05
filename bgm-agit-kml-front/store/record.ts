@@ -44,6 +44,7 @@ export interface YakumanItem {
 export interface DetailRecordData {
   matchsId: number;
   wind: DirectionKey;
+  tournamentStatus: string;
   records: RecordItem[];
   yakumans: YakumanItem[];
 }

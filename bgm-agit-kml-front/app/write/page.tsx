@@ -12,7 +12,7 @@ import {
   useFetchYakuman,
 } from '@/services/record.service';
 import { useRecordUserStore, useUserStore } from '@/store/user';
-import { Check, Plus } from 'phosphor-react';
+import { Check, Plus, TrashSimple } from 'phosphor-react';
 import { useDetailRecordStore, useYakumanStore } from '@/store/record';
 import { useInsertPost, useUpdatePost } from '@/services/main.service';
 import { alertDialog, confirmDialog } from '@/utils/alert';
@@ -278,6 +278,7 @@ export default function Write() {
 
     // 국 길이
     setLeader(detailData.wind);
+    setTournament(detailData.tournamentStatus);
 
     // records
     const nextRecords = {
@@ -475,6 +476,14 @@ export default function Write() {
 
           return (
             <Center key={`yakuman-${idx}`} $color="#f3f3f3">
+              <Button
+                onClick={() => {
+                  setYakumanRows((prev) => prev.filter((_, i) => i !== idx));
+                  setHeroImages((prev) => prev.filter((_, i) => i !== idx));
+                }}
+              >
+                <TrashSimple weight="bold" />
+              </Button>
               <WriteCroup>
                 <FieldsWrapper>
                   {/* 닉네임 검색 */}
@@ -806,6 +815,11 @@ const Center = styled.section<{ $color: string }>`
   align-items: center;
   background-color: ${({ theme }) => theme.colors.recordBgColor};
   border-radius: 4px;
+
+  button {
+    background-color: #d9625e;
+    margin: 24px 24px 24px auto;
+  }
 
   h4 {
     display: inline-flex;
