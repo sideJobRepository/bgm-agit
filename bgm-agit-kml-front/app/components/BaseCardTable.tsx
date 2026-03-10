@@ -3,7 +3,7 @@
 import styled from 'styled-components';
 import Pagination from '@/app/components/Pagination';
 import { useUserStore } from '@/store/user';
-import { FileText, TrashSimple, Share } from 'phosphor-react';
+import { FileText, TrashSimple, Share, ClockCounterClockwise } from 'phosphor-react';
 import { alertDialog, confirmDialog } from '@/utils/alert';
 import { useDeletePost } from '@/services/main.service';
 import { useRouter } from 'next/navigation';
@@ -99,6 +99,9 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
                   </Button>
                 </>
               )}
+              <Button onClick={() => deleteData(item.matchsId)} color="#757575">
+                <ClockCounterClockwise weight="bold" />
+              </Button>
               <Button
                 onClick={(e) => {
                   e.stopPropagation();

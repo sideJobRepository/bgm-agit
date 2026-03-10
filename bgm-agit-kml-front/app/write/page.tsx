@@ -55,8 +55,10 @@ export default function Write() {
   const router = useRouter();
 
   //detail
-  const searchParams = useSearchParams();
-  const detailId = searchParams.get('id');
+  // const searchParams = useSearchParams();
+  // const detailId = searchParams.get('id');
+  const [detailId, setDetailId] = useState<string | null>(null);
+
   const fetchDetailWrite = useFetchDetailWrite();
   const detailData = useDetailRecordStore((state) => state.detailRecord);
   console.log('detail', detailData);
@@ -268,6 +270,11 @@ export default function Write() {
   };
 
   //detail 로직
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setDetailId(params.get('id'));
+  }, []);
+
   useEffect(() => {
     //권한 없을경우 메인으로
     if (detailId) {
