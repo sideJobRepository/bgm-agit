@@ -54,7 +54,7 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
   };
 
   const editWriteMove = (id: number) => {
-    window.open(`/record/write?id=${id}`, '_blank');
+    router.push(`/write?id=${id}`);
   };
 
   //공유하기

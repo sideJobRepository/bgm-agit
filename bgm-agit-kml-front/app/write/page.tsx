@@ -211,6 +211,8 @@ export default function Write() {
       ignoreErrorRedirect: true,
       onSuccess: async () => {
         await alertDialog('기록이 저장되었습니다.', 'success');
+
+        if (detailId) router.push('/day-record');
       },
     });
   };
