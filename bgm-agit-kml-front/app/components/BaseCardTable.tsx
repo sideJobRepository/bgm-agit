@@ -3,7 +3,7 @@
 import styled from 'styled-components';
 import Pagination from '@/app/components/Pagination';
 import { useUserStore } from '@/store/user';
-import { FileText, TrashSimple } from 'phosphor-react';
+import { FileText, TrashSimple, Share } from 'phosphor-react';
 import { alertDialog, confirmDialog } from '@/utils/alert';
 import { useDeletePost } from '@/services/main.service';
 import { useRouter } from 'next/navigation';
@@ -56,13 +56,40 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
   const editWriteMove = (id: number) => {
     window.open(`/record/write?id=${id}`, '_blank');
   };
+
+  //공유하기
+  function shareReservation(item: MatchType) {
+    if (!window.Kakao || !window.Kakao.isInitialized()) return;
+
+    const rowsText = item.rows
+      .map(
+        (row) =>
+          `${row.seat} ${row.nickname} ${row.score.toLocaleString()} (${row.point > 0 ? '+' : ''}${row.point})`
+      )
+      .join('\n');
+
+    const text =
+      '\u200B[BGM KML 기록 안내]\n\n' +
+      `ID: ${item.matchsId}\n` +
+      `기록일자: ${item.registDate}\n\n` +
+      rowsText;
+
+    window.Kakao.Share.sendDefault({
+      objectType: 'text',
+      text,
+      link: {
+        mobileWebUrl: 'https://bgmagit.co.kr/record',
+        webUrl: 'https://bgmagit.co.kr/record',
+      },
+    });
+  }
   return (
     <>
       <CardGrid>
         {data.content.map((item) => (
           <Card key={item.matchsId}>
-            {(user?.roles.includes('ROLE_ADMIN') || user?.roles.includes('MENTOR')) && (
-              <ButtonBox>
+            <ButtonBox>
+              {(user?.roles.includes('ROLE_ADMIN') || user?.roles.includes('MENTOR')) && (
                 <>
                   <Button color="#415B9C">
                     <FileText weight="bold" onClick={() => editWriteMove(item.matchsId)} />
@@ -71,8 +98,17 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
                     <TrashSimple weight="bold" />
                   </Button>
                 </>
-              </ButtonBox>
-            )}
+              )}
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  shareReservation(item);
+                }}
+                color="#093A6E"
+              >
+                <Share weight="bold" />
+              </Button>
+            </ButtonBox>
             <Header>
               <span>ID: {item.matchsId}</span>
               <span>{item.registDate}</span>
