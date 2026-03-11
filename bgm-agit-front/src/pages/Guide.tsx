@@ -1,42 +1,19 @@
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
 import type { WithTheme } from '../styles/styled-props.ts';
 
 export default function Guide() {
   return (
     <Wrapper>
-      <Hero>
-        <HeroBg>
-          <img src={'/guide/guideHero.png'} alt="상단 이미지" />
-        </HeroBg>
-        <FixedDarkOverlay />
-        <HeroOverlay
-          initial={{ width: '0%' }}
-          animate={{ width: '100%' }}
-          transition={{
-            duration: 1.2,
-            ease: [0.65, 0, 0.35, 1],
-          }}
-        />
-      </Hero>
+      <TopBox>
+        <img src={'/guide/guide.jpeg'} alt="상단 이미지" />
+      </TopBox>
+
       <ContentBox>
-        <MainContent>
-          <h1>
-            도박이 아닌 지적 유희, 대전 유일의 <br />
-            프리미엄 마작 라운지
-          </h1>
-          <h5>
-            <strong>“아직도 마작을 영화 속 어두운 뒷골목의 전유물로 생각하시나요?” </strong>
-            <br />
-            마작은 전 세계 1억 명 이상이 즐기는 정교한 ‘두뇌 스포츠’입니다. <br /> 확률과 전략,
-            그리고 심리전이 결합된 이 매력적인 게임을 이제 가장 쾌적한 환경에서 시작해보세요.
-          </h5>
-        </MainContent>
-        <SubContent>
+        <SubContent $bg="#ffffff">
           <ImageBox>
             <img src={'/guide/rexx3.jpg'} alt="마작 테이블" />
           </ImageBox>
-          <TextBox>
+          <TextBox $align="right" $bg="#F8F9FA">
             <strong>“대전 유일의 REXX-3 도입”</strong>
             <br />
             <span>
@@ -48,11 +25,11 @@ export default function Guide() {
             </span>
           </TextBox>
         </SubContent>
-        <SubContent>
+        <SubContent $bg="#F8F9FA">
           <ImageBox>
             <img src={'/guide/celanRoom.png'} alt="클린매너 사진" />
           </ImageBox>
-          <TextBox>
+          <TextBox $align="left" $bg="#ffffff">
             <strong>“철저한 ‘클린 매너’ 원칙”</strong>
             <br />
             <span>
@@ -64,11 +41,11 @@ export default function Guide() {
             </span>
           </TextBox>
         </SubContent>
-        <SubContent>
+        <SubContent $bg="#ffffff">
           <ImageBox>
-            <img src={'/guide/all.jpg'} alt="프리미엄 환경 사진" />
+            <img src={'/guide/guideTop.png'} alt="프리미엄 환경 사진" />
           </ImageBox>
-          <TextBox>
+          <TextBox $align="right" $bg="#F8F9FA">
             <strong>“프리미엄 환경”</strong>
             <br />
             <span>
@@ -93,6 +70,7 @@ const Wrapper = styled.div<WithTheme>`
   height: 100%;
   margin: 0 auto;
   flex-direction: column;
+  background-color: #f3f4ee;
 
   @media ${({ theme }) => theme.device.tablet} {
     width: 100vw;
@@ -102,47 +80,17 @@ const Wrapper = styled.div<WithTheme>`
   }
 `;
 
-const Hero = styled.section<WithTheme>`
-  position: relative;
-  width: 100%;
-  height: 520px;
-  overflow: hidden;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    height: 320px;
-  }
-`;
-
-const HeroBg = styled.div`
-  position: absolute;
-  inset: 0;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`;
-
-const FixedDarkOverlay = styled.div`
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.02);
-  z-index: 0;
-`;
-
-const HeroOverlay = styled(motion.div)`
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.2);
+const TopBox = styled.div`
+  padding-bottom: 24px;
 `;
 
 const ContentBox = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
-  gap: 24px;
   width: 100%;
-  padding-bottom: 48px;
+  padding: 24px 0 48px 0;
+  gap: 24px;
+  //background-color: white;
 
   h1 {
     font-size: ${({ theme }) => theme.desktop.sizes.h1Size};
@@ -181,20 +129,13 @@ const ContentBox = styled.div<WithTheme>`
   }
 `;
 
-const MainContent = styled.div<WithTheme>`
-  display: flex;
-  flex-direction: column;
-  padding: 64px 12px;
-  gap: 24px;
-  background-color: ${({ theme }) => theme.colors.softColor};
-`;
-
-const SubContent = styled.div<WithTheme>`
+const SubContent = styled.div<WithTheme & { $bg: string }>`
   display: flex;
   border-radius: 4px;
+  padding: 24px;
+  background-color: ${({ $bg }) => $bg};
+  margin: 0 24px;
   gap: 24px;
-  padding: 12px 0;
-  flex-direction: column;
   span {
     font-size: ${({ theme }) => theme.desktop.sizes.xl};
     font-weight: 600;
@@ -204,41 +145,60 @@ const SubContent = styled.div<WithTheme>`
       font-size: ${({ theme }) => theme.mobile.sizes.xl};
     }
   }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    flex-direction: column;
+    padding: 12px;
+    margin: 0 8px;
+  }
 `;
 
-const ImageBox = styled.div`
+const ImageBox = styled.div<WithTheme>`
   display: flex;
+  width: 50%;
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: 4px;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 100%;
   }
 `;
 
-const TextBox = styled.div<WithTheme>`
+const TextBox = styled.div<WithTheme & { $align: string; $bg: string }>`
   display: flex;
   flex-direction: column;
-  padding: 24px 12px;
+  justify-content: center;
+  padding: 24px;
   gap: 4px;
   font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
   word-break: keep-all;
   overflow-wrap: break-word;
-  text-align: center;
+  text-align: ${({ $align }) => $align};
   line-height: 2;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.inputColor};
+  width: 50%;
+  background-color: ${({ $bg }) => $bg};
+  border-radius: 4px;
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
+    width: 100%;
+    padding: 24px 12px;
   }
 
   strong {
-    font-size: ${({ theme }) => theme.desktop.sizes.h2Size};
+    font-size: ${({ theme }) => theme.desktop.sizes.h3Size};
     line-height: 1.4;
     letter-spacing: 2px;
+    text-align: ${({ $align }) => ($align === 'left' ? 'right' : 'left')};
     color: ${({ theme }) => theme.colors.blackColor};
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.mobile.sizes.h2Size};
+      font-size: ${({ theme }) => theme.mobile.sizes.h3Size};
     }
   }
 `;
