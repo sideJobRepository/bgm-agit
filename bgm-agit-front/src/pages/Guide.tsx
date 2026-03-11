@@ -26,9 +26,6 @@ export default function Guide() {
           </TextBox>
         </SubContent>
         <SubContent $bg="#F8F9FA">
-          <ImageBox>
-            <img src={'/guide/celanRoom.png'} alt="클린매너 사진" />
-          </ImageBox>
           <TextBox $align="left" $bg="#ffffff">
             <strong>“철저한 ‘클린 매너’ 원칙”</strong>
             <br />
@@ -40,13 +37,16 @@ export default function Guide() {
               건전하고 품격 있는 커뮤니티를 지향합니다.
             </span>
           </TextBox>
+          <ImageBox>
+            <img src={'/guide/celanRoom.png'} alt="클린매너 사진" />
+          </ImageBox>
         </SubContent>
         <SubContent $bg="#ffffff">
           <ImageBox>
             <img src={'/guide/guideTop.png'} alt="프리미엄 환경 사진" />
           </ImageBox>
           <TextBox $align="right" $bg="#F8F9FA">
-            <strong>“프리미엄 환경”</strong>
+            <strong>“최적의 프리미엄 환경”</strong>
             <br />
             <span>
               쾌적한 공기 질 관리 시스템과 세련된 공간 설계를 통해
@@ -184,6 +184,7 @@ const TextBox = styled.div<WithTheme & { $align: string; $bg: string }>`
   width: 50%;
   background-color: ${({ $bg }) => $bg};
   border-radius: 4px;
+  font-family: 'Jua', sans-serif;
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
