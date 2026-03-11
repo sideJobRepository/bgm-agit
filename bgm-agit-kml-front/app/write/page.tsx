@@ -6,13 +6,17 @@ import { withBasePath } from '@/lib/path';
 
 import React, { useEffect, useState } from 'react';
 
-import { useFetchRecordUser, useFetchYakuman } from '@/services/recordStore';
+import {
+  useFetchDetailWrite,
+  useFetchRecordUser,
+  useFetchYakuman,
+} from '@/services/record.service';
 import { useRecordUserStore, useUserStore } from '@/store/user';
-import { Check, Plus } from 'phosphor-react';
-import { useYakumanStore } from '@/store/record';
-import { useInsertPost } from '@/services/main.service';
+import { Check, Plus, TrashSimple } from 'phosphor-react';
+import { useDetailRecordStore, useYakumanStore } from '@/store/record';
+import { useInsertPost, useUpdatePost } from '@/services/main.service';
 import { alertDialog, confirmDialog } from '@/utils/alert';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const DIRECTIONS = [
   { key: 'EAST', label: '동', color: '#415B9C' },
@@ -40,13 +44,26 @@ type YakumanRow = {
   userId: number | null;
   yakumanId: number | null;
   file: File | null;
+  existingFileId?: number | null;
 };
 
 export default function Write() {
   const { insert } = useInsertPost();
+  const { update } = useUpdatePost();
 
   const user = useUserStore((state) => state.user);
   const router = useRouter();
+
+  //detail
+  // const searchParams = useSearchParams();
+  // const detailId = searchParams.get('id');
+  const [detailId, setDetailId] = useState<string | null>(null);
+
+  const fetchDetailWrite = useFetchDetailWrite();
+  const detailData = useDetailRecordStore((state) => state.detailRecord);
+  console.log('detail', detailData);
+
+  const [changeReason, setChangeReason] = useState('');
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -79,16 +96,17 @@ export default function Write() {
     Record<
       DirectionKey,
       {
+        recordId?: number | null;
         userId: number | null;
         score: string;
         search: string;
       }
     >
   >({
-    EAST: { userId: null, score: '', search: '' },
-    SOUTH: { userId: null, score: '', search: '' },
-    WEST: { userId: null, score: '', search: '' },
-    NORTH: { userId: null, score: '', search: '' },
+    EAST: { recordId: null, userId: null, score: '', search: '' },
+    SOUTH: { recordId: null, userId: null, score: '', search: '' },
+    WEST: { recordId: null, userId: null, score: '', search: '' },
+    NORTH: { recordId: null, userId: null, score: '', search: '' },
   });
 
   const [yakumanRows, setYakumanRows] = useState<YakumanRow[]>([]);
@@ -98,10 +116,11 @@ export default function Write() {
     .map(([seat, data]) => ({
       seat,
       ...data,
-      score: Number(data.score), // 👈 숫자로 변환
+      score: Number(data.score), // 숫자로 변환
     }))
     .sort((a, b) => b.score - a.score)
     .map((r, idx) => ({
+      recordId: r.recordId,
       memberId: r.userId,
       recordScore: r.score, // 이미 숫자
       recordRank: idx + 1,
@@ -135,7 +154,10 @@ export default function Write() {
       router.push('/login');
     }
 
-    const result = await confirmDialog('저장 하시겠습니까?', 'warning');
+    const message = detailId ? '수정 하시겠습니까?' : '등록 하시겠습니까?';
+    const method = detailId ? update : insert;
+
+    const result = await confirmDialog(message, 'warning');
     if (!result.isConfirmed) return;
 
     if (!validateForm()) return;
@@ -143,13 +165,21 @@ export default function Write() {
     const formData = new FormData();
 
     /** 기본 값 */
+    if (detailId) {
+      formData.append('matchsId', detailId);
+      formData.append('changeReason', changeReason);
+    }
     formData.append('wind', leader);
     formData.append('tournamentStatus', tournament);
 
     /** records */
     rankedRecords.forEach((r, idx) => {
       if (!r.memberId) return;
+      const record = records[r.recordSeat as DirectionKey];
 
+      if (detailId && record.recordId) {
+        formData.append(`records[${idx}].recordId`, String(record.recordId));
+      }
       formData.append(`records[${idx}].memberId`, String(r.memberId));
       formData.append(`records[${idx}].recordScore`, String(r.recordScore));
       formData.append(`records[${idx}].recordRank`, String(r.recordRank));
@@ -163,6 +193,10 @@ export default function Write() {
       const yakuman = yakumanData.find((y) => y.id === row.yakumanId);
       if (!yakuman) return;
 
+      if (detailId && row.existingFileId) {
+        formData.append(`yakumans[${idx}].yakumanId`, String(row.existingFileId));
+      }
+
       formData.append(`yakumans[${idx}].memberId`, String(row.userId));
       formData.append(`yakumans[${idx}].yakumanName`, yakuman.yakumanName);
 
@@ -173,17 +207,24 @@ export default function Write() {
       }
     });
 
-    insert({
+    method({
       url: '/bgm-agit/record',
       body: formData,
       ignoreErrorRedirect: true,
       onSuccess: async () => {
-        await alertDialog('기록이 작성되었습니다.', 'success');
+        await alertDialog('기록이 저장되었습니다.', 'success');
+
+        if (detailId) router.push('/day-record');
       },
     });
   };
 
   const validateForm = () => {
+    if (detailId && !user?.roles.includes('ROLE_ADMIN')) {
+      alertDialog('수정의 경우 관리자만 가능합니다.', 'error');
+      router.push('/');
+      return false;
+    }
     // 국길이 선택
     if (!leader) {
       alertDialog('국 길이를 선택해주세요.', 'error');
@@ -227,6 +268,63 @@ export default function Write() {
 
     return true;
   };
+
+  //detail 로직
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setDetailId(params.get('id'));
+  }, []);
+
+  useEffect(() => {
+    //권한 없을경우 메인으로
+    if (detailId) {
+      fetchDetailWrite(detailId);
+    }
+  }, [detailId]);
+
+  useEffect(() => {
+    if (!detailData) return;
+
+    // 국 길이
+    setLeader(detailData.wind);
+    setTournament(detailData.tournamentStatus);
+
+    // records
+    const nextRecords = {
+      EAST: { recordId: null, userId: null, score: '', search: '' },
+      SOUTH: { recordId: null, userId: null, score: '', search: '' },
+      WEST: { recordId: null, userId: null, score: '', search: '' },
+      NORTH: { recordId: null, userId: null, score: '', search: '' },
+    };
+
+    detailData.records.forEach((r) => {
+      nextRecords[r.recordSeat] = {
+        recordId: r.recordId,
+        userId: r.memberId,
+        score: String(r.recordScore),
+        search: '',
+      };
+    });
+
+    setRecords(nextRecords);
+
+    // yakuman
+    if (detailData.yakumans) {
+      const rows = detailData.yakumans.map((y) => ({
+        search: '',
+        userId: y.memberId,
+        yakumanId: yakumanData.find((yk) => yk.yakumanName === y.yakumanName)?.id ?? null,
+        file: null,
+        existingFileId: y.yakumanId,
+      }));
+
+      setYakumanRows(rows);
+
+      setMemo(detailData.yakumans[0]?.yakumanCont ?? '');
+
+      setHeroImages(detailData.yakumans.map((y) => y.imageUrl));
+    }
+  }, [detailData, yakumanData]);
 
   return (
     <Wrapper>
@@ -284,6 +382,21 @@ export default function Write() {
             <Check weight="bold" />
           </Button>
         </Top>
+        {detailId && (
+          <WriteCroup>
+            <FieldsWrapper>
+              <Field className="memo">
+                <label>수정사유</label>
+                <textarea
+                  value={changeReason}
+                  onChange={(e) => setChangeReason(e.target.value)}
+                  placeholder="수정사유를 입력해주세요."
+                  rows={5}
+                />
+              </Field>
+            </FieldsWrapper>
+          </WriteCroup>
+        )}
 
         {/* 동서남북 입력 */}
         {DIRECTIONS.map(({ key, label, color }) => {
@@ -372,6 +485,14 @@ export default function Write() {
 
           return (
             <Center key={`yakuman-${idx}`} $color="#f3f3f3">
+              <Button
+                onClick={() => {
+                  setYakumanRows((prev) => prev.filter((_, i) => i !== idx));
+                  setHeroImages((prev) => prev.filter((_, i) => i !== idx));
+                }}
+              >
+                <TrashSimple weight="bold" />
+              </Button>
               <WriteCroup>
                 <FieldsWrapper>
                   {/* 닉네임 검색 */}
@@ -703,6 +824,11 @@ const Center = styled.section<{ $color: string }>`
   align-items: center;
   background-color: ${({ theme }) => theme.colors.recordBgColor};
   border-radius: 4px;
+
+  button {
+    background-color: #d9625e;
+    margin: 24px 24px 24px auto;
+  }
 
   h4 {
     display: inline-flex;

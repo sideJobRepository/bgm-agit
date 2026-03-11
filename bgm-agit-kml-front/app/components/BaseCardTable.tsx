@@ -3,11 +3,16 @@
 import styled from 'styled-components';
 import Pagination from '@/app/components/Pagination';
 import { useUserStore } from '@/store/user';
-import { FileText, TrashSimple } from 'phosphor-react';
+import { FileText, TrashSimple, Share, ClockCounterClockwise } from 'phosphor-react';
 import { alertDialog, confirmDialog } from '@/utils/alert';
 import { useDeletePost } from '@/services/main.service';
 import { useRouter } from 'next/navigation';
 import { useFetchDayRecordList } from '@/services/dayRecord.service';
+import { useState } from 'react';
+import Modal from '@/app/modal/modal';
+import { HistBaseCardTable } from '@/app/components/HistBaseCardTable';
+import { useFetchHistWrite } from '@/services/record.service';
+import { useHistRecordStore } from '@/store/record';
 
 type RowType = {
   seat: string;
@@ -37,7 +42,22 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
   const router = useRouter();
   const fetchDayRecord = useFetchDayRecordList();
 
+  console.log('data', data);
+
   const user = useUserStore((state) => state.user);
+
+  //히스토리
+  const fetchHistRecord = useFetchHistWrite();
+  const histData = useHistRecordStore((state) => state.histRecord);
+  console.log('histData', histData);
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  const getHist = async (id: number) => {
+    fetchHistRecord(id);
+
+    setHistoryOpen(true);
+  };
+
   const deleteData = async (id: number) => {
     const result = await confirmDialog('해당 기록을 삭제 하시겠습니까?', 'warning');
 
@@ -52,23 +72,66 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
       });
     }
   };
+
+  const editWriteMove = (id: number) => {
+    router.push(`/write?id=${id}`);
+  };
+
+  //공유하기
+  function shareReservation(item: MatchType) {
+    if (!window.Kakao || !window.Kakao.isInitialized()) return;
+
+    const rowsText = item.rows
+      .map(
+        (row) =>
+          `${row.seat} ${row.nickname} ${row.score.toLocaleString()} (${row.point > 0 ? '+' : ''}${row.point})`
+      )
+      .join('\n');
+
+    const text =
+      '\u200B[BGM KML 기록 안내]\n\n' +
+      `ID: ${item.matchsId}\n` +
+      `기록일자: ${item.registDate}\n\n` +
+      rowsText;
+
+    window.Kakao.Share.sendDefault({
+      objectType: 'text',
+      text,
+      link: {
+        mobileWebUrl: 'https://bgmagit.co.kr/record',
+        webUrl: 'https://bgmagit.co.kr/record',
+      },
+    });
+  }
   return (
     <>
       <CardGrid>
         {data.content.map((item) => (
           <Card key={item.matchsId}>
-            {(user?.roles.includes('ROLE_ADMIN') || user?.roles.includes('MENTOR')) && (
-              <ButtonBox>
+            <ButtonBox>
+              {(user?.roles.includes('ROLE_ADMIN') || user?.roles.includes('MENTOR')) && (
                 <>
                   <Button color="#415B9C">
-                    <FileText weight="bold" />
+                    <FileText weight="bold" onClick={() => editWriteMove(item.matchsId)} />
                   </Button>
                   <Button onClick={() => deleteData(item.matchsId)} color="#D9625E">
                     <TrashSimple weight="bold" />
                   </Button>
                 </>
-              </ButtonBox>
-            )}
+              )}
+              <Button onClick={() => getHist(item.matchsId)} color="#757575">
+                <ClockCounterClockwise weight="bold" />
+              </Button>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  shareReservation(item);
+                }}
+                color="#093A6E"
+              >
+                <Share weight="bold" />
+              </Button>
+            </ButtonBox>
             <Header>
               <span>ID: {item.matchsId}</span>
               <span>{item.registDate}</span>
@@ -93,6 +156,11 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
       <PaginationWrapper>
         <Pagination current={page} totalPages={data.totalPages} onChange={onPageChange} />
       </PaginationWrapper>
+      {histData && (
+        <Modal open={historyOpen} onClose={() => setHistoryOpen(false)}>
+          <HistBaseCardTable data={histData} />
+        </Modal>
+      )}
     </>
   );
 }

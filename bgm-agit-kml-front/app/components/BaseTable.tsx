@@ -5,11 +5,6 @@ import styled from 'styled-components';
 import Pagination from '@/app/components/Pagination';
 import { useUserStore } from '@/store/user';
 import { PencilSimpleLine, MagnifyingGlass } from 'phosphor-react';
-import { usePathname } from 'next/navigation';
-import { MyPageItem } from '@/store/myPage';
-import { useInsertPost } from '@/services/main.service';
-import { alertDialog, confirmDialog } from '@/utils/alert';
-import { useFetchMyPageList } from '@/services/myPage.service';
 
 export interface BaseColumn<T> {
   key: string;
@@ -38,13 +33,6 @@ interface BaseTableProps<T> {
   onSearch?: () => void;
 }
 
-type MyPageRow = MyPageItem & {
-  approvalBtnEnabled?: boolean;
-  cancelBtnEnabled?: boolean;
-  approvalStatus?: string;
-  cancelStatus?: string;
-};
-
 export function BaseTable<T>({
   columns,
   data,
@@ -60,173 +48,71 @@ export function BaseTable<T>({
   onSearchKeywordChange,
   onSearch,
 }: BaseTableProps<T>) {
-  const { insert } = useInsertPost();
-  const fetchMyPage = useFetchMyPageList();
-
   const user = useUserStore((state) => state.user);
-  const pathname = usePathname();
 
-  function isMyPageRow(row: unknown): row is MyPageRow {
-    return typeof row === 'object' && row !== null;
-  }
-
-  console.log('path', pathname);
-
-  //공유하기
-  function shareReservation(item: MyPageItem) {
-    if (!window.Kakao || !window.Kakao.isInitialized()) {
-      return;
-    }
-
-    window.Kakao.Share.sendDefault({
-      objectType: 'text',
-      text: `
-      [마작 아카데미 예약 내역 안내]
-      
-      예약자: ${item.memberName}
-      예약일자: ${item.startDate}
-      예약시간: ${item.startTime} ~ ${item.endTime}
-      연락처: ${item.phoneNo}
-    `.trim(),
-      link: {
-        mobileWebUrl: 'https://bgmagit.co.kr/record',
-        webUrl: 'https://bgmagit.co.kr/record',
-      },
-    });
-  }
-
-  //업데이트
-  async function updateData(item: MyPageItem, gb: boolean) {
-    const param = {
-      lectureId: item.lectureId,
-      memberId: user?.id,
-    };
-
-    const url = gb ? `/my-academy/approval` : `/my-academy/cancel`;
-    const message = gb ? '해당 예약을 확정하시겠습니까?' : '해당 예약을 취소하시겠습니까?';
-    const message2 = gb ? '예약이 확정되었습니다.' : '예약이 취소되었습니다.';
-
-    const result = await confirmDialog(message, 'warning');
-    if (result.isConfirmed) {
-      insert({
-        url: `/bgm-agit${url}`,
-        body: param,
-        ignoreErrorRedirect: true,
-        onSuccess: async () => {
-          await alertDialog(message2, 'success');
-          fetchMyPage({ page, titleAndCont: searchKeyword });
-        },
-      });
-    }
-  }
   return (
     <TableBox>
       <TopBox>
-        {['/notice', '/review'].includes(pathname) ? (
-          <>
-            <SearchGroup
-              onSubmit={(e) => {
-                e.preventDefault();
-                onSearch?.();
-              }}
-            >
-              <FieldsWrapper>
-                <Field>
-                  <label>{searchLabel}</label>
-                  <input
-                    type="text"
-                    placeholder="검색어를 입력해주세요."
-                    value={searchKeyword ?? ''}
-                    onChange={(e) => onSearchKeywordChange?.(e.target.value)}
-                  />
-                </Field>
-              </FieldsWrapper>
-              <SearchButton type="submit">
-                <MagnifyingGlass weight="bold" />
-                검색
-              </SearchButton>
-            </SearchGroup>
-            {((pathname === '/notice' && user?.roles?.includes('ROLE_ADMIN')) ||
-              (pathname === '/review' && user)) && (
-              <Button onClick={onWriteClick ? () => onWriteClick() : undefined}>
-                <PencilSimpleLine weight="bold" />
-              </Button>
-            )}
-          </>
-        ) : (
-          <TextBox>
-            <p>
-              • 계좌 : 카카오뱅크 79795151308 <br />• 예금주 : 박x후
-            </p>
-            <span>
-              ※ 예약금은 10,000원이며, 반드시 예약자명으로 입금해주시기 바랍니다.
-              <br />※ 확정 후 취소의 경우 0507-1445-3503로 문의 주시기 바랍니다.
-            </span>
-          </TextBox>
+        <SearchGroup
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSearch?.();
+          }}
+        >
+          <FieldsWrapper>
+            <Field>
+              <label>{searchLabel}</label>
+              <input
+                type="text"
+                placeholder="검색어를 입력해주세요."
+                value={searchKeyword ?? ''}
+                onChange={(e) => onSearchKeywordChange?.(e.target.value)}
+              />
+            </Field>
+          </FieldsWrapper>
+          <SearchButton type="submit">
+            <MagnifyingGlass weight="bold" />
+            검색
+          </SearchButton>
+        </SearchGroup>
+        {user?.roles?.includes('ROLE_ADMIN') && (
+          <Button onClick={onWriteClick ? () => onWriteClick() : undefined}>
+            <PencilSimpleLine weight="bold" />
+          </Button>
         )}
       </TopBox>
-      <TableScroll>
-        <Table>
-          <thead>
+      <Table>
+        <thead>
+          <tr>
+            {columns.map((col) => (
+              <Th key={col.key} $width={col.width}>
+                {col.header}
+              </Th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.length === 0 ? (
             <tr>
-              {columns.map((col) => (
-                <Th key={col.key} $width={col.width}>
-                  {col.header}
-                </Th>
-              ))}
-              {pathname === '/myPage' && <Th>예약 상태</Th>}
+              <EmptyTd colSpan={columns.length}>{emptyMessage}</EmptyTd>
             </tr>
-          </thead>
-          <tbody>
-            {data?.length === 0 ? (
-              <tr>
-                <EmptyTd colSpan={columns.length}>{emptyMessage}</EmptyTd>
-              </tr>
-            ) : (
-              data?.map((row, index) => (
-                <Tr
-                  key={index}
-                  $clickable={!!onRowClick}
-                  onClick={onRowClick ? () => onRowClick(row) : undefined}
-                >
-                  {columns.map((col) => (
-                    <Td key={col.key} $align={col.align} $nowrap={col.nowrap}>
-                      {col.render(row, index)}
-                    </Td>
-                  ))}
-                  {pathname === '/myPage' && isMyPageRow(row) && (
-                    <Td $nowrap $align="center">
-                      <div>
-                        {row.cancelStatus === 'Y'
-                          ? '예약 취소'
-                          : row.approvalStatus === 'Y'
-                            ? '예약 확정'
-                            : '예약 대기'}
-                        {/* 승인 버튼 */}
-                        {row.approvalBtnEnabled && (
-                          <StatusButton color="#1A7D55" onClick={() => updateData(row, true)}>
-                            확정
-                          </StatusButton>
-                        )}
-
-                        {/* 취소 버튼 */}
-                        {row.cancelBtnEnabled && (
-                          <StatusButton onClick={() => updateData(row, false)} color="#FF5E57">
-                            취소
-                          </StatusButton>
-                        )}
-                        <StatusButton color="#093A6E" onClick={() => shareReservation(row)}>
-                          공유
-                        </StatusButton>
-                      </div>
-                    </Td>
-                  )}
-                </Tr>
-              ))
-            )}
-          </tbody>
-        </Table>
-      </TableScroll>
+          ) : (
+            data.map((row, index) => (
+              <Tr
+                key={index}
+                $clickable={!!onRowClick}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+              >
+                {columns.map((col) => (
+                  <Td key={col.key} $align={col.align} $nowrap={col.nowrap}>
+                    {col.render(row, index)}
+                  </Td>
+                ))}
+              </Tr>
+            ))
+          )}
+        </tbody>
+      </Table>
       <PaginationWrapper>
         <Pagination current={page} totalPages={totalPages} onChange={onPageChange} />
       </PaginationWrapper>
@@ -303,12 +189,6 @@ const Td = styled.td<{
   white-space: ${({ $nowrap }) => ($nowrap ? 'nowrap' : 'normal')};
   word-break: break-word;
   overflow-wrap: anywhere;
-
-  > div {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-  }
 `;
 
 const Tr = styled.tr<{ $clickable: boolean }>`
@@ -427,45 +307,5 @@ const SearchButton = styled.button`
   white-space: nowrap;
   &:hover {
     opacity: 0.8;
-  }
-`;
-
-const TableScroll = styled.div`
-  width: 100%;
-  overflow-x: auto;
-`;
-
-const StatusButton = styled.button<{ color: string }>`
-  padding: 4px 8px;
-  background-color: ${({ color }) => color};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.desktop.sizes.md};
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.mobile.sizes.md};
-  }
-`;
-
-const TextBox = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: right;
-  width: 100%;
-  font-size: ${({ theme }) => theme.desktop.sizes.xl};
-  line-height: 1.4;
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.mobile.sizes.xl};
-  }
-
-  p {
-    color: ${({ theme }) => theme.colors.subColor};
-  }
-
-  span {
-    color: ${({ theme }) => theme.colors.redColor};
-    font-weight: ${({ theme }) => theme.weight.semiBold};
   }
 `;
