@@ -2,7 +2,7 @@ import { useRequest } from '@/hooks/useRequest';
 import { useNoticeListStore } from '@/store/notice';
 import api from '@/lib/axiosInstance';
 import { useRecordUserStore } from '@/store/user';
-import { useDetailRecordStore, useYakumanStore } from '@/store/record';
+import { useDetailRecordStore, useHistRecordStore, useYakumanStore } from '@/store/record';
 
 export function useFetchRecordUser() {
   const { request } = useRequest();
@@ -41,4 +41,17 @@ export function useFetchDetailWrite() {
   };
 
   return fetchDetailWrite;
+}
+
+export function useFetchHistWrite() {
+  const { request } = useRequest();
+  const setHistRecord = useHistRecordStore((state) => state.setHistRecord);
+
+  const fetchHistWrite = (id: number) => {
+    request(() => api.get(`/bgm-agit/history/${id}`).then((res) => res.data), setHistRecord, {
+      ignoreErrorRedirect: true,
+    });
+  };
+
+  return fetchHistWrite;
 }

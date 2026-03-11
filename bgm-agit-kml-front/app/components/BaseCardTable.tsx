@@ -11,6 +11,8 @@ import { useFetchDayRecordList } from '@/services/dayRecord.service';
 import { useState } from 'react';
 import Modal from '@/app/modal/modal';
 import { HistBaseCardTable } from '@/app/components/HistBaseCardTable';
+import { useFetchHistWrite } from '@/services/record.service';
+import { useHistRecordStore } from '@/store/record';
 
 type RowType = {
   seat: string;
@@ -40,10 +42,21 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
   const router = useRouter();
   const fetchDayRecord = useFetchDayRecordList();
 
+  console.log('data', data);
+
   const user = useUserStore((state) => state.user);
 
-  //히스토리 모달 상태
+  //히스토리
+  const fetchHistRecord = useFetchHistWrite();
+  const histData = useHistRecordStore((state) => state.histRecord);
+  console.log('histData', histData);
   const [historyOpen, setHistoryOpen] = useState(false);
+
+  const getHist = async (id: number) => {
+    fetchHistRecord(id);
+
+    setHistoryOpen(true);
+  };
 
   const deleteData = async (id: number) => {
     const result = await confirmDialog('해당 기록을 삭제 하시겠습니까?', 'warning');
@@ -106,7 +119,7 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
                   </Button>
                 </>
               )}
-              <Button onClick={() => setHistoryOpen(true)} color="#757575">
+              <Button onClick={() => getHist(item.matchsId)} color="#757575">
                 <ClockCounterClockwise weight="bold" />
               </Button>
               <Button
@@ -143,10 +156,11 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
       <PaginationWrapper>
         <Pagination current={page} totalPages={data.totalPages} onChange={onPageChange} />
       </PaginationWrapper>
-
-      <Modal open={historyOpen} onClose={() => setHistoryOpen(false)}>
-        <HistBaseCardTable data={data} />
-      </Modal>
+      {histData && (
+        <Modal open={historyOpen} onClose={() => setHistoryOpen(false)}>
+          <HistBaseCardTable data={histData} />
+        </Modal>
+      )}
     </>
   );
 }

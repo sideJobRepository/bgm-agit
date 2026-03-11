@@ -49,14 +49,52 @@ export interface DetailRecordData {
   yakumans: YakumanItem[];
 }
 
-// zustand store 타입
 interface DetailRecordStore {
   detailRecord: DetailRecordData | null;
   setDetailRecord: (detailRecord: DetailRecordData | null) => void;
 }
 
-// zustand store
 export const useDetailRecordStore = create<DetailRecordStore>((set) => ({
   detailRecord: null,
   setDetailRecord: (detailRecord) => set({ detailRecord }),
+}));
+
+//hist
+
+export interface RecordHistory {
+  recordId: number;
+  nickName: string;
+  score: number;
+  rank: number;
+  point: number;
+  seat: string;
+  winner?: boolean;
+}
+
+export interface HistRecord {
+  changeReason: string;
+  changeType: string;
+  delStatus: string;
+  firstUma: number;
+  secondUma: number;
+  thirdUma: number;
+  fourthUma: number;
+  matchHistoryId: number;
+  matchId: number;
+  matchsWind: string;
+  modifyDate: string;
+  modifyName: string;
+  recordHistory: RecordHistory[];
+  tournamentStatus: string;
+  turing: number;
+}
+
+interface HistRecordStore {
+  histRecord: HistRecord[] | null;
+  setHistRecord: (histRecord: HistRecord[] | null) => void;
+}
+
+export const useHistRecordStore = create<HistRecordStore>((set) => ({
+  histRecord: null,
+  setHistRecord: (histRecord) => set({ histRecord }),
 }));

@@ -8,6 +8,7 @@ import { alertDialog, confirmDialog } from '@/utils/alert';
 import { useDeletePost } from '@/services/main.service';
 import { useRouter } from 'next/navigation';
 import { useFetchDayRecordList } from '@/services/dayRecord.service';
+import { HistRecord } from '@/store/record';
 
 type RowType = {
   seat: string;
@@ -24,37 +25,28 @@ type MatchType = {
 };
 
 type BaseCardTableProps = {
-  data: {
-    content: MatchType[];
-    totalPages: number;
-  };
-  page: number;
-  onPageChange: (page: number) => void;
+  data: HistRecord[];
 };
 
-export function HistBaseCardTable({ data, page, onPageChange }: BaseCardTableProps) {
-  const { remove } = useDeletePost();
-  const router = useRouter();
-  const fetchDayRecord = useFetchDayRecordList();
-
+export function HistBaseCardTable({ data }: BaseCardTableProps) {
   return (
     <CardWrap>
       <CardGrid>
-        {data.content.map((item) => (
-          <Card key={item.matchsId}>
+        {data.map((item, idx) => (
+          <Card key={idx}>
             <Header>
-              <span>ID: {item.matchsId}</span>
-              <span>{item.registDate}</span>
+              <span>{item.modifyName}</span>
+              <span>{item.modifyDate}</span>
             </Header>
             {/*<HeaderData>*/}
             {/*  <span>{item.matchsId}</span>*/}
             {/*  <span>{item.registDate}</span>*/}
             {/*</HeaderData>*/}
-            {item.rows.map((row, idx) => (
+            {item.recordHistory.map((row, idx) => (
               <Row key={idx} $highlight={row.rank === 1}>
                 <span>{row.seat}</span>
                 <span>{row.rank}</span>
-                <span>{row.nickname}</span>
+                <span>{row.nickName}</span>
                 <span>{row.score.toLocaleString()}</span>
                 <span>{row.point}</span>
               </Row>
@@ -62,10 +54,6 @@ export function HistBaseCardTable({ data, page, onPageChange }: BaseCardTablePro
           </Card>
         ))}
       </CardGrid>
-
-      <PaginationWrapper>
-        <Pagination current={page} totalPages={data.totalPages} onChange={onPageChange} />
-      </PaginationWrapper>
     </CardWrap>
   );
 }
