@@ -95,7 +95,8 @@ public class RecordServiceImpl implements RecordService {
                     response.setMatchsId(entry.getKey());
                     response.setCreateNicname(group.get(0).getMatchs().getMember().getBgmAgitMemberNickname());
                     response.setRegistDate(group.get(0).getRegistDate());
-    
+                    response.setTournamentStatus(group.get(0).getMatchs().getTournamentStatus());
+                    response.setMatchsWind(group.get(0).getMatchs().getWind());
                     for (Record rec : group) {
     
                         RecordGetResponse.Row row = new RecordGetResponse.Row();

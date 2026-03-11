@@ -1,5 +1,6 @@
 package com.bgmagitapi.kml.record.dto.response;
 
+import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.record.enums.Wind;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -21,6 +22,8 @@ public class RecordGetResponse {
     private Long matchsId;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime registDate;
+    private String tournamentStatus;
+    private MatchsWind matchsWind;
     private String createNicname;
     private List<Row> rows;
     
