@@ -8,9 +8,6 @@ import { alertDialog, confirmDialog } from '@/utils/alert';
 import { useDeletePost } from '@/services/main.service';
 import { useRouter } from 'next/navigation';
 import { useFetchDayRecordList } from '@/services/dayRecord.service';
-import { useState } from 'react';
-import Modal from '@/app/modal/modal';
-import { HistBaseCardTable } from '@/app/components/HistBaseCardTable';
 
 type RowType = {
   seat: string;
@@ -35,90 +32,16 @@ type BaseCardTableProps = {
   onPageChange: (page: number) => void;
 };
 
-export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) {
+export function HistBaseCardTable({ data, page, onPageChange }: BaseCardTableProps) {
   const { remove } = useDeletePost();
   const router = useRouter();
   const fetchDayRecord = useFetchDayRecordList();
 
-  const user = useUserStore((state) => state.user);
-
-  //히스토리 모달 상태
-  const [historyOpen, setHistoryOpen] = useState(false);
-
-  const deleteData = async (id: number) => {
-    const result = await confirmDialog('해당 기록을 삭제 하시겠습니까?', 'warning');
-
-    if (result.isConfirmed) {
-      remove({
-        url: `/bgm-agit/record/${id}`,
-        ignoreErrorRedirect: true,
-        onSuccess: async () => {
-          await alertDialog('기록이 삭제되었습니다.', 'success');
-          fetchDayRecord({ page });
-        },
-      });
-    }
-  };
-
-  const editWriteMove = (id: number) => {
-    router.push(`/write?id=${id}`);
-  };
-
-  //공유하기
-  function shareReservation(item: MatchType) {
-    if (!window.Kakao || !window.Kakao.isInitialized()) return;
-
-    const rowsText = item.rows
-      .map(
-        (row) =>
-          `${row.seat} ${row.nickname} ${row.score.toLocaleString()} (${row.point > 0 ? '+' : ''}${row.point})`
-      )
-      .join('\n');
-
-    const text =
-      '\u200B[BGM KML 기록 안내]\n\n' +
-      `ID: ${item.matchsId}\n` +
-      `기록일자: ${item.registDate}\n\n` +
-      rowsText;
-
-    window.Kakao.Share.sendDefault({
-      objectType: 'text',
-      text,
-      link: {
-        mobileWebUrl: 'https://bgmagit.co.kr/record',
-        webUrl: 'https://bgmagit.co.kr/record',
-      },
-    });
-  }
   return (
-    <>
+    <CardWrap>
       <CardGrid>
         {data.content.map((item) => (
           <Card key={item.matchsId}>
-            <ButtonBox>
-              {(user?.roles.includes('ROLE_ADMIN') || user?.roles.includes('MENTOR')) && (
-                <>
-                  <Button color="#415B9C">
-                    <FileText weight="bold" onClick={() => editWriteMove(item.matchsId)} />
-                  </Button>
-                  <Button onClick={() => deleteData(item.matchsId)} color="#D9625E">
-                    <TrashSimple weight="bold" />
-                  </Button>
-                </>
-              )}
-              <Button onClick={() => setHistoryOpen(true)} color="#757575">
-                <ClockCounterClockwise weight="bold" />
-              </Button>
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  shareReservation(item);
-                }}
-                color="#093A6E"
-              >
-                <Share weight="bold" />
-              </Button>
-            </ButtonBox>
             <Header>
               <span>ID: {item.matchsId}</span>
               <span>{item.registDate}</span>
@@ -143,13 +66,17 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
       <PaginationWrapper>
         <Pagination current={page} totalPages={data.totalPages} onChange={onPageChange} />
       </PaginationWrapper>
-
-      <Modal open={historyOpen} onClose={() => setHistoryOpen(false)}>
-        <HistBaseCardTable data={data} />
-      </Modal>
-    </>
+    </CardWrap>
   );
 }
+
+const CardWrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  width: 100%;
+  height: 100%;
+`;
 
 const CardGrid = styled.div`
   display: grid;
@@ -236,39 +163,4 @@ const PaginationWrapper = styled.div`
   margin: 32px auto;
   display: flex;
   justify-content: center;
-`;
-
-const ButtonBox = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  flex: 1;
-  margin-bottom: 8px;
-`;
-
-const Button = styled.button<{ color: string }>`
-  display: flex;
-  align-items: center;
-  padding: 4px;
-  background-color: ${({ color }) => color};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.desktop.sizes.md};
-  border: none;
-  border-radius: 999px;
-  cursor: pointer;
-  white-space: nowrap;
-  box-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.mobile.sizes.md};
-  }
-
-  svg {
-    width: 12px;
-    height: 12px;
-  }
-
-  &:hover {
-    opacity: 0.8;
-  }
 `;
