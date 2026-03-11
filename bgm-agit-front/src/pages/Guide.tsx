@@ -5,13 +5,13 @@ export default function Guide() {
   return (
     <Wrapper>
       <TopBox>
-        <img src={'/guide/guide.jpeg'} alt="상단 이미지" />
+        <img src={'/guides/guide.jpeg'} alt="상단 이미지" />
       </TopBox>
 
       <ContentBox>
         <SubContent $bg="#ffffff">
           <ImageBox>
-            <img src={'/guide/rexx3.jpg'} alt="마작 테이블" />
+            <img src={'/guides/rexx3.jpg'} alt="마작 테이블" />
           </ImageBox>
           <TextBox $align="right" $bg="#F8F9FA">
             <strong>“대전 유일의 REXX-3 도입”</strong>
@@ -38,12 +38,12 @@ export default function Guide() {
             </span>
           </TextBox>
           <ImageBox>
-            <img src={'/guide/celanRoom.png'} alt="클린매너 사진" />
+            <img src={'/guides/celanRoom.png'} alt="클린매너 사진" />
           </ImageBox>
         </SubContent>
         <SubContent $bg="#ffffff">
           <ImageBox>
-            <img src={'/guide/guideTop.png'} alt="프리미엄 환경 사진" />
+            <img src={'/guides/guideTop.png'} alt="프리미엄 환경 사진" />
           </ImageBox>
           <TextBox $align="right" $bg="#F8F9FA">
             <strong>“최적의 프리미엄 환경”</strong>
