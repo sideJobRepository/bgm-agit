@@ -68,14 +68,14 @@ const CardWrap = styled.div`
 
 const CardGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr); // 한 줄에 3개
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
   gap: 16px;
   padding: 0 12px;
 
-  @media ${({ theme }) => theme.device.tablet} {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
+  // @media ${({ theme }) => theme.device.tablet} {
+  //   grid-template-columns: repeat(2, 1fr);
+  // }
+  //
   @media ${({ theme }) => theme.device.mobile} {
     grid-template-columns: 1fr;
   }

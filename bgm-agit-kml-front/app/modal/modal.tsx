@@ -35,6 +35,6 @@ const Content = styled.div`
   background: white;
   padding: 24px;
   border-radius: 8px;
-  width: 80%;
-  height: 80%;
+  width: 90%;
+  //height: 80%;
 `;
