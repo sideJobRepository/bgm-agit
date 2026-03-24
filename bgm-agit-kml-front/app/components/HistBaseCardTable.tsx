@@ -73,17 +73,15 @@ export function HistBaseCardTable({ data }: BaseCardTableProps) {
 }
 
 const CardWrap = styled.div`
-  display: flex;
-  flex-direction: column;
+  flex: 1;
   overflow: auto;
-  width: 100%;
-  height: 100%;
 `;
 
 const CardGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
   gap: 16px;
+  padding: 24px;
 
   // @media ${({ theme }) => theme.device.tablet} {
   //   grid-template-columns: repeat(2, 1fr);
@@ -105,12 +103,13 @@ const Card = styled.div`
 const ModifyBox = styled.div`
   text-align: right;
   margin-bottom: 8px;
-  font-size: ${({ theme }) => theme.desktop.sizes.xl};
+  font-size: ${({ theme }) => theme.desktop.sizes.md};
   color: ${({ theme }) => theme.colors.inputColor};
   font-weight: 600;
+  padding: 4px 12px;
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.mobile.sizes.xl};
+    font-size: ${({ theme }) => theme.mobile.sizes.md};
   }
 `;
 

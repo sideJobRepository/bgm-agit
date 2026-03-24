@@ -2,6 +2,7 @@
 
 import styled from 'styled-components';
 import ModalPortal from '@/app/modal/modalPortal';
+import { X } from 'phosphor-react';
 
 type Props = {
   open: boolean;
@@ -15,7 +16,13 @@ export default function Modal({ open, onClose, children }: Props) {
   return (
     <ModalPortal>
       <Overlay onClick={onClose}>
-        <Content onClick={(e) => e.stopPropagation()}>{children}</Content>
+        <Content onClick={(e) => e.stopPropagation()}>
+          <TopModalBox>
+            <h4>HISTORY</h4>
+            <X onClick={onClose} weight="bold" />
+          </TopModalBox>
+          {children}
+        </Content>
       </Overlay>
     </ModalPortal>
   );
@@ -31,10 +38,40 @@ const Overlay = styled.div`
   z-index: 1000;
 `;
 
+const TopModalBox = styled.div`
+  width: 100%;
+  display: flex;
+  padding: 20px 24px;
+  border-radius: 8px 8px 0 0;
+  background-color: ${({ theme }) => theme.colors.softColor};
+
+  h4 {
+    display: inline-flex;
+    font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
+    font-weight: 800;
+    color: ${({ theme }) => theme.colors.inputColor};
+
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
+    }
+  }
+
+  svg {
+    color: ${({ theme }) => theme.colors.inputColor};
+    margin-left: auto;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+  }
+`;
+
 const Content = styled.div`
   background: white;
-  padding: 24px;
   border-radius: 8px;
   width: 90%;
-  //max-height: 80%;
+  max-width: 1280px;
+  max-height: 80vh;
+
+  display: flex;
+  flex-direction: column;
 `;
