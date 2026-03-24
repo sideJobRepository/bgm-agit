@@ -36,5 +36,5 @@ const Content = styled.div`
   padding: 24px;
   border-radius: 8px;
   width: 90%;
-  //height: 80%;
+  //max-height: 80%;
 `;

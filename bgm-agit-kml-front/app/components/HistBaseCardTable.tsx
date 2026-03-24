@@ -1,14 +1,8 @@
 'use client';
 
 import styled from 'styled-components';
-import Pagination from '@/app/components/Pagination';
-import { useUserStore } from '@/store/user';
-import { FileText, TrashSimple, Share, ClockCounterClockwise } from 'phosphor-react';
-import { alertDialog, confirmDialog } from '@/utils/alert';
-import { useDeletePost } from '@/services/main.service';
-import { useRouter } from 'next/navigation';
-import { useFetchDayRecordList } from '@/services/dayRecord.service';
 import { HistRecord } from '@/store/record';
+import React from 'react';
 
 type RowType = {
   seat: string;
@@ -28,14 +22,27 @@ type BaseCardTableProps = {
   data: HistRecord[];
 };
 
+const LEADER_POSITIONS = [
+  { label: '동장', value: 'EAST' },
+  { label: '남장', value: 'SOUTH' },
+  { label: '서장', value: 'WEST' },
+  { label: '북장', value: 'NORTH' },
+];
+
 export function HistBaseCardTable({ data }: BaseCardTableProps) {
+  const getLabelByValue = (value: string) => {
+    return LEADER_POSITIONS.find((item) => item.value === value)?.label;
+  };
+
   return (
     <CardWrap>
       <CardGrid>
         {data.map((item, idx) => (
           <Card key={idx}>
+            <ModifyBox>{item.modifyName}</ModifyBox>
             <Header>
-              <span>{item.modifyName}</span>
+              <span>{getLabelByValue(item.matchsWind)}</span>
+              <span>대회여부 : {item.tournamentStatus === 'Y' ? '예' : '아니오'}</span>
               <span>{item.modifyDate}</span>
             </Header>
             {/*<HeaderData>*/}
@@ -51,6 +58,13 @@ export function HistBaseCardTable({ data }: BaseCardTableProps) {
                 <span>{row.point}</span>
               </Row>
             ))}
+            <HistResonBox>
+              <textarea
+                disabled={true}
+                value={item.changeReason}
+                placeholder="수정사유를 입력해주세요."
+              />
+            </HistResonBox>
           </Card>
         ))}
       </CardGrid>
@@ -70,7 +84,6 @@ const CardGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
   gap: 16px;
-  padding: 0 12px;
 
   // @media ${({ theme }) => theme.device.tablet} {
   //   grid-template-columns: repeat(2, 1fr);
@@ -87,6 +100,18 @@ const Card = styled.div`
   padding: 8px;
   width: 100%;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+`;
+
+const ModifyBox = styled.div`
+  text-align: right;
+  margin-bottom: 8px;
+  font-size: ${({ theme }) => theme.desktop.sizes.xl};
+  color: ${({ theme }) => theme.colors.inputColor};
+  font-weight: 600;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.mobile.sizes.xl};
+  }
 `;
 
 const Header = styled.div`
@@ -147,8 +172,29 @@ const Row = styled.div<{ $highlight?: boolean }>`
   }
 `;
 
-const PaginationWrapper = styled.div`
-  margin: 32px auto;
-  display: flex;
-  justify-content: center;
+const HistResonBox = styled.div`
+  display: inline-flex;
+  width: 100%;
+  flex-direction: column;
+
+  textarea {
+    border: none;
+    width: 100%;
+    resize: none;
+    padding: 8px 12px;
+    text-align: left;
+    font-size: ${({ theme }) => theme.desktop.sizes.md};
+    outline: none;
+    color: ${({ theme }) => theme.colors.inputColor};
+    background: ${({ theme }) => theme.colors.whiteColor};
+    border-radius: 4px;
+
+    &::placeholder {
+      color: ${({ theme }) => theme.colors.grayColor};
+    }
+
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: ${({ theme }) => theme.mobile.sizes.md};
+    }
+  }
 `;
