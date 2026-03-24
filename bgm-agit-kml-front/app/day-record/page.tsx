@@ -266,9 +266,11 @@ const FieldsWrapper = styled.div`
   width: 100%;
   align-items: center;
   flex: 1;
+  gap: 8px;
   overflow-x: auto;
   flex-wrap: nowrap;
   overflow-y: hidden;
+  margin-right: 12px;
 `;
 
 const Field = styled.div`
@@ -322,11 +324,8 @@ const DateRange = styled.div`
   color: ${({ theme }) => theme.colors.inputColor};
 
   input {
-    width: 80px !important;
+    width: 60px !important;
     cursor: pointer;
-    @media ${({ theme }) => theme.device.mobile} {
-      width: 72px !important;
-    }
   }
 
   span {
