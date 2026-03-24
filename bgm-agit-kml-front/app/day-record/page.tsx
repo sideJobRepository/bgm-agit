@@ -276,7 +276,7 @@ const FieldsWrapper = styled.div`
 const Field = styled.div`
   display: flex;
   flex-direction: column;
-  width: 50%;
+  width: calc(50% - 8px);
   flex-shrink: 0;
 
   label {
