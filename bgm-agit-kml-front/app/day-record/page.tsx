@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { BaseCardTable } from '@/app/components/BaseCardTable';
 import { MagnifyingGlass, PencilSimpleLine } from 'phosphor-react';
 import DatePicker from 'react-datepicker';
+import { ko } from 'date-fns/locale';
 import 'react-datepicker/dist/react-datepicker.css';
 
 export default function DayRecord() {
@@ -93,12 +94,14 @@ export default function DayRecord() {
                     selected={startDate}
                     onChange={(date) => setStartDate(date)}
                     dateFormat="yyyy.MM.dd"
+                    locale={ko}
                     portalId="root-portal"
                   />
                   <DateCenter>-</DateCenter>
                   <DatePicker
                     selected={endDate}
                     onChange={(date) => setEndDate(date)}
+                    locale={ko}
                     dateFormat="yyyy.MM.dd"
                     portalId="root-portal"
                   />
