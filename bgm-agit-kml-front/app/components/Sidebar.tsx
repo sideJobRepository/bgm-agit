@@ -176,68 +176,68 @@ export default function Sidebar() {
                 );
               })}
             <Divider />
-            {menuData
-              ?.filter((menu) => menu.menuOrders > 2)
-              ?.map((menu) => {
-                const IconComponent = iconMap[menu.icon as keyof typeof iconMap];
+            {/*{menuData*/}
+            {/*  ?.filter((menu) => menu.menuOrders > 2)*/}
+            {/*  ?.map((menu) => {*/}
+            {/*    const IconComponent = iconMap[menu.icon as keyof typeof iconMap];*/}
 
-                return (
-                  <MenuLi key={menu.id} $active={pathname === menu.menuLink}>
-                    {/*<Link href={menu.menuLink}>*/}
-                    {/*  {IconComponent && <IconComponent weight="fill" />}*/}
-                    {/*  {menu.menuName}*/}
-                    {/*</Link>*/}
+            {/*    return (*/}
+            {/*      <MenuLi key={menu.id} $active={pathname === menu.menuLink}>*/}
+            {/*        /!*<Link href={menu.menuLink}>*!/*/}
+            {/*        /!*  {IconComponent && <IconComponent weight="fill" />}*!/*/}
+            {/*        /!*  {menu.menuName}*!/*/}
+            {/*        /!*</Link>*!/*/}
 
-                    {menu.menuLink !== '/sub' ? (
-                      <Link href={menu?.menuLink}>
-                        {IconComponent && <IconComponent weight="fill" />}
-                        {menu.menuName}
-                      </Link>
-                    ) : (
-                      <>
-                        <a
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setOpenSubMenuId(openSubMenuId === menu.id ? null : menu.id);
-                          }}
-                        >
-                          {IconComponent && <IconComponent weight="fill" />}
-                          {menu.menuName}
-                          {openSubMenuId === menu.id ? (
-                            <CaretUp weight="bold" />
-                          ) : (
-                            <CaretDown weight="bold" />
-                          )}
-                        </a>
-                        <AnimatePresence initial={false}>
-                          {openSubMenuId === menu.id && (
-                            <SubUl
-                              key="submenu"
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.25, ease: 'easeInOut' }}
-                            >
-                              {menu.subMenus?.map((sub: any) => {
-                                const SubIcon = iconMap[sub.icon as keyof typeof iconMap];
-                                return (
-                                  <MenuLi key={sub.id} $active={pathname === sub.menuLink}>
-                                    <Link href={sub.menuLink}>
-                                      {SubIcon && <SubIcon weight="fill" />}
-                                      {sub.menuName}
-                                    </Link>
-                                  </MenuLi>
-                                );
-                              })}
-                            </SubUl>
-                          )}
-                        </AnimatePresence>
-                      </>
-                    )}
-                  </MenuLi>
-                );
-              })}
+            {/*        {menu.menuLink !== '/sub' ? (*/}
+            {/*          <Link href={menu?.menuLink}>*/}
+            {/*            {IconComponent && <IconComponent weight="fill" />}*/}
+            {/*            {menu.menuName}*/}
+            {/*          </Link>*/}
+            {/*        ) : (*/}
+            {/*          <>*/}
+            {/*            <a*/}
+            {/*              href="#"*/}
+            {/*              onClick={(e) => {*/}
+            {/*                e.preventDefault();*/}
+            {/*                setOpenSubMenuId(openSubMenuId === menu.id ? null : menu.id);*/}
+            {/*              }}*/}
+            {/*            >*/}
+            {/*              {IconComponent && <IconComponent weight="fill" />}*/}
+            {/*              {menu.menuName}*/}
+            {/*              {openSubMenuId === menu.id ? (*/}
+            {/*                <CaretUp weight="bold" />*/}
+            {/*              ) : (*/}
+            {/*                <CaretDown weight="bold" />*/}
+            {/*              )}*/}
+            {/*            </a>*/}
+            {/*            <AnimatePresence initial={false}>*/}
+            {/*              {openSubMenuId === menu.id && (*/}
+            {/*                <SubUl*/}
+            {/*                  key="submenu"*/}
+            {/*                  initial={{ opacity: 0, height: 0 }}*/}
+            {/*                  animate={{ opacity: 1, height: 'auto' }}*/}
+            {/*                  exit={{ opacity: 0, height: 0 }}*/}
+            {/*                  transition={{ duration: 0.25, ease: 'easeInOut' }}*/}
+            {/*                >*/}
+            {/*                  {menu.subMenus?.map((sub: any) => {*/}
+            {/*                    const SubIcon = iconMap[sub.icon as keyof typeof iconMap];*/}
+            {/*                    return (*/}
+            {/*                      <MenuLi key={sub.id} $active={pathname === sub.menuLink}>*/}
+            {/*                        <Link href={sub.menuLink}>*/}
+            {/*                          {SubIcon && <SubIcon weight="fill" />}*/}
+            {/*                          {sub.menuName}*/}
+            {/*                        </Link>*/}
+            {/*                      </MenuLi>*/}
+            {/*                    );*/}
+            {/*                  })}*/}
+            {/*                </SubUl>*/}
+            {/*              )}*/}
+            {/*            </AnimatePresence>*/}
+            {/*          </>*/}
+            {/*        )}*/}
+            {/*      </MenuLi>*/}
+            {/*    );*/}
+            {/*  })}*/}
           </MainUl>
         </MiddleSeciton>
         <BottomSeciton>
@@ -351,8 +351,6 @@ const SidebarWrapper = styled(motion.aside)`
   display: flex;
   width: 100%;
   height: 100%;
-  flex-direction: column;
-  border: 20px solid rgb(244 244 245);
   background: ${({ theme }) => theme.colors.whiteColor};
   overflow-y: auto;
 
@@ -364,14 +362,19 @@ const SidebarWrapper = styled(motion.aside)`
     height: calc(100dvh - 64px);
     padding-top: 20px;
     z-index: 1;
+    flex-direction: column;
+    border: 20px solid rgb(244 244 245);
   }
 `;
 
 const MainUl = styled.ul`
   display: flex;
-  flex-direction: column;
   padding: 0 24px;
   gap: 12px;
+
+  @media ${({ theme }) => theme.device.tablet} {
+    flex-direction: column;
+  }
 `;
 
 const SubUl = styled(motion.ul)`
@@ -395,7 +398,6 @@ const TopSeticon = styled.div`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 10px solid rgb(244 244 245);
   padding: 16px 12px;
 
   img {
@@ -404,6 +406,7 @@ const TopSeticon = styled.div`
 
   @media ${({ theme }) => theme.device.tablet} {
     display: none;
+    border-bottom: 10px solid rgb(244 244 245);
   }
 `;
 
@@ -411,13 +414,15 @@ const MiddleSeciton = styled.div`
   flex: 1;
   justify-content: center;
   display: flex;
-  flex-direction: column;
   padding: 16px 0;
+
+  @media ${({ theme }) => theme.device.tablet} {
+    flex-direction: column;
+  }
 `;
 
 const MenuLi = styled.li<{ $active: boolean }>`
   display: flex;
-  flex-direction: column;
   gap: 24px;
   padding: 12px 16px;
   background-color: ${({ $active }) => ($active ? '#000000' : 'transparent')};
@@ -429,7 +434,7 @@ const MenuLi = styled.li<{ $active: boolean }>`
     position: relative;
     align-items: center;
     gap: 8px;
-    width: 100%;
+    //width: 100%;
     font-weight: 500;
     font-size: ${({ theme }) => theme.desktop.sizes.xl};
 
@@ -437,6 +442,10 @@ const MenuLi = styled.li<{ $active: boolean }>`
       width: 16px;
       height: 16px;
     }
+  }
+
+  @media ${({ theme }) => theme.device.tablet} {
+    flex-direction: column;
   }
 `;
 
