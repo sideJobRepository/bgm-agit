@@ -328,7 +328,8 @@ const DateRange = styled.div`
   color: ${({ theme }) => theme.colors.inputColor};
 
   input {
-    width: 60px !important;
+    text-align: center;
+    width: 68px !important;
     cursor: pointer;
   }
 
