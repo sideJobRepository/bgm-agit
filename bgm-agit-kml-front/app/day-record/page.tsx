@@ -279,6 +279,10 @@ const Field = styled.div`
   width: calc(50% - 8px);
   flex-shrink: 0;
 
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 180px;
+  }
+
   label {
     font-size: ${({ theme }) => theme.desktop.sizes.xs};
     color: ${({ theme }) => theme.colors.blackColor};
