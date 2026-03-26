@@ -44,16 +44,15 @@ const LeftArea = styled.header`
   top: 0;
   left: 0;
   right: 0;
-  //height: 100%;
   width: 100%;
-  height: 64px;
+  height: 100px;
   background-color: ${({ theme }) => theme.colors.whiteColor};
   z-index: 3;
 
-  // @media ${({ theme }) => theme.device.tablet} {
-  //     width: 100%;
-  //     height: 64px;
-  // }
+  @media ${({ theme }) => theme.device.tablet} {
+    width: 100%;
+    height: 64px;
+  }
 `;
 
 const MainArea = styled.main`
@@ -61,9 +60,9 @@ const MainArea = styled.main`
   z-index: 0;
   flex: 1;
   height: 100%;
-  margin-left: 280px; //leftArea의 넓이 값
   overflow-y: auto;
   overflow-x: auto;
+  margin-top: 100px;
 
   @media ${({ theme }) => theme.device.tablet} {
     margin-left: 0;

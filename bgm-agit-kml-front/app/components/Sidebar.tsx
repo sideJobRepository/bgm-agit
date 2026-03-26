@@ -176,68 +176,68 @@ export default function Sidebar() {
                 );
               })}
             <Divider />
-            {/*{menuData*/}
-            {/*  ?.filter((menu) => menu.menuOrders > 2)*/}
-            {/*  ?.map((menu) => {*/}
-            {/*    const IconComponent = iconMap[menu.icon as keyof typeof iconMap];*/}
+            {menuData
+              ?.filter((menu) => menu.menuOrders > 2)
+              ?.map((menu) => {
+                const IconComponent = iconMap[menu.icon as keyof typeof iconMap];
 
-            {/*    return (*/}
-            {/*      <MenuLi key={menu.id} $active={pathname === menu.menuLink}>*/}
-            {/*        /!*<Link href={menu.menuLink}>*!/*/}
-            {/*        /!*  {IconComponent && <IconComponent weight="fill" />}*!/*/}
-            {/*        /!*  {menu.menuName}*!/*/}
-            {/*        /!*</Link>*!/*/}
+                return (
+                  <MenuLi key={menu.id} $active={pathname === menu.menuLink}>
+                    {/*<Link href={menu.menuLink}>*/}
+                    {/*  {IconComponent && <IconComponent weight="fill" />}*/}
+                    {/*  {menu.menuName}*/}
+                    {/*</Link>*/}
 
-            {/*        {menu.menuLink !== '/sub' ? (*/}
-            {/*          <Link href={menu?.menuLink}>*/}
-            {/*            {IconComponent && <IconComponent weight="fill" />}*/}
-            {/*            {menu.menuName}*/}
-            {/*          </Link>*/}
-            {/*        ) : (*/}
-            {/*          <>*/}
-            {/*            <a*/}
-            {/*              href="#"*/}
-            {/*              onClick={(e) => {*/}
-            {/*                e.preventDefault();*/}
-            {/*                setOpenSubMenuId(openSubMenuId === menu.id ? null : menu.id);*/}
-            {/*              }}*/}
-            {/*            >*/}
-            {/*              {IconComponent && <IconComponent weight="fill" />}*/}
-            {/*              {menu.menuName}*/}
-            {/*              {openSubMenuId === menu.id ? (*/}
-            {/*                <CaretUp weight="bold" />*/}
-            {/*              ) : (*/}
-            {/*                <CaretDown weight="bold" />*/}
-            {/*              )}*/}
-            {/*            </a>*/}
-            {/*            <AnimatePresence initial={false}>*/}
-            {/*              {openSubMenuId === menu.id && (*/}
-            {/*                <SubUl*/}
-            {/*                  key="submenu"*/}
-            {/*                  initial={{ opacity: 0, height: 0 }}*/}
-            {/*                  animate={{ opacity: 1, height: 'auto' }}*/}
-            {/*                  exit={{ opacity: 0, height: 0 }}*/}
-            {/*                  transition={{ duration: 0.25, ease: 'easeInOut' }}*/}
-            {/*                >*/}
-            {/*                  {menu.subMenus?.map((sub: any) => {*/}
-            {/*                    const SubIcon = iconMap[sub.icon as keyof typeof iconMap];*/}
-            {/*                    return (*/}
-            {/*                      <MenuLi key={sub.id} $active={pathname === sub.menuLink}>*/}
-            {/*                        <Link href={sub.menuLink}>*/}
-            {/*                          {SubIcon && <SubIcon weight="fill" />}*/}
-            {/*                          {sub.menuName}*/}
-            {/*                        </Link>*/}
-            {/*                      </MenuLi>*/}
-            {/*                    );*/}
-            {/*                  })}*/}
-            {/*                </SubUl>*/}
-            {/*              )}*/}
-            {/*            </AnimatePresence>*/}
-            {/*          </>*/}
-            {/*        )}*/}
-            {/*      </MenuLi>*/}
-            {/*    );*/}
-            {/*  })}*/}
+                    {menu.menuLink !== '/sub' ? (
+                      <Link href={menu?.menuLink}>
+                        {IconComponent && <IconComponent weight="fill" />}
+                        {menu.menuName}
+                      </Link>
+                    ) : (
+                      <>
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setOpenSubMenuId(openSubMenuId === menu.id ? null : menu.id);
+                          }}
+                        >
+                          {IconComponent && <IconComponent weight="fill" />}
+                          {menu.menuName}
+                          {openSubMenuId === menu.id ? (
+                            <CaretUp weight="bold" />
+                          ) : (
+                            <CaretDown weight="bold" />
+                          )}
+                        </a>
+                        <AnimatePresence initial={false}>
+                          {openSubMenuId === menu.id && (
+                            <SubUl
+                              key="submenu"
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.25, ease: 'easeInOut' }}
+                            >
+                              {menu.subMenus?.map((sub: any) => {
+                                const SubIcon = iconMap[sub.icon as keyof typeof iconMap];
+                                return (
+                                  <MenuLi key={sub.id} $active={pathname === sub.menuLink}>
+                                    <Link href={sub.menuLink}>
+                                      {SubIcon && <SubIcon weight="fill" />}
+                                      {sub.menuName}
+                                    </Link>
+                                  </MenuLi>
+                                );
+                              })}
+                            </SubUl>
+                          )}
+                        </AnimatePresence>
+                      </>
+                    )}
+                  </MenuLi>
+                );
+              })}
           </MainUl>
         </MiddleSeciton>
         <BottomSeciton>
@@ -353,6 +353,7 @@ const SidebarWrapper = styled(motion.aside)`
   height: 100%;
   background: ${({ theme }) => theme.colors.whiteColor};
   overflow-y: auto;
+  border-bottom: 10px solid rgb(244 244 245);
 
   @media ${({ theme }) => theme.device.tablet} {
     position: fixed;
@@ -371,9 +372,13 @@ const MainUl = styled.ul`
   display: flex;
   padding: 0 24px;
   gap: 12px;
+  align-items: center;
 
   @media ${({ theme }) => theme.device.tablet} {
     flex-direction: column;
+    align-items: unset;
+    //gap: 12px;
+    //justify-content: unset;
   }
 `;
 
@@ -401,7 +406,7 @@ const TopSeticon = styled.div`
   padding: 16px 12px;
 
   img {
-    width: 140px;
+    width: 180px;
   }
 
   @media ${({ theme }) => theme.device.tablet} {
@@ -414,10 +419,10 @@ const MiddleSeciton = styled.div`
   flex: 1;
   justify-content: center;
   display: flex;
-  padding: 16px 0;
 
   @media ${({ theme }) => theme.device.tablet} {
     flex-direction: column;
+    padding: 16px 0;
   }
 `;
 
@@ -429,12 +434,16 @@ const MenuLi = styled.li<{ $active: boolean }>`
   color: ${({ $active, theme }) => ($active ? '#ffffff' : theme.colors.blackColor)};
   border-radius: 99px;
 
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+
   a {
     display: flex;
     position: relative;
     align-items: center;
     gap: 8px;
-    //width: 100%;
+    white-space: nowrap;
     font-weight: 500;
     font-size: ${({ theme }) => theme.desktop.sizes.xl};
 
@@ -451,14 +460,23 @@ const MenuLi = styled.li<{ $active: boolean }>`
 
 const BottomSeciton = styled.div`
   padding: 24px 0;
-  border-top: 10px solid rgb(244 244 245);
+
   justify-content: center;
   display: flex;
   flex-direction: column;
+
+  @media ${({ theme }) => theme.device.tablet} {
+    border-top: 10px solid rgb(244 244 245);
+  }
 `;
 
 const Divider = styled.div`
-  width: 100%;
-  height: 1px;
+  width: 1px;
+  height: 70%;
   background-color: rgb(244 244 245);
+
+  @media ${({ theme }) => theme.device.tablet} {
+    width: 100%;
+    height: 1px;
+  }
 `;
