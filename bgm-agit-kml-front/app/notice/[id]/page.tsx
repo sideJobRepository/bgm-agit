@@ -5,10 +5,10 @@ import { useFetchNoticeDetailL, useNoticeDownloadFetch } from '@/services/notice
 import { use, useEffect, useRef, useState } from 'react';
 import { NoticeFiles, useNoticeDetailStore } from '@/store/notice';
 import dynamic from 'next/dynamic';
-import styled, {keyframes} from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, TrashSimple, FileText, Check, FilePlus, DownloadSimple   } from 'phosphor-react';
+import { ArrowLeft, TrashSimple, FileText, Check, FilePlus, DownloadSimple } from 'phosphor-react';
 import { useDeletePost, useInsertPost, useUpdatePost } from '@/services/main.service';
 import { alertDialog, confirmDialog } from '@/utils/alert';
 import { useLoadingStore } from '@/store/loading';
@@ -24,23 +24,18 @@ type NewNoticeState = {
 };
 
 type ExistingFile = {
-  id: number;        // 서버 파일 ID
+  id: number; // 서버 파일 ID
   fileName: string;
   fileUrl: string;
   status: 'NORMAL' | 'DELETED';
   fileFolder: string;
 };
 
-
-export default function NoticeDetail({
-                                       params,
-                                     }: {
-  params: Promise<{ id: string }>;
-}) {
+export default function NoticeDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
 
-  console.log("id", id)
+  console.log('id', id);
 
   const { insert } = useInsertPost();
   const { update } = useUpdatePost();
@@ -50,7 +45,7 @@ export default function NoticeDetail({
   const fetchDetailNotice = useFetchNoticeDetailL();
   const detailNotice = useNoticeDetailStore((state) => state.noticeDetail);
 
-  const fetchFileDownload =useNoticeDownloadFetch();
+  const fetchFileDownload = useNoticeDownloadFetch();
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [newNotice, setNewNotice] = useState<NewNoticeState>({
@@ -65,8 +60,7 @@ export default function NoticeDetail({
   const [files, setFiles] = useState<File[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<ExistingFile[]>([]);
 
-  function fileDownload(file : NoticeFiles) {
-
+  function fileDownload(file: NoticeFiles) {
     fetchFileDownload(file);
   }
 
@@ -75,12 +69,11 @@ export default function NoticeDetail({
 
     const selectedFiles = Array.from(e.target.files);
 
-    setFiles(prev => [...prev, ...selectedFiles]);
+    setFiles((prev) => [...prev, ...selectedFiles]);
 
     // 같은 파일 다시 선택 가능하게 초기화
     e.target.value = '';
   };
-
 
   const handleSubmit = async () => {
     const formData = new FormData();
@@ -91,11 +84,10 @@ export default function NoticeDetail({
       formData.append('id', id);
 
       attachedFiles
-        .filter(file => file.status === 'DELETED')
-        .forEach(file => {
+        .filter((file) => file.status === 'DELETED')
+        .forEach((file) => {
           formData.append('deleteFileIds', String(file.id));
         });
-
     }
 
     files.forEach((file) => {
@@ -121,9 +113,9 @@ export default function NoticeDetail({
               'success'
             );
             if (result.isConfirmed) {
-              router.push(`/notice`)
-            }else {
-              fetchDetailNotice(id)
+              router.push(`/notice`);
+            } else {
+              fetchDetailNotice(id);
               setFiles([]);
             }
           }
@@ -150,7 +142,6 @@ export default function NoticeDetail({
   };
 
   const cancleClick = async () => {
-
     const result = await confirmDialog('정말 이전으로 되돌아 가시겠습니까?', 'warning');
 
     if (result.isConfirmed) {
@@ -167,26 +158,22 @@ export default function NoticeDetail({
         router.push('/notice');
       }
     }
-  }
+  };
 
   //파일 추가 삭제
   const handleRemoveFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   //기존파일
   const handleDeleteExistingFile = (fileId: number) => {
-    setAttachedFiles(prev =>
-      prev.map(file =>
-        file.id === fileId
-          ? { ...file, status: 'DELETED' }
-          : file
-      )
+    setAttachedFiles((prev) =>
+      prev.map((file) => (file.id === fileId ? { ...file, status: 'DELETED' } : file))
     );
   };
 
   //로딩
-  const loading = useLoadingStore((state) => state.loading)
+  const loading = useLoadingStore((state) => state.loading);
   const isReady = !loading && detailNotice;
 
   useEffect(() => {
@@ -201,12 +188,12 @@ export default function NoticeDetail({
         content: detailNotice.cont,
       });
       setAttachedFiles(
-        (detailNotice.files ?? []).map(file => ({
+        (detailNotice.files ?? []).map((file) => ({
           id: file.id,
           fileName: file.fileName,
           fileUrl: file.fileUrl,
           status: 'NORMAL',
-          fileFolder: file.fileFolder
+          fileFolder: file.fileFolder,
         }))
       );
     }
@@ -274,20 +261,20 @@ export default function NoticeDetail({
               <SkeletonBox style={{ width: '100%', height: '300px' }} />
             </ContentBox>
           </>
-          ) : (
+        ) : (
           <>
             {user?.roles.includes('ROLE_ADMIN') && (
               <ButtonBox>
-                  <>
-                    <Button onClick={() => setIsEditMode(true)} color="#415B9C">
-                      <FileText weight="bold"/>
-                    </Button>
-                    <Button onClick={deleteData} color="#D9625E">
-                      <TrashSimple weight="bold"/>
-                    </Button>
-                  </>
+                <>
+                  <Button onClick={() => setIsEditMode(true)} color="#415B9C">
+                    <FileText weight="bold" />
+                  </Button>
+                  <Button onClick={deleteData} color="#D9625E">
+                    <TrashSimple weight="bold" />
+                  </Button>
+                </>
               </ButtonBox>
-              )}
+            )}
             <TitleBox>
               <div>
                 <span>{detailNotice?.registDate}</span>
@@ -309,7 +296,7 @@ export default function NoticeDetail({
                     >
                       {file.fileName}
                       <FileSvgBox $color="#6DAE81">
-                        <DownloadSimple  weight="bold"/>
+                        <DownloadSimple weight="bold" />
                       </FileSvgBox>
                     </a>
                   </li>
@@ -328,15 +315,10 @@ export default function NoticeDetail({
         <>
           <ButtonBox>
             <Button onClick={handleSubmit} color="#4A90E2">
-              <Check weight="bold"/>
+              <Check weight="bold" />
             </Button>
-            <Button
-              onClick={() =>
-                cancleClick()
-              }
-              color="#D9625E"
-            >
-              <ArrowLeft weight="bold"/>
+            <Button onClick={() => cancleClick()} color="#D9625E">
+              <ArrowLeft weight="bold" />
             </Button>
           </ButtonBox>
           <EditorWrapper>
@@ -344,59 +326,47 @@ export default function NoticeDetail({
               type="text"
               placeholder="제목을 입력해주세요."
               value={newNotice.title}
-              onChange={(e) =>
-                setNewNotice((prev) => ({ ...prev, title: e.target.value }))
-              }
+              onChange={(e) => setNewNotice((prev) => ({ ...prev, title: e.target.value }))}
             />
             <FileButtonBox>
-              <Button
-                type="button"
-                color="#415B9C"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <FilePlus weight="bold"/>
+              <Button type="button" color="#415B9C" onClick={() => fileInputRef.current?.click()}>
+                <FilePlus weight="bold" />
               </Button>
             </FileButtonBox>
             <StyledFileUl>
               {attachedFiles
-                .filter(file => file.status !== 'DELETED')
+                .filter((file) => file.status !== 'DELETED')
                 .map((file, idx) => (
                   <li key={idx}>
                     <a>
                       {file.fileName}
                       <FileSvgBox $color="#D9625E">
-                        <TrashSimple  weight="bold" onClick={() => handleDeleteExistingFile(file.id)}/>
+                        <TrashSimple
+                          weight="bold"
+                          onClick={() => handleDeleteExistingFile(file.id)}
+                        />
                       </FileSvgBox>
                       <FileSvgBox $color="#6DAE81">
-                        <DownloadSimple  weight="bold" onClick={() => fileDownload(file)}/>
+                        <DownloadSimple weight="bold" onClick={() => fileDownload(file)} />
                       </FileSvgBox>
                     </a>
                   </li>
                 ))}
 
-                {files.map((file, idx) => (
-                  <li key={`${file.name}-${idx}`}>
-                    {file.name}
-                    <FileSvgBox $color="#D9625E">
-                      <TrashSimple  onClick={() => handleRemoveFile(idx)} weight="bold"/>
-                    </FileSvgBox>
-                  </li>
-                ))}
-
+              {files.map((file, idx) => (
+                <li key={`${file.name}-${idx}`}>
+                  {file.name}
+                  <FileSvgBox $color="#D9625E">
+                    <TrashSimple onClick={() => handleRemoveFile(idx)} weight="bold" />
+                  </FileSvgBox>
+                </li>
+              ))}
             </StyledFileUl>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              hidden
-              onChange={handleFileChange}
-            />
+            <input ref={fileInputRef} type="file" multiple hidden onChange={handleFileChange} />
             <EditorBox>
               <NoticeEditor
                 value={newNotice.content}
-                onChange={(content) =>
-                  setNewNotice((prev) => ({ ...prev, content }))
-                }
+                onChange={(content) => setNewNotice((prev) => ({ ...prev, content }))}
                 onUpload={(file) => {
                   const formData = new FormData();
                   formData.append('file', file);
@@ -406,7 +376,6 @@ export default function NoticeDetail({
                       body: formData,
                       ignoreErrorRedirect: true,
                       onSuccess: (data: unknown) => {
-
                         resolve(data as string);
                       },
                     });
@@ -422,12 +391,12 @@ export default function NoticeDetail({
 }
 
 export const Wrapper = styled.div`
-    max-width: 1500px;
+  max-width: 1500px;
   min-width: 1280px;
   min-height: 600px;
   height: 100%;
   margin: auto;
-    padding: 24px 8px;
+  padding: 24px 8px;
   @media ${({ theme }) => theme.device.mobile} {
     max-width: 100%;
     min-width: 100%;
@@ -437,9 +406,9 @@ export const Wrapper = styled.div`
 
 const EditorWrapper = styled.div`
   display: flex;
-    margin-top: 12px; 
+  margin-top: 12px;
   flex-direction: column;
-  height: calc(100vh - 160px);
+  height: calc(100vh - 196px);
   box-sizing: border-box;
   padding-bottom: 40px;
 `;
@@ -449,25 +418,25 @@ const InputBox = styled.input`
   width: 100%;
   margin-bottom: 10px;
   padding: 0 8px;
-    color: ${({ theme }) => theme.colors.inputColor};
+  color: ${({ theme }) => theme.colors.inputColor};
   border: 1px solid #c4c4c4; /* CKEditor 기본 테두리 색상 */
   border-radius: 4px;
   box-shadow: none;
-    font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
-    
+  font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.inputColor};
   }
 
-    @media ${({ theme }) => theme.device.mobile} {
-        font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
-    }
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
+  }
 `;
 
 const EditorBox = styled.section`
   flex: 1;
-  min-height: 0; 
+  min-height: 0;
 
   .ck-editor {
     height: 100% !important;
@@ -495,131 +464,131 @@ const EditorBox = styled.section`
 const ButtonBox = styled.div`
   display: flex;
   align-items: center;
-    justify-content: flex-end;
+  justify-content: flex-end;
   gap: 8px;
-    flex: 1;
-    margin-bottom: 16px;
+  flex: 1;
+  margin-bottom: 16px;
 `;
 
 const FileButtonBox = styled.div`
-    display: flex;
-    justify-content: end;
+  display: flex;
+  justify-content: end;
   padding-top: 8px;
-    border-top: 1px solid ${({ theme }) => theme.colors.lineColor};
-`
+  border-top: 1px solid ${({ theme }) => theme.colors.lineColor};
+`;
 
 const Button = styled.button<{ color: string }>`
-    display: flex;
-    align-items: center;
-    padding: 8px;
+  display: flex;
+  align-items: center;
+  padding: 8px;
   background-color: ${({ color }) => color};
   color: ${({ theme }) => theme.colors.white};
   font-size: ${({ theme }) => theme.desktop.sizes.md};
   border: none;
   border-radius: 999px;
   cursor: pointer;
-    white-space: nowrap;
-    box-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+  box-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.mobile.sizes.md};
   }
-    
-    svg {
-        width: 16px;
-        height: 16px;
-    }
-    
-    &:hover {
-        opacity: 0.8;
-    }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    opacity: 0.8;
+  }
 `;
 
 const TitleBox = styled.div`
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  width: 100%;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: ${({ theme }) => theme.colors.lineColor};
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 32px;
+    height: 2px;
+    background: ${({ theme }) => theme.colors.blackColor};
+  }
+
+  > div {
     display: flex;
-    position: relative;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 8px;
     width: 100%;
-    border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
+    background-color: ${({ theme }) => theme.colors.softColor};
 
-    &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: ${({ theme }) => theme.colors.lineColor};
+    span {
+      color: ${({ theme }) => theme.colors.grayColor};
+      font-size: ${({ theme }) => theme.desktop.sizes.xl};
+      font-weight: 600;
+
+      @media ${({ theme }) => theme.device.mobile} {
+        font-size: ${({ theme }) => theme.mobile.sizes.xl};
+      }
     }
 
-    &::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 32px;
-        height: 2px;
-        background: ${({ theme }) => theme.colors.blackColor};
+    a {
+      display: flex;
+      position: relative;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      font-weight: 500;
+      margin-left: 8px;
+      color: ${({ theme }) => theme.colors.grayColor};
+      font-size: ${({ theme }) => theme.desktop.sizes.sm};
+
+      svg {
+        width: 12px;
+        height: 12px;
+      }
     }
+  }
 
-    > div {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 12px 8px;
-        width: 100%;
-        background-color: ${({ theme }) => theme.colors.softColor};
+  h3 {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    padding: 20px 10px;
+    color: ${({ theme }) => theme.colors.inputColor};
+    font-size: ${({ theme }) => theme.desktop.sizes.h3Size};
+    font-weight: 600;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 
-        span {
-            color: ${({ theme }) => theme.colors.grayColor};
-            font-size: ${({ theme }) => theme.desktop.sizes.xl};
-            font-weight: 600;
-
-            @media ${({ theme }) => theme.device.mobile} {
-                font-size: ${({ theme }) => theme.mobile.sizes.xl};
-            }
-        }
-
-        a {
-            display: flex;
-            position: relative;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 4px;
-            font-weight: 500;
-            margin-left: 8px;
-            color: ${({ theme }) => theme.colors.grayColor};
-            font-size: ${({ theme }) => theme.desktop.sizes.sm};
-
-            svg {
-                width: 12px;
-                height: 12px;
-            }
-        }
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: ${({ theme }) => theme.mobile.sizes.h3Size};
     }
-
-    h3 {
-        display: flex;
-        height: 100%;
-        align-items: center;
-        padding: 20px 10px;
-        color: ${({ theme }) => theme.colors.inputColor};
-        font-size: ${({ theme }) => theme.desktop.sizes.h3Size};
-        font-weight: 600;
-        white-space: normal;
-        word-break: break-word;
-        overflow-wrap: anywhere;
-
-        @media ${({ theme }) => theme.device.mobile} {
-            font-size: ${({ theme }) => theme.mobile.sizes.h3Size};
-        }
-    }
+  }
 `;
 
 const ContentBox = styled.div`
   height: 100%;
   width: 100%;
-  min-height: calc(100vh - 300px);
+  min-height: calc(100vh - 336px);
   padding: 20px 10px;
   border-bottom: 2px solid ${({ theme }) => theme.colors.lineColor};
   margin-bottom: 20px;
@@ -639,46 +608,46 @@ const ContentBox = styled.div`
     overflow: visible;
   }
 
-    img {
-        max-width: 100%;
-        height: auto;
-        display: block;
-    }
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
 `;
 
-const FileSvgBox = styled.div<{$color: string}>`
-    display: flex;
-    background-color: ${({ $color }) => $color};
-    padding: 2px;
-    border-radius: 999px;
-    align-items: center;
+const FileSvgBox = styled.div<{ $color: string }>`
+  display: flex;
+  background-color: ${({ $color }) => $color};
+  padding: 2px;
+  border-radius: 999px;
+  align-items: center;
 
-    svg {
-        width: 10px;
-        height: 10px;
-        cursor: pointer;
-        color: white;
-        
-        &:hover {
-            opacity: 0.6;
-        }
+  svg {
+    width: 10px;
+    height: 10px;
+    cursor: pointer;
+    color: white;
+
+    &:hover {
+      opacity: 0.6;
     }
-`
+  }
+`;
 
 const StyledFileUl = styled.ul`
   display: flex;
   flex-direction: column;
   width: 100%;
   color: ${({ theme }) => theme.colors.inputColor};
-    padding-bottom: 8px;
-    margin-bottom: 8px;
-    border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
 
   li {
     display: flex;
-      justify-content: end;
+    justify-content: end;
     margin-top: 8px;
-      gap: 8px;
+    gap: 8px;
     font-size: ${({ theme }) => theme.desktop.sizes.sm};
 
     a {
@@ -704,5 +673,3 @@ const SkeletonBox = styled.div`
   animation: ${shimmer} 1.5s infinite;
   border-radius: 4px;
 `;
-
-
