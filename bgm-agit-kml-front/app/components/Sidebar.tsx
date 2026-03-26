@@ -264,20 +264,6 @@ export default function Sidebar() {
                 기록 입력
               </a>
             </MenuLi>
-            {user && (
-              <MenuLi $active={pathname === '/myPage'}>
-                <a
-                  href="#"
-                  onClick={async (e) => {
-                    e.preventDefault();
-                    router.push('/myPage');
-                  }}
-                >
-                  <ListChecks weight="fill" />
-                  아카데미 예약 내역
-                </a>
-              </MenuLi>
-            )}
             <MenuLi $active={pathname === '/login'}>
               {user ? (
                 <a
@@ -370,14 +356,14 @@ const SidebarWrapper = styled(motion.aside)`
 
 const MainUl = styled.ul`
   display: flex;
-  padding: 0 24px;
+  padding: 0;
   gap: 12px;
   align-items: center;
 
   @media ${({ theme }) => theme.device.tablet} {
     flex-direction: column;
     align-items: unset;
-    //gap: 12px;
+    padding: 0 24px;
     //justify-content: unset;
   }
 `;
@@ -406,7 +392,7 @@ const TopSeticon = styled.div`
   padding: 16px 12px;
 
   img {
-    width: 180px;
+    width: 160px;
   }
 
   @media ${({ theme }) => theme.device.tablet} {
