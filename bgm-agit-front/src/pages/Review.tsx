@@ -34,6 +34,7 @@ export default function Review() {
       {
         key: 'title',
         header: '내용',
+        nowrap: true,
         render: row => (
           <TitleCell>
             <span className="title">{row.cont}</span>
@@ -205,6 +206,7 @@ const TitleCell = styled.div<WithTheme>`
     display: flex;
     width: 100%;
     min-width: 0;
+    overflow: hidden;
     align-items: center;
     gap: 8px;
   }
@@ -212,6 +214,8 @@ const TitleCell = styled.div<WithTheme>`
   .title {
     display: block;
     flex: 1 1 auto;
+    width: 0;
+    max-width: 100%;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
