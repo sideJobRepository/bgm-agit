@@ -623,7 +623,7 @@ const EditorWrapper = styled.div`
   display: flex;
   margin-top: 12px;
   flex-direction: column;
-  height: calc(100vh - 160px);
+  height: calc(100vh - 400px);
   box-sizing: border-box;
   padding-bottom: 40px;
 `;
@@ -809,7 +809,7 @@ const TitleBox = styled.div<WithTheme>`
 const ContentBox = styled.div<WithTheme>`
   height: 100%;
   width: 100%;
-  min-height: calc(100vh - 300px);
+  min-height: calc(100vh - 500px);
   padding: 20px 10px;
   border-bottom: 2px solid ${({ theme }) => theme.colors.lineColor};
   margin-bottom: 20px;
