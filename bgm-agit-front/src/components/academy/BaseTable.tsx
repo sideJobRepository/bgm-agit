@@ -263,6 +263,7 @@ const TableBox = styled.div`
 
 const Table = styled.table<WithTheme & { $fixedLayout?: boolean }>`
   width: 100%;
+  min-width: ${({ $fixedLayout }) => ($fixedLayout ? '760px' : '100%')};
   table-layout: ${({ $fixedLayout }) => ($fixedLayout ? 'fixed' : 'auto')};
   border-collapse: collapse;
   font-size: ${({ theme }) => theme.desktop.sizes.sm};
@@ -303,6 +304,13 @@ const Table = styled.table<WithTheme & { $fixedLayout?: boolean }>`
 
   td {
     border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    width: ${({ $fixedLayout }) => ($fixedLayout ? '760px' : '100%')};
+    min-width: ${({ $fixedLayout }) => ($fixedLayout ? '760px' : '100%')};
+    max-width: none;
+    table-layout: ${({ $fixedLayout }) => ($fixedLayout ? 'fixed' : 'auto')};
   }
 `;
 
