@@ -61,7 +61,7 @@ public class ReviewServiceImpl implements ReviewService {
         for (ReviewGetResponse allByReview : allByReviews) {
             String cont = allByReview.getCont();
             String img = htmlSanitizerService.extractFirstImgUrl(cont);
-            String content = htmlSanitizerService.extractPreviewText(cont,10);
+            String content = htmlSanitizerService.extractPreviewText(cont);
             allByReview.setThumbnail(img);
             allByReview.setCont(content);
         }

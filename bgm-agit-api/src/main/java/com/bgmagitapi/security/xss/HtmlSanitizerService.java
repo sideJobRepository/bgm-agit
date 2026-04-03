@@ -67,16 +67,13 @@ public class HtmlSanitizerService {
     }
     
     
-    public String extractPreviewText(String html, int length) {
+    public String extractPreviewText(String html) {
         if (html == null || html.isBlank()) return "";
         
         // 1. HTML 태그 제거
         String text = Jsoup.parse(html).text();
         
         // 2. 공백 정리 (줄바꿈/여러 공백 → 하나로)
-        text = text.replaceAll("\\s+", " ").trim();
-        
-        // 3. 글자수 자르기
-        return text.length() > length ? text.substring(0, length) : text;
+        return text.replaceAll("\\s+", " ").trim();
     }
 }
