@@ -20,6 +20,7 @@ import com.bgmagitapi.kml.review.service.ReviewService;
 import com.bgmagitapi.repository.BgmAgitCommonCommentRepository;
 import com.bgmagitapi.repository.BgmAgitCommonFileRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
+import com.bgmagitapi.security.xss.HtmlSanitizerService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -52,9 +53,19 @@ public class ReviewServiceImpl implements ReviewService {
     
     private final ApplicationEventPublisher eventPublisher;
     
+    private final HtmlSanitizerService htmlSanitizerService;
+    
     @Override
     public Page<ReviewGetResponse> getReviews(Pageable pageable, String titleOrCont) {
-        return reviewRepository.findAllByReviews(pageable,titleOrCont);
+        Page<ReviewGetResponse> allByReviews = reviewRepository.findAllByReviews(pageable, titleOrCont);
+        for (ReviewGetResponse allByReview : allByReviews) {
+            String cont = allByReview.getCont();
+            String img = htmlSanitizerService.extractFirstImgUrl(cont);
+            String content = htmlSanitizerService.extractPreviewText(cont,10);
+            allByReview.setThumbnail(img);
+            allByReview.setCont(content);
+        }
+        return allByReviews;
     }
     
     @Override
