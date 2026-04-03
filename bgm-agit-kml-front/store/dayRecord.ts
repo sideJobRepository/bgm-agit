@@ -13,6 +13,8 @@ interface Record {
   createNicname: string;
   matchsId: number;
   registDate: string;
+  matchsWind: string;
+  tournamentStatus: string;
   rows: Row[];
 }
 

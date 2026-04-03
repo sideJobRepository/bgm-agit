@@ -25,6 +25,8 @@ type RowType = {
 type MatchType = {
   matchsId: number;
   registDate: string;
+  matchsWind: string;
+  tournamentStatus: string;
   rows: RowType[];
 };
 
@@ -36,6 +38,13 @@ type BaseCardTableProps = {
   page: number;
   onPageChange: (page: number) => void;
 };
+
+const LEADER_POSITIONS = [
+  { label: '동장', value: 'EAST' },
+  { label: '남장', value: 'SOUTH' },
+  { label: '서장', value: 'WEST' },
+  { label: '북장', value: 'NORTH' },
+];
 
 export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) {
   const { remove } = useDeletePost();
@@ -103,6 +112,10 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
       },
     });
   }
+
+  const getLabelByValue = (value: string) => {
+    return LEADER_POSITIONS.find((item) => item.value === value)?.label;
+  };
   return (
     <>
       <CardGrid>
@@ -133,7 +146,9 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
               </Button>
             </ButtonBox>
             <Header>
-              <span>ID: {item.matchsId}</span>
+              <span>{getLabelByValue(item.matchsWind)}</span>
+              <span>대회여부 : {item.tournamentStatus === 'Y' ? '예' : '아니오'}</span>
+
               <span>{item.registDate}</span>
             </Header>
             {/*<HeaderData>*/}
@@ -167,14 +182,14 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
 
 const CardGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr); // 한 줄에 3개
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
   gap: 16px;
   padding: 0 12px;
 
-  @media ${({ theme }) => theme.device.tablet} {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
+  // @media ${({ theme }) => theme.device.tablet} {
+  //   grid-template-columns: repeat(2, 1fr);
+  // }
+  //
   @media ${({ theme }) => theme.device.mobile} {
     grid-template-columns: 1fr;
   }
@@ -196,6 +211,11 @@ const Header = styled.div`
   padding: 6px 8px;
   font-size: ${({ theme }) => theme.desktop.sizes.md};
   font-weight: 600;
+
+  > div {
+    display: inline-flex;
+    gap: 8px;
+  }
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.mobile.sizes.md};

@@ -3,6 +3,8 @@ package com.bgmagitapi.security.xss;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.safety.Safelist;
 import org.springframework.stereotype.Service;
 
@@ -53,4 +55,25 @@ public class HtmlSanitizerService {
       
               return cleaned;
      }
+    
+    
+    public String extractFirstImgUrl(String html) {
+        if (html == null || html.isEmpty()) return null;
+        
+        Document doc = Jsoup.parse(html);
+        Element img = doc.selectFirst("img");
+        
+        return img != null ? img.attr("src") : null;
+    }
+    
+    
+    public String extractPreviewText(String html) {
+        if (html == null || html.isBlank()) return "";
+        
+        // 1. HTML 태그 제거
+        String text = Jsoup.parse(html).text();
+        
+        // 2. 공백 정리 (줄바꿈/여러 공백 → 하나로)
+        return text.replaceAll("\\s+", " ").trim();
+    }
 }

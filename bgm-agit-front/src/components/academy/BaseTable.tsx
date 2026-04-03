@@ -67,6 +67,7 @@ export function BaseTable<T>({
 
   const location = useLocation();
   const pathname = location.pathname;
+  const isReviewPage = pathname === '/review';
 
   function isMyPageRow(row: unknown): row is MyPageRow {
     return typeof row === 'object' && row !== null;
@@ -170,7 +171,7 @@ export function BaseTable<T>({
         )}
       </TopBox>
       <TableScroll>
-        <Table>
+        <Table $fixedLayout={isReviewPage}>
           <thead>
             <tr>
               {columns.map(col => (
@@ -260,8 +261,10 @@ const TableBox = styled.div`
   padding: 24px 8px;
 `;
 
-const Table = styled.table<WithTheme>`
+const Table = styled.table<WithTheme & { $fixedLayout?: boolean }>`
   width: 100%;
+  min-width: ${({ $fixedLayout }) => ($fixedLayout ? '760px' : '100%')};
+  table-layout: ${({ $fixedLayout }) => ($fixedLayout ? 'fixed' : 'auto')};
   border-collapse: collapse;
   font-size: ${({ theme }) => theme.desktop.sizes.sm};
   color: ${({ theme }) => theme.colors.inputColor};
@@ -302,6 +305,13 @@ const Table = styled.table<WithTheme>`
   td {
     border-bottom: 1px solid ${({ theme }) => theme.colors.border};
   }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    width: ${({ $fixedLayout }) => ($fixedLayout ? '760px' : '100%')};
+    min-width: ${({ $fixedLayout }) => ($fixedLayout ? '760px' : '100%')};
+    max-width: none;
+    table-layout: ${({ $fixedLayout }) => ($fixedLayout ? 'fixed' : 'auto')};
+  }
 `;
 
 const Th = styled.th<{
@@ -324,7 +334,9 @@ const Td = styled.td<{
   overflow-wrap: anywhere;
 
   > div {
-    display: inline-flex;
+    display: flex;
+    width: 100%;
+    min-width: 0;
     align-items: center;
     gap: 8px;
   }

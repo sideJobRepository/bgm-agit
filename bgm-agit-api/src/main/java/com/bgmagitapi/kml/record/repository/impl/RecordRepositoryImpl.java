@@ -160,7 +160,7 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
     }
     private BooleanExpression whereNickLikeExists(String nickName) {
         if (!StringUtils.hasText(nickName)) return null;
-        
+    
         return JPAExpressions.selectOne()
                 .from(record)
                 .join(record.member, bgmAgitMember)

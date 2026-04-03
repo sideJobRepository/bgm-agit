@@ -4,6 +4,9 @@ import { useDayRecordStore } from '@/store/dayRecord';
 
 export type params = {
   page?: number;
+  startDate: string | null;
+  endDate: string | null;
+  nickName: string;
 };
 
 export function useFetchDayRecordList() {

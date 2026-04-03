@@ -24,12 +24,26 @@ export default function Review() {
   const columns = useMemo<BaseColumn<ReviewItem>[]>(
     () => [
       {
-        key: 'registDate',
-        header: '날짜',
+        key: 'thumbnail',
+        header: '',
         width: '140px',
         align: 'center',
         nowrap: true,
-        render: row => row.registDate,
+        render: row => <img src={row.thumbnail} />,
+      },
+      {
+        key: 'title',
+        header: '내용',
+        nowrap: true,
+        render: row => (
+          <TitleCell>
+            <span className="title">{row.cont}</span>
+            <span className="reply">
+              <Chats weight="bold" />
+              {row.commentCount}
+            </span>
+          </TitleCell>
+        ),
       },
       {
         key: 'nickname',
@@ -38,19 +52,6 @@ export default function Review() {
         align: 'center',
         nowrap: true,
         render: row => row.nickname,
-      },
-      {
-        key: 'title',
-        header: '제목',
-        render: row => (
-          <TitleCell>
-            <span className="title">{row.title}</span>
-            <span className="reply">
-              <Chats weight="bold" />
-              {row.commentCount}
-            </span>
-          </TitleCell>
-        ),
       },
     ],
     []
@@ -201,12 +202,21 @@ const TableBox = styled.div`
 `;
 
 const TitleCell = styled.div<WithTheme>`
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  && {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    align-items: center;
+    gap: 8px;
+  }
 
   .title {
-    flex: 1;
+    display: block;
+    flex: 1 1 auto;
+    width: 0;
+    max-width: 100%;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -214,6 +224,7 @@ const TitleCell = styled.div<WithTheme>`
 
   .reply {
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     gap: 4px;
     font-size: ${({ theme }) => theme.desktop.sizes.xs};

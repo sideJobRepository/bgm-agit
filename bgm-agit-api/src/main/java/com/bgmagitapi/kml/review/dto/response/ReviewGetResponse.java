@@ -21,6 +21,7 @@ public class ReviewGetResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDateTime registDate;
     private Long commentCount;
+    private String thumbnail;
     
     @QueryProjection
     public ReviewGetResponse(Long id, String title, String cont, Long memberId, String memberName, String nickname, LocalDateTime registDate, Long commentCount) {

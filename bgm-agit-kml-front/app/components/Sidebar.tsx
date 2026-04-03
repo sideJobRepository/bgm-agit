@@ -264,20 +264,6 @@ export default function Sidebar() {
                 기록 입력
               </a>
             </MenuLi>
-            {user && (
-              <MenuLi $active={pathname === '/myPage'}>
-                <a
-                  href="#"
-                  onClick={async (e) => {
-                    e.preventDefault();
-                    router.push('/myPage');
-                  }}
-                >
-                  <ListChecks weight="fill" />
-                  아카데미 예약 내역
-                </a>
-              </MenuLi>
-            )}
             <MenuLi $active={pathname === '/login'}>
               {user ? (
                 <a
@@ -351,10 +337,9 @@ const SidebarWrapper = styled(motion.aside)`
   display: flex;
   width: 100%;
   height: 100%;
-  flex-direction: column;
-  border: 20px solid rgb(244 244 245);
   background: ${({ theme }) => theme.colors.whiteColor};
   overflow-y: auto;
+  border-bottom: 10px solid rgb(244 244 245);
 
   @media ${({ theme }) => theme.device.tablet} {
     position: fixed;
@@ -364,14 +349,23 @@ const SidebarWrapper = styled(motion.aside)`
     height: calc(100dvh - 64px);
     padding-top: 20px;
     z-index: 1;
+    flex-direction: column;
+    border: 20px solid rgb(244 244 245);
   }
 `;
 
 const MainUl = styled.ul`
   display: flex;
-  flex-direction: column;
-  padding: 0 24px;
+  padding: 0;
   gap: 12px;
+  align-items: center;
+
+  @media ${({ theme }) => theme.device.tablet} {
+    flex-direction: column;
+    align-items: unset;
+    padding: 0 24px;
+    //justify-content: unset;
+  }
 `;
 
 const SubUl = styled(motion.ul)`
@@ -395,15 +389,15 @@ const TopSeticon = styled.div`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 10px solid rgb(244 244 245);
   padding: 16px 12px;
 
   img {
-    width: 140px;
+    width: 160px;
   }
 
   @media ${({ theme }) => theme.device.tablet} {
     display: none;
+    border-bottom: 10px solid rgb(244 244 245);
   }
 `;
 
@@ -411,25 +405,31 @@ const MiddleSeciton = styled.div`
   flex: 1;
   justify-content: center;
   display: flex;
-  flex-direction: column;
-  padding: 16px 0;
+
+  @media ${({ theme }) => theme.device.tablet} {
+    flex-direction: column;
+    padding: 16px 0;
+  }
 `;
 
 const MenuLi = styled.li<{ $active: boolean }>`
   display: flex;
-  flex-direction: column;
   gap: 24px;
   padding: 12px 16px;
   background-color: ${({ $active }) => ($active ? '#000000' : 'transparent')};
   color: ${({ $active, theme }) => ($active ? '#ffffff' : theme.colors.blackColor)};
   border-radius: 99px;
 
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+
   a {
     display: flex;
     position: relative;
     align-items: center;
     gap: 8px;
-    width: 100%;
+    white-space: nowrap;
     font-weight: 500;
     font-size: ${({ theme }) => theme.desktop.sizes.xl};
 
@@ -438,18 +438,31 @@ const MenuLi = styled.li<{ $active: boolean }>`
       height: 16px;
     }
   }
+
+  @media ${({ theme }) => theme.device.tablet} {
+    flex-direction: column;
+  }
 `;
 
 const BottomSeciton = styled.div`
   padding: 24px 0;
-  border-top: 10px solid rgb(244 244 245);
+
   justify-content: center;
   display: flex;
   flex-direction: column;
+
+  @media ${({ theme }) => theme.device.tablet} {
+    border-top: 10px solid rgb(244 244 245);
+  }
 `;
 
 const Divider = styled.div`
-  width: 100%;
-  height: 1px;
+  width: 1px;
+  height: 70%;
   background-color: rgb(244 244 245);
+
+  @media ${({ theme }) => theme.device.tablet} {
+    width: 100%;
+    height: 1px;
+  }
 `;

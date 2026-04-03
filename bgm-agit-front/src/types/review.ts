@@ -6,6 +6,7 @@ export interface ReviewItem {
   title: string;
   cont: string;
   registDate: string;
+  thumbnail?: string;
 }
 
 export interface ReviewPage {
