@@ -21,7 +21,7 @@ class RankServiceImplTest extends RepositoryAndServiceTestSupport {
     @Test
     void test1(){
         // given
-        RankType type = RankType.WEEKLY;
+        RankType type = RankType.MONTHLY;
         LocalDate baseDate = LocalDate.of(2026, 2, 20);
         
         // when
