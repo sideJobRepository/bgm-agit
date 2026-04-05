@@ -6,11 +6,12 @@ import com.bgmagitapi.kml.rank.enums.RankType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class RankServiceImplTest extends RepositoryAndServiceTestSupport {
     
@@ -23,9 +24,9 @@ class RankServiceImplTest extends RepositoryAndServiceTestSupport {
         // given
         RankType type = RankType.MONTHLY;
         LocalDate baseDate = LocalDate.of(2026, 2, 20);
-        
+        Pageable pageable = PageRequest.of(0, 20);
         // when
-        List<RankGetResponse> ranks = rankService.findRanks(type, baseDate);
+        Page<RankGetResponse> ranks = rankService.findRanks(type, baseDate, pageable);
         
         // then
         System.out.println("=== MONTHLY RANK ===");

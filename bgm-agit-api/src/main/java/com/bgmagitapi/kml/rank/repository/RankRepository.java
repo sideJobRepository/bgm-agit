@@ -6,8 +6,12 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -22,9 +26,9 @@ public class RankRepository {
 
     private final JPAQueryFactory queryFactory;
     
-    public List<RankGetResponse> findRanks(LocalDate start, LocalDate end){
+    public Page<RankGetResponse> findRanks(LocalDate start, LocalDate end, Pageable pageable) {
         
-        // ===== 토비 =====
+        // ===== 기존 Expression 그대로 유지 =====
         NumberExpression<Integer> tobiCount =
                 Expressions.numberTemplate(
                         Integer.class,
@@ -39,40 +43,35 @@ public class RankRepository {
                         record.recordScore,
                         record.recordRank
                 );
-
-// ===== 플러스 ===== (정산 점수 기준)
+        
         NumberExpression<Integer> plusCount =
                 Expressions.numberTemplate(
                         Integer.class,
                         "SUM(CASE WHEN {0} > 0 THEN 1 ELSE 0 END)",
                         record.recordPoint
                 );
-
-// ===== -2 ===== (3~4등)
+        
         NumberExpression<Integer> minus2Count =
                 Expressions.numberTemplate(
                         Integer.class,
                         "SUM(CASE WHEN {0} >= 3 THEN 1 ELSE 0 END)",
                         record.recordRank
                 );
-
-// ===== +3 ===== (1~3등)
+        
         NumberExpression<Integer> plus3Count =
                 Expressions.numberTemplate(
                         Integer.class,
                         "SUM(CASE WHEN {0} <= 3 THEN 1 ELSE 0 END)",
                         record.recordRank
                 );
-
-// ===== 총점 =====
+        
         NumberExpression<Double> totalPoint =
                 Expressions.numberTemplate(
                         Double.class,
                         "ROUND(SUM({0}), 2)",
                         record.recordPoint
                 );
-
-// ===== 순위 카운트 =====
+        
         NumberExpression<Integer> firstCount =
                 Expressions.numberTemplate(
                         Integer.class,
@@ -101,7 +100,8 @@ public class RankRepository {
                         record.recordRank
                 );
         
-        return queryFactory
+        // ===== 데이터 조회 =====
+        List<RankGetResponse> content = queryFactory
                 .select(Projections.constructor(
                         RankGetResponse.class,
                         bgmAgitMember.bgmAgitMemberId,
@@ -124,15 +124,26 @@ public class RankRepository {
                 .where(betweenDate(start, end))
                 .groupBy(bgmAgitMember.bgmAgitMemberId, bgmAgitMember.bgmAgitMemberNickname)
                 .orderBy(totalPoint.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
                 .fetch();
         
+        // ===== count 쿼리 =====
+        JPAQuery<Long> countQuery = queryFactory
+                .select(bgmAgitMember.bgmAgitMemberId.countDistinct())
+                .from(record)
+                .join(bgmAgitMember)
+                .on(record.member.bgmAgitMemberId.eq(bgmAgitMember.bgmAgitMemberId))
+                .where(betweenDate(start, end));
         
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
     
     private BooleanExpression betweenDate(LocalDate start, LocalDate end) {
         if(start == null || end == null){
             return null;
         }
+        
         return record.registDate.goe(start.atStartOfDay())
                 .and(record.registDate.lt(end.plusDays(1).atStartOfDay()));
     }

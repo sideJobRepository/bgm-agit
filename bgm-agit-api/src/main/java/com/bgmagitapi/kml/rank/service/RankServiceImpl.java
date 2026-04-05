@@ -5,6 +5,8 @@ import com.bgmagitapi.kml.rank.dto.response.RankGetResponse;
 import com.bgmagitapi.kml.rank.enums.RankType;
 import com.bgmagitapi.kml.rank.repository.RankRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,8 +21,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RankServiceImpl {
     
     private final RankRepository rankRepository;
-    
-    public List<RankGetResponse> findRanks(RankType type, LocalDate baseDate) {
+    public Page<RankGetResponse> findRanks(RankType type, LocalDate baseDate, Pageable pageable) {
+        
         LocalDate start;
         LocalDate end;
         
@@ -32,49 +34,41 @@ public class RankServiceImpl {
             end = baseDate.withDayOfMonth(baseDate.lengthOfMonth());
         }
         
-        List<RankGetResponse> ranks = rankRepository.findRanks(start, end);
-        AtomicInteger rank = new AtomicInteger(1);
-        for (int i = 0; i < ranks.size(); i++) {
+        Page<RankGetResponse> ranks = rankRepository.findRanks(start, end, pageable);
+        
+        List<RankGetResponse> content = ranks.getContent();
+        
+        for (int i = 0; i < content.size(); i++) {
             
-            RankGetResponse r = ranks.get(i);
-            
+            RankGetResponse r = content.get(i);
             int total = r.getTotalCount();
             
             if (total == 0) continue;
             
-            // rank
-            r.setRank(i + 1);
+            // ===== 진짜 랭킹 (페이지 고려) =====
+            int rank = (int) pageable.getOffset() + i + 1;
+            r.setRank(rank);
             
-            // 1%
+            // ===== 퍼센트 =====
             r.setFirstRate(round((r.getFirstCount() * 100.0) / total));
-            
-            // 12%
             r.setTop2Rate(round(((r.getFirstCount() + r.getSecondCount()) * 100.0) / total));
-            
-            // 4%
             r.setFourthRate(round((r.getFourthCount() * 100.0) / total));
-            
-            // +%
             r.setPlusRate(round((r.getPlusCount() * 100.0) / total));
-            
-            // -2%
             r.setMinus2Rate(round((r.getMinus2Count() * 100.0) / total));
-            
-            // +3%
             r.setPlus3Rate(round((r.getPlus3Count() * 100.0) / total));
-            
-            // 토비% (점수 < 0)
             r.setTobiRate(round((r.getTobiCount() * 100.0) / total));
-
-            // 토비시3%
-            // 보통: 토비이면서 3~4등
             r.setTobiMinus3Rate(round((r.getTobiMinus3Count() * 100.0) / total));
             
-            // 평균 순위
-            double avgRank = (r.getFirstCount() * 1.0 + r.getSecondCount() * 2.0 + r.getThirdCount() * 3.0 + r.getFourthCount() * 4.0) / total;
+            // ===== 평균 순위 =====
+            double avgRank =
+                    (r.getFirstCount() * 1.0 +
+                            r.getSecondCount() * 2.0 +
+                            r.getThirdCount() * 3.0 +
+                            r.getFourthCount() * 4.0) / total;
             
             r.setAvgRank(round(avgRank));
         }
+        
         return ranks;
     }
     
