@@ -24,6 +24,7 @@ import {
   CaretUp,
   CaretDown,
   ListChecks,
+  Trophy,
 } from 'phosphor-react';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -73,6 +74,7 @@ export default function Sidebar() {
     Student,
     Handshake,
     ChatsCircle,
+    Trophy,
   };
 
   const resetUser = useUserStore((state) => state.clearUser);
