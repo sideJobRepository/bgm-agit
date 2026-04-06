@@ -144,7 +144,8 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
                         bgmAgitMember.bgmAgitMemberNickname,
                         yakuman.yakumanName,
                         yakuman.yakumanCont,
-                        bgmAgitCommonFile.bgmAgitCommonFileUrl
+                        bgmAgitCommonFile.bgmAgitCommonFileUrl,
+                        yakuman.registDate
                 ))
                 .from(yakuman)
                 .join(yakuman.member, bgmAgitMember)
