@@ -10,6 +10,7 @@ import { MagnifyingGlass, PencilSimpleLine } from 'phosphor-react';
 import DatePicker from 'react-datepicker';
 import { ko } from 'date-fns/locale';
 import 'react-datepicker/dist/react-datepicker.css';
+import { format } from 'date-fns';
 
 export default function DayRecord() {
   const fetchDayRecord = useFetchDayRecordList();
@@ -29,7 +30,7 @@ export default function DayRecord() {
   const oneMonthLater = new Date();
   oneMonthLater.setMonth(today.getMonth() - 1);
 
-  const formatDate = (date: Date | null) => (date ? date.toISOString().split('T')[0] : null);
+  const formatDate = (date: Date | null) => (date ? format(date, 'yyyy-MM-dd') : null);
 
   const [startDate, setStartDate] = useState<Date | null>(oneMonthLater);
   const [endDate, setEndDate] = useState<Date | null>(today);
