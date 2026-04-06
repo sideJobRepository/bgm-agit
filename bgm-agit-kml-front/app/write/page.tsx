@@ -58,10 +58,11 @@ export default function Write() {
   // const searchParams = useSearchParams();
   // const detailId = searchParams.get('id');
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [tournamentStatus, setTournamentStatus] = useState<string | null>(null);
+  const [title, setTitle] = useState({ title: '', content: '' });
 
   const fetchDetailWrite = useFetchDetailWrite();
   const detailData = useDetailRecordStore((state) => state.detailRecord);
-  console.log('detail', detailData);
 
   const [changeReason, setChangeReason] = useState('');
 
@@ -86,7 +87,7 @@ export default function Write() {
   const yakumanData = useYakumanStore((state) => state.yakuman);
 
   /** 장 선택 */
-  const [leader, setLeader] = useState('');
+  const [leader, setLeader] = useState('SOUTH');
 
   /** 토너먼트 여부 선택 */
   const [tournament, setTournament] = useState('');
@@ -170,7 +171,7 @@ export default function Write() {
       formData.append('changeReason', changeReason);
     }
     formData.append('wind', leader);
-    formData.append('tournamentStatus', tournament);
+    formData.append('tournamentStatus', tournamentStatus);
 
     /** records */
     rankedRecords.forEach((r, idx) => {
@@ -231,12 +232,6 @@ export default function Write() {
       return false;
     }
 
-    // 대회 여부
-    if (!tournament) {
-      alertDialog('대회 여부를 선택해주세요.', 'error');
-      return false;
-    }
-
     // records: 4명 전부 선택됐는지
     const selectedUsers = Object.values(records).filter((r) => r.userId);
     if (selectedUsers.length !== 4) {
@@ -272,7 +267,23 @@ export default function Write() {
   //detail 로직
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setDetailId(params.get('id'));
+
+    const id = params.get('id');
+    const tournamentStatus = params.get('tournamentStatus');
+    setDetailId(id);
+    console.log('id', id);
+    setTournamentStatus(tournamentStatus);
+    if (tournamentStatus === 'Y') {
+      setTitle({
+        title: 'Tournament Entry',
+        content: '대회 경기 결과를 입력하고 공식 기록으로 관리하세요.',
+      });
+    } else {
+      setTitle({
+        title: 'Record Entry',
+        content: '플레이 결과를 입력하고 나만의 기록을 쌓아보세요.',
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -283,11 +294,12 @@ export default function Write() {
   }, [detailId]);
 
   useEffect(() => {
-    if (!detailData) return;
+    if (!detailId || !detailData) return;
+    console.log('타냐??', detailId);
 
     // 국 길이
     setLeader(detailData.wind);
-    setTournament(detailData.tournamentStatus);
+    setTournamentStatus(detailData.tournamentStatus);
 
     // records
     const nextRecords = {
@@ -343,27 +355,16 @@ export default function Write() {
         />
 
         <HeroContent>
-          <h1>Record Entry</h1>
-          <span>플레이 결과를 입력하고 랭킹에 반영하세요.</span>
+          <>
+            <h1>{title.title}</h1>
+            <span>{title.content}</span>
+          </>
         </HeroContent>
       </Hero>
       <TableBox>
         {/* 장 선택 */}
         <Top>
           <TopGroup>
-            <FieldsWrapper>
-              <Field className="top">
-                <label>대회여부</label>
-                <select value={tournament} onChange={(e) => setTournament(e.target.value)}>
-                  <option value="">선택</option>
-                  {TOURNAMENT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </FieldsWrapper>
             <FieldsWrapper>
               <Field className="top">
                 <label>국 길이</label>

@@ -258,12 +258,34 @@ export default function Sidebar() {
                       router.push('/login');
                     }
                   } else {
-                    router.push('/write');
+                    router.push('/write?tournamentStatus=N');
                   }
                 }}
               >
                 <PencilSimple weight="fill" />
                 기록 입력
+              </a>
+            </MenuLi>
+            <MenuLi $active={false}>
+              <a
+                href="#"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  if (!user) {
+                    const result = await confirmDialog(
+                      '로그인 후 이용 가능합니다.\n 로그인 페이지로 이동하시겠습니까?',
+                      'warning'
+                    );
+                    if (result.isConfirmed) {
+                      router.push('/login');
+                    }
+                  } else {
+                    router.push('/write?tournamentStatus=Y');
+                  }
+                }}
+              >
+                <PencilSimple weight="fill" />
+                대회 입력
               </a>
             </MenuLi>
             <MenuLi $active={pathname === '/login'}>

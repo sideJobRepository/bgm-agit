@@ -16,7 +16,7 @@ export default function RankPage() {
   const [rankType, setRankType] = useState<'WEEKLY' | 'MONTHLY'>('MONTHLY');
   const [startDate, setStartDate] = useState<Date | null>(() => {
     const d = new Date();
-    d.setMonth(d.getMonth() - 1);
+    d.setMonth(d.getMonth());
     return d;
   });
   const [page, setPage] = useState(0);
