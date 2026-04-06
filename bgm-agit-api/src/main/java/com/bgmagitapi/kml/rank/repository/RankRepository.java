@@ -1,5 +1,6 @@
 package com.bgmagitapi.kml.rank.repository;
 
+import com.bgmagitapi.kml.matchs.entity.QMatchs;
 import com.bgmagitapi.kml.rank.dto.response.RankGetResponse;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -18,6 +19,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static com.bgmagitapi.entity.QBgmAgitMember.*;
+import static com.bgmagitapi.kml.matchs.entity.QMatchs.*;
 import static com.bgmagitapi.kml.record.entity.QRecord.*;
 
 @Repository
@@ -99,7 +101,6 @@ public class RankRepository {
                         "SUM(CASE WHEN {0} = 4 THEN 1 ELSE 0 END)",
                         record.recordRank
                 );
-        
         // ===== 데이터 조회 =====
         List<RankGetResponse> content = queryFactory
                 .select(Projections.constructor(
@@ -121,7 +122,9 @@ public class RankRepository {
                 .from(record)
                 .join(bgmAgitMember)
                 .on(record.member.bgmAgitMemberId.eq(bgmAgitMember.bgmAgitMemberId))
-                .where(betweenDate(start, end))
+                .join(matchs)
+                .on(record.matchs.id.eq(matchs.id))
+                .where(betweenDate(start, end) , matchs.delStatus.eq("N"))
                 .groupBy(bgmAgitMember.bgmAgitMemberId, bgmAgitMember.bgmAgitMemberNickname)
                 .orderBy(totalPoint.desc())
                 .offset(pageable.getOffset())
@@ -134,6 +137,8 @@ public class RankRepository {
                 .from(record)
                 .join(bgmAgitMember)
                 .on(record.member.bgmAgitMemberId.eq(bgmAgitMember.bgmAgitMemberId))
+                .join(matchs)
+                .on(record.matchs.id.eq(matchs.id))
                 .where(betweenDate(start, end));
         
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
