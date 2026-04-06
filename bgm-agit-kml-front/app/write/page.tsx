@@ -51,6 +51,8 @@ export default function Write() {
   const { insert } = useInsertPost();
   const { update } = useUpdatePost();
 
+  const searchParams = useSearchParams();
+
   const user = useUserStore((state) => state.user);
   const router = useRouter();
 
@@ -215,7 +217,7 @@ export default function Write() {
       onSuccess: async () => {
         await alertDialog('기록이 저장되었습니다.', 'success');
 
-        if (detailId) router.push('/day-record');
+        router.push('/day-record');
       },
     });
   };
@@ -284,7 +286,7 @@ export default function Write() {
         content: '플레이 결과를 입력하고 나만의 기록을 쌓아보세요.',
       });
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     //권한 없을경우 메인으로

@@ -259,6 +259,7 @@ export default function Sidebar() {
                     }
                   } else {
                     router.push('/write?tournamentStatus=N');
+                    setIsOpen(false);
                   }
                 }}
               >
@@ -281,6 +282,7 @@ export default function Sidebar() {
                     }
                   } else {
                     router.push('/write?tournamentStatus=Y');
+                    setIsOpen(false);
                   }
                 }}
               >
