@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface RecordQueryRepository {
     
-    Page<Record> findByRecords(Pageable pageable, String startDate, String endDate, String nickName);
+    Page<Record> findByRecords(Pageable pageable, String startDate, String endDate, String nickName, String tournamentStatus);
     
     List<RecordGetDetailResponse.RecordList> findByRecord(Long id);
     

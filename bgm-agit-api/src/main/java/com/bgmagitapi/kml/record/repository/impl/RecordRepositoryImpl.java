@@ -29,7 +29,7 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
     private final JPAQueryFactory queryFactory;
     
     @Override
-    public Page<Record> findByRecords(Pageable pageable, String startDate, String endDate, String nickName) {
+    public Page<Record> findByRecords(Pageable pageable, String startDate, String endDate, String nickName, String tournamentStatus) {
         //  Match 먼저 페이징
         List<Long> matchIds = queryFactory
                 .select(matchs.id)
@@ -38,7 +38,8 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                         matchs.delStatus.eq("N"),
                         whereDateGoe(startDate),
                         whereDateLt(endDate),
-                        whereNickLikeExists(nickName)
+                        whereNickLikeExists(nickName),
+                        whereTournamentStatus(tournamentStatus)
                 )
                 .orderBy(matchs.registDate.desc(), matchs.id.desc())
                 .offset(pageable.getOffset())
@@ -169,5 +170,9 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                         bgmAgitMember.bgmAgitMemberNickname.like("%" + nickName + "%")
                 )
                 .exists();
+    }
+    private BooleanExpression whereTournamentStatus(String tournamentStatus) {
+        if (!StringUtils.hasText(tournamentStatus)) return null;
+        return matchs.tournamentStatus.eq(tournamentStatus);
     }
 }
