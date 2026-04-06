@@ -90,7 +90,6 @@ export default function DayRecord() {
               <Field $width="calc(20% - 8px)" $mobileWidth="100px">
                 <label>대회여부</label>
                 <select value={tournament} onChange={(e) => setTournament(e.target.value)}>
-                  <option value="">선택</option>
                   {TOURNAMENT_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
