@@ -263,33 +263,25 @@ export default function Write() {
 
   //detail 로직
   useEffect(() => {
-    const handle = () => {
-      const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(window.location.search);
 
-      const id = params.get('id');
-      const tournamentStatus = params.get('tournamentStatus');
+    const id = params.get('id');
+    const tournamentStatus = params.get('tournamentStatus');
 
-      setDetailId(id);
-      setTournamentStatus(tournamentStatus);
+    setDetailId(id);
+    setTournamentStatus(tournamentStatus);
 
-      if (tournamentStatus === 'Y') {
-        setTitle({
-          title: 'Tournament Entry',
-          content: '대회 경기 결과를 입력하고 공식 기록으로 관리하세요.',
-        });
-      } else {
-        setTitle({
-          title: 'Record Entry',
-          content: '플레이 결과를 입력하고 나만의 기록을 쌓아보세요.',
-        });
-      }
-    };
-
-    handle(); // 최초 실행
-
-    window.addEventListener('popstate', handle);
-
-    return () => window.removeEventListener('popstate', handle);
+    if (tournamentStatus === 'Y') {
+      setTitle({
+        title: 'Tournament Entry',
+        content: '대회 경기 결과를 입력하고 공식 기록으로 관리하세요.',
+      });
+    } else {
+      setTitle({
+        title: 'Record Entry',
+        content: '플레이 결과를 입력하고 나만의 기록을 쌓아보세요.',
+      });
+    }
   }, []);
 
   useEffect(() => {

@@ -258,8 +258,11 @@ export default function Sidebar() {
                       router.push('/login');
                     }
                   } else {
-                    router.push('/write?tournamentStatus=N');
-                    setIsOpen(false);
+                    if (pathname === '/write') {
+                      window.location.href = '/record/write?tournamentStatus=N';
+                    } else {
+                      router.push('/write?tournamentStatus=N');
+                    }
                   }
                 }}
               >
@@ -281,8 +284,11 @@ export default function Sidebar() {
                       router.push('/login');
                     }
                   } else {
-                    router.push('/write?tournamentStatus=Y');
-                    setIsOpen(false);
+                    if (pathname === '/write') {
+                      window.location.href = '/record/write?tournamentStatus=Y';
+                    } else {
+                      router.push('/write?tournamentStatus=Y');
+                    }
                   }
                 }}
               >
