@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { refreshToken } from '@/lib/axiosInstance';
 import { useUserStore } from '@/store/user';
 
-const protectedPrefixes = ['/write'];
+const protectedPrefixes = ['/write', '/setting'];
 
 export default function RouteAuthGuard() {
   const pathname = usePathname();
