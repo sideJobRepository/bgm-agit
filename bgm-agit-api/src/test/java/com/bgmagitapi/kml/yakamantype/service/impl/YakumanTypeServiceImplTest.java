@@ -42,7 +42,8 @@ class YakumanTypeServiceImplTest extends RepositoryAndServiceTestSupport {
     @DisplayName("")
     @Test
     void test3(){
-        List<YakumanGetResponse> pivotYakuman = yakumanService.getPivotYakuman(null);
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        Page<YakumanGetResponse> pivotYakuman = yakumanService.getPivotYakuman(null, pageRequest);
         System.out.println("pivotYakuman = " + pivotYakuman);
     }
     

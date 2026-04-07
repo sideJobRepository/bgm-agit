@@ -10,8 +10,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Transactional
 @RequiredArgsConstructor
 @Service
@@ -22,8 +20,8 @@ public class YakumanServiceImpl implements YakumanService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<YakumanGetResponse> getPivotYakuman(String nickName) {
-         return yakumanRepository.getPivotYakuman(nickName);
+    public Page<YakumanGetResponse> getPivotYakuman(String nickName, Pageable pageable) {
+          return yakumanRepository.getPivotYakuman(nickName,pageable);
     }
     
     @Override

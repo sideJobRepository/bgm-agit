@@ -24,8 +24,9 @@ public class YakumanController {
     private final YakumanService yakumanService;
     
     @GetMapping("/yakuman-pivot")
-    public List<YakumanGetResponse> getPivotYakuman(@RequestParam(required = false) String nickName) {
-        return yakumanService.getPivotYakuman(nickName);
+    public PageResponse<YakumanGetResponse> getPivotYakuman(@PageableDefault(size = 10) Pageable pageable,@RequestParam(required = false) String nickName) {
+        Page<YakumanGetResponse> pivotYakuman = yakumanService.getPivotYakuman(nickName, pageable);
+        return PageResponse.from(pivotYakuman);
     }
     
     @GetMapping("/yakuman-detail")
