@@ -31,7 +31,7 @@ interface BaseTableProps<T> {
   showWriteButton?: boolean;
   onWriteClick?: () => void;
   emptyMessage?: string;
-  searchLabel?: string;
+  searchLabel?: string | null;
   searchKeyword?: string;
   onSearchKeywordChange?: (value: string) => void;
   rankType?: 'WEEKLY' | 'MONTHLY';
@@ -70,63 +70,66 @@ export function BaseTable<T>({
 
   return (
     <TableBox data-pathname={pathname}>
-      <TopBox>
-        <SearchGroup
-          $isRankPage={isRankPage}
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSearch?.();
-          }}
-        >
-          <FieldsWrapper>
-            {!isRankPage ? (
-              <Field $path={true}>
-                <label>{searchLabel}</label>
-                <input
-                  type="text"
-                  placeholder="검색어를 입력해주세요."
-                  value={searchKeyword ?? ''}
-                  onChange={(e) => onSearchKeywordChange?.(e.target.value)}
-                />
-              </Field>
-            ) : (
-              <>
-                <Field $path={false}>
-                  <label>구분</label>
-                  <select
-                    value={rankType}
-                    onChange={(e) => onRankTypeChange?.(e.target.value as 'WEEKLY' | 'MONTHLY')}
-                  >
-                    <option value="WEEKLY">주간</option>
-                    <option value="MONTHLY">월간</option>
-                  </select>
+      {searchLabel && (
+        <TopBox>
+          <SearchGroup
+            $isRankPage={isRankPage}
+            onSubmit={(e) => {
+              e.preventDefault();
+              onSearch?.();
+            }}
+          >
+            <FieldsWrapper>
+              {!isRankPage ? (
+                <Field $path={true}>
+                  <label>{searchLabel}</label>
+                  <input
+                    type="text"
+                    placeholder="검색어를 입력해주세요."
+                    value={searchKeyword ?? ''}
+                    onChange={(e) => onSearchKeywordChange?.(e.target.value)}
+                  />
                 </Field>
-                <Field $path={false}>
-                  <label>시작일</label>
-                  <DateRange>
-                    <DatePicker
-                      selected={startDate}
-                      onChange={(date) => onStartDateChange?.(date)}
-                      dateFormat="yyyy.MM.dd"
-                      locale={ko}
-                      portalId="root-portal"
-                    />
-                  </DateRange>
-                </Field>
-              </>
-            )}
-          </FieldsWrapper>
-          <SearchButton type="submit">
-            <MagnifyingGlass weight="bold" />
-            검색
-          </SearchButton>
-        </SearchGroup>
-        {user?.roles?.includes('ROLE_ADMIN') && !showWriteButton && (
-          <Button onClick={onWriteClick ? () => onWriteClick() : undefined}>
-            <PencilSimpleLine weight="bold" />
-          </Button>
-        )}
-      </TopBox>
+              ) : (
+                <>
+                  <Field $path={false}>
+                    <label>구분</label>
+                    <select
+                      value={rankType}
+                      onChange={(e) => onRankTypeChange?.(e.target.value as 'WEEKLY' | 'MONTHLY')}
+                    >
+                      <option value="WEEKLY">주간</option>
+                      <option value="MONTHLY">월간</option>
+                    </select>
+                  </Field>
+                  <Field $path={false}>
+                    <label>시작일</label>
+                    <DateRange>
+                      <DatePicker
+                        selected={startDate}
+                        onChange={(date) => onStartDateChange?.(date)}
+                        dateFormat="yyyy.MM.dd"
+                        locale={ko}
+                        portalId="root-portal"
+                      />
+                    </DateRange>
+                  </Field>
+                </>
+              )}
+            </FieldsWrapper>
+            <SearchButton type="submit">
+              <MagnifyingGlass weight="bold" />
+              검색
+            </SearchButton>
+          </SearchGroup>
+          {user?.roles?.includes('ROLE_ADMIN') && !showWriteButton && (
+            <Button onClick={onWriteClick ? () => onWriteClick() : undefined}>
+              <PencilSimpleLine weight="bold" />
+            </Button>
+          )}
+        </TopBox>
+      )}
+
       <TableScroll>
         <Table>
           <thead>

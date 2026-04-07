@@ -14,7 +14,7 @@ export function useFetchDayRecordList() {
   const { request } = useRequest();
   const setDayRecord = useDayRecordStore((state) => state.setDayRecord);
 
-  const fetchNotice = (params: params) => {
+  const fetchDayRecord = (params: params) => {
     request(
       () => api.get(`/bgm-agit/record?size=6`, { params }).then((res) => res.data),
       setDayRecord,
@@ -22,5 +22,5 @@ export function useFetchDayRecordList() {
     );
   };
 
-  return fetchNotice;
+  return fetchDayRecord;
 }
