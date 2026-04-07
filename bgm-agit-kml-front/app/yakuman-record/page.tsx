@@ -34,7 +34,7 @@ export default function Notice() {
   const loading = useLoadingStore((state) => state.loading);
   const isReady = !loading && yakumanList;
 
-  console.log('yakumanList', yakumanList);
+  const [previewImg, setPreviewImg] = useState<string | null>(null);
 
   const countColumns = useMemo<BaseColumn<YakumanRow>[]>(
     () => [
@@ -187,7 +187,7 @@ export default function Notice() {
         key: 'fileUrl',
         header: '이미지',
         align: 'center',
-        render: (row) => <Thumbnail src={row.fileUrl} />,
+        render: (row) => <Thumbnail src={row.fileUrl} onClick={() => setPreviewImg(row.fileUrl)} />,
       },
       {
         key: 'registDate',
@@ -206,6 +206,11 @@ export default function Notice() {
 
   return (
     <Wrapper>
+      {previewImg && (
+        <ImageOverlay onClick={() => setPreviewImg(null)}>
+          <img src={previewImg} />
+        </ImageOverlay>
+      )}
       <Hero>
         <HeroBg>
           <img src={withBasePath('/bgmMain.jpeg')} alt="상단 이미지" />
@@ -399,4 +404,22 @@ const Thumbnail = styled.img`
   height: 80px;
   object-fit: cover;
   border-radius: 6px;
+  cursor: zoom-in;
+`;
+
+const ImageOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  img {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+  }
 `;
