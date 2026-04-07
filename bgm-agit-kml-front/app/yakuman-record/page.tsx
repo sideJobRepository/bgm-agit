@@ -40,7 +40,7 @@ export default function Notice() {
     () => [
       {
         key: 'nickname',
-        header: '이름',
+        header: '닉네임',
         width: '120px',
         align: 'center',
         render: (row) => row.nickname,
@@ -53,7 +53,7 @@ export default function Notice() {
       },
       {
         key: 'countedYakuman',
-        header: '헤아림',
+        header: '헤아림 역만',
         align: 'center',
         render: (row) => row.countedYakuman,
       },
@@ -131,13 +131,13 @@ export default function Notice() {
       },
       {
         key: 'kokushi13Wait',
-        header: '국사13',
+        header: '국사무쌍 13면 대기',
         align: 'center',
         render: (row) => row.kokushi13Wait,
       },
       {
         key: 'pureChuuren',
-        header: '순정구련',
+        header: '순정 구련보등',
         align: 'center',
         render: (row) => row.pureChuuren,
       },
@@ -149,7 +149,7 @@ export default function Notice() {
       },
       {
         key: 'sharin',
-        header: '사린연기',
+        header: '사리엔커',
         align: 'center',
         render: (row) => row.sharin,
       },
