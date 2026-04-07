@@ -213,7 +213,7 @@ export default function Notice() {
       )}
       <Hero>
         <HeroBg>
-          <img src={withBasePath('/bgmMain.jpeg')} alt="상단 이미지" />
+          <img src={withBasePath('/yakHero.jpg')} alt="상단 이미지" />
         </HeroBg>
         <FixedDarkOverlay />
         <HeroOverlay
@@ -226,8 +226,8 @@ export default function Notice() {
         />
 
         <HeroContent>
-          <h1>What’s New</h1>
-          <span>새로운 소식과 중요 안내를 확인하세요.</span>
+          <h1>Yakuman Records</h1>
+          <span>역만 기록과 상세 내역을 확인하세요.</span>
         </HeroContent>
       </Hero>
       <ToggleBox>
