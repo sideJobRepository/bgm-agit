@@ -51,14 +51,9 @@ export default function Write() {
   const { insert } = useInsertPost();
   const { update } = useUpdatePost();
 
-  const searchParams = useSearchParams();
-
   const user = useUserStore((state) => state.user);
   const router = useRouter();
 
-  //detail
-  // const searchParams = useSearchParams();
-  // const detailId = searchParams.get('id');
   const [detailId, setDetailId] = useState<string | null>(null);
   const [tournamentStatus, setTournamentStatus] = useState<string | null>(null);
   const [title, setTitle] = useState({ title: '', content: '' });
@@ -268,25 +263,34 @@ export default function Write() {
 
   //detail 로직
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const handle = () => {
+      const params = new URLSearchParams(window.location.search);
 
-    const id = params.get('id');
-    const tournamentStatus = params.get('tournamentStatus');
-    setDetailId(id);
-    console.log('id', id);
-    setTournamentStatus(tournamentStatus);
-    if (tournamentStatus === 'Y') {
-      setTitle({
-        title: 'Tournament Entry',
-        content: '대회 경기 결과를 입력하고 공식 기록으로 관리하세요.',
-      });
-    } else {
-      setTitle({
-        title: 'Record Entry',
-        content: '플레이 결과를 입력하고 나만의 기록을 쌓아보세요.',
-      });
-    }
-  }, [searchParams]);
+      const id = params.get('id');
+      const tournamentStatus = params.get('tournamentStatus');
+
+      setDetailId(id);
+      setTournamentStatus(tournamentStatus);
+
+      if (tournamentStatus === 'Y') {
+        setTitle({
+          title: 'Tournament Entry',
+          content: '대회 경기 결과를 입력하고 공식 기록으로 관리하세요.',
+        });
+      } else {
+        setTitle({
+          title: 'Record Entry',
+          content: '플레이 결과를 입력하고 나만의 기록을 쌓아보세요.',
+        });
+      }
+    };
+
+    handle(); // 최초 실행
+
+    window.addEventListener('popstate', handle);
+
+    return () => window.removeEventListener('popstate', handle);
+  }, []);
 
   useEffect(() => {
     //권한 없을경우 메인으로
