@@ -13,6 +13,7 @@ export const myPageState = atom<MyPage>({
     nickName: '',
     phoneNo: '',
     nickNameUseStatus: '',
+    mahjongUseStatus: '',
     name: '',
     mail: '',
     registDate: '',

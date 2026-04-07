@@ -23,7 +23,7 @@ export default function MyPageModal({ onClose }: Props) {
 
   const [nickName, setNickName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-
+  const [mahjongUse, setMahjongUse] = useState<'Y' | 'N'>('N');
   //휴대폰 정규식
   const PHONE_REGEX = /^01[0-9]-[0-9]{3,4}-[0-9]{4}$/;
 
@@ -47,6 +47,7 @@ export default function MyPageModal({ onClose }: Props) {
       nickName: nickName,
       phoneNo: phoneNumber,
       nickNameUseStatus: 'Y',
+      mahjongUseStatus: mahjongUse,
     };
 
     showConfirmModal({
@@ -72,6 +73,7 @@ export default function MyPageModal({ onClose }: Props) {
   useEffect(() => {
     setNickName(items?.nickName);
     setPhoneNumber(items?.phoneNo);
+    setMahjongUse(items?.mahjongUseStatus === 'Y' ? 'Y' : 'N');
   }, [items]);
 
   return (
@@ -139,6 +141,16 @@ export default function MyPageModal({ onClose }: Props) {
               onChange={e => setPhoneNumber(e.target.value)}
             />
           </InputBox>
+          <InputBox>
+            <CheckRow>
+              <label>마작기록 사용 여부</label>
+              <input
+                type="checkbox"
+                checked={mahjongUse === 'Y'}
+                onChange={e => setMahjongUse(e.target.checked ? 'Y' : 'N')}
+              />
+            </CheckRow>
+          </InputBox>
           <button onClick={() => updateData()}>수정하기</button>
         </BottomModalBox>
       </ModalWrapper>
@@ -201,7 +213,7 @@ const BottomModalBox = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
   padding: 0 28px;
 
   button {
@@ -226,12 +238,14 @@ const InputBox = styled.div<WithTheme>`
   flex-direction: column;
   text-align: left;
   gap: 4px;
+
   label {
     font-size: ${({ theme }) => theme.sizes.xsmall};
     text-align: left;
     color: ${({ theme }) => theme.colors.bronzeColor};
     font-weight: 600;
     padding: 0 8px;
+    white-space: nowrap;
   }
 
   input {
@@ -251,5 +265,17 @@ const InputBox = styled.div<WithTheme>`
   .readonly-input {
     background-color: transparent;
     border: none;
+  }
+`;
+
+const CheckRow = styled.div`
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+
+  input {
+    width: 40px;
+    height: 20px;
   }
 `;
