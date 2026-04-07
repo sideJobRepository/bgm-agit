@@ -47,4 +47,9 @@ public class SettingServiceImpl implements SettingService {
         settingRepository.save(setting);
         return new ApiResponse(200,true,"반환점 설정이 완료되었습니다.");
     }
+    
+    @Override
+    public Integer getRefund() {
+        return settingRepository.findRefund() * 4;
+    }
 }

@@ -9,7 +9,7 @@ import static com.bgmagitapi.kml.setting.entity.QSetting.setting;
 
 @RequiredArgsConstructor
 public class SettingRepositoryImpl implements SettingQueryRepository {
-
+    
     
     private final JPAQueryFactory queryFactory;
     
@@ -25,7 +25,16 @@ public class SettingRepositoryImpl implements SettingQueryRepository {
     public void updateUseStatusN() {
         queryFactory
                 .update(setting)
-                .set(setting.useStatus,"N")
+                .set(setting.useStatus, "N")
                 .execute();
+    }
+    
+    @Override
+    public Integer findRefund() {
+        return queryFactory
+                .select(setting.turning)
+                .from(setting)
+                .where(setting.useStatus.eq("Y"))
+                .fetchFirst();
     }
 }

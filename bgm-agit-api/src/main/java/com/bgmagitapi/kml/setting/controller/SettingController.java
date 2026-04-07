@@ -18,12 +18,17 @@ public class SettingController {
     private final SettingService settingService;
     
     
-    @GetMapping("/setting")
+    @GetMapping("/settings")
     public SettingGetResponse getSettings() {
         return settingService.getSettings();
     }
     
-    @PostMapping("/setting")
+    @GetMapping("/settings/refund")
+    public Integer getRefund() {
+        return settingService.getRefund();
+    }
+    
+    @PostMapping("/settings")
     public ApiResponse setSettings(@Validated @RequestBody SettingPostRequest request) {
         return settingService.createSettings(request);
     }

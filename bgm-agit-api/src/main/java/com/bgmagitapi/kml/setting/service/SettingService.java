@@ -10,4 +10,6 @@ public interface SettingService {
     SettingGetResponse getSettings();
     
     ApiResponse createSettings(SettingPostRequest request);
+    
+    Integer getRefund();
 }
