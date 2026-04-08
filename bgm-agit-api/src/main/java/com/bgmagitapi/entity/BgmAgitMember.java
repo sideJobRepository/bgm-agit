@@ -61,6 +61,7 @@ public class BgmAgitMember extends DateSuperClass {
         this.bgmAgitMemberPhoneNo = normalizePhone(socialProfile.phone());
         this.bgmAgitMemberNickname = socialProfile.name();
         this.bgmAgitMemberNicknameUseStatus = "Y";
+        this.bgmAgitMemberMahjongUseStatus = "N";
     }
     
     public void modifyMember(SocialProfile socialProfile) {
