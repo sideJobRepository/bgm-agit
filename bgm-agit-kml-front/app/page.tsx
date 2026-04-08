@@ -5,11 +5,21 @@ import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { withBasePath } from '@/lib/path';
 import Link from 'next/link';
-import { ArrowRight, HandPointing  } from 'phosphor-react';
+import { ArrowRight, HandPointing } from 'phosphor-react';
 import { useMediaQuery } from 'react-responsive';
+import { useRouter } from 'next/navigation';
 
 const INITIAL_CARDS = [
-  { id: 1, title: 'RED', color: '#D9625E' },
+  {
+    id: 1,
+    title: 'Tournament Play',
+    content:
+      '대회에서의 한 판 한 판은 단순한 결과가 아닌, 경쟁과 전략이 쌓인 기록입니다.\n' +
+      '경기 결과를 입력하고 공식 데이터를 남겨, 나의 플레이 흐름과 성과를 체계적으로 관리해보세요.',
+    push: '/write?tournamentStatus=Y',
+    color: '#D9625E',
+    img: '/1.png',
+  },
   {
     id: 2,
     title: '시작은 BGM 아지트부터',
@@ -17,16 +27,28 @@ const INITIAL_CARDS = [
       'BGM 아지트는 보드게임을 사랑하는 가지각색의 사람들이 모여, 따뜻한 즐거움을 제공하는 아늑한 공간입니다.\n' +
       '잠깐의 시간으로 끝나지 않고 여러분의 일상이 될 수 있는, 최고의 친구들과 취미를 만들어보세요.',
     color: '#4A90E2',
-    link: process.env.NEXT_PUBLIC_FRONT_BGM_URL
+    link: process.env.NEXT_PUBLIC_FRONT_BGM_URL,
+    img: '/2.png',
   },
-  { id: 3, title: 'YELLOW', color: '#EAC764' },
-  { id: 4, title: 'GREEN', color: '#6DAE81' },
-  { id: 5, title: 'ORANGE', color: '#E38B29' },
-  { id: 6, title: 'NAVY', color: '#415B9C' },
-  { id: 7, title: 'PURPLE', color: '#8E6FB5' },
+  {
+    id: 3,
+    title: '기록이 쌓이는 공간',
+    content:
+      '하루의 기록이 모여 하나의 흐름이 되고, 그 흐름이 당신의 플레이를 완성합니다.\n' +
+      '일간과 월간 기록을 통해 나의 변화와 성장을 한눈에 확인하고, 쌓여가는 데이터 속에서 나만의 플레이 패턴을 발견해보세요.\n' +
+      '작은 기록 하나가 더 나은 선택과 전략으로 이어지는 순간을 경험할 수 있습니다.',
+    push: '/day-record',
+    color: '#6DAE81',
+    img: '/3.png',
+  },
+  // { id: 4, title: 'GREEN', color: '#6DAE81' },
+  // { id: 5, title: 'ORANGE', color: '#E38B29' },
+  // { id: 6, title: 'NAVY', color: '#415B9C' },
+  // { id: 7, title: 'PURPLE', color: '#8E6FB5' },
 ];
 
 export default function Home() {
+  const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
 
@@ -40,7 +62,7 @@ export default function Home() {
 
   const next = () => {
     setDir(1);
-    setCards(prev => {
+    setCards((prev) => {
       const [first, ...rest] = prev;
       return [...rest, first]; // 앞에서 빼서 뒤로
     });
@@ -48,7 +70,7 @@ export default function Home() {
 
   const prev = () => {
     setDir(-1);
-    setCards(prev => {
+    setCards((prev) => {
       const last = prev[prev.length - 1];
       const rest = prev.slice(0, prev.length - 1);
       return [last, ...rest]; // 뒤에서 빼서 앞으로
@@ -69,7 +91,8 @@ export default function Home() {
   return (
     <Wrapper>
       <Title>
-        <h1>Welcome to
+        <h1>
+          Welcome to
           <img src={withBasePath('/logo.png')} alt="로고" />
         </h1>
         <h5>
@@ -104,11 +127,7 @@ export default function Home() {
             }}
           >
             {showSwipeHint && i === 1 && (
-              <SwipeHint
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
+              <SwipeHint initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <SwipeFinger
                   animate={{ x: [-28, 28, -28] }}
                   transition={{
@@ -129,19 +148,28 @@ export default function Home() {
                 >
                   <span>카드를 좌우로 넘겨보세요.</span>
                 </SwipeMessage>
-
               </SwipeHint>
             )}
             <ContentSection>
               <h4>{card.title}</h4>
               <span>{card?.content}</span>
-              <a href={card?.link} target="_blank" rel="noopener noreferrer">
+              <a
+                href={card?.link || '#'}
+                target={card?.link ? '_blank' : undefined}
+                rel={card?.link ? 'noopener noreferrer' : undefined}
+                onClick={(e) => {
+                  if (!card?.link) {
+                    e.preventDefault();
+                    router.push(card.push!);
+                  }
+                }}
+              >
                 Read more
                 <ArrowRight weight="bold" />
               </a>
             </ContentSection>
             <ImageSection>
-              <img src={withBasePath('/2.png')} alt="로고" />
+              <img src={withBasePath(`/main/${card?.img}`)} alt="로고" />
             </ImageSection>
           </Card>
         ))}
@@ -164,7 +192,7 @@ const Wrapper = styled.div`
   margin: auto;
   flex-direction: column;
   gap: 36px;
-    padding: 12px 0;
+  padding: 12px 0;
 
   @media ${({ theme }) => theme.device.tablet} {
     width: 100vw;
@@ -185,23 +213,23 @@ const Title = styled.div`
   margin-bottom: 24px;
 
   h1 {
-      display: flex;
-      gap: 4px;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+    display: flex;
+    gap: 4px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     font-size: ${({ theme }) => theme.desktop.sizes.titleSize};
     font-weight: 800;
 
-      img {
-          width: 400px;
-      }
-      
+    img {
+      width: 400px;
+    }
+
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.mobile.sizes.titleSize};
-        img {
-            width: 240px;
-        }
+      img {
+        width: 240px;
+      }
     }
   }
 
@@ -243,7 +271,7 @@ const Card = styled(motion.div)`
 
   font-size: 32px;
   font-weight: 700;
-    touch-action: pan-y;
+  touch-action: pan-y;
 `;
 
 const NavLeft = styled.div`
@@ -316,7 +344,7 @@ const ContentSection = styled.section`
     font-size: ${({ theme }) => theme.desktop.sizes.xl};
     font-weight: 600;
     word-break: keep-all;
-    white-space: normal;
+    white-space: pre-line;
     color: ${({ theme }) => theme.colors.basicColor};
 
     @media ${({ theme }) => theme.device.mobile} {
@@ -396,49 +424,46 @@ const variants = (isMobile: boolean) => ({
 });
 
 const SwipeHint = styled(motion.div)`
-    position: absolute;
-    inset: 0;
-    z-index: 6;
-    gap: 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 
-    pointer-events: none;
+  pointer-events: none;
 `;
 
-
 const SwipeFinger = styled(motion.div)`
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(4px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
 
-    svg {
-        width: 26px;
-        height: 26px;
-        color: ${({ theme }) => theme.colors.whiteColor};
-    }
-    
+  svg {
+    width: 26px;
+    height: 26px;
+    color: ${({ theme }) => theme.colors.whiteColor};
+  }
 `;
 
 const SwipeMessage = styled(motion.div)`
-    border-radius: 4px;
-    padding: 6px 8px;
-    background: rgba(0, 0, 0, 0.45); 
-    backdrop-filter: blur(4px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    font-size: ${({ theme }) => theme.desktop.sizes.sm};
-    color: ${({ theme }) => theme.colors.whiteColor};
+  border-radius: 4px;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-size: ${({ theme }) => theme.desktop.sizes.sm};
+  color: ${({ theme }) => theme.colors.whiteColor};
 `;
-

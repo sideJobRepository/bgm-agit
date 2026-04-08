@@ -18,7 +18,7 @@ class MatchsAndRecordHistoryServiceImplTest extends RepositoryAndServiceTestSupp
     @DisplayName("")
     @Test
     void test1(){
-        List<MatchsAndRecordHistoryResponse> matchsAndRecordHistory = matchsHistoryService.getMatchsAndRecordHistory(1L);
+        List<MatchsAndRecordHistoryResponse> matchsAndRecordHistory = matchsHistoryService.getMatchsAndRecordHistory(2L);
         System.out.println("matchsAndRecordHistory = " + matchsAndRecordHistory);
     }
 }

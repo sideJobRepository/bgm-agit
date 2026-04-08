@@ -66,7 +66,8 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
     }
     
     @Override
-    public List<YakumanGetResponse> getPivotYakuman(String nickName) {
+    public Page<YakumanGetResponse> getPivotYakuman(String nickName, Pageable pageable) {
+        
         NumberExpression<Long> countedYakuman = sumCase(yakuman.yakumanName.eq("헤아림 역만"));
         NumberExpression<Long> suuankou       = sumCase(yakuman.yakumanName.eq("사암각"));
         NumberExpression<Long> suukantsu      = sumCase(yakuman.yakumanName.eq("사깡즈"));
@@ -85,11 +86,11 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
         NumberExpression<Long> suuankouTanki  = sumCase(yakuman.yakumanName.eq("사암각 단기"));
         NumberExpression<Long> sharin         = sumCase(yakuman.yakumanName.eq("사리엔커"));
         
-        return queryFactory
+        List<YakumanGetResponse> content = queryFactory
                 .select(new QYakumanGetResponse(
-                        bgmAgitMember.bgmAgitMemberId,          // memberId
-                        bgmAgitMember.bgmAgitMemberNickname,    // nickname
-                        yakuman.count(),                 // totalCount
+                        bgmAgitMember.bgmAgitMemberId,
+                        bgmAgitMember.bgmAgitMemberNickname,
+                        yakuman.count(),
                         countedYakuman,
                         suuankou,
                         suukantsu,
@@ -114,7 +115,17 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
                 .where(bgmAgitMember.bgmAgitMemberMahjongUseStatus.eq("Y"), whereNickName(nickName))
                 .groupBy(bgmAgitMember.bgmAgitMemberId, bgmAgitMember.bgmAgitMemberNickname)
                 .orderBy(yakuman.count().desc())
+                .offset(pageable.getOffset())     // 핵심
+                .limit(pageable.getPageSize())    // 핵심
                 .fetch();
+        
+        // count 쿼리
+        JPAQuery<Long> countQuery = queryFactory
+                .select(bgmAgitMember.count())
+                .from(bgmAgitMember)
+                .where(bgmAgitMember.bgmAgitMemberMahjongUseStatus.eq("Y"), whereNickName(nickName));
+        
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
     
     
@@ -144,7 +155,8 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
                         bgmAgitMember.bgmAgitMemberNickname,
                         yakuman.yakumanName,
                         yakuman.yakumanCont,
-                        bgmAgitCommonFile.bgmAgitCommonFileUrl
+                        bgmAgitCommonFile.bgmAgitCommonFileUrl,
+                        yakuman.registDate
                 ))
                 .from(yakuman)
                 .join(yakuman.member, bgmAgitMember)

@@ -8,8 +8,8 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface YakumanService {
-
-    List<YakumanGetResponse> getPivotYakuman(String nickName);
+    
+    Page<YakumanGetResponse> getPivotYakuman(String nickName, Pageable pageable);
     
     Page<YakumanDetailGetResponse> getDetailYakuman(Pageable pageable);
 }

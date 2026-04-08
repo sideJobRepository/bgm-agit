@@ -30,8 +30,9 @@ public class RecordController {
             ,@RequestParam(name = "startDate", required = false) String startDate
             ,@RequestParam(name = "endDate" , required = false) String endDate
             ,@RequestParam(name= "nickName", required = false) String nickName
+            ,@RequestParam(name= "tournamentStatus", required = false) String tournamentStatus
     ) {
-        Page<RecordGetResponse> records = recordService.getRecords(pageable,startDate,endDate,nickName);
+        Page<RecordGetResponse> records = recordService.getRecords(pageable,startDate,endDate,nickName,tournamentStatus);
         return PageResponse.from(records);
     }
     

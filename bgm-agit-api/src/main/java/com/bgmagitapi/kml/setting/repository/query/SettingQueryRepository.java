@@ -8,4 +8,6 @@ public interface SettingQueryRepository {
     Setting findBySetting();
     
     void updateUseStatusN();
+    
+    Integer findRefund();
 }

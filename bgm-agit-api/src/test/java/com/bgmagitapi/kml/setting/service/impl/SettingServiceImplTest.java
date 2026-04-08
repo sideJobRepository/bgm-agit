@@ -37,4 +37,12 @@ class SettingServiceImplTest extends RepositoryAndServiceTestSupport {
         System.out.println("settings = " + settings);
     }
     
+    @DisplayName("")
+    @Test
+    void test(){
+        Integer refund = settingService.getRefund();
+        System.out.println("refund = " + refund);
+        
+    }
+    
 }

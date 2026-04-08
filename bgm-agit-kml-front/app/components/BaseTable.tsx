@@ -5,6 +5,10 @@ import styled from 'styled-components';
 import Pagination from '@/app/components/Pagination';
 import { useUserStore } from '@/store/user';
 import { PencilSimpleLine, MagnifyingGlass } from 'phosphor-react';
+import { usePathname } from 'next/navigation';
+import DatePicker from 'react-datepicker';
+import { ko } from 'date-fns/locale';
+import 'react-datepicker/dist/react-datepicker.css';
 
 export interface BaseColumn<T> {
   key: string;
@@ -27,9 +31,15 @@ interface BaseTableProps<T> {
   showWriteButton?: boolean;
   onWriteClick?: () => void;
   emptyMessage?: string;
-  searchLabel?: string;
+  searchLabel?: string | null;
   searchKeyword?: string;
   onSearchKeywordChange?: (value: string) => void;
+  rankType?: 'WEEKLY' | 'MONTHLY';
+  onRankTypeChange?: (value: 'WEEKLY' | 'MONTHLY') => void;
+  startDate?: Date | null;
+  onStartDateChange?: (value: Date | null) => void;
+  getRowClassName?: (row: T, index: number) => string | undefined;
+  getCellClassName?: (row: T, col: BaseColumn<T>, index: number) => string | undefined;
   onSearch?: () => void;
 }
 
@@ -46,73 +56,120 @@ export function BaseTable<T>({
   searchLabel,
   searchKeyword,
   onSearchKeywordChange,
+  rankType = 'MONTHLY',
+  onRankTypeChange,
+  startDate = null,
+  onStartDateChange,
+  getRowClassName,
+  getCellClassName,
   onSearch,
 }: BaseTableProps<T>) {
   const user = useUserStore((state) => state.user);
+  const pathname = usePathname();
+  const isRankPage = pathname === '/rank';
 
   return (
-    <TableBox>
-      <TopBox>
-        <SearchGroup
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSearch?.();
-          }}
-        >
-          <FieldsWrapper>
-            <Field>
-              <label>{searchLabel}</label>
-              <input
-                type="text"
-                placeholder="검색어를 입력해주세요."
-                value={searchKeyword ?? ''}
-                onChange={(e) => onSearchKeywordChange?.(e.target.value)}
-              />
-            </Field>
-          </FieldsWrapper>
-          <SearchButton type="submit">
-            <MagnifyingGlass weight="bold" />
-            검색
-          </SearchButton>
-        </SearchGroup>
-        {user?.roles?.includes('ROLE_ADMIN') && (
-          <Button onClick={onWriteClick ? () => onWriteClick() : undefined}>
-            <PencilSimpleLine weight="bold" />
-          </Button>
-        )}
-      </TopBox>
-      <Table>
-        <thead>
-          <tr>
-            {columns.map((col) => (
-              <Th key={col.key} $width={col.width}>
-                {col.header}
-              </Th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.length === 0 ? (
-            <tr>
-              <EmptyTd colSpan={columns.length}>{emptyMessage}</EmptyTd>
-            </tr>
-          ) : (
-            data.map((row, index) => (
-              <Tr
-                key={index}
-                $clickable={!!onRowClick}
-                onClick={onRowClick ? () => onRowClick(row) : undefined}
-              >
-                {columns.map((col) => (
-                  <Td key={col.key} $align={col.align} $nowrap={col.nowrap}>
-                    {col.render(row, index)}
-                  </Td>
-                ))}
-              </Tr>
-            ))
+    <TableBox data-pathname={pathname}>
+      {searchLabel && (
+        <TopBox>
+          <SearchGroup
+            $isRankPage={isRankPage}
+            onSubmit={(e) => {
+              e.preventDefault();
+              onSearch?.();
+            }}
+          >
+            <FieldsWrapper>
+              {!isRankPage ? (
+                <Field $path={true}>
+                  <label>{searchLabel}</label>
+                  <input
+                    type="text"
+                    placeholder="검색어를 입력해주세요."
+                    value={searchKeyword ?? ''}
+                    onChange={(e) => onSearchKeywordChange?.(e.target.value)}
+                  />
+                </Field>
+              ) : (
+                <>
+                  <Field $path={false}>
+                    <label>구분</label>
+                    <select
+                      value={rankType}
+                      onChange={(e) => onRankTypeChange?.(e.target.value as 'WEEKLY' | 'MONTHLY')}
+                    >
+                      <option value="WEEKLY">주간</option>
+                      <option value="MONTHLY">월간</option>
+                    </select>
+                  </Field>
+                  <Field $path={false}>
+                    <label>시작일</label>
+                    <DateRange>
+                      <DatePicker
+                        selected={startDate}
+                        onChange={(date) => onStartDateChange?.(date)}
+                        dateFormat="yyyy.MM.dd"
+                        locale={ko}
+                        portalId="root-portal"
+                      />
+                    </DateRange>
+                  </Field>
+                </>
+              )}
+            </FieldsWrapper>
+            <SearchButton type="submit">
+              <MagnifyingGlass weight="bold" />
+              검색
+            </SearchButton>
+          </SearchGroup>
+          {user?.roles?.includes('ROLE_ADMIN') && !showWriteButton && (
+            <Button onClick={onWriteClick ? () => onWriteClick() : undefined}>
+              <PencilSimpleLine weight="bold" />
+            </Button>
           )}
-        </tbody>
-      </Table>
+        </TopBox>
+      )}
+
+      <TableScroll>
+        <Table>
+          <thead>
+            <tr>
+              {columns.map((col) => (
+                <Th key={col.key} $width={col.width}>
+                  {col.header}
+                </Th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.length === 0 ? (
+              <tr>
+                <EmptyTd colSpan={columns.length}>{emptyMessage}</EmptyTd>
+              </tr>
+            ) : (
+              data.map((row, index) => (
+                <Tr
+                  key={index}
+                  className={getRowClassName?.(row, index)}
+                  $clickable={!!onRowClick}
+                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                >
+                  {columns.map((col) => (
+                    <Td
+                      key={col.key}
+                      className={getCellClassName?.(row, col, index)}
+                      $align={col.align}
+                      $nowrap={col.nowrap}
+                    >
+                      {col.render(row, index)}
+                    </Td>
+                  ))}
+                </Tr>
+              ))
+            )}
+          </tbody>
+        </Table>
+      </TableScroll>
       <PaginationWrapper>
         <Pagination current={page} totalPages={totalPages} onChange={onPageChange} />
       </PaginationWrapper>
@@ -125,10 +182,14 @@ const TableBox = styled.div`
   flex-direction: column;
   gap: 24px;
   padding: 24px 8px;
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
 `;
 
 const Table = styled.table`
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: ${({ theme }) => theme.desktop.sizes.sm};
   color: ${({ theme }) => theme.colors.inputColor};
@@ -189,6 +250,21 @@ const Td = styled.td<{
   white-space: ${({ $nowrap }) => ($nowrap ? 'nowrap' : 'normal')};
   word-break: break-word;
   overflow-wrap: anywhere;
+
+  &.cell-blue {
+    color: #2563eb;
+    font-weight: 600;
+  }
+
+  &.cell-green {
+    color: #15803d;
+    font-weight: 600;
+  }
+
+  &.cell-red {
+    color: #dc2626;
+    font-weight: 600;
+  }
 `;
 
 const Tr = styled.tr<{ $clickable: boolean }>`
@@ -196,6 +272,18 @@ const Tr = styled.tr<{ $clickable: boolean }>`
 
   &:nth-child(even) {
     background-color: rgb(253, 253, 255);
+  }
+
+  &.rank-gold {
+    background-color: #fff4cc !important;
+  }
+
+  &.rank-silver {
+    background-color: #f3f4f6 !important;
+  }
+
+  &.rank-bronze {
+    background-color: #fce7d6 !important;
   }
 `;
 
@@ -239,7 +327,7 @@ const Button = styled.button`
   }
 `;
 
-const SearchGroup = styled.form`
+const SearchGroup = styled.form<{ $isRankPage?: boolean }>`
   display: flex;
   background-color: ${({ theme }) => theme.colors.white};
   flex: 1;
@@ -249,7 +337,7 @@ const SearchGroup = styled.form`
   border: 1px solid ${({ theme }) => theme.colors.lineColor};
   border-radius: 4px;
   flex-wrap: nowrap;
-  max-width: 260px;
+  max-width: ${({ $isRankPage }) => ($isRankPage ? '620px' : '260px')};
 
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
@@ -266,10 +354,10 @@ const FieldsWrapper = styled.div`
   overflow-y: hidden;
 `;
 
-const Field = styled.div`
+const Field = styled.div<{ $path: boolean }>`
   display: flex;
   flex-direction: column;
-  width: 100%;
+  width: ${({ $path }) => ($path ? '100%' : 'calc(50% - 8px)')};
   flex-shrink: 0;
 
   label {
@@ -287,6 +375,17 @@ const Field = styled.div`
     outline: none;
     color: ${({ theme }) => theme.colors.inputColor};
     background: transparent;
+  }
+
+  select {
+    border: none;
+    width: 100%;
+    padding: 4px 0;
+    font-size: ${({ theme }) => theme.desktop.sizes.sm};
+    outline: none;
+    color: ${({ theme }) => theme.colors.inputColor};
+    background: transparent;
+    appearance: none;
   }
 `;
 
@@ -307,5 +406,24 @@ const SearchButton = styled.button`
   white-space: nowrap;
   &:hover {
     opacity: 0.8;
+  }
+`;
+
+const TableScroll = styled.div`
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+`;
+
+const DateRange = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: ${({ theme }) => theme.colors.inputColor};
+
+  input {
+    cursor: pointer;
   }
 `;

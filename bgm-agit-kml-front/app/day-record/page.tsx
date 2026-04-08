@@ -4,12 +4,13 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useFetchDayRecordList } from '@/services/dayRecord.service';
 import { useDayRecordStore } from '@/store/dayRecord';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BaseCardTable } from '@/app/components/BaseCardTable';
 import { MagnifyingGlass, PencilSimpleLine } from 'phosphor-react';
 import DatePicker from 'react-datepicker';
 import { ko } from 'date-fns/locale';
 import 'react-datepicker/dist/react-datepicker.css';
+import { format } from 'date-fns';
 
 export default function DayRecord() {
   const fetchDayRecord = useFetchDayRecordList();
@@ -17,13 +18,19 @@ export default function DayRecord() {
   const dayRecordData = useDayRecordStore((state) => state.dayReord);
 
   //검색
+  const TOURNAMENT_OPTIONS = [
+    { label: '예', value: 'Y' },
+    { label: '아니오', value: 'N' },
+  ];
+
+  const [tournament, setTournament] = useState('N');
   const [nickName, setNickName] = useState('');
 
   const today = new Date();
   const oneMonthLater = new Date();
   oneMonthLater.setMonth(today.getMonth() - 1);
 
-  const formatDate = (date: Date | null) => (date ? date.toISOString().split('T')[0] : null);
+  const formatDate = (date: Date | null) => (date ? format(date, 'yyyy-MM-dd') : null);
 
   const [startDate, setStartDate] = useState<Date | null>(oneMonthLater);
   const [endDate, setEndDate] = useState<Date | null>(today);
@@ -40,6 +47,7 @@ export default function DayRecord() {
       startDate: formatDate(startDate),
       endDate: formatDate(endDate),
       nickName,
+      tournamentStatus: tournament,
     });
   }, [page]);
 
@@ -74,11 +82,22 @@ export default function DayRecord() {
                 startDate: formatDate(startDate),
                 endDate: formatDate(endDate),
                 nickName,
+                tournamentStatus: tournament,
               });
             }}
           >
             <FieldsWrapper>
-              <Field>
+              <Field $width="calc(20% - 8px)" $mobileWidth="100px">
+                <label>대회여부</label>
+                <select value={tournament} onChange={(e) => setTournament(e.target.value)}>
+                  {TOURNAMENT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field $width="calc(40% - 8px)" $mobileWidth="180px">
                 <label>닉네임</label>
                 <input
                   type="text"
@@ -87,7 +106,7 @@ export default function DayRecord() {
                   onChange={(e) => setNickName(e.target.value)}
                 />
               </Field>
-              <Field>
+              <Field $width="calc(40% - 8px)" $mobileWidth="180px">
                 <label>날짜</label>
                 <DateRange>
                   <DatePicker
@@ -114,7 +133,22 @@ export default function DayRecord() {
             </SearchButton>
           </SearchGroup>
         </TopBox>
-        {dayRecordData && <BaseCardTable page={page} onPageChange={setPage} data={dayRecordData} />}
+        {dayRecordData && (
+          <BaseCardTable
+            page={page}
+            onPageChange={setPage}
+            data={dayRecordData}
+            onDeleteSuccess={() => {
+              fetchDayRecord({
+                page,
+                startDate: formatDate(startDate),
+                endDate: formatDate(endDate),
+                nickName,
+                tournamentStatus: tournament,
+              });
+            }}
+          />
+        )}
       </TableBox>
     </Wrapper>
   );
@@ -273,14 +307,14 @@ const FieldsWrapper = styled.div`
   margin-right: 12px;
 `;
 
-const Field = styled.div`
+const Field = styled.div<{ $width: string; $mobileWidth: string }>`
   display: flex;
   flex-direction: column;
-  width: calc(50% - 8px);
   flex-shrink: 0;
+  width: ${({ $width }) => $width};
 
   @media ${({ theme }) => theme.device.mobile} {
-    width: 180px;
+    width: ${({ $mobileWidth }) => $mobileWidth};
   }
 
   label {
@@ -292,12 +326,21 @@ const Field = styled.div`
 
   input {
     border: none;
-    width: 100%;
     padding: 4px 0;
     font-size: ${({ theme }) => theme.desktop.sizes.sm};
     outline: none;
     color: ${({ theme }) => theme.colors.inputColor};
     background: transparent;
+  }
+
+  select {
+    border: none;
+    width: 100%;
+    padding: 4px 0;
+    font-size: ${({ theme }) => theme.desktop.sizes.sm};
+    outline: none;
+    color: ${({ theme }) => theme.colors.inputColor};
+    cursor: pointer;
   }
 `;
 

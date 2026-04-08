@@ -76,7 +76,7 @@ export default function Notice() {
             searchLabel="제목 및 내용"
             totalPages={noticeList.totalPages}
             onPageChange={setPage}
-            showWriteButton
+            showWriteButton={false}
             onWriteClick={() => {
               clearDetail();
               router.push(`/notice/new`);

@@ -37,6 +37,7 @@ type BaseCardTableProps = {
   };
   page: number;
   onPageChange: (page: number) => void;
+  onDeleteSuccess: () => void;
 };
 
 const LEADER_POSITIONS = [
@@ -46,7 +47,7 @@ const LEADER_POSITIONS = [
   { label: '북장', value: 'NORTH' },
 ];
 
-export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) {
+export function BaseCardTable({ data, page, onPageChange, onDeleteSuccess }: BaseCardTableProps) {
   const { remove } = useDeletePost();
   const router = useRouter();
   const fetchDayRecord = useFetchDayRecordList();
@@ -76,14 +77,14 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
         ignoreErrorRedirect: true,
         onSuccess: async () => {
           await alertDialog('기록이 삭제되었습니다.', 'success');
-          fetchDayRecord({ page });
+          onDeleteSuccess();
         },
       });
     }
   };
 
-  const editWriteMove = (id: number) => {
-    router.push(`/write?id=${id}`);
+  const editWriteMove = (id: number, tournamentStatus: string) => {
+    router.push(`/write?id=${id}&tournamentStatus=${tournamentStatus}`);
   };
 
   //공유하기
@@ -119,13 +120,17 @@ export function BaseCardTable({ data, page, onPageChange }: BaseCardTableProps) 
   return (
     <>
       <CardGrid>
+        {data.content.length === 0 && <EmptyTd> 검색된 결과가 없습니다.</EmptyTd>}
         {data.content.map((item) => (
           <Card key={item.matchsId}>
             <ButtonBox>
               {(user?.roles.includes('ROLE_ADMIN') || user?.roles.includes('MENTOR')) && (
                 <>
                   <Button color="#415B9C">
-                    <FileText weight="bold" onClick={() => editWriteMove(item.matchsId)} />
+                    <FileText
+                      weight="bold"
+                      onClick={() => editWriteMove(item.matchsId, item.tournamentStatus)}
+                    />
                   </Button>
                   <Button onClick={() => deleteData(item.matchsId)} color="#D9625E">
                     <TrashSimple weight="bold" />
@@ -305,4 +310,9 @@ const Button = styled.button<{ color: string }>`
   &:hover {
     opacity: 0.8;
   }
+`;
+
+const EmptyTd = styled.span`
+  padding: 40px 0;
+  font-weight: 600;
 `;
