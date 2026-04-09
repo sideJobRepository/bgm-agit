@@ -17,3 +17,13 @@ export const useSettingStore = create<SettingStore>((set) => ({
   setting: null,
   setSetting: (setting) => set({ setting }),
 }));
+
+interface SettingRefundStore {
+  refund: number | null;
+  setSettingRefund: (refund: number) => void;
+}
+
+export const useSettingRefundStore = create<SettingRefundStore>((set) => ({
+  refund: null,
+  setSettingRefund: (refund) => set({ refund }),
+}));
