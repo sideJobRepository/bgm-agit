@@ -17,6 +17,8 @@ import { useDetailRecordStore, useYakumanStore } from '@/store/record';
 import { useInsertPost, useUpdatePost } from '@/services/main.service';
 import { alertDialog, confirmDialog } from '@/utils/alert';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useFetchSettingRefund } from '@/services/setting.service';
+import { useSettingRefundStore } from '@/store/setting';
 
 const DIRECTIONS = [
   { key: 'EAST', label: '동', color: '#415B9C' },
@@ -83,6 +85,10 @@ export default function Write() {
   const recordUser = useRecordUserStore((state) => state.recordUser);
   const yakumanData = useYakumanStore((state) => state.yakuman);
 
+  //점수
+  const fetchSettingRefund = useFetchSettingRefund();
+  const refundData = useSettingRefundStore((state) => state.refund);
+
   /** 장 선택 */
   const [leader, setLeader] = useState('SOUTH');
 
@@ -138,6 +144,7 @@ export default function Write() {
   useEffect(() => {
     fetchRecordUser();
     fetchYakuman();
+    fetchSettingRefund();
   }, []);
 
   /** 닉네임 검색 필터 */
@@ -335,6 +342,28 @@ export default function Write() {
       setHeroImages(detailData.yakumans.map((y) => y.imageUrl));
     }
   }, [detailData, yakumanData]);
+
+  //마지막 북 자동계산
+  useEffect(() => {
+    const east = records.EAST.score;
+    const south = records.SOUTH.score;
+    const west = records.WEST.score;
+
+    // 3개 다 있어야 계산
+    if (!east || !south || !west) return;
+
+    const total = Number(east) + Number(south) + Number(west);
+
+    const refund = Number(refundData) || 0;
+
+    setRecords((prev) => ({
+      ...prev,
+      NORTH: {
+        ...prev.NORTH,
+        score: String(refund - total),
+      },
+    }));
+  }, [records.EAST.score, records.SOUTH.score, records.WEST.score, refundData]);
 
   return (
     <Wrapper>
