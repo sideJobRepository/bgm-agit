@@ -300,7 +300,6 @@ export default function Write() {
 
   useEffect(() => {
     if (!detailId || !detailData) return;
-    console.log('타냐??', detailId);
 
     // 국 길이
     setLeader(detailData.wind);
@@ -364,6 +363,30 @@ export default function Write() {
       },
     }));
   }, [records.EAST.score, records.SOUTH.score, records.WEST.score, refundData]);
+
+  //닉네임 검색시 닉네임선택
+  useEffect(() => {
+    let updated = false;
+
+    const newRecords = { ...records };
+
+    (['EAST', 'SOUTH', 'WEST', 'NORTH'] as const).forEach((key) => {
+      const row = records[key];
+      const users = filteredUsers(row.search);
+
+      if (row.search && users.length > 0) {
+        newRecords[key] = {
+          ...row,
+          userId: users[0].id,
+        };
+        updated = true;
+      }
+    });
+
+    if (updated) {
+      setRecords(newRecords);
+    }
+  }, [records.EAST.search, records.SOUTH.search, records.WEST.search, records.NORTH.search]);
 
   return (
     <Wrapper>
