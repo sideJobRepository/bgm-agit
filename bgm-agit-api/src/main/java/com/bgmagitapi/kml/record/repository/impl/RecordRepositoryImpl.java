@@ -31,6 +31,7 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
     @Override
     public Page<Record> findByRecords(Pageable pageable, String startDate, String endDate, String nickName, String tournamentStatus) {
         //  Match 먼저 페이징
+        // 1. match 기준으로 페이징
         List<Long> matchIds = queryFactory
                 .select(matchs.id)
                 .from(matchs)
@@ -50,19 +51,18 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
             return new PageImpl<>(List.of(), pageable, 0);
         }
         
-        // 2) 해당 Match에 속한 Record 전부 조회 (여기서 페이징/닉네임 필터 X)
-        List<Record> records = queryFactory
+        // 2. 해당 match의 record 전체 조회 (페이징 X)
+        List<Record> content = queryFactory
                 .selectFrom(record)
                 .join(record.matchs, matchs).fetchJoin()
                 .join(record.member, bgmAgitMember).fetchJoin()
                 .where(
                         matchs.id.in(matchIds)
-                        // record.delStatus.eq("N") // record에도 삭제여부 있으면 추가
                 )
                 .orderBy(matchs.registDate.desc(), matchs.id.desc(), record.id.asc())
                 .fetch();
         
-        // 3) count도 Match 기준 + 동일 조건
+        // 3. count (match 기준!)
         JPAQuery<Long> countQuery = queryFactory
                 .select(matchs.count())
                 .from(matchs)
@@ -70,9 +70,10 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                         matchs.delStatus.eq("N"),
                         whereDateGoe(startDate),
                         whereDateLt(endDate),
-                        whereNickLikeExists(nickName)
+                        whereNickLikeExists(nickName),
+                        whereTournamentStatus(tournamentStatus)
                 );
-        return PageableExecutionUtils.getPage(records, pageable, countQuery::fetchOne);
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
     
     @Override
@@ -99,6 +100,20 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                 .selectFrom(record)
                 .where(record.matchs.id.eq(id))
                 .fetch();
+    }
+    @Override
+    public Long countQuery(String startDate, String endDate, String nickName, String tournamentStatus){
+     return queryFactory
+                .select(matchs.count())
+                .from(matchs)
+                .where(
+                        matchs.delStatus.eq("N"),
+                        whereDateGoe(startDate),
+                        whereDateLt(endDate),
+                        whereNickLikeExists(nickName),
+                        whereTournamentStatus(tournamentStatus)
+                )
+             .fetchOne();
     }
     
     @Override
