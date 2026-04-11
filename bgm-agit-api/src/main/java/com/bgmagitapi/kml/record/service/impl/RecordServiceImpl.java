@@ -119,7 +119,7 @@ public class RecordServiceImpl implements RecordService {
                 .sorted(Comparator.comparing(RecordGetResponse::getRegistDate).reversed())
                 .toList();
     
-        return new PageImpl<>(list, pageable, list.size());
+        return new PageImpl<>(list, pageable, records.getTotalElements());
     }
     
     @Override
