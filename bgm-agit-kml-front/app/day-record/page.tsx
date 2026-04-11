@@ -19,11 +19,12 @@ export default function DayRecord() {
 
   //검색
   const TOURNAMENT_OPTIONS = [
+    { label: '전체', value: '' },
     { label: '예', value: 'Y' },
     { label: '아니오', value: 'N' },
   ];
 
-  const [tournament, setTournament] = useState('N');
+  const [tournament, setTournament] = useState('');
   const [nickName, setNickName] = useState('');
 
   const today = new Date();

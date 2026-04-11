@@ -26,6 +26,7 @@ import com.bgmagitapi.kml.yakuman.repository.YakumanRepository;
 import com.bgmagitapi.repository.BgmAgitCommonFileRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.util.CalculateUtil;
+import com.querydsl.jpa.impl.JPAQuery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -118,8 +119,9 @@ public class RecordServiceImpl implements RecordService {
                 .filter(Objects::nonNull)
                 .sorted(Comparator.comparing(RecordGetResponse::getRegistDate).reversed())
                 .toList();
-    
-        return new PageImpl<>(list, pageable, list.size());
+        
+        Long countQuery = recordRepository.countQuery(startDate, endDate, nickName, tournamentStatus);
+        return new PageImpl<>(list, pageable, countQuery == null ? 0 : countQuery);
     }
     
     @Override

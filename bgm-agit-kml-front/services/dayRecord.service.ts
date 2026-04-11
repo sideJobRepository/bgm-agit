@@ -7,7 +7,7 @@ export type params = {
   startDate: string | null;
   endDate: string | null;
   nickName: string;
-  tournamentStatus: string;
+  tournamentStatus?: string;
 };
 
 export function useFetchDayRecordList() {

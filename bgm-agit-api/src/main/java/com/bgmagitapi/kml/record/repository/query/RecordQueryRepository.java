@@ -2,6 +2,7 @@ package com.bgmagitapi.kml.record.repository.query;
 
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
 import com.bgmagitapi.kml.record.entity.Record;
+import com.querydsl.jpa.impl.JPAQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -18,4 +19,5 @@ public interface RecordQueryRepository {
     Page<Long> findMatchIdsByYear(Pageable pageable, Integer year);
     
     List<Record> findRecordsByMatchIds(List<Long> matchIds);
+     Long countQuery(String startDate, String endDate, String nickName, String tournamentStatus);
 }
