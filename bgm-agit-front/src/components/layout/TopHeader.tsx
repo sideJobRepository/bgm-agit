@@ -62,7 +62,6 @@ export default function TopHeader() {
       //내정보 팝업
       setIsMyPageModalOpen(true);
     } else {
-      console.log('탔나보자');
       navigate(item.link);
     }
   }
