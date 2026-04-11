@@ -201,8 +201,11 @@ export default function Notice() {
 
   useEffect(() => {
     fetchYakuman({ page, nickName: searchKeyword });
-    fetchDetailYakman({ page: detailPage });
   }, [page]);
+
+  useEffect(() => {
+    fetchDetailYakman({ page: detailPage });
+  }, [detailPage]);
 
   return (
     <Wrapper>
