@@ -32,6 +32,9 @@ public class RecordController {
             ,@RequestParam(name= "nickName", required = false) String nickName
             ,@RequestParam(name= "tournamentStatus", required = false) String tournamentStatus
     ) {
+        if("null".equals(tournamentStatus)){
+            tournamentStatus = null;
+        }
         Page<RecordGetResponse> records = recordService.getRecords(pageable,startDate,endDate,nickName,tournamentStatus);
         return PageResponse.from(records);
     }
