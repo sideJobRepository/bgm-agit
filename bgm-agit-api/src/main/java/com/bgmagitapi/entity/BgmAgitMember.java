@@ -50,6 +50,13 @@ public class BgmAgitMember extends DateSuperClass {
     @Column(name = "BGM_AGIT_MEMBER_MAHJONG_USE_STATUS")
     private String bgmAgitMemberMahjongUseStatus;
     
+    @Column(name = "BGM_AGIT_MEMBER_KML_ID")
+    private Long bgmAgitMemberKmlId;
+
+    @Column(name = "BGM_AGIT_MEMBER_KML_SYNK")
+    private String bgmAgitMemberKmlSynk;
+    
+    
     
     
     public BgmAgitMember(SocialProfile socialProfile) {
@@ -62,6 +69,27 @@ public class BgmAgitMember extends DateSuperClass {
         this.bgmAgitMemberNickname = socialProfile.name();
         this.bgmAgitMemberNicknameUseStatus = "Y";
         this.bgmAgitMemberMahjongUseStatus = "N";
+    }
+
+    public BgmAgitMember(String name, String nickname, String phoneNo, String hashedPassword, Long kmlId) {
+        this.bgmAgitMemberName = name;
+        this.bgmAgitMemberNickname = nickname;
+        this.bgmAgitMemberPhoneNo = normalizePhone(phoneNo);
+        this.bgmAgitMemberPassword = hashedPassword;
+        this.bgmAgitMemberKmlId = kmlId;
+        this.bgmAgitMemberKmlSynk = kmlId != null ? "Y" : "N";
+        this.socialType = BgmAgitSocialType.MAHJONG;
+        this.bgmAgitMemberNicknameUseStatus = "Y";
+        this.bgmAgitMemberMahjongUseStatus = "N";
+    }
+
+    public void linkKml(Long kmlId) {
+        this.bgmAgitMemberKmlId = kmlId;
+        this.bgmAgitMemberKmlSynk = "Y";
+    }
+
+    public void markKmlSyncFailed() {
+        this.bgmAgitMemberKmlSynk = "N";
     }
     
     public void modifyMember(SocialProfile socialProfile) {

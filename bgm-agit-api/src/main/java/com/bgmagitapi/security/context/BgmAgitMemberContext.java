@@ -23,9 +23,9 @@ public class BgmAgitMemberContext implements UserDetails {
     
     @Override
     public String getPassword() {
-        return "";
+        return bgmAgitMember.getBgmAgitMemberPassword();
     }
-    
+
     @Override
     public String getUsername() {
         return bgmAgitMember.getBgmAgitMemberName();

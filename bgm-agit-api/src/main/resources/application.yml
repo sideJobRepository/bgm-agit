@@ -68,3 +68,8 @@ biztalk:
 server:
   tomcat:
     max-part-count: 2000
+
+kml:
+  url: https://kml.or.kr/stat52
+  api:
+    key: BgmAgit

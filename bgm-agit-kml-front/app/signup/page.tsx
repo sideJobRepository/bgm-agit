@@ -6,27 +6,51 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { withBasePath } from '@/lib/path';
-import { useLoginPost } from '@/services/auth.service';
+import { useSignupPost } from '@/services/auth.service';
+import { alertDialog } from '@/utils/alert';
 
-export default function Login() {
+export default function Signup() {
   const [mounted, setMounted] = useState(false);
-  const [nickname, setNickname] = useState('');
-  const [password, setPassword] = useState('');
+  const [form, setForm] = useState({
+    name: '',
+    nickname: '',
+    phoneNo: '',
+    password: '',
+    passwordConfirm: '',
+  });
   const router = useRouter();
-  const { postUser } = useLoginPost();
+  const { postSignup } = useSignupPost();
 
   useEffect(() => setMounted(true), []);
 
+  const handleChange = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!nickname.trim() || !password) return;
 
-    const rawRedirect = new URLSearchParams(window.location.search).get('redirect') || '/';
-    const redirectPath = rawRedirect.startsWith('/') ? rawRedirect : '/';
+    if (!form.name.trim() || !form.nickname.trim() || !form.phoneNo.trim() || !form.password) {
+      alertDialog('모든 항목을 입력해 주세요.', 'warning');
+      return;
+    }
+    if (form.password.length < 8) {
+      alertDialog('비밀번호는 최소 8자 이상이어야 합니다.', 'warning');
+      return;
+    }
+    if (form.password !== form.passwordConfirm) {
+      alertDialog('비밀번호가 일치하지 않습니다.', 'warning');
+      return;
+    }
 
-    postUser({ nickname: nickname.trim(), password }, () => {
-      router.replace(redirectPath);
-    });
+    postSignup(
+      {
+        name: form.name.trim(),
+        nickname: form.nickname.trim(),
+        phoneNo: form.phoneNo.trim(),
+        password: form.password,
+      },
+      () => router.replace('/login')
+    );
   };
 
   if (!mounted) return null;
@@ -38,36 +62,51 @@ export default function Login() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: 'easeOut' }}
       >
-        <h1>Sign In to Continue</h1>
-        <span>기록은 시작의 첫 걸음입니다.</span>
+        <h1>Create an Account</h1>
+        <span>기록을 시작할 준비를 합니다.</span>
       </Title>
-      <LoginBox
+      <SignupBox
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8, duration: 0.8, ease: 'easeOut' }}
+        transition={{ delay: 0.4, duration: 0.8, ease: 'easeOut' }}
       >
         <Top>
           <img src={withBasePath('/kmlMain.png')} alt="로고" />
         </Top>
         <Form onSubmit={handleSubmit}>
+          <Input type="text" placeholder="이름" value={form.name} onChange={handleChange('name')} autoComplete="name" />
           <Input
             type="text"
             placeholder="닉네임"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
+            value={form.nickname}
+            onChange={handleChange('nickname')}
             autoComplete="username"
           />
           <Input
-            type="password"
-            placeholder="비밀번호"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
+            type="tel"
+            placeholder="전화번호 (예: 010-1234-5678)"
+            value={form.phoneNo}
+            onChange={handleChange('phoneNo')}
+            autoComplete="tel"
           />
-          <SubmitButton type="submit">로그인</SubmitButton>
-          <SignupLink href="/signup">회원가입</SignupLink>
+          <Input
+            type="password"
+            placeholder="비밀번호 (8자 이상)"
+            value={form.password}
+            onChange={handleChange('password')}
+            autoComplete="new-password"
+          />
+          <Input
+            type="password"
+            placeholder="비밀번호 확인"
+            value={form.passwordConfirm}
+            onChange={handleChange('passwordConfirm')}
+            autoComplete="new-password"
+          />
+          <SubmitButton type="submit">가입하기</SubmitButton>
+          <BackLink href="/login">로그인으로 돌아가기</BackLink>
         </Form>
-      </LoginBox>
+      </SignupBox>
     </Wrapper>
   );
 }
@@ -112,19 +151,15 @@ const Title = styled(motion.div)`
     font-size: ${({ theme }) => theme.desktop.sizes.md};
     font-weight: 600;
     color: ${({ theme }) => theme.colors.grayColor};
-
-    @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.desktop.sizes.md};
-    }
   }
 `;
 
-const LoginBox = styled(motion.div)`
+const SignupBox = styled(motion.div)`
   display: flex;
   flex-direction: column;
   justify-content: center;
   width: 80%;
-  min-height: 420px;
+  min-height: 520px;
   gap: 24px;
   max-width: 600px;
   padding: 24px 0;
@@ -137,7 +172,7 @@ const LoginBox = styled(motion.div)`
 const Top = styled.section`
   display: flex;
   width: 100%;
-  height: 200px;
+  height: 140px;
   margin: 0;
   align-items: flex-start;
   justify-content: center;
@@ -156,14 +191,14 @@ const Form = styled.form`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 0 16px;
 `;
 
 const Input = styled.input`
   width: 100%;
   max-width: 310px;
-  height: 48px;
+  height: 44px;
   padding: 0 14px;
   border: 1px solid #d0d0d0;
   background-color: #ffffff;
@@ -179,9 +214,10 @@ const SubmitButton = styled.button`
   display: flex;
   align-items: center;
   max-width: 310px;
-  height: 52px;
+  height: 48px;
   justify-content: center;
   width: 100%;
+  margin-top: 4px;
   border: none;
   background-color: #2f250c;
   color: #ffffff;
@@ -190,7 +226,7 @@ const SubmitButton = styled.button`
   cursor: pointer;
 `;
 
-const SignupLink = styled(Link)`
+const BackLink = styled(Link)`
   margin-top: 4px;
   color: ${({ theme }) => theme.colors.grayColor};
   font-size: ${({ theme }) => theme.desktop.sizes.md};
