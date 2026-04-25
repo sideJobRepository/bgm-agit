@@ -42,26 +42,35 @@ public class BgmAgitMemberDetailService implements UserDetailsService {
     }
     
     public UserDetails loadUserByUsername(SocialProfile socialProfile) {
-        
+
         BgmAgitMember findBgmAgitMember = bgmAgitMemberRepository.findByBgmAgitMemberSocialId(String.valueOf(socialProfile.sub()))
                 .orElseGet(() -> {
                     BgmAgitMember agitMember = new BgmAgitMember(socialProfile);
                     BgmAgitMember saveMember = bgmAgitMemberRepository.save(agitMember);
-                    
+
                     BgmAgitRole findbyBgmAgitRole = bgmAgitMemberDetailRepository.findByBgmAgitRoleName("USER");
-                    
+
                     BgmAgitMemberRole bgmAgitMemberRole = new BgmAgitMemberRole(saveMember, findbyBgmAgitRole);
-                    
+
                     bgmAgitMemberRoleRepository.save(bgmAgitMemberRole);
                     eventPublisher.publishEvent(new MemberJoinedEvent(saveMember.getBgmAgitMemberId()));
                     return saveMember;
                 });
-        
-        Long id = findBgmAgitMember.getBgmAgitMemberId();
-        List<String> roleName = bgmAgitMemberDetailRepository.getRoleName(id);
+
+        List<String> roleName = ensureDefaultRole(findBgmAgitMember);
         List<GrantedAuthority> authorityList = AuthorityUtils.createAuthorityList(roleName);
-        
+
         return new BgmAgitMemberContext(findBgmAgitMember, authorityList);
+    }
+
+    public List<String> ensureDefaultRole(BgmAgitMember member) {
+        List<String> roleNames = bgmAgitMemberDetailRepository.getRoleName(member.getBgmAgitMemberId());
+        if (roleNames == null || roleNames.isEmpty()) {
+            BgmAgitRole userRole = bgmAgitMemberDetailRepository.findByBgmAgitRoleName("USER");
+            bgmAgitMemberRoleRepository.save(new BgmAgitMemberRole(member, userRole));
+            roleNames = bgmAgitMemberDetailRepository.getRoleName(member.getBgmAgitMemberId());
+        }
+        return roleNames;
     }
     
     

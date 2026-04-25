@@ -45,6 +45,7 @@ public class BgmAgitSecurityConfig {
     private final AuthenticationEntryPoint bgmagitAuthenticationEntryPoint;
     private final AuthorizationManager<RequestAuthorizationContext> bgmAgitAuthorizationManager;
     private final AuthenticationProvider socialAuthenticationProvider;
+    private final AuthenticationProvider formAuthenticationProvider;
     private final AccessDeniedHandler bgmAgitAccessDeniedHandler;
     
     
@@ -53,6 +54,7 @@ public class BgmAgitSecurityConfig {
         
         AuthenticationManagerBuilder managerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
         managerBuilder.authenticationProvider(socialAuthenticationProvider);
+        managerBuilder.authenticationProvider(formAuthenticationProvider);
         AuthenticationManager authenticationManager = managerBuilder.build();
         http.authorizeHttpRequests(auth -> auth
                         .requestMatchers(resource).permitAll()

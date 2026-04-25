@@ -4,7 +4,6 @@ package com.bgmagitapi.security.handler;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.security.dto.BgmAgitMemberResponseDto;
 import com.bgmagitapi.security.jwt.RsaSecuritySigner;
-import com.bgmagitapi.security.token.SocialAuthenticationToken;
 import com.bgmagitapi.service.BgmAgitRefreshTokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
@@ -42,9 +41,9 @@ public class BgmAgitAuthenticationSuccessHandler implements AuthenticationSucces
     
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        SocialAuthenticationToken token = (SocialAuthenticationToken) authentication;
-        BgmAgitMember member = (BgmAgitMember) token.getPrincipal();
-        List<GrantedAuthority> authorities = (List<GrantedAuthority>) token.getAuthorities();
+        BgmAgitMember member = (BgmAgitMember) authentication.getPrincipal();
+        @SuppressWarnings("unchecked")
+        List<GrantedAuthority> authorities = (List<GrantedAuthority>) authentication.getAuthorities();
         
         LocalDateTime expiresAt = LocalDateTime.now().plusDays(1);
         

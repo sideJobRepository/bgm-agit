@@ -24,8 +24,7 @@ public class BgmAgitSecurityDsl<H extends HttpSecurityBuilder<H>> extends Abstra
     private static final RequestMatcher LOGIN_MATCHER = new OrRequestMatcher(
             new AntPathRequestMatcher("/bgm-agit/kakao-login", "POST"),
             new AntPathRequestMatcher("/bgm-agit/naver-login", "POST"),
-            new AntPathRequestMatcher("/bgm-agit/next/kakao-login", "POST"),
-            new AntPathRequestMatcher("/bgm-agit/next/naver-login", "POST")
+            new AntPathRequestMatcher("/bgm-agit/next/login", "POST")
     );
     
     
