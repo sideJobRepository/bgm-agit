@@ -28,7 +28,10 @@ import java.util.Map;
 @Component(value = "bgmAgitAuthenticationSuccessHandler")
 @RequiredArgsConstructor
 public class BgmAgitAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
-    
+
+    public static final String COOKIE_NAME_MAIN = "refreshToken_main";
+    public static final String COOKIE_NAME_RECORD = "refreshToken_record";
+
     private final ObjectMapper objectMapper;
     private final RsaSecuritySigner rsaSecuritySigner;
     private final BgmAgitRefreshTokenService bgmAgitRefreshTokenService;
@@ -58,8 +61,12 @@ public class BgmAgitAuthenticationSuccessHandler implements AuthenticationSucces
                     "token", tokenPair.getAccessToken()
             );
             
-            // Refresh Token은 HttpOnly 쿠키로 설정
-            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenPair.getRefreshToken())
+            // Refresh Token은 HttpOnly 쿠키로 설정 (로그인 경로에 따라 쿠키 이름 분리)
+            String cookieName = "/bgm-agit/next/login".equals(request.getRequestURI())
+                    ? COOKIE_NAME_RECORD
+                    : COOKIE_NAME_MAIN;
+
+            ResponseCookie refreshCookie = ResponseCookie.from(cookieName, tokenPair.getRefreshToken())
                     .httpOnly(true)
                     .secure(secure) // 로컬일 경우 secure=false
                     .path("/")

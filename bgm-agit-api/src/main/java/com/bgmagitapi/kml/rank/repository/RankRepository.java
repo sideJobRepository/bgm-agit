@@ -15,7 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.bgmagitapi.entity.QBgmAgitMember.*;
@@ -28,7 +28,7 @@ public class RankRepository {
 
     private final JPAQueryFactory queryFactory;
     
-    public Page<RankGetResponse> findRanks(LocalDate start, LocalDate end, Pageable pageable) {
+    public Page<RankGetResponse> findRanks(LocalDateTime start, LocalDateTime end, Pageable pageable) {
         
         // ===== 기존 Expression 그대로 유지 =====
         NumberExpression<Integer> tobiCount =
@@ -144,12 +144,12 @@ public class RankRepository {
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
     
-    private BooleanExpression betweenDate(LocalDate start, LocalDate end) {
-        if(start == null || end == null){
+    private BooleanExpression betweenDate(LocalDateTime start, LocalDateTime end) {
+        if (start == null || end == null) {
             return null;
         }
-        
-        return record.registDate.goe(start.atStartOfDay())
-                .and(record.registDate.lt(end.plusDays(1).atStartOfDay()));
+
+        return record.registDate.goe(start)
+                .and(record.registDate.lt(end));
     }
 }

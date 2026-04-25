@@ -2,11 +2,14 @@ import { useRequest } from '@/hooks/useRequest';
 import api from '@/lib/axiosInstance';
 import { useRankListStore } from '@/store/rank';
 
+export type RankType = 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+
 export type params = {
   page?: number;
-  type?: string;
-  startDate?: string;
+  type?: RankType;
   baseDate?: string;
+  startDateTime?: string;
+  endDateTime?: string;
 };
 
 export function useFetchRankList() {

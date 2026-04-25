@@ -34,10 +34,12 @@ interface BaseTableProps<T> {
   searchLabel?: string | null;
   searchKeyword?: string;
   onSearchKeywordChange?: (value: string) => void;
-  rankType?: 'WEEKLY' | 'MONTHLY';
-  onRankTypeChange?: (value: 'WEEKLY' | 'MONTHLY') => void;
+  rankType?: 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+  onRankTypeChange?: (value: 'WEEKLY' | 'MONTHLY' | 'CUSTOM') => void;
   startDate?: Date | null;
   onStartDateChange?: (value: Date | null) => void;
+  endDate?: Date | null;
+  onEndDateChange?: (value: Date | null) => void;
   getRowClassName?: (row: T, index: number) => string | undefined;
   getCellClassName?: (row: T, col: BaseColumn<T>, index: number) => string | undefined;
   onSearch?: () => void;
@@ -60,6 +62,8 @@ export function BaseTable<T>({
   onRankTypeChange,
   startDate = null,
   onStartDateChange,
+  endDate = null,
+  onEndDateChange,
   getRowClassName,
   getCellClassName,
   onSearch,
@@ -96,24 +100,74 @@ export function BaseTable<T>({
                     <label>구분</label>
                     <select
                       value={rankType}
-                      onChange={(e) => onRankTypeChange?.(e.target.value as 'WEEKLY' | 'MONTHLY')}
+                      onChange={(e) =>
+                        onRankTypeChange?.(e.target.value as 'WEEKLY' | 'MONTHLY' | 'CUSTOM')
+                      }
                     >
                       <option value="WEEKLY">주간</option>
                       <option value="MONTHLY">월간</option>
+                      <option value="CUSTOM">사용자설정</option>
                     </select>
                   </Field>
-                  <Field $path={false}>
-                    <label>시작일</label>
-                    <DateRange>
-                      <DatePicker
-                        selected={startDate}
-                        onChange={(date) => onStartDateChange?.(date)}
-                        dateFormat="yyyy.MM.dd"
-                        locale={ko}
-                        portalId="root-portal"
-                      />
-                    </DateRange>
-                  </Field>
+                  {rankType === 'WEEKLY' && (
+                    <Field $path={false}>
+                      <label>주 선택</label>
+                      <DateRange>
+                        <DatePicker
+                          selected={startDate}
+                          onChange={(date) => onStartDateChange?.(date)}
+                          dateFormat="yyyy.MM.dd"
+                          showWeekNumbers
+                          showWeekPicker
+                          locale={ko}
+                          portalId="root-portal"
+                        />
+                      </DateRange>
+                    </Field>
+                  )}
+                  {rankType === 'MONTHLY' && (
+                    <Field $path={false}>
+                      <label>년월</label>
+                      <DateRange>
+                        <DatePicker
+                          selected={startDate}
+                          onChange={(date) => onStartDateChange?.(date)}
+                          dateFormat="yyyy.MM"
+                          showMonthYearPicker
+                          locale={ko}
+                          portalId="root-portal"
+                        />
+                      </DateRange>
+                    </Field>
+                  )}
+                  {rankType === 'CUSTOM' && (
+                    <Field $path={false} $wide>
+                      <label>기간(시간 포함)</label>
+                      <DateRange>
+                        <DatePicker
+                          selected={startDate}
+                          onChange={(date) => onStartDateChange?.(date)}
+                          showTimeSelect
+                          timeFormat="HH:mm"
+                          timeIntervals={15}
+                          dateFormat="yyyy.MM.dd HH:mm"
+                          locale={ko}
+                          portalId="root-portal"
+                        />
+                        <span>~</span>
+                        <DatePicker
+                          selected={endDate}
+                          onChange={(date) => onEndDateChange?.(date)}
+                          showTimeSelect
+                          timeFormat="HH:mm"
+                          timeIntervals={15}
+                          dateFormat="yyyy.MM.dd HH:mm"
+                          locale={ko}
+                          portalId="root-portal"
+                        />
+                      </DateRange>
+                    </Field>
+                  )}
                 </>
               )}
             </FieldsWrapper>
@@ -303,6 +357,12 @@ const TopBox = styled.section`
   gap: 24px;
   padding: 12px 0;
   justify-content: space-between;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
 `;
 
 const Button = styled.button`
@@ -341,6 +401,10 @@ const SearchGroup = styled.form<{ $isRankPage?: boolean }>`
 
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
+    max-width: 100%;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    gap: 8px;
   }
 `;
 
@@ -352,12 +416,19 @@ const FieldsWrapper = styled.div`
   overflow-x: auto;
   flex-wrap: nowrap;
   overflow-y: hidden;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    gap: 8px;
+  }
 `;
 
-const Field = styled.div<{ $path: boolean }>`
+const Field = styled.div<{ $path: boolean; $wide?: boolean }>`
   display: flex;
   flex-direction: column;
-  width: ${({ $path }) => ($path ? '100%' : 'calc(50% - 8px)')};
+  width: ${({ $path, $wide }) =>
+    $wide ? 'calc(100% - 100px)' : $path ? '100%' : 'calc(50% - 8px)'};
   flex-shrink: 0;
 
   label {
@@ -375,6 +446,11 @@ const Field = styled.div<{ $path: boolean }>`
     outline: none;
     color: ${({ theme }) => theme.colors.inputColor};
     background: transparent;
+
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: 16px;
+      padding: 6px 0;
+    }
   }
 
   select {
@@ -386,6 +462,15 @@ const Field = styled.div<{ $path: boolean }>`
     color: ${({ theme }) => theme.colors.inputColor};
     background: transparent;
     appearance: none;
+
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: 16px;
+      padding: 6px 0;
+    }
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 100%;
   }
 `;
 
@@ -425,5 +510,10 @@ const DateRange = styled.div`
 
   input {
     cursor: pointer;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    flex-wrap: wrap;
+    gap: 4px;
   }
 `;

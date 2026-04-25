@@ -17,7 +17,7 @@ let refreshing: Promise<string | null> | null = null;
 //토큰 재발급
 export async function refreshToken(): Promise<string | null> {
   try {
-    const { data } = await axios.post('/bgm-agit/refresh', null, {
+    const { data } = await axios.post('/bgm-agit/refresh?source=record', null, {
       baseURL: api.defaults.baseURL,
       withCredentials: true,
     });
@@ -41,7 +41,7 @@ export async function refreshToken(): Promise<string | null> {
 }
 
 api.interceptors.request.use(async (config: AuthAxiosRequestConfig) => {
-  if (config.url?.includes('/bgm-agit/refresh')) return config; //api 수정 예정
+  if (config.url?.includes('/bgm-agit/refresh')) return config;
 
   let token = tokenStore.get();
   if (!token) {
@@ -78,7 +78,6 @@ api.interceptors.response.use(
 
     // refresh 자체 실패면 중단
     if (original?.url?.includes('/bgm-agit/refresh')) {
-      //api 수정 예정
       return Promise.reject(error);
     }
 
@@ -105,7 +104,7 @@ api.interceptors.response.use(
     if (!isRefreshing) {
       isRefreshing = true;
       axios
-        .post('/bgm-agit/refresh', null, {
+        .post('/bgm-agit/refresh?source=record', null, {
           //api 구조 변경 필요
           baseURL: api.defaults.baseURL,
           withCredentials: true,

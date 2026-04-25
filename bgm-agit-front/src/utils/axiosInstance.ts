@@ -15,7 +15,7 @@ let refreshing: Promise<string | null> | null = null;
 
 async function refreshToken(): Promise<string | null> {
   try {
-    const { data } = await axios.post('/bgm-agit/refresh', null, {
+    const { data } = await axios.post('/bgm-agit/refresh?source=main', null, {
       baseURL: api.defaults.baseURL,
       withCredentials: true,
     });
@@ -95,7 +95,7 @@ api.interceptors.response.use(
       if (!isRefreshing) {
         isRefreshing = true;
         axios
-            .post('/bgm-agit/refresh', null, {
+            .post('/bgm-agit/refresh?source=main', null, {
               baseURL: api.defaults.baseURL,
               withCredentials: true,
             })

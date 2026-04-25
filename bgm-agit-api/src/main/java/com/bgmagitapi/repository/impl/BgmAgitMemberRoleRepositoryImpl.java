@@ -2,10 +2,10 @@ package com.bgmagitapi.repository.impl;
 
 import com.bgmagitapi.controller.response.BgmAgitRoleResponse;
 import com.bgmagitapi.entity.BgmAgitMemberRole;
+import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.repository.custom.BgmAgitMemberRoleCustomRepository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -67,6 +67,62 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
         return PageableExecutionUtils.getPage(content, pageable,countQuery::fetchOne);
     }
     
+    @Override
+    public Page<BgmAgitRoleResponse> getMahjongRoles(Pageable pageable, String res) {
+        BooleanExpression mahjongOnly = bgmAgitMember.socialType.eq(BgmAgitSocialType.MAHJONG);
+
+        List<BgmAgitRoleResponse> content = queryFactory
+                .select(Projections.constructor(
+                        BgmAgitRoleResponse.class,
+                        bgmAgitMemberRole.bgmAgitMember.bgmAgitMemberId,
+                        bgmAgitMemberRole.bgmAgitRole.bgmAgitRoleId,
+                        bgmAgitMember.bgmAgitMemberName,
+                        bgmAgitRole.bgmAgitRoleName,
+                        bgmAgitMember.bgmAgitMemberEmail,
+                        bgmAgitMember.bgmAgitMemberPhoneNo,
+                        bgmAgitMember.socialType.stringValue()
+                ))
+                .from(bgmAgitMemberRole)
+                .join(bgmAgitMemberRole.bgmAgitMember, bgmAgitMember)
+                .join(bgmAgitMemberRole.bgmAgitRole, bgmAgitRole)
+                .where(mahjongOnly, nicknameOrNameOrPhoneNo(res))
+                .orderBy(
+                        bgmAgitRole.bgmAgitRoleName.asc(),
+                        bgmAgitMember.registDate.asc()
+                )
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        content.forEach(item -> {
+            if (item.getMemberPhoneNo() != null) {
+                String memberPhoneNo = item.getMemberPhoneNo()
+                        .replace("+82", "0")
+                        .replaceAll("\\s+", "");
+                item.setMemberPhoneNo(memberPhoneNo);
+            }
+        });
+
+        JPAQuery<Long> countQuery = queryFactory
+                .select(bgmAgitMember.count())
+                .from(bgmAgitMember)
+                .where(mahjongOnly, nicknameOrNameOrPhoneNo(res));
+
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    private BooleanExpression nicknameOrNameOrPhoneNo(String res) {
+        if (!StringUtils.hasText(res)) return null;
+
+        String keyword = res;
+        if (res.startsWith("010")) {
+            keyword = res.replace("010", "+82 10");
+        }
+        return bgmAgitMember.bgmAgitMemberNickname.like("%" + keyword + "%")
+                .or(bgmAgitMember.bgmAgitMemberName.like("%" + keyword + "%"))
+                .or(bgmAgitMember.bgmAgitMemberPhoneNo.like("%" + keyword + "%"));
+    }
+
     @Override
     public Optional<BgmAgitMemberRole> findByBgmAgitMemberId(Long memberId) {
         BgmAgitMemberRole result = queryFactory

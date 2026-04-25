@@ -88,7 +88,7 @@ export default function Sidebar() {
       channel.close();
 
       try {
-        await api.delete('/bgm-agit/refresh', { withCredentials: true });
+        await api.delete('/bgm-agit/refresh?source=record', { withCredentials: true });
       } catch (err) {
         console.error('서버 리프레시 토큰 삭제 실패:', err);
       }

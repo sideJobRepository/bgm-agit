@@ -85,7 +85,7 @@ export default function TopHeader() {
       try {
         // 서버가 지원하는 엔드포인트 사용 (둘 중 하나)
         // await api.post('/bgm-agit/logout', null, { withCredentials: true });
-        await api.delete('/bgm-agit/refresh', { withCredentials: true }); // ← Refresh 쿠키 제거
+        await api.delete('/bgm-agit/refresh?source=main', { withCredentials: true }); // ← Refresh 쿠키 제거
       } catch (err) {
         console.error('서버 리프레시 토큰 삭제 실패:', err);
       }
