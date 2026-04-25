@@ -3,6 +3,7 @@ export type Role = {
   memberEmail: string;
   memberId: number;
   memberName: string;
+  memberNickname: string;
   roleId: number;
   roleName: string;
   memberPhoneNo: string;

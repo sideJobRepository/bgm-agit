@@ -47,9 +47,9 @@ export default function Role() {
     setSearchKeyword(searchInput);
   };
 
-  const handleChangePassword = async (memberId: number, memberName: string) => {
+  const handleChangePassword = async (memberId: number, memberNickname: string) => {
     const result = await Swal.fire({
-      title: `${memberName} 비밀번호 변경`,
+      title: `${memberNickname} 비밀번호 변경`,
       input: 'password',
       inputLabel: '새 비밀번호 (8자 이상)',
       inputAttributes: {
@@ -163,6 +163,7 @@ export default function Role() {
                 <Th> </Th>
                 <Th>번호</Th>
                 <Th>이름</Th>
+                <Th>닉네임</Th>
                 <Th>연락처</Th>
                 <Th>권한</Th>
                 <Th>비밀번호</Th>
@@ -187,6 +188,7 @@ export default function Role() {
                   </Td>
                   <Td>{page * (roleData?.size ?? 10) + idx + 1}</Td>
                   <Td>{item.memberName}</Td>
+                  <Td>{item.memberNickname}</Td>
                   <Td>{item.memberPhoneNo}</Td>
                   <Td>
                     <RadioGroup>
@@ -209,7 +211,7 @@ export default function Role() {
                   <Td>
                     <PasswordButton
                       type="button"
-                      onClick={() => handleChangePassword(item.memberId, item.memberName)}
+                      onClick={() => handleChangePassword(item.memberId, item.memberNickname)}
                     >
                       <Key weight="bold" />
                       변경

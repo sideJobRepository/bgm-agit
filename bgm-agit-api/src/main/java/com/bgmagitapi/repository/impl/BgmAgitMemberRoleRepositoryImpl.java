@@ -35,6 +35,7 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                         bgmAgitMemberRole.bgmAgitMember.bgmAgitMemberId,
                         bgmAgitMemberRole.bgmAgitRole.bgmAgitRoleId,
                         bgmAgitMember.bgmAgitMemberName,
+                        bgmAgitMember.bgmAgitMemberNickname,
                         bgmAgitRole.bgmAgitRoleName,
                         bgmAgitMember.bgmAgitMemberEmail,
                         bgmAgitMember.bgmAgitMemberPhoneNo,
@@ -52,12 +53,7 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                 .limit(pageable.getPageSize())
                 .fetch();
         
-        content.forEach(item -> {
-                    String memberPhoneNo = item.getMemberPhoneNo()
-                            .replace("+82", "0")
-                            .replaceAll("\\s+", "");
-                    item.setMemberPhoneNo(memberPhoneNo);
-                });
+        content.forEach(item -> item.setMemberPhoneNo(formatPhoneNo(item.getMemberPhoneNo())));
         // 2. 전체 개수 조회
         JPAQuery<Long> countQuery = queryFactory
                 .select(bgmAgitMember.count())
@@ -77,6 +73,7 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                         bgmAgitMemberRole.bgmAgitMember.bgmAgitMemberId,
                         bgmAgitMemberRole.bgmAgitRole.bgmAgitRoleId,
                         bgmAgitMember.bgmAgitMemberName,
+                        bgmAgitMember.bgmAgitMemberNickname,
                         bgmAgitRole.bgmAgitRoleName,
                         bgmAgitMember.bgmAgitMemberEmail,
                         bgmAgitMember.bgmAgitMemberPhoneNo,
@@ -94,14 +91,7 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        content.forEach(item -> {
-            if (item.getMemberPhoneNo() != null) {
-                String memberPhoneNo = item.getMemberPhoneNo()
-                        .replace("+82", "0")
-                        .replaceAll("\\s+", "");
-                item.setMemberPhoneNo(memberPhoneNo);
-            }
-        });
+        content.forEach(item -> item.setMemberPhoneNo(formatPhoneNo(item.getMemberPhoneNo())));
 
         JPAQuery<Long> countQuery = queryFactory
                 .select(bgmAgitMember.count())
@@ -109,6 +99,18 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                 .where(mahjongOnly, nicknameOrNameOrPhoneNo(res));
 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    private String formatPhoneNo(String raw) {
+        if (raw == null) return null;
+        String digits = raw.replace("+82", "0").replaceAll("\\D", "");
+        if (digits.length() == 11) {
+            return digits.substring(0, 3) + "-" + digits.substring(3, 7) + "-" + digits.substring(7);
+        }
+        if (digits.length() == 10) {
+            return digits.substring(0, 3) + "-" + digits.substring(3, 6) + "-" + digits.substring(6);
+        }
+        return digits;
     }
 
     private BooleanExpression nicknameOrNameOrPhoneNo(String res) {

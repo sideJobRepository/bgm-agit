@@ -4,6 +4,7 @@ export interface RoleItem {
   memberId: number;
   roleId: number;
   memberName: string;
+  memberNickname: string;
   roleName: string;
   memberEmail: string;
   memberPhoneNo: string;
