@@ -63,8 +63,16 @@ kml:
 
 ### KML API (bgm-agit 기준)
 - `GET /api_users.php` — 전체 사용자 리스트 반환 `{status, count, users: [{id, nick}]}`
-- `POST /record_submit_api.php` — 기록 전송(아직 미연동) `{game_length, common_point, players[4]{user_id, point, wind}}`
+- `POST /record_submit_api.php` — 기록 전송 `{game_length, common_point, players[4]{user_id, point, wind}}`
 - 둘 다 `x-api-key` 헤더 필요
+- 매핑: `MatchsWind`/`Wind` enum의 `ordinal()`이 그대로 0=동/1=남/2=서/3=북. `point`는 `recordScore` (정수). `common_point`는 현재 추적하지 않아 0 고정
+
+### 기록 송신 (record_submit_api.php) 흐름
+- `RecordServiceImpl.createRecord` 마지막에 `KmlRecordSubmitEvent` 발행 (`publishKmlSubmitEvent`)
+- 4명 중 한 명이라도 `bgmAgitMemberKmlId == null`이면 송신 자체를 생략 (KML이 4명 정확히 요구하기 때문)
+- `KmlRecordEventListener` (`@Async("bizTalkExecutor")`, `@TransactionalEventListener AFTER_COMMIT`) → `KmlRecordClient.submit(...)`
+- 송신 실패는 모두 catch 후 `log.warn`만. **DB 저장 트랜잭션과 분리**되어 있어 KML이 에러나도 우리쪽 기록은 정상 저장됨
+- 수정·삭제(`updateRecord`/`removeRecord`)는 아직 KML 송신 안 함 (KML 측 update/delete API가 없음)
 
 ### 회원-KML 연결
 - 회원가입 시 닉네임으로 KML 조회(`KmlUserClient.findSingleKmlIdByNickname`)
@@ -146,7 +154,6 @@ kml:
 
 - 닉네임 변경 시 KML synk 리셋
 - `AMBIGUOUS`(다건 매칭) 수동 해결 UI — 마이페이지에서 KML ID 직접 선택
-- KML `record_submit_api.php` 연동 (기록 송신)
 - `application-*.yml` 정리 (`kakao.redirecturi2`, `naver.redirecturi2`, `bgm-agit-kml-front`의 소셜 OAuth env vars)
 
 ## 자주 쓰는 경로

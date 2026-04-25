@@ -7,6 +7,7 @@ import com.bgmagitapi.config.UploadResult;
 import com.bgmagitapi.entity.BgmAgitCommonFile;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
+import com.bgmagitapi.event.dto.KmlRecordSubmitEvent;
 import com.bgmagitapi.kml.history.service.MatchsAndRecordHistoryService;
 import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
@@ -28,6 +29,8 @@ import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.util.CalculateUtil;
 import com.querydsl.jpa.impl.JPAQuery;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -38,26 +41,29 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class RecordServiceImpl implements RecordService {
-    
+
     private final RecordRepository recordRepository;
-    
+
     private final MatchsRepository matchsRepository;
-    
+
     private final BgmAgitMemberRepository memberRepository;
-    
+
     private final SettingRepository settingRepository;
-    
+
     private final YakumanRepository yakumanRepository;
-    
+
     private final BgmAgitCommonFileRepository commonFileRepository;
-    
+
     private final MatchsAndRecordHistoryService matchsAndRecordHistoryService;
-    
+
     private final S3FileUtils s3FileUtils;
+
+    private final ApplicationEventPublisher eventPublisher;
     
     private static final Map<Wind, Integer> WIND_ORDER = Map.of(
             Wind.EAST, 0,
@@ -230,7 +236,39 @@ public class RecordServiceImpl implements RecordService {
             }
         }
         matchsAndRecordHistoryService.createMatchsAndRecordHistory(matchs, recordList);
+
+        publishKmlSubmitEvent(matchs, recordList);
+
         return new ApiResponse(200, true, "기록이 저장되었습니다.");
+    }
+
+    private void publishKmlSubmitEvent(Matchs matchs, List<Record> recordList) {
+        if (recordList.size() != 4) {
+            log.info("[KML] record_submit 송신 생략 — 참가자 수가 4명이 아님 size={}", recordList.size());
+            return;
+        }
+
+        List<KmlRecordSubmitEvent.Player> players = new ArrayList<>();
+        for (Record rec : recordList) {
+            BgmAgitMember member = rec.getMember();
+            Long kmlId = member != null ? member.getBgmAgitMemberKmlId() : null;
+            if (kmlId == null) {
+                log.info("[KML] record_submit 송신 생략 — KML 미연동 회원 포함 memberId={}",
+                        member != null ? member.getBgmAgitMemberId() : null);
+                return;
+            }
+            players.add(new KmlRecordSubmitEvent.Player(
+                    kmlId,
+                    rec.getRecordScore(),
+                    rec.getRecordSeat().ordinal()
+            ));
+        }
+
+        eventPublisher.publishEvent(new KmlRecordSubmitEvent(
+                matchs.getWind().ordinal(),
+                0,
+                players
+        ));
     }
     
     @Override
