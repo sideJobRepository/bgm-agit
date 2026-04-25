@@ -1,6 +1,7 @@
 package com.bgmagitapi.kml.yakuman.repository.impl;
 
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
+import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.kml.record.dto.response.QRecordGetDetailResponse_YakumanList;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
 import com.bgmagitapi.kml.yakuman.dto.response.QYakumanDetailGetResponse;
@@ -112,7 +113,7 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
                 .from(bgmAgitMember)
                 .leftJoin(yakuman)
                 .on(yakuman.member.bgmAgitMemberId.eq(bgmAgitMember.bgmAgitMemberId))
-                .where(bgmAgitMember.bgmAgitMemberMahjongUseStatus.eq("Y"), whereNickName(nickName))
+                .where(bgmAgitMember.socialType.eq(BgmAgitSocialType.MAHJONG), whereNickName(nickName))
                 .groupBy(bgmAgitMember.bgmAgitMemberId, bgmAgitMember.bgmAgitMemberNickname)
                 .orderBy(yakuman.count().desc())
                 .offset(pageable.getOffset())     // 핵심
@@ -123,7 +124,7 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
         JPAQuery<Long> countQuery = queryFactory
                 .select(bgmAgitMember.count())
                 .from(bgmAgitMember)
-                .where(bgmAgitMember.bgmAgitMemberMahjongUseStatus.eq("Y"), whereNickName(nickName));
+                .where(bgmAgitMember.socialType.eq(BgmAgitSocialType.MAHJONG), whereNickName(nickName));
         
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }

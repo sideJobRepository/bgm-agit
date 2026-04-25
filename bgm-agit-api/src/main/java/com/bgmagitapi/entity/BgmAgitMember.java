@@ -88,6 +88,10 @@ public class BgmAgitMember extends DateSuperClass {
         this.bgmAgitMemberKmlSynk = "Y";
     }
 
+    public void changePassword(String hashedPassword) {
+        this.bgmAgitMemberPassword = hashedPassword;
+    }
+
     public void markKmlSyncFailed() {
         this.bgmAgitMemberKmlSynk = "N";
     }

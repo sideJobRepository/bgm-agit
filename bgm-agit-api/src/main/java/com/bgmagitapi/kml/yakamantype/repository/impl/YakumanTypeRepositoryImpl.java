@@ -2,6 +2,7 @@ package com.bgmagitapi.kml.yakamantype.repository.impl;
 
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.QBgmAgitMember;
+import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.kml.setting.entity.QSetting;
 import com.bgmagitapi.kml.setting.entity.Setting;
 import com.bgmagitapi.kml.yakamantype.repository.query.YakumanTypeQueryRepository;
@@ -15,15 +16,15 @@ import static com.bgmagitapi.kml.setting.entity.QSetting.*;
 
 @RequiredArgsConstructor
 public class YakumanTypeRepositoryImpl implements YakumanTypeQueryRepository {
-    
+
     private final JPAQueryFactory queryFactory;
-    
-    
+
+
     @Override
     public List<BgmAgitMember> getMembers() {
         return queryFactory
                 .selectFrom(bgmAgitMember)
-                .where(bgmAgitMember.bgmAgitMemberMahjongUseStatus.eq("Y"))
+                .where(bgmAgitMember.socialType.eq(BgmAgitSocialType.MAHJONG))
                 .fetch();
     }
     

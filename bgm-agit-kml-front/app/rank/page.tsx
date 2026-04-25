@@ -13,14 +13,30 @@ import { useFetchRankList } from '@/services/rank.service';
 export default function RankPage() {
   const fetchRank = useFetchRankList();
   const rankList = useRankListStore((state) => state.rank);
-  const [rankType, setRankType] = useState<'WEEKLY' | 'MONTHLY'>('MONTHLY');
-  const [startDate, setStartDate] = useState<Date | null>(() => {
-    const d = new Date();
-    d.setMonth(d.getMonth());
-    return d;
-  });
+  const [rankType, setRankType] = useState<'WEEKLY' | 'MONTHLY' | 'CUSTOM'>('MONTHLY');
+  const [startDate, setStartDate] = useState<Date | null>(() => new Date());
+  const [endDate, setEndDate] = useState<Date | null>(() => new Date());
   const [page, setPage] = useState(0);
+
   const formatDate = (date: Date | null) => (date ? date.toISOString().split('T')[0] : '');
+
+  const formatLocalDateTime = (date: Date | null) => {
+    if (!date) return '';
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
+  };
+
+  const buildParams = (overridePage?: number) => {
+    const base = { page: overridePage ?? page, type: rankType };
+    if (rankType === 'CUSTOM') {
+      return {
+        ...base,
+        startDateTime: formatLocalDateTime(startDate),
+        endDateTime: formatLocalDateTime(endDate),
+      };
+    }
+    return { ...base, baseDate: formatDate(startDate) };
+  };
 
   const loading = useLoadingStore((state) => state.loading);
   const isReady = !loading && rankList;
@@ -172,14 +188,12 @@ export default function RankPage() {
   };
 
   useEffect(() => {
-    const formattedStartDate = formatDate(startDate);
-    fetchRank({
-      page,
-      type: rankType,
-      startDate: formattedStartDate,
-      baseDate: formattedStartDate,
-    });
-  }, [page, rankType, startDate]);
+    if (rankType === 'CUSTOM') {
+      if (!startDate || !endDate) return;
+      if (endDate.getTime() <= startDate.getTime()) return;
+    }
+    fetchRank(buildParams());
+  }, [page, rankType, startDate, endDate]);
 
   return (
     <Wrapper>
@@ -214,19 +228,20 @@ export default function RankPage() {
             rankType={rankType}
             onRankTypeChange={setRankType}
             startDate={startDate}
+            endDate={endDate}
             showWriteButton={true}
             onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
             getRowClassName={getRankRowClassName}
             getCellClassName={getRankCellClassName}
             onSearch={() => {
+              if (rankType === 'CUSTOM') {
+                if (!startDate || !endDate || endDate.getTime() <= startDate.getTime()) {
+                  return;
+                }
+              }
               setPage(0);
-              const formattedStartDate = formatDate(startDate);
-              fetchRank({
-                page: 0,
-                type: rankType,
-                startDate: formattedStartDate,
-                baseDate: formattedStartDate,
-              });
+              fetchRank(buildParams(0));
             }}
           />
         ) : (

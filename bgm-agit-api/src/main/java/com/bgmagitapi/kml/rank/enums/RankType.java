@@ -8,7 +8,8 @@ import lombok.RequiredArgsConstructor;
 public enum RankType {
     
     WEEKLY("주간"),
-    MONTHLY("월간");
+    MONTHLY("월간"),
+    CUSTOM("사용자설정");
     
     private final String value;
 }

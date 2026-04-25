@@ -768,6 +768,11 @@ const TableBox = styled.div`
   max-width: 800px;
   margin: 0 auto;
 
+  @media ${({ theme }) => theme.device.mobile} {
+    gap: 16px;
+    padding: 16px 4px;
+  }
+
   select {
     border: none;
     width: 100%;
@@ -779,6 +784,11 @@ const TableBox = styled.div`
     background: ${({ theme }) => theme.colors.whiteColor};
     border-radius: 4px;
     cursor: pointer;
+
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: 16px;
+      padding: 10px 6px;
+    }
   }
 `;
 
@@ -805,6 +815,12 @@ const PlusButton = styled.button`
     width: 14px;
     height: 14px;
   }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    width: auto;
+    padding: 8px 14px;
+    font-size: ${({ theme }) => theme.mobile.sizes.md};
+  }
 `;
 
 const Top = styled.section`
@@ -814,6 +830,10 @@ const Top = styled.section`
   justify-content: space-between;
   align-items: center;
   padding: 24px 0;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    padding: 12px 4px;
+  }
 
   &::before {
     content: '';
@@ -879,6 +899,10 @@ const Center = styled.section<{ $color: string }>`
   button {
     background-color: #d9625e;
     margin: 24px 24px 24px auto;
+
+    @media ${({ theme }) => theme.device.mobile} {
+      margin: 12px 12px 12px auto;
+    }
   }
 
   h4 {
@@ -891,6 +915,7 @@ const Center = styled.section<{ $color: string }>`
 
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
+      padding: 12px 8px;
     }
   }
 `;
@@ -903,6 +928,12 @@ const FieldsWrapper = styled.div`
   overflow-x: auto;
   flex-wrap: nowrap;
   overflow-y: hidden;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    gap: 8px;
+  }
 `;
 
 const Field = styled.div`
@@ -929,6 +960,18 @@ const Field = styled.div`
   &.score {
     flex: 1;
   }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    &.search,
+    &.user {
+      flex: 1 1 calc(50% - 4px);
+      min-width: 0;
+    }
+
+    &.score {
+      flex: 1 1 100%;
+    }
+  }
 `;
 
 const WriteCroup = styled.div`
@@ -942,6 +985,8 @@ const WriteCroup = styled.div`
 
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
+    padding: 8px;
+    flex-wrap: wrap;
   }
 
   label {
@@ -965,6 +1010,11 @@ const WriteCroup = styled.div`
 
     &::placeholder {
       color: ${({ theme }) => theme.colors.softColor};
+    }
+
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: 16px;
+      padding: 10px 6px;
     }
   }
 
@@ -1020,6 +1070,11 @@ const ImageOverlay = styled.div`
   background: ${({ theme }) => theme.colors.border};
   transition: background 0.25s ease;
   border-radius: 4px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    height: 140px;
+    margin: 8px 0 16px 0;
+  }
 `;
 
 const UploadLabel = styled.label`

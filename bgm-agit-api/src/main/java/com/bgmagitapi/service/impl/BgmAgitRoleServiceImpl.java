@@ -1,10 +1,14 @@
 package com.bgmagitapi.service.impl;
 
 import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.controller.request.BgmAgitMemberPasswordChangeRequest;
 import com.bgmagitapi.controller.request.BgmAgitRoleModifyRequest;
 import com.bgmagitapi.controller.response.BgmAgitRoleResponse;
+import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitMemberRole;
 import com.bgmagitapi.entity.BgmAgitRole;
+import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
+import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRoleRepository;
 import com.bgmagitapi.repository.BgmAgitRoleRepository;
 import com.bgmagitapi.security.manager.BgmAgitAuthorizationManager;
@@ -12,6 +16,7 @@ import com.bgmagitapi.service.BgmAgitRoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,9 +29,13 @@ import java.util.List;
 public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
     
     private final BgmAgitRoleRepository bgmAgitRoleRepository;
-    
+
     private final BgmAgitMemberRoleRepository bgmAgitMemberRoleRepository;
-    
+
+    private final BgmAgitMemberRepository bgmAgitMemberRepository;
+
+    private final PasswordEncoder passwordEncoder;
+
     private final BgmAgitAuthorizationManager bgmAgitAuthorizationManager;
     
     @Override
@@ -34,7 +43,14 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
     public Page<BgmAgitRoleResponse> getRoles(Pageable pageable, String res) {
         return bgmAgitMemberRoleRepository.getRoles(pageable,res);
     }
-  
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BgmAgitRoleResponse> getMahjongRoles(Pageable pageable, String res) {
+        return bgmAgitMemberRoleRepository.getMahjongRoles(pageable, res);
+    }
+
+
     
     @Override
     public ApiResponse modifyRole(List<BgmAgitRoleModifyRequest> requestList) {
@@ -57,5 +73,18 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
         bgmAgitAuthorizationManager.reload();
         // 4. 저장
         return new ApiResponse(200,true,"권한이 성공적으로 변경되었습니다.");
+    }
+
+    @Override
+    public ApiResponse changePassword(BgmAgitMemberPasswordChangeRequest request) {
+        BgmAgitMember member = bgmAgitMemberRepository.findById(request.getMemberId())
+                .orElseThrow(() -> new RuntimeException("해당 회원을 찾을 수 없습니다."));
+
+        if (member.getSocialType() != BgmAgitSocialType.MAHJONG) {
+            return new ApiResponse(400, false, "마작 회원만 비밀번호를 변경할 수 있습니다.");
+        }
+
+        member.changePassword(passwordEncoder.encode(request.getPassword()));
+        return new ApiResponse(200, true, "비밀번호가 변경되었습니다.");
     }
 }
