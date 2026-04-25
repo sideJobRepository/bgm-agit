@@ -72,4 +72,4 @@ server:
 kml:
   url: https://kml.or.kr/stat52
   api:
-    key: BgmAgit
+    key: ${KML_API_KEY}
