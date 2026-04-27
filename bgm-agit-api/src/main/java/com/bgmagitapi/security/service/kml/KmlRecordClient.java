@@ -27,7 +27,7 @@ public class KmlRecordClient {
      * 실패해도 호출자에게 예외를 던지지 않는다 (우리 DB 저장과 분리).
      */
     public void submit(KmlRecordSubmitEvent event) {
-        String url = kmlBaseUrl + "/record_submit_api.php";
+        String url = kmlBaseUrl + "/api_record_submit.php";
 
         List<Map<String, Object>> players = event.getPlayers().stream()
                 .map(p -> Map.<String, Object>of(
