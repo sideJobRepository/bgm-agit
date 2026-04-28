@@ -208,6 +208,11 @@ const Backdrop = styled(motion.div)`
   justify-content: center;
   z-index: 1000;
   padding: 16px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    padding: 12px;
+    align-items: flex-end;
+  }
 `;
 
 const Card = styled(motion.div)`
@@ -222,6 +227,13 @@ const Card = styled(motion.div)`
   display: flex;
   flex-direction: column;
   gap: 16px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    padding: 18px;
+    gap: 14px;
+    border-radius: 12px 12px 8px 8px;
+    max-height: 92vh;
+  }
 `;
 
 const Header = styled.div`
@@ -234,6 +246,12 @@ const Header = styled.div`
   h2 {
     font-size: ${({ theme }) => theme.desktop.sizes.h5Size};
     font-weight: 700;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    h2 {
+      font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
+    }
   }
 `;
 
@@ -268,6 +286,10 @@ const SectionTitle = styled.h3`
   font-size: ${({ theme }) => theme.desktop.sizes.md};
   font-weight: 600;
   color: ${({ theme }) => theme.colors.blackColor};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.desktop.sizes.md};
+  }
 `;
 
 const Field = styled.div`
@@ -296,6 +318,13 @@ const Field = styled.div`
 
     @media ${({ theme }) => theme.device.mobile} {
       font-size: 16px;
+      padding: 12px;
+    }
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    label {
+      font-size: ${({ theme }) => theme.desktop.sizes.xs};
     }
   }
 `;
@@ -307,6 +336,11 @@ const ReadOnly = styled.div`
   background: ${({ theme }) => theme.colors.recordBgColor};
   font-size: ${({ theme }) => theme.desktop.sizes.sm};
   color: ${({ theme }) => theme.colors.inputColor};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.desktop.sizes.md};
+    padding: 12px;
+  }
 `;
 
 const Row = styled.div`
@@ -318,12 +352,32 @@ const Row = styled.div`
     flex: 1;
     min-width: 0;
   }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    flex-wrap: wrap;
+
+    input {
+      flex: 1 1 100%;
+    }
+
+    button {
+      flex: 1 1 100%;
+      justify-content: center;
+    }
+  }
 `;
 
 const ActionRow = styled.div`
   display: flex;
   justify-content: flex-end;
   margin-top: 4px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    button {
+      flex: 1;
+      justify-content: center;
+    }
+  }
 `;
 
 const PrimaryButton = styled.button`
@@ -346,6 +400,11 @@ const PrimaryButton = styled.button`
   svg {
     width: 14px;
     height: 14px;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    padding: 12px 16px;
+    font-size: ${({ theme }) => theme.desktop.sizes.md};
   }
 `;
 

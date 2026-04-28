@@ -506,7 +506,7 @@ const TableWrapper = styled.div`
 
 const Table = styled.table`
   width: 100%;
-  min-width: 640px;
+  min-width: 720px;
   border-collapse: collapse;
   font-size: ${({ theme }) => theme.desktop.sizes.sm};
   color: ${({ theme }) => theme.colors.inputColor};
@@ -522,6 +522,8 @@ const Table = styled.table`
   }
 
   @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.desktop.sizes.xs};
+
     th,
     td {
       padding: 10px 6px;
@@ -575,6 +577,7 @@ const PasswordButton = styled.button`
   border-radius: 4px;
   font-size: ${({ theme }) => theme.desktop.sizes.xs};
   cursor: pointer;
+  white-space: nowrap;
 
   &:hover {
     background-color: ${({ theme }) => theme.colors.recordBgColor};
@@ -583,6 +586,11 @@ const PasswordButton = styled.button`
   svg {
     width: 12px;
     height: 12px;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    padding: 8px 10px;
+    font-size: ${({ theme }) => theme.desktop.sizes.sm};
   }
 `;
 
