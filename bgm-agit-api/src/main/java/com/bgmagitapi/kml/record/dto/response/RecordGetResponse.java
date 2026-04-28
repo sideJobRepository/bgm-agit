@@ -25,6 +25,8 @@ public class RecordGetResponse {
     private String tournamentStatus;
     private MatchsWind matchsWind;
     private String createNicname;
+    // 'Y' 면 삭제된 기록 (멘토 이상에게만 노출), 'N' 정상
+    private String delStatus;
     private List<Row> rows;
     
     public List<Row> getRows() {

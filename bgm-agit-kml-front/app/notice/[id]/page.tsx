@@ -12,6 +12,7 @@ import { ArrowLeft, TrashSimple, FileText, Check, FilePlus, DownloadSimple } fro
 import { useDeletePost, useInsertPost, useUpdatePost } from '@/services/main.service';
 import { alertDialog, confirmDialog } from '@/utils/alert';
 import { useLoadingStore } from '@/store/loading';
+import { uploadNoticeFile } from '@/services/noticeFile.service';
 
 const NoticeEditor = dynamic(() => import('../../components/NoticeEditor'), {
   ssr: false,
@@ -24,11 +25,20 @@ type NewNoticeState = {
 };
 
 type ExistingFile = {
-  id: number; // 서버 파일 ID
+  id: number; // 서버 파일 ID (legacy: BgmAgitCommonFile.id, new: BgmAgitFile.id)
   fileName: string;
-  fileUrl: string;
+  fileUrl: string | null;
   status: 'NORMAL' | 'DELETED';
   fileFolder: string;
+  legacy: boolean;
+};
+
+// 새로 선택된 파일: 즉시 presigned 업로드 후 fileId 보유
+type PendingFile = {
+  fileName: string;
+  fileSize: number;
+  uploadStatus: 'uploading' | 'done' | 'failed';
+  fileId: number | null;
 };
 
 export default function NoticeDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -57,42 +67,91 @@ export default function NoticeDetail({ params }: { params: Promise<{ id: string 
   //파일
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<PendingFile[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<ExistingFile[]>([]);
 
   function fileDownload(file: NoticeFiles) {
     fetchFileDownload(file);
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
 
     const selectedFiles = Array.from(e.target.files);
-
-    setFiles((prev) => [...prev, ...selectedFiles]);
-
-    // 같은 파일 다시 선택 가능하게 초기화
     e.target.value = '';
+
+    // 각 파일을 별도 슬롯으로 추가하고 병렬 업로드
+    const startIdx = files.length;
+    setFiles((prev) => [
+      ...prev,
+      ...selectedFiles.map((f) => ({
+        fileName: f.name,
+        fileSize: f.size,
+        uploadStatus: 'uploading' as const,
+        fileId: null,
+      })),
+    ]);
+
+    selectedFiles.forEach(async (file, i) => {
+      const idx = startIdx + i;
+      try {
+        const res = await uploadNoticeFile(file);
+        setFiles((prev) =>
+          prev.map((p, j) =>
+            j === idx ? { ...p, fileId: res.fileId, uploadStatus: 'done' } : p
+          )
+        );
+      } catch (err) {
+        console.error('[notice-file] upload 실패', err);
+        setFiles((prev) =>
+          prev.map((p, j) => (j === idx ? { ...p, uploadStatus: 'failed' } : p))
+        );
+        await alertDialog(`'${file.name}' 업로드 실패`, 'error');
+      }
+    });
   };
 
   const handleSubmit = async () => {
-    const formData = new FormData();
-    formData.append('title', newNotice.title);
-    formData.append('cont', newNotice.content);
-
-    if (isEditMode) {
-      formData.append('id', id);
-
-      attachedFiles
-        .filter((file) => file.status === 'DELETED')
-        .forEach((file) => {
-          formData.append('deleteFileIds', String(file.id));
-        });
+    if (files.some((f) => f.uploadStatus === 'uploading')) {
+      await alertDialog('파일 업로드가 끝나길 기다려주세요.', 'warning');
+      return;
+    }
+    if (files.some((f) => f.uploadStatus === 'failed')) {
+      await alertDialog('업로드 실패한 파일이 있습니다. 제거 후 다시 시도해주세요.', 'error');
+      return;
     }
 
-    files.forEach((file) => {
-      formData.append('files', file);
-    });
+    // FileRequest 구성: 새 파일은 CREATE, 삭제된 기존 파일(legacy=false)만 DELETE
+    type FileChange = { id: number; fileProcessStatus: 'CREATE' | 'DELETE' | 'NORMAL' };
+    const fileChanges: FileChange[] = [];
+
+    files
+      .filter((f) => f.uploadStatus === 'done' && f.fileId !== null)
+      .forEach((f) => fileChanges.push({ id: f.fileId!, fileProcessStatus: 'CREATE' }));
+
+    if (isEditMode) {
+      attachedFiles
+        .filter((f) => f.status === 'DELETED' && !f.legacy)
+        .forEach((f) => fileChanges.push({ id: f.id, fileProcessStatus: 'DELETE' }));
+    }
+
+    const body: Record<string, unknown> = {
+      title: newNotice.title,
+      cont: newNotice.content,
+      files: { fileType: 'MAHJONG_NOTICE', files: fileChanges },
+    };
+    if (isEditMode) {
+      body.id = Number(id);
+    }
+
+    // legacy 파일 삭제 (옛 BgmAgitCommonFile) — 백엔드 새 흐름엔 처리 로직 없음
+    // 운영 데이터에서 옛 첨부파일을 지우는 케이스가 적다고 가정. 필요 시 별도 엔드포인트 필요
+    const legacyDeletes = isEditMode
+      ? attachedFiles.filter((f) => f.status === 'DELETED' && f.legacy)
+      : [];
+    if (legacyDeletes.length > 0) {
+      console.warn('[notice] legacy 파일 삭제 요청은 현재 무시됨', legacyDeletes);
+    }
 
     const requestFn = isEditMode ? update : insert;
     const result = await confirmDialog('저장 하시겠습니까?', 'warning');
@@ -100,7 +159,7 @@ export default function NoticeDetail({ params }: { params: Promise<{ id: string 
     if (result.isConfirmed) {
       requestFn({
         url: '/bgm-agit/kml-notice',
-        body: formData,
+        body,
         ignoreErrorRedirect: true,
         onSuccess: async () => {
           if (!isEditMode) {
@@ -194,6 +253,7 @@ export default function NoticeDetail({ params }: { params: Promise<{ id: string 
           fileUrl: file.fileUrl,
           status: 'NORMAL',
           fileFolder: file.fileFolder,
+          legacy: file.legacy ?? true,
         }))
       );
     }
@@ -354,8 +414,10 @@ export default function NoticeDetail({ params }: { params: Promise<{ id: string 
                 ))}
 
               {files.map((file, idx) => (
-                <li key={`${file.name}-${idx}`}>
-                  {file.name}
+                <li key={`${file.fileName}-${idx}`}>
+                  {file.fileName}
+                  {file.uploadStatus === 'uploading' && ' (업로드 중...)'}
+                  {file.uploadStatus === 'failed' && ' (실패)'}
                   <FileSvgBox $color="#D9625E">
                     <TrashSimple onClick={() => handleRemoveFile(idx)} weight="bold" />
                   </FileSvgBox>

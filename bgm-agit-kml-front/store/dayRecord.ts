@@ -15,6 +15,8 @@ interface Record {
   registDate: string;
   matchsWind: string;
   tournamentStatus: string;
+  // 'Y' 면 삭제된 기록 (멘토+ 에게만 응답에 포함됨), 'N' 정상
+  delStatus?: string;
   rows: Row[];
 }
 

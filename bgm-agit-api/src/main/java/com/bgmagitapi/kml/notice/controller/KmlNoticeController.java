@@ -37,12 +37,12 @@ public class KmlNoticeController {
     }
     
     @PostMapping("/kml-notice")
-    public ApiResponse createKmlNotice(@Validated @ModelAttribute KmlNoticePostRequest request) {
+    public ApiResponse createKmlNotice(@Validated @RequestBody KmlNoticePostRequest request) {
         return kmlNoticeService.createKmlNotice(request);
     }
-    
+
     @PutMapping("/kml-notice")
-    public ApiResponse updateKmlNotice(@Validated @ModelAttribute KmlNoticePutRequest request) {
+    public ApiResponse updateKmlNotice(@Validated @RequestBody KmlNoticePutRequest request) {
         return kmlNoticeService.modifyKmlNotice(request);
     }
     

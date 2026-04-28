@@ -2,6 +2,8 @@ package com.bgmagitapi.kml.down.controller;
 
 import com.bgmagitapi.config.S3FileUtils;
 import com.bgmagitapi.config.UploadResult;
+import com.bgmagitapi.file.enums.FileType;
+import com.bgmagitapi.file.service.BgmAgitFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
@@ -26,9 +28,11 @@ import java.nio.charset.StandardCharsets;
 public class FileDownLoadController {
     
     private final S3Client s3Client;
-    
+
     private final S3FileUtils s3FileUtils;
-    
+
+    private final BgmAgitFileService bgmAgitFileService;
+
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
     
@@ -68,7 +72,15 @@ public class FileDownLoadController {
       
     @PostMapping("/ckEditor/file/{folder}")
     public String ckEditorFileUpload(@RequestParam("file") MultipartFile file, @PathVariable String folder) {
-        UploadResult notice = s3FileUtils.storeFile(file, folder);
-        return notice.getUrl();
+        // folder 별로 인라인 파일 타입 매핑 — 공지 외 도메인이 늘면 여기 추가
+        FileType fileType = resolveInlineFileType(folder);
+        return bgmAgitFileService.registerInlineUpload(file, folder, fileType);
+    }
+
+    private FileType resolveInlineFileType(String folder) {
+        return switch (folder) {
+            case "kml-notice" -> FileType.MAHJONG_NOTICE_INLINE;
+            default -> throw new IllegalArgumentException("지원하지 않는 인라인 업로드 folder: " + folder);
+        };
     }
 }

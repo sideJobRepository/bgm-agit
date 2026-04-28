@@ -2,6 +2,8 @@ package com.bgmagitapi.kml.yakuman.repository.impl;
 
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
+import com.bgmagitapi.file.enums.FileStatus;
+import com.bgmagitapi.file.enums.FileType;
 import com.bgmagitapi.kml.record.dto.response.QRecordGetDetailResponse_YakumanList;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
 import com.bgmagitapi.kml.yakuman.dto.response.QYakumanDetailGetResponse;
@@ -30,6 +32,7 @@ import java.util.List;
 
 import static com.bgmagitapi.entity.QBgmAgitCommonFile.bgmAgitCommonFile;
 import static com.bgmagitapi.entity.QBgmAgitMember.bgmAgitMember;
+import static com.bgmagitapi.file.entity.QBgmAgitFile.bgmAgitFile;
 import static com.bgmagitapi.kml.yakuman.entity.QYakuman.yakuman;
 
 @RequiredArgsConstructor
@@ -47,13 +50,18 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
                                 bgmAgitMember.bgmAgitMemberNickname,
                                 yakuman.yakumanName,
                                 yakuman.yakumanCont,
-                                bgmAgitCommonFile.bgmAgitCommonFileUrl
+                                bgmAgitCommonFile.bgmAgitCommonFileUrl,
+                                bgmAgitFile.id
                         )
                 )
                 .from(yakuman)
                 .leftJoin(bgmAgitCommonFile)
                 .on(yakuman.id.eq(bgmAgitCommonFile.bgmAgitCommonFileTargetId), bgmAgitCommonFile.bgmAgitCommonFileType.eq(BgmAgitCommonType.YAKUMAN))
-                .leftJoin(yakuman.member,bgmAgitMember)
+                .leftJoin(bgmAgitFile)
+                .on(yakuman.id.eq(bgmAgitFile.targetId),
+                        bgmAgitFile.fileType.eq(FileType.YAKUMAN),
+                        bgmAgitFile.fileStatus.eq(FileStatus.COMPLETE))
+                .leftJoin(yakuman.member, bgmAgitMember)
                 .where(yakuman.matchs.id.eq(id))
                 .fetch();
     }
@@ -112,7 +120,11 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
                 ))
                 .from(bgmAgitMember)
                 .leftJoin(yakuman)
-                .on(yakuman.member.bgmAgitMemberId.eq(bgmAgitMember.bgmAgitMemberId))
+                .on(
+                        yakuman.member.bgmAgitMemberId.eq(bgmAgitMember.bgmAgitMemberId),
+                        // 삭제된 대국에 속한 역만은 집계에서 제외
+                        yakuman.matchs.delStatus.ne("Y")
+                )
                 .where(bgmAgitMember.socialType.eq(BgmAgitSocialType.MAHJONG), whereNickName(nickName))
                 .groupBy(bgmAgitMember.bgmAgitMemberId, bgmAgitMember.bgmAgitMemberNickname)
                 .orderBy(yakuman.count().desc())
@@ -132,23 +144,25 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
     
     @Override
     public Page<YakumanDetailGetResponse> getYakuman(Pageable pageable) {
-        
-        // 1) 페이지에 해당하는 yakuman id만 먼저 가져오기
+
+        // 1) 페이지에 해당하는 yakuman id만 먼저 가져오기 (삭제된 대국 제외)
         List<Long> ids = queryFactory
                 .select(yakuman.id)
                 .from(yakuman)
+                .where(yakuman.matchs.delStatus.ne("Y"))
                 .orderBy(yakuman.id.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
-        
+
         if (ids.isEmpty()) {
             return new PageImpl<>(List.of(), pageable, 0);
         }
-        
+
         JPAQuery<Long> countQuery = queryFactory
                 .select(yakuman.count())
-                .from(yakuman);
+                .from(yakuman)
+                .where(yakuman.matchs.delStatus.ne("Y"));
         
         
         List<YakumanDetailGetResponse> content = queryFactory
@@ -157,6 +171,7 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
                         yakuman.yakumanName,
                         yakuman.yakumanCont,
                         bgmAgitCommonFile.bgmAgitCommonFileUrl,
+                        bgmAgitFile.id,
                         yakuman.registDate
                 ))
                 .from(yakuman)
@@ -165,6 +180,12 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
                 .on(
                         bgmAgitCommonFile.bgmAgitCommonFileTargetId.eq(yakuman.id),
                         bgmAgitCommonFile.bgmAgitCommonFileType.eq(BgmAgitCommonType.YAKUMAN)
+                )
+                .leftJoin(bgmAgitFile)
+                .on(
+                        bgmAgitFile.targetId.eq(yakuman.id),
+                        bgmAgitFile.fileType.eq(FileType.YAKUMAN),
+                        bgmAgitFile.fileStatus.eq(FileStatus.COMPLETE)
                 )
                 .where(yakuman.id.in(ids))
                 .orderBy(yakuman.id.desc())

@@ -52,6 +52,10 @@ public class Matchs extends DateSuperClass {
         this.delStatus = "Y";
     }
 
+    public void restoreDelStatus() {
+        this.delStatus = "N";
+    }
+
     public void linkKmlMatchsId(Long kmlMatchsId) {
         this.matchsKmlId = kmlMatchsId;
     }

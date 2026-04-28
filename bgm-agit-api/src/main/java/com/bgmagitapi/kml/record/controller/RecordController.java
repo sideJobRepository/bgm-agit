@@ -31,24 +31,30 @@ public class RecordController {
             ,@RequestParam(name = "endDate" , required = false) String endDate
             ,@RequestParam(name= "nickName", required = false) String nickName
             ,@RequestParam(name= "tournamentStatus", required = false) String tournamentStatus
+            ,@AuthenticationPrincipal Jwt jwt
     ) {
-        Page<RecordGetResponse> records = recordService.getRecords(pageable,startDate,endDate,nickName,tournamentStatus);
+        Page<RecordGetResponse> records = recordService.getRecords(pageable,startDate,endDate,nickName,tournamentStatus, JwtParserUtil.extractRoles(jwt));
         return PageResponse.from(records);
     }
-    
+
+    @PutMapping("/record/{id}/restore")
+    public ApiResponse restoreRecord(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        return recordService.restoreRecord(id, JwtParserUtil.extractRoles(jwt));
+    }
+
     @GetMapping("/record/{id}")
     public RecordGetDetailResponse getDetailRecord(@PathVariable Long id) {
         return recordService.getRecordDetail(id);
     }
     
     @PostMapping("/record")
-    public ApiResponse createRecord(@Validated @ModelAttribute RecordPostRequest request, @AuthenticationPrincipal Jwt jwt) {
+    public ApiResponse createRecord(@Validated @RequestBody RecordPostRequest request, @AuthenticationPrincipal Jwt jwt) {
         Long memberId = JwtParserUtil.extractMemberId(jwt);
         return recordService.createRecord(request, memberId);
     }
-    
+
     @PutMapping("/record")
-    ApiResponse modifyRecord(@Validated @ModelAttribute RecordPutRequest request, @AuthenticationPrincipal Jwt jwt) {
+    ApiResponse modifyRecord(@Validated @RequestBody RecordPutRequest request, @AuthenticationPrincipal Jwt jwt) {
         Long memberId = JwtParserUtil.extractMemberId(jwt);
         return recordService.updateRecord(request, memberId);
     }

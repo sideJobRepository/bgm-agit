@@ -8,11 +8,15 @@ import com.bgmagitapi.kml.record.dto.response.RecordGetResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface RecordService {
-    Page<RecordGetResponse> getRecords(Pageable pageable, String startDate, String endDate, String nickName,String tournamentStatus);
+    Page<RecordGetResponse> getRecords(Pageable pageable, String startDate, String endDate, String nickName, String tournamentStatus, List<String> roles);
     RecordGetDetailResponse getRecordDetail(Long id);
     ApiResponse createRecord(RecordPostRequest request, Long memberId);
-    ApiResponse updateRecord(RecordPutRequest request,Long memberId);
-    
+    ApiResponse updateRecord(RecordPutRequest request, Long memberId);
+
     ApiResponse removeRecord(Long id, Long memberId);
+
+    ApiResponse restoreRecord(Long id, List<String> roles);
 }

@@ -29,14 +29,14 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
     private final JPAQueryFactory queryFactory;
     
     @Override
-    public Page<Record> findByRecords(Pageable pageable, String startDate, String endDate, String nickName, String tournamentStatus) {
+    public Page<Record> findByRecords(Pageable pageable, String startDate, String endDate, String nickName, String tournamentStatus, boolean includeDeleted) {
         //  Match 먼저 페이징
         // 1. match 기준으로 페이징
         List<Long> matchIds = queryFactory
                 .select(matchs.id)
                 .from(matchs)
                 .where(
-                        matchs.delStatus.eq("N"),
+                        whereDelStatus(includeDeleted),
                         whereDateGoe(startDate),
                         whereDateLt(endDate),
                         whereNickLikeExists(nickName),
@@ -46,11 +46,11 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
-        
+
         if (matchIds.isEmpty()) {
             return new PageImpl<>(List.of(), pageable, 0);
         }
-        
+
         // 2. 해당 match의 record 전체 조회 (페이징 X)
         List<Record> content = queryFactory
                 .selectFrom(record)
@@ -61,19 +61,23 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                 )
                 .orderBy(matchs.registDate.desc(), matchs.id.desc(), record.id.asc())
                 .fetch();
-        
+
         // 3. count (match 기준!)
         JPAQuery<Long> countQuery = queryFactory
                 .select(matchs.count())
                 .from(matchs)
                 .where(
-                        matchs.delStatus.eq("N"),
+                        whereDelStatus(includeDeleted),
                         whereDateGoe(startDate),
                         whereDateLt(endDate),
                         whereNickLikeExists(nickName),
                         whereTournamentStatus(tournamentStatus)
                 );
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    private com.querydsl.core.types.dsl.BooleanExpression whereDelStatus(boolean includeDeleted) {
+        return includeDeleted ? null : matchs.delStatus.eq("N");
     }
     
     @Override
@@ -102,12 +106,12 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                 .fetch();
     }
     @Override
-    public Long countQuery(String startDate, String endDate, String nickName, String tournamentStatus){
+    public Long countQuery(String startDate, String endDate, String nickName, String tournamentStatus, boolean includeDeleted){
      return queryFactory
                 .select(matchs.count())
                 .from(matchs)
                 .where(
-                        matchs.delStatus.eq("N"),
+                        whereDelStatus(includeDeleted),
                         whereDateGoe(startDate),
                         whereDateLt(endDate),
                         whereNickLikeExists(nickName),

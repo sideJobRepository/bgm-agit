@@ -46,7 +46,10 @@ export const useYakumanRecordStore = create<YakumanStore>((set) => ({
 
 //디테일 역만
 export interface DetailYakumanRow {
-  fileUrl: string;
+  // legacy: BgmAgitCommonFile 의 풀 URL
+  fileUrl: string | null;
+  // new: BgmAgitFile id (presigned URL 은 /bgm-agit/file-view 로 일괄 조회)
+  fileId: number | null;
   nickname: string;
   registDate: string;
   yakumanCont: string;
