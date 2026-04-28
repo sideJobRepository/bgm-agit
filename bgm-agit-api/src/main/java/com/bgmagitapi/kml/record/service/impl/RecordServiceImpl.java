@@ -7,6 +7,7 @@ import com.bgmagitapi.config.UploadResult;
 import com.bgmagitapi.entity.BgmAgitCommonFile;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
+import com.bgmagitapi.event.dto.KmlRecordModifyEvent;
 import com.bgmagitapi.event.dto.KmlRecordSubmitEvent;
 import com.bgmagitapi.kml.history.service.MatchsAndRecordHistoryService;
 import com.bgmagitapi.kml.matchs.entity.Matchs;
@@ -265,6 +266,41 @@ public class RecordServiceImpl implements RecordService {
         }
 
         eventPublisher.publishEvent(new KmlRecordSubmitEvent(
+                matchs.getId(),
+                matchs.getWind().ordinal(),
+                0,
+                players
+        ));
+    }
+
+    private void publishKmlModifyEvent(Matchs matchs, List<Record> recordList) {
+        if (matchs.getMatchsKmlId() == null) {
+            log.info("[KML] record_modify 송신 생략 — matchsKmlId 없음 (등록 미송신 게임) matchsId={}", matchs.getId());
+            return;
+        }
+        if (recordList.size() != 4) {
+            log.info("[KML] record_modify 송신 생략 — 참가자 수가 4명이 아님 size={}", recordList.size());
+            return;
+        }
+
+        List<KmlRecordSubmitEvent.Player> players = new ArrayList<>();
+        for (Record rec : recordList) {
+            BgmAgitMember member = rec.getMember();
+            Long kmlId = member != null ? member.getBgmAgitMemberKmlId() : null;
+            if (kmlId == null) {
+                log.info("[KML] record_modify 송신 생략 — KML 미연동 회원 포함 memberId={}",
+                        member != null ? member.getBgmAgitMemberId() : null);
+                return;
+            }
+            players.add(new KmlRecordSubmitEvent.Player(
+                    kmlId,
+                    rec.getRecordScore(),
+                    rec.getRecordSeat().ordinal()
+            ));
+        }
+
+        eventPublisher.publishEvent(new KmlRecordModifyEvent(
+                matchs.getMatchsKmlId(),
                 matchs.getWind().ordinal(),
                 0,
                 players
@@ -468,7 +504,12 @@ public class RecordServiceImpl implements RecordService {
                 request.getChangeReason(),
                 requestMemberId
         );
-        
+
+        List<Record> currentRecords = records.stream()
+                .filter(r -> requestRecordIds.contains(r.getId()))
+                .toList();
+        publishKmlModifyEvent(matchs, currentRecords);
+
         return new ApiResponse(200, true, "기록이 수정되었습니다.");
     }
     
