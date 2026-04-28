@@ -70,60 +70,67 @@ public class RecordServiceImpl implements RecordService {
     
     
     @Override
-    public Page<RecordGetResponse> getRecords(Pageable pageable, String startDate, String endDate, String nickName, String tournamentStatus) {
-        Page<Record> records = recordRepository.findByRecords(pageable, startDate, endDate, nickName, tournamentStatus);
-
+    public Page<RecordGetResponse> getRecords(Pageable pageable, String startDate, String endDate, String nickName, String tournamentStatus, List<String> roles) {
+        boolean canSeeDeleted = canSeeDeleted(roles);
+        Page<Record> records = recordRepository.findByRecords(pageable, startDate, endDate, nickName, tournamentStatus, canSeeDeleted);
+    
         Map<Long, List<Record>> groupedByMatch = records.getContent().stream()
                         .filter(r -> r.getMatchs() != null)
                         .collect(Collectors.groupingBy(r -> r.getMatchs().getId()));
-
+    
         List<RecordGetResponse> list = groupedByMatch.entrySet().stream()
                 .map(entry -> {
-
+    
                     List<Record> group = new ArrayList<>(entry.getValue());
                     if (group.isEmpty()) return null;
-
+                    
                     // 1단계: 점수 기준 정렬 → rank 계산
                     group.sort(Comparator.comparing(Record::getRecordScore).reversed());
-
+    
                     Map<Long, Integer> rankMap = new HashMap<>();
                     for (int i = 0; i < group.size(); i++) {
                         rankMap.put(group.get(i).getId(), i + 1);
                     }
-
+                    
                     // 2단계: 동남서북 순 정렬 (enum 선언 순서)
                     group.sort(Comparator.comparing(r -> r.getRecordSeat().ordinal()));
-
+    
                     RecordGetResponse response = new RecordGetResponse();
                     response.setMatchsId(entry.getKey());
                     response.setCreateNicname(group.get(0).getMatchs().getMember().getBgmAgitMemberNickname());
                     response.setRegistDate(group.get(0).getMatchs().getRegistDate());
                     response.setTournamentStatus(group.get(0).getMatchs().getTournamentStatus());
                     response.setMatchsWind(group.get(0).getMatchs().getWind());
+                    response.setDelStatus(group.get(0).getMatchs().getDelStatus());
                     for (Record rec : group) {
-
+    
                         RecordGetResponse.Row row = new RecordGetResponse.Row();
-
+    
                         // enum value
                         row.setSeat(rec.getRecordSeat().getValue());
-
+    
                         row.setRank(rankMap.get(rec.getId()));
                         row.setNickname(rec.getMember() != null ? rec.getMember().getBgmAgitMemberNickname() : "");
                         row.setScore(rec.getRecordScore());
                         row.setPoint(rec.getRecordPoint());
                         row.setWinner(rankMap.get(rec.getId()) == 1);
-
+    
                         response.getRows().add(row);
                     }
-
+    
                     return response;
                 })
                 .filter(Objects::nonNull)
                 .sorted(Comparator.comparing(RecordGetResponse::getRegistDate).reversed())
                 .toList();
-
-        Long countQuery = recordRepository.countQuery(startDate, endDate, nickName, tournamentStatus);
+        
+        Long countQuery = recordRepository.countQuery(startDate, endDate, nickName, tournamentStatus, canSeeDeleted);
         return new PageImpl<>(list, pageable, countQuery == null ? 0 : countQuery);
+    }
+
+    private boolean canSeeDeleted(List<String> roles) {
+        if (roles == null) return false;
+        return roles.contains("ROLE_ADMIN") || roles.contains("ROLE_MENTOR");
     }
     
     @Override
@@ -484,6 +491,30 @@ public class RecordServiceImpl implements RecordService {
 
         matchsAndRecordHistoryService.updateMatchsAndRecordHistory(matchs,findRecord,"삭제",memberId);
         return new ApiResponse(200,true,"삭제 되었습니다.");
+    }
+
+    @Override
+    public ApiResponse restoreRecord(Long id, List<String> roles) {
+        if (!canSeeDeleted(roles)) {
+            throw new ValidException("멘토 이상만 복구할 수 있습니다.");
+        }
+
+        Matchs matchs = matchsRepository.findById(id).orElseThrow(() -> new RuntimeException("존재하지 않은 대국입니다."));
+        if (!"Y".equals(matchs.getDelStatus())) {
+            throw new ValidException("이미 복구된 대국입니다.");
+        }
+
+        matchs.restoreDelStatus();
+
+        // 묶인 yakuman 의 TEMPORARY 파일들을 다시 COMPLETE 로 (배치가 아직 안 지웠다면)
+        List<Yakuman> yakumans = yakumanRepository.findByYakumanMatchesId(matchs.getId());
+        if (!yakumans.isEmpty()) {
+            List<Long> yakumanIds = yakumans.stream().map(Yakuman::getId).toList();
+            List<BgmAgitFile> tempFiles = bgmAgitFileService.findTemporaryByTargets(yakumanIds, FileType.YAKUMAN);
+            tempFiles.forEach(BgmAgitFile::restoreCompleteFileStatus);
+        }
+
+        return new ApiResponse(200, true, "기록이 복구되었습니다.");
     }
 
 }

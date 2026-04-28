@@ -19,5 +19,10 @@ public class JwtParserUtil {
          List<String> roles = jwt.getClaim("roles");
         return roles != null && !roles.isEmpty() ? roles.get(0) : "GUEST";
     }
-    
+
+    public static List<String> extractRoles(Jwt jwt) {
+        if (jwt == null) return List.of();
+        List<String> roles = jwt.getClaim("roles");
+        return roles != null ? roles : List.of();
+    }
 }

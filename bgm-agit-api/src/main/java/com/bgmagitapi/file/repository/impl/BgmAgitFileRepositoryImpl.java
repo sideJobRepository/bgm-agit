@@ -66,4 +66,15 @@ public class BgmAgitFileRepositoryImpl implements BgmAgitFileQueryRepository {
                         .and(bgmAgitFile.fileType.eq(fileType)))
                 .fetch();
     }
+
+    @Override
+    public List<BgmAgitFile> findTemporaryByTargetIdsAndFileType(List<Long> targetIds, FileType fileType) {
+        if (targetIds == null || targetIds.isEmpty()) return List.of();
+        return queryFactory
+                .selectFrom(bgmAgitFile)
+                .where(bgmAgitFile.targetId.in(targetIds)
+                        .and(bgmAgitFile.fileType.eq(fileType))
+                        .and(bgmAgitFile.fileStatus.eq(FileStatus.TEMPORARY)))
+                .fetch();
+    }
 }

@@ -209,6 +209,15 @@ public class BgmAgitFileService {
     }
 
     /**
+     * 도메인 행이 복구될 때 그에 묶여있던 TEMPORARY 파일을 조회.
+     * 배치가 아직 정리하지 않은 파일들만 잡힘 → 호출부가 restoreCompleteFileStatus() 로 다시 살림.
+     */
+    @Transactional(readOnly = true)
+    public List<BgmAgitFile> findTemporaryByTargets(List<Long> targetIds, FileType fileType) {
+        return bgmAgitFileRepository.findTemporaryByTargetIdsAndFileType(targetIds, fileType);
+    }
+
+    /**
      * CK Editor 등 인라인 업로드 트랙용 — 멀티파트로 받은 파일을 S3 에 직접 PUT 하고
      * BgmAgitFile 을 TEMPORARY 로 등록한다. 응답은 public URL 문자열 (CK Editor 어댑터 호환).
      * 도메인 저장 시 InlineFileTracker.syncInlineFiles() 가 본문에서 매칭해 COMPLETE 로 승격한다.

@@ -22,25 +22,31 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/bgm-agit")
 public class RecordController {
-
+    
     private final RecordService recordService;
-
+    
     @GetMapping("/record")
     public PageResponse<RecordGetResponse> getRecord(@PageableDefault(size = 10) Pageable pageable
             ,@RequestParam(name = "startDate", required = false) String startDate
             ,@RequestParam(name = "endDate" , required = false) String endDate
             ,@RequestParam(name= "nickName", required = false) String nickName
             ,@RequestParam(name= "tournamentStatus", required = false) String tournamentStatus
+            ,@AuthenticationPrincipal Jwt jwt
     ) {
-        Page<RecordGetResponse> records = recordService.getRecords(pageable,startDate,endDate,nickName,tournamentStatus);
+        Page<RecordGetResponse> records = recordService.getRecords(pageable,startDate,endDate,nickName,tournamentStatus, JwtParserUtil.extractRoles(jwt));
         return PageResponse.from(records);
+    }
+
+    @PutMapping("/record/{id}/restore")
+    public ApiResponse restoreRecord(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        return recordService.restoreRecord(id, JwtParserUtil.extractRoles(jwt));
     }
 
     @GetMapping("/record/{id}")
     public RecordGetDetailResponse getDetailRecord(@PathVariable Long id) {
         return recordService.getRecordDetail(id);
     }
-
+    
     @PostMapping("/record")
     public ApiResponse createRecord(@Validated @RequestBody RecordPostRequest request, @AuthenticationPrincipal Jwt jwt) {
         Long memberId = JwtParserUtil.extractMemberId(jwt);
@@ -52,7 +58,7 @@ public class RecordController {
         Long memberId = JwtParserUtil.extractMemberId(jwt);
         return recordService.updateRecord(request, memberId);
     }
-
+    
     @DeleteMapping("/record/{id}")
     public ApiResponse deleteRecord(@PathVariable Long id,@AuthenticationPrincipal Jwt jwt) {
         Long memberId = JwtParserUtil.extractMemberId(jwt);

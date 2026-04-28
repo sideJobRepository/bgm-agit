@@ -57,4 +57,8 @@ public class BgmAgitFile extends DateSuperClass {
     public void modifyTemporaryFileStatus() {
         this.fileStatus = FileStatus.TEMPORARY;
     }
+
+    public void restoreCompleteFileStatus() {
+        this.fileStatus = FileStatus.COMPLETE;
+    }
 }

@@ -3,9 +3,9 @@
 import styled from 'styled-components';
 import Pagination from '@/app/components/Pagination';
 import { useUserStore } from '@/store/user';
-import { FileText, TrashSimple, Share, ClockCounterClockwise } from 'phosphor-react';
+import { FileText, TrashSimple, Share, ClockCounterClockwise, ArrowCounterClockwise } from 'phosphor-react';
 import { alertDialog, confirmDialog } from '@/utils/alert';
-import { useDeletePost } from '@/services/main.service';
+import { useDeletePost, useUpdatePost } from '@/services/main.service';
 import { useRouter } from 'next/navigation';
 import { useFetchDayRecordList } from '@/services/dayRecord.service';
 import { useState } from 'react';
@@ -27,6 +27,7 @@ type MatchType = {
   registDate: string;
   matchsWind: string;
   tournamentStatus: string;
+  delStatus?: string;
   rows: RowType[];
 };
 
@@ -49,6 +50,7 @@ const LEADER_POSITIONS = [
 
 export function BaseCardTable({ data, page, onPageChange, onDeleteSuccess }: BaseCardTableProps) {
   const { remove } = useDeletePost();
+  const { update } = useUpdatePost();
   const router = useRouter();
   const fetchDayRecord = useFetchDayRecordList();
 
@@ -87,6 +89,24 @@ export function BaseCardTable({ data, page, onPageChange, onDeleteSuccess }: Bas
     router.push(`/write?id=${id}&tournamentStatus=${tournamentStatus}`);
   };
 
+  const restoreData = async (id: number) => {
+    const result = await confirmDialog('해당 기록을 복구하시겠습니까?', 'warning');
+    if (!result.isConfirmed) return;
+
+    update({
+      url: `/bgm-agit/record/${id}/restore`,
+      body: {},
+      ignoreErrorRedirect: true,
+      onSuccess: async () => {
+        await alertDialog('기록이 복구되었습니다.', 'success');
+        onDeleteSuccess();
+      },
+    });
+  };
+
+  const isMentorOrAdmin =
+    !!user?.roles?.includes('ROLE_ADMIN') || !!user?.roles?.includes('ROLE_MENTOR');
+
   //공유하기
   function shareReservation(item: MatchType) {
     if (!window.Kakao || !window.Kakao.isInitialized()) return;
@@ -121,10 +141,13 @@ export function BaseCardTable({ data, page, onPageChange, onDeleteSuccess }: Bas
     <>
       <CardGrid>
         {data.content.length === 0 && <EmptyTd> 검색된 결과가 없습니다.</EmptyTd>}
-        {data.content.map((item) => (
-          <Card key={item.matchsId}>
+        {data.content.map((item) => {
+          const isDeleted = item.delStatus === 'Y';
+          return (
+          <Card key={item.matchsId} $deleted={isDeleted}>
+            {isDeleted && <DeletedBadge>삭제된 기록</DeletedBadge>}
             <ButtonBox>
-              {(user?.roles.includes('ROLE_ADMIN') || user?.roles.includes('MENTOR')) && (
+              {isMentorOrAdmin && !isDeleted && (
                 <>
                   <Button color="#415B9C">
                     <FileText
@@ -136,6 +159,11 @@ export function BaseCardTable({ data, page, onPageChange, onDeleteSuccess }: Bas
                     <TrashSimple weight="bold" />
                   </Button>
                 </>
+              )}
+              {isMentorOrAdmin && isDeleted && (
+                <Button onClick={() => restoreData(item.matchsId)} color="#1A7D55">
+                  <ArrowCounterClockwise weight="bold" />
+                </Button>
               )}
               <Button onClick={() => getHist(item.matchsId)} color="#757575">
                 <ClockCounterClockwise weight="bold" />
@@ -170,7 +198,8 @@ export function BaseCardTable({ data, page, onPageChange, onDeleteSuccess }: Bas
               </Row>
             ))}
           </Card>
-        ))}
+          );
+        })}
       </CardGrid>
 
       <PaginationWrapper>
@@ -200,12 +229,33 @@ const CardGrid = styled.div`
   }
 `;
 
-const Card = styled.div`
+const Card = styled.div<{ $deleted?: boolean }>`
+  position: relative;
   background-color: ${({ theme }) => theme.colors.recordBgColor};
   border-radius: 4px;
   padding: 8px;
   width: 100%;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  ${({ $deleted }) =>
+    $deleted &&
+    `
+    opacity: 0.55;
+    border: 2px dashed #D9625E;
+  `}
+`;
+
+const DeletedBadge = styled.span`
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: #d9625e;
+  color: #fff;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 3px;
+  z-index: 1;
 `;
 
 const Header = styled.div`

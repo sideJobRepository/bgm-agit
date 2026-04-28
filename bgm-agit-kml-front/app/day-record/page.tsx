@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useFetchDayRecordList } from '@/services/dayRecord.service';
 import { useDayRecordStore } from '@/store/dayRecord';
+import { useUserStore } from '@/store/user';
 import React, { useEffect, useState } from 'react';
 import { BaseCardTable } from '@/app/components/BaseCardTable';
 import { MagnifyingGlass, PencilSimpleLine } from 'phosphor-react';
@@ -16,6 +17,8 @@ export default function DayRecord() {
   const fetchDayRecord = useFetchDayRecordList();
   const [page, setPage] = useState(0);
   const dayRecordData = useDayRecordStore((state) => state.dayReord);
+  // 로그인/로그아웃 시 권한별 응답이 달라지므로 재페치 트리거로 사용
+  const user = useUserStore((state) => state.user);
 
   //검색
   const TOURNAMENT_OPTIONS = [
@@ -50,7 +53,7 @@ export default function DayRecord() {
       nickName,
       tournamentStatus: tournament,
     });
-  }, [page]);
+  }, [page, user]);
 
   return (
     <Wrapper>
