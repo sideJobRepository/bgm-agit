@@ -70,10 +70,10 @@ export default function Role() {
     const result = await Swal.fire({
       title: `${memberNickname} 비밀번호 변경`,
       input: 'password',
-      inputLabel: '새 비밀번호 (8자 이상)',
+      inputLabel: '새 비밀번호 (4자 이상)',
       inputAttributes: {
         autocomplete: 'new-password',
-        minlength: '8',
+        minlength: '4',
       },
       showCancelButton: true,
       confirmButtonText: '변경',
@@ -83,7 +83,7 @@ export default function Role() {
       cancelButtonColor: '#757575',
       inputValidator: (value) => {
         if (!value) return '비밀번호를 입력해주세요.';
-        if (value.length < 8) return '비밀번호는 최소 8자 이상이어야 합니다.';
+        if (value.length < 4) return '비밀번호는 최소 4자 이상이어야 합니다.';
         return null;
       },
     });
