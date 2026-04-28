@@ -8,6 +8,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 import static com.bgmagitapi.file.entity.QBgmAgitFile.bgmAgitFile;
@@ -53,6 +54,16 @@ public class BgmAgitFileRepositoryImpl implements BgmAgitFileQueryRepository {
                 .where(bgmAgitFile.targetId.in(targetIds)
                         .and(bgmAgitFile.fileType.eq(fileType))
                         .and(bgmAgitFile.fileStatus.eq(FileStatus.COMPLETE)))
+                .fetch();
+    }
+
+    @Override
+    public List<BgmAgitFile> findByPathsAndFileType(Collection<String> paths, FileType fileType) {
+        if (paths == null || paths.isEmpty()) return List.of();
+        return queryFactory
+                .selectFrom(bgmAgitFile)
+                .where(bgmAgitFile.filePath.in(paths)
+                        .and(bgmAgitFile.fileType.eq(fileType)))
                 .fetch();
     }
 }

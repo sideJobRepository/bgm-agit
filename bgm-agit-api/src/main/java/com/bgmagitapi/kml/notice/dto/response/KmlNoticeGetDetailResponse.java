@@ -37,9 +37,13 @@ public class KmlNoticeGetDetailResponse {
     @NoArgsConstructor
     @Builder
     public static class KmlNoticeFile {
+        // legacy 면 BgmAgitCommonFile.id, 아니면 BgmAgitFile.id
         private Long id;
         private String fileName;
+        // legacy 면 풀 URL, 아니면 null (프론트가 /file-view 로 presigned URL 조회)
         private String fileUrl;
         private String fileFolder;
+        // true: 옛 BgmAgitCommonFile / false: 새 BgmAgitFile
+        private boolean legacy;
     }
 }

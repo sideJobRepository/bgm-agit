@@ -209,6 +209,46 @@ public class BgmAgitFileService {
     }
 
     /**
+     * CK Editor 등 인라인 업로드 트랙용 — 멀티파트로 받은 파일을 S3 에 직접 PUT 하고
+     * BgmAgitFile 을 TEMPORARY 로 등록한다. 응답은 public URL 문자열 (CK Editor 어댑터 호환).
+     * 도메인 저장 시 InlineFileTracker.syncInlineFiles() 가 본문에서 매칭해 COMPLETE 로 승격한다.
+     */
+    public String registerInlineUpload(org.springframework.web.multipart.MultipartFile file,
+                                       String folder,
+                                       FileType fileType) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("업로드할 파일이 비어 있습니다.");
+        }
+        String originalFilename = file.getOriginalFilename();
+        String ext = originalFilename == null ? "" : FilenameUtils.getExtension(originalFilename);
+        String objectKey = folder + "/" + UUID.randomUUID() + (ext.isBlank() ? "" : "." + ext);
+
+        try {
+            PutObjectRequest put = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(objectKey)
+                    .contentType(file.getContentType())
+                    .build();
+            s3Client.putObject(put, software.amazon.awssdk.core.sync.RequestBody.fromBytes(file.getBytes()));
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("S3 업로드 실패", e);
+        }
+
+        BgmAgitFile saved = BgmAgitFile.builder()
+                .fileName(originalFilename)
+                .fileSize((int) file.getSize())
+                .fileContentType(file.getContentType())
+                .filePath(objectKey)
+                .fileType(fileType)
+                .bucketName(bucket)
+                .fileStatus(FileStatus.TEMPORARY)
+                .build();
+        bgmAgitFileRepository.save(saved);
+
+        return s3Client.utilities().getUrl(b -> b.bucket(bucket).key(objectKey)).toExternalForm();
+    }
+
+    /**
      * 조회용 Presigned GET URL 일괄 반환. 요청된 id 순서를 유지한다.
      */
     @Transactional(readOnly = true)

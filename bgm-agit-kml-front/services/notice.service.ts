@@ -33,6 +33,27 @@ export function useNoticeDownloadFetch() {
   const { request } = useRequest();
 
   const fetchNoticeDownload = (file: NoticeFiles) => {
+    // 새 흐름: presigned GET URL 한 방으로 다운로드
+    if (!file.legacy) {
+      request(
+        () =>
+          api.get<string>(`/bgm-agit/download-file/${file.id}`).then((res) => {
+            const presignedUrl = res.data;
+            const a = document.createElement('a');
+            a.href = presignedUrl;
+            a.download = file.fileName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          }),
+        undefined,
+        { disableLoading: true }
+      );
+      return;
+    }
+
+    // legacy 흐름: 옛 BgmAgitCommonFile 의 풀 URL 기반
+    if (!file.fileUrl) return;
     const sliceId = file.fileUrl.split('/').pop()!;
     const downloadUrl =
       `${process.env.NEXT_PUBLIC_API_URL}` +
@@ -42,16 +63,14 @@ export function useNoticeDownloadFetch() {
       /iP(hone|od|ad)/.test(navigator.userAgent) ||
       (navigator.userAgent.includes('Macintosh') && 'ontouchend' in document);
 
-    // iOS는 Blob 절대 금지
     if (isIOS) {
       window.open(downloadUrl, '_blank');
       return;
     }
 
-    // PC / Android만 Blob 다운로드
     request(
       () =>
-        api.get(downloadUrl, { responseType: 'blob' }).then(res => {
+        api.get(downloadUrl, { responseType: 'blob' }).then((res) => {
           const blob = new Blob([res.data], {
             type: res.headers['content-type'],
           });
@@ -71,7 +90,7 @@ export function useNoticeDownloadFetch() {
           URL.revokeObjectURL(url);
         }),
       undefined,
-      { disableLoading: true },
+      { disableLoading: true }
     );
   };
 
