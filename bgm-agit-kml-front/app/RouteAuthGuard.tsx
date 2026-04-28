@@ -4,8 +4,7 @@ import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { refreshToken } from '@/lib/axiosInstance';
 import { useUserStore } from '@/store/user';
-
-const protectedPrefixes = ['/write', '/setting'];
+import { isProtectedPath } from '@/lib/authPaths';
 
 export default function RouteAuthGuard() {
   const pathname = usePathname();
@@ -15,8 +14,7 @@ export default function RouteAuthGuard() {
   useEffect(() => {
     let mounted = true;
 
-    const isProtected = protectedPrefixes.some((prefix) => pathname.startsWith(prefix));
-    if (!isProtected || user) return;
+    if (!isProtectedPath(pathname) || user) return;
 
     (async () => {
       const token = await refreshToken();

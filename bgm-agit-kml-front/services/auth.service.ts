@@ -3,6 +3,7 @@ import { useRequest } from '@/hooks/useRequest';
 import api from '@/lib/axiosInstance';
 import { tokenStore } from '@/services/tokenStore';
 import { alertDialog } from '@/utils/alert';
+import { TAB_ID } from '@/lib/tabId';
 
 export interface LoginPayload {
   nickname: string;
@@ -34,7 +35,7 @@ export function useLoginPost() {
         onSuccess?.();
         alertDialog('로그인에 성공하였습니다.', 'success');
         const channel = new BroadcastChannel('auth');
-        channel.postMessage({ type: 'LOGIN' });
+        channel.postMessage({ type: 'LOGIN', from: TAB_ID });
         channel.close();
       },
       { ignoreErrorRedirect: true }

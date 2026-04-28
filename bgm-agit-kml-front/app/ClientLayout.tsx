@@ -6,6 +6,7 @@ import ClientProviders from './providers';
 import Sidebar from './components/Sidebar';
 import AuthListener from '@/app/AuthListener';
 import RouteAuthGuard from '@/app/RouteAuthGuard';
+import MyPageModal from '@/app/components/MyPageModal';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   console.log('ClientLayout styled ===', styled);
@@ -13,6 +14,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     <ClientProviders>
       <AuthListener />
       <RouteAuthGuard />
+      <MyPageModal />
       <Wrapper>
         <Inner>
           <LeftArea>

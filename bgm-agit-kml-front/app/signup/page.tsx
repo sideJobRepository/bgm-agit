@@ -33,8 +33,8 @@ export default function Signup() {
       alertDialog('모든 항목을 입력해 주세요.', 'warning');
       return;
     }
-    if (form.password.length < 8) {
-      alertDialog('비밀번호는 최소 8자 이상이어야 합니다.', 'warning');
+    if (form.password.length < 4) {
+      alertDialog('비밀번호는 최소 4자 이상이어야 합니다.', 'warning');
       return;
     }
     if (form.password !== form.passwordConfirm) {
@@ -91,7 +91,7 @@ export default function Signup() {
           />
           <Input
             type="password"
-            placeholder="비밀번호 (8자 이상)"
+            placeholder="비밀번호 (4자 이상)"
             value={form.password}
             onChange={handleChange('password')}
             autoComplete="new-password"

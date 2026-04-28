@@ -36,6 +36,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import api from '@/lib/axiosInstance';
 import { tokenStore } from '@/services/tokenStore';
 import { alertDialog, confirmDialog } from '@/utils/alert';
+import { isProtectedPath } from '@/lib/authPaths';
+import { TAB_ID } from '@/lib/tabId';
+import { useMyPageStore } from '@/store/myPage';
 
 export default function Sidebar() {
   //navigation
@@ -78,13 +81,15 @@ export default function Sidebar() {
   };
 
   const resetUser = useUserStore((state) => state.clearUser);
+  const clearMenu = useKmlMenuStore((state) => state.clearMenu);
+  const openMyPage = useMyPageStore((state) => state.open);
 
   const logout = async () => {
     const result = await confirmDialog('로그아웃 하시겠습니까?', 'warning');
 
     if (result.isConfirmed) {
       const channel = new BroadcastChannel('auth');
-      channel.postMessage({ type: 'LOGOUT' });
+      channel.postMessage({ type: 'LOGOUT', from: TAB_ID });
       channel.close();
 
       try {
@@ -97,7 +102,12 @@ export default function Sidebar() {
 
       tokenStore.clear();
       resetUser();
+      clearMenu();
       setIsOpen(false);
+
+      if (isProtectedPath(pathname)) {
+        router.push('/');
+      }
     }
   };
 
@@ -168,6 +178,23 @@ export default function Sidebar() {
               ?.map((menu) => {
                 const IconComponent = iconMap[menu.icon as keyof typeof iconMap];
 
+                if (menu.menuLink === '/my-page') {
+                  return (
+                    <MenuLi key={menu.id} $active={false}>
+                      <a
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          openMyPage();
+                        }}
+                      >
+                        {IconComponent && <IconComponent weight="fill" />}
+                        {menu.menuName}
+                      </a>
+                    </MenuLi>
+                  );
+                }
+
                 return (
                   <MenuLi key={menu.id} $active={pathname === menu.menuLink}>
                     <Link href={menu?.menuLink}>
@@ -190,7 +217,18 @@ export default function Sidebar() {
                     {/*  {menu.menuName}*/}
                     {/*</Link>*/}
 
-                    {menu.menuLink !== '/sub' ? (
+                    {menu.menuLink === '/my-page' ? (
+                      <a
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          openMyPage();
+                        }}
+                      >
+                        {IconComponent && <IconComponent weight="fill" />}
+                        {menu.menuName}
+                      </a>
+                    ) : menu.menuLink !== '/sub' ? (
                       <Link href={menu?.menuLink}>
                         {IconComponent && <IconComponent weight="fill" />}
                         {menu.menuName}
