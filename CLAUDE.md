@@ -63,26 +63,36 @@ kml:
 
 ### KML API (bgm-agit 기준)
 - `GET /api_users.php` — 전체 사용자 리스트 반환 `{status, count, users: [{id, nick}]}`
-- `POST /record_submit_api.php` — 기록 전송 `{game_length, common_point, players[4]{user_id, point, wind}}`
-- 둘 다 `x-api-key` 헤더 필요
+- `POST /api_user_register.php` — 신규 사용자 등록 `{nick}` → `{status, user_id, nick, message}` (409면 이미 존재)
+- `POST /api_record_submit.php` — 기록 전송 `{game_length, common_point, players[4]{user_id, point, wind}}` → `{status, record_id, sum_check}`
+- `POST /api_record_modify.php` — 기록 수정 `{modify_id, game_length, common_point, players[4]}` → `{status, modify_id, sum_check}` (404면 대상 미존재)
+- 모두 `x-api-key` 헤더 필요. 삭제 API는 KML이 아직 안 만들어줌
 - 매핑: `MatchsWind`/`Wind` enum의 `ordinal()`이 그대로 0=동/1=남/2=서/3=북. `point`는 `recordScore` (정수). `common_point`는 현재 추적하지 않아 0 고정
 
-### 기록 송신 (record_submit_api.php) 흐름
-- `RecordServiceImpl.createRecord` 마지막에 `KmlRecordSubmitEvent` 발행 (`publishKmlSubmitEvent`)
+### 기록 송신 (등록) 흐름
+- `RecordServiceImpl.createRecord` 마지막에 `KmlRecordSubmitEvent` 발행 (`publishKmlSubmitEvent`) — 이벤트에 `matchsId` 포함
 - 4명 중 한 명이라도 `bgmAgitMemberKmlId == null`이면 송신 자체를 생략 (KML이 4명 정확히 요구하기 때문)
-- `KmlRecordEventListener` (`@Async("bizTalkExecutor")`, `@TransactionalEventListener AFTER_COMMIT`) → `KmlRecordClient.submit(...)`
+- `KmlRecordEventListener.onRecordSubmit` (`@Async("bizTalkExecutor")`, `@TransactionalEventListener AFTER_COMMIT`) → `KmlRecordClient.submit(...)` → 응답의 `record_id` 추출 → `KmlMatchsLinker.linkKmlMatchsId(matchsId, recordId)` 별도 트랜잭션에서 `BGM_AGIT_MATCHS.BGM_AGIT_MATCHS_KML_ID` 저장
 - 송신 실패는 모두 catch 후 `log.warn`만. **DB 저장 트랜잭션과 분리**되어 있어 KML이 에러나도 우리쪽 기록은 정상 저장됨
-- 수정·삭제(`updateRecord`/`removeRecord`)는 아직 KML 송신 안 함 (KML 측 update/delete API가 없음)
+
+### 기록 송신 (수정) 흐름
+- `RecordServiceImpl.updateRecord` 마지막에 `publishKmlModifyEvent` — `matchs.matchsKmlId`가 null이면 스킵 (등록 미송신 게임은 수정도 송신 안 함, fallback submit 안 함)
+- 4명 중 KML 미연동 회원 있으면 스킵 (등록과 동일)
+- `KmlRecordEventListener.onRecordModify` → `KmlRecordClient.modify(...)`
+- 응답은 따로 저장하지 않음 (`modifyId`는 이미 알고 있음)
+- 삭제(`removeRecord`)는 KML 송신 안 함 — KML 측 delete API 없음
 
 ### 회원-KML 연결
-- 회원가입 시 닉네임으로 KML 조회(`KmlUserClient.findSingleKmlIdByNickname`)
+- 회원가입 시 닉네임으로 KML 조회·자동 등록(`KmlUserClient.findOrRegisterKmlIdByNickname`)
 - 단건 매칭 → `BGM_AGIT_MEMBER.BGM_AGIT_MEMBER_KML_ID` 저장 + `BGM_AGIT_MEMBER_KML_SYNK = 'Y'`
-- 0건 / 다건 / 502·오류 → `kml_id = null` + `synk = 'N'` (가입은 계속 진행)
+- **0건 매칭 → KML `api_user_register.php` 호출하여 자동 등록 후 발급된 `user_id` 저장 + `synk = 'Y'`**
+  - 등록 시 409 충돌이면 단건 재조회로 폴백, 그래도 안 되면 `synk = 'N'`
+- 다건 매칭(`AMBIGUOUS`) / 502·네트워크·파싱 오류 → `kml_id = null` + `synk = 'N'` (가입은 계속 진행)
 
 ### 자동 재시도 스케줄러
 `KmlSyncScheduler` + `KmlSyncService`
 - `@Scheduled(cron = "0 0 * * * *", zone = "Asia/Seoul")` — 매시 정각
-- `synk = 'N'` 유저 배치 조회 → KML 재호출 → 성공 시 `linkKml(id)`로 상태 `'Y'` 전환
+- `synk = 'N'` 유저 배치 조회 → `findOrRegisterKmlIdByNickname` 재호출 → 성공 시(매칭 또는 신규 등록) `linkKml(id)`로 상태 `'Y'` 전환
 - `BgmAgitApiApplication`에 `@EnableScheduling` 이미 있음
 
 ### 닉네임 변경 시 주의
@@ -146,7 +156,7 @@ kml:
    ```bash
    curl -I -H "x-api-key: BgmAgit" https://kml.or.kr/stat52/api_users.php
    ```
-2. **KML 닉네임 중복** — 동일 닉네임 여러 명 있을 수 있음. 단건일 때만 자동 연결, 다건은 `AMBIGUOUS` 취급되어 스케줄러도 연결 안 함 (수동 개입 필요)
+2. **KML 닉네임 중복** — 동일 닉네임 여러 명 있을 수 있음. 단건일 때만 자동 연결, 다건은 `AMBIGUOUS` 취급되어 스케줄러도 연결·자동 등록 안 함 (수동 개입 필요). 0건일 때만 신규 등록함
 3. **회원가입 시 알림톡 발행은 주석처리** — 활성화 하려면 `SignupServiceImpl`의 `eventPublisher.publishEvent(...)` 주석 해제
 4. **소셜·폼 닉네임 네임스페이스 분리** — `findByBgmAgitMemberNickname` 같은 무조건 조회는 버그. 항상 `AndSocialType` 버전 사용
 

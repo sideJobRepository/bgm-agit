@@ -47,8 +47,12 @@ public class Matchs extends DateSuperClass {
         this.wind = wind;
         this.tournamentStatus = tournamentStatus;
     }
-    
+
     public void modifyDelStatus() {
         this.delStatus = "Y";
+    }
+
+    public void linkKmlMatchsId(Long kmlMatchsId) {
+        this.matchsKmlId = kmlMatchsId;
     }
 }

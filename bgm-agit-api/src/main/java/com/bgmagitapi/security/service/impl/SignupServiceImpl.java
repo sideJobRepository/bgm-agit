@@ -39,7 +39,7 @@ public class SignupServiceImpl implements SignupService {
         }
 
         String hashedPassword = passwordEncoder.encode(request.getPassword());
-        Long kmlId = kmlUserClient.findSingleKmlIdByNickname(nickname).orElse(null);
+        Long kmlId = kmlUserClient.findOrRegisterKmlIdByNickname(nickname).orElse(null);
 
         BgmAgitMember member = new BgmAgitMember(
                 request.getName(),

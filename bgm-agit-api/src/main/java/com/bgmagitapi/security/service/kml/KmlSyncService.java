@@ -24,7 +24,7 @@ public class KmlSyncService {
 
         int linked = 0;
         for (BgmAgitMember member : candidates) {
-            Long id = kmlUserClient.findSingleKmlIdByNickname(member.getBgmAgitMemberNickname()).orElse(null);
+            Long id = kmlUserClient.findOrRegisterKmlIdByNickname(member.getBgmAgitMemberNickname()).orElse(null);
             if (id != null) {
                 member.linkKml(id);
                 linked++;
