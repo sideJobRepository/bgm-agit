@@ -10,12 +10,12 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface BgmAgitRoleService {
-    
+
     Page<BgmAgitRoleResponse> getRoles(Pageable pageable, String request);
 
     Page<BgmAgitRoleResponse> getMahjongRoles(Pageable pageable, String request);
 
-    ApiResponse modifyRole(List<BgmAgitRoleModifyRequest> request );
+    ApiResponse modifyRole(List<BgmAgitRoleModifyRequest> request, List<String> actorRoles);
 
-    ApiResponse changePassword(BgmAgitMemberPasswordChangeRequest request);
+    ApiResponse changePassword(BgmAgitMemberPasswordChangeRequest request, List<String> actorRoles);
 }

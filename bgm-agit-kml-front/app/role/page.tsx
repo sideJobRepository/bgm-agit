@@ -22,6 +22,8 @@ const ROLE_OPTIONS = [
   { id: 2, label: '유저' },
 ];
 
+const USER_ROLE_ID = 2;
+
 export default function Role() {
   const { update } = useUpdatePost();
   const user = useUserStore((state) => state.user);
@@ -29,6 +31,23 @@ export default function Role() {
 
   const fetchRoles = useFetchMahjongRoles();
   const roleData = useRoleStore((state) => state.role);
+
+  const isAdmin = !!user?.roles?.includes('ROLE_ADMIN');
+  const isMentor = !isAdmin && !!user?.roles?.includes('ROLE_MENTOR');
+
+  const canEditTarget = (targetRoleId: number) => {
+    if (isAdmin) return true;
+    if (isMentor) return targetRoleId === USER_ROLE_ID;
+    return false;
+  };
+
+  const visibleRoleOptions = (targetRoleId: number) => {
+    if (isAdmin) return ROLE_OPTIONS;
+    if (isMentor && targetRoleId === USER_ROLE_ID) {
+      return ROLE_OPTIONS.filter((opt) => opt.id === USER_ROLE_ID);
+    }
+    return [];
+  };
 
   const [page, setPage] = useState(0);
   const [searchInput, setSearchInput] = useState('');
@@ -170,55 +189,68 @@ export default function Role() {
               </tr>
             </thead>
             <tbody>
-              {roleData?.content.map((item, idx) => (
-                <tr key={item.memberId}>
-                  <Td>
-                    <input
-                      type="checkbox"
-                      checked={checkedIds.includes(item.memberId)}
-                      onChange={(e) => {
-                        const isChecked = e.target.checked;
-                        setCheckedIds((prev) =>
-                          isChecked
-                            ? [...prev, item.memberId]
-                            : prev.filter((id) => id !== item.memberId)
-                        );
-                      }}
-                    />
-                  </Td>
-                  <Td>{page * (roleData?.size ?? 10) + idx + 1}</Td>
-                  <Td>{item.memberName}</Td>
-                  <Td>{item.memberNickname}</Td>
-                  <Td>{item.memberPhoneNo}</Td>
-                  <Td>
-                    <RadioGroup>
-                      {ROLE_OPTIONS.map((opt) => (
-                        <label key={opt.id}>
-                          <input
-                            type="radio"
-                            name={`role-${item.memberId}`}
-                            value={opt.id}
-                            checked={(roleMap[item.memberId] ?? item.roleId) === opt.id}
-                            onChange={() =>
-                              setRoleMap((prev) => ({ ...prev, [item.memberId]: opt.id }))
-                            }
-                          />
-                          {opt.label}
-                        </label>
-                      ))}
-                    </RadioGroup>
-                  </Td>
-                  <Td>
-                    <PasswordButton
-                      type="button"
-                      onClick={() => handleChangePassword(item.memberId, item.memberNickname)}
-                    >
-                      <Key weight="bold" />
-                      변경
-                    </PasswordButton>
-                  </Td>
-                </tr>
-              ))}
+              {roleData?.content.map((item, idx) => {
+                const editable = canEditTarget(item.roleId);
+                const options = visibleRoleOptions(item.roleId);
+                return (
+                  <tr key={item.memberId}>
+                    <Td>
+                      <input
+                        type="checkbox"
+                        checked={checkedIds.includes(item.memberId)}
+                        disabled={!editable}
+                        onChange={(e) => {
+                          const isChecked = e.target.checked;
+                          setCheckedIds((prev) =>
+                            isChecked
+                              ? [...prev, item.memberId]
+                              : prev.filter((id) => id !== item.memberId)
+                          );
+                        }}
+                      />
+                    </Td>
+                    <Td>{page * (roleData?.size ?? 10) + idx + 1}</Td>
+                    <Td>{item.memberName}</Td>
+                    <Td>{item.memberNickname}</Td>
+                    <Td>{item.memberPhoneNo}</Td>
+                    <Td>
+                      {editable && options.length > 0 ? (
+                        <RadioGroup>
+                          {options.map((opt) => (
+                            <label key={opt.id}>
+                              <input
+                                type="radio"
+                                name={`role-${item.memberId}`}
+                                value={opt.id}
+                                checked={(roleMap[item.memberId] ?? item.roleId) === opt.id}
+                                onChange={() =>
+                                  setRoleMap((prev) => ({ ...prev, [item.memberId]: opt.id }))
+                                }
+                              />
+                              {opt.label}
+                            </label>
+                          ))}
+                        </RadioGroup>
+                      ) : (
+                        ROLE_OPTIONS.find((opt) => opt.id === item.roleId)?.label ?? '-'
+                      )}
+                    </Td>
+                    <Td>
+                      {editable ? (
+                        <PasswordButton
+                          type="button"
+                          onClick={() => handleChangePassword(item.memberId, item.memberNickname)}
+                        >
+                          <Key weight="bold" />
+                          변경
+                        </PasswordButton>
+                      ) : (
+                        '-'
+                      )}
+                    </Td>
+                  </tr>
+                );
+              })}
             </tbody>
           </Table>
           {roleData?.content.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
