@@ -39,6 +39,10 @@ public class Matchs extends DateSuperClass {
     @Column(name = "BGM_AGIT_MATCHS_DEL_STATUS")
     private String delStatus;
     
+    @Column(name = "BGM_AGIT_MATCHS_KML_ID")
+    private Long bgmAgitMatchsKmlId;
+    
+    
     public void modify(MatchsWind wind, String tournamentStatus) {
         this.wind = wind;
         this.tournamentStatus = tournamentStatus;
