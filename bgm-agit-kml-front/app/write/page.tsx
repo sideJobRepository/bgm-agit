@@ -429,9 +429,6 @@ export default function Write() {
               </Field>
             </FieldsWrapper>
           </TopGroup>
-          <Button onClick={handleSubmit}>
-            <Check weight="bold" />
-          </Button>
         </Top>
         {detailId && (
           <WriteCroup>
@@ -516,17 +513,23 @@ export default function Write() {
           );
         })}
 
-        <PlusButton
-          onClick={() =>
-            setYakumanRows((prev) => [
-              ...prev,
-              { search: '', userId: null, yakumanId: null, file: null },
-            ])
-          }
-        >
-          <Plus weight="bold" />
-          역만 추가
-        </PlusButton>
+        <BottomActions>
+          <PlusButton
+            onClick={() =>
+              setYakumanRows((prev) => [
+                ...prev,
+                { search: '', userId: null, yakumanId: null, file: null },
+              ])
+            }
+          >
+            <Plus weight="bold" />
+            역만 추가
+          </PlusButton>
+          <SaveButton onClick={handleSubmit}>
+            <Check weight="bold" />
+            저장
+          </SaveButton>
+        </BottomActions>
         {yakumanRows.map((row, idx) => {
           const users = !row.search
             ? recordUser
@@ -792,13 +795,51 @@ const TableBox = styled.div`
   }
 `;
 
+const BottomActions = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+`;
+
+const SaveButton = styled.button`
+  display: flex;
+  width: 100px;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  padding: 8px;
+  background-color: ${({ theme }) => theme.colors.writeBgColor};
+  color: ${({ theme }) => theme.colors.whiteColor};
+  font-size: ${({ theme }) => theme.desktop.sizes.sm};
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+
+  &:hover {
+    opacity: 0.85;
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    width: auto;
+    padding: 8px 14px;
+    font-size: ${({ theme }) => theme.mobile.sizes.md};
+  }
+`;
+
 const PlusButton = styled.button`
   display: flex;
   width: 100px;
   gap: 6px;
   justify-content: center;
   align-items: center;
-  margin-left: auto;
   padding: 8px;
   background-color: #415b9c;
   color: ${({ theme }) => theme.colors.whiteColor};
