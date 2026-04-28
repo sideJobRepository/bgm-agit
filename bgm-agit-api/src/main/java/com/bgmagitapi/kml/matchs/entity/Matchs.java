@@ -40,7 +40,7 @@ public class Matchs extends DateSuperClass {
     private String delStatus;
     
     @Column(name = "BGM_AGIT_MATCHS_KML_ID")
-    private Long bgmAgitMatchsKmlId;
+    private Long matchsKmlId;
     
     
     public void modify(MatchsWind wind, String tournamentStatus) {
