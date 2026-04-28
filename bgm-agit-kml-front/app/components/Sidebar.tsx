@@ -36,6 +36,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import api from '@/lib/axiosInstance';
 import { tokenStore } from '@/services/tokenStore';
 import { alertDialog, confirmDialog } from '@/utils/alert';
+import { isProtectedPath } from '@/lib/authPaths';
 import { TAB_ID } from '@/lib/tabId';
 
 export default function Sidebar() {
@@ -101,6 +102,10 @@ export default function Sidebar() {
       resetUser();
       clearMenu();
       setIsOpen(false);
+
+      if (isProtectedPath(pathname)) {
+        router.push('/');
+      }
     }
   };
 
