@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import styled, { keyframes } from 'styled-components';
 import { withBasePath } from '@/lib/path';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { BaseColumn, BaseTable } from '@/app/components/BaseTable';
 import { useLoadingStore } from '@/store/loading';
 import BaseTableSkeleton from '@/app/components/BaseTableSkeleton';
@@ -187,13 +187,27 @@ export default function RankPage() {
     return undefined;
   };
 
+  // page / rankType 변경 시 자동 fetch (CUSTOM 모드의 페이지네이션도 여기서 처리)
   useEffect(() => {
     if (rankType === 'CUSTOM') {
       if (!startDate || !endDate) return;
       if (endDate.getTime() <= startDate.getTime()) return;
     }
     fetchRank(buildParams());
-  }, [page, rankType, startDate, endDate]);
+  }, [page, rankType]);
+
+  // WEEKLY/MONTHLY 의 날짜 picker 변경 시 자동 fetch — CUSTOM 은 검색 버튼으로만
+  // 첫 마운트 1회는 위 effect 가 처리하므로 skip
+  const dateAutoFetchSkip = useRef(true);
+  useEffect(() => {
+    if (dateAutoFetchSkip.current) {
+      dateAutoFetchSkip.current = false;
+      return;
+    }
+    if (rankType === 'CUSTOM') return;
+    if (!startDate || !endDate) return;
+    fetchRank(buildParams());
+  }, [startDate, endDate]);
 
   return (
     <Wrapper>
