@@ -36,6 +36,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import api from '@/lib/axiosInstance';
 import { tokenStore } from '@/services/tokenStore';
 import { alertDialog, confirmDialog } from '@/utils/alert';
+import { TAB_ID } from '@/lib/tabId';
 
 export default function Sidebar() {
   //navigation
@@ -78,13 +79,14 @@ export default function Sidebar() {
   };
 
   const resetUser = useUserStore((state) => state.clearUser);
+  const clearMenu = useKmlMenuStore((state) => state.clearMenu);
 
   const logout = async () => {
     const result = await confirmDialog('로그아웃 하시겠습니까?', 'warning');
 
     if (result.isConfirmed) {
       const channel = new BroadcastChannel('auth');
-      channel.postMessage({ type: 'LOGOUT' });
+      channel.postMessage({ type: 'LOGOUT', from: TAB_ID });
       channel.close();
 
       try {
@@ -97,6 +99,7 @@ export default function Sidebar() {
 
       tokenStore.clear();
       resetUser();
+      clearMenu();
       setIsOpen(false);
     }
   };

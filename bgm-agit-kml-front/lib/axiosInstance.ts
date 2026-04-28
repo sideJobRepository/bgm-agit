@@ -32,7 +32,8 @@ export async function refreshToken(): Promise<string | null> {
 
     return newToken;
   } catch (e) {
-    console.error(e);
+    // 비로그인/세션 만료 시 401로 떨어지는 정상 경로 — 콘솔 오버레이 방지를 위해 warn 으로 다룸
+    console.warn('[refreshToken] no active session:', e);
     localStorage.removeItem('login');
     return null;
   } finally {
