@@ -1,5 +1,6 @@
 package com.bgmagitapi.service.impl;
 
+import com.bgmagitapi.advice.exception.ValidException;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.controller.request.BgmAgitMemberPasswordChangeRequest;
 import com.bgmagitapi.controller.request.BgmAgitRoleModifyRequest;
@@ -111,7 +112,7 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
                 .orElseThrow(() -> new RuntimeException("해당 회원을 찾을 수 없습니다."));
 
         if (member.getSocialType() != BgmAgitSocialType.MAHJONG) {
-            return new ApiResponse(400, false, "마작 회원만 비밀번호를 변경할 수 있습니다.");
+            throw new ValidException("마작 회원만 비밀번호를 변경할 수 있습니다.");
         }
 
         if (actorIsMentor) {
