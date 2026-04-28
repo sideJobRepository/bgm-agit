@@ -37,7 +37,10 @@ export interface YakumanItem {
   yakumanId: number;
   yakumanName: string;
   yakumanCont: string;
-  imageUrl: string;
+  // legacy: BgmAgitCommonFile 의 풀 URL
+  imageUrl: string | null;
+  // new: BgmAgitFile id (presigned GET URL 은 /bgm-agit/file-view 로 일괄 조회)
+  fileId: number | null;
 }
 
 // detail 전체 데이터

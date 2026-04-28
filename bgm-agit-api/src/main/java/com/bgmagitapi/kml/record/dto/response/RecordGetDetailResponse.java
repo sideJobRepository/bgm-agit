@@ -52,16 +52,20 @@ public class RecordGetDetailResponse {
         private String nickName;
         private String yakumanName;
         private String yakumanCont;
+        // legacy: BgmAgitCommonFile 의 풀 URL (구버전 데이터용)
         private String imageUrl;
-        
+        // new: BgmAgitFile 의 ID. 프론트가 /file-view 로 presigned URL 조회
+        private Long fileId;
+
         @QueryProjection
-        public YakumanList(Long yakumanId, Long memberId, String nickName, String yakumanName, String yakumanCont, String imageUrl) {
+        public YakumanList(Long yakumanId, Long memberId, String nickName, String yakumanName, String yakumanCont, String imageUrl, Long fileId) {
             this.yakumanId = yakumanId;
             this.memberId = memberId;
             this.nickName = nickName;
             this.yakumanName = yakumanName;
             this.yakumanCont = yakumanCont;
             this.imageUrl = imageUrl;
+            this.fileId = fileId;
         }
     }
 }

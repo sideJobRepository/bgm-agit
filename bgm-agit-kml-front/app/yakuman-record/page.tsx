@@ -17,6 +17,7 @@ import {
   YakumanRow,
 } from '@/store/yakuman';
 import { useFetchDetailYakumanList, useFetchYakumanList } from '@/services/yakuman.service';
+import { fetchFileViewUrls } from '@/services/yakumanFile.service';
 
 export default function Notice() {
   const router = useRouter();
@@ -161,7 +162,35 @@ export default function Notice() {
   const detailYakumanList = useDetailYakumanRecordStore((state) => state.detailYakuman);
   const [detailPage, setDetailPage] = useState(0);
 
-  console.log('detailYakumanList', detailYakumanList);
+  // 새 흐름(BgmAgitFile) fileId → presigned GET URL 매핑
+  const [fileViewMap, setFileViewMap] = useState<Map<number, string>>(new Map());
+
+  // detail 데이터가 바뀔 때마다 새 fileId 들의 presigned URL 일괄 조회
+  useEffect(() => {
+    if (!detailYakumanList?.content) return;
+    const newFileIds = detailYakumanList.content
+      .map((r) => r.fileId)
+      .filter((id): id is number => !!id);
+
+    if (newFileIds.length === 0) {
+      setFileViewMap(new Map());
+      return;
+    }
+
+    fetchFileViewUrls(newFileIds)
+      .then((views) => {
+        setFileViewMap(new Map(views.map((v) => [v.fileId, v.url])));
+      })
+      .catch(() => setFileViewMap(new Map()));
+  }, [detailYakumanList]);
+
+  const resolveImageUrl = (row: DetailYakumanRow): string | null => {
+    if (row.fileId && fileViewMap.has(row.fileId)) {
+      return fileViewMap.get(row.fileId) ?? null;
+    }
+    return row.fileUrl ?? null;
+  };
+
   const detailColumns = useMemo<BaseColumn<DetailYakumanRow>[]>(
     () => [
       {
@@ -187,7 +216,11 @@ export default function Notice() {
         key: 'fileUrl',
         header: '이미지',
         align: 'center',
-        render: (row) => <Thumbnail src={row.fileUrl} onClick={() => setPreviewImg(row.fileUrl)} />,
+        render: (row) => {
+          const url = resolveImageUrl(row);
+          if (!url) return null;
+          return <Thumbnail src={url} onClick={() => setPreviewImg(url)} />;
+        },
       },
       {
         key: 'registDate',
@@ -196,7 +229,7 @@ export default function Notice() {
         render: (row) => row.registDate,
       },
     ],
-    []
+    [fileViewMap]
   );
 
   useEffect(() => {

@@ -19,6 +19,10 @@ import { alertDialog, confirmDialog } from '@/utils/alert';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useFetchSettingRefund } from '@/services/setting.service';
 import { useSettingRefundStore } from '@/store/setting';
+import {
+  uploadYakumanFile,
+  fetchFileViewUrls,
+} from '@/services/yakumanFile.service';
 
 const DIRECTIONS = [
   { key: 'EAST', label: '동', color: '#415B9C' },
@@ -45,8 +49,11 @@ type YakumanRow = {
   search: string;
   userId: number | null;
   yakumanId: number | null;
-  file: File | null;
-  existingFileId?: number | null;
+  // 현재 행에 연결된 BgmAgitFile id (업로드 직후 또는 기존 데이터 로드 시 채워짐)
+  fileId: number | null;
+  // detail 로드 시 받은 원본 fileId (변경 감지용)
+  originalFileId: number | null;
+  uploadStatus: 'idle' | 'uploading' | 'failed';
 };
 
 export default function Write() {
@@ -70,14 +77,33 @@ export default function Write() {
   //이미지
   const [heroImages, setHeroImages] = useState<string[]>([]);
 
-  const handleImageChange = (idx: number, file: File) => {
+  const handleImageChange = async (idx: number, file: File) => {
     const url = URL.createObjectURL(file);
-
     setHeroImages((prev) => {
       const next = [...prev];
       next[idx] = url;
       return next;
     });
+
+    // 즉시 S3 업로드 시작
+    setYakumanRows((prev) =>
+      prev.map((r, i) => (i === idx ? { ...r, uploadStatus: 'uploading' } : r))
+    );
+
+    try {
+      const res = await uploadYakumanFile(file);
+      setYakumanRows((prev) =>
+        prev.map((r, i) =>
+          i === idx ? { ...r, fileId: res.fileId, uploadStatus: 'idle' } : r
+        )
+      );
+    } catch (e) {
+      console.error('[yakuman-file] upload 실패', e);
+      setYakumanRows((prev) =>
+        prev.map((r, i) => (i === idx ? { ...r, uploadStatus: 'failed' } : r))
+      );
+      await alertDialog('이미지 업로드에 실패했습니다. 다시 시도해주세요.', 'error');
+    }
   };
 
   const fetchRecordUser = useFetchRecordUser();
@@ -157,6 +183,7 @@ export default function Write() {
     if (!user) {
       await alertDialog('유저 정보가 없습니다. \n 로그인 후 이용해주세요.', 'error');
       router.push('/login');
+      return;
     }
 
     const message = detailId ? '수정 하시겠습니까?' : '등록 하시겠습니까?';
@@ -167,58 +194,76 @@ export default function Write() {
 
     if (!validateForm()) return;
 
-    const formData = new FormData();
-
-    /** 기본 값 */
-    if (detailId) {
-      formData.append('matchsId', detailId);
-      formData.append('changeReason', changeReason);
+    // 업로드 진행 중인 행이 있으면 막기
+    if (yakumanRows.some((r) => r.uploadStatus === 'uploading')) {
+      await alertDialog('이미지 업로드가 끝나길 기다려주세요.', 'warning');
+      return;
     }
-    formData.append('wind', leader);
-    formData.append('tournamentStatus', tournamentStatus);
+    if (yakumanRows.some((r) => r.uploadStatus === 'failed')) {
+      await alertDialog('업로드 실패한 이미지가 있습니다. 다시 선택해주세요.', 'error');
+      return;
+    }
 
-    /** records */
-    rankedRecords.forEach((r, idx) => {
-      if (!r.memberId) return;
-      const record = records[r.recordSeat as DirectionKey];
+    const yakumansBody = yakumanRows
+      .filter((row) => row.userId && row.yakumanId)
+      .map((row) => {
+        const yakuman = yakumanData.find((y) => y.id === row.yakumanId);
+        const files: { id: number; fileProcessStatus: 'CREATE' | 'DELETE' | 'NORMAL' }[] = [];
+        // 기존 파일이 있었는데 새 파일로 교체된 경우 → 기존 DELETE
+        if (row.originalFileId && row.fileId !== row.originalFileId) {
+          files.push({ id: row.originalFileId, fileProcessStatus: 'DELETE' });
+        }
+        // 새로 추가된 파일 → CREATE
+        if (row.fileId && row.fileId !== row.originalFileId) {
+          files.push({ id: row.fileId, fileProcessStatus: 'CREATE' });
+        }
+        // 변경 없음 → NORMAL (서버 측 no-op)
+        if (row.fileId && row.fileId === row.originalFileId) {
+          files.push({ id: row.fileId, fileProcessStatus: 'NORMAL' });
+        }
+        // 기존 파일이 있었는데 사용자가 지운 경우 → DELETE
+        if (!row.fileId && row.originalFileId) {
+          files.push({ id: row.originalFileId, fileProcessStatus: 'DELETE' });
+        }
 
-      if (detailId && record.recordId) {
-        formData.append(`records[${idx}].recordId`, String(record.recordId));
-      }
-      formData.append(`records[${idx}].memberId`, String(r.memberId));
-      formData.append(`records[${idx}].recordScore`, String(r.recordScore));
-      formData.append(`records[${idx}].recordRank`, String(r.recordRank));
-      formData.append(`records[${idx}].recordSeat`, r.recordSeat);
-    });
+        return {
+          ...(detailId && row.originalFileId ? {} : {}),
+          memberId: row.userId,
+          yakumanName: yakuman?.yakumanName,
+          yakumanCont: memo || `${yakuman?.yakumanName} 역만`,
+          files: { fileType: 'YAKUMAN', files },
+        };
+      });
 
-    /** yakumans */
-    yakumanRows.forEach((row, idx) => {
-      if (!row.userId || !row.yakumanId) return;
+    const body: Record<string, unknown> = {
+      wind: leader,
+      tournamentStatus,
+      records: rankedRecords
+        .filter((r) => r.memberId)
+        .map((r) => {
+          const record = records[r.recordSeat as DirectionKey];
+          return {
+            ...(detailId && record.recordId ? { recordId: record.recordId } : {}),
+            memberId: r.memberId,
+            recordScore: r.recordScore,
+            recordRank: r.recordRank,
+            recordSeat: r.recordSeat,
+          };
+        }),
+      yakumans: yakumansBody,
+    };
 
-      const yakuman = yakumanData.find((y) => y.id === row.yakumanId);
-      if (!yakuman) return;
-
-      if (detailId && row.existingFileId) {
-        formData.append(`yakumans[${idx}].yakumanId`, String(row.existingFileId));
-      }
-
-      formData.append(`yakumans[${idx}].memberId`, String(row.userId));
-      formData.append(`yakumans[${idx}].yakumanName`, yakuman.yakumanName);
-
-      formData.append(`yakumans[${idx}].yakumanCont`, memo || `${yakuman.yakumanName} 역만`);
-
-      if (row.file) {
-        formData.append(`yakumans[${idx}].files`, row.file);
-      }
-    });
+    if (detailId) {
+      body.matchsId = Number(detailId);
+      body.changeReason = changeReason;
+    }
 
     method({
       url: '/bgm-agit/record',
-      body: formData,
+      body,
       ignoreErrorRedirect: true,
       onSuccess: async () => {
         await alertDialog('기록이 저장되었습니다.', 'success');
-
         router.push('/day-record');
       },
     });
@@ -326,19 +371,42 @@ export default function Write() {
 
     // yakuman
     if (detailData.yakumans) {
-      const rows = detailData.yakumans.map((y) => ({
+      const rows: YakumanRow[] = detailData.yakumans.map((y) => ({
         search: '',
         userId: y.memberId,
         yakumanId: yakumanData.find((yk) => yk.yakumanName === y.yakumanName)?.id ?? null,
-        file: null,
-        existingFileId: y.yakumanId,
+        fileId: y.fileId ?? null,
+        originalFileId: y.fileId ?? null,
+        uploadStatus: 'idle',
       }));
 
       setYakumanRows(rows);
 
       setMemo(detailData.yakumans[0]?.yakumanCont ?? '');
 
-      setHeroImages(detailData.yakumans.map((y) => y.imageUrl));
+      // 기존 미리보기: 새 흐름(fileId)이면 /file-view 로 presigned URL, 옛 흐름은 imageUrl 그대로
+      const newFileIds = detailData.yakumans
+        .map((y) => y.fileId)
+        .filter((id): id is number => !!id);
+      const legacyUrls = detailData.yakumans.map((y) => y.imageUrl ?? '');
+
+      if (newFileIds.length > 0) {
+        fetchFileViewUrls(newFileIds)
+          .then((views) => {
+            const urlByFileId = new Map(views.map((v) => [v.fileId, v.url]));
+            setHeroImages(
+              detailData.yakumans.map((y, i) => {
+                if (y.fileId && urlByFileId.has(y.fileId)) {
+                  return urlByFileId.get(y.fileId) ?? '';
+                }
+                return legacyUrls[i];
+              })
+            );
+          })
+          .catch(() => setHeroImages(legacyUrls));
+      } else {
+        setHeroImages(legacyUrls);
+      }
     }
   }, [detailData, yakumanData]);
 
@@ -518,7 +586,14 @@ export default function Write() {
             onClick={() =>
               setYakumanRows((prev) => [
                 ...prev,
-                { search: '', userId: null, yakumanId: null, file: null },
+                {
+                  search: '',
+                  userId: null,
+                  yakumanId: null,
+                  fileId: null,
+                  originalFileId: null,
+                  uploadStatus: 'idle',
+                },
               ])
             }
           >
@@ -628,9 +703,6 @@ export default function Write() {
                   accept="image/*"
                   onChange={(e) => {
                     const file = e.target.files?.[0] ?? null;
-
-                    setYakumanRows((prev) => prev.map((r, i) => (i === idx ? { ...r, file } : r)));
-
                     if (file) handleImageChange(idx, file);
                   }}
                 />

@@ -2,13 +2,12 @@ package com.bgmagitapi.kml.record.service.impl;
 
 import com.bgmagitapi.advice.exception.ValidException;
 import com.bgmagitapi.apiresponse.ApiResponse;
-import com.bgmagitapi.config.S3FileUtils;
-import com.bgmagitapi.config.UploadResult;
-import com.bgmagitapi.entity.BgmAgitCommonFile;
 import com.bgmagitapi.entity.BgmAgitMember;
-import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.event.dto.KmlRecordModifyEvent;
 import com.bgmagitapi.event.dto.KmlRecordSubmitEvent;
+import com.bgmagitapi.file.entity.BgmAgitFile;
+import com.bgmagitapi.file.enums.FileType;
+import com.bgmagitapi.file.service.BgmAgitFileService;
 import com.bgmagitapi.kml.history.service.MatchsAndRecordHistoryService;
 import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
@@ -25,10 +24,8 @@ import com.bgmagitapi.kml.setting.entity.Setting;
 import com.bgmagitapi.kml.setting.repository.SettingRepository;
 import com.bgmagitapi.kml.yakuman.entity.Yakuman;
 import com.bgmagitapi.kml.yakuman.repository.YakumanRepository;
-import com.bgmagitapi.repository.BgmAgitCommonFileRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.util.CalculateUtil;
-import com.querydsl.jpa.impl.JPAQuery;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -58,11 +55,9 @@ public class RecordServiceImpl implements RecordService {
 
     private final YakumanRepository yakumanRepository;
 
-    private final BgmAgitCommonFileRepository commonFileRepository;
-
     private final MatchsAndRecordHistoryService matchsAndRecordHistoryService;
 
-    private final S3FileUtils s3FileUtils;
+    private final BgmAgitFileService bgmAgitFileService;
 
     private final ApplicationEventPublisher eventPublisher;
     
@@ -75,30 +70,30 @@ public class RecordServiceImpl implements RecordService {
     
     
     @Override
-    public Page<RecordGetResponse> getRecords(Pageable pageable, String startDate, String endDate, String nickName,String tournamentStatus) {
-        Page<Record> records = recordRepository.findByRecords(pageable,startDate,endDate,nickName,tournamentStatus);
-    
+    public Page<RecordGetResponse> getRecords(Pageable pageable, String startDate, String endDate, String nickName, String tournamentStatus) {
+        Page<Record> records = recordRepository.findByRecords(pageable, startDate, endDate, nickName, tournamentStatus);
+
         Map<Long, List<Record>> groupedByMatch = records.getContent().stream()
                         .filter(r -> r.getMatchs() != null)
                         .collect(Collectors.groupingBy(r -> r.getMatchs().getId()));
-    
+
         List<RecordGetResponse> list = groupedByMatch.entrySet().stream()
                 .map(entry -> {
-    
+
                     List<Record> group = new ArrayList<>(entry.getValue());
                     if (group.isEmpty()) return null;
-                    
+
                     // 1단계: 점수 기준 정렬 → rank 계산
                     group.sort(Comparator.comparing(Record::getRecordScore).reversed());
-    
+
                     Map<Long, Integer> rankMap = new HashMap<>();
                     for (int i = 0; i < group.size(); i++) {
                         rankMap.put(group.get(i).getId(), i + 1);
                     }
-                    
+
                     // 2단계: 동남서북 순 정렬 (enum 선언 순서)
                     group.sort(Comparator.comparing(r -> r.getRecordSeat().ordinal()));
-    
+
                     RecordGetResponse response = new RecordGetResponse();
                     response.setMatchsId(entry.getKey());
                     response.setCreateNicname(group.get(0).getMatchs().getMember().getBgmAgitMemberNickname());
@@ -106,27 +101,27 @@ public class RecordServiceImpl implements RecordService {
                     response.setTournamentStatus(group.get(0).getMatchs().getTournamentStatus());
                     response.setMatchsWind(group.get(0).getMatchs().getWind());
                     for (Record rec : group) {
-    
+
                         RecordGetResponse.Row row = new RecordGetResponse.Row();
-    
+
                         // enum value
                         row.setSeat(rec.getRecordSeat().getValue());
-    
+
                         row.setRank(rankMap.get(rec.getId()));
                         row.setNickname(rec.getMember() != null ? rec.getMember().getBgmAgitMemberNickname() : "");
                         row.setScore(rec.getRecordScore());
                         row.setPoint(rec.getRecordPoint());
                         row.setWinner(rankMap.get(rec.getId()) == 1);
-    
+
                         response.getRows().add(row);
                     }
-    
+
                     return response;
                 })
                 .filter(Objects::nonNull)
                 .sorted(Comparator.comparing(RecordGetResponse::getRegistDate).reversed())
                 .toList();
-        
+
         Long countQuery = recordRepository.countQuery(startDate, endDate, nickName, tournamentStatus);
         return new PageImpl<>(list, pageable, countQuery == null ? 0 : countQuery);
     }
@@ -223,18 +218,7 @@ public class RecordServiceImpl implements RecordService {
                     .yakumanCont(yakuman.getYakumanCont())
                     .build();
             yakumanRepository.save(saveYakuman);
-            UploadResult result = s3FileUtils.storeFile(yakuman.getFiles(), "yakuman");
-            if (result != null) {
-                BgmAgitCommonFile commonFile = BgmAgitCommonFile
-                        .builder()
-                        .bgmAgitCommonFileTargetId(saveYakuman.getId())
-                        .bgmAgitCommonFileType(BgmAgitCommonType.YAKUMAN)
-                        .bgmAgitCommonFileUrl(result.getUrl())
-                        .bgmAgitCommonFileUuidName(result.getUuid())
-                        .bgmAgitCommonFileName(result.getOriginalFilename())
-                        .build();
-                commonFileRepository.save(commonFile);
-            }
+            bgmAgitFileService.modifyFileStatus(yakuman.getFiles(), saveYakuman.getId());
         }
         matchsAndRecordHistoryService.createMatchsAndRecordHistory(matchs, recordList);
 
@@ -324,12 +308,16 @@ public class RecordServiceImpl implements RecordService {
         Set<Long> recordMemberSet = request.getRecords().stream()
                 .map(RecordPutRequest.Records::getMemberId)
                 .collect(Collectors.toSet());
-        
+
+        if (recordMemberSet.size() != 4) {
+            throw new ValidException("동일 사용자가 기록에 포함되어 있습니다.");
+        }
+
         List<Long> invalidMemberIds = request.getYakumans().stream()
                 .map(RecordPutRequest.Yakumans::getMemberId)
                 .filter(id -> !recordMemberSet.contains(id))
                 .toList();
-        
+
         if (!invalidMemberIds.isEmpty()) {
             throw new ValidException("대국 참가자가 아닌 회원이 역만 기록에 포함되어 있습니다.");
         }
@@ -444,58 +432,25 @@ public class RecordServiceImpl implements RecordService {
                 yakuman.modify(dto, member);
             }
             
-            // 파일 처리
-            if (dto.getFiles() != null && !dto.getFiles().isEmpty()) {
-                
-                List<BgmAgitCommonFile> deleteFiles =
-                        commonFileRepository.findByDeleteFile(
-                                yakuman.getId(),
-                                BgmAgitCommonType.YAKUMAN
-                        );
-                
-                commonFileRepository.deleteAll(deleteFiles);
-                
-                for (BgmAgitCommonFile file : deleteFiles) {
-                    s3FileUtils.deleteFile(file.getBgmAgitCommonFileUrl());
-                }
-                
-                UploadResult result = s3FileUtils.storeFile(dto.getFiles(), "yakuman");
-                
-                if (result != null) {
-                    commonFileRepository.save(
-                            BgmAgitCommonFile.builder()
-                                    .bgmAgitCommonFileTargetId(yakuman.getId())
-                                    .bgmAgitCommonFileType(BgmAgitCommonType.YAKUMAN)
-                                    .bgmAgitCommonFileUrl(result.getUrl())
-                                    .bgmAgitCommonFileUuidName(result.getUuid())
-                                    .bgmAgitCommonFileName(result.getOriginalFilename())
-                                    .build()
-                    );
-                }
-            }
-            
+            // 파일 처리: CREATE/DELETE/NORMAL 의도를 그대로 위임
+            bgmAgitFileService.modifyFileStatus(dto.getFiles(), yakuman.getId());
+
             requestYakumanIds.add(yakuman.getId());
         }
-        
-        // 삭제 대상 Yakuman
-        existingYakumans.stream()
+
+        // 삭제 대상 Yakuman: 도메인 + 연결된 BgmAgitFile 모두 분리
+        // (행 자체를 삭제했으므로 클라이언트가 별도 DELETE 신호를 보낼 수 없음 — 서버가 책임)
+        List<Yakuman> deletedYakumans = existingYakumans.stream()
                 .filter(item -> !requestYakumanIds.contains(item.getId()))
-                .forEach(item -> {
-                    
-                    List<BgmAgitCommonFile> deleteFiles =
-                            commonFileRepository.findByDeleteFile(
-                                    item.getId(),
-                                    BgmAgitCommonType.YAKUMAN
-                            );
-                    
-                    yakumanRepository.delete(item);
-                    
-                    commonFileRepository.deleteAll(deleteFiles);
-                    
-                    for (BgmAgitCommonFile file : deleteFiles) {
-                        s3FileUtils.deleteFile(file.getBgmAgitCommonFileUrl());
-                    }
-                });
+                .toList();
+
+        if (!deletedYakumans.isEmpty()) {
+            List<Long> deletedYakumanIds = deletedYakumans.stream().map(Yakuman::getId).toList();
+            List<BgmAgitFile> orphanFiles =
+                    bgmAgitFileService.findCompletedByTargets(deletedYakumanIds, FileType.YAKUMAN);
+            orphanFiles.forEach(BgmAgitFile::modifyTemporaryFileStatus);
+        }
+        deletedYakumans.forEach(yakumanRepository::delete);
         
         // 히스토리 기록
         matchsAndRecordHistoryService.updateMatchsAndRecordHistory(
@@ -518,8 +473,17 @@ public class RecordServiceImpl implements RecordService {
         Matchs matchs = matchsRepository.findById(id).orElseThrow(() -> new RuntimeException("존재하지 않은 대국입니다."));
         matchs.modifyDelStatus();
         List<Record> findRecord = recordRepository.findByRecordByMatchsId(matchs.getId());
+
+        // 대국에 묶인 yakuman 첨부 파일을 TEMPORARY 로 되돌려 일일 배치가 정리하도록
+        List<Yakuman> yakumans = yakumanRepository.findByYakumanMatchesId(matchs.getId());
+        if (!yakumans.isEmpty()) {
+            List<Long> yakumanIds = yakumans.stream().map(Yakuman::getId).toList();
+            List<BgmAgitFile> files = bgmAgitFileService.findCompletedByTargets(yakumanIds, FileType.YAKUMAN);
+            files.forEach(BgmAgitFile::modifyTemporaryFileStatus);
+        }
+
         matchsAndRecordHistoryService.updateMatchsAndRecordHistory(matchs,findRecord,"삭제",memberId);
         return new ApiResponse(200,true,"삭제 되었습니다.");
     }
-    
+
 }
