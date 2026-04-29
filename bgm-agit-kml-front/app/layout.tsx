@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     template: '%s | BGM 아지트 BML',
   },
   description:
-    'BGM 아지트 BML — 대전 BGM 아지트의 마작 기록·랭킹·역만 기록 시스템',
+    'BGM 아지트 BML — 대전 BGM 아지트의 마작 기록 시스템',
   keywords: [
     'BGM 아지트',
     'BGM 아지트 BML',
@@ -50,11 +50,11 @@ export const metadata: Metadata = {
     siteName: 'BGM 아지트 BML',
     title: 'BGM 아지트 BML | 마작 기록 시스템',
     description:
-      'BGM 아지트 BML — 대전 BGM 아지트의 마작 기록·랭킹·역만 기록 시스템',
+      'BGM 아지트 BML — 대전 BGM 아지트의 마작 기록 시스템',
     url: 'https://bgmagit.co.kr/record',
     images: [
       {
-        url: 'https://bgmagit.co.kr/record/og-image.png?v=20260429',
+        url: 'https://bgmagit.co.kr/record/og-image.png?v=20260429-3',
         width: 1200,
         height: 630,
         alt: 'BGM 아지트 BML',
@@ -65,8 +65,8 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'BGM 아지트 BML | 마작 기록 시스템',
     description:
-      'BGM 아지트 BML — 대전 BGM 아지트의 마작 기록·랭킹·역만 기록 시스템',
-    images: ['https://bgmagit.co.kr/record/og-image.png?v=20260429'],
+      'BGM 아지트 BML — 대전 BGM 아지트의 마작 기록 시스템',
+    images: ['https://bgmagit.co.kr/record/og-image.png?v=20260429-3'],
   },
   verification: {
     other: {
@@ -85,7 +85,7 @@ const jsonLd = {
       alternateName: ['BGM 아지트 마작 기록', 'BML', 'BGM 아지트 BML'],
       inLanguage: 'ko-KR',
       description:
-        'BGM 아지트 BML — 대전 BGM 아지트의 마작 기록·랭킹·역만 기록 시스템',
+        'BGM 아지트 BML — 대전 BGM 아지트의 마작 기록 시스템',
       publisher: {
         '@id': 'https://bgmagit.co.kr/#organization',
       },
