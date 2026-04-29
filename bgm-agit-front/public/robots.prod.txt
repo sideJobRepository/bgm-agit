@@ -3,11 +3,21 @@ Disallow: /bgm-agit/
 Disallow: /api/
 Disallow: /admin/
 Disallow: /private/
+Disallow: /record/login
+Disallow: /record/signup
+Disallow: /record/my-page
+Disallow: /record/setting
+Disallow: /record/write
 
 User-agent: Yeti
 Disallow: /bgm-agit/
 Disallow: /api/
 Disallow: /admin/
 Disallow: /private/
+Disallow: /record/login
+Disallow: /record/signup
+Disallow: /record/my-page
+Disallow: /record/setting
+Disallow: /record/write
 
 Sitemap: https://bgmagit.co.kr/sitemap.xml
