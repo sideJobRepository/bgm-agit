@@ -73,10 +73,6 @@ export const metadata: Metadata = {
       'naver-site-verification': '0b1074878637f7749d20394f63daaf381db057b6',
     },
   },
-  icons: {
-    icon: '/record/favicon.ico',
-    shortcut: '/record/favicon.ico',
-  },
 };
 const jsonLd = {
   '@context': 'https://schema.org',
