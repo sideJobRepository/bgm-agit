@@ -4,7 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- 사이트 제목 (검색결과 및 탭 제목) -->
-    <title>보드게임카페 BGM(비지엠) 아지트</title>
+    <title>BGM 아지트 | 대전 보드게임카페 · 머더미스터리</title>
+
+    <!-- canonical (중복 URL 방지) -->
+    <link rel="canonical" href="https://bgmagit.co.kr/" />
 
     <!-- 사이트 설명 (검색결과에 표시됨) -->
     <meta
@@ -33,7 +36,7 @@
     <meta property="og:locale" content="ko_KR" />
     <meta property="og:url" content="https://bgmagit.co.kr/" />
     <meta property="og:site_name" content="BGM 아지트" />
-    <meta property="og:title" content="보드게임카페 BGM(비지엠) 아지트" />
+    <meta property="og:title" content="BGM 아지트 | 대전 보드게임카페 · 머더미스터리" />
     <meta
       property="og:description"
       content="대전 보드게임 매니아들의 성지, 최대규모의 크라임씬(머더미스터리) 게임 보유, BGM 아지트"
@@ -42,7 +45,7 @@
 
     <!-- 트위터 미리보기 -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="보드게임카페 BGM(비지엠) 아지트" />
+    <meta name="twitter:title" content="BGM 아지트 | 대전 보드게임카페 · 머더미스터리" />
     <meta
       name="twitter:description"
       content="대전 보드게임 매니아들의 성지, 최대규모의 크라임씬(머더미스터리) 게임 보유, BGM 아지트"
@@ -56,7 +59,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Jua&display=swap" rel="stylesheet"/>
 
     <!-- 명시적 title 메타 (검색엔진 참고용) -->
-    <meta name="title" content="보드게임카페 BGM(비지엠) 아지트" />
+    <meta name="title" content="BGM 아지트 | 대전 보드게임카페 · 머더미스터리" />
 
     <!-- robots (검색엔진 허용) -->
     <meta name="robots" content="index, follow" />
@@ -69,13 +72,53 @@
           "@type": "WebSite",
           "@id": "https://bgmagit.co.kr/#website",
           "url": "https://bgmagit.co.kr/",
-          "name": "보드게임카페 BGM 아지트",
-          "alternateName": "BGM 아지트",
+          "name": "BGM 아지트",
+          "alternateName": ["보드게임카페 BGM 아지트", "비지엠 아지트", "BGM아지트"],
+          "inLanguage": "ko-KR",
           "potentialAction": {
             "@type": "SearchAction",
             "target": "https://bgmagit.co.kr/search?q={search_term_string}",
             "query-input": "required name=search_term_string"
           }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://bgmagit.co.kr/#organization",
+          "name": "BGM 아지트",
+          "alternateName": ["보드게임카페 BGM 아지트", "비지엠 아지트"],
+          "url": "https://bgmagit.co.kr/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://bgmagit.co.kr/headerLogo.png"
+          },
+          "image": "https://bgmagit.co.kr/bgm-image.png",
+          "description": "대전 보드게임 매니아들의 성지, 최대규모의 크라임씬(머더미스터리) 게임 보유"
+        },
+        {
+          "@type": "LocalBusiness",
+          "@id": "https://bgmagit.co.kr/#localbusiness",
+          "name": "BGM 아지트",
+          "alternateName": "보드게임카페 BGM 아지트",
+          "url": "https://bgmagit.co.kr/",
+          "image": "https://bgmagit.co.kr/bgm-image.png",
+          "logo": "https://bgmagit.co.kr/headerLogo.png",
+          "description": "대전 보드게임 매니아들의 성지, 최대규모의 크라임씬(머더미스터리) 게임 보유",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "대전광역시",
+            "addressCountry": "KR",
+            "streetAddress": "TODO: 정확한 도로명 주소 입력"
+          },
+          "telephone": "TODO: +82-XX-XXXX-XXXX",
+          "openingHoursSpecification": [
+            {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+              "opens": "TODO: 13:00",
+              "closes": "TODO: 02:00"
+            }
+          ],
+          "priceRange": "₩₩"
         },
         {
           "@type": "SiteNavigationElement",
