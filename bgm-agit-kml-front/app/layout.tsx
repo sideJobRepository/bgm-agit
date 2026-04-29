@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     url: 'https://bgmagit.co.kr/record',
     images: [
       {
-        url: 'https://bgmagit.co.kr/record/logo.png?v=20260122',
+        url: 'https://bgmagit.co.kr/record/og-image.png?v=20260429',
         width: 1200,
         height: 630,
         alt: 'BGM 아지트 BML',
