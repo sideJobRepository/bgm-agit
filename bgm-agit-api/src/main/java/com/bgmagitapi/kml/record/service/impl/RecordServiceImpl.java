@@ -176,7 +176,7 @@ public class RecordServiceImpl implements RecordService {
         
         
         MatchsWind wind = request.getWind();
-        String tournamentStatus = request.getTournamentStatus();
+        String tournamentStatus = request.getTournamentStatus() != null ? request.getTournamentStatus() : "N";
         AtomicInteger rankCount = new AtomicInteger(1);
         BgmAgitMember bgmAgitMember = memberRepository.findById(memberId).orElseThrow(() -> new ValidException("다시 로그인 해주세요"));
         Matchs matchs = Matchs.builder()

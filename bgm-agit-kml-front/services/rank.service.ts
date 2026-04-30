@@ -8,6 +8,8 @@ export type params = {
   page?: number;
   type?: RankType;
   baseDate?: string;
+  year?: number;
+  month?: number;
   startDateTime?: string;
   endDateTime?: string;
 };

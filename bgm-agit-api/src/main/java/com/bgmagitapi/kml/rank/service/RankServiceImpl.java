@@ -25,6 +25,8 @@ public class RankServiceImpl {
 
     public Page<RankGetResponse> findRanks(RankType type,
                                            LocalDate baseDate,
+                                           Integer year,
+                                           Integer month,
                                            LocalDateTime startDateTime,
                                            LocalDateTime endDateTime,
                                            Pageable pageable) {
@@ -33,11 +35,17 @@ public class RankServiceImpl {
         LocalDateTime end;
 
         if (type == RankType.WEEKLY) {
+            if (baseDate == null) {
+                throw new IllegalArgumentException("주간 조회에는 baseDate가 필요합니다.");
+            }
             LocalDate monday = baseDate.with(DayOfWeek.MONDAY);
             start = monday.atStartOfDay();
             end = monday.plusWeeks(1).atStartOfDay();
         } else if (type == RankType.MONTHLY) {
-            LocalDate firstOfMonth = baseDate.withDayOfMonth(1);
+            if (year == null || month == null) {
+                throw new IllegalArgumentException("월간 조회에는 year, month가 필요합니다.");
+            }
+            LocalDate firstOfMonth = LocalDate.of(year, month, 1);
             start = firstOfMonth.atStartOfDay();
             end = firstOfMonth.plusMonths(1).atStartOfDay();
         } else {
