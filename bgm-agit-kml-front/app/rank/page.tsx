@@ -60,6 +60,8 @@ export default function RankPage() {
         header: '순위',
         align: 'center',
         nowrap: true,
+        sticky: true,
+        width: '60px',
         render: (row) => row.rank,
       },
       {
@@ -67,6 +69,8 @@ export default function RankPage() {
         header: '이름',
         align: 'center',
         nowrap: true,
+        sticky: true,
+        width: '120px',
         render: (row) => row.memberNickname,
       },
       {
@@ -127,7 +131,7 @@ export default function RankPage() {
       },
       {
         key: 'tobiMinus3Rate',
-        header: '토비-3%',
+        header: '토비3%',
         align: 'center',
         nowrap: true,
         render: (row) => row.tobiMinus3Rate,

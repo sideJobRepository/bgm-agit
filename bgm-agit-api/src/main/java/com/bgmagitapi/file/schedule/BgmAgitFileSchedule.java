@@ -20,8 +20,8 @@ public class BgmAgitFileSchedule {
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucket;
 
-    //@Scheduled(cron = "0 0 1 * * *", zone = "Asia/Seoul")
-    @Scheduled(cron = "0 0 * * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 1 * * *", zone = "Asia/Seoul")
+   // @Scheduled(cron = "0 0 * * * *", zone = "Asia/Seoul")
     public void scheduled() {
         LocalDateTime targetTime = LocalDateTime.now().minusDays(1);
         fileBatchService.temporaryFileRemove(targetTime, bucket);

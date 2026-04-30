@@ -66,9 +66,9 @@ public class RankServiceImpl {
         for (int i = 0; i < content.size(); i++) {
 
             RankGetResponse r = content.get(i);
-            int total = r.getTotalCount();
+            double total = r.getTotalCount() != null ? r.getTotalCount() : 0.0;
 
-            if (total == 0) continue;
+            if (total == 0.0) continue;
 
             int rank = (int) pageable.getOffset() + i + 1;
             r.setRank(rank);

@@ -1,6 +1,7 @@
 // BaseTable.tsx
 'use client';
 
+import { useMemo } from 'react';
 import styled from 'styled-components';
 import Pagination from '@/app/components/Pagination';
 import { useUserStore } from '@/store/user';
@@ -17,6 +18,7 @@ export interface BaseColumn<T> {
   width?: string;
   align?: 'left' | 'center' | 'right';
   nowrap?: boolean;
+  sticky?: boolean;
 }
 
 interface BaseTableProps<T> {
@@ -71,6 +73,22 @@ export function BaseTable<T>({
   const user = useUserStore((state) => state.user);
   const pathname = usePathname();
   const isRankPage = pathname === '/rank';
+
+  // sticky 컬럼들의 누적 left offset (width는 px 형식이어야 함)
+  const stickyOffsets = useMemo(() => {
+    const offsets: (string | undefined)[] = [];
+    let offsetPx = 0;
+    columns.forEach((col) => {
+      if (col.sticky) {
+        offsets.push(`${offsetPx}px`);
+        const w = parseInt(col.width ?? '0', 10);
+        if (Number.isFinite(w)) offsetPx += w;
+      } else {
+        offsets.push(undefined);
+      }
+    });
+    return offsets;
+  }, [columns]);
 
   return (
     <TableBox data-pathname={pathname}>
@@ -188,8 +206,13 @@ export function BaseTable<T>({
         <Table>
           <thead>
             <tr>
-              {columns.map((col) => (
-                <Th key={col.key} $width={col.width}>
+              {columns.map((col, i) => (
+                <Th
+                  key={col.key}
+                  $width={col.width}
+                  $sticky={!!col.sticky}
+                  style={col.sticky ? { left: stickyOffsets[i] } : undefined}
+                >
                   {col.header}
                 </Th>
               ))}
@@ -208,12 +231,14 @@ export function BaseTable<T>({
                   $clickable={!!onRowClick}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                 >
-                  {columns.map((col) => (
+                  {columns.map((col, i) => (
                     <Td
                       key={col.key}
                       className={getCellClassName?.(row, col, index)}
                       $align={col.align}
                       $nowrap={col.nowrap}
+                      $sticky={!!col.sticky}
+                      style={col.sticky ? { left: stickyOffsets[i] } : undefined}
                     >
                       {col.render(row, index)}
                     </Td>
@@ -256,6 +281,7 @@ const Table = styled.table`
     right: 0;
     height: 2px;
     background: ${({ theme }) => theme.colors.lineColor};
+    z-index: 4;
   }
 
   &::after {
@@ -266,6 +292,7 @@ const Table = styled.table`
     width: 32px;
     height: 2px;
     background: ${({ theme }) => theme.colors.blackColor};
+    z-index: 4;
   }
 
   thead {
@@ -289,21 +316,37 @@ const Table = styled.table`
 const Th = styled.th<{
   $width?: string;
   $align?: 'left' | 'center' | 'right';
+  $sticky?: boolean;
 }>`
   white-space: nowrap;
   font-weight: 600;
   text-align: center;
   width: ${({ $width }) => $width ?? 'auto'};
+  ${({ $sticky }) =>
+    $sticky &&
+    `
+    position: sticky;
+    z-index: 3;
+    background-color: #ffffff;
+  `}
 `;
 
 const Td = styled.td<{
   $align?: 'left' | 'center' | 'right';
   $nowrap?: boolean;
+  $sticky?: boolean;
 }>`
   text-align: ${({ $align }) => $align ?? 'left'};
   white-space: ${({ $nowrap }) => ($nowrap ? 'nowrap' : 'normal')};
   word-break: break-word;
   overflow-wrap: anywhere;
+  ${({ $sticky }) =>
+    $sticky &&
+    `
+    position: sticky;
+    z-index: 1;
+    background-color: inherit;
+  `}
 
   &.cell-blue {
     color: #2563eb;
@@ -323,6 +366,7 @@ const Td = styled.td<{
 
 const Tr = styled.tr<{ $clickable: boolean }>`
   cursor: ${({ $clickable }) => ($clickable ? 'pointer' : 'default')};
+  background-color: #ffffff;
 
   &:nth-child(even) {
     background-color: rgb(253, 253, 255);
