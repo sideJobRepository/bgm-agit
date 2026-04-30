@@ -89,7 +89,7 @@ export interface HistRecord {
   modifyName: string;
   recordHistory: RecordHistory[];
   tournamentStatus: string;
-  turing: number;
+  turning: number;
 }
 
 interface HistRecordStore {
