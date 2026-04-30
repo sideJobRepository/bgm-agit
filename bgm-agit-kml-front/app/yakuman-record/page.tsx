@@ -50,109 +50,109 @@ export default function Notice() {
         key: 'totalCount',
         header: '총 역만 횟수',
         align: 'center',
-        render: (row) => row.totalCount,
+        render: (row) => <CountCell $count={row.totalCount}>{row.totalCount}</CountCell>,
       },
       {
         key: 'countedYakuman',
         header: '헤아림 역만',
         align: 'center',
-        render: (row) => row.countedYakuman,
+        render: (row) => <CountCell $count={row.countedYakuman}>{row.countedYakuman}</CountCell>,
       },
       {
         key: 'suukantsu',
         header: '사깡즈',
         align: 'center',
-        render: (row) => row.suukantsu,
+        render: (row) => <CountCell $count={row.suukantsu}>{row.suukantsu}</CountCell>,
       },
       {
         key: 'suuankou',
         header: '사암각',
         align: 'center',
-        render: (row) => row.suuankou,
+        render: (row) => <CountCell $count={row.suuankou}>{row.suuankou}</CountCell>,
       },
       {
         key: 'kokushiMusou',
         header: '국사무쌍',
         align: 'center',
-        render: (row) => row.kokushiMusou,
+        render: (row) => <CountCell $count={row.kokushiMusou}>{row.kokushiMusou}</CountCell>,
       },
       {
         key: 'daisangen',
         header: '대삼원',
         align: 'center',
-        render: (row) => row.daisangen,
+        render: (row) => <CountCell $count={row.daisangen}>{row.daisangen}</CountCell>,
       },
       {
         key: 'tenhou',
         header: '천화',
         align: 'center',
-        render: (row) => row.tenhou,
+        render: (row) => <CountCell $count={row.tenhou}>{row.tenhou}</CountCell>,
       },
       {
         key: 'chiihou',
         header: '지화',
         align: 'center',
-        render: (row) => row.chiihou,
+        render: (row) => <CountCell $count={row.chiihou}>{row.chiihou}</CountCell>,
       },
       {
         key: 'chuurenPoutou',
         header: '구련보등',
         align: 'center',
-        render: (row) => row.chuurenPoutou,
+        render: (row) => <CountCell $count={row.chuurenPoutou}>{row.chuurenPoutou}</CountCell>,
       },
       {
         key: 'ryuuiisou',
         header: '녹일색',
         align: 'center',
-        render: (row) => row.ryuuiisou,
+        render: (row) => <CountCell $count={row.ryuuiisou}>{row.ryuuiisou}</CountCell>,
       },
       {
         key: 'chinroutou',
         header: '청노두',
         align: 'center',
-        render: (row) => row.chinroutou,
+        render: (row) => <CountCell $count={row.chinroutou}>{row.chinroutou}</CountCell>,
       },
       {
         key: 'tsuuiisou',
         header: '자일색',
         align: 'center',
-        render: (row) => row.tsuuiisou,
+        render: (row) => <CountCell $count={row.tsuuiisou}>{row.tsuuiisou}</CountCell>,
       },
       {
         key: 'shousuushii',
         header: '소사희',
         align: 'center',
-        render: (row) => row.shousuushii,
+        render: (row) => <CountCell $count={row.shousuushii}>{row.shousuushii}</CountCell>,
       },
       {
         key: 'daisuushii',
         header: '대사희',
         align: 'center',
-        render: (row) => row.daisuushii,
+        render: (row) => <CountCell $count={row.daisuushii}>{row.daisuushii}</CountCell>,
       },
       {
         key: 'kokushi13Wait',
         header: '국사무쌍 13면 대기',
         align: 'center',
-        render: (row) => row.kokushi13Wait,
+        render: (row) => <CountCell $count={row.kokushi13Wait}>{row.kokushi13Wait}</CountCell>,
       },
       {
         key: 'pureChuuren',
         header: '순정 구련보등',
         align: 'center',
-        render: (row) => row.pureChuuren,
+        render: (row) => <CountCell $count={row.pureChuuren}>{row.pureChuuren}</CountCell>,
       },
       {
         key: 'suuankouTanki',
         header: '사암각단기',
         align: 'center',
-        render: (row) => row.suuankouTanki,
+        render: (row) => <CountCell $count={row.suuankouTanki}>{row.suuankouTanki}</CountCell>,
       },
       {
         key: 'sharin',
         header: '사리엔커',
         align: 'center',
-        render: (row) => row.sharin,
+        render: (row) => <CountCell $count={row.sharin}>{row.sharin}</CountCell>,
       },
     ],
     []
@@ -303,6 +303,26 @@ export default function Notice() {
     </Wrapper>
   );
 }
+
+const CountCell = styled.span<{ $count: number }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: ${({ $count }) => ($count > 0 ? 700 : 400)};
+  background: ${({ $count }) =>
+    $count >= 3
+      ? '#FFE082'
+      : $count === 2
+        ? '#FFF3C4'
+        : $count === 1
+          ? '#FFFBEA'
+          : 'transparent'};
+  color: ${({ $count, theme }) =>
+    $count > 0 ? '#B26A00' : theme.colors.inputColor};
+`;
 
 const Wrapper = styled.div`
   display: flex;
