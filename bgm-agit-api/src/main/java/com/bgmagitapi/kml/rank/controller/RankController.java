@@ -30,13 +30,15 @@ public class RankController {
             @PageableDefault(size = 20) Pageable pageable,
             @RequestParam RankType type,
             @RequestParam(required = false) String baseDate,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDateTime,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDateTime
     ) {
         LocalDate parsedDate = baseDate != null ? LocalDate.parse(baseDate) : null;
-        Page<RankGetResponse> ranks = rankService.findRanks(type, parsedDate, startDateTime, endDateTime, pageable);
+        Page<RankGetResponse> ranks = rankService.findRanks(type, parsedDate, year, month, startDateTime, endDateTime, pageable);
         return PageResponse.from(ranks);
     }
 }

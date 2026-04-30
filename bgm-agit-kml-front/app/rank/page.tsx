@@ -18,11 +18,15 @@ export default function RankPage() {
   const [endDate, setEndDate] = useState<Date | null>(() => new Date());
   const [page, setPage] = useState(0);
 
-  const formatDate = (date: Date | null) => (date ? date.toISOString().split('T')[0] : '');
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  const formatDate = (date: Date | null) => {
+    if (!date) return '';
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  };
 
   const formatLocalDateTime = (date: Date | null) => {
     if (!date) return '';
-    const pad = (n: number) => String(n).padStart(2, '0');
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
   };
 
@@ -33,6 +37,14 @@ export default function RankPage() {
         ...base,
         startDateTime: formatLocalDateTime(startDate),
         endDateTime: formatLocalDateTime(endDate),
+      };
+    }
+    if (rankType === 'MONTHLY') {
+      if (!startDate) return base;
+      return {
+        ...base,
+        year: startDate.getFullYear(),
+        month: startDate.getMonth() + 1,
       };
     }
     return { ...base, baseDate: formatDate(startDate) };
@@ -48,6 +60,8 @@ export default function RankPage() {
         header: '순위',
         align: 'center',
         nowrap: true,
+        sticky: true,
+        width: '60px',
         render: (row) => row.rank,
       },
       {
@@ -55,6 +69,8 @@ export default function RankPage() {
         header: '이름',
         align: 'center',
         nowrap: true,
+        sticky: true,
+        width: '120px',
         render: (row) => row.memberNickname,
       },
       {
@@ -115,7 +131,7 @@ export default function RankPage() {
       },
       {
         key: 'tobiMinus3Rate',
-        header: '토비-3%',
+        header: '토비3%',
         align: 'center',
         nowrap: true,
         render: (row) => row.tobiMinus3Rate,
