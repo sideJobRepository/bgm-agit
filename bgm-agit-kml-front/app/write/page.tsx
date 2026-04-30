@@ -456,6 +456,24 @@ export default function Write() {
     }
   }, [records.EAST.search, records.SOUTH.search, records.WEST.search, records.NORTH.search]);
 
+  //역만 닉네임 검색시 닉네임선택
+  const yakumanSearchKey = yakumanRows.map((r) => r.search).join('|');
+  useEffect(() => {
+    let updated = false;
+    const newRows = yakumanRows.map((row) => {
+      const users = filteredUsers(row.search);
+      if (row.search && users.length > 0) {
+        updated = true;
+        return { ...row, userId: users[0].id };
+      }
+      return row;
+    });
+    if (updated) {
+      setYakumanRows(newRows);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [yakumanSearchKey]);
+
   return (
     <Wrapper>
       <Hero>
@@ -559,7 +577,23 @@ export default function Write() {
                     </select>
                   </Field>
                   <Field className="score">
-                    <label>점수</label>
+                    <ScoreLabelRow>
+                      <label>점수</label>
+                      <SignButton
+                        type="button"
+                        aria-label="부호 변경"
+                        onClick={() =>
+                          setRecords((prev) => {
+                            const v = prev[key].score;
+                            if (v === '' || v === '0') return prev;
+                            const flipped = v.startsWith('-') ? v.slice(1) : '-' + v;
+                            return { ...prev, [key]: { ...prev[key], score: flipped } };
+                          })
+                        }
+                      >
+                        ±
+                      </SignButton>
+                    </ScoreLabelRow>
                     <input
                       type="number"
                       step="1"
@@ -569,7 +603,7 @@ export default function Write() {
                           ...prev,
                           [key]: {
                             ...prev[key],
-                            score: e.target.value, // 그대로 string 저장
+                            score: e.target.value,
                           },
                         }))
                       }
@@ -1083,6 +1117,37 @@ const Field = styled.div`
 
     &.score {
       flex: 1 1 100%;
+    }
+  }
+`;
+
+const ScoreLabelRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const SignButton = styled.button`
+  display: none;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 20px;
+    min-width: 28px;
+    padding: 0 8px;
+    background-color: ${({ theme }) => theme.colors.writeBgColor};
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 1;
+    color: ${({ theme }) => theme.colors.whiteColor};
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.85;
     }
   }
 `;
