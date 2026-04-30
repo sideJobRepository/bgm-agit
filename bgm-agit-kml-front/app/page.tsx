@@ -5,9 +5,11 @@ import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { withBasePath } from '@/lib/path';
 import Link from 'next/link';
-import { ArrowRight, HandPointing } from 'phosphor-react';
+import { ArrowRight, HandPointing, PencilSimple } from 'phosphor-react';
 import { useMediaQuery } from 'react-responsive';
 import { useRouter } from 'next/navigation';
+import { useUserStore } from '@/store/user';
+import { confirmDialog } from '@/utils/alert';
 
 const INITIAL_CARDS = [
   {
@@ -49,8 +51,23 @@ const INITIAL_CARDS = [
 
 export default function Home() {
   const router = useRouter();
+  const user = useUserStore((state) => state.user);
 
   const [mounted, setMounted] = useState(false);
+
+  const handleQuickWrite = async () => {
+    if (!user) {
+      const result = await confirmDialog(
+        '로그인 후 이용 가능합니다.\n 로그인 페이지로 이동하시겠습니까?',
+        'warning'
+      );
+      if (result.isConfirmed) {
+        router.push(`/login?redirect=${encodeURIComponent('/write')}`);
+      }
+      return;
+    }
+    router.push('/write');
+  };
 
   const [cards, setCards] = useState(INITIAL_CARDS);
   const [dir, setDir] = useState(1); // 1 = next, -1 = prev
@@ -101,6 +118,16 @@ export default function Home() {
           여러분의 보드게임 이야기가 이곳에 쌓여갑니다.
         </h5>
       </Title>
+      <QuickWrite
+        onClick={handleQuickWrite}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+      >
+        <PencilSimple weight="bold" />
+        <span>기록 입력하기</span>
+        <ArrowRight weight="bold" />
+      </QuickWrite>
       <Slider>
         {cards.slice(0, 3).map((card, i) => (
           <Card
@@ -240,6 +267,39 @@ const Title = styled.div`
 
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.mobile.sizes.h5Size};
+    }
+  }
+`;
+
+const QuickWrite = styled(motion.button)`
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  min-height: 52px;
+  border: none;
+  border-radius: 999px;
+  background: ${({ theme }) => theme.colors.writeBgColor};
+  color: ${({ theme }) => theme.colors.whiteColor};
+  font-size: ${({ theme }) => theme.desktop.sizes.h5Size};
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(74, 144, 226, 0.35);
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: 16px;
+    padding: 12px 22px;
+    min-height: 48px;
+
+    svg {
+      width: 18px;
+      height: 18px;
     }
   }
 `;

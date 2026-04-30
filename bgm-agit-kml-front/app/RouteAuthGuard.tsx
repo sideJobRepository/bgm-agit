@@ -10,9 +10,18 @@ export default function RouteAuthGuard() {
   const pathname = usePathname();
   const router = useRouter();
   const user = useUserStore((state) => state.user);
+  const isLoggingOut = useUserStore((state) => state.isLoggingOut);
+  const setLoggingOut = useUserStore((state) => state.setLoggingOut);
 
   useEffect(() => {
     let mounted = true;
+
+    if (isLoggingOut) {
+      if (!isProtectedPath(pathname)) {
+        setLoggingOut(false);
+      }
+      return;
+    }
 
     if (!isProtectedPath(pathname) || user) return;
 
@@ -28,7 +37,7 @@ export default function RouteAuthGuard() {
     return () => {
       mounted = false;
     };
-  }, [pathname, user, router]);
+  }, [pathname, user, router, isLoggingOut, setLoggingOut]);
 
   return null;
 }

@@ -36,7 +36,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import api from '@/lib/axiosInstance';
 import { tokenStore } from '@/services/tokenStore';
 import { alertDialog, confirmDialog } from '@/utils/alert';
-import { isProtectedPath } from '@/lib/authPaths';
 import { TAB_ID } from '@/lib/tabId';
 import { useMyPageStore } from '@/store/myPage';
 
@@ -81,6 +80,7 @@ export default function Sidebar() {
   };
 
   const resetUser = useUserStore((state) => state.clearUser);
+  const setLoggingOut = useUserStore((state) => state.setLoggingOut);
   const clearMenu = useKmlMenuStore((state) => state.clearMenu);
   const openMyPage = useMyPageStore((state) => state.open);
 
@@ -100,14 +100,13 @@ export default function Sidebar() {
 
       await alertDialog('로그아웃 되었습니다.', 'success');
 
+      setLoggingOut(true);
       tokenStore.clear();
       resetUser();
       clearMenu();
       setIsOpen(false);
 
-      if (isProtectedPath(pathname)) {
-        router.push('/');
-      }
+      router.push('/');
     }
   };
 
@@ -133,10 +132,11 @@ export default function Sidebar() {
   }, [pathname]);
 
   useEffect(() => {
-    if (pathname === '/login') {
-      if (user) {
-        router.replace('/');
-      }
+    if (pathname === '/login' && user) {
+      const rawRedirect =
+        new URLSearchParams(window.location.search).get('redirect') || '/';
+      const dest = rawRedirect.startsWith('/') ? rawRedirect : '/';
+      router.replace(dest);
     }
   }, [pathname, user]);
 
@@ -293,7 +293,9 @@ export default function Sidebar() {
                       'warning'
                     );
                     if (result.isConfirmed) {
-                      router.push('/login');
+                      router.push(
+                        `/login?redirect=${encodeURIComponent('/write?tournamentStatus=N')}`
+                      );
                     }
                   } else {
                     if (pathname === '/write') {
@@ -319,7 +321,9 @@ export default function Sidebar() {
                       'warning'
                     );
                     if (result.isConfirmed) {
-                      router.push('/login');
+                      router.push(
+                        `/login?redirect=${encodeURIComponent('/write?tournamentStatus=Y')}`
+                      );
                     }
                   } else {
                     if (pathname === '/write') {
