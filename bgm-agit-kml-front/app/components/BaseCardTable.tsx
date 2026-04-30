@@ -119,7 +119,7 @@ export function BaseCardTable({ data, page, onPageChange, onDeleteSuccess }: Bas
       .join('\n');
 
     const text =
-      '\u200B[BGM KML 기록 안내]\n\n' +
+      '\u200B[BGM 아지트 BML 기록 안내]\n\n' +
       `ID: ${item.matchsId}\n` +
       `기록일자: ${item.registDate}\n\n` +
       rowsText;
