@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
@@ -13,7 +13,6 @@ export default function Login() {
   const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { postUser } = useLoginPost();
 
   useEffect(() => setMounted(true), []);
@@ -22,7 +21,7 @@ export default function Login() {
     e.preventDefault();
     if (!nickname.trim() || !password) return;
 
-    const rawRedirect = searchParams.get('redirect') || '/';
+    const rawRedirect = new URLSearchParams(window.location.search).get('redirect') || '/';
     const redirectPath = rawRedirect.startsWith('/') ? rawRedirect : '/';
 
     postUser({ nickname: nickname.trim(), password }, () => {
