@@ -4,6 +4,7 @@ Disallow: /api/
 Disallow: /admin/
 Disallow: /private/
 Disallow: /record/login
+Disallow: /record/role
 Disallow: /record/signup
 Disallow: /record/my-page
 Disallow: /record/setting
@@ -15,6 +16,7 @@ Disallow: /api/
 Disallow: /admin/
 Disallow: /private/
 Disallow: /record/login
+Disallow: /record/role
 Disallow: /record/signup
 Disallow: /record/my-page
 Disallow: /record/setting

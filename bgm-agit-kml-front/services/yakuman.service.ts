@@ -17,7 +17,7 @@ export function useFetchYakumanList() {
 
   const fetchYakuan = (params: params) => {
     request(
-      () => api.get(`/bgm-agit/yakuman-pivot?size=6`, { params }).then((res) => res.data),
+      () => api.get(`/bgm-agit/yakuman-pivot?size=20`, { params }).then((res) => res.data),
       setYakuman,
       { ignoreErrorRedirect: true }
     );
