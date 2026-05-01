@@ -130,6 +130,49 @@ kml:
   - 표는 모바일에서 부모에 `overflow-x: auto`, table에 `min-width` 두고 가로 스크롤
   - `Wrapper`의 `min-width: 1280px`은 `@media tablet` 블록에서 `100%`로 풀어줘야 함
 
+## SSR / SEO 패턴 (kml-front)
+
+### Hybrid SSR
+`day-record`, `yakuman-record`, `rank`, `notice` 4개 페이지는 hybrid SSR로 변환됨.
+- `app/<page>/page.tsx` — server component. 비로그인 기준으로 초기 데이터 fetch + `metadata` export
+- `app/<page>/<Page>Client.tsx` — `'use client'`. `initialData` prop을 받아 `useRef` 가드로 zustand store에 1회 hydrate
+- 첫 진입 + `initialData` 있으면 client 측 첫 fetch 스킵 (`firstFetchSkipRef`) — 불필요한 재요청 방지
+- 검색·페이지네이션·필터는 기존 hook 그대로 (CSR)
+- 서버 fetch는 plain `fetch(`${process.env.NEXT_PUBLIC_API_URL}/...`)` 사용. `lib/axiosInstance.ts`는 `tokenStore.get()`/`window.dispatchEvent` 등 클라이언트 전용 API를 써서 서버에서 못 부름
+  - 분리 폴더: `services/server/*.server.ts` (`'server-only'` 가드) 또는 `page.tsx` 내부에 inline 정의 — 둘 다 혼재 중
+
+### Metadata 주의 (title 중복 함정)
+- `app/layout.tsx`에 `title.template = '%s | BGM 아지트 BML'` 있음. 자식 페이지의 `metadata.title`이 자동으로 ` | BGM 아지트 BML` suffix를 받음
+- 따라서 페이지별 `metadata.title`은 **suffix 없이 짧게** 작성: `'역만 기록'`, `'랭킹'`, `'월간/일간 기록'` 등
+- 잘못 작성하면 `'역만 기록 | BGM 아지트 BML | BGM 아지트 BML'`로 중복됨
+- `openGraph.title`은 template 안 거치므로 풀 텍스트(`'역만 기록 | BGM 아지트 BML'`)로 명시
+- `alternates.canonical`, `openGraph.url`도 페이지별로 명시
+
+### Soft 404 대응
+구글 서치콘솔에서 컨텐츠가 적은 목록 페이지(공지 1개, 랭킹 4명 등)가 **soft 404**로 분류되어 색인 거부될 수 있음.
+- 대응: server `page.tsx`에서 `<script type="application/ld+json">` 으로 페이지별 `CollectionPage` + `ItemList` 구조화 데이터 추가 (`app/notice/page.tsx`, `app/rank/page.tsx` 참고)
+- 본문 한국어 텍스트량 늘리는 것도 효과적 (특히 rank처럼 칼럼이 숫자/율 위주인 페이지)
+
+## 기록 입력 UX 규칙 (write/page.tsx)
+
+### 점수 자동 계산
+- 4자리(동/남/서/북) 중 **사용자가 직접 입력 안 한 자리**(`scoreEditTime[key] === 0`)가 자동 계산 대상
+- 어느 3자리든 입력하면 나머지 1자리가 `refund - sum(others)`로 자동 계산
+- 기본 자동 계산 대상은 NORTH (기존 동작 호환)
+- 4자리 모두 사용자가 직접 입력 시 자동 계산 정지 (수동 모드). 칸 비우면(`score === ''`) timestamp가 0으로 리셋되어 다시 자동 계산 후보로 복귀
+- 자동 계산 effect는 `Number.isNaN` 체크로 `'-'` 단독 입력시 NaN 발산 방지
+
+### 모바일 ± 부호 토글 (`SignButton`)
+- 점수 input은 `type="text"` + `inputMode="numeric"` + `^-?\d*$` 정규식 검증 — `-`만 단독으로 표시하기 위해 (type=number는 안 됨)
+- 빈 값에서 ± 누르면 `-` 입력 → 이후 숫자 타이핑하면 음수 완성
+- `0`에서 누르면 무시 (`-0` 방지)
+- 값이 있으면 부호 토글 (`'1000'` ↔ `'-1000'`)
+
+### "내 닉네임" 버튼
+- 동/남/서/북 각 자리 + 역만 행마다 `<MeButton>` 좌측 배치, 휴지통(역만 전용)은 우측. 같은 줄로 분리해 오클릭 방지
+- 클릭 시 `Number(user.id)`를 `recordUser`(`socialType=MAHJONG` 멤버 목록)에서 찾아 해당 자리 `userId`로 세팅
+- 회원 목록에 본인 정보 없으면 alert 출력 (마작 회원 미등록자 대응)
+
 ## 기록 권한·랭킹 (bgm-agit-kml-front 운영)
 
 ### 마작 회원 식별
