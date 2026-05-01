@@ -34,5 +34,40 @@ async function fetchNoticeList(): Promise<NoticePage | null> {
 
 export default async function NoticePage() {
   const initialData = await fetchNoticeList();
-  return <NoticeClient initialData={initialData} />;
+
+  const pageUrl = 'https://bgmagit.co.kr/record/notice';
+  const itemListElements = (initialData?.content ?? []).map((item, idx) => ({
+    '@type': 'ListItem',
+    position: idx + 1,
+    url: `${pageUrl}/${item.id}`,
+    name: item.title,
+  }));
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': `${pageUrl}#webpage`,
+    url: pageUrl,
+    name: '공지사항 | BGM 아지트 BML',
+    description:
+      'BGM 아지트 BML 공지사항 — 대회 일정, 룰 업데이트, 운영 안내 및 주요 소식',
+    inLanguage: 'ko-KR',
+    isPartOf: { '@id': 'https://bgmagit.co.kr/record/#website' },
+    mainEntity: {
+      '@type': 'ItemList',
+      name: 'BGM 아지트 BML 공지사항 목록',
+      numberOfItems: itemListElements.length,
+      itemListElement: itemListElements,
+    },
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <NoticeClient initialData={initialData} />
+    </>
+  );
 }
