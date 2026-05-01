@@ -22,10 +22,7 @@ export default function Rule() {
 
   const currentStatus = pageIndex === 1 ? 'Y' : 'N';
 
-  const currentRule = ruleData?.find(
-    (item) => item.tournamentStatus === currentStatus
-  );
-
+  const currentRule = ruleData?.find((item) => item.tournamentStatus === currentStatus);
 
   useEffect(() => {
     fetchRule();
@@ -51,20 +48,25 @@ export default function Rule() {
       <Wrapper>
         <SlideViewport>
           {pageIndex === 1 && (
-            <NavLeftButton onClick={() => {
-              setDirection(-1);
-              setPageIndex(0);
-            }}>
-              <CaretLeft weight="bold"/>
+            <NavLeftButton
+              onClick={() => {
+                setDirection(-1);
+                setPageIndex(0);
+              }}
+            >
+              <CaretLeft weight="bold" />
               마작 규칙 안내 보기
-            </NavLeftButton>)}
+            </NavLeftButton>
+          )}
           {pageIndex === 0 && (
-            <NavRightButton onClick={() => {
-              setDirection(1);
-              setPageIndex(1);
-            }}>
+            <NavRightButton
+              onClick={() => {
+                setDirection(1);
+                setPageIndex(1);
+              }}
+            >
               대회 운영 규정 보기
-              <CaretRight weight="bold"/>
+              <CaretRight weight="bold" />
             </NavRightButton>
           )}
           <MotionBox
@@ -81,21 +83,21 @@ export default function Rule() {
               if (isFirstRender) setIsFirstRender(false);
             }}
           >
-          <Title>
+            <Title>
               <h1>{pageIndex === 0 ? '마작 규칙 안내' : '대회 운영 규정'}</h1>
 
-            <span>
-              {pageIndex === 0
-                ? '마작의 기본 규칙과 진행 방식을 정리한 공식 가이드입니다.'
-                : '대회 진행을 위한 운영 기준과 참가 규정을 안내합니다.'}
-            </span>
+              <span>
+                {pageIndex === 0
+                  ? '마작의 기본 규칙과 진행 방식을 정리한 공식 가이드입니다.'
+                  : '대회 진행을 위한 운영 기준과 참가 규정을 안내합니다.'}
+              </span>
             </Title>
             <PdfContainer>
-                <PdfViewer
-                  pageIndex={pageIndex}
-                  fileUrl={currentRule?.file?.fileUrl}
-                  currentRule={currentRule}
-                />
+              <PdfViewer
+                pageIndex={pageIndex}
+                fileUrl={currentRule?.file?.fileUrl}
+                currentRule={currentRule}
+              />
             </PdfContainer>
           </MotionBox>
         </SlideViewport>
@@ -116,17 +118,17 @@ const Wrapper = styled.div`
   max-width: 1500px;
   min-width: 1280px;
   min-height: 600px;
-    height: calc(100vh - 76px);
+  height: calc(100vh - 76px);
   margin: 0 auto;
   flex-direction: column;
-    z-index: 2;
-    overflow: hidden;
+  z-index: 2;
+  overflow: hidden;
 
   @media ${({ theme }) => theme.device.tablet} {
     width: 100vw;
     max-width: 100%;
     min-width: 100%;
-      min-height: unset;
+    min-height: unset;
   }
 `;
 
@@ -137,13 +139,13 @@ const Title = styled.div`
   align-self: center;
   text-align: center;
   gap: 8px;
-    margin-top: 12px;
-    padding: 24px 0;
+  margin-top: 12px;
+  padding: 24px 0;
 
   h1 {
     font-size: ${({ theme }) => theme.desktop.sizes.titleSize};
     font-weight: 800;
-      color: ${({ theme }) => theme.colors.whiteColor};
+    color: ${({ theme }) => theme.colors.whiteColor};
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.mobile.sizes.titleSize};
     }
@@ -161,69 +163,71 @@ const Title = styled.div`
 `;
 
 const SlideViewport = styled.div`
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   position: relative;
   width: 100%;
-    padding-top: 12px;
+  padding-top: 12px;
 `;
 
 const MotionBox = styled(motion.div)`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex: 1;
-`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-height: 0;
+`;
 
 const PdfContainer = styled.div`
   width: 90%;
-    display: flex;
-    padding: 24px 0;
-    flex: 1;
+  display: flex;
+  padding: 24px 0;
+  flex: 1;
+  min-height: 0;
 `;
 
-
 const NavRightButton = styled.button`
-    position: absolute;
-    right: 0;
-    display: flex;
-    width: 160px;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    border: none;
-    padding: 6px 0;
-    border-radius: 4px;
-    cursor: pointer;
-    background-color: transparent;
-    font-size: ${({ theme }) => theme.desktop.sizes.sm};
-    color: ${({ theme }) => theme.colors.lineColor};;
+  position: absolute;
+  right: 0;
+  display: flex;
+  width: 160px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: none;
+  padding: 6px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: transparent;
+  font-size: ${({ theme }) => theme.desktop.sizes.sm};
+  color: ${({ theme }) => theme.colors.lineColor};
 
   svg {
-      width: 12px;
-      height: 12px;
+    width: 12px;
+    height: 12px;
   }
 `;
 
 const NavLeftButton = styled.button`
-    position: absolute;
-    left: 0;
-    display: flex;
-    width: 160px;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    border: none;
-    padding: 6px 0;
-    border-radius: 4px;
-    cursor: pointer;
-    background-color: transparent;
-    font-size: ${({ theme }) => theme.desktop.sizes.sm};
-    color: ${({ theme }) => theme.colors.lineColor};;
+  position: absolute;
+  left: 0;
+  display: flex;
+  width: 160px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: none;
+  padding: 6px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: transparent;
+  font-size: ${({ theme }) => theme.desktop.sizes.sm};
+  color: ${({ theme }) => theme.colors.lineColor};
 
   svg {
-      width: 12px;
-      height: 12px;
+    width: 12px;
+    height: 12px;
   }
 `;

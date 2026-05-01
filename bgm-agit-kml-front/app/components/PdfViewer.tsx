@@ -276,13 +276,13 @@ const CanvasBox = styled.div`
   overflow: auto;
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: 8px;
+  align-items: flex-start;
+  //padding: 8px;
 `;
 
 const Canvas = styled.div`
   width: fit-content;
-  margin: 0 auto;
+  margin: auto;
   overflow: auto;
 `;
 
