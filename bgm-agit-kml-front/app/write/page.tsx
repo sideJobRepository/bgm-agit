@@ -142,6 +142,22 @@ export default function Write() {
   const [yakumanRows, setYakumanRows] = useState<YakumanRow[]>([]);
   const [memo, setMemo] = useState('');
 
+  /** 각 자리 점수의 사용자 수정 시각. 0 = 사용자가 직접 안 만짐(자동계산 후보) */
+  const [scoreEditTime, setScoreEditTime] = useState<Record<DirectionKey, number>>({
+    EAST: 0,
+    SOUTH: 0,
+    WEST: 0,
+    NORTH: 0,
+  });
+
+  /** 점수 비면 0으로(자동계산 후보), 값 있으면 현재 시각으로 마킹 */
+  const markScoreEdited = (key: DirectionKey, newScore: string) => {
+    setScoreEditTime((prev) => ({
+      ...prev,
+      [key]: newScore === '' ? 0 : Date.now(),
+    }));
+  };
+
   const rankedRecords = Object.entries(records)
     .map(([seat, data]) => ({
       seat,
@@ -177,6 +193,39 @@ export default function Write() {
   const filteredUsers = (search: string) => {
     if (!search) return recordUser;
     return recordUser.filter((u) => u.nickName.toLowerCase().includes(search.toLowerCase()));
+  };
+
+  /** 본인 닉네임 자동 입력 - 동/남/서/북 */
+  const handleSelfFillRecord = async (key: DirectionKey) => {
+    if (!user) {
+      await alertDialog('로그인이 필요합니다.', 'error');
+      return;
+    }
+    const meId = Number(user.id);
+    if (!recordUser.some((u) => u.id === meId)) {
+      await alertDialog('회원 목록에서 본인 정보를 찾을 수 없습니다.', 'error');
+      return;
+    }
+    setRecords((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], userId: meId, search: '' },
+    }));
+  };
+
+  /** 본인 닉네임 자동 입력 - 역만 행 */
+  const handleSelfFillYakuman = async (idx: number) => {
+    if (!user) {
+      await alertDialog('로그인이 필요합니다.', 'error');
+      return;
+    }
+    const meId = Number(user.id);
+    if (!recordUser.some((u) => u.id === meId)) {
+      await alertDialog('회원 목록에서 본인 정보를 찾을 수 없습니다.', 'error');
+      return;
+    }
+    setYakumanRows((prev) =>
+      prev.map((r, i) => (i === idx ? { ...r, userId: meId, search: '' } : r))
+    );
   };
 
   const handleSubmit = async () => {
@@ -410,27 +459,51 @@ export default function Write() {
     }
   }, [detailData, yakumanData]);
 
-  //마지막 북 자동계산
+  //3자리 입력시 나머지 자리 자동계산 (사용자가 직접 안 만진 자리가 대상)
   useEffect(() => {
-    const east = records.EAST.score;
-    const south = records.SOUTH.score;
-    const west = records.WEST.score;
+    const keys: DirectionKey[] = ['EAST', 'SOUTH', 'WEST', 'NORTH'];
 
-    // 3개 다 있어야 계산
-    if (!east || !south || !west) return;
+    // 자동계산 대상 = scoreEditTime이 0인 자리 (NORTH 우선, 그다음 E→S→W)
+    let autoTarget: DirectionKey | null = null;
+    if (scoreEditTime.NORTH === 0) {
+      autoTarget = 'NORTH';
+    } else {
+      for (const k of ['EAST', 'SOUTH', 'WEST'] as DirectionKey[]) {
+        if (scoreEditTime[k] === 0) {
+          autoTarget = k;
+          break;
+        }
+      }
+    }
+    if (!autoTarget) return; // 4자리 모두 사용자 지정 → 자동계산 안 함
 
-    const total = Number(east) + Number(south) + Number(west);
+    // 나머지 3자리가 모두 유효한 숫자인지
+    const others = keys.filter((k) => k !== autoTarget);
+    for (const k of others) {
+      const v = records[k].score;
+      if (v === '' || v === '-') return;
+      if (Number.isNaN(Number(v))) return;
+    }
 
+    const total = others.reduce((sum, k) => sum + Number(records[k].score), 0);
     const refund = Number(refundData) || 0;
+    const computed = String(refund - total);
 
-    setRecords((prev) => ({
-      ...prev,
-      NORTH: {
-        ...prev.NORTH,
-        score: String(refund - total),
-      },
-    }));
-  }, [records.EAST.score, records.SOUTH.score, records.WEST.score, refundData]);
+    if (records[autoTarget].score !== computed) {
+      const target = autoTarget;
+      setRecords((prev) => ({
+        ...prev,
+        [target]: { ...prev[target], score: computed },
+      }));
+    }
+  }, [
+    records.EAST.score,
+    records.SOUTH.score,
+    records.WEST.score,
+    records.NORTH.score,
+    refundData,
+    scoreEditTime,
+  ]);
 
   //닉네임 검색시 닉네임선택
   useEffect(() => {
@@ -540,6 +613,11 @@ export default function Write() {
           return (
             <Center key={key} $color={color}>
               <h4>{label}</h4>
+              <ActionsRow>
+                <MeButton type="button" onClick={() => handleSelfFillRecord(key)}>
+                  내 닉네임
+                </MeButton>
+              </ActionsRow>
               <WriteCroup>
                 <FieldsWrapper>
                   <Field className="search">
@@ -582,31 +660,40 @@ export default function Write() {
                       <SignButton
                         type="button"
                         aria-label="부호 변경"
-                        onClick={() =>
-                          setRecords((prev) => {
-                            const v = prev[key].score;
-                            if (v === '' || v === '0') return prev;
-                            const flipped = v.startsWith('-') ? v.slice(1) : '-' + v;
-                            return { ...prev, [key]: { ...prev[key], score: flipped } };
-                          })
-                        }
+                        onClick={() => {
+                          const v = records[key].score;
+                          if (v === '0') return;
+                          const next = v === ''
+                            ? '-'
+                            : v.startsWith('-')
+                            ? v.slice(1)
+                            : '-' + v;
+                          setRecords((prev) => ({
+                            ...prev,
+                            [key]: { ...prev[key], score: next },
+                          }));
+                          markScoreEdited(key, next);
+                        }}
                       >
                         ±
                       </SignButton>
                     </ScoreLabelRow>
                     <input
-                      type="number"
-                      step="1"
+                      type="text"
+                      inputMode="numeric"
                       value={row.score}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (!/^-?\d*$/.test(v)) return;
                         setRecords((prev) => ({
                           ...prev,
                           [key]: {
                             ...prev[key],
-                            score: e.target.value,
+                            score: v,
                           },
-                        }))
-                      }
+                        }));
+                        markScoreEdited(key, v);
+                      }}
                     />
                   </Field>
                 </FieldsWrapper>
@@ -648,14 +735,19 @@ export default function Write() {
 
           return (
             <Center key={`yakuman-${idx}`} $color="#f3f3f3">
-              <Button
-                onClick={() => {
-                  setYakumanRows((prev) => prev.filter((_, i) => i !== idx));
-                  setHeroImages((prev) => prev.filter((_, i) => i !== idx));
-                }}
-              >
-                <TrashSimple weight="bold" />
-              </Button>
+              <ActionsRow>
+                <MeButton type="button" onClick={() => handleSelfFillYakuman(idx)}>
+                  내 닉네임
+                </MeButton>
+                <Button
+                  onClick={() => {
+                    setYakumanRows((prev) => prev.filter((_, i) => i !== idx));
+                    setHeroImages((prev) => prev.filter((_, i) => i !== idx));
+                  }}
+                >
+                  <TrashSimple weight="bold" />
+                </Button>
+              </ActionsRow>
               <WriteCroup>
                 <FieldsWrapper>
                   {/* 닉네임 검색 */}
@@ -1211,6 +1303,48 @@ const WriteCroup = styled.div`
     &::placeholder {
       color: ${({ theme }) => theme.colors.grayColor};
     }
+  }
+`;
+
+const MeButton = styled.button`
+  && {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #4f7cac;
+    color: ${({ theme }) => theme.colors.whiteColor};
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: ${({ theme }) => theme.desktop.sizes.xs};
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.15);
+
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: ${({ theme }) => theme.mobile.sizes.xs};
+      padding: 6px 10px;
+    }
+  }
+
+  &&:hover {
+    opacity: 0.85;
+  }
+`;
+
+const ActionsRow = styled.div`
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 0;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    padding: 8px 12px 0;
+  }
+
+  && > button {
+    margin: 0;
   }
 `;
 
