@@ -43,5 +43,42 @@ async function fetchRankList(): Promise<LankPage | null> {
 
 export default async function RankPage() {
   const initialData = await fetchRankList();
-  return <RankClient initialData={initialData} />;
+
+  const pageUrl = 'https://bgmagit.co.kr/record/rank';
+  const today = new Date();
+  const periodLabel = `${today.getFullYear()}년 ${today.getMonth() + 1}월`;
+
+  const itemListElements = (initialData?.content ?? []).map((item, idx) => ({
+    '@type': 'ListItem',
+    position: idx + 1,
+    name: `${item.rank}위 ${item.memberNickname} (총점 ${item.recordSumPoint}, 평균순위 ${item.avgRank})`,
+  }));
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': `${pageUrl}#webpage`,
+    url: pageUrl,
+    name: '랭킹 | BGM 아지트 BML',
+    description:
+      'BGM 아지트 BML 주간/월간 마작 랭킹 — 멤버별 순위, 평균 순위, 1·2위율, 토비율 등 통계를 확인하세요.',
+    inLanguage: 'ko-KR',
+    isPartOf: { '@id': 'https://bgmagit.co.kr/record/#website' },
+    mainEntity: {
+      '@type': 'ItemList',
+      name: `BGM 아지트 BML 마작 랭킹 (${periodLabel})`,
+      numberOfItems: itemListElements.length,
+      itemListElement: itemListElements,
+    },
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <RankClient initialData={initialData} />
+    </>
+  );
 }
