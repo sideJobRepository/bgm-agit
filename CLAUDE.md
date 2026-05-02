@@ -195,13 +195,10 @@ kml:
 
 ## 운영상 주의사항 (현장에서 겪은 이슈)
 
-1. **KML 서버가 종종 502** — 스케줄러가 자동 커버하지만, curl로 상태 확인 가능
-   ```bash
-   curl -I -H "x-api-key: BgmAgit" https://kml.or.kr/stat52/api_users.php
-   ```
-2. **KML 닉네임 중복** — 동일 닉네임 여러 명 있을 수 있음. 단건일 때만 자동 연결, 다건은 `AMBIGUOUS` 취급되어 스케줄러도 연결·자동 등록 안 함 (수동 개입 필요). 0건일 때만 신규 등록함
-3. **회원가입 시 알림톡 발행은 주석처리** — 활성화 하려면 `SignupServiceImpl`의 `eventPublisher.publishEvent(...)` 주석 해제
-4. **소셜·폼 닉네임 네임스페이스 분리** — `findByBgmAgitMemberNickname` 같은 무조건 조회는 버그. 항상 `AndSocialType` 버전 사용
+
+1.**KML 닉네임 중복** — 동일 닉네임 여러 명 있을 수 있음. 단건일 때만 자동 연결, 다건은 `AMBIGUOUS` 취급되어 스케줄러도 연결·자동 등록 안 함 (수동 개입 필요). 0건일 때만 신규 등록함
+2.**회원가입 시 알림톡 발행은 주석처리** — 활성화 하려면 `SignupServiceImpl`의 `eventPublisher.publishEvent(...)` 주석 해제
+3.**소셜·폼 닉네임 네임스페이스 분리** — `findByBgmAgitMemberNickname` 같은 무조건 조회는 버그. 항상 `AndSocialType` 버전 사용
 
 ## 아직 안 한 것 (TODO 후보)
 
