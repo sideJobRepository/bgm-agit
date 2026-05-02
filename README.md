@@ -29,7 +29,7 @@
 
 ## KML 연동
 
-KML에 발급받은 stat 번호(`stat52`)에 `x-api-key: BgmAgit` 헤더로 호출.
+KML에 발급받은 stat 번호(`stat52`)에 `x-api-key: ${KML_API_KEY}` 헤더로 호출.
 
 | 엔드포인트 | 용도 | 호출 시점 |
 |---|---|---|
