@@ -71,7 +71,7 @@ npm install && npm run dev          # http://localhost:3000/record
 
 API 환경변수(`application-*.yml`):
 - `kml.url` — `https://kml.or.kr/stat52`
-- `kml.api.key` — `BgmAgit`
+- `kml.api.key` — `${KML_API_KEY}`
 - `cookie.secure` — 운영은 true, 로컬은 false
 
 ## 데이터베이스
