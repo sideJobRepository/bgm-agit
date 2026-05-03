@@ -16,6 +16,7 @@ import { Check, Plus, TrashSimple } from 'phosphor-react';
 import { useDetailRecordStore, useYakumanStore } from '@/store/record';
 import { useInsertPost, useUpdatePost } from '@/services/main.service';
 import { alertDialog, confirmDialog } from '@/utils/alert';
+import Swal from 'sweetalert2';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useFetchSettingRefund } from '@/services/setting.service';
 import { useSettingRefundStore } from '@/store/setting';
@@ -284,9 +285,28 @@ export default function Write() {
         };
       });
 
+    const passwordResult = await Swal.fire({
+      title: '점수 입력 비밀번호',
+      input: 'password',
+      inputLabel: '관리자가 설정한 비밀번호를 입력해주세요.',
+      inputAttributes: {
+        autocomplete: 'current-password',
+      },
+      showCancelButton: true,
+      confirmButtonText: detailId ? '수정' : '등록',
+      cancelButtonText: '취소',
+      reverseButtons: true,
+      confirmButtonColor: '#4A90E2',
+      cancelButtonColor: '#757575',
+    });
+
+    if (!passwordResult.isConfirmed) return;
+    const password = passwordResult.value ?? '';
+
     const body: Record<string, unknown> = {
       wind: leader,
       tournamentStatus,
+      password,
       records: rankedRecords
         .filter((r) => r.memberId)
         .map((r) => {

@@ -55,11 +55,13 @@ import java.util.List;
 public class RecordPutRequest {
 
     private Long matchsId;
-    
+
     private MatchsWind wind;
-    
+
     private String tournamentStatus;
-    
+
+    private String password;
+
     @NotBlank(message = "수정 사유를 입력해주세요")
     private String changeReason;
     
