@@ -6,9 +6,10 @@ import { withBasePath } from '@/lib/path';
 
 import React, { useEffect, useState } from 'react';
 
-import { Check } from 'phosphor-react';
+import { Check, Key } from 'phosphor-react';
 import { useInsertPost, useUpdatePost } from '@/services/main.service';
 import { alertDialog, confirmDialog } from '@/utils/alert';
+import Swal from 'sweetalert2';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useFetchSetting } from '@/services/setting.service';
 import { useSettingStore } from '@/store/setting';
@@ -16,6 +17,7 @@ import { useUserStore } from '@/store/user';
 
 export default function Write() {
   const { insert } = useInsertPost();
+  const { update } = useUpdatePost();
   const user = useUserStore((state) => state.user);
   const router = useRouter();
 
@@ -56,6 +58,40 @@ export default function Write() {
       ignoreErrorRedirect: true,
       onSuccess: async () => {
         await alertDialog('설정이 저장되었습니다.', 'success');
+      },
+    });
+  };
+
+  const handleChangeScorePassword = async () => {
+    const result = await Swal.fire({
+      title: '점수 입력 비밀번호 변경',
+      input: 'password',
+      inputLabel: '새 비밀번호 (4자 이상)',
+      inputAttributes: {
+        autocomplete: 'new-password',
+        minlength: '4',
+      },
+      showCancelButton: true,
+      confirmButtonText: '변경',
+      cancelButtonText: '취소',
+      reverseButtons: true,
+      confirmButtonColor: '#4A90E2',
+      cancelButtonColor: '#757575',
+      inputValidator: (value) => {
+        if (!value) return '비밀번호를 입력해주세요.';
+        if (value.length < 4) return '비밀번호는 최소 4자 이상이어야 합니다.';
+        return null;
+      },
+    });
+
+    if (!result.isConfirmed || !result.value) return;
+
+    update({
+      url: '/bgm-agit/score-password',
+      body: { password: result.value },
+      ignoreErrorRedirect: true,
+      onSuccess: async () => {
+        await alertDialog('비밀번호가 변경되었습니다.', 'success');
       },
     });
   };
@@ -151,6 +187,17 @@ export default function Write() {
             </FieldsWrapper>
           </WriteCroup>
         </Center>
+
+        <PasswordSection>
+          <PasswordInfo>
+            <h4>점수 입력 비밀번호</h4>
+            <p>기록 입력·수정 시 요구되는 비밀번호입니다. 미설정 시 검증 없이 통과됩니다.</p>
+          </PasswordInfo>
+          <PasswordButton type="button" onClick={handleChangeScorePassword}>
+            <Key weight="bold" />
+            변경
+          </PasswordButton>
+        </PasswordSection>
       </TableBox>
     </Wrapper>
   );
@@ -438,5 +485,66 @@ const Button = styled.button`
   svg {
     width: 16px;
     height: 16px;
+  }
+`;
+
+const PasswordSection = styled.section`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 20px 24px;
+  background-color: ${({ theme }) => theme.colors.recordBgColor};
+  border-radius: 4px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+  }
+`;
+
+const PasswordInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  h4 {
+    font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
+    font-weight: 600;
+    color: ${({ theme }) => theme.colors.blackColor};
+
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
+    }
+  }
+
+  p {
+    font-size: ${({ theme }) => theme.desktop.sizes.xs};
+    color: ${({ theme }) => theme.colors.grayColor};
+  }
+`;
+
+const PasswordButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  background-color: ${({ theme }) => theme.colors.blackColor};
+  color: ${({ theme }) => theme.colors.whiteColor};
+  font-size: ${({ theme }) => theme.desktop.sizes.sm};
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    opacity: 0.85;
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
   }
 `;

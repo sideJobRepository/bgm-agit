@@ -56,8 +56,11 @@ import java.util.List;
 public class RecordPostRequest {
 
     private MatchsWind wind;
-    
+
     private String tournamentStatus;
+
+    private String password;
+
     @Valid
     private List<Records> records;
     @Valid

@@ -12,6 +12,7 @@ import com.bgmagitapi.kml.history.service.MatchsAndRecordHistoryService;
 import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.matchs.repository.MatchsRepository;
+import com.bgmagitapi.kml.password.service.BgmAgitPasswordService;
 import com.bgmagitapi.kml.record.dto.request.RecordPostRequest;
 import com.bgmagitapi.kml.record.dto.request.RecordPutRequest;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
@@ -58,6 +59,8 @@ public class RecordServiceImpl implements RecordService {
     private final MatchsAndRecordHistoryService matchsAndRecordHistoryService;
 
     private final BgmAgitFileService bgmAgitFileService;
+
+    private final BgmAgitPasswordService bgmAgitPasswordService;
 
     private final ApplicationEventPublisher eventPublisher;
     
@@ -146,7 +149,9 @@ public class RecordServiceImpl implements RecordService {
     
     @Override
     public ApiResponse createRecord(RecordPostRequest request, Long memberId) {
-        
+
+        bgmAgitPasswordService.verify(request.getPassword());
+
         Integer sum = request.getRecords()
                 .stream()
                 .mapToInt(RecordPostRequest.Records::getRecordScore).sum();
@@ -300,6 +305,9 @@ public class RecordServiceImpl implements RecordService {
     
     @Override
     public ApiResponse updateRecord(RecordPutRequest request, Long requestMemberId) {
+
+        bgmAgitPasswordService.verify(request.getPassword());
+
         Long matchsId = request.getMatchsId();
         
         // Match 조회
