@@ -43,8 +43,9 @@ public class BgmAgitInquiryRepositoryImpl implements BgmAgitInquiryCustomReposit
         JPAQuery<Long> countQuery = queryFactory
                 .select(bgmAgitInquiry.count())
                 .from(bgmAgitInquiry)
-                .join(bgmAgitInquiry.bgmAgitMember, bgmAgitMember).fetchJoin()
-                .where(isUserFilter(memberId, isUser),bgmAgitInquiry.bgmAgitInquiryHierarchyId.isNull());
+                .where(isUserFilter(memberId, isUser),
+                       bgmAgitInquiry.bgmAgitInquiryHierarchyId.isNull(),
+                       titleOrContLikeIgnoreSpaces(titleOrCont));
         
         return PageableExecutionUtils.getPage(result, pageable, countQuery::fetchOne);
     }
