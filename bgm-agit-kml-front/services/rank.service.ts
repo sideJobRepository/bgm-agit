@@ -123,7 +123,7 @@ export function useFetchRankList() {
   const setRank = useRankListStore((state) => state.setRank);
 
   const fetchRank = (params: params) => {
-    request(() => api.get(`/bgm-agit/ranks?size=20`, { params }).then((res) => res.data), setRank, {
+    request(() => api.get(`/bgm-agit/ranks?size=100`, { params }).then((res) => res.data), setRank, {
       ignoreErrorRedirect: true,
     });
   };
