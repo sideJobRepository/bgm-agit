@@ -23,7 +23,7 @@ async function fetchRankList(): Promise<LankPage | null> {
 
   const today = new Date();
   const params = new URLSearchParams({
-    size: '20',
+    size: '100',
     page: '0',
     type: 'MONTHLY',
     year: String(today.getFullYear()),
