@@ -680,6 +680,9 @@ export default function Write() {
                       <SignButton
                         type="button"
                         aria-label="부호 변경"
+                        tabIndex={-1}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onTouchStart={(e) => e.preventDefault()}
                         onClick={() => {
                           const v = records[key].score;
                           if (v === '0') return;
