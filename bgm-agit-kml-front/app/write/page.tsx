@@ -634,7 +634,7 @@ export default function Write() {
             <Center key={key} $color={color}>
               <h4>{label}</h4>
               <ActionsRow>
-                <MeButton type="button" onClick={() => handleSelfFillRecord(key)}>
+                <MeButton type="button" tabIndex={-1} onClick={() => handleSelfFillRecord(key)}>
                   내 닉네임
                 </MeButton>
               </ActionsRow>
@@ -759,7 +759,7 @@ export default function Write() {
           return (
             <Center key={`yakuman-${idx}`} $color="#f3f3f3">
               <ActionsRow>
-                <MeButton type="button" onClick={() => handleSelfFillYakuman(idx)}>
+                <MeButton type="button" tabIndex={-1} onClick={() => handleSelfFillYakuman(idx)}>
                   내 닉네임
                 </MeButton>
                 <Button
