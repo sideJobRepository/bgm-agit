@@ -205,6 +205,7 @@ kml:
 - 닉네임 변경 시 KML synk 리셋
 - `AMBIGUOUS`(다건 매칭) 수동 해결 UI — 마이페이지에서 KML ID 직접 선택
 - `application-*.yml` 정리 (`kakao.redirecturi2`, `naver.redirecturi2`, `bgm-agit-kml-front`의 소셜 OAuth env vars)
+- **메인 퀵메뉴 추가** — `app/page.tsx`의 `QuickWrite(기록 입력하기)` 외에 자주 보는 페이지 진입용 퀵메뉴 추가 (랭킹/다국왕 등). 팀 논의 결과 "첫화면 직접 노출 vs 퀵메뉴" 중 **퀵메뉴 방향**으로 결정. 구현 시 정해야 할 것: 어떤 메뉴를 노출할지(월간 랭킹/주간 랭킹/다국왕 등), `QuickWrite`와 같은 스타일로 묶을지 그리드/행으로 새로 구성할지, 모바일 첫 화면에서 슬라이더가 밀리지 않게 높이 조절
 
 ## 자주 쓰는 경로
 

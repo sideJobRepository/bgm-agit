@@ -5,11 +5,38 @@ import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { withBasePath } from '@/lib/path';
 import Link from 'next/link';
-import { ArrowRight, HandPointing, PencilSimple } from 'phosphor-react';
+import {
+  ArrowRight,
+  Bell,
+  BookOpen,
+  CalendarBlank,
+  ChartLineUp,
+  Crown,
+  Gear,
+  GraduationCap,
+  HandPointing,
+  PencilSimple,
+  SlidersHorizontal,
+  Trophy,
+} from 'phosphor-react';
 import { useMediaQuery } from 'react-responsive';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/store/user';
+import { useKmlMenuStore } from '@/store/menu';
 import { confirmDialog } from '@/utils/alert';
+
+const ICON_MAP = {
+  Bell,
+  BookOpen,
+  CalendarBlank,
+  ChartLineUp,
+  Crown,
+  Gear,
+  GraduationCap,
+  PencilSimple,
+  SlidersHorizontal,
+  Trophy,
+} as const;
 
 const INITIAL_CARDS = [
   {
@@ -52,8 +79,13 @@ const INITIAL_CARDS = [
 export default function Home() {
   const router = useRouter();
   const user = useUserStore((state) => state.user);
+  const menuData = useKmlMenuStore((state) => state.menu);
 
   const [mounted, setMounted] = useState(false);
+
+  const quickMenus = (menuData ?? []).filter(
+    (m) => m.menuLink !== '/sub' && m.menuLink !== '/my-page'
+  );
 
   const handleQuickWrite = async () => {
     if (!user) {
@@ -118,16 +150,33 @@ export default function Home() {
           여러분의 보드게임 이야기가 이곳에 쌓여갑니다.
         </h5>
       </Title>
-      <QuickWrite
-        onClick={handleQuickWrite}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-      >
-        <PencilSimple weight="bold" />
-        <span>기록 입력하기</span>
-        <ArrowRight weight="bold" />
-      </QuickWrite>
+      <QuickMenu>
+        <QuickItem
+          $primary
+          onClick={handleQuickWrite}
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+        >
+          <PencilSimple weight="bold" />
+          <span>기록 입력</span>
+        </QuickItem>
+        {quickMenus.map((m) => {
+          const Icon = ICON_MAP[m.icon as keyof typeof ICON_MAP];
+          return (
+            <QuickItem
+              key={m.id}
+              onClick={() => router.push(m.menuLink)}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+            >
+              {Icon && <Icon weight="bold" />}
+              <span>{m.menuName}</span>
+            </QuickItem>
+          );
+        })}
+      </QuickMenu>
       <Slider>
         {cards.slice(0, 3).map((card, i) => (
           <Card
@@ -271,35 +320,59 @@ const Title = styled.div`
   }
 `;
 
-const QuickWrite = styled(motion.button)`
-  align-self: center;
-  display: inline-flex;
+const QuickMenu = styled.div`
+  width: 96%;
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    gap: 8px;
+  }
+`;
+
+const QuickItem = styled(motion.button)<{ $primary?: boolean }>`
+  flex: 0 0 calc(25% - 9px);
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 14px 28px;
-  min-height: 52px;
-  border: none;
-  border-radius: 999px;
-  background: ${({ theme }) => theme.colors.writeBgColor};
-  color: ${({ theme }) => theme.colors.whiteColor};
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 8px;
+  min-height: 96px;
+
+  border: 1px solid
+    ${({ theme, $primary }) => ($primary ? 'transparent' : theme.colors.border)};
+  border-radius: 16px;
+  background: ${({ theme, $primary }) =>
+    $primary ? theme.colors.writeBgColor : theme.colors.softColor};
+  color: ${({ theme, $primary }) =>
+    $primary ? theme.colors.whiteColor : theme.colors.inputColor};
   font-size: ${({ theme }) => theme.desktop.sizes.h5Size};
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(74, 144, 226, 0.35);
+  box-shadow: ${({ $primary }) =>
+    $primary ? '0 6px 16px rgba(74, 144, 226, 0.35)' : '0 2px 6px rgba(0,0,0,0.04)'};
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: 28px;
+    height: 28px;
   }
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: 16px;
-    padding: 12px 22px;
-    min-height: 48px;
+    flex: 0 0 calc(25% - 6px);
+    font-size: 14px;
+    padding: 14px 4px;
+    min-height: 78px;
+    border-radius: 14px;
+    gap: 6px;
 
     svg {
-      width: 18px;
-      height: 18px;
+      width: 22px;
+      height: 22px;
     }
   }
 `;

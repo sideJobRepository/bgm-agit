@@ -91,6 +91,7 @@ export default function RankClient({ initialData }: Props) {
         header: '총점',
         align: 'center',
         nowrap: true,
+        sortable: true,
         render: (row) => row.recordSumPoint,
       },
       {
@@ -98,6 +99,7 @@ export default function RankClient({ initialData }: Props) {
         header: '1%',
         align: 'center',
         nowrap: true,
+        sortable: true,
         render: (row) => row.firstRate,
       },
       {
@@ -105,6 +107,7 @@ export default function RankClient({ initialData }: Props) {
         header: '12%',
         align: 'center',
         nowrap: true,
+        sortable: true,
         render: (row) => row.top2Rate,
       },
       {
@@ -112,6 +115,7 @@ export default function RankClient({ initialData }: Props) {
         header: '+%',
         align: 'center',
         nowrap: true,
+        sortable: true,
         render: (row) => row.plusRate,
       },
       {
@@ -119,6 +123,7 @@ export default function RankClient({ initialData }: Props) {
         header: '-2%',
         align: 'center',
         nowrap: true,
+        sortable: true,
         render: (row) => row.minus2Rate,
       },
       {
@@ -126,6 +131,7 @@ export default function RankClient({ initialData }: Props) {
         header: '+3%',
         align: 'center',
         nowrap: true,
+        sortable: true,
         render: (row) => row.plus3Rate,
       },
       {
@@ -133,6 +139,7 @@ export default function RankClient({ initialData }: Props) {
         header: '4%',
         align: 'center',
         nowrap: true,
+        sortable: true,
         render: (row) => row.fourthRate,
       },
       {
@@ -140,6 +147,7 @@ export default function RankClient({ initialData }: Props) {
         header: '토비%',
         align: 'center',
         nowrap: true,
+        sortable: true,
         render: (row) => row.tobiRate,
       },
       {
@@ -147,6 +155,7 @@ export default function RankClient({ initialData }: Props) {
         header: '토비3%',
         align: 'center',
         nowrap: true,
+        sortable: true,
         render: (row) => row.tobiMinus3Rate,
       },
 
@@ -156,6 +165,7 @@ export default function RankClient({ initialData }: Props) {
         header: '1',
         align: 'center',
         nowrap: true,
+        sortable: true,
         render: (row) => row.firstCount,
       },
       {
@@ -163,6 +173,7 @@ export default function RankClient({ initialData }: Props) {
         header: '2',
         align: 'center',
         nowrap: true,
+        sortable: true,
         render: (row) => row.secondCount,
       },
       {
@@ -170,6 +181,7 @@ export default function RankClient({ initialData }: Props) {
         header: '3',
         align: 'center',
         nowrap: true,
+        sortable: true,
         render: (row) => row.thirdCount,
       },
       {
@@ -177,6 +189,7 @@ export default function RankClient({ initialData }: Props) {
         header: '4',
         align: 'center',
         nowrap: true,
+        sortable: true,
         render: (row) => row.fourthCount,
       },
 
@@ -185,6 +198,7 @@ export default function RankClient({ initialData }: Props) {
         header: '순위%',
         align: 'center',
         nowrap: true,
+        sortable: true,
         render: (row) => row.avgRank,
       },
       {
@@ -192,6 +206,7 @@ export default function RankClient({ initialData }: Props) {
         header: '국수',
         align: 'center',
         nowrap: true,
+        sortable: true,
         render: (row) => row.totalCount,
       },
     ],

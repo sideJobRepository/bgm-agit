@@ -1,11 +1,11 @@
 // BaseTable.tsx
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import styled from 'styled-components';
 import Pagination from '@/app/components/Pagination';
 import { useUserStore } from '@/store/user';
-import { PencilSimpleLine, MagnifyingGlass } from 'phosphor-react';
+import { CaretDown, CaretUp, MagnifyingGlass, PencilSimpleLine } from 'phosphor-react';
 import { usePathname } from 'next/navigation';
 import DatePicker from 'react-datepicker';
 import { ko } from 'date-fns/locale';
@@ -19,7 +19,11 @@ export interface BaseColumn<T> {
   align?: 'left' | 'center' | 'right';
   nowrap?: boolean;
   sticky?: boolean;
+  sortable?: boolean;
+  sortValue?: (row: T) => number | string | null | undefined;
 }
+
+type SortState = { key: string; dir: 'asc' | 'desc' } | null;
 
 interface BaseTableProps<T> {
   columns: BaseColumn<T>[];
@@ -74,6 +78,8 @@ export function BaseTable<T>({
   const pathname = usePathname();
   const isRankPage = pathname === '/rank';
 
+  const [sort, setSort] = useState<SortState>(null);
+
   // sticky 컬럼들의 누적 left offset (width는 px 형식이어야 함)
   const stickyOffsets = useMemo(() => {
     const offsets: (string | undefined)[] = [];
@@ -89,6 +95,38 @@ export function BaseTable<T>({
     });
     return offsets;
   }, [columns]);
+
+  const sortedData = useMemo(() => {
+    if (!sort) return data;
+    const col = columns.find((c) => c.key === sort.key);
+    if (!col) return data;
+    const getValue =
+      col.sortValue ?? ((row: T) => (row as Record<string, unknown>)[sort.key] as number | string);
+    const arr = [...data];
+    arr.sort((a, b) => {
+      const va = getValue(a);
+      const vb = getValue(b);
+      const aNullish = va === null || va === undefined || va === '';
+      const bNullish = vb === null || vb === undefined || vb === '';
+      if (aNullish && bNullish) return 0;
+      if (aNullish) return 1;
+      if (bNullish) return -1;
+      let cmp: number;
+      if (typeof va === 'number' && typeof vb === 'number') cmp = va - vb;
+      else cmp = String(va).localeCompare(String(vb), 'ko', { numeric: true });
+      return sort.dir === 'asc' ? cmp : -cmp;
+    });
+    return arr;
+  }, [data, sort, columns]);
+
+  const onHeaderClick = (col: BaseColumn<T>) => {
+    if (!col.sortable) return;
+    setSort((prev) => {
+      if (!prev || prev.key !== col.key) return { key: col.key, dir: 'desc' };
+      if (prev.dir === 'desc') return { key: col.key, dir: 'asc' };
+      return null;
+    });
+  };
 
   return (
     <TableBox data-pathname={pathname}>
@@ -206,25 +244,42 @@ export function BaseTable<T>({
         <Table>
           <thead>
             <tr>
-              {columns.map((col, i) => (
-                <Th
-                  key={col.key}
-                  $width={col.width}
-                  $sticky={!!col.sticky}
-                  style={col.sticky ? { left: stickyOffsets[i] } : undefined}
-                >
-                  {col.header}
-                </Th>
-              ))}
+              {columns.map((col, i) => {
+                const isSorted = sort?.key === col.key;
+                return (
+                  <Th
+                    key={col.key}
+                    $width={col.width}
+                    $sticky={!!col.sticky}
+                    $sortable={!!col.sortable}
+                    style={col.sticky ? { left: stickyOffsets[i] } : undefined}
+                    onClick={col.sortable ? () => onHeaderClick(col) : undefined}
+                  >
+                    <ThInner>
+                      {col.header}
+                      {col.sortable && (
+                        <SortIcons $active={isSorted}>
+                          <CaretUp
+                            weight={isSorted && sort?.dir === 'asc' ? 'fill' : 'regular'}
+                          />
+                          <CaretDown
+                            weight={isSorted && sort?.dir === 'desc' ? 'fill' : 'regular'}
+                          />
+                        </SortIcons>
+                      )}
+                    </ThInner>
+                  </Th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
-            {data.length === 0 ? (
+            {sortedData.length === 0 ? (
               <tr>
                 <EmptyTd colSpan={columns.length}>{emptyMessage}</EmptyTd>
               </tr>
             ) : (
-              data.map((row, index) => (
+              sortedData.map((row, index) => (
                 <Tr
                   key={index}
                   className={getRowClassName?.(row, index)}
@@ -317,11 +372,21 @@ const Th = styled.th<{
   $width?: string;
   $align?: 'left' | 'center' | 'right';
   $sticky?: boolean;
+  $sortable?: boolean;
 }>`
   white-space: nowrap;
   font-weight: 600;
   text-align: center;
   width: ${({ $width }) => $width ?? 'auto'};
+  cursor: ${({ $sortable }) => ($sortable ? 'pointer' : 'default')};
+  user-select: ${({ $sortable }) => ($sortable ? 'none' : 'auto')};
+  ${({ $sortable }) =>
+    $sortable &&
+    `
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+  `}
   ${({ $sticky }) =>
     $sticky &&
     `
@@ -329,6 +394,27 @@ const Th = styled.th<{
     z-index: 3;
     background-color: #ffffff;
   `}
+`;
+
+const ThInner = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
+`;
+
+const SortIcons = styled.span<{ $active: boolean }>`
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 0;
+  color: ${({ $active, theme }) =>
+    $active ? theme.colors.inputColor : theme.colors.lineColor};
+
+  svg {
+    width: 10px;
+    height: 10px;
+    margin: -1px 0;
+  }
 `;
 
 const Td = styled.td<{
