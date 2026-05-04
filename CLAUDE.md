@@ -193,6 +193,27 @@ kml:
 - repository는 `LocalDateTime` 범위로 비교 (`record.registDate.goe(start).and(.lt(end))`)
 - 프론트 UI: `BaseTable`이 `rankType` 따라 주 픽커 / 년월 픽커 / datetime 두 개로 분기
 
+### 개인기록 (memberId 기준)
+랭킹 표 닉네임 클릭 → `/rank/{memberId}`로 진입. 차트·단(段) 시스템 안 씀, 표·카드 중심 (실용적 방향).
+- 백엔드: `RankServiceImpl.findMemberStats / findMemberRecentGames`, 쿼리는 `RankRepository`에 4개 메서드(`findMemberCards / findMemberSeatStats / findMemberTopRivals / findMemberMatchIds`)
+  - `GET /bgm-agit/ranks/{memberId}/stats?year=` — 카드 통계(총국수/평균순위/총승점/1·4위/토비/+30000/-2등) + 자리별×순위별 표(동·남·서·북장 각각, 1~4위 + 토비 행) + 같이 친 TOP3
+  - `GET /bgm-agit/ranks/{memberId}/games?page=&year=` — 최근 경기 페이징. matchs id를 본인 record로 페이징 → `RecordRepository.findRecordsByMatchIds`로 4명 record 묶어 반환
+  - `year` 생략 = 전체 기간
+- 프론트: `app/rank/[memberId]/page.tsx` + `MemberRankClient.tsx` — **CSR (SSR 안 씀)**. styled-components로 작성, 외부 차트 라이브러리 의존 없음
+- 진입 동선:
+  - `app/rank/RankClient.tsx`의 닉네임 셀 → `Link href="/rank/{memberId}"`
+  - 메인 퀵메뉴 "내 기록"(로그인 시 노출, `UserCircle` 아이콘) → `/rank/{user.id}`
+  - DB 메뉴로 등록할 땐 `/my-rank`로 적기 — `app/my-rank/page.tsx`가 본인 id로 redirect (비로그인이면 `/login?redirect=/my-rank`)
+- 자리별 표 비율 규약 (스샷 기준):
+  - **전체%** = 그 wind 총국수 분모
+  - **동·남·서·북%** = 그 자리에 앉은 합계(rank 1~4 합) 분모. 토비 행도 동일 분모
+  - 표시: 소수점 2자리, 끝의 0 자동 제거 (`23.80%` → `23.8%`, `25.00%` → `25%`)
+- **QueryDSL 함정** — 이 프로젝트 환경에서 다음이 컴파일 실패:
+  - `new CaseBuilder().when(...).then(1L).otherwise(0L).sum()` → `method sum cannot be applied: required: Class<P>`
+  - `record.recordPoint.sum()`, `record.recordRank.avg()` 등 NumberPath 인스턴스 집계 메서드도 동일 증상
+  - 우회: 모두 `Expressions.numberTemplate(Long.class, "SUM({0})", flag)` / `Expressions.numberTemplate(Double.class, "AVG({0})", path)` 패턴으로. 기존 `findRanks` 메서드도 같은 패턴 사용 중
+- **RecordQueryRepository 주입 충돌** — 인터페이스로 주입하면 `RecordRepository`(JpaRepository extends) + `RecordRepositoryImpl` 두 빈이 매칭되어 기동 실패. 주입은 항상 `RecordRepository`로 (다른 서비스도 모두 그렇게 함)
+
 ## 운영상 주의사항 (현장에서 겪은 이슈)
 
 
