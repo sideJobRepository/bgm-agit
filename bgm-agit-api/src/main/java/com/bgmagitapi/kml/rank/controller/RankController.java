@@ -1,6 +1,8 @@
 package com.bgmagitapi.kml.rank.controller;
 
 
+import com.bgmagitapi.kml.rank.dto.response.MemberRecentGameResponse;
+import com.bgmagitapi.kml.rank.dto.response.MemberStatsResponse;
 import com.bgmagitapi.kml.rank.dto.response.RankGetResponse;
 import com.bgmagitapi.kml.rank.enums.RankType;
 import com.bgmagitapi.kml.rank.service.RankServiceImpl;
@@ -11,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,5 +43,22 @@ public class RankController {
         LocalDate parsedDate = baseDate != null ? LocalDate.parse(baseDate) : null;
         Page<RankGetResponse> ranks = rankService.findRanks(type, parsedDate, year, month, startDateTime, endDateTime, pageable);
         return PageResponse.from(ranks);
+    }
+
+    @GetMapping("/ranks/{memberId}/stats")
+    public MemberStatsResponse getMemberStats(
+            @PathVariable Long memberId,
+            @RequestParam(required = false) Integer year
+    ) {
+        return rankService.findMemberStats(memberId, year);
+    }
+
+    @GetMapping("/ranks/{memberId}/games")
+    public PageResponse<MemberRecentGameResponse> getMemberRecentGames(
+            @PathVariable Long memberId,
+            @RequestParam(required = false) Integer year,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        return PageResponse.from(rankService.findMemberRecentGames(memberId, year, pageable));
     }
 }

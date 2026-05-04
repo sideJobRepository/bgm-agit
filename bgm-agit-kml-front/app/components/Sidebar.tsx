@@ -129,6 +129,8 @@ export default function Sidebar() {
   useEffect(() => {
     // 모바일시 메뉴 이동시 메뉴 닫히게
     if (isOpen) setIsOpen(false);
+    // 라우트 변경 시 펼쳐진 sub 드롭다운 닫기
+    setOpenSubMenuId(null);
   }, [pathname]);
 
   useEffect(() => {
@@ -228,7 +230,7 @@ export default function Sidebar() {
                         {IconComponent && <IconComponent weight="fill" />}
                         {menu.menuName}
                       </a>
-                    ) : menu.menuLink !== '/sub' ? (
+                    ) : menu.menuLink && menu.menuLink !== '/sub' ? (
                       <Link href={menu?.menuLink}>
                         {IconComponent && <IconComponent weight="fill" />}
                         {menu.menuName}
@@ -261,6 +263,22 @@ export default function Sidebar() {
                             >
                               {menu.subMenus?.map((sub: any) => {
                                 const SubIcon = iconMap[sub.icon as keyof typeof iconMap];
+                                if (sub.menuLink === '/my-page') {
+                                  return (
+                                    <MenuLi key={sub.id} $active={false}>
+                                      <a
+                                        href="#"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          openMyPage();
+                                        }}
+                                      >
+                                        {SubIcon && <SubIcon weight="fill" />}
+                                        {sub.menuName}
+                                      </a>
+                                    </MenuLi>
+                                  );
+                                }
                                 return (
                                   <MenuLi key={sub.id} $active={pathname === sub.menuLink}>
                                     <Link href={sub.menuLink}>
@@ -412,7 +430,7 @@ const SidebarWrapper = styled(motion.aside)`
   width: 100%;
   height: 100%;
   background: ${({ theme }) => theme.colors.whiteColor};
-  overflow-y: auto;
+  overflow: visible;
   border-bottom: 10px solid rgb(244 244 245);
 
   @media ${({ theme }) => theme.device.tablet} {
@@ -424,6 +442,7 @@ const SidebarWrapper = styled(motion.aside)`
     padding-top: 20px;
     z-index: 1;
     flex-direction: column;
+    overflow-y: auto;
     border: 20px solid rgb(244 244 245);
   }
 `;
@@ -445,9 +464,19 @@ const MainUl = styled.ul`
 const SubUl = styled(motion.ul)`
   display: flex;
   flex-direction: column;
-  // padding: 0 24px;
-  gap: 12px;
+  gap: 8px;
   overflow: hidden;
+
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  background: ${({ theme }) => theme.colors.whiteColor};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 12px;
+  padding: 8px 12px;
+  min-width: 160px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
 
   a {
     font-size: ${({ theme }) => theme.desktop.sizes.md};
@@ -456,6 +485,15 @@ const SubUl = styled(motion.ul)`
       width: 14px;
       height: 14px;
     }
+  }
+
+  @media ${({ theme }) => theme.device.tablet} {
+    position: static;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0 0 0 16px;
+    min-width: unset;
   }
 `;
 
@@ -487,6 +525,7 @@ const MiddleSeciton = styled.div`
 `;
 
 const MenuLi = styled.li<{ $active: boolean }>`
+  position: relative;
   display: flex;
   gap: 24px;
   padding: 12px 16px;
@@ -515,6 +554,8 @@ const MenuLi = styled.li<{ $active: boolean }>`
 
   @media ${({ theme }) => theme.device.tablet} {
     flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 `;
 
