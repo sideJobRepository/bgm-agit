@@ -130,6 +130,18 @@ kml:
   - 표는 모바일에서 부모에 `overflow-x: auto`, table에 `min-width` 두고 가로 스크롤
   - `Wrapper`의 `min-width: 1280px`은 `@media tablet` 블록에서 `100%`로 풀어줘야 함
 
+### 사이드바 sub 메뉴 (`Sidebar.tsx`)
+DB의 `BGM_AGIT_KML_MENU.BGM_AGIT_KML_SUB_MENU_ID`가 부모 메뉴 ID. 백엔드(`KmlMenuServiceImpl`)에서 `parentMenuId`로 트리 구성, `subMenus[]` 배열로 묶어 반환.
+- **부모 메뉴 분기 (Sidebar)**:
+  - `menuLink === '/my-page'` → 마이페이지 모달 오픈
+  - `!menuLink || menuLink === '/sub'` → sub 펼침 토글 (link 없는 부모도 sub 컨테이너로 동작)
+  - 그 외 → 일반 `<Link>`
+- **sub 안 `/my-page`** 도 모달 오픈 (마이페이지를 sub로 옮긴 경우 대응)
+- 데스크탑: sub `position: absolute` 드롭다운. **`SidebarWrapper { overflow: visible }`** 필수 — 헤더가 가로 일렬이라 absolute로 안 띄우면 다른 메뉴가 밀리거나 잘림
+- 태블릿/모바일: sub `position: static` 인라인 펼침 + `padding-left: 16px` 들여쓰기. `SidebarWrapper { overflow-y: auto }`
+- 라우트 변경 시 `setOpenSubMenuId(null)` (펼친 채 남는 버그 방지)
+- **메인 페이지 `quickMenus` 필터** — `!!menuLink && menuLink !== '/sub' && menuLink !== '/my-page'`. 즉 link 없는 부모도 제외 (root만 단일 액션 가능, 부모는 sub 컨테이너 역할이라 메인 퀵메뉴엔 안 띄움)
+
 ## SSR / SEO 패턴 (kml-front)
 
 ### Hybrid SSR
@@ -226,12 +238,18 @@ kml:
 - 닉네임 변경 시 KML synk 리셋
 - `AMBIGUOUS`(다건 매칭) 수동 해결 UI — 마이페이지에서 KML ID 직접 선택
 - `application-*.yml` 정리 (`kakao.redirecturi2`, `naver.redirecturi2`, `bgm-agit-kml-front`의 소셜 OAuth env vars)
-- **메인 퀵메뉴 추가** — `app/page.tsx`의 `QuickWrite(기록 입력하기)` 외에 자주 보는 페이지 진입용 퀵메뉴 추가 (랭킹/다국왕 등). 팀 논의 결과 "첫화면 직접 노출 vs 퀵메뉴" 중 **퀵메뉴 방향**으로 결정. 구현 시 정해야 할 것: 어떤 메뉴를 노출할지(월간 랭킹/주간 랭킹/다국왕 등), `QuickWrite`와 같은 스타일로 묶을지 그리드/행으로 새로 구성할지, 모바일 첫 화면에서 슬라이더가 밀리지 않게 높이 조절
+- **메인 퀵메뉴 추가** — *부분 진행 중*. 로그인 사용자에게 "내 기록"(`/rank/{user.id}`) QuickItem 추가됨 (`UserCircle` 아이콘). 추가 후보(월간 랭킹/주간 랭킹/다국왕 등)와 그리드/행 레이아웃·모바일 슬라이더 높이는 미결.
+- **개인기록 더보기 영역 미구현** — 스샷에 있던 "월간/주간/요일별/시간대별 성적·역만·기록" 링크 라인은 `/rank/[memberId]`에 안 들어갔음
+- **외부 클릭 시 사이드바 sub 자동 닫기 미구현** — 현재는 라우트 변경 시에만 닫힘
+- **새 엔드포인트 권한 매핑** — `/bgm-agit/ranks/{memberId}/stats`, `/bgm-agit/ranks/{memberId}/games`, `/my-rank` 라우트가 `BGM_AGIT_URL_RESOURCES` / `BGM_AGIT_KML_MENU_ROLE`에 등록 안 됐을 수 있음. 기존 `/bgm-agit/ranks` 권한과 동일하게 추가 필요
 
 ## 자주 쓰는 경로
 
 - 인증/시큐리티: `bgm-agit-api/src/main/java/com/bgmagitapi/security/`
 - KML 연동: `bgm-agit-api/src/main/java/com/bgmagitapi/security/service/kml/`
 - 도메인 패키지: `bgm-agit-api/src/main/java/com/bgmagitapi/kml/{lecture,notice,record,rank,...}/`
+- 랭킹·개인기록: `bgm-agit-api/.../kml/rank/{controller,service,repository,dto/response}/`
 - 프론트 로그인/가입: `bgm-agit-kml-front/app/{login,signup}/page.tsx`
 - 프론트 인증 서비스: `bgm-agit-kml-front/services/auth.service.ts`
+- 프론트 개인기록: `bgm-agit-kml-front/app/rank/[memberId]/{page,MemberRankClient}.tsx`, `app/my-rank/page.tsx`
+- 프론트 사이드바: `bgm-agit-kml-front/app/components/Sidebar.tsx`
