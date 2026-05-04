@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import styled, { keyframes } from 'styled-components';
 import { withBasePath } from '@/lib/path';
@@ -84,7 +85,7 @@ export default function RankClient({ initialData }: Props) {
         nowrap: true,
         sticky: true,
         width: '120px',
-        render: (row) => row.memberNickname,
+        render: (row) => <NicknameLink href={`/rank/${row.memberId}`}>{row.memberNickname}</NicknameLink>,
       },
       {
         key: 'recordSumPoint',
@@ -409,6 +410,15 @@ const HeroContent = styled.div`
 const TableBox = styled.div`
   width: 100%;
   overflow: hidden;
+`;
+
+const NicknameLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.writeBgColor};
+  font-weight: 600;
+  text-decoration: none;
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 const shimmer = keyframes`

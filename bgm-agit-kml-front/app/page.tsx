@@ -18,6 +18,7 @@ import {
   PencilSimple,
   SlidersHorizontal,
   Trophy,
+  UserCircle,
 } from 'phosphor-react';
 import { useMediaQuery } from 'react-responsive';
 import { useRouter } from 'next/navigation';
@@ -84,7 +85,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
 
   const quickMenus = (menuData ?? []).filter(
-    (m) => m.menuLink !== '/sub' && m.menuLink !== '/my-page'
+    (m) => !!m.menuLink && m.menuLink !== '/sub' && m.menuLink !== '/my-page'
   );
 
   const handleQuickWrite = async () => {
@@ -161,6 +162,17 @@ export default function Home() {
           <PencilSimple weight="bold" />
           <span>기록 입력</span>
         </QuickItem>
+        {user && (
+          <QuickItem
+            onClick={() => router.push(`/rank/${user.id}`)}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+          >
+            <UserCircle weight="bold" />
+            <span>내 기록</span>
+          </QuickItem>
+        )}
         {quickMenus.map((m) => {
           const Icon = ICON_MAP[m.icon as keyof typeof ICON_MAP];
           return (
