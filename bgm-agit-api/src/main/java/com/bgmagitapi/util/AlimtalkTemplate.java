@@ -15,7 +15,9 @@ public interface AlimtalkTemplate {
     String 	BGMAGIT_RES_LECTURE_CANCEL1 = "bgmagit-res-lecture-cancel1-2"; // 사용자가 마작강의 취소했을때
     
     String 	BGMAGIT_RES_LECTURE_CANCEL2 = "bgmagit-res-lecture-cancel2-2"; // 관리자가 마작강의 취소했을때
-    
-    
-    
+
+    String BGMAGIT_BML_MATCH = "bgmagit-bml-match"; // 대국 기록 등록 시 대국자에게 발송
+
+
+
 }

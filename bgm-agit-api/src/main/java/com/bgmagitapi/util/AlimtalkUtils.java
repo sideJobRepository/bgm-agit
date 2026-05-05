@@ -335,6 +335,62 @@ public class AlimtalkUtils {
     }
     
     
+    /**
+     * 점수 포맷: 38100 → "38,100"
+     */
+    public static String formatMatchScore(Integer score) {
+        if (score == null) return "-";
+        return String.format("%,d", score);
+    }
+
+    /**
+     * 승점 포맷: 18.1 → "+18.1", -39.6 → "-39.6", 0 → "0.0"
+     */
+    public static String formatMatchPoint(Double point) {
+        if (point == null) return "-";
+        return point > 0 ? String.format("+%.1f", point) : String.format("%.1f", point);
+    }
+
+    /**
+     * BGM 아지트 BML 대국 기록 안내
+     * 템플릿코드: bgmagit-bml-match
+     *
+     * @param recordId      대국 기록 ID
+     * @param recordDate    기록일자 (예: "2026-04-30 22:11:22")
+     * @param eastNickname  동가 닉네임
+     * @param eastScore     동가 점수 (예: "38,100")
+     * @param eastPoint     동가 승점 (예: "+18.1")
+     * @param southNickname 남가 닉네임
+     * @param southScore    남가 점수
+     * @param southPoint    남가 승점
+     * @param westNickname  서가 닉네임
+     * @param westScore     서가 점수
+     * @param westPoint     서가 승점
+     * @param northNickname 북가 닉네임
+     * @param northScore    북가 점수
+     * @param northPoint    북가 승점
+     */
+    public static String buildMatchsRecordMessage(
+            Long recordId,
+            String recordDate,
+            String eastNickname, String eastScore, String eastPoint,
+            String southNickname, String southScore, String southPoint,
+            String westNickname, String westScore, String westPoint,
+            String northNickname, String northScore, String northPoint
+    ) {
+        return new StringBuilder()
+                .append("[BGM 아지트 BML 기록 안내]\n\n")
+                .append("ID: ").append(recordId).append("\n")
+                .append("기록일자: ").append(recordDate).append("\n\n")
+                .append("東 ").append(eastNickname).append(" ").append(eastScore).append(" (").append(eastPoint).append(")\n")
+                .append("南 ").append(southNickname).append(" ").append(southScore).append(" (").append(southPoint).append(")\n")
+                .append("西 ").append(westNickname).append(" ").append(westScore).append(" (").append(westPoint).append(")\n")
+                .append("北 ").append(northNickname).append(" ").append(northScore).append(" (").append(northPoint).append(")\n\n")
+                .append("자세한 내용은 BGM 아지트 BML 사이트에서 확인해 주세요")
+                .toString();
+    }
+
+
     public static String buildReviewMessage(String userName, String title,String date, String times) {
         return new StringBuilder()
                 .append(("[BGM 아지트 리뷰 알림]\n\n"))
