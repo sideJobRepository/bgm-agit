@@ -18,4 +18,5 @@ public class BgmAgitMyPagePutRequest {
     private String phoneNo;
     private String nickNameUseStatus;
     private String mahjongUseStatus;
+    private String alimtalkStatus;
 }

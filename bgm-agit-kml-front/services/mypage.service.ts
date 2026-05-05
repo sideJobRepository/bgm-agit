@@ -9,6 +9,7 @@ export interface MyPageInfo {
   phoneNo: string;
   nickNameUseStatus: string | null;
   mahjongUseStatus: string | null;
+  alimtalkStatus: string | null;
   registDate: string;
 }
 
