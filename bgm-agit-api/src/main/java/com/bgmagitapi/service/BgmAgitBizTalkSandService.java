@@ -25,4 +25,5 @@ public interface BgmAgitBizTalkSandService {
     void sendLectureCancel1(MyAcademyCancelEvent event);
     void sendLectureCancel2(MyAcademyCancelEvent event);
     void sendReview(ReviewPostEvents e);
+    void sendMatchRecord(Long matchsId);
 }

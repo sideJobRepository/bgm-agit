@@ -5,6 +5,7 @@ import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.event.dto.KmlRecordModifyEvent;
 import com.bgmagitapi.event.dto.KmlRecordSubmitEvent;
+import com.bgmagitapi.event.dto.MatchRecordRegisteredEvent;
 import com.bgmagitapi.file.entity.BgmAgitFile;
 import com.bgmagitapi.file.enums.FileType;
 import com.bgmagitapi.file.service.BgmAgitFileService;
@@ -235,6 +236,8 @@ public class RecordServiceImpl implements RecordService {
         matchsAndRecordHistoryService.createMatchsAndRecordHistory(matchs, recordList);
 
         publishKmlSubmitEvent(matchs, recordList);
+
+        eventPublisher.publishEvent(new MatchRecordRegisteredEvent(matchs.getId()));
 
         return new ApiResponse(200, true, "기록이 저장되었습니다.");
     }

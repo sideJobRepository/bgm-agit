@@ -5,11 +5,16 @@ import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitReservation;
 import com.bgmagitapi.entity.enumeration.BgmAgitImageCategory;
+import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.entity.enumeration.BgmAgitSubject;
 import com.bgmagitapi.event.dto.InquiryEvent;
 import com.bgmagitapi.kml.lecture.dto.event.LecturePostEvent;
+import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.my.dto.events.MyAcademyApprovalEvent;
 import com.bgmagitapi.kml.my.dto.events.MyAcademyCancelEvent;
+import com.bgmagitapi.kml.record.entity.Record;
+import com.bgmagitapi.kml.record.enums.Wind;
+import com.bgmagitapi.kml.record.repository.RecordRepository;
 import com.bgmagitapi.kml.review.dto.events.ReviewPostEvents;
 import com.bgmagitapi.repository.BgmAgitBiztalkSendHistoryRepository;
 import com.bgmagitapi.repository.BgmAgitImageRepository;
@@ -22,12 +27,15 @@ import com.bgmagitapi.service.response.ReservationTalkContext;
 import com.bgmagitapi.util.AlimtalkTemplate;
 import com.bgmagitapi.util.AlimtalkUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,16 +43,19 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService {
-    
+
     private final BgmAgitBizTalkService bgmAgitBizTalkService;
-    
+
     private final BgmAgitBiztalkSendHistoryRepository bgmAgitBiztalkSendHistoryRepository;
-    
+
     private final BgmAgitImageRepository bgmAgitImageRepository;
+
+    private final RecordRepository recordRepository;
     
     private static final String PHONE1 = "010-5059-3499";
     private static final String PHONE2 = "010-5592-8832";
@@ -246,6 +257,71 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String message = AlimtalkUtils.buildReviewMessage(memberName, title, date, time);
         sendTalk(message, template, PHONE1, id, event.getSubject(), "리뷰 내역 확인 하기", "https://bgmagit.co.kr");
         sendTalk(message, template, PHONE2, id, event.getSubject(), "리뷰 내역 확인 하기", "https://bgmagit.co.kr");
+    }
+
+    /**
+     * 대국 기록 등록 시 4명 참가자에게 알림톡 발송.
+     * - 마작 회원(socialType=MAHJONG)이면서 알림톡 수신 ON("Y")인 회원에게만 발송
+     * - 자리(EAST/SOUTH/WEST/NORTH)가 모두 채워진 4인 대국에만 발송
+     */
+    @Override
+    public void sendMatchRecord(Long matchsId) {
+        List<Record> records = recordRepository.findByRecordByMatchsId(matchsId);
+        if (records.size() != 4) {
+            log.info("[ALIMTALK] 대국기록 알림 발송 생략 — 참가자 수가 4명이 아님 matchsId={} size={}", matchsId, records.size());
+            return;
+        }
+
+        Map<Wind, Record> bySeat = new EnumMap<>(Wind.class);
+        for (Record r : records) {
+            if (r.getRecordSeat() != null) {
+                bySeat.put(r.getRecordSeat(), r);
+            }
+        }
+        Record east = bySeat.get(Wind.EAST);
+        Record south = bySeat.get(Wind.SOUTH);
+        Record west = bySeat.get(Wind.WEST);
+        Record north = bySeat.get(Wind.NORTH);
+        if (east == null || south == null || west == null || north == null) {
+            log.info("[ALIMTALK] 대국기록 알림 발송 생략 — 자리(동남서북) 누락 matchsId={}", matchsId);
+            return;
+        }
+
+        Matchs matchs = records.get(0).getMatchs();
+        String registDate = matchs.getRegistDate() != null
+                ? matchs.getRegistDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                : "";
+
+        String message = AlimtalkUtils.buildMatchsRecordMessage(
+                matchsId,
+                registDate,
+                nicknameOf(east), AlimtalkUtils.formatMatchScore(east.getRecordScore()), AlimtalkUtils.formatMatchPoint(east.getRecordPoint()),
+                nicknameOf(south), AlimtalkUtils.formatMatchScore(south.getRecordScore()), AlimtalkUtils.formatMatchPoint(south.getRecordPoint()),
+                nicknameOf(west), AlimtalkUtils.formatMatchScore(west.getRecordScore()), AlimtalkUtils.formatMatchPoint(west.getRecordPoint()),
+                nicknameOf(north), AlimtalkUtils.formatMatchScore(north.getRecordScore()), AlimtalkUtils.formatMatchPoint(north.getRecordPoint())
+        );
+
+        String template = AlimtalkTemplate.BGMAGIT_BML_MATCH;
+        records.sort(Comparator.comparing(r -> r.getRecordSeat().ordinal()));
+        for (Record r : records) {
+            BgmAgitMember member = r.getMember();
+            if (member == null) continue;
+            if (member.getSocialType() != BgmAgitSocialType.MAHJONG) continue;
+            if (!"Y".equals(member.getBgmAgitMemberAlimtalkStatus())) continue;
+            if (member.getBgmAgitMemberPhoneNo() == null || member.getBgmAgitMemberPhoneNo().isBlank()) continue;
+
+            String url = "https://bgmagit.co.kr/record/rank/" + member.getBgmAgitMemberId();
+            sendTalk(message, template, member.getBgmAgitMemberPhoneNo(),
+                    matchsId, BgmAgitSubject.MATCH_RECORD,
+                    "사이트 바로가기", url);
+        }
+    }
+
+    private String nicknameOf(Record record) {
+        BgmAgitMember m = record.getMember();
+        if (m == null) return "-";
+        String nick = m.getBgmAgitMemberNickname();
+        return nick == null || nick.isBlank() ? "-" : nick;
     }
     
     /**
