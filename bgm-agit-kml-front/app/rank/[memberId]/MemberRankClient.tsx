@@ -217,15 +217,10 @@ function SeatBlock({ block }: { block: SeatRankBlock }) {
             <tr>
               <th>순위</th>
               <th>전체</th>
-              <th>전체%</th>
               <th>동</th>
-              <th>동%</th>
               <th>남</th>
-              <th>남%</th>
               <th>서</th>
-              <th>서%</th>
               <th>북</th>
-              <th>북%</th>
             </tr>
           </thead>
           <tbody>
@@ -234,16 +229,26 @@ function SeatBlock({ block }: { block: SeatRankBlock }) {
               return (
                 <tr key={r.label} className={isTobi ? 'tobi' : ''}>
                   <td>{r.label}</td>
-                  <td>{r.all}</td>
-                  <td>{pct(r.all, block.totalGames)}</td>
-                  <td>{r.east}</td>
-                  <td>{pct(r.east, seatTotals.east)}</td>
-                  <td>{r.south}</td>
-                  <td>{pct(r.south, seatTotals.south)}</td>
-                  <td>{r.west}</td>
-                  <td>{pct(r.west, seatTotals.west)}</td>
-                  <td>{r.north}</td>
-                  <td>{pct(r.north, seatTotals.north)}</td>
+                  <td>
+                    <CellNum>{r.all}</CellNum>
+                    <CellPct>{pct(r.all, block.totalGames)}</CellPct>
+                  </td>
+                  <td>
+                    <CellNum>{r.east}</CellNum>
+                    <CellPct>{pct(r.east, seatTotals.east)}</CellPct>
+                  </td>
+                  <td>
+                    <CellNum>{r.south}</CellNum>
+                    <CellPct>{pct(r.south, seatTotals.south)}</CellPct>
+                  </td>
+                  <td>
+                    <CellNum>{r.west}</CellNum>
+                    <CellPct>{pct(r.west, seatTotals.west)}</CellPct>
+                  </td>
+                  <td>
+                    <CellNum>{r.north}</CellNum>
+                    <CellPct>{pct(r.north, seatTotals.north)}</CellPct>
+                  </td>
                 </tr>
               );
             })}
@@ -483,16 +488,33 @@ const ScrollWrap = styled.div`
   }
 `;
 
+const CellNum = styled.div`
+  font-weight: 600;
+  line-height: 1.2;
+`;
+
+const CellPct = styled.div`
+  font-size: 11px;
+  color: ${({ theme }) => theme.colors.grayColor};
+  line-height: 1.2;
+  margin-top: 2px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: 10px;
+    margin-top: 1px;
+  }
+`;
+
 const SeatTable = styled.table`
   width: 100%;
-  min-width: 720px;
   border-collapse: collapse;
   font-size: 13px;
+  table-layout: fixed;
 
   thead th {
     background: ${({ theme }) => theme.colors.softColor};
     border-bottom: 2px solid ${({ theme }) => theme.colors.border};
-    padding: 8px 6px;
+    padding: 8px 4px;
     font-weight: 600;
     text-align: center;
     white-space: nowrap;
@@ -500,7 +522,7 @@ const SeatTable = styled.table`
 
   tbody td {
     border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-    padding: 8px 6px;
+    padding: 8px 4px;
     text-align: center;
     white-space: nowrap;
   }
@@ -515,34 +537,29 @@ const SeatTable = styled.table`
     font-weight: 600;
   }
 
-  /* 첫 컬럼(순위) 가로 스크롤 시 고정 */
+  tbody tr.tobi ${CellPct} {
+    color: inherit;
+    opacity: 0.85;
+  }
+
   thead th:first-child,
   tbody td:first-child {
-    position: sticky;
-    left: 0;
-    z-index: 1;
-  }
-  thead th:first-child {
-    background: ${({ theme }) => theme.colors.softColor};
-    box-shadow: 1px 0 0 ${({ theme }) => theme.colors.border};
-  }
-  tbody td:first-child {
-    background: #fff;
-    box-shadow: 1px 0 0 ${({ theme }) => theme.colors.border};
-  }
-  tbody tr.tobi td:first-child {
-    background: #fff5f5;
+    width: 16%;
   }
 
   @media ${({ theme }) => theme.device.mobile} {
-    min-width: 540px;
     font-size: 12px;
 
     thead th {
-      padding: 6px 4px;
+      padding: 6px 2px;
     }
     tbody td {
-      padding: 6px 4px;
+      padding: 6px 2px;
+    }
+
+    thead th:first-child,
+    tbody td:first-child {
+      width: 18%;
     }
   }
 `;
