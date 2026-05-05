@@ -141,7 +141,7 @@ export default function MyPageModal() {
                         type="tel"
                         value={phoneNo}
                         onChange={(e) => setPhoneNo(e.target.value)}
-                        placeholder="010-1234-5678"
+                        placeholder="010-1234-5678 또는 01012345678"
                         autoComplete="tel"
                       />
                       <PrimaryButton type="button" onClick={handleSavePhone}>
