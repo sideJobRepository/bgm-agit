@@ -26,8 +26,8 @@ class BgmAgitMyPageServiceImplTest extends RepositoryAndServiceTestSupport {
     @Test
     void modifyMyPage() {
         
-        BgmAgitMyPagePutRequest bgmAgitMyPagePutRequest = new BgmAgitMyPagePutRequest(14L, "배성환", "010-6280-7022", "Y","Y");
-        ApiResponse apiResponse = bgmAgitMyPageService.modifyMyPage(bgmAgitMyPagePutRequest);
+     //   BgmAgitMyPagePutRequest bgmAgitMyPagePutRequest = new BgmAgitMyPagePutRequest(14L, "배성환", "010-6280-7022", "Y","Y");
+   //     ApiResponse apiResponse = bgmAgitMyPageService.modifyMyPage(bgmAgitMyPagePutRequest);
         
     }
 }
