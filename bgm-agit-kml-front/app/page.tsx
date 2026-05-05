@@ -15,6 +15,7 @@ import {
   Gear,
   GraduationCap,
   HandPointing,
+  IdentificationCard,
   PencilSimple,
   SlidersHorizontal,
   Trophy,
@@ -24,6 +25,7 @@ import { useMediaQuery } from 'react-responsive';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/store/user';
 import { useKmlMenuStore } from '@/store/menu';
+import { useMyPageStore } from '@/store/myPage';
 import { confirmDialog } from '@/utils/alert';
 
 const ICON_MAP = {
@@ -81,6 +83,7 @@ export default function Home() {
   const router = useRouter();
   const user = useUserStore((state) => state.user);
   const menuData = useKmlMenuStore((state) => state.menu);
+  const openMyPage = useMyPageStore((state) => state.open);
 
   const [mounted, setMounted] = useState(false);
 
@@ -171,6 +174,17 @@ export default function Home() {
           >
             <UserCircle weight="bold" />
             <span>내 기록</span>
+          </QuickItem>
+        )}
+        {user && (
+          <QuickItem
+            onClick={openMyPage}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+          >
+            <IdentificationCard weight="bold" />
+            <span>내 정보</span>
           </QuickItem>
         )}
         {quickMenus.map((m) => {
