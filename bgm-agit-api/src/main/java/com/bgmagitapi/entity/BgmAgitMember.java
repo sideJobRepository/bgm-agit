@@ -56,6 +56,9 @@ public class BgmAgitMember extends DateSuperClass {
     @Column(name = "BGM_AGIT_MEMBER_KML_SYNK")
     private String bgmAgitMemberKmlSynk;
     
+    // BGM 아지트 회원 알림톡 상태
+    @Column(name = "BGM_AGIT_MEMBER_ALIMTALK_STATUS")
+    private String bgmAgitMemberAlimtalkStatus;
     
     
     
@@ -69,6 +72,7 @@ public class BgmAgitMember extends DateSuperClass {
         this.bgmAgitMemberNickname = socialProfile.name();
         this.bgmAgitMemberNicknameUseStatus = "Y";
         this.bgmAgitMemberMahjongUseStatus = "N";
+        this.bgmAgitMemberAlimtalkStatus = "Y";
     }
 
     public BgmAgitMember(String name, String nickname, String phoneNo, String hashedPassword, Long kmlId) {
@@ -81,6 +85,7 @@ public class BgmAgitMember extends DateSuperClass {
         this.socialType = BgmAgitSocialType.MAHJONG;
         this.bgmAgitMemberNicknameUseStatus = "Y";
         this.bgmAgitMemberMahjongUseStatus = "N";
+        this.bgmAgitMemberAlimtalkStatus = "Y";
     }
 
     public void linkKml(Long kmlId) {
@@ -111,6 +116,7 @@ public class BgmAgitMember extends DateSuperClass {
         this.bgmAgitMemberPhoneNo =  request.getPhoneNo();
         this.bgmAgitMemberNicknameUseStatus =  request.getNickNameUseStatus();
         this.bgmAgitMemberMahjongUseStatus = request.getMahjongUseStatus();
+        this.bgmAgitMemberAlimtalkStatus = request.getAlimtalkStatus();
     }
     
     private String normalizePhone(String phone) {

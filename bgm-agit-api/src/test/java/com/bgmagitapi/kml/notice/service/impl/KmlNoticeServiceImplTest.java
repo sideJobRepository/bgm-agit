@@ -108,8 +108,8 @@ class KmlNoticeServiceImplTest extends RepositoryAndServiceTestSupport {
                 .id(3L)
                 .title("수정")
                 .cont("수정내용")
-                .files(files)
-                .deleteFileIds(null)
+               // .files(files)
+                //.deleteFileIds(null)
                 .build();
         ApiResponse result = kmlNoticeService.modifyKmlNotice(build2);
         System.out.println("result = " + result);

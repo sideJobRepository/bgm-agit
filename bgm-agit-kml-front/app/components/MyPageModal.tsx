@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Key, FloppyDisk } from 'phosphor-react';
+import { X, Key, FloppyDisk, Bell } from 'phosphor-react';
 import { useFetchMyPage, MyPageInfo } from '@/services/mypage.service';
 import { useUpdatePost } from '@/services/main.service';
 import { alertDialog, confirmDialog } from '@/utils/alert';
@@ -60,11 +60,44 @@ export default function MyPageModal() {
         phoneNo: phoneNo.trim(),
         nickNameUseStatus: info.nickNameUseStatus,
         mahjongUseStatus: info.mahjongUseStatus,
+        alimtalkStatus: info.alimtalkStatus,
       },
       ignoreErrorRedirect: true,
       onSuccess: async () => {
         await alertDialog('전화번호가 변경되었습니다.', 'success');
         setInfo({ ...info, phoneNo: phoneNo.trim() });
+      },
+    });
+  };
+
+  const handleToggleAlimtalk = async () => {
+    if (!info) return;
+    const next = info.alimtalkStatus === 'Y' ? 'N' : 'Y';
+    const message =
+      next === 'Y'
+        ? '대국 기록 알림톡을 받으시겠습니까?'
+        : '대국 기록 알림톡 수신을 끄시겠습니까?';
+    const result = await confirmDialog(message, 'warning');
+    if (!result.isConfirmed) return;
+
+    update({
+      url: '/bgm-agit/mypage',
+      body: {
+        nickName: info.nickName,
+        phoneNo: info.phoneNo,
+        nickNameUseStatus: info.nickNameUseStatus,
+        mahjongUseStatus: info.mahjongUseStatus,
+        alimtalkStatus: next,
+      },
+      ignoreErrorRedirect: true,
+      onSuccess: async () => {
+        setInfo({ ...info, alimtalkStatus: next });
+        await alertDialog(
+          next === 'Y'
+            ? '알림톡 수신을 켰습니다.'
+            : '알림톡 수신을 껐습니다.',
+          'success'
+        );
       },
     });
   };
@@ -141,7 +174,7 @@ export default function MyPageModal() {
                         type="tel"
                         value={phoneNo}
                         onChange={(e) => setPhoneNo(e.target.value)}
-                        placeholder="010-1234-5678"
+                        placeholder="010-1234-5678 또는 01012345678"
                         autoComplete="tel"
                       />
                       <PrimaryButton type="button" onClick={handleSavePhone}>
@@ -150,6 +183,32 @@ export default function MyPageModal() {
                       </PrimaryButton>
                     </Row>
                   </Field>
+                </Section>
+
+                <Divider />
+
+                <Section>
+                  <SectionTitle>알림 설정</SectionTitle>
+                  <ToggleField>
+                    <ToggleLabel>
+                      <Bell weight="bold" />
+                      <div>
+                        <ToggleTitle>대국 기록 알림톡 수신</ToggleTitle>
+                        <ToggleHint>
+                          내가 참여한 대국의 점수가 등록되면 알림톡을 받습니다.
+                        </ToggleHint>
+                      </div>
+                    </ToggleLabel>
+                    <Toggle
+                      type="button"
+                      role="switch"
+                      aria-checked={info?.alimtalkStatus === 'Y'}
+                      $on={info?.alimtalkStatus === 'Y'}
+                      onClick={handleToggleAlimtalk}
+                    >
+                      <ToggleThumb $on={info?.alimtalkStatus === 'Y'} />
+                    </Toggle>
+                  </ToggleField>
                 </Section>
 
                 <Divider />
@@ -411,6 +470,84 @@ const PrimaryButton = styled.button`
 const Divider = styled.div`
   height: 1px;
   background: ${({ theme }) => theme.colors.lineColor};
+`;
+
+const ToggleField = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid ${({ theme }) => theme.colors.lineColor};
+  border-radius: 6px;
+  background: ${({ theme }) => theme.colors.recordBgColor};
+`;
+
+const ToggleLabel = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    color: ${({ theme }) => theme.colors.blackColor};
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+`;
+
+const ToggleTitle = styled.div`
+  font-size: ${({ theme }) => theme.desktop.sizes.sm};
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.blackColor};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.desktop.sizes.md};
+  }
+`;
+
+const ToggleHint = styled.div`
+  font-size: ${({ theme }) => theme.desktop.sizes.xs};
+  color: ${({ theme }) => theme.colors.grayColor};
+  margin-top: 2px;
+  line-height: 1.4;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.desktop.sizes.sm};
+  }
+`;
+
+const Toggle = styled.button<{ $on: boolean }>`
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  border: none;
+  background: ${({ $on, theme }) =>
+    $on ? theme.colors.kakao : theme.colors.lineColor};
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.18s ease;
+  padding: 0;
+
+  &:hover {
+    opacity: 0.9;
+  }
+`;
+
+const ToggleThumb = styled.span<{ $on: boolean }>`
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: ${({ theme }) => theme.colors.whiteColor};
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transform: translateX(${({ $on }) => ($on ? '20px' : '0')});
+  transition: transform 0.18s ease;
 `;
 
 const Empty = styled.div`

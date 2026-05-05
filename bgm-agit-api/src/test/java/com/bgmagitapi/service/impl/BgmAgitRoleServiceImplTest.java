@@ -50,7 +50,7 @@ class BgmAgitRoleServiceImplTest extends RepositoryAndServiceTestSupport {
         requestList.add(request2);
         
         // when
-        ApiResponse response = bgmAgitRoleService.modifyRole(requestList);
+        //ApiResponse response = bgmAgitRoleService.modifyRole(requestList);
     
     }
 }

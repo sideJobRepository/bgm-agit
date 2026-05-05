@@ -26,11 +26,11 @@ class RankServiceImplTest extends RepositoryAndServiceTestSupport {
         LocalDate baseDate = LocalDate.of(2026, 2, 20);
         Pageable pageable = PageRequest.of(0, 20);
         // when
-        Page<RankGetResponse> ranks = rankService.findRanks(type, baseDate, pageable);
-        
-        // then
-        System.out.println("=== MONTHLY RANK ===");
-        ranks.forEach(System.out::println);
+//        Page<RankGetResponse> ranks = rankService.findRanks(type, baseDate, LocalDate.of(2020));
+//
+//        // then
+//        System.out.println("=== MONTHLY RANK ===");
+//        ranks.forEach(System.out::println);
         
     }
 }

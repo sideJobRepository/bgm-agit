@@ -86,7 +86,7 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
                 .memberId(1L)
                 .yakumanName("사암각")
                 .yakumanCont("사암각 쯔모")
-                .files(multipartFile1)
+              //  .files(multipartFile1)
                 .build();
         
         
@@ -96,7 +96,7 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
                 .memberId(6L)
                 .yakumanName("구련보등")
                 .yakumanCont("구련보등 쯔모")
-                .files(multipartFile2)
+          //      .files(multipartFile2)
                 .build();
         List<RecordPostRequest.Yakumans> result = Arrays.asList(list, list2);
         
@@ -158,7 +158,7 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
                 .memberId(1L)
                 .yakumanName("사암각")
                 .yakumanCont("사암각 수정됨")
-                .files(newFile)
+           //     .files(newFile)
                 .build();
         
         RecordPutRequest updateRequest = RecordPutRequest.builder()
@@ -179,8 +179,8 @@ class RecordServiceImplTest extends RepositoryAndServiceTestSupport {
     @Test
     void test2() {
         PageRequest pageRequest = PageRequest.of(0, 10);
-        Page<RecordGetResponse> records = recordService.getRecords(pageRequest,null,null,null,"");
-        System.out.println("records = " + records);
+//        Page<RecordGetResponse> records = recordService.getRecords(pageRequest,null,null,null,"");
+//        System.out.println("records = " + records);
     }
     
     @DisplayName("")

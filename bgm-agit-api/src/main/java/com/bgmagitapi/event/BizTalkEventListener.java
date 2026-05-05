@@ -5,6 +5,7 @@ import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitReservation;
 import com.bgmagitapi.event.dto.InquiryEvent;
+import com.bgmagitapi.event.dto.MatchRecordRegisteredEvent;
 import com.bgmagitapi.event.dto.MemberJoinedEvent;
 import com.bgmagitapi.event.dto.ReservationTalkEvent;
 import com.bgmagitapi.event.dto.ReservationWaitingEvent;
@@ -148,4 +149,14 @@ public class BizTalkEventListener {
               bgmAgitBizTalkSandService.sendReview(e);
           }
       }
+
+    @Async("bizTalkExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onMatchRecordRegistered(MatchRecordRegisteredEvent e) {
+        try {
+            bgmAgitBizTalkSandService.sendMatchRecord(e.getMatchsId());
+        } catch (Exception ex) {
+            bgmAgitBizTalkSandService.sendMatchRecord(e.getMatchsId());
+        }
+    }
 }

@@ -84,7 +84,7 @@ export default function Signup() {
           />
           <Input
             type="tel"
-            placeholder="전화번호 (예: 010-1234-5678)"
+            placeholder="전화번호 (예: 010-1234-5678 또는 01012345678)"
             value={form.phoneNo}
             onChange={handleChange('phoneNo')}
             autoComplete="tel"
