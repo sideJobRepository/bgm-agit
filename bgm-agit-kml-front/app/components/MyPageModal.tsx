@@ -153,6 +153,7 @@ export default function MyPageModal() {
               </CloseButton>
             </Header>
 
+            <Body>
             {!user ? (
               <Empty>로그인 후 이용해주세요.</Empty>
             ) : (
@@ -251,6 +252,7 @@ export default function MyPageModal() {
                 </Section>
               </>
             )}
+            </Body>
           </Card>
         </Backdrop>
       )}
@@ -278,18 +280,14 @@ const Card = styled(motion.div)`
   width: 100%;
   max-width: 480px;
   max-height: 90vh;
-  overflow-y: auto;
   background: ${({ theme }) => theme.colors.whiteColor};
   border-radius: 8px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
-  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  overflow: hidden;
 
   @media ${({ theme }) => theme.device.mobile} {
-    padding: 18px;
-    gap: 14px;
     border-radius: 12px 12px 8px 8px;
     max-height: 92vh;
   }
@@ -300,7 +298,8 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   border-bottom: 2px solid ${({ theme }) => theme.colors.lineColor};
-  padding-bottom: 12px;
+  padding: 24px 24px 12px;
+  flex-shrink: 0;
 
   h2 {
     font-size: ${({ theme }) => theme.desktop.sizes.h5Size};
@@ -308,9 +307,25 @@ const Header = styled.div`
   }
 
   @media ${({ theme }) => theme.device.mobile} {
+    padding: 18px 18px 12px;
+
     h2 {
       font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
     }
+  }
+`;
+
+const Body = styled.div`
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 16px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    padding: 14px 18px 18px;
+    gap: 14px;
   }
 `;
 
