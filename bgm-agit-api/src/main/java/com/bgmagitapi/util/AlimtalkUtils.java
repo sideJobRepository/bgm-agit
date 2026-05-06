@@ -355,6 +355,7 @@ public class AlimtalkUtils {
      * BGM 아지트 BML 대국 기록 안내
      * 템플릿코드: bgmagit-bml-match
      *
+     * @param recipientNickname 수신자 닉네임 (대국 참여자 본인)
      * @param recordId      대국 기록 ID
      * @param recordDate    기록일자 (예: "2026-04-30 22:11:22")
      * @param eastNickname  동가 닉네임
@@ -371,6 +372,7 @@ public class AlimtalkUtils {
      * @param northPoint    북가 승점
      */
     public static String buildMatchsRecordMessage(
+            String recipientNickname,
             Long recordId,
             String recordDate,
             String eastNickname, String eastScore, String eastPoint,
@@ -379,14 +381,15 @@ public class AlimtalkUtils {
             String northNickname, String northScore, String northPoint
     ) {
         return new StringBuilder()
-                .append("[BGM 아지트 BML 기록 안내]\n\n")
+                .append("[BGM 아지트 BML 대국 기록 안내]\n\n")
+                .append(recipientNickname).append("님께서 참여하신 대국의 기록이 등록되어 안내드립니다.\n\n")
                 .append("ID: ").append(recordId).append("\n")
                 .append("기록일자: ").append(recordDate).append("\n\n")
                 .append("東 ").append(eastNickname).append(" ").append(eastScore).append(" (").append(eastPoint).append(")\n")
                 .append("南 ").append(southNickname).append(" ").append(southScore).append(" (").append(southPoint).append(")\n")
                 .append("西 ").append(westNickname).append(" ").append(westScore).append(" (").append(westPoint).append(")\n")
                 .append("北 ").append(northNickname).append(" ").append(northScore).append(" (").append(northPoint).append(")\n\n")
-                .append("자세한 내용은 BGM 아지트 BML 사이트에서 확인해 주세요")
+                .append("자세한 내용은 BGM 아지트 BML 사이트에 로그인하여 확인하실 수 있습니다.")
                 .toString();
     }
 

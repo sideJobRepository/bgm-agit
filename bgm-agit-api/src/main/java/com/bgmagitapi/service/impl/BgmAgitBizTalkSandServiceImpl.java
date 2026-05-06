@@ -292,15 +292,6 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
                 ? matchs.getRegistDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                 : "";
 
-        String message = AlimtalkUtils.buildMatchsRecordMessage(
-                matchsId,
-                registDate,
-                nicknameOf(east), AlimtalkUtils.formatMatchScore(east.getRecordScore()), AlimtalkUtils.formatMatchPoint(east.getRecordPoint()),
-                nicknameOf(south), AlimtalkUtils.formatMatchScore(south.getRecordScore()), AlimtalkUtils.formatMatchPoint(south.getRecordPoint()),
-                nicknameOf(west), AlimtalkUtils.formatMatchScore(west.getRecordScore()), AlimtalkUtils.formatMatchPoint(west.getRecordPoint()),
-                nicknameOf(north), AlimtalkUtils.formatMatchScore(north.getRecordScore()), AlimtalkUtils.formatMatchPoint(north.getRecordPoint())
-        );
-
         String template = AlimtalkTemplate.BGMAGIT_BML_MATCH;
         records.sort(Comparator.comparing(r -> r.getRecordSeat().ordinal()));
         for (Record r : records) {
@@ -309,6 +300,16 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
             if (member.getSocialType() != BgmAgitSocialType.MAHJONG) continue;
             if (!"Y".equals(member.getBgmAgitMemberAlimtalkStatus())) continue;
             if (member.getBgmAgitMemberPhoneNo() == null || member.getBgmAgitMemberPhoneNo().isBlank()) continue;
+
+            String message = AlimtalkUtils.buildMatchsRecordMessage(
+                    nicknameOf(r),
+                    matchsId,
+                    registDate,
+                    nicknameOf(east), AlimtalkUtils.formatMatchScore(east.getRecordScore()), AlimtalkUtils.formatMatchPoint(east.getRecordPoint()),
+                    nicknameOf(south), AlimtalkUtils.formatMatchScore(south.getRecordScore()), AlimtalkUtils.formatMatchPoint(south.getRecordPoint()),
+                    nicknameOf(west), AlimtalkUtils.formatMatchScore(west.getRecordScore()), AlimtalkUtils.formatMatchPoint(west.getRecordPoint()),
+                    nicknameOf(north), AlimtalkUtils.formatMatchScore(north.getRecordScore()), AlimtalkUtils.formatMatchPoint(north.getRecordPoint())
+            );
 
             String url = "https://bgmagit.co.kr/record/rank/" + member.getBgmAgitMemberId();
             sendTalk(message, template, member.getBgmAgitMemberPhoneNo(),
