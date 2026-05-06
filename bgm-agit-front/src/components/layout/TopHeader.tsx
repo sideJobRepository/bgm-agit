@@ -91,6 +91,7 @@ export default function TopHeader() {
       }
 
       tokenStore.clear(); // 메모리 Access Token 제거
+      localStorage.removeItem('login');
       resetUser(null);
       setIsOpen(false);
 

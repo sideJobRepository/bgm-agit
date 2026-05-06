@@ -1,6 +1,8 @@
 package com.bgmagitapi.service.impl;
 
 import com.bgmagitapi.advice.exception.RefreshTokenExpiredException;
+import com.bgmagitapi.advice.exception.RefreshTokenInvalidException;
+import com.bgmagitapi.advice.exception.RefreshTokenMissingException;
 import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitRefreshToken;
@@ -26,88 +28,94 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional
 public class BgmAgitRefreshTokenServiceImpl implements BgmAgitRefreshTokenService {
-    
+
     private final BgmAgitRefreshTokenRepository bgmAgitRefreshTokenRepository;
     private final BgmAgitMemberRoleService bgmAgitMemberRoleService;
     private final RsaSecuritySigner rsaSecuritySigner;
     private final JWK jwk;
-    
+
     @Override
-    public void refreshTokenSaveOrUpdate(BgmAgitMember member, String refreshTokenValue, LocalDateTime expiresAt) {
+    public void refreshTokenSaveOrUpdate(BgmAgitMember member, String refreshTokenValue, LocalDateTime expiresAt, String platformId) {
+        if (platformId == null || platformId.isBlank()) {
+            throw new RefreshTokenInvalidException("디바이스 식별자가 없습니다.");
+        }
+
         BgmAgitRefreshToken token = bgmAgitRefreshTokenRepository
-                .findBgmAgitMember(member)
+                .findByMemberAndPlatformId(member, platformId)
                 .orElse(BgmAgitRefreshToken.builder()
                         .bgmAgitMember(member)
                         .bgmAgitRefreshTokenValue(refreshTokenValue)
                         .bgmAgitRefreshExpiresDate(expiresAt)
+                        .bgmAgitRefreshPlatformId(platformId)
                         .build()
                 );
-        
+
         // 이미 존재한다면 값만 갱신
         if (token.getBgmAgitRefreshTokenId() != null) {
             token.updateToken(refreshTokenValue, expiresAt);
         }
         bgmAgitRefreshTokenRepository.save(token);
     }
-    
-    
-    public  BgmAgitMember validateRefreshToken(String refreshToken) {
-        BgmAgitRefreshToken token = bgmAgitRefreshTokenRepository
-                .findBgmAgitRefreshTokenValue(refreshToken)
-                .orElse(null);
-        
-        if (token == null) {
-            return null;
-        }
-        
-        if (token.getBgmAgitRefreshExpiresDate().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("리프레시 토큰이 만료되었습니다.");
-        }
-        
-        return token.getBgmAgitMember(); // fetch join 필요시 수정
-    }
+
+
     @Override
-    public TokenAndUser reissueTokenWithUser(String refreshToken) {
+    public TokenAndUser reissueTokenWithUser(String refreshToken, String platformId) {
         if (refreshToken == null || refreshToken.isBlank()) {
-            return null;
+            throw new RefreshTokenMissingException("리프레시 토큰이 없습니다.");
         }
-        
-        BgmAgitMember member = validateRefreshToken(refreshToken);
-        
-        if(member == null) {
-            return null;
+        if (platformId == null || platformId.isBlank()) {
+            throw new RefreshTokenInvalidException("디바이스 식별자가 없습니다.");
         }
-        
+
+        BgmAgitMember member = validateRefreshToken(refreshToken, platformId);
+
         String roleName = bgmAgitMemberRoleService
                 .getMemberRole(member.getBgmAgitMemberId())
                 .getBgmAgitRole()
                 .getBgmAgitRoleName();
-        
+
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(roleName));
-        
+
         try {
             TokenPair token = rsaSecuritySigner.getToken(member, jwk, authorities);
-            
+
             refreshTokenSaveOrUpdate(
                     member,
                     token.getRefreshToken(),
-                    LocalDateTime.now().plusDays(1)
+                    LocalDateTime.now().plusDays(1),
+                    platformId
             );
-            
+
             // 로그인 때와 동일하게 DTO 생성
             BgmAgitMemberResponseDto user = BgmAgitMemberResponseDto.create(member, authorities);
-            
+
             return new TokenAndUser(token, user);
         } catch (JOSEException e) {
             throw new RuntimeException("JWT 생성 실패", e);
         }
     }
-    
-    
+
+
     @Override
-    public ApiResponse deleteRefresh(String request) {
-        BgmAgitRefreshToken bgmAgitRefreshToken = bgmAgitRefreshTokenRepository.findBgmAgitRefreshTokenValue(request).orElseThrow(() -> new RuntimeException("존재하지않는 리프레쉬 토큰입니다."));
-        bgmAgitRefreshTokenRepository.delete(bgmAgitRefreshToken);
-        return new ApiResponse(200,true,"정상 삭제");
+    public ApiResponse deleteRefresh(String refreshToken, String platformId) {
+        if (refreshToken == null || refreshToken.isBlank() || platformId == null || platformId.isBlank()) {
+            return new ApiResponse(200, true, "정상 삭제");
+        }
+        bgmAgitRefreshTokenRepository.findByTokenValueAndPlatformId(refreshToken, platformId)
+                .ifPresent(bgmAgitRefreshTokenRepository::delete);
+        return new ApiResponse(200, true, "정상 삭제");
+    }
+
+    private BgmAgitMember validateRefreshToken(String refreshToken, String platformId) {
+        BgmAgitRefreshToken token = bgmAgitRefreshTokenRepository
+                .findByTokenValueAndPlatformId(refreshToken, platformId)
+                .orElseThrow(() -> new RefreshTokenInvalidException("리프레시 토큰이 유효하지 않습니다."));
+
+        if (token.getBgmAgitRefreshExpiresDate().isBefore(LocalDateTime.now())) {
+            bgmAgitRefreshTokenRepository.delete(token);
+            throw new RefreshTokenExpiredException("리프레시 토큰이 만료되었습니다.");
+        }
+
+        return token.getBgmAgitMember();
     }
 }

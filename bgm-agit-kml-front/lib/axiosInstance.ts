@@ -1,6 +1,7 @@
 // utils/axiosInstance.ts
 import axios, { AxiosError, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
 import { tokenStore } from '@/services/tokenStore';
+import { getDeviceId } from '@/lib/deviceId';
 
 interface AuthAxiosRequestConfig extends InternalAxiosRequestConfig {
   __hadAuth?: boolean;
@@ -16,10 +17,15 @@ let refreshing: Promise<string | null> | null = null;
 
 //토큰 재발급
 export async function refreshToken(): Promise<string | null> {
+  if (typeof window === 'undefined' || localStorage.getItem('login') !== '1') {
+    return null;
+  }
+
   try {
     const { data } = await axios.post('/bgm-agit/refresh?source=record', null, {
       baseURL: api.defaults.baseURL,
       withCredentials: true,
+      headers: { 'X-Device-Id': getDeviceId() },
     });
     const newToken = data?.token ?? null;
 
@@ -42,29 +48,23 @@ export async function refreshToken(): Promise<string | null> {
 }
 
 api.interceptors.request.use(async (config: AuthAxiosRequestConfig) => {
+  config.headers = config.headers ?? {};
+  config.headers['X-Device-Id'] = getDeviceId();
+
   if (config.url?.includes('/bgm-agit/refresh')) return config;
 
   let token = tokenStore.get();
-  if (!token) {
-    if (!refreshing) refreshing = refreshToken(); // 첫 호출만 실제 실행
-    token = await refreshing; // 모든 요칭이 같은 Promise를 기다림
+  if (!token && localStorage.getItem('login') === '1') {
+    if (!refreshing) refreshing = refreshToken(); // 모든 요청이 같은 Promise를 기다림
+    token = await refreshing;
   }
 
   config.__hadAuth = !!token;
   if (token) {
-    config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
-
-let isRefreshing = false;
-let waiters: Array<(t: string) => void> = [];
-const addWaiter = (cb: (t: string) => void) => waiters.push(cb);
-const notifyAll = (t: string) => {
-  waiters.forEach(cb => cb(t));
-  waiters = [];
-};
 
 api.interceptors.response.use(
   r => r,
@@ -87,47 +87,15 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // 1) 현재 요청을 먼저 재시도 큐에 등록
-    const retryPromise = new Promise((resolve, reject) => {
-      addWaiter((token: string) => {
-        try {
-          original.__isRetryRequest = true;
-          original.headers = original.headers ?? {};
-          original.headers.Authorization = `Bearer ${token}`;
-          resolve(api(original)); // 원요청 재호출
-        } catch (e) {
-          reject(e);
-        }
-      });
-    });
+    // request 인터셉터와 동일한 락(refreshing)을 공유
+    if (!refreshing) refreshing = refreshToken();
+    const newToken = await refreshing;
+    if (!newToken) return Promise.reject(error);
 
-    // 2) 그리고 나서 refresh를 시작(이미 진행 중이면 건너뜀). await 금지
-    if (!isRefreshing) {
-      isRefreshing = true;
-      axios
-        .post('/bgm-agit/refresh?source=record', null, {
-          //api 구조 변경 필요
-          baseURL: api.defaults.baseURL,
-          withCredentials: true,
-        })
-        .then(({ data }) => {
-          const newToken = data?.token;
-          if (!newToken) throw new Error('No access token from refresh');
-          tokenStore.set(newToken);
-          notifyAll(newToken); // 등록된 모든 대기 요청 재시도
-        })
-        .catch(e => {
-          waiters = []; // 실패 시 대기열 비움
-          // 토큰 삭제
-          tokenStore.clear();
-        })
-        .finally(() => {
-          isRefreshing = false;
-        });
-    }
-
-    // 3) 내 요청은 큐에서 깨울 때까지 기다렸다가 재시도
-    return retryPromise;
+    original.__isRetryRequest = true;
+    original.headers = original.headers ?? {};
+    original.headers.Authorization = `Bearer ${newToken}`;
+    return api(original);
   }
 );
 

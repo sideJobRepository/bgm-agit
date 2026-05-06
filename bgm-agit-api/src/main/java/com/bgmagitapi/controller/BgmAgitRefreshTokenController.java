@@ -28,20 +28,14 @@ public class BgmAgitRefreshTokenController {
     @PostMapping("/refresh")
     public Map<String, Object> refreshToken(
             @RequestParam(value = "source", required = false, defaultValue = "main") String source,
+            @RequestHeader(value = "X-Device-Id", required = false) String deviceId,
             HttpServletRequest request,
             HttpServletResponse response
     ) {
         String cookieName = resolveCookieName(source);
         String refreshToken = readCookie(request, cookieName);
 
-        if (refreshToken == null) {
-            return null;
-        }
-
-        TokenAndUser tokenPair = refreshTokenService.reissueTokenWithUser(refreshToken);
-        if (tokenPair == null) {
-            return null;
-        }
+        TokenAndUser tokenPair = refreshTokenService.reissueTokenWithUser(refreshToken, deviceId);
 
         ResponseCookie.ResponseCookieBuilder cookieBuilder =
                 ResponseCookie.from(cookieName, tokenPair.token().getRefreshToken())
@@ -66,15 +60,14 @@ public class BgmAgitRefreshTokenController {
     @DeleteMapping("/refresh")
     public ApiResponse deleteRefreshToken(
             @RequestParam(value = "source", required = false, defaultValue = "main") String source,
+            @RequestHeader(value = "X-Device-Id", required = false) String deviceId,
             HttpServletRequest request,
             HttpServletResponse response
     ) {
         String cookieName = resolveCookieName(source);
         String refreshToken = readCookie(request, cookieName);
 
-        ApiResponse apiResponse = refreshToken != null
-                ? refreshTokenService.deleteRefresh(refreshToken)
-                : null;
+        ApiResponse apiResponse = refreshTokenService.deleteRefresh(refreshToken, deviceId);
 
         ResponseCookie deleteCookie = ResponseCookie.from(cookieName, "")
                 .httpOnly(true)
