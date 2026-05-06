@@ -6,8 +6,8 @@ import com.bgmagitapi.entity.BgmAgitRefreshToken;
 import java.util.Optional;
 
 public interface BgmAgitRefreshTokenCustomRepository {
-    
-    Optional<BgmAgitRefreshToken> findBgmAgitMember(BgmAgitMember member);
-    
-    Optional<BgmAgitRefreshToken> findBgmAgitRefreshTokenValue(String refreshTokenValue);
+
+    Optional<BgmAgitRefreshToken> findByMemberAndPlatformId(BgmAgitMember member, String platformId);
+
+    Optional<BgmAgitRefreshToken> findByTokenValueAndPlatformId(String refreshTokenValue, String platformId);
 }

@@ -50,9 +50,17 @@ public class BgmAgitAuthenticationSuccessHandler implements AuthenticationSucces
         
         LocalDateTime expiresAt = LocalDateTime.now().plusDays(1);
         
+        String deviceId = request.getHeader("X-Device-Id");
+        if (deviceId == null || deviceId.isBlank()) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setContentType("application/json; charset=UTF-8");
+            response.getWriter().write("{\"message\":\"디바이스 식별자가 없습니다.\"}");
+            return;
+        }
+
         try {
             TokenPair tokenPair = rsaSecuritySigner.getToken(member, jwk, authorities);
-            bgmAgitRefreshTokenService.refreshTokenSaveOrUpdate(member, tokenPair.getRefreshToken(), expiresAt);
+            bgmAgitRefreshTokenService.refreshTokenSaveOrUpdate(member, tokenPair.getRefreshToken(), expiresAt, deviceId);
             
             BgmAgitMemberResponseDto bgmAgitMemberResponseDto = BgmAgitMemberResponseDto.create(member, authorities);
             // Access Token은 응답 JSON에 포함
