@@ -1,6 +1,7 @@
 // utils/axiosInstance.ts
 import axios, { AxiosError, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
 import { tokenStore } from './tokenStore';
+import { getDeviceId } from './deviceId';
 
 interface AuthAxiosRequestConfig extends InternalAxiosRequestConfig {
   __hadAuth?: boolean;
@@ -22,6 +23,7 @@ async function refreshToken(): Promise<string | null> {
     const { data } = await axios.post('/bgm-agit/refresh?source=main', null, {
       baseURL: api.defaults.baseURL,
       withCredentials: true,
+      headers: { 'X-Device-Id': getDeviceId() },
     });
     const newToken = data?.token ?? null;
     tokenStore.set(newToken);
@@ -37,6 +39,9 @@ async function refreshToken(): Promise<string | null> {
 }
 
 api.interceptors.request.use(async (config: AuthAxiosRequestConfig) => {
+  config.headers = config.headers ?? {};
+  config.headers['X-Device-Id'] = getDeviceId();
+
   if (config.url?.includes('/bgm-agit/refresh')) return config;
 
   let token = tokenStore.get();
@@ -47,7 +52,6 @@ api.interceptors.request.use(async (config: AuthAxiosRequestConfig) => {
 
   config.__hadAuth = !!token;
   if (token) {
-    config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;

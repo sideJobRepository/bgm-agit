@@ -1,6 +1,7 @@
 // utils/axiosInstance.ts
 import axios, { AxiosError, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
 import { tokenStore } from '@/services/tokenStore';
+import { getDeviceId } from '@/lib/deviceId';
 
 interface AuthAxiosRequestConfig extends InternalAxiosRequestConfig {
   __hadAuth?: boolean;
@@ -24,6 +25,7 @@ export async function refreshToken(): Promise<string | null> {
     const { data } = await axios.post('/bgm-agit/refresh?source=record', null, {
       baseURL: api.defaults.baseURL,
       withCredentials: true,
+      headers: { 'X-Device-Id': getDeviceId() },
     });
     const newToken = data?.token ?? null;
 
@@ -46,17 +48,19 @@ export async function refreshToken(): Promise<string | null> {
 }
 
 api.interceptors.request.use(async (config: AuthAxiosRequestConfig) => {
+  config.headers = config.headers ?? {};
+  config.headers['X-Device-Id'] = getDeviceId();
+
   if (config.url?.includes('/bgm-agit/refresh')) return config;
 
   let token = tokenStore.get();
   if (!token && localStorage.getItem('login') === '1') {
-    if (!refreshing) refreshing = refreshToken(); // 첫 호출만 실제 실행
-    token = await refreshing; // 모든 요청이 같은 Promise를 기다림
+    if (!refreshing) refreshing = refreshToken(); // 모든 요청이 같은 Promise를 기다림
+    token = await refreshing;
   }
 
   config.__hadAuth = !!token;
   if (token) {
-    config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
