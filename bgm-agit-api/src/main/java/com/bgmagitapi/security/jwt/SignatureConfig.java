@@ -4,27 +4,20 @@ import com.bgmagitapi.repository.BgmAgitRsaRepository;
 import com.bgmagitapi.security.pem.PemKey;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jose.jwk.RSAKey;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.InputStream;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.Base64;
 
 @Configuration
 @RequiredArgsConstructor
 public class SignatureConfig {
     
-    @Value("${jwt.secret}")
-    private String secret;
     
     private final BgmAgitRsaRepository bgmAgitRsaRepository;
     

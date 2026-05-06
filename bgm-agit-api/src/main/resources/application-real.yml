@@ -61,8 +61,7 @@ naver:
   clientId: PsFKP7NZFE16cvAOX80d
   client-secret: ${NAVER_CLIENT_SECRET}
 
-jwt:
-  secret: ${JWT_SECRET}
+
 
 cookie:
   secure: true
