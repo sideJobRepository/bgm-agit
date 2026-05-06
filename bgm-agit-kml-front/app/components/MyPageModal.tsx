@@ -280,6 +280,7 @@ const Card = styled(motion.div)`
   width: 100%;
   max-width: 480px;
   max-height: 90vh;
+  max-height: 90dvh;
   background: ${({ theme }) => theme.colors.whiteColor};
   border-radius: 8px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
@@ -290,6 +291,7 @@ const Card = styled(motion.div)`
   @media ${({ theme }) => theme.device.mobile} {
     border-radius: 12px 12px 8px 8px;
     max-height: 92vh;
+    max-height: 92dvh;
   }
 `;
 
