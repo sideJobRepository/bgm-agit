@@ -49,7 +49,7 @@ export function useLoginPost() {
 export function useSignupPost() {
   const { request } = useRequest();
 
-  const postSignup = (payload: SignupPayload, onSuccess?: () => void) => {
+  const postSignup = (payload: SignupPayload, onSuccess?: () => void) =>
     request(
       () => api.post('/bgm-agit/next/signup', payload).then((res) => res.data),
       (res) => {
@@ -61,8 +61,7 @@ export function useSignupPost() {
         }
       },
       { ignoreErrorRedirect: true }
-    );
-  };
+    ).catch(() => undefined);
 
   return { postSignup };
 }

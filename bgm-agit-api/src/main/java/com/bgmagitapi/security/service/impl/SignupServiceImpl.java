@@ -16,12 +16,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class SignupServiceImpl implements SignupService {
+
+    private static final ConcurrentHashMap<String, Object> NICKNAME_LOCKS = new ConcurrentHashMap<>();
 
     private final BgmAgitMemberRepository bgmAgitMemberRepository;
     private final BgmAgitMemberRoleRepository bgmAgitMemberRoleRepository;
@@ -29,11 +32,22 @@ public class SignupServiceImpl implements SignupService {
     private final PasswordEncoder passwordEncoder;
     private final KmlUserClient kmlUserClient;
     private final ApplicationEventPublisher eventPublisher;
+    private final TransactionTemplate transactionTemplate;
 
     @Override
     public ApiResponse signup(SignupRequest request) {
         String nickname = request.getNickname().trim();
+        Object lock = NICKNAME_LOCKS.computeIfAbsent(nickname, k -> new Object());
+        synchronized (lock) {
+            try {
+                return transactionTemplate.execute(status -> doSignup(request, nickname));
+            } finally {
+                NICKNAME_LOCKS.remove(nickname, lock);
+            }
+        }
+    }
 
+    private ApiResponse doSignup(SignupRequest request, String nickname) {
         if (bgmAgitMemberRepository.existsByBgmAgitMemberNicknameAndSocialType(nickname, BgmAgitSocialType.MAHJONG)) {
             return new ApiResponse(409, false, "이미 사용 중인 닉네임입니다.");
         }
