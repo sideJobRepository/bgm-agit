@@ -11,6 +11,7 @@ import { alertDialog } from '@/utils/alert';
 
 export default function Signup() {
   const [mounted, setMounted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: '',
     nickname: '',
@@ -28,6 +29,7 @@ export default function Signup() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!form.name.trim() || !form.nickname.trim() || !form.phoneNo.trim() || !form.password) {
       alertDialog('모든 항목을 입력해 주세요.', 'warning');
@@ -42,6 +44,7 @@ export default function Signup() {
       return;
     }
 
+    setIsSubmitting(true);
     postSignup(
       {
         name: form.name.trim(),
@@ -50,7 +53,7 @@ export default function Signup() {
         password: form.password,
       },
       () => router.replace('/login')
-    );
+    ).finally(() => setIsSubmitting(false));
   };
 
   if (!mounted) return null;
@@ -103,7 +106,9 @@ export default function Signup() {
             onChange={handleChange('passwordConfirm')}
             autoComplete="new-password"
           />
-          <SubmitButton type="submit">가입하기</SubmitButton>
+          <SubmitButton type="submit" disabled={isSubmitting}>
+            {isSubmitting ? '처리 중…' : '가입하기'}
+          </SubmitButton>
           <BackLink href="/login">로그인으로 돌아가기</BackLink>
         </Form>
       </SignupBox>
@@ -224,6 +229,11 @@ const SubmitButton = styled.button`
   font-size: ${({ theme }) => theme.desktop.sizes.md};
   font-weight: 600;
   cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
 
 const BackLink = styled(Link)`
