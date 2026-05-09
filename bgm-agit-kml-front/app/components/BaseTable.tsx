@@ -40,8 +40,8 @@ interface BaseTableProps<T> {
   searchLabel?: string | null;
   searchKeyword?: string;
   onSearchKeywordChange?: (value: string) => void;
-  rankType?: 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
-  onRankTypeChange?: (value: 'WEEKLY' | 'MONTHLY' | 'CUSTOM') => void;
+  rankType?: 'ALL' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+  onRankTypeChange?: (value: 'ALL' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM') => void;
   startDate?: Date | null;
   onStartDateChange?: (value: Date | null) => void;
   endDate?: Date | null;
@@ -157,9 +157,12 @@ export function BaseTable<T>({
                     <select
                       value={rankType}
                       onChange={(e) =>
-                        onRankTypeChange?.(e.target.value as 'WEEKLY' | 'MONTHLY' | 'CUSTOM')
+                        onRankTypeChange?.(
+                          e.target.value as 'ALL' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM'
+                        )
                       }
                     >
+                      <option value="ALL">전체</option>
                       <option value="WEEKLY">주간</option>
                       <option value="MONTHLY">월간</option>
                       <option value="CUSTOM">사용자설정</option>

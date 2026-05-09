@@ -20,12 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -47,7 +42,10 @@ public class RankServiceImpl {
         LocalDateTime start;
         LocalDateTime end;
 
-        if (type == RankType.WEEKLY) {
+        if (type == RankType.ALL) {
+            start = null;
+            end = null;
+        } else if (type == RankType.WEEKLY) {
             if (baseDate == null) {
                 throw new IllegalArgumentException("주간 조회에는 baseDate가 필요합니다.");
             }

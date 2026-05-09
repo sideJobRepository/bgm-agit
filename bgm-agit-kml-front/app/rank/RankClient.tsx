@@ -19,7 +19,7 @@ export default function RankClient({ initialData }: Props) {
   const fetchRank = useFetchRankList();
   const rankList = useRankListStore((state) => state.rank);
   const setRank = useRankListStore((state) => state.setRank);
-  const [rankType, setRankType] = useState<'WEEKLY' | 'MONTHLY' | 'CUSTOM'>('MONTHLY');
+  const [rankType, setRankType] = useState<'ALL' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM'>('MONTHLY');
   const [startDate, setStartDate] = useState<Date | null>(() => new Date());
   const [endDate, setEndDate] = useState<Date | null>(() => new Date());
   const [page, setPage] = useState(0);
@@ -45,6 +45,9 @@ export default function RankClient({ initialData }: Props) {
 
   const buildParams = (overridePage?: number) => {
     const base = { page: overridePage ?? page, type: rankType };
+    if (rankType === 'ALL') {
+      return base;
+    }
     if (rankType === 'CUSTOM') {
       return {
         ...base,
