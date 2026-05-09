@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum RankType {
     
+    ALL("전체"),
     WEEKLY("주간"),
     MONTHLY("월간"),
     CUSTOM("사용자설정");

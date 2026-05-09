@@ -2,7 +2,7 @@ import { useRequest } from '@/hooks/useRequest';
 import api from '@/lib/axiosInstance';
 import { useRankListStore } from '@/store/rank';
 
-export type RankType = 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+export type RankType = 'ALL' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
 
 export interface MemberStatsCards {
   totalCount: number;

@@ -1,7 +1,7 @@
 // BaseTable.tsx
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import Pagination from '@/app/components/Pagination';
 import { useUserStore } from '@/store/user';
@@ -40,8 +40,8 @@ interface BaseTableProps<T> {
   searchLabel?: string | null;
   searchKeyword?: string;
   onSearchKeywordChange?: (value: string) => void;
-  rankType?: 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
-  onRankTypeChange?: (value: 'WEEKLY' | 'MONTHLY' | 'CUSTOM') => void;
+  rankType?: 'ALL' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+  onRankTypeChange?: (value: 'ALL' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM') => void;
   startDate?: Date | null;
   onStartDateChange?: (value: Date | null) => void;
   endDate?: Date | null;
@@ -79,6 +79,15 @@ export function BaseTable<T>({
   const isRankPage = pathname === '/rank';
 
   const [sort, setSort] = useState<SortState>(null);
+
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 844px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   // sticky 컬럼들의 누적 left offset (width는 px 형식이어야 함)
   const stickyOffsets = useMemo(() => {
@@ -157,9 +166,12 @@ export function BaseTable<T>({
                     <select
                       value={rankType}
                       onChange={(e) =>
-                        onRankTypeChange?.(e.target.value as 'WEEKLY' | 'MONTHLY' | 'CUSTOM')
+                        onRankTypeChange?.(
+                          e.target.value as 'ALL' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM'
+                        )
                       }
                     >
+                      <option value="ALL">전체</option>
                       <option value="WEEKLY">주간</option>
                       <option value="MONTHLY">월간</option>
                       <option value="CUSTOM">사용자설정</option>
@@ -208,7 +220,8 @@ export function BaseTable<T>({
                           timeIntervals={15}
                           dateFormat="yyyy.MM.dd HH:mm"
                           locale={ko}
-                          portalId="root-portal"
+                          withPortal={isMobile}
+                          portalId={isMobile ? undefined : 'root-portal'}
                         />
                         <span>~</span>
                         <DatePicker
@@ -219,7 +232,8 @@ export function BaseTable<T>({
                           timeIntervals={15}
                           dateFormat="yyyy.MM.dd HH:mm"
                           locale={ko}
-                          portalId="root-portal"
+                          withPortal={isMobile}
+                          portalId={isMobile ? undefined : 'root-portal'}
                         />
                       </DateRange>
                     </Field>
