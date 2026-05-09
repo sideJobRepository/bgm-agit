@@ -1,7 +1,7 @@
 // BaseTable.tsx
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import styled from 'styled-components';
 import Pagination from '@/app/components/Pagination';
 import { useUserStore } from '@/store/user';
@@ -79,15 +79,6 @@ export function BaseTable<T>({
   const isRankPage = pathname === '/rank';
 
   const [sort, setSort] = useState<SortState>(null);
-
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 844px)');
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
 
   // sticky 컬럼들의 누적 left offset (width는 px 형식이어야 함)
   const stickyOffsets = useMemo(() => {
@@ -220,8 +211,7 @@ export function BaseTable<T>({
                           timeIntervals={15}
                           dateFormat="yyyy.MM.dd HH:mm"
                           locale={ko}
-                          withPortal={isMobile}
-                          portalId={isMobile ? undefined : 'root-portal'}
+                          portalId="root-portal"
                         />
                         <span>~</span>
                         <DatePicker
@@ -232,8 +222,7 @@ export function BaseTable<T>({
                           timeIntervals={15}
                           dateFormat="yyyy.MM.dd HH:mm"
                           locale={ko}
-                          withPortal={isMobile}
-                          portalId={isMobile ? undefined : 'root-portal'}
+                          portalId="root-portal"
                         />
                       </DateRange>
                     </Field>
