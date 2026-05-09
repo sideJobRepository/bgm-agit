@@ -1,6 +1,7 @@
 package com.bgmagitapi.service;
 
 import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.controller.request.BgmAgitMemberNicknameChangeRequest;
 import com.bgmagitapi.controller.request.BgmAgitMemberPasswordChangeRequest;
 import com.bgmagitapi.controller.request.BgmAgitRoleModifyRequest;
 import com.bgmagitapi.controller.response.BgmAgitRoleResponse;
@@ -18,4 +19,6 @@ public interface BgmAgitRoleService {
     ApiResponse modifyRole(List<BgmAgitRoleModifyRequest> request, List<String> actorRoles);
 
     ApiResponse changePassword(BgmAgitMemberPasswordChangeRequest request, List<String> actorRoles);
+
+    ApiResponse changeNickname(BgmAgitMemberNicknameChangeRequest request, List<String> actorRoles);
 }

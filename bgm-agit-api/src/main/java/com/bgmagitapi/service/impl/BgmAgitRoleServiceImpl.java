@@ -2,6 +2,7 @@ package com.bgmagitapi.service.impl;
 
 import com.bgmagitapi.advice.exception.ValidException;
 import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.controller.request.BgmAgitMemberNicknameChangeRequest;
 import com.bgmagitapi.controller.request.BgmAgitMemberPasswordChangeRequest;
 import com.bgmagitapi.controller.request.BgmAgitRoleModifyRequest;
 import com.bgmagitapi.controller.response.BgmAgitRoleResponse;
@@ -13,6 +14,7 @@ import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRoleRepository;
 import com.bgmagitapi.repository.BgmAgitRoleRepository;
 import com.bgmagitapi.security.manager.BgmAgitAuthorizationManager;
+import com.bgmagitapi.security.service.kml.KmlUserClient;
 import com.bgmagitapi.service.BgmAgitRoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -43,6 +45,8 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
     private final PasswordEncoder passwordEncoder;
 
     private final BgmAgitAuthorizationManager bgmAgitAuthorizationManager;
+
+    private final KmlUserClient kmlUserClient;
 
     @Override
     @Transactional(readOnly = true)
@@ -126,6 +130,53 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
 
         member.changePassword(passwordEncoder.encode(request.getPassword()));
         return new ApiResponse(200, true, "비밀번호가 변경되었습니다.");
+    }
+
+    @Override
+    public ApiResponse changeNickname(BgmAgitMemberNicknameChangeRequest request, List<String> actorRoles) {
+        boolean actorIsAdmin = hasRole(actorRoles, ROLE_ADMIN);
+        boolean actorIsMentor = !actorIsAdmin && hasRole(actorRoles, ROLE_MENTOR);
+
+        if (!actorIsAdmin && !actorIsMentor) {
+            throw new RuntimeException("권한이 없습니다.");
+        }
+
+        BgmAgitMember member = bgmAgitMemberRepository.findById(request.getMemberId())
+                .orElseThrow(() -> new RuntimeException("해당 회원을 찾을 수 없습니다."));
+
+        if (member.getSocialType() != BgmAgitSocialType.MAHJONG) {
+            throw new ValidException("마작 회원만 닉네임을 변경할 수 있습니다.");
+        }
+
+        if (actorIsMentor) {
+            BgmAgitMemberRole memberRole = bgmAgitMemberRoleRepository
+                    .findByBgmAgitMemberId(member.getBgmAgitMemberId())
+                    .orElseThrow(() -> new RuntimeException("해당 회원의 권한 정보가 없습니다."));
+            if (!ROLE_NAME_USER.equals(memberRole.getBgmAgitRole().getBgmAgitRoleName())) {
+                throw new RuntimeException("멘토는 유저의 닉네임만 변경할 수 있습니다.");
+            }
+        }
+
+        String newNickname = request.getNickname().trim();
+
+        if (newNickname.equals(member.getBgmAgitMemberNickname())) {
+            throw new ValidException("기존 닉네임과 동일합니다.");
+        }
+
+        if (bgmAgitMemberRepository.existsByBgmAgitMemberNicknameAndSocialType(newNickname, BgmAgitSocialType.MAHJONG)) {
+            throw new ValidException("이미 사용 중인 닉네임입니다.");
+        }
+
+        member.changeNickname(newNickname);
+
+        Long kmlId = kmlUserClient.findOrRegisterKmlIdByNickname(newNickname).orElse(null);
+        if (kmlId != null) {
+            member.linkKml(kmlId);
+        } else {
+            member.markKmlSyncFailed();
+        }
+
+        return new ApiResponse(200, true, "닉네임이 변경되었습니다.");
     }
 
     private boolean hasRole(List<String> roles, String role) {

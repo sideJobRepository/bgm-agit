@@ -6,7 +6,7 @@ import { withBasePath } from '@/lib/path';
 
 import React, { useEffect, useState } from 'react';
 
-import { Check, MagnifyingGlass, Key } from 'phosphor-react';
+import { Check, MagnifyingGlass, Key, PencilSimple } from 'phosphor-react';
 import { useUpdatePost } from '@/services/main.service';
 import { alertDialog, confirmDialog } from '@/utils/alert';
 import Swal from 'sweetalert2';
@@ -64,6 +64,39 @@ export default function Role() {
     e.preventDefault();
     setPage(0);
     setSearchKeyword(searchInput);
+  };
+
+  const handleChangeNickname = async (memberId: number, memberNickname: string) => {
+    const result = await Swal.fire({
+      title: `${memberNickname} 닉네임 변경`,
+      input: 'text',
+      inputLabel: '새 닉네임',
+      inputValue: memberNickname,
+      showCancelButton: true,
+      confirmButtonText: '변경',
+      cancelButtonText: '취소',
+      reverseButtons: true,
+      confirmButtonColor: '#4A90E2',
+      cancelButtonColor: '#757575',
+      inputValidator: (value) => {
+        const trimmed = (value ?? '').trim();
+        if (!trimmed) return '닉네임을 입력해주세요.';
+        if (trimmed === memberNickname) return '기존 닉네임과 동일합니다.';
+        return null;
+      },
+    });
+
+    if (!result.isConfirmed || !result.value) return;
+
+    update({
+      url: '/bgm-agit/mahjong-role/nickname',
+      body: { memberId, nickname: result.value.trim() },
+      ignoreErrorRedirect: true,
+      onSuccess: async () => {
+        await alertDialog('닉네임이 변경되었습니다.', 'success');
+        fetchRoles(page, searchKeyword);
+      },
+    });
   };
 
   const handleChangePassword = async (memberId: number, memberNickname: string) => {
@@ -211,7 +244,20 @@ export default function Role() {
                     </Td>
                     <Td>{page * (roleData?.size ?? 10) + idx + 1}</Td>
                     <Td>{item.memberName}</Td>
-                    <Td>{item.memberNickname}</Td>
+                    <Td>
+                      <NicknameCell>
+                        <span>{item.memberNickname}</span>
+                        {editable && (
+                          <NicknameEditButton
+                            type="button"
+                            onClick={() => handleChangeNickname(item.memberId, item.memberNickname)}
+                            aria-label="닉네임 변경"
+                          >
+                            <PencilSimple weight="bold" />
+                          </NicknameEditButton>
+                        )}
+                      </NicknameCell>
+                    </Td>
                     <Td>{item.memberPhoneNo}</Td>
                     <Td>
                       {editable && options.length > 0 ? (
@@ -563,6 +609,62 @@ const RadioGroup = styled.div`
 
   @media ${({ theme }) => theme.device.mobile} {
     gap: 8px;
+  }
+`;
+
+const NicknameCell = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+  word-break: break-all;
+
+  span {
+    line-height: 1.2;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    gap: 8px;
+  }
+`;
+
+const NicknameEditButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid ${({ theme }) => theme.colors.lineColor};
+  border-radius: 4px;
+  color: ${({ theme }) => theme.colors.grayColor};
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.recordBgColor};
+    color: ${({ theme }) => theme.colors.blackColor};
+  }
+
+  &:active {
+    background-color: ${({ theme }) => theme.colors.recordBgColor};
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 36px;
+    height: 36px;
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
   }
 `;
 

@@ -38,6 +38,15 @@ ul, ol {
   font-size: 18px;
 }
 
+@media (max-width: 844px) {
+  .swal2-input,
+  .swal2-textarea,
+  .swal2-file,
+  .swal2-select {
+    font-size: 16px !important;
+  }
+}
+
 
 /*CK 에디터 css*/
 .ck-content p {

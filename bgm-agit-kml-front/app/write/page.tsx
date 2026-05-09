@@ -339,8 +339,12 @@ export default function Write() {
   };
 
   const validateForm = () => {
-    if (detailId && !user?.roles.includes('ROLE_ADMIN')) {
-      alertDialog('수정의 경우 관리자만 가능합니다.', 'error');
+    if (
+      detailId &&
+      !user?.roles.includes('ROLE_ADMIN') &&
+      !user?.roles.includes('ROLE_MENTOR')
+    ) {
+      alertDialog('수정은 관리자 또는 멘토만 가능합니다.', 'error');
       router.push('/');
       return false;
     }
