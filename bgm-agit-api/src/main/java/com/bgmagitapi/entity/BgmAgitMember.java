@@ -97,6 +97,10 @@ public class BgmAgitMember extends DateSuperClass {
         this.bgmAgitMemberPassword = hashedPassword;
     }
 
+    public void changeNickname(String nickname) {
+        this.bgmAgitMemberNickname = nickname;
+    }
+
     public void markKmlSyncFailed() {
         this.bgmAgitMemberKmlSynk = "N";
     }

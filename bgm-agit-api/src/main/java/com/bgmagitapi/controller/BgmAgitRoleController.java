@@ -2,6 +2,7 @@ package com.bgmagitapi.controller;
 
 
 import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.controller.request.BgmAgitMemberNicknameChangeRequest;
 import com.bgmagitapi.controller.request.BgmAgitMemberPasswordChangeRequest;
 import com.bgmagitapi.controller.request.BgmAgitRoleModifyRequest;
 import com.bgmagitapi.controller.response.BgmAgitRoleResponse;
@@ -54,6 +55,12 @@ public class BgmAgitRoleController {
     public ApiResponse changePassword(@AuthenticationPrincipal Jwt jwt,
                                       @Validated @RequestBody BgmAgitMemberPasswordChangeRequest request) {
         return bgmAgitRoleService.changePassword(request, extractRoles(jwt));
+    }
+
+    @PutMapping("/mahjong-role/nickname")
+    public ApiResponse changeNickname(@AuthenticationPrincipal Jwt jwt,
+                                      @Validated @RequestBody BgmAgitMemberNicknameChangeRequest request) {
+        return bgmAgitRoleService.changeNickname(request, extractRoles(jwt));
     }
 
     private List<String> extractRoles(Jwt jwt) {
