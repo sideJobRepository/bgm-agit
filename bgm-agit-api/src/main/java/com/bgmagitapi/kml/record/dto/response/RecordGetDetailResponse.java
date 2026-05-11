@@ -19,6 +19,9 @@ public class RecordGetDetailResponse {
     
     private Long matchsId;
     private String tournamentStatus;
+    // 대회 기록일 때만 채워짐 — 대회 setting의 단일 turning (× 4 안 함, 프론트가 합계 계산 시 곱함)
+    private Integer tournamentTurning;
+    private String tournamentName;
     private MatchsWind wind;
     private List<RecordList> records;
     private List<YakumanList> yakumans;

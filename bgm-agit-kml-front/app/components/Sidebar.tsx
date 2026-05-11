@@ -313,14 +313,14 @@ export default function Sidebar() {
                     );
                     if (result.isConfirmed) {
                       router.push(
-                        `/login?redirect=${encodeURIComponent('/write?tournamentStatus=N')}`
+                        `/login?redirect=${encodeURIComponent('/write')}`
                       );
                     }
                   } else {
                     if (pathname === '/write') {
-                      window.location.href = '/record/write?tournamentStatus=N';
+                      window.location.href = '/record/write';
                     } else {
-                      router.push('/write?tournamentStatus=N');
+                      router.push('/write');
                     }
                   }
                 }}
@@ -566,6 +566,10 @@ const BottomSeciton = styled.div`
   justify-content: center;
   display: flex;
   flex-direction: column;
+
+  li:nth-child(2) {
+    display: none;
+  }
 
   @media ${({ theme }) => theme.device.tablet} {
     border-top: 10px solid rgb(244 244 245);

@@ -24,6 +24,10 @@ import com.bgmagitapi.kml.record.repository.RecordRepository;
 import com.bgmagitapi.kml.record.service.RecordService;
 import com.bgmagitapi.kml.setting.entity.Setting;
 import com.bgmagitapi.kml.setting.repository.SettingRepository;
+import com.bgmagitapi.kml.tournament.entity.Tournament;
+import com.bgmagitapi.kml.tournament.enums.TournamentProgressStatus;
+import com.bgmagitapi.kml.tournament.repository.TournamentRepository;
+import com.bgmagitapi.kml.tournamentsetting.entity.TournamentSetting;
 import com.bgmagitapi.kml.yakuman.entity.Yakuman;
 import com.bgmagitapi.kml.yakuman.repository.YakumanRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
@@ -37,6 +41,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -54,6 +62,8 @@ public class RecordServiceImpl implements RecordService {
     private final BgmAgitMemberRepository memberRepository;
 
     private final SettingRepository settingRepository;
+
+    private final TournamentRepository tournamentRepository;
 
     private final YakumanRepository yakumanRepository;
 
@@ -104,6 +114,8 @@ public class RecordServiceImpl implements RecordService {
                     response.setCreateNicname(group.get(0).getMatchs().getMember().getBgmAgitMemberNickname());
                     response.setRegistDate(group.get(0).getMatchs().getRegistDate());
                     response.setTournamentStatus(group.get(0).getMatchs().getTournamentStatus());
+                    Tournament t = group.get(0).getMatchs().getTournament();
+                    response.setTournamentName(t != null ? t.getName() : null);
                     response.setMatchsWind(group.get(0).getMatchs().getWind());
                     response.setDelStatus(group.get(0).getMatchs().getDelStatus());
                     for (Record rec : group) {
@@ -139,13 +151,26 @@ public class RecordServiceImpl implements RecordService {
     
     @Override
     public RecordGetDetailResponse getRecordDetail(Long id) {
-        
+
         Matchs matchs = matchsRepository.findById(id).orElseThrow(() -> new RuntimeException("존재 하지 않은 대국입니다."));
-        
+
         List<RecordGetDetailResponse.RecordList> records = recordRepository.findByRecord(id);
         List<RecordGetDetailResponse.YakumanList> yakumanLists = yakumanRepository.findByMatchsYakuman(id);
-        
-        return new RecordGetDetailResponse(matchs.getId(),matchs.getTournamentStatus(), matchs.getWind(), records, yakumanLists);
+
+        Tournament tournament = matchs.getTournament();
+        TournamentSetting tournamentSetting = tournament != null ? tournament.getTournamentSetting() : null;
+        Integer tournamentTurning = tournamentSetting != null ? tournamentSetting.getTurning() : null;
+        String tournamentName = tournament != null ? tournament.getName() : null;
+
+        return new RecordGetDetailResponse(
+                matchs.getId(),
+                matchs.getTournamentStatus(),
+                tournamentTurning,
+                tournamentName,
+                matchs.getWind(),
+                records,
+                yakumanLists
+        );
     }
     
     @Override
@@ -153,61 +178,92 @@ public class RecordServiceImpl implements RecordService {
 
         bgmAgitPasswordService.verify(request.getPassword());
 
-        Integer sum = request.getRecords()
-                .stream()
-                .mapToInt(RecordPostRequest.Records::getRecordScore).sum();
-        Setting setting = settingRepository.findBySetting();
-        Integer turning = setting.getTurning() * 4;
-        if (!sum.equals(turning)) {
-            String message = String.format("입력된 점수 합계(%d)가 기준 점수(%d)와 일치하지 않습니다.", sum, turning);
-            throw new ValidException(message);
-        }
-        
         Set<Long> recordMemberSet = request.getRecords().stream()
                 .map(RecordPostRequest.Records::getMemberId)
                 .collect(Collectors.toSet());
-        
+
         if (recordMemberSet.size() != 4) {
             throw new ValidException("동일 사용자가 기록에 포함되어 있습니다.");
         }
-        
+
         List<Long> invalidMemberIds = request.getYakumans().stream()
                 .map(RecordPostRequest.Yakumans::getMemberId)
                 .filter(id -> !recordMemberSet.contains(id))
                 .toList();
-        
+
         if (!invalidMemberIds.isEmpty()) {
             throw new ValidException("대국 참가자가 아닌 회원이 역만 기록에 포함되어 있습니다.");
         }
-        
-        
+
+
         MatchsWind wind = request.getWind();
         String tournamentStatus = request.getTournamentStatus() != null ? request.getTournamentStatus() : "N";
+        Setting setting = settingRepository.findBySetting();
+        Tournament activeTournament = null;
+        TournamentSetting tournamentSetting = null;
+        if ("Y".equals(tournamentStatus)) {
+            activeTournament = tournamentRepository.findFirstByProgressStatus(TournamentProgressStatus.ACTIVE)
+                    .orElseThrow(() -> new ValidException("진행 중인 대회가 없습니다."));
+            LocalDate startDate = activeTournament.getStartDate();
+            LocalDate endDate = activeTournament.getEndDate();
+            LocalTime startTime = activeTournament.getStartTime();
+            LocalTime endTime = activeTournament.getEndTime();
+            if (startDate == null || endDate == null || startTime == null || endTime == null) {
+                throw new ValidException("대회 시작/종료 일시가 설정되지 않았습니다.");
+            }
+            LocalDateTime start = LocalDateTime.of(startDate, startTime);
+            LocalDateTime end = LocalDateTime.of(endDate, endTime);
+            LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+            if (now.isBefore(start) || now.isAfter(end)) {
+                throw new ValidException(String.format(
+                        "대회 시간(%s ~ %s) 외에는 기록할 수 없습니다. 현재 %s",
+                        start, end, now));
+            }
+            tournamentSetting = activeTournament.getTournamentSetting();
+            if (tournamentSetting == null) {
+                throw new ValidException("대회 설정이 지정되지 않았습니다.");
+            }
+        }
+
+        Integer sum = request.getRecords()
+                .stream()
+                .mapToInt(RecordPostRequest.Records::getRecordScore).sum();
+        Integer turning = "Y".equals(tournamentStatus)
+                ? tournamentSetting.getTurning() * 4
+                : setting.getTurning() * 4;
+        if (!sum.equals(turning)) {
+            String message = String.format("입력된 점수 합계(%d)가 기준 점수(%d)와 일치하지 않습니다.", sum, turning);
+            throw new ValidException(message);
+        }
+
         AtomicInteger rankCount = new AtomicInteger(1);
         BgmAgitMember bgmAgitMember = memberRepository.findById(memberId).orElseThrow(() -> new ValidException("다시 로그인 해주세요"));
         Matchs matchs = Matchs.builder()
                 .wind(wind)
                 .tournamentStatus(tournamentStatus)
                 .setting(setting)
+                .tournament(activeTournament)
                 .delStatus("N")
                 .member(bgmAgitMember)
                 .build();
-        
+
         matchsRepository.save(matchs);
-        
+
         List<RecordPostRequest.Records> records = request.getRecords();
         records.sort(
                 Comparator.comparing(
                         RecordPostRequest.Records::getRecordScore,
                         Comparator.reverseOrder()
                 ).thenComparing(r -> WIND_ORDER.get(r.getRecordSeat())));
-        
+
         records.forEach(item -> item.setRecordRank(rankCount.getAndIncrement()));
         int multiplier = CalculateUtil.seatMultiplier(matchs.getWind());
         List<Record> recordList = new ArrayList<>();
         for (RecordPostRequest.Records record : records) {
             BgmAgitMember member = memberRepository.findById(record.getMemberId()).orElseThrow(() -> new RuntimeException("존재 하지 않는 회원입니다."));
-            Double recordPoint = CalculateUtil.calculatePlayerPoint(record, setting, multiplier);
+            Double recordPoint = tournamentSetting != null
+                    ? CalculateUtil.calculatePlayerPoint(record, tournamentSetting, multiplier)
+                    : CalculateUtil.calculatePlayerPoint(record, setting, multiplier);
             Record saveRecord = Record.builder()
                     .matchs(matchs)
                     .member(member)
@@ -318,10 +374,15 @@ public class RecordServiceImpl implements RecordService {
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 경기입니다."));
         
         Long settingId = matchs.getSetting().getId();
-        
+
         Setting setting = settingRepository.findById(settingId)
                 .orElseThrow(() -> new RuntimeException("존재하지않는 세팅값입니다."));
-        
+
+        // 대회 기록이면 그 대회의 setting을 사용 (sum 검증 + 점수 재계산 모두)
+        TournamentSetting tournamentSetting = matchs.getTournament() != null
+                ? matchs.getTournament().getTournamentSetting()
+                : null;
+
         // 참가자 검증
         Set<Long> recordMemberSet = request.getRecords().stream()
                 .map(RecordPutRequest.Records::getMemberId)
@@ -339,14 +400,16 @@ public class RecordServiceImpl implements RecordService {
         if (!invalidMemberIds.isEmpty()) {
             throw new ValidException("대국 참가자가 아닌 회원이 역만 기록에 포함되어 있습니다.");
         }
-        
+
         // 점수 합 검증
         Integer sum = request.getRecords().stream()
                 .mapToInt(RecordPutRequest.Records::getRecordScore)
                 .sum();
-        
-        Integer turning = setting.getTurning() * 4;
-        
+
+        Integer turning = tournamentSetting != null
+                ? tournamentSetting.getTurning() * 4
+                : setting.getTurning() * 4;
+
         if (!sum.equals(turning)) {
             throw new ValidException(
                     String.format("입력된 점수 합계(%d)가 기준 점수(%d)와 일치하지 않습니다.", sum, turning)
@@ -390,7 +453,9 @@ public class RecordServiceImpl implements RecordService {
                 throw new RuntimeException("존재하지 않는 Record ID: " + dto.getRecordId());
             }
             
-            Double point = CalculateUtil.calculatePlayerPoint(dto, setting, multiplier);
+            Double point = tournamentSetting != null
+                    ? CalculateUtil.calculatePlayerPoint(dto, tournamentSetting, multiplier)
+                    : CalculateUtil.calculatePlayerPoint(dto, setting, multiplier);
             
             Long memberId = dto.getMemberId();
             
@@ -468,7 +533,7 @@ public class RecordServiceImpl implements RecordService {
                     bgmAgitFileService.findCompletedByTargets(deletedYakumanIds, FileType.YAKUMAN);
             orphanFiles.forEach(BgmAgitFile::modifyTemporaryFileStatus);
         }
-        deletedYakumans.forEach(yakumanRepository::delete);
+        yakumanRepository.deleteAll(deletedYakumans);
         
         // 히스토리 기록
         matchsAndRecordHistoryService.updateMatchsAndRecordHistory(

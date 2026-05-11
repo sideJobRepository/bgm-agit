@@ -8,11 +8,11 @@ import React, { useEffect, useState } from 'react';
 
 import { Check, Key } from 'phosphor-react';
 import { useInsertPost, useUpdatePost } from '@/services/main.service';
-import { alertDialog, confirmDialog } from '@/utils/alert';
+import { alertDialog } from '@/utils/alert';
 import Swal from 'sweetalert2';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useFetchSetting } from '@/services/setting.service';
-import { useSettingStore } from '@/store/setting';
+import { useRouter } from 'next/navigation';
+import { useFetchSetting, useFetchTournamentSetting } from '@/services/setting.service';
+import { useSettingStore, useTournamentSettingStore } from '@/store/setting';
 import { useUserStore } from '@/store/user';
 
 export default function Write() {
@@ -22,10 +22,19 @@ export default function Write() {
   const router = useRouter();
 
   const fetchSetting = useFetchSetting();
+  const fetchTournamentSetting = useFetchTournamentSetting();
   const settingData = useSettingStore((state) => state.setting);
-  console.log('settingData', settingData);
+  const tournamentSettingData = useTournamentSettingStore((state) => state.tournamentSetting);
 
   const [form, setForm] = useState({
+    turning: 0,
+    firstUma: 0,
+    secondUma: 0,
+    thirdUma: 0,
+    fourthUma: 0,
+  });
+
+  const [tournamentForm, setTournamentForm] = useState({
     turning: 0,
     firstUma: 0,
     secondUma: 0,
@@ -40,10 +49,18 @@ export default function Write() {
     }));
   };
 
+  const handleTournamentChange = (key: keyof typeof tournamentForm, value: number) => {
+    setTournamentForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
   const handleSubmit = async () => {
     if (!user) {
       await alertDialog('유저 정보가 없습니다. \n 로그인 후 이용해주세요.', 'error');
       router.push('/login');
+      return;
     }
 
     insert({
@@ -58,6 +75,30 @@ export default function Write() {
       ignoreErrorRedirect: true,
       onSuccess: async () => {
         await alertDialog('설정이 저장되었습니다.', 'success');
+      },
+    });
+  };
+
+  const handleTournamentSubmit = async () => {
+    if (!user) {
+      await alertDialog('?좎? ?뺣낫媛 ?놁뒿?덈떎. \n 濡쒓렇?????댁슜?댁＜?몄슂.', 'error');
+      router.push('/login');
+      return;
+    }
+
+    insert({
+      url: '/bgm-agit/tournament-settings',
+      body: {
+        turning: tournamentForm.turning,
+        firstUma: tournamentForm.firstUma,
+        secondUma: tournamentForm.secondUma,
+        thirdUma: tournamentForm.thirdUma,
+        fourthUma: tournamentForm.fourthUma,
+      },
+      ignoreErrorRedirect: true,
+      onSuccess: async () => {
+        await alertDialog('대회 설정이 저장되었습니다.', 'success');
+        fetchTournamentSetting();
       },
     });
   };
@@ -98,10 +139,12 @@ export default function Write() {
 
   useEffect(() => {
     fetchSetting();
+    fetchTournamentSetting();
   }, []);
 
   useEffect(() => {
     if (settingData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm({
         turning: settingData.turning,
         firstUma: settingData.firstUma,
@@ -111,6 +154,19 @@ export default function Write() {
       });
     }
   }, [settingData]);
+
+  useEffect(() => {
+    if (tournamentSettingData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTournamentForm({
+        turning: tournamentSettingData.turning,
+        firstUma: tournamentSettingData.firstUma,
+        secondUma: tournamentSettingData.secondUma,
+        thirdUma: tournamentSettingData.thirdUma,
+        fourthUma: tournamentSettingData.fourthUma,
+      });
+    }
+  }, [tournamentSettingData]);
 
   return (
     <Wrapper>
@@ -136,6 +192,7 @@ export default function Write() {
         </HeroContent>
       </Hero>
       <TableBox>
+        <SettingTitle>일반 반환점/우마 설정</SettingTitle>
         <Top>
           <Button onClick={handleSubmit}>
             <Check weight="bold" />
@@ -182,6 +239,64 @@ export default function Write() {
                   type="number"
                   value={form.fourthUma}
                   onChange={(e) => handleChange('fourthUma', Number(e.target.value))}
+                />
+              </Field>
+            </FieldsWrapper>
+          </WriteCroup>
+        </Center>
+
+        <SettingTitle>대회 반환점/우마 설정</SettingTitle>
+        <Top>
+          <Button onClick={handleTournamentSubmit}>
+            <Check weight="bold" />
+          </Button>
+        </Top>
+        <Center>
+          <WriteCroup>
+            <FieldsWrapper>
+              <Field className="score">
+                <label>반환점</label>
+                <input
+                  type="number"
+                  step="1"
+                  value={tournamentForm.turning}
+                  onChange={(e) => handleTournamentChange('turning', Number(e.target.value))}
+                />
+              </Field>
+              <Field className="score">
+                <label>1등 우마</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={tournamentForm.firstUma}
+                  onChange={(e) => handleTournamentChange('firstUma', Number(e.target.value))}
+                />
+              </Field>
+              <Field className="score">
+                <label>2등 우마</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={tournamentForm.secondUma}
+                  onChange={(e) => handleTournamentChange('secondUma', Number(e.target.value))}
+                />
+              </Field>
+              <Field className="score">
+                <label>3등 우마</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={tournamentForm.thirdUma}
+                  onChange={(e) => handleTournamentChange('thirdUma', Number(e.target.value))}
+                />
+              </Field>
+              <Field className="score">
+                <label>4등 우마</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={tournamentForm.fourthUma}
+                  onChange={(e) => handleTournamentChange('fourthUma', Number(e.target.value))}
                 />
               </Field>
             </FieldsWrapper>
@@ -315,6 +430,13 @@ const TableBox = styled.div`
   }
 `;
 
+const SettingTitle = styled.h3`
+  margin: 0;
+  font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.blackColor};
+`;
+
 const Top = styled.section`
   display: flex;
   width: 100%;
@@ -344,7 +466,7 @@ const Top = styled.section`
   }
 `;
 
-const Center = styled.section<>`
+const Center = styled.section`
   display: inline-flex;
   flex-direction: column;
   width: 100%;

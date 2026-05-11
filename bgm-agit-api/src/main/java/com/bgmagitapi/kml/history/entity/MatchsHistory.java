@@ -30,6 +30,10 @@ public class MatchsHistory extends DateSuperClass {
     @Column(name = "BGM_AGIT_SETTING_ID")
     private Long settingId;
 
+    // BGM 아지트 대회 ID (대회 기록일 때만 채워짐)
+    @Column(name = "BGM_AGIT_TOURNAMENT_ID")
+    private Long tournamentId;
+
     // BGM 아지트 회원 ID
     @Column(name = "BGM_AGIT_MEMBER_ID")
     private Long memberId;

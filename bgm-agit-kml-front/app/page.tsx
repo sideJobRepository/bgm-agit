@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { withBasePath } from '@/lib/path';
@@ -27,6 +27,28 @@ import { useUserStore } from '@/store/user';
 import { useKmlMenuStore } from '@/store/menu';
 import { useMyPageStore } from '@/store/myPage';
 import { confirmDialog } from '@/utils/alert';
+import api from '@/lib/axiosInstance';
+
+interface ActiveTournament {
+  tournamentId: number;
+  name: string;
+  startDate: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+}
+
+function formatRemaining(diffMs: number): string {
+  if (diffMs <= 0) return '종료됨';
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((diffMs / (1000 * 60)) % 60);
+  const seconds = Math.floor((diffMs / 1000) % 60);
+  if (days > 0) return `${days}일 ${hours}시간 ${minutes}분`;
+  if (hours > 0) return `${hours}시간 ${minutes}분 ${seconds}초`;
+  if (minutes > 0) return `${minutes}분 ${seconds}초`;
+  return `${seconds}초`;
+}
 
 const ICON_MAP = {
   Bell,
@@ -87,9 +109,25 @@ export default function Home() {
 
   const [mounted, setMounted] = useState(false);
 
-  const quickMenus = (menuData ?? []).filter(
-    (m) => !!m.menuLink && m.menuLink !== '/sub' && m.menuLink !== '/my-page'
-  );
+  // 부모 메뉴(/sub 컨테이너)는 자체 link가 없고 subMenus만 갖고 있어서
+  // top-level만 보면 안 잡힘. top-level + subMenus 모두 펴서 실제 link 있는 것만 노출
+  const quickMenus = useMemo(() => {
+    // /my-rank은 위에 하드코딩된 "내 기록" 퀵아이템과 중복되므로 제외
+    const isQuickable = (link?: string | null) =>
+      !!link && link !== '/sub' && link !== '/my-page' && link !== '/my-rank';
+    const result: { id: string; icon: string; menuName: string; menuLink: string }[] = [];
+    (menuData ?? []).forEach((m) => {
+      if (isQuickable(m.menuLink)) {
+        result.push({ id: m.id, icon: m.icon, menuName: m.menuName, menuLink: m.menuLink });
+      }
+      (m.subMenus ?? []).forEach((sub) => {
+        if (isQuickable(sub.menuLink)) {
+          result.push({ id: sub.id, icon: sub.icon, menuName: sub.menuName, menuLink: sub.menuLink });
+        }
+      });
+    });
+    return result;
+  }, [menuData]);
 
   const handleQuickWrite = async () => {
     if (!user) {
@@ -104,6 +142,9 @@ export default function Home() {
     }
     router.push('/write');
   };
+
+  const [activeTournament, setActiveTournament] = useState<ActiveTournament | null>(null);
+  const [nowTick, setNowTick] = useState<number>(() => Date.now());
 
   const [cards, setCards] = useState(INITIAL_CARDS);
   const [dir, setDir] = useState(1); // 1 = next, -1 = prev
@@ -140,9 +181,70 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
+  // active 대회: 진입 시 조회 + 시간 범위 안이면 1초마다 카운트다운
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    api
+      .get('/bgm-agit/tournaments/active')
+      .then((res) => {
+        const t = res.data;
+        if (!t?.startDate || !t?.endDate || !t?.startTime || !t?.endTime) return;
+        const start = new Date(`${t.startDate}T${t.startTime}`);
+        const end = new Date(`${t.endDate}T${t.endTime}`);
+        const checkNow = new Date();
+        if (checkNow < start || checkNow > end) return;
+
+        setActiveTournament({
+          tournamentId: t.tournamentId,
+          name: t.name,
+          startDate: t.startDate,
+          endDate: t.endDate,
+          startTime: t.startTime,
+          endTime: t.endTime,
+        });
+        interval = setInterval(() => setNowTick(Date.now()), 1000);
+      })
+      .catch(() => {});
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, []);
+
+  const remainingLabel = useMemo(() => {
+    if (!activeTournament) return null;
+    const end = new Date(`${activeTournament.endDate}T${activeTournament.endTime}`);
+    const diff = end.getTime() - nowTick;
+    if (diff <= 0) return null;
+    return formatRemaining(diff);
+  }, [activeTournament, nowTick]);
+
   if (!mounted) return null;
   return (
     <Wrapper>
+      {activeTournament && remainingLabel && (
+        <TournamentBanner
+          onClick={() => router.push('/tournament/live')}
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
+        >
+          <BannerIcon>
+            <Trophy weight="fill" />
+          </BannerIcon>
+          <BannerContent>
+            <BannerLabel>진행 중인 대회</BannerLabel>
+            <BannerName>{activeTournament.name}</BannerName>
+          </BannerContent>
+          <BannerRemaining>
+            <span>남은 시간</span>
+            <strong>{remainingLabel}</strong>
+          </BannerRemaining>
+        </TournamentBanner>
+      )}
       <Title>
         <h1>
           Welcome to
@@ -301,6 +403,104 @@ const Wrapper = styled.div`
     max-width: 100%;
     min-width: 100%;
     min-height: unset;
+  }
+`;
+
+const TournamentBanner = styled(motion.button)`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 90%;
+  max-width: 800px;
+  align-self: center;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1f4e5b 0%, #2b6b7f 100%);
+  color: ${({ theme }) => theme.colors.whiteColor};
+  box-shadow: 0 6px 18px rgba(31, 78, 91, 0.25);
+  cursor: pointer;
+  text-align: left;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+`;
+
+const BannerIcon = styled.div`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  flex-shrink: 0;
+
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+`;
+
+const BannerContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+`;
+
+const BannerLabel = styled.span`
+  font-size: ${({ theme }) => theme.desktop.sizes.xs};
+  font-weight: 700;
+  opacity: 0.78;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+`;
+
+const BannerName = styled.strong`
+  font-size: ${({ theme }) => theme.desktop.sizes.lg};
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.mobile.sizes.lg};
+  }
+`;
+
+const BannerRemaining = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+
+  span {
+    font-size: ${({ theme }) => theme.desktop.sizes.xs};
+    font-weight: 700;
+    opacity: 0.78;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  strong {
+    font-size: ${({ theme }) => theme.desktop.sizes.lg};
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+
+    @media ${({ theme }) => theme.device.mobile} {
+      font-size: ${({ theme }) => theme.mobile.sizes.lg};
+    }
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    align-items: flex-start;
+    width: 100%;
   }
 `;
 

@@ -5,6 +5,9 @@ import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.setting.dto.request.SettingPostRequest;
 import com.bgmagitapi.kml.setting.dto.response.SettingGetResponse;
 import com.bgmagitapi.kml.setting.service.SettingService;
+import com.bgmagitapi.kml.tournamentsetting.dto.request.TournamentSettingPostRequest;
+import com.bgmagitapi.kml.tournamentsetting.dto.response.TournamentSettingGetResponse;
+import com.bgmagitapi.kml.tournamentsetting.service.TournamentSettingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +19,7 @@ public class SettingController {
 
 
     private final SettingService settingService;
+    private final TournamentSettingService tournamentSettingService;
     
     
     @GetMapping("/settings")
@@ -31,5 +35,15 @@ public class SettingController {
     @PostMapping("/settings")
     public ApiResponse setSettings(@Validated @RequestBody SettingPostRequest request) {
         return settingService.createSettings(request);
+    }
+
+    @GetMapping("/tournament-settings")
+    public TournamentSettingGetResponse getTournamentSettings() {
+        return tournamentSettingService.getTournamentSettings();
+    }
+
+    @PostMapping("/tournament-settings")
+    public ApiResponse setTournamentSettings(@Validated @RequestBody TournamentSettingPostRequest request) {
+        return tournamentSettingService.createTournamentSettings(request);
     }
 }

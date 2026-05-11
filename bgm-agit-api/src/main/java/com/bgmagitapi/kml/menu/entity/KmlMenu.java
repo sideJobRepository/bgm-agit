@@ -42,4 +42,12 @@ public class KmlMenu extends DateSuperClass {
     @Column(name = "BGM_AGIT_KML_ICON")
     private String icon;
 
+    public void update(KmlMenu parentMenuId, String menuName, String menuLink, Integer orders, String icon) {
+        this.parentMenuId = parentMenuId;
+        this.menuName = menuName;
+        this.menuLink = menuLink;
+        this.orders = orders;
+        this.icon = icon;
+    }
+
 }

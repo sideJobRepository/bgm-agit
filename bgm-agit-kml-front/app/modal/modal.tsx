@@ -8,9 +8,10 @@ type Props = {
   open: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  title?: string;
 };
 
-export default function Modal({ open, onClose, children }: Props) {
+export default function Modal({ open, onClose, children, title = 'HISTORY' }: Props) {
   if (!open) return null;
 
   return (
@@ -18,7 +19,7 @@ export default function Modal({ open, onClose, children }: Props) {
       <Overlay onClick={onClose}>
         <Content onClick={(e) => e.stopPropagation()}>
           <TopModalBox>
-            <h4>HISTORY</h4>
+            <h4>{title}</h4>
             <X onClick={onClose} weight="bold" />
           </TopModalBox>
           {children}

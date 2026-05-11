@@ -3,7 +3,7 @@
 import styled from 'styled-components';
 import Pagination from '@/app/components/Pagination';
 import { useUserStore } from '@/store/user';
-import { FileText, TrashSimple, Share, ClockCounterClockwise, ArrowCounterClockwise } from 'phosphor-react';
+import { FileText, TrashSimple, Share, ClockCounterClockwise, ArrowCounterClockwise, Trophy } from 'phosphor-react';
 import { alertDialog, confirmDialog } from '@/utils/alert';
 import { useDeletePost, useUpdatePost } from '@/services/main.service';
 import { useRouter } from 'next/navigation';
@@ -27,6 +27,7 @@ type MatchType = {
   registDate: string;
   matchsWind: string;
   tournamentStatus: string;
+  tournamentName?: string | null;
   delStatus?: string;
   rows: RowType[];
 };
@@ -143,8 +144,9 @@ export function BaseCardTable({ data, page, onPageChange, onDeleteSuccess }: Bas
         {data.content.length === 0 && <EmptyTd> 검색된 결과가 없습니다.</EmptyTd>}
         {data.content.map((item) => {
           const isDeleted = item.delStatus === 'Y';
+          const isTournament = item.tournamentStatus === 'Y';
           return (
-          <Card key={item.matchsId} $deleted={isDeleted}>
+          <Card key={item.matchsId} $deleted={isDeleted} $tournament={isTournament}>
             {isDeleted && <DeletedBadge>삭제된 기록</DeletedBadge>}
             <ButtonBox>
               {isMentorOrAdmin && !isDeleted && (
@@ -178,10 +180,16 @@ export function BaseCardTable({ data, page, onPageChange, onDeleteSuccess }: Bas
                 <Share weight="bold" />
               </Button>
             </ButtonBox>
-            <Header>
-              <span>{getLabelByValue(item.matchsWind)}</span>
-              <span>대회여부 : {item.tournamentStatus === 'Y' ? '예' : '아니오'}</span>
-
+            <Header $tournament={isTournament}>
+              <HeaderLeft>
+                <span>{getLabelByValue(item.matchsWind)}</span>
+                {isTournament && (
+                  <TournamentBadge>
+                    <Trophy weight="fill" />
+                    {item.tournamentName || '대회'}
+                  </TournamentBadge>
+                )}
+              </HeaderLeft>
               <span>{item.registDate}</span>
             </Header>
             {/*<HeaderData>*/}
@@ -229,7 +237,7 @@ const CardGrid = styled.div`
   }
 `;
 
-const Card = styled.div<{ $deleted?: boolean }>`
+const Card = styled.div<{ $deleted?: boolean; $tournament?: boolean }>`
   position: relative;
   background-color: ${({ theme }) => theme.colors.recordBgColor};
   border-radius: 4px;
@@ -237,11 +245,19 @@ const Card = styled.div<{ $deleted?: boolean }>`
   width: 100%;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 
+  ${({ $tournament }) =>
+    $tournament &&
+    `
+    border: 2px solid #f0b429;
+    box-shadow: 0 4px 14px rgba(240, 180, 41, 0.25);
+  `}
+
   ${({ $deleted }) =>
     $deleted &&
     `
     opacity: 0.55;
     border: 2px dashed #D9625E;
+    box-shadow: none;
   `}
 `;
 
@@ -258,11 +274,13 @@ const DeletedBadge = styled.span`
   z-index: 1;
 `;
 
-const Header = styled.div`
-  background-color: ${({ theme }) => theme.colors.blueColor};
+const Header = styled.div<{ $tournament?: boolean }>`
+  background-color: ${({ $tournament, theme }) =>
+    $tournament ? '#1f4e5b' : theme.colors.blueColor};
   color: ${({ theme }) => theme.colors.whiteColor};
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 6px 8px;
   font-size: ${({ theme }) => theme.desktop.sizes.md};
   font-weight: 600;
@@ -274,6 +292,39 @@ const Header = styled.div`
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.mobile.sizes.md};
+  }
+`;
+
+const HeaderLeft = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const TournamentBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  max-width: 240px;
+  background: linear-gradient(135deg, #f0b429 0%, #de911d 100%);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  svg {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    max-width: 160px;
   }
 `;
 
