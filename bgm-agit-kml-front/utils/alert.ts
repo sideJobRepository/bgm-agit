@@ -13,7 +13,7 @@ export const confirmDialog = async (
     cancelButtonText: '취소',
     reverseButtons: true,
     confirmButtonColor: '#4A90E2',
-    cancelButtonColor: '#757575',
+     cancelButtonColor: '#757575',
   });
 };
 

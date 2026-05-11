@@ -481,7 +481,7 @@ public class RecordServiceImpl implements RecordService {
         Map<Long, Yakuman> yakumanMap = existingYakumans.stream()
                 .collect(Collectors.toMap(Yakuman::getId, y -> y));
         
-        Set<Long> requestYakumanIds = new HashSet<>();
+         Set<Long> requestYakumanIds = new HashSet<>();
         
         for (RecordPutRequest.Yakumans dto : request.getYakumans()) {
             
