@@ -24,6 +24,7 @@ import {
   uploadYakumanFile,
   fetchFileViewUrls,
 } from '@/services/yakumanFile.service';
+import api from '@/lib/axiosInstance';
 
 const DIRECTIONS = [
   { key: 'EAST', label: '동', color: '#415B9C' },
@@ -115,6 +116,9 @@ export default function Write() {
   //점수
   const fetchSettingRefund = useFetchSettingRefund();
   const refundData = useSettingRefundStore((state) => state.refund);
+
+  /** 대회 진행 중일 때 active 대회의 반환점 (없으면 일반 반환점으로 fallback) */
+  const [tournamentTurning, setTournamentTurning] = useState<number | null>(null);
 
   /** 장 선택 */
   const [leader, setLeader] = useState('SOUTH');
@@ -386,27 +390,63 @@ export default function Write() {
     return true;
   };
 
-  //detail 로직
+  const setTournamentTitle = () => {
+    setTitle({
+      title: 'Tournament Entry',
+      content: '대회 경기 결과를 입력하고 공식 기록으로 관리하세요.',
+    });
+  };
+
+  const setRecordTitle = () => {
+    setTitle({
+      title: 'Record Entry',
+      content: '플레이 결과를 입력하고 나만의 기록을 쌓아보세요.',
+    });
+  };
+
+  //detail 로직 + 진입 시 오늘 대회 자동 감지
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-
     const id = params.get('id');
-    const tournamentStatus = params.get('tournamentStatus');
-
     setDetailId(id);
-    setTournamentStatus(tournamentStatus);
 
-    if (tournamentStatus === 'Y') {
-      setTitle({
-        title: 'Tournament Entry',
-        content: '대회 경기 결과를 입력하고 공식 기록으로 관리하세요.',
+    // 수정 모드: detailData가 도착하면 그쪽에서 tournamentStatus를 세팅하니 여기선 패스
+    if (id) return;
+
+    // 신규 입력: active 대회의 [start, end] 시간 범위 안이면 자동으로 대회 모드 전환
+    api
+      .get('/bgm-agit/tournaments/active')
+      .then((res) => {
+        const active = res.data;
+        const inSchedule =
+          !!active &&
+          active.startDate &&
+          active.endDate &&
+          active.startTime &&
+          active.endTime &&
+          (() => {
+            const start = new Date(`${active.startDate}T${active.startTime}`);
+            const end = new Date(`${active.endDate}T${active.endTime}`);
+            const now = new Date();
+            return now >= start && now <= end;
+          })();
+
+        if (inSchedule) {
+          setTournamentStatus('Y');
+          const turning = active.tournamentSettingTurning;
+          setTournamentTurning(typeof turning === 'number' ? turning : null);
+          setTournamentTitle();
+        } else {
+          setTournamentStatus('N');
+          setTournamentTurning(null);
+          setRecordTitle();
+        }
+      })
+      .catch(() => {
+        setTournamentStatus('N');
+        setTournamentTurning(null);
+        setRecordTitle();
       });
-    } else {
-      setTitle({
-        title: 'Record Entry',
-        content: '플레이 결과를 입력하고 나만의 기록을 쌓아보세요.',
-      });
-    }
   }, []);
 
   useEffect(() => {
@@ -422,6 +462,17 @@ export default function Write() {
     // 국 길이
     setLeader(detailData.wind);
     setTournamentStatus(detailData.tournamentStatus);
+
+    // 대회 기록이면 detail 응답의 tournamentTurning을 사용 (종료된 대회도 정확하게 자동계산됨)
+    if (detailData.tournamentStatus === 'Y') {
+      setTournamentTurning(
+        typeof detailData.tournamentTurning === 'number' ? detailData.tournamentTurning : null
+      );
+      setTournamentTitle();
+    } else {
+      setTournamentTurning(null);
+      setRecordTitle();
+    }
 
     // records
     const nextRecords = {
@@ -441,6 +492,16 @@ export default function Write() {
     });
 
     setRecords(nextRecords);
+
+    // detail 로드된 점수는 이미 확정값이므로 자동계산이 덮어쓰지 않도록 4자리 모두 edited 마킹.
+    // 사용자가 점수를 비우거나 직접 수정하면 markScoreEdited가 다시 0으로 리셋해 후보 복귀.
+    const now = Date.now();
+    setScoreEditTime({
+      EAST: now,
+      SOUTH: now,
+      WEST: now,
+      NORTH: now,
+    });
 
     // yakuman
     if (detailData.yakumans) {
@@ -510,7 +571,11 @@ export default function Write() {
     }
 
     const total = others.reduce((sum, k) => sum + Number(records[k].score), 0);
-    const refund = Number(refundData) || 0;
+    // refundData는 이미 `turning * 4` (합계 기준) 값이고, tournamentTurning은 단일 turning 값이라 ×4 해야 함
+    const refund =
+      tournamentStatus === 'Y' && tournamentTurning != null
+        ? tournamentTurning * 4
+        : Number(refundData) || 0;
     const computed = String(refund - total);
 
     if (records[autoTarget].score !== computed) {
@@ -526,6 +591,8 @@ export default function Write() {
     records.WEST.score,
     records.NORTH.score,
     refundData,
+    tournamentStatus,
+    tournamentTurning,
     scoreEditTime,
   ]);
 

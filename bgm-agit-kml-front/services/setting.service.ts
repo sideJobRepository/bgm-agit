@@ -1,6 +1,6 @@
 import { useRequest } from '@/hooks/useRequest';
 import api from '@/lib/axiosInstance';
-import { useSettingRefundStore, useSettingStore } from '@/store/setting';
+import { useSettingRefundStore, useSettingStore, useTournamentSettingStore } from '@/store/setting';
 
 export function useFetchSetting() {
   const { request } = useRequest();
@@ -26,4 +26,17 @@ export function useFetchSettingRefund() {
   };
 
   return fetchSettingRefund;
+}
+
+export function useFetchTournamentSetting() {
+  const { request } = useRequest();
+  const setTournamentSetting = useTournamentSettingStore((state) => state.setTournamentSetting);
+
+  const fetchTournamentSetting = () => {
+    request(() => api.get(`/bgm-agit/tournament-settings`).then((res) => res.data), setTournamentSetting, {
+      ignoreErrorRedirect: true,
+    });
+  };
+
+  return fetchTournamentSetting;
 }

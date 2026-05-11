@@ -24,10 +24,10 @@ public class MatchsAndRecordHistoryResponse {
     private Long matchId;
     
     private Integer turning;
-    private Integer firstUma;
-    private Integer secondUma;
-    private Integer thirdUma;
-    private Integer fourthUma;
+    private Double firstUma;
+    private Double secondUma;
+    private Double thirdUma;
+    private Double fourthUma;
     
     private MatchsWind matchsWind;
     
@@ -54,7 +54,7 @@ public class MatchsAndRecordHistoryResponse {
     }
     
     @QueryProjection
-    public MatchsAndRecordHistoryResponse(Long matchHistoryId, Long matchId, Integer turning, Integer firstUma, Integer secondUma, Integer thirdUma, Integer fourthUma, MatchsWind matchsWind, String tournamentStatus, String delStatus, ChangeType changeType, String changeReason, LocalDateTime modifyDate, String modifyName, List<RecordHistList> recordHistory) {
+    public MatchsAndRecordHistoryResponse(Long matchHistoryId, Long matchId, Integer turning, Double firstUma, Double secondUma, Double thirdUma, Double fourthUma, MatchsWind matchsWind, String tournamentStatus, String delStatus, ChangeType changeType, String changeReason, LocalDateTime modifyDate, String modifyName, List<RecordHistList> recordHistory) {
         this.matchHistoryId = matchHistoryId;
         this.matchId = matchId;
         this.turning = turning;

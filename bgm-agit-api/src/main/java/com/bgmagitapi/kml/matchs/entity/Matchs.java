@@ -4,6 +4,7 @@ import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.setting.entity.Setting;
+import com.bgmagitapi.kml.tournament.entity.Tournament;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -35,6 +36,10 @@ public class Matchs extends DateSuperClass {
     
     @Column(name = "BGM_AGIT_MATCHS_TOURNAMENT_STATUS")
     private String tournamentStatus;
+
+    @JoinColumn(name = "BGM_AGIT_TOURNAMENT_ID")
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Tournament tournament;
     
     @Column(name = "BGM_AGIT_MATCHS_DEL_STATUS")
     private String delStatus;

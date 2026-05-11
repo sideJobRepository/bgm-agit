@@ -46,7 +46,7 @@ public class KmlNoticeController {
         return kmlNoticeService.modifyKmlNotice(request);
     }
     
-    @DeleteMapping("kml-notice/{id}")
+    @DeleteMapping("/kml-notice/{id}")
     public ApiResponse deleteKmlNotice(@PathVariable Long id) {
         return kmlNoticeService.removeKmlNotice(id);
     }

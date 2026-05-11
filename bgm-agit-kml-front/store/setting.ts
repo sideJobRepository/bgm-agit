@@ -18,6 +18,24 @@ export const useSettingStore = create<SettingStore>((set) => ({
   setSetting: (setting) => set({ setting }),
 }));
 
+interface TournamentSetting {
+  firstUma: number;
+  fourthUma: number;
+  secondUma: number;
+  thirdUma: number;
+  turning: number;
+}
+
+interface TournamentSettingStore {
+  tournamentSetting: TournamentSetting | null;
+  setTournamentSetting: (setting: TournamentSetting | null) => void;
+}
+
+export const useTournamentSettingStore = create<TournamentSettingStore>((set) => ({
+  tournamentSetting: null,
+  setTournamentSetting: (setting) => set({ tournamentSetting: setting }),
+}));
+
 interface SettingRefundStore {
   refund: number | null;
   setSettingRefund: (refund: number) => void;

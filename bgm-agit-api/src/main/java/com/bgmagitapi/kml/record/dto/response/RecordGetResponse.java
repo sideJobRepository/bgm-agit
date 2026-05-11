@@ -23,6 +23,8 @@ public class RecordGetResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime registDate;
     private String tournamentStatus;
+    // 대회 기록일 때만 채워짐 (tournamentStatus = 'Y' AND matchs.tournament != null)
+    private String tournamentName;
     private MatchsWind matchsWind;
     private String createNicname;
     // 'Y' 면 삭제된 기록 (멘토 이상에게만 노출), 'N' 정상

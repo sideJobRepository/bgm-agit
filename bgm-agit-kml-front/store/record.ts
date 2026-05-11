@@ -48,6 +48,9 @@ export interface DetailRecordData {
   matchsId: number;
   wind: DirectionKey;
   tournamentStatus: string;
+  // 대회 기록이면 그 대회의 단일 turning. 자동계산 시 ×4 해서 합계 기준으로 사용
+  tournamentTurning: number | null;
+  tournamentName: string | null;
   records: RecordItem[];
   yakumans: YakumanItem[];
 }

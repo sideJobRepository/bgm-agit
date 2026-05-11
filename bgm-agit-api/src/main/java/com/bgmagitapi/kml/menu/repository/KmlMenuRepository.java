@@ -6,5 +6,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface KmlMenuRepository extends JpaRepository<KmlMenu, Long> , KmlMenuQueryRepository {
 
+    boolean existsByMenuLink(String menuLink);
+
+    boolean existsByMenuLinkAndIdNot(String menuLink, Long id);
+
+    boolean existsByParentMenuId_Id(Long parentMenuId);
 
 }
