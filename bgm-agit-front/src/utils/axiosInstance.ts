@@ -38,6 +38,18 @@ async function refreshToken(): Promise<string | null> {
   }
 }
 
+export async function restoreAuthSession(): Promise<void> {
+  if (typeof window === 'undefined' || localStorage.getItem('login') !== '1') {
+    return;
+  }
+
+  if (tokenStore.get()) {
+    return;
+  }
+
+  await refreshToken();
+}
+
 api.interceptors.request.use(async (config: AuthAxiosRequestConfig) => {
   config.headers = config.headers ?? {};
   config.headers['X-Device-Id'] = getDeviceId();
