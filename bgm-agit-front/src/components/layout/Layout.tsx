@@ -9,6 +9,7 @@ import { loadingState } from '../../recoil';
 import Loading from '../Loading.tsx';
 import { useEffect } from 'react';
 import { userState } from '../../recoil/state/userState.ts';
+import { restoreAuthSession } from '../../utils/axiosInstance';
 
 export default function Layout() {
   const location = useLocation();
@@ -27,6 +28,10 @@ export default function Layout() {
     window.addEventListener('auth:refreshed', handler as EventListener);
     return () => window.removeEventListener('auth:refreshed', handler as EventListener);
   }, [setUser]);
+
+  useEffect(() => {
+    void restoreAuthSession();
+  }, []);
 
   return (
     <Wrapper>
