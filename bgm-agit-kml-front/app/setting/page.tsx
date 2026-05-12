@@ -210,7 +210,6 @@ export default function Write() {
                 <label>반환점</label>
                 <input
                   type="text"
-                  inputMode="numeric"
                   value={form.turning}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -223,7 +222,6 @@ export default function Write() {
                 <label>1등 우마</label>
                 <input
                   type="text"
-                  inputMode="numeric"
                   value={form.firstUma}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -236,7 +234,6 @@ export default function Write() {
                 <label>2등 우마</label>
                 <input
                   type="text"
-                  inputMode="numeric"
                   value={form.secondUma}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -249,7 +246,6 @@ export default function Write() {
                 <label>3등 우마</label>
                 <input
                   type="text"
-                  inputMode="numeric"
                   value={form.thirdUma}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -262,7 +258,6 @@ export default function Write() {
                 <label>4등 우마</label>
                 <input
                   type="text"
-                  inputMode="numeric"
                   value={form.fourthUma}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -288,7 +283,6 @@ export default function Write() {
                 <label>반환점</label>
                 <input
                   type="text"
-                  inputMode="numeric"
                   value={tournamentForm.turning}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -301,7 +295,6 @@ export default function Write() {
                 <label>1등 우마</label>
                 <input
                   type="text"
-                  inputMode="decimal"
                   value={tournamentForm.firstUma}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -314,7 +307,6 @@ export default function Write() {
                 <label>2등 우마</label>
                 <input
                   type="text"
-                  inputMode="decimal"
                   value={tournamentForm.secondUma}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -327,7 +319,6 @@ export default function Write() {
                 <label>3등 우마</label>
                 <input
                   type="text"
-                  inputMode="decimal"
                   value={tournamentForm.thirdUma}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -340,7 +331,6 @@ export default function Write() {
                 <label>4등 우마</label>
                 <input
                   type="text"
-                  inputMode="decimal"
                   value={tournamentForm.fourthUma}
                   onChange={(e) => {
                     const value = e.target.value;
