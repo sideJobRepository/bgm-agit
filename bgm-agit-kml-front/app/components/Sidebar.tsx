@@ -102,7 +102,6 @@ export default function Sidebar() {
 
       setLoggingOut(true);
       tokenStore.clear();
-      localStorage.removeItem('login');
       resetUser();
       clearMenu();
       setIsOpen(false);

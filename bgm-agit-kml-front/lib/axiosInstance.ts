@@ -15,9 +15,22 @@ const api = axios.create({
 
 let refreshing: Promise<string | null> | null = null;
 
+function clearAuthSession() {
+  tokenStore.clear();
+  window.dispatchEvent(new Event('auth:expired'));
+}
+
+function isAuthEndpoint(url?: string) {
+  return !!url && (
+    url.includes('/bgm-agit/refresh') ||
+    url.includes('/bgm-agit/next/login') ||
+    url.includes('/bgm-agit/next/signup')
+  );
+}
+
 //토큰 재발급
 export async function refreshToken(): Promise<string | null> {
-  if (typeof window === 'undefined' || localStorage.getItem('login') !== '1') {
+  if (typeof window === 'undefined') {
     return null;
   }
 
@@ -30,7 +43,8 @@ export async function refreshToken(): Promise<string | null> {
     const newToken = data?.token ?? null;
 
     if (!newToken) {
-      localStorage.removeItem('login');
+      clearAuthSession();
+      return null;
     }
 
     tokenStore.set(newToken);
@@ -40,7 +54,7 @@ export async function refreshToken(): Promise<string | null> {
   } catch (e) {
     // 비로그인/세션 만료 시 401로 떨어지는 정상 경로 — 콘솔 오버레이 방지를 위해 warn 으로 다룸
     console.warn('[refreshToken] no active session:', e);
-    localStorage.removeItem('login');
+    clearAuthSession();
     return null;
   } finally {
     refreshing = null; // 락 해제
@@ -51,10 +65,10 @@ api.interceptors.request.use(async (config: AuthAxiosRequestConfig) => {
   config.headers = config.headers ?? {};
   config.headers['X-Device-Id'] = getDeviceId();
 
-  if (config.url?.includes('/bgm-agit/refresh')) return config;
+  if (isAuthEndpoint(config.url)) return config;
 
   let token = tokenStore.get();
-  if (!token && localStorage.getItem('login') === '1') {
+  if (!token) {
     if (!refreshing) refreshing = refreshToken(); // 모든 요청이 같은 Promise를 기다림
     token = await refreshing;
   }
@@ -78,12 +92,12 @@ api.interceptors.response.use(
     const status = error.response.status;
 
     // refresh 자체 실패면 중단
-    if (original?.url?.includes('/bgm-agit/refresh')) {
+    if (isAuthEndpoint(original?.url)) {
       return Promise.reject(error);
     }
 
     // 401만 처리 + 이미 재시도했거나 애초에 인증 없이 간 요청이면 패스
-    if (status !== 401 || original?.__isRetryRequest || !original?.__hadAuth) {
+    if (status !== 401 || original?.__isRetryRequest) {
       return Promise.reject(error);
     }
 

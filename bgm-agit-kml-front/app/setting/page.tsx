@@ -27,33 +27,38 @@ export default function Write() {
   const tournamentSettingData = useTournamentSettingStore((state) => state.tournamentSetting);
 
   const [form, setForm] = useState({
-    turning: 0,
-    firstUma: 0,
-    secondUma: 0,
-    thirdUma: 0,
-    fourthUma: 0,
+    turning: '0',
+    firstUma: '0',
+    secondUma: '0',
+    thirdUma: '0',
+    fourthUma: '0',
   });
 
   const [tournamentForm, setTournamentForm] = useState({
-    turning: 0,
-    firstUma: 0,
-    secondUma: 0,
-    thirdUma: 0,
-    fourthUma: 0,
+    turning: '0',
+    firstUma: '0',
+    secondUma: '0',
+    thirdUma: '0',
+    fourthUma: '0',
   });
 
-  const handleChange = (key: keyof typeof form, value: number) => {
+  const handleChange = (key: keyof typeof form, value: string) => {
     setForm((prev) => ({
       ...prev,
       [key]: value,
     }));
   };
 
-  const handleTournamentChange = (key: keyof typeof tournamentForm, value: number) => {
+  const handleTournamentChange = (key: keyof typeof tournamentForm, value: string) => {
     setTournamentForm((prev) => ({
       ...prev,
       [key]: value,
     }));
+  };
+
+  const parseNumber = (value: string) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
   };
 
   const handleSubmit = async () => {
@@ -66,11 +71,11 @@ export default function Write() {
     insert({
       url: '/bgm-agit/settings',
       body: {
-        turning: form.turning,
-        firstUma: form.firstUma,
-        secondUma: form.secondUma,
-        thirdUma: form.thirdUma,
-        fourthUma: form.fourthUma,
+        turning: parseNumber(form.turning),
+        firstUma: parseNumber(form.firstUma),
+        secondUma: parseNumber(form.secondUma),
+        thirdUma: parseNumber(form.thirdUma),
+        fourthUma: parseNumber(form.fourthUma),
       },
       ignoreErrorRedirect: true,
       onSuccess: async () => {
@@ -89,11 +94,11 @@ export default function Write() {
     insert({
       url: '/bgm-agit/tournament-settings',
       body: {
-        turning: tournamentForm.turning,
-        firstUma: tournamentForm.firstUma,
-        secondUma: tournamentForm.secondUma,
-        thirdUma: tournamentForm.thirdUma,
-        fourthUma: tournamentForm.fourthUma,
+        turning: parseNumber(tournamentForm.turning),
+        firstUma: parseNumber(tournamentForm.firstUma),
+        secondUma: parseNumber(tournamentForm.secondUma),
+        thirdUma: parseNumber(tournamentForm.thirdUma),
+        fourthUma: parseNumber(tournamentForm.fourthUma),
       },
       ignoreErrorRedirect: true,
       onSuccess: async () => {
@@ -146,11 +151,11 @@ export default function Write() {
     if (settingData) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm({
-        turning: settingData.turning,
-        firstUma: settingData.firstUma,
-        secondUma: settingData.secondUma,
-        thirdUma: settingData.thirdUma,
-        fourthUma: settingData.fourthUma,
+        turning: String(settingData.turning),
+        firstUma: String(settingData.firstUma),
+        secondUma: String(settingData.secondUma),
+        thirdUma: String(settingData.thirdUma),
+        fourthUma: String(settingData.fourthUma),
       });
     }
   }, [settingData]);
@@ -159,11 +164,11 @@ export default function Write() {
     if (tournamentSettingData) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setTournamentForm({
-        turning: tournamentSettingData.turning,
-        firstUma: tournamentSettingData.firstUma,
-        secondUma: tournamentSettingData.secondUma,
-        thirdUma: tournamentSettingData.thirdUma,
-        fourthUma: tournamentSettingData.fourthUma,
+        turning: String(tournamentSettingData.turning),
+        firstUma: String(tournamentSettingData.firstUma),
+        secondUma: String(tournamentSettingData.secondUma),
+        thirdUma: String(tournamentSettingData.thirdUma),
+        fourthUma: String(tournamentSettingData.fourthUma),
       });
     }
   }, [tournamentSettingData]);
@@ -204,41 +209,61 @@ export default function Write() {
               <Field className="score">
                 <label>반환점</label>
                 <input
-                  type="number"
+                  type="text"
                   value={form.turning}
-                  onChange={(e) => handleChange('turning', Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!/^-?\d*$/.test(value)) return;
+                    handleChange('turning', value);
+                  }}
                 />
               </Field>
               <Field className="score">
                 <label>1등 우마</label>
                 <input
-                  type="number"
+                  type="text"
                   value={form.firstUma}
-                  onChange={(e) => handleChange('firstUma', Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!/^-?\d*$/.test(value)) return;
+                    handleChange('firstUma', value);
+                  }}
                 />
               </Field>
               <Field className="score">
                 <label>2등 우마</label>
                 <input
-                  type="number"
+                  type="text"
                   value={form.secondUma}
-                  onChange={(e) => handleChange('secondUma', Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!/^-?\d*$/.test(value)) return;
+                    handleChange('secondUma', value);
+                  }}
                 />
               </Field>
               <Field className="score">
                 <label>3등 우마</label>
                 <input
-                  type="number"
+                  type="text"
                   value={form.thirdUma}
-                  onChange={(e) => handleChange('thirdUma', Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!/^-?\d*$/.test(value)) return;
+                    handleChange('thirdUma', value);
+                  }}
                 />
               </Field>
               <Field className="score">
                 <label>4등 우마</label>
                 <input
-                  type="number"
+                  type="text"
                   value={form.fourthUma}
-                  onChange={(e) => handleChange('fourthUma', Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!/^-?\d*$/.test(value)) return;
+                    handleChange('fourthUma', value);
+                  }}
                 />
               </Field>
             </FieldsWrapper>
@@ -257,46 +282,61 @@ export default function Write() {
               <Field className="score">
                 <label>반환점</label>
                 <input
-                  type="number"
-                  step="1"
+                  type="text"
                   value={tournamentForm.turning}
-                  onChange={(e) => handleTournamentChange('turning', Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!/^-?\d*$/.test(value)) return;
+                    handleTournamentChange('turning', value);
+                  }}
                 />
               </Field>
               <Field className="score">
                 <label>1등 우마</label>
                 <input
-                  type="number"
-                  step="0.01"
+                  type="text"
                   value={tournamentForm.firstUma}
-                  onChange={(e) => handleTournamentChange('firstUma', Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!/^-?$|^-?\d*\.?\d*$/.test(value)) return;
+                    handleTournamentChange('firstUma', value);
+                  }}
                 />
               </Field>
               <Field className="score">
                 <label>2등 우마</label>
                 <input
-                  type="number"
-                  step="0.01"
+                  type="text"
                   value={tournamentForm.secondUma}
-                  onChange={(e) => handleTournamentChange('secondUma', Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!/^-?$|^-?\d*\.?\d*$/.test(value)) return;
+                    handleTournamentChange('secondUma', value);
+                  }}
                 />
               </Field>
               <Field className="score">
                 <label>3등 우마</label>
                 <input
-                  type="number"
-                  step="0.01"
+                  type="text"
                   value={tournamentForm.thirdUma}
-                  onChange={(e) => handleTournamentChange('thirdUma', Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!/^-?$|^-?\d*\.?\d*$/.test(value)) return;
+                    handleTournamentChange('thirdUma', value);
+                  }}
                 />
               </Field>
               <Field className="score">
                 <label>4등 우마</label>
                 <input
-                  type="number"
-                  step="0.01"
+                  type="text"
                   value={tournamentForm.fourthUma}
-                  onChange={(e) => handleTournamentChange('fourthUma', Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!/^-?$|^-?\d*\.?\d*$/.test(value)) return;
+                    handleTournamentChange('fourthUma', value);
+                  }}
                 />
               </Field>
             </FieldsWrapper>
