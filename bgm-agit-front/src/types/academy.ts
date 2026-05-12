@@ -12,7 +12,7 @@ export interface AcademyData {
     inputsDate: string;
     classesName: string;
     progress: string;
-    subjects: string;
+     subjects: string;
     teacher: string;
     tests: string;
     progressItems: {

@@ -25,8 +25,15 @@ export default function Layout() {
         setUser(e.detail.user);
       }
     };
+    const expiredHandler = () => {
+      setUser(null);
+    };
     window.addEventListener('auth:refreshed', handler as EventListener);
-    return () => window.removeEventListener('auth:refreshed', handler as EventListener);
+    window.addEventListener('auth:expired', expiredHandler);
+    return () => {
+      window.removeEventListener('auth:refreshed', handler as EventListener);
+      window.removeEventListener('auth:expired', expiredHandler);
+    };
   }, [setUser]);
 
   useEffect(() => {
