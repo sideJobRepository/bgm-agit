@@ -27,7 +27,6 @@ export function useLoginPost() {
         api.post('/bgm-agit/next/login', payload).then((res) => {
           const token = res.data.token as string;
           tokenStore.set(token);
-          localStorage.setItem('login', '1');
           return res.data.user;
         }),
       (user) => {

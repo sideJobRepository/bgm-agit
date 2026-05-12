@@ -10,6 +10,12 @@ export default function AuthListener() {
   const setUser = useUserStore((state) => state.setUser);
 
   useEffect(() => {
+    const clearAuthState = () => {
+      tokenStore.clear();
+      setUser(null);
+      useKmlMenuStore.getState().clearMenu();
+    };
+
     /* 같은 탭용 */
     const handler = (e: Event) => {
       const custom = e as CustomEvent;
@@ -28,9 +34,7 @@ export default function AuthListener() {
       if (e.data?.from === TAB_ID) return;
 
       if (e.data?.type === 'LOGOUT') {
-        tokenStore.clear();
-        setUser(null);
-        useKmlMenuStore.getState().clearMenu();
+        clearAuthState();
       }
 
       if (e.data?.type === 'LOGIN') {
@@ -43,8 +47,11 @@ export default function AuthListener() {
       console.log('비로그인 상태 체크');
     });
 
+    window.addEventListener('auth:expired', clearAuthState);
+
     return () => {
       window.removeEventListener('auth:refreshed', handler);
+      window.removeEventListener('auth:expired', clearAuthState);
       channel.close();
     };
   }, [setUser]);
