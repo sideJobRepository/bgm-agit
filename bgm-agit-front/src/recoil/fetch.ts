@@ -263,7 +263,6 @@ export function useLoginPost() {
         api.post(`/bgm-agit/${name}-login`, { code }).then(res => {
           const token = res.data.token as string;
           tokenStore.set(token);
-          localStorage.setItem('login', '1');
 
           const user = res.data.user;
 

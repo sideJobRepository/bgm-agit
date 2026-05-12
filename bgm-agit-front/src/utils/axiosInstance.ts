@@ -14,8 +14,19 @@ const api = axios.create({
 
 let refreshing: Promise<string | null> | null = null;
 
+function isAuthEndpoint(url?: string) {
+  return !!url && (
+    url.includes('/bgm-agit/refresh') ||
+    url.includes('/bgm-agit/next/login') ||
+    url.includes('/bgm-agit/next/signup') ||
+    url.includes('/bgm-agit/kakao-login') ||
+    url.includes('/bgm-agit/google-login') ||
+    url.includes('/bgm-agit/naver-login')
+  );
+}
+
 async function refreshToken(): Promise<string | null> {
-  if (typeof window === 'undefined' || localStorage.getItem('login') !== '1') {
+  if (typeof window === 'undefined') {
     return null;
   }
 
@@ -26,12 +37,19 @@ async function refreshToken(): Promise<string | null> {
       headers: { 'X-Device-Id': getDeviceId() },
     });
     const newToken = data?.token ?? null;
+    if (!newToken) {
+      tokenStore.clear();
+      window.dispatchEvent(new Event('auth:expired'));
+      return null;
+    }
+
     tokenStore.set(newToken);
     window.dispatchEvent(new CustomEvent('auth:refreshed', { detail: { user: data?.user } }));
     return newToken;
   } catch (e) {
     console.error(e);
-    localStorage.removeItem('login');
+    tokenStore.clear();
+    window.dispatchEvent(new Event('auth:expired'));
     return null;
   } finally {
     refreshing = null; // 락 해제
@@ -39,7 +57,7 @@ async function refreshToken(): Promise<string | null> {
 }
 
 export async function restoreAuthSession(): Promise<void> {
-  if (typeof window === 'undefined' || localStorage.getItem('login') !== '1') {
+  if (typeof window === 'undefined') {
     return;
   }
 
@@ -54,10 +72,10 @@ api.interceptors.request.use(async (config: AuthAxiosRequestConfig) => {
   config.headers = config.headers ?? {};
   config.headers['X-Device-Id'] = getDeviceId();
 
-  if (config.url?.includes('/bgm-agit/refresh')) return config;
+  if (isAuthEndpoint(config.url)) return config;
 
   let token = tokenStore.get();
-  if (!token && localStorage.getItem('login') === '1') {
+  if (!token) {
     if (!refreshing) refreshing = refreshToken(); // 첫 호출만 실제 실행
     token = await refreshing; // 모두 같은 Promise를 기다림
   }
@@ -81,12 +99,12 @@ api.interceptors.response.use(
       const status = error.response.status;
 
       // refresh 자체 실패면 중단
-      if (original?.url?.includes('/bgm-agit/refresh')) {
+      if (isAuthEndpoint(original?.url)) {
         return Promise.reject(error);
       }
 
       // 401만 처리 + 이미 재시도했거나 애초에 인증 없이 간 요청이면 패스
-      if (status !== 401 || original?.__isRetryRequest || !original?.__hadAuth) {
+      if (status !== 401 || original?.__isRetryRequest) {
         return Promise.reject(error);
       }
 
