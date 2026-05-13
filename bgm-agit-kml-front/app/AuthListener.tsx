@@ -11,9 +11,12 @@ export default function AuthListener() {
 
   useEffect(() => {
     const clearAuthState = () => {
+      const hadUser = !!useUserStore.getState().user;
       tokenStore.clear();
       setUser(null);
-      useKmlMenuStore.getState().clearMenu();
+      if (hadUser) {
+        useKmlMenuStore.getState().clearMenu();
+      }
     };
 
     /* 같은 탭용 */
