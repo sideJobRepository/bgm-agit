@@ -6,6 +6,7 @@ import com.bgmagitapi.repository.custom.BgmAgitRefreshTokenCustomRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static com.bgmagitapi.entity.QBgmAgitRefreshToken.bgmAgitRefreshToken;
@@ -37,5 +38,13 @@ public class BgmAgitRefreshTokenRepositoryImpl  implements BgmAgitRefreshTokenCu
                 )
                 .fetchOne();
         return Optional.ofNullable(token);
+    }
+
+    @Override
+    public long deleteByModifyDateBefore(LocalDateTime targetTime) {
+        return queryFactory
+                .delete(bgmAgitRefreshToken)
+                .where(bgmAgitRefreshToken.modifyDate.lt(targetTime))
+                .execute();
     }
 }

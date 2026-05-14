@@ -2,6 +2,7 @@ package com.bgmagitapi.file.service;
 
 import com.bgmagitapi.file.entity.BgmAgitFile;
 import com.bgmagitapi.file.repository.BgmAgitFileRepository;
+import com.bgmagitapi.repository.BgmAgitRefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import java.util.List;
 public class FileBatchService {
 
     private final BgmAgitFileRepository bgmAgitFileRepository;
+    private final BgmAgitRefreshTokenRepository bgmAgitRefreshTokenRepository;
     private final S3Client s3Client;
 
     public void temporaryFileRemove(LocalDateTime targetTime, String bucket) {
@@ -35,6 +37,8 @@ public class FileBatchService {
             }
         }
         bgmAgitFileRepository.deleteAll(files);
+        long deletedRefreshTokens = bgmAgitRefreshTokenRepository.deleteByModifyDateBefore(targetTime);
+        log.info("[file-batch] expired refresh token cleanup complete count={}", deletedRefreshTokens);
         log.info("[file-batch] TEMPORARY 파일 정리 완료 count={}", files.size());
     }
 }
