@@ -38,6 +38,16 @@ export default function RankClient({ initialData }: Props) {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   };
 
+  const getMondayOfWeek = (date: Date | null) => {
+    if (!date) return null;
+    const monday = new Date(date);
+    const day = monday.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    monday.setDate(monday.getDate() + diff);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+  };
+
   const formatLocalDateTime = (date: Date | null) => {
     if (!date) return '';
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
@@ -63,7 +73,7 @@ export default function RankClient({ initialData }: Props) {
         month: startDate.getMonth() + 1,
       };
     }
-    return { ...base, baseDate: formatDate(startDate) };
+    return { ...base, baseDate: formatDate(getMondayOfWeek(startDate)) };
   };
 
   const loading = useLoadingStore((state) => state.loading);
