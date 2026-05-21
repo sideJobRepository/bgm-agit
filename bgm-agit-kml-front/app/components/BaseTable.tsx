@@ -80,6 +80,36 @@ export function BaseTable<T>({
 
   const [sort, setSort] = useState<SortState>(null);
 
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  const formatDate = (date: Date) =>
+    `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())}`;
+
+  const getMondayOfWeek = (date: Date | null) => {
+    if (!date) return null;
+    const monday = new Date(date);
+    const day = monday.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    monday.setDate(monday.getDate() + diff);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+  };
+
+  const getSundayOfWeek = (date: Date | null) => {
+    const monday = getMondayOfWeek(date);
+    if (!monday) return null;
+    const sunday = new Date(monday);
+    sunday.setDate(sunday.getDate() + 6);
+    return sunday;
+  };
+
+  const formatWeekRange = (date: Date | null) => {
+    const monday = getMondayOfWeek(date);
+    const sunday = getSundayOfWeek(date);
+    if (!monday || !sunday) return '';
+    return `${formatDate(monday)} ~ ${formatDate(sunday)}`;
+  };
+
   // sticky 컬럼들의 누적 left offset (width는 px 형식이어야 함)
   const stickyOffsets = useMemo(() => {
     const offsets: (string | undefined)[] = [];
@@ -173,11 +203,13 @@ export function BaseTable<T>({
                       <label>주 선택</label>
                       <DateRange>
                         <DatePicker
-                          selected={startDate}
-                          onChange={(date) => onStartDateChange?.(date)}
+                          selected={getMondayOfWeek(startDate)}
+                          onChange={(date) => onStartDateChange?.(getMondayOfWeek(date))}
                           dateFormat="yyyy.MM.dd"
+                          value={formatWeekRange(startDate)}
                           showWeekNumbers
                           showWeekPicker
+                          calendarStartDay={1}
                           locale={ko}
                           portalId="root-portal"
                         />
