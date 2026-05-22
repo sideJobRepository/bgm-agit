@@ -546,7 +546,11 @@ public class RecordServiceImpl implements RecordService {
         List<Record> currentRecords = records.stream()
                 .filter(r -> requestRecordIds.contains(r.getId()))
                 .toList();
-        publishKmlModifyEvent(matchs, currentRecords);
+        if (matchs.getMatchsKmlId() == null) {
+            publishKmlSubmitEvent(matchs, currentRecords);
+        } else {
+            publishKmlModifyEvent(matchs, currentRecords);
+        }
 
         return new ApiResponse(200, true, "기록이 수정되었습니다.");
     }
