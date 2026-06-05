@@ -1076,8 +1076,8 @@ const TableBox = styled.div`
   margin: 0 auto;
 
   @media ${({ theme }) => theme.device.mobile} {
-    gap: 16px;
-    padding: 16px 4px;
+    gap: 10px;
+    padding: 12px 4px;
   }
 
   select {
@@ -1094,7 +1094,7 @@ const TableBox = styled.div`
 
     @media ${({ theme }) => theme.device.mobile} {
       font-size: 16px;
-      padding: 10px 6px;
+      padding: 8px 6px;
     }
   }
 `;
@@ -1260,7 +1260,7 @@ const Center = styled.section<{ $color: string }>`
 
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
-      padding: 12px 8px;
+      padding: 6px 8px;
     }
   }
 `;
@@ -1361,7 +1361,7 @@ const WriteCroup = styled.div`
 
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
-    padding: 8px;
+    padding: 4px 8px;
     flex-wrap: wrap;
   }
 
@@ -1390,7 +1390,7 @@ const WriteCroup = styled.div`
 
     @media ${({ theme }) => theme.device.mobile} {
       font-size: 16px;
-      padding: 10px 6px;
+      padding: 8px 6px;
     }
   }
 
@@ -1446,7 +1446,7 @@ const ActionsRow = styled.div`
   padding: 12px 16px 0;
 
   @media ${({ theme }) => theme.device.mobile} {
-    padding: 8px 12px 0;
+    padding: 4px 12px 0;
   }
 
   && > button {
