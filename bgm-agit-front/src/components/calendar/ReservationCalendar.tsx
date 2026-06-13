@@ -1,9 +1,8 @@
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { FaUsers } from 'react-icons/fa';
-import { MdAdd, MdRemove } from 'react-icons/md';
 import type { WithTheme } from '../../styles/styled-props';
 import { useRecoilValue } from 'recoil';
 import { reservationDataState, reservationState } from '../../recoil/state/reservationState.ts';
@@ -11,7 +10,7 @@ import type { ReservationDatas } from '../../types/reservation.ts';
 
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import { userState } from '../../recoil/state/userState.ts';
-import { showConfirmModal } from '../confirmAlert.tsx';
+import { showConfirmModal, showReservationConfirmModal } from '../confirmAlert.tsx';
 import { useInsertPost, useReservationFetch } from '../../recoil/fetch.ts';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -26,11 +25,6 @@ export default function ReservationCalendar({ id }: { id?: number }) {
 
   //로그인 모달
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-
-  //인원수
-  const [count, setCount] = useState(0);
-  //요청사항
-  const [reason, setReason] = useState('');
 
   const today = new Date();
   //insert
@@ -102,83 +96,65 @@ export default function ReservationCalendar({ id }: { id?: number }) {
   };
 
   function reservationSave() {
-    const messageGb = user
-      ? {
-          message: (
-            <>
-              {reservation.label} {count}명
-              <br />
-              {reason && (
-                <>
-                  요청사항: {reason}
-                  <br />
-                </>
-              )}
-              해당 일자를 예약하시겠습니까?
-              <br />
-              예약금 입금 후 예약 확정이 완료됩니다.
-            </>
-          ),
-          gb: 2,
-        }
-      : {
-          message: (
-            <>
-              로그인 후 예약 가능합니다.
-              <br />
-              로그인을 하시겠습니까?
-            </>
-          ),
-          gb: 1,
-        };
-    showConfirmModal({
-      message: messageGb.message,
-      onConfirm: () => {
-        if (messageGb.gb === 1) {
-          setIsLoginModalOpen(true);
-        } else {
-          let b = id === (32 || 33 || 34 || 35);
-          insert({
-            url: '/bgm-agit/reservation',
-            body: {
-              bgmAgitImageId: id,
-              bgmAgitReservationType: b ? 'DELEGATE_PLAY' : 'ROOM',
-              bgmAgitReservationStartDate: value,
-              startTimeEndTime: selectedTimes,
-              bgmAgitReservationPeople: count,
-              bgmAgitReservationRequest: reason,
-            },
-            ignoreHttpError: true,
-            onSuccess: () => {
-              showConfirmModal({
-                message: (
-                  <>
-                    예약이 완료되었습니다.
-                    <br />
-                    예약금 입금 계좌번호 및 예약 상태는 예약내역에서 확인 가능합니다.
-                    <br />
-                    예약내역으로 이동하시겠습니까?
-                  </>
-                ),
-                onConfirm: () => {
-                  navigate('/reservationList');
-                },
-              });
+    // 비로그인: 로그인 안내 모달
+    if (!user) {
+      showConfirmModal({
+        message: (
+          <>
+            로그인 후 예약 가능합니다.
+            <br />
+            로그인을 하시겠습니까?
+          </>
+        ),
+        onConfirm: () => setIsLoginModalOpen(true),
+      });
+      return;
+    }
 
-              if (reservationData) {
-                setSelectedTimes([]);
-                fetchReservation(reservationData);
-              }
-            },
-          });
-        }
+    // 로그인: 인원수·요청사항 입력 포함 확정 모달
+    showReservationConfirmModal({
+      label: reservation.label!,
+      initialCount: reservation.minPeople!,
+      minPeople: reservation.minPeople!,
+      maxPeople: reservation.maxPeople!,
+      onConfirm: ({ count, reason }) => {
+        let b = id === (32 || 33 || 34 || 35);
+        insert({
+          url: '/bgm-agit/reservation',
+          body: {
+            bgmAgitImageId: id,
+            bgmAgitReservationType: b ? 'DELEGATE_PLAY' : 'ROOM',
+            bgmAgitReservationStartDate: value,
+            startTimeEndTime: selectedTimes,
+            bgmAgitReservationPeople: count,
+            bgmAgitReservationRequest: reason,
+          },
+          ignoreHttpError: true,
+          onSuccess: () => {
+            showConfirmModal({
+              message: (
+                <>
+                  예약이 완료되었습니다.
+                  <br />
+                  예약금 입금 계좌번호 및 예약 상태는 예약내역에서 확인 가능합니다.
+                  <br />
+                  예약내역으로 이동하시겠습니까?
+                </>
+              ),
+              onConfirm: () => {
+                navigate('/reservationList');
+              },
+            });
+
+            if (reservationData) {
+              setSelectedTimes([]);
+              fetchReservation(reservationData);
+            }
+          },
+        });
       },
     });
   }
-
-  useEffect(() => {
-    if (reservation) setCount(reservation.minPeople!);
-  }, [reservation?.minPeople]);
 
   return (
     <Wrapper>
@@ -186,32 +162,6 @@ export default function ReservationCalendar({ id }: { id?: number }) {
         <div>
           <h2>{reservation.label}</h2>
           <FaUsers /> <span> {reservation.group} </span>
-        </div>
-        <div className="count-box">
-          <MdRemove
-            style={{
-              cursor: count > reservation.minPeople! ? 'pointer' : 'not-allowed',
-              opacity: count > reservation.minPeople! ? 1 : 0.3,
-            }}
-            onClick={() => setCount(c => Math.max(reservation.minPeople!, c - 1))}
-          />
-
-          <span>{count}명</span>
-          <MdAdd
-            style={{
-              cursor: count < reservation.maxPeople! ? 'pointer' : 'not-allowed',
-              opacity: count < reservation.maxPeople! ? 1 : 0.3,
-            }}
-            onClick={() => setCount(c => Math.min(reservation.maxPeople!, c + 1))}
-          />
-        </div>
-        <div className="count-box">
-          <input
-            type="text"
-            placeholder="요청사항을 적어주세요."
-            value={reason}
-            onChange={e => setReason(e.target.value)}
-          />
         </div>
         <MessageBox>
           <p>
