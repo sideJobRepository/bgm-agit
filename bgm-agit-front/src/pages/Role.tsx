@@ -75,7 +75,10 @@ export default function Role() {
             <SearchBar<string>
               color="#988271"
               label="아이디,이름,연락처"
-              onSearch={setSearchKeyword}
+              onSearch={keyword => {
+                setPage(0);
+                setSearchKeyword(keyword);
+              }}
             />
           </SearchBox>
         </SearchWrapper>
