@@ -24,6 +24,7 @@ import {
   uploadYakumanFile,
   fetchFileViewUrls,
 } from '@/services/yakumanFile.service';
+import { uploadSanbaemanFile } from '@/services/sanbaemanFile.service';
 import api from '@/lib/axiosInstance';
 
 const DIRECTIONS = [
@@ -58,6 +59,186 @@ type YakumanRow = {
   uploadStatus: 'idle' | 'uploading' | 'failed';
 };
 
+// 삼배만은 종류 마스터 없이 역(yaku) 멀티선택으로 입력받는다.
+// selectedYaku: { 역 key → 개수 }, furo: 후로(鳴き) 여부(멘젠이면 false).
+type SanbaemanRow = {
+  search: string;
+  userId: number | null;
+  furo: boolean;
+  selectedYaku: Record<string, number>;
+  fileId: number | null;
+  originalFileId: number | null;
+  uploadStatus: 'idle' | 'uploading' | 'failed';
+};
+
+// han: 멘젠 한수, openHan: 후로 시 한수(쿠이사가리 반영). menzenOnly는 openHan 불필요.
+// hasCount: 개수 입력(도라 계열, 개당 1한).
+type YakuOption = {
+  key: string;
+  label: string;
+  han: number;
+  openHan?: number;
+  hasCount?: boolean;
+  menzenOnly?: boolean;
+};
+
+// 삼배만 구성 역 후보 (프론트 고정 목록).
+// menzenOnly: 후로 시 성립 불가 → 후로 선택하면 자동 비활성/해제.
+const YAKU_OPTIONS: YakuOption[] = [
+  { key: 'riichi', label: '리치', han: 1, menzenOnly: true },
+  { key: 'ippatsu', label: '일발', han: 1, menzenOnly: true },
+  { key: 'menzentsumo', label: '멘젠쯔모', han: 1, menzenOnly: true },
+  { key: 'pinfu', label: '핑후', han: 1, menzenOnly: true },
+  { key: 'tanyao', label: '탕야오', han: 1, openHan: 1 },
+  { key: 'iipeikou', label: '이페코', han: 1, menzenOnly: true },
+  // 역패: 자풍/장풍(동남서북) + 삼원패(백발중), 각 1한
+  { key: 'yakuhai_east', label: '동', han: 1, openHan: 1 },
+  { key: 'yakuhai_south', label: '남', han: 1, openHan: 1 },
+  { key: 'yakuhai_west', label: '서', han: 1, openHan: 1 },
+  { key: 'yakuhai_north', label: '북', han: 1, openHan: 1 },
+  { key: 'yakuhai_haku', label: '백', han: 1, openHan: 1 },
+  { key: 'yakuhai_hatsu', label: '발', han: 1, openHan: 1 },
+  { key: 'yakuhai_chun', label: '중', han: 1, openHan: 1 },
+  { key: 'sanshoku', label: '삼색동순', han: 2, openHan: 1 },
+  { key: 'sanshokudoukou', label: '삼색동각', han: 2, openHan: 2 },
+  { key: 'ittsuu', label: '일기통관', han: 2, openHan: 1 },
+  { key: 'chanta', label: '찬타', han: 2, openHan: 1 },
+  { key: 'junchan', label: '준찬타', han: 3, openHan: 2 },
+  { key: 'toitoi', label: '또이또이', han: 2, openHan: 2 },
+  { key: 'sanankou', label: '삼안커', han: 2, openHan: 2 },
+  { key: 'sankantsu', label: '삼짱즈', han: 2, openHan: 2 },
+  { key: 'shousangen', label: '소삼원', han: 2, openHan: 2 },
+  { key: 'honroutou', label: '혼노두', han: 2, openHan: 2 },
+  { key: 'chiitoitsu', label: '치또이쯔', han: 2, menzenOnly: true },
+  { key: 'honitsu', label: '혼일색', han: 3, openHan: 2 },
+  { key: 'chinitsu', label: '청일색', han: 6, openHan: 5 },
+  { key: 'ryanpeikou', label: '량페코', han: 3, menzenOnly: true },
+  { key: 'dora', label: '도라', han: 1, hasCount: true },
+  { key: 'akadora', label: '아카도라', han: 1, hasCount: true },
+  { key: 'uradora', label: '우라도라', han: 1, hasCount: true },
+];
+
+const FURO_TOKEN = '후로';
+
+// 선택된 역 + 멘젠/후로로 총 판수 계산. (부·깡 등 세부는 무시한 근사치)
+const computeHan = (furo: boolean, selected: Record<string, number>): number => {
+  let total = 0;
+  YAKU_OPTIONS.forEach((y) => {
+    const c = selected[y.key];
+    if (c == null) return;
+    if (y.hasCount) {
+      total += c * y.han;
+    } else {
+      total += furo ? (y.openHan ?? 0) : y.han;
+    }
+  });
+  return total;
+};
+
+// 판수 → 등급 라벨 (11~12판 삼배만, 13판+ 역만급)
+const hanGradeLabel = (han: number): string => {
+  if (han >= 13) return '역만급';
+  if (han >= 11) return '삼배만';
+  return '삼배만 미만';
+};
+
+const YAKUHAI_KEYS = [
+  'yakuhai_east',
+  'yakuhai_south',
+  'yakuhai_west',
+  'yakuhai_north',
+  'yakuhai_haku',
+  'yakuhai_hatsu',
+  'yakuhai_chun',
+];
+
+// 함께 성립할 수 없는 역 조합(양립 불가). 대칭으로 채운다. (1차 규칙 — 클럽 기준으로 가감)
+const CONFLICTS: Record<string, Set<string>> = (() => {
+  const m: Record<string, Set<string>> = {};
+  const pair = (a: string, b: string) => {
+    if (a === b) return;
+    if (!m[a]) m[a] = new Set();
+    if (!m[b]) m[b] = new Set();
+    m[a].add(b);
+    m[b].add(a);
+  };
+  const link = (as: string[], bs: string[]) => as.forEach((a) => bs.forEach((b) => pair(a, b)));
+
+  link(['chinitsu'], ['honitsu']); // 청일색 ↔ 혼일색
+  link(['chinitsu', 'honitsu'], ['sanshoku', 'sanshokudoukou']); // 일색 ↔ 삼색
+  link(['iipeikou'], ['ryanpeikou']); // 이페코 ↔ 량페코
+  link(['chanta'], ['junchan']); // 찬타 ↔ 준찬타
+  // 핑후(시퀀스/노트리플) ↔ 트리플·소삼원·혼노두·치또이·역패
+  link(['pinfu'], ['toitoi', 'sanankou', 'sankantsu', 'chiitoitsu', 'shousangen', 'honroutou', ...YAKUHAI_KEYS]);
+  // 또이또이(올트리플) ↔ 시퀀스 필요 역·치또이·찬타/준찬타(→혼노두/청노두)
+  link(['toitoi'], ['iipeikou', 'ryanpeikou', 'sanshoku', 'ittsu', 'chiitoitsu', 'chanta', 'junchan']);
+  // 치또이쯔(7페어, 멜드 없음) ↔ 멜드/트리플 계열
+  link(
+    ['chiitoitsu'],
+    ['sanankou', 'sankantsu', 'iipeikou', 'ryanpeikou', 'sanshoku', 'sanshokudoukou', 'ittsu', 'chanta', 'junchan', 'shousangen', ...YAKUHAI_KEYS]
+  );
+  // 탕야오(노 야오추/자패) ↔ 찬타/준찬타/혼노두/소삼원/혼일색/역패
+  link(['tanyao'], ['chanta', 'junchan', 'honroutou', 'shousangen', 'honitsu', ...YAKUHAI_KEYS]);
+  // 청일색(자패 없음) ↔ 자패 포함 역
+  link(['chinitsu'], ['chanta', 'honroutou', 'shousangen', ...YAKUHAI_KEYS]);
+  // 준찬타(자패 없음) ↔ 자패 포함 역
+  link(['junchan'], ['honitsu', 'honroutou', 'shousangen', ...YAKUHAI_KEYS]);
+  // 혼노두(올 야오추) ↔ 시퀀스/삼색동각
+  link(['honroutou'], ['iipeikou', 'ryanpeikou', 'sanshoku', 'sanshokudoukou', 'ittsu', 'pinfu']);
+
+  return m;
+})();
+
+// 현재 선택에서 서로 충돌하는 역 key 집합
+const getConflicts = (selected: Record<string, number>): Set<string> => {
+  const keys = Object.keys(selected);
+  const out = new Set<string>();
+  keys.forEach((a) => {
+    keys.forEach((b) => {
+      if (a !== b && CONFLICTS[a]?.has(b)) {
+        out.add(a);
+        out.add(b);
+      }
+    });
+  });
+  return out;
+};
+
+// 선택된 역 → 저장/표시용 문자열 (예: "후로·청일색·도라3"). 멘젠이면 후로 토큰 없음.
+const buildSanbaemanName = (furo: boolean, selected: Record<string, number>): string => {
+  const parts = YAKU_OPTIONS.filter((y) => selected[y.key] != null).map((y) =>
+    y.hasCount ? `${y.label}${selected[y.key]}` : y.label
+  );
+  return [...(furo ? [FURO_TOKEN] : []), ...parts].join('·');
+};
+
+// 저장 문자열 → { furo, selectedYaku } 복원. 매칭 안 되는 토큰(과거 자유 텍스트)은 무시.
+const parseSanbaemanName = (
+  name: string
+): { furo: boolean; selectedYaku: Record<string, number> } => {
+  const selectedYaku: Record<string, number> = {};
+  let furo = false;
+  if (!name) return { furo, selectedYaku };
+  name.split('·').forEach((raw) => {
+    const token = raw.trim();
+    if (!token) return;
+    if (token === FURO_TOKEN) {
+      furo = true;
+      return;
+    }
+    const countOpt = YAKU_OPTIONS.find(
+      (y) => y.hasCount && token.startsWith(y.label) && /^\d+$/.test(token.slice(y.label.length))
+    );
+    if (countOpt) {
+      selectedYaku[countOpt.key] = Number(token.slice(countOpt.label.length));
+      return;
+    }
+    const exact = YAKU_OPTIONS.find((y) => y.label === token);
+    if (exact) selectedYaku[exact.key] = 1;
+  });
+  return { furo, selectedYaku };
+};
+
 export default function Write() {
   const { insert } = useInsertPost();
   const { update } = useUpdatePost();
@@ -78,6 +259,7 @@ export default function Write() {
 
   //이미지
   const [heroImages, setHeroImages] = useState<string[]>([]);
+  const [sbHeroImages, setSbHeroImages] = useState<string[]>([]);
 
   const handleImageChange = async (idx: number, file: File) => {
     const url = URL.createObjectURL(file);
@@ -102,6 +284,34 @@ export default function Write() {
     } catch (e) {
       console.error('[yakuman-file] upload 실패', e);
       setYakumanRows((prev) =>
+        prev.map((r, i) => (i === idx ? { ...r, uploadStatus: 'failed' } : r))
+      );
+      await alertDialog('이미지 업로드에 실패했습니다. 다시 시도해주세요.', 'error');
+    }
+  };
+
+  const handleSanbaemanImageChange = async (idx: number, file: File) => {
+    const url = URL.createObjectURL(file);
+    setSbHeroImages((prev) => {
+      const next = [...prev];
+      next[idx] = url;
+      return next;
+    });
+
+    setSanbaemanRows((prev) =>
+      prev.map((r, i) => (i === idx ? { ...r, uploadStatus: 'uploading' } : r))
+    );
+
+    try {
+      const res = await uploadSanbaemanFile(file);
+      setSanbaemanRows((prev) =>
+        prev.map((r, i) =>
+          i === idx ? { ...r, fileId: res.fileId, uploadStatus: 'idle' } : r
+        )
+      );
+    } catch (e) {
+      console.error('[sanbaeman-file] upload 실패', e);
+      setSanbaemanRows((prev) =>
         prev.map((r, i) => (i === idx ? { ...r, uploadStatus: 'failed' } : r))
       );
       await alertDialog('이미지 업로드에 실패했습니다. 다시 시도해주세요.', 'error');
@@ -146,6 +356,9 @@ export default function Write() {
 
   const [yakumanRows, setYakumanRows] = useState<YakumanRow[]>([]);
   const [memo, setMemo] = useState('');
+
+  const [sanbaemanRows, setSanbaemanRows] = useState<SanbaemanRow[]>([]);
+  const [sbMemo, setSbMemo] = useState('');
 
   /** 각 자리 점수의 사용자 수정 시각. 0 = 사용자가 직접 안 만짐(자동계산 후보) */
   const [scoreEditTime, setScoreEditTime] = useState<Record<DirectionKey, number>>({
@@ -233,6 +446,22 @@ export default function Write() {
     );
   };
 
+  /** 본인 닉네임 자동 입력 - 삼배만 행 */
+  const handleSelfFillSanbaeman = async (idx: number) => {
+    if (!user) {
+      await alertDialog('로그인이 필요합니다.', 'error');
+      return;
+    }
+    const meId = Number(user.id);
+    if (!recordUser.some((u) => u.id === meId)) {
+      await alertDialog('회원 목록에서 본인 정보를 찾을 수 없습니다.', 'error');
+      return;
+    }
+    setSanbaemanRows((prev) =>
+      prev.map((r, i) => (i === idx ? { ...r, userId: meId, search: '' } : r))
+    );
+  };
+
   const handleSubmit = async () => {
     if (!user) {
       await alertDialog('유저 정보가 없습니다. \n 로그인 후 이용해주세요.', 'error');
@@ -249,13 +478,31 @@ export default function Write() {
     if (!validateForm()) return;
 
     // 업로드 진행 중인 행이 있으면 막기
-    if (yakumanRows.some((r) => r.uploadStatus === 'uploading')) {
+    if (
+      yakumanRows.some((r) => r.uploadStatus === 'uploading') ||
+      sanbaemanRows.some((r) => r.uploadStatus === 'uploading')
+    ) {
       await alertDialog('이미지 업로드가 끝나길 기다려주세요.', 'warning');
       return;
     }
-    if (yakumanRows.some((r) => r.uploadStatus === 'failed')) {
+    if (
+      yakumanRows.some((r) => r.uploadStatus === 'failed') ||
+      sanbaemanRows.some((r) => r.uploadStatus === 'failed')
+    ) {
       await alertDialog('업로드 실패한 이미지가 있습니다. 다시 선택해주세요.', 'error');
       return;
+    }
+
+    // 삼배만 역 조합 모순 시 한 번 더 확인 (경고는 비차단, 저장 전 확인만)
+    const hasSanbaemanConflict = sanbaemanRows.some(
+      (row) => Object.keys(row.selectedYaku).length > 0 && getConflicts(row.selectedYaku).size > 0
+    );
+    if (hasSanbaemanConflict) {
+      const conflictConfirm = await confirmDialog(
+        '함께 성립하기 어려운 역 조합이 있습니다. 그래도 저장할까요?',
+        'warning'
+      );
+      if (!conflictConfirm.isConfirmed) return;
     }
 
     const yakumansBody = yakumanRows
@@ -286,6 +533,33 @@ export default function Write() {
           yakumanName: yakuman?.yakumanName,
           yakumanCont: memo || `${yakuman?.yakumanName} 역만`,
           files: { fileType: 'YAKUMAN', files },
+        };
+      });
+
+    const sanbaemansBody = sanbaemanRows
+      .filter((row) => row.userId && Object.keys(row.selectedYaku).length > 0)
+      .map((row) => {
+        const files: { id: number; fileProcessStatus: 'CREATE' | 'DELETE' | 'NORMAL' }[] = [];
+        if (row.originalFileId && row.fileId !== row.originalFileId) {
+          files.push({ id: row.originalFileId, fileProcessStatus: 'DELETE' });
+        }
+        if (row.fileId && row.fileId !== row.originalFileId) {
+          files.push({ id: row.fileId, fileProcessStatus: 'CREATE' });
+        }
+        if (row.fileId && row.fileId === row.originalFileId) {
+          files.push({ id: row.fileId, fileProcessStatus: 'NORMAL' });
+        }
+        if (!row.fileId && row.originalFileId) {
+          files.push({ id: row.originalFileId, fileProcessStatus: 'DELETE' });
+        }
+
+        const sanbaemanName = buildSanbaemanName(row.furo, row.selectedYaku);
+
+        return {
+          memberId: row.userId,
+          sanbaemanName,
+          sanbaemanCont: sbMemo || `${sanbaemanName} 삼배만`,
+          files: { fileType: 'SANBAEMAN', files },
         };
       });
 
@@ -324,6 +598,7 @@ export default function Write() {
           };
         }),
       yakumans: yakumansBody,
+      sanbaemans: sanbaemansBody,
     };
 
     if (detailId) {
@@ -382,6 +657,37 @@ export default function Write() {
 
         if (!memo.trim()) {
           alertDialog('역만이 있을 경우 비고(내용)는 필수입니다.', 'error');
+          return false;
+        }
+      }
+    }
+
+    // sanbaeman 검증
+    if (sanbaemanRows.length > 0) {
+      for (let i = 0; i < sanbaemanRows.length; i++) {
+        const row = sanbaemanRows[i];
+
+        if (!row.userId) {
+          alertDialog(`삼배만 ${i + 1}번: 닉네임을 선택해주세요.`, 'error');
+          return false;
+        }
+
+        if (Object.keys(row.selectedYaku).length === 0) {
+          alertDialog(`삼배만 ${i + 1}번: 역을 1개 이상 선택해주세요.`, 'error');
+          return false;
+        }
+
+        const han = computeHan(row.furo, row.selectedYaku);
+        if (han < 11 || han > 12) {
+          alertDialog(
+            `삼배만 ${i + 1}번: 삼배만은 11~12판만 저장할 수 있습니다. (현재 ${han}판)`,
+            'error'
+          );
+          return false;
+        }
+
+        if (!sbMemo.trim()) {
+          alertDialog('삼배만이 있을 경우 비고(내용)는 필수입니다.', 'error');
           return false;
         }
       }
@@ -542,6 +848,49 @@ export default function Write() {
         setHeroImages(legacyUrls);
       }
     }
+
+    // sanbaeman
+    if (detailData.sanbaemans) {
+      const rows: SanbaemanRow[] = detailData.sanbaemans.map((s) => {
+        const parsed = parseSanbaemanName(s.sanbaemanName ?? '');
+        return {
+          search: '',
+          userId: s.memberId,
+          furo: parsed.furo,
+          selectedYaku: parsed.selectedYaku,
+          fileId: s.fileId ?? null,
+          originalFileId: s.fileId ?? null,
+          uploadStatus: 'idle',
+        };
+      });
+
+      setSanbaemanRows(rows);
+
+      setSbMemo(detailData.sanbaemans[0]?.sanbaemanCont ?? '');
+
+      const sbNewFileIds = detailData.sanbaemans
+        .map((s) => s.fileId)
+        .filter((id): id is number => !!id);
+      const sbLegacyUrls = detailData.sanbaemans.map((s) => s.imageUrl ?? '');
+
+      if (sbNewFileIds.length > 0) {
+        fetchFileViewUrls(sbNewFileIds)
+          .then((views) => {
+            const urlByFileId = new Map(views.map((v) => [v.fileId, v.url]));
+            setSbHeroImages(
+              detailData.sanbaemans.map((s, i) => {
+                if (s.fileId && urlByFileId.has(s.fileId)) {
+                  return urlByFileId.get(s.fileId) ?? '';
+                }
+                return sbLegacyUrls[i];
+              })
+            );
+          })
+          .catch(() => setSbHeroImages(sbLegacyUrls));
+      } else {
+        setSbHeroImages(sbLegacyUrls);
+      }
+    }
   }, [detailData, yakumanData]);
 
   //3자리 입력시 나머지 자리 자동계산 (사용자가 직접 안 만진 자리가 대상)
@@ -637,6 +986,24 @@ export default function Write() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [yakumanSearchKey]);
+
+  //삼배만 닉네임 검색시 닉네임선택
+  const sanbaemanSearchKey = sanbaemanRows.map((r) => r.search).join('|');
+  useEffect(() => {
+    let updated = false;
+    const newRows = sanbaemanRows.map((row) => {
+      const users = filteredUsers(row.search);
+      if (row.search && users.length > 0) {
+        updated = true;
+        return { ...row, userId: users[0].id };
+      }
+      return row;
+    });
+    if (updated) {
+      setSanbaemanRows(newRows);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sanbaemanSearchKey]);
 
   return (
     <Wrapper>
@@ -803,24 +1170,45 @@ export default function Write() {
         })}
 
         <BottomActions>
-          <PlusButton
-            onClick={() =>
-              setYakumanRows((prev) => [
-                ...prev,
-                {
-                  search: '',
-                  userId: null,
-                  yakumanId: null,
-                  fileId: null,
-                  originalFileId: null,
-                  uploadStatus: 'idle',
-                },
-              ])
-            }
-          >
-            <Plus weight="bold" />
-            역만 추가
-          </PlusButton>
+          <AddGroup>
+            <PlusButton
+              onClick={() =>
+                setYakumanRows((prev) => [
+                  ...prev,
+                  {
+                    search: '',
+                    userId: null,
+                    yakumanId: null,
+                    fileId: null,
+                    originalFileId: null,
+                    uploadStatus: 'idle',
+                  },
+                ])
+              }
+            >
+              <Plus weight="bold" />
+              역만 추가
+            </PlusButton>
+            <SbPlusButton
+              onClick={() =>
+                setSanbaemanRows((prev) => [
+                  ...prev,
+                  {
+                    search: '',
+                    userId: null,
+                    furo: false,
+                    selectedYaku: {},
+                    fileId: null,
+                    originalFileId: null,
+                    uploadStatus: 'idle',
+                  },
+                ])
+              }
+            >
+              <Plus weight="bold" />
+              삼배만 추가
+            </SbPlusButton>
+          </AddGroup>
           <SaveButton onClick={handleSubmit}>
             <Check weight="bold" />
             저장
@@ -966,6 +1354,241 @@ export default function Write() {
                   value={memo}
                   onChange={(e) => setMemo(e.target.value)}
                   placeholder="예) 동 1국 진하친 이지금 사암각 단기 론 오름 -진하쏘임"
+                  rows={5}
+                />
+              </Field>
+            </FieldsWrapper>
+          </WriteCroup>
+        )}
+
+        {sanbaemanRows.map((row, idx) => {
+          const users = !row.search
+            ? recordUser
+            : recordUser.filter((u) => u.nickName.toLowerCase().includes(row.search.toLowerCase()));
+
+          const inputId = `sanbaeman-file-${idx}`;
+          const han = computeHan(row.furo, row.selectedYaku);
+          const conflictKeys = getConflicts(row.selectedYaku);
+          const conflictLabels = YAKU_OPTIONS.filter((y) => conflictKeys.has(y.key)).map(
+            (y) => y.label
+          );
+
+          return (
+            <Center key={`sanbaeman-${idx}`} $color="#f3f3f3">
+              <ActionsRow>
+                <MeButton
+                  type="button"
+                  tabIndex={-1}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onTouchStart={(e) => e.preventDefault()}
+                  onClick={() => handleSelfFillSanbaeman(idx)}
+                >
+                  내 닉네임
+                </MeButton>
+                <Button
+                  onClick={() => {
+                    setSanbaemanRows((prev) => prev.filter((_, i) => i !== idx));
+                    setSbHeroImages((prev) => prev.filter((_, i) => i !== idx));
+                  }}
+                >
+                  <TrashSimple weight="bold" />
+                </Button>
+              </ActionsRow>
+              <WriteCroup>
+                <FieldsWrapper>
+                  {/* 닉네임 검색 */}
+                  <Field className="search">
+                    <label>닉네임 검색</label>
+                    <input
+                      value={row.search}
+                      onChange={(e) =>
+                        setSanbaemanRows((prev) =>
+                          prev.map((r, i) => (i === idx ? { ...r, search: e.target.value } : r))
+                        )
+                      }
+                      placeholder="검색"
+                    />
+                  </Field>
+
+                  {/* 닉네임 */}
+                  <Field className="user">
+                    <label>닉네임</label>
+                    <select
+                      value={row.userId ?? ''}
+                      onChange={(e) =>
+                        setSanbaemanRows((prev) =>
+                          prev.map((r, i) =>
+                            i === idx
+                              ? { ...r, userId: e.target.value ? Number(e.target.value) : null }
+                              : r
+                          )
+                        )
+                      }
+                    >
+                      <option value="">선택</option>
+                      {users.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.nickName}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+
+                </FieldsWrapper>
+              </WriteCroup>
+              {/* 삼배만 구성 역 (복수 선택) */}
+              <WriteCroup>
+                <FieldsWrapper>
+                  <Field className="memo">
+                    <YakuHeader>
+                      <YakuHeaderLeft>
+                        <label>역 (복수 선택)</label>
+                        <HanBadge $reached={han >= 11 && han <= 12}>
+                          {han}판 · {hanGradeLabel(han)}
+                        </HanBadge>
+                        {conflictLabels.length > 0 && (
+                          <ConflictText>조합 확인 필요: {conflictLabels.join(', ')}</ConflictText>
+                        )}
+                      </YakuHeaderLeft>
+                      <MenzenToggle>
+                        <button
+                          type="button"
+                          className={!row.furo ? 'active' : ''}
+                          onClick={() =>
+                            setSanbaemanRows((prev) =>
+                              prev.map((r, i) => (i === idx ? { ...r, furo: false } : r))
+                            )
+                          }
+                        >
+                          멘젠
+                        </button>
+                        <button
+                          type="button"
+                          className={row.furo ? 'active' : ''}
+                          onClick={() =>
+                            setSanbaemanRows((prev) =>
+                              prev.map((r, i) => {
+                                if (i !== idx) return r;
+                                // 후로 전환 시 멘젠 전용 역 자동 해제
+                                const next = { ...r.selectedYaku };
+                                YAKU_OPTIONS.forEach((y) => {
+                                  if (y.menzenOnly) delete next[y.key];
+                                });
+                                return { ...r, furo: true, selectedYaku: next };
+                              })
+                            )
+                          }
+                        >
+                          후로
+                        </button>
+                      </MenzenToggle>
+                    </YakuHeader>
+                    <YakuBox>
+                      {YAKU_OPTIONS.map((y) => {
+                        const selected = row.selectedYaku[y.key] != null;
+                        const disabled = row.furo && !!y.menzenOnly;
+                        return (
+                          <YakuChip
+                            key={y.key}
+                            $active={selected}
+                            $disabled={disabled}
+                            $conflict={conflictKeys.has(y.key)}
+                            onClick={() => {
+                              if (disabled) return;
+                              setSanbaemanRows((prev) =>
+                                prev.map((r, i) => {
+                                  if (i !== idx) return r;
+                                  const next = { ...r.selectedYaku };
+                                  if (next[y.key] != null) delete next[y.key];
+                                  else next[y.key] = 1;
+                                  return { ...r, selectedYaku: next };
+                                })
+                              );
+                            }}
+                          >
+                            {y.label}
+                            {selected && y.hasCount && (
+                              <Stepper onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setSanbaemanRows((prev) =>
+                                      prev.map((r, i) =>
+                                        i === idx
+                                          ? {
+                                              ...r,
+                                              selectedYaku: {
+                                                ...r.selectedYaku,
+                                                [y.key]: Math.max(1, (r.selectedYaku[y.key] ?? 1) - 1),
+                                              },
+                                            }
+                                          : r
+                                      )
+                                    )
+                                  }
+                                >
+                                  −
+                                </button>
+                                <span>{row.selectedYaku[y.key]}</span>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setSanbaemanRows((prev) =>
+                                      prev.map((r, i) =>
+                                        i === idx
+                                          ? {
+                                              ...r,
+                                              selectedYaku: {
+                                                ...r.selectedYaku,
+                                                [y.key]: (r.selectedYaku[y.key] ?? 1) + 1,
+                                              },
+                                            }
+                                          : r
+                                      )
+                                    )
+                                  }
+                                >
+                                  +
+                                </button>
+                              </Stepper>
+                            )}
+                          </YakuChip>
+                        );
+                      })}
+                    </YakuBox>
+                  </Field>
+                </FieldsWrapper>
+              </WriteCroup>
+              <ImageOverlay>
+                {sbHeroImages[idx] && <Img src={sbHeroImages[idx]} alt="상단 이미지" />}
+
+                <UploadLabel htmlFor={inputId}>
+                  <h5>이미지 첨부</h5>
+                  <span>드래그하거나 클릭하세요.</span>
+                </UploadLabel>
+
+                <HiddenInput
+                  id={inputId}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    if (file) handleSanbaemanImageChange(idx, file);
+                  }}
+                />
+              </ImageOverlay>
+            </Center>
+          );
+        })}
+        {sanbaemanRows.length > 0 && (
+          <WriteCroup>
+            <FieldsWrapper>
+              <Field className="memo">
+                <label>비고</label>
+                <textarea
+                  value={sbMemo}
+                  onChange={(e) => setSbMemo(e.target.value)}
+                  placeholder="예) 남 2국 진하친 청일색 멘젠쯔모 삼배만"
                   rows={5}
                 />
               </Field>
@@ -1138,6 +1761,16 @@ const SaveButton = styled.button`
   }
 `;
 
+const AddGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    gap: 8px;
+  }
+`;
+
 const PlusButton = styled.button`
   display: flex;
   width: 100px;
@@ -1166,6 +1799,10 @@ const PlusButton = styled.button`
     padding: 8px 14px;
     font-size: ${({ theme }) => theme.mobile.sizes.md};
   }
+`;
+
+const SbPlusButton = styled(PlusButton)`
+  background-color: #8e6fb5;
 `;
 
 const Top = styled.section`
@@ -1547,4 +2184,122 @@ const Img = styled.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
+`;
+
+const YakuHeader = styled.div`
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+`;
+
+const YakuHeaderLeft = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const HanBadge = styled.span<{ $reached: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: ${({ theme }) => theme.desktop.sizes.xs};
+  font-weight: 700;
+  background: ${({ $reached }) => ($reached ? '#8e6fb5' : '#ececec')};
+  color: ${({ $reached }) => ($reached ? '#ffffff' : '#666')};
+`;
+
+const MenzenToggle = styled.div`
+  display: inline-flex;
+  background: #333;
+  border-radius: 24px;
+  padding: 3px;
+
+  && button {
+    margin: 0;
+    padding: 4px 12px;
+    border: none;
+    background: transparent;
+    color: #ffffff;
+    border-radius: 24px;
+    font-size: ${({ theme }) => theme.desktop.sizes.xs};
+    cursor: pointer;
+    box-shadow: none;
+
+    &.active {
+      background: #ffffff;
+      color: #1d1d1f;
+    }
+  }
+`;
+
+const YakuBox = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 0 4px;
+`;
+
+const YakuChip = styled.div<{ $active: boolean; $disabled?: boolean; $conflict?: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: ${({ $disabled }) => ($disabled ? 'not-allowed' : 'pointer')};
+  opacity: ${({ $disabled }) => ($disabled ? 0.35 : 1)};
+  user-select: none;
+  font-size: ${({ theme }) => theme.desktop.sizes.sm};
+  border: 1px solid
+    ${({ $active, $conflict, theme }) =>
+      $conflict ? '#d9625e' : $active ? '#8e6fb5' : theme.colors.lineColor};
+  box-shadow: ${({ $conflict }) => ($conflict ? '0 0 0 1px #d9625e inset' : 'none')};
+  background: ${({ $active }) => ($active ? '#8e6fb5' : '#ffffff')};
+  color: ${({ $active, theme }) => ($active ? '#ffffff' : theme.colors.inputColor)};
+  transition: all 0.15s ease;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: 14px;
+    padding: 6px 10px;
+  }
+`;
+
+const ConflictText = styled.span`
+  font-size: ${({ theme }) => theme.desktop.sizes.xs};
+  font-weight: 600;
+  color: #d9625e;
+`;
+
+const Stepper = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  span {
+    min-width: 12px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  && button {
+    margin: 0;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: none;
+  }
 `;

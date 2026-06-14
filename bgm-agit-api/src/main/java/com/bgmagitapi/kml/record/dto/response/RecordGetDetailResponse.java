@@ -25,6 +25,7 @@ public class RecordGetDetailResponse {
     private MatchsWind wind;
     private List<RecordList> records;
     private List<YakumanList> yakumans;
+    private List<SanbaemanList> sanbaemans;
     
     @Data
     @NoArgsConstructor
@@ -67,6 +68,32 @@ public class RecordGetDetailResponse {
             this.nickName = nickName;
             this.yakumanName = yakumanName;
             this.yakumanCont = yakumanCont;
+            this.imageUrl = imageUrl;
+            this.fileId = fileId;
+        }
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SanbaemanList{
+        private Long sanbaemanId;
+        private Long memberId;
+        private String nickName;
+        private String sanbaemanName;
+        private String sanbaemanCont;
+        // legacy: BgmAgitCommonFile 의 풀 URL (구버전 데이터용)
+        private String imageUrl;
+        // new: BgmAgitFile 의 ID. 프론트가 /file-view 로 presigned URL 조회
+        private Long fileId;
+
+        @QueryProjection
+        public SanbaemanList(Long sanbaemanId, Long memberId, String nickName, String sanbaemanName, String sanbaemanCont, String imageUrl, Long fileId) {
+            this.sanbaemanId = sanbaemanId;
+            this.memberId = memberId;
+            this.nickName = nickName;
+            this.sanbaemanName = sanbaemanName;
+            this.sanbaemanCont = sanbaemanCont;
             this.imageUrl = imageUrl;
             this.fileId = fileId;
         }

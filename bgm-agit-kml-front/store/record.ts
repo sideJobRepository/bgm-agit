@@ -43,6 +43,19 @@ export interface YakumanItem {
   fileId: number | null;
 }
 
+// sanbaeman
+export interface SanbaemanItem {
+  memberId: number;
+  nickName: string;
+  sanbaemanId: number;
+  sanbaemanName: string;
+  sanbaemanCont: string;
+  // legacy: BgmAgitCommonFile 의 풀 URL
+  imageUrl: string | null;
+  // new: BgmAgitFile id (presigned GET URL 은 /bgm-agit/file-view 로 일괄 조회)
+  fileId: number | null;
+}
+
 // detail 전체 데이터
 export interface DetailRecordData {
   matchsId: number;
@@ -53,6 +66,7 @@ export interface DetailRecordData {
   tournamentName: string | null;
   records: RecordItem[];
   yakumans: YakumanItem[];
+  sanbaemans: SanbaemanItem[];
 }
 
 interface DetailRecordStore {

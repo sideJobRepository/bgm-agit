@@ -69,19 +69,28 @@ public class RecordPutRequest {
     private List<Records> records;
     @Valid
     private List<Yakumans> yakumans;
-    
+    @Valid
+    private List<Sanbaemans> sanbaemans;
+
     public List<Records> getRecords() {
         if(this.records == null) {
             this.records = new ArrayList<>();
         }
         return this.records;
     }
-    
+
     public List<Yakumans> getYakumans() {
         if(this.yakumans == null) {
             this.yakumans = new ArrayList<>();
         }
         return this.yakumans;
+    }
+
+    public List<Sanbaemans> getSanbaemans() {
+        if(this.sanbaemans == null) {
+            this.sanbaemans = new ArrayList<>();
+        }
+        return this.sanbaemans;
     }
     
     @Data
@@ -106,6 +115,20 @@ public class RecordPutRequest {
         private String yakumanName;
         @NotBlank(message = "내용을 입력해주세요")
         private String yakumanCont;
+        private FileRequest files;
+
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class Sanbaemans {
+        private Long sanbaemanId;
+        private Long memberId;
+        private String sanbaemanName;
+        @NotBlank(message = "내용을 입력해주세요")
+        private String sanbaemanCont;
         private FileRequest files;
 
     }

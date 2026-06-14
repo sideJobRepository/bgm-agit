@@ -28,6 +28,8 @@ import com.bgmagitapi.kml.tournament.entity.Tournament;
 import com.bgmagitapi.kml.tournament.enums.TournamentProgressStatus;
 import com.bgmagitapi.kml.tournament.repository.TournamentRepository;
 import com.bgmagitapi.kml.tournamentsetting.entity.TournamentSetting;
+import com.bgmagitapi.kml.sanbaeman.entity.Sanbaeman;
+import com.bgmagitapi.kml.sanbaeman.repository.SanbaemanRepository;
 import com.bgmagitapi.kml.yakuman.entity.Yakuman;
 import com.bgmagitapi.kml.yakuman.repository.YakumanRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
@@ -66,6 +68,8 @@ public class RecordServiceImpl implements RecordService {
     private final TournamentRepository tournamentRepository;
 
     private final YakumanRepository yakumanRepository;
+
+    private final SanbaemanRepository sanbaemanRepository;
 
     private final MatchsAndRecordHistoryService matchsAndRecordHistoryService;
 
@@ -156,6 +160,7 @@ public class RecordServiceImpl implements RecordService {
 
         List<RecordGetDetailResponse.RecordList> records = recordRepository.findByRecord(id);
         List<RecordGetDetailResponse.YakumanList> yakumanLists = yakumanRepository.findByMatchsYakuman(id);
+        List<RecordGetDetailResponse.SanbaemanList> sanbaemanLists = sanbaemanRepository.findByMatchsSanbaeman(id);
 
         Tournament tournament = matchs.getTournament();
         TournamentSetting tournamentSetting = tournament != null ? tournament.getTournamentSetting() : null;
@@ -169,7 +174,8 @@ public class RecordServiceImpl implements RecordService {
                 tournamentName,
                 matchs.getWind(),
                 records,
-                yakumanLists
+                yakumanLists,
+                sanbaemanLists
         );
     }
     
@@ -193,6 +199,15 @@ public class RecordServiceImpl implements RecordService {
 
         if (!invalidMemberIds.isEmpty()) {
             throw new ValidException("대국 참가자가 아닌 회원이 역만 기록에 포함되어 있습니다.");
+        }
+
+        List<Long> invalidSanbaemanMemberIds = request.getSanbaemans().stream()
+                .map(RecordPostRequest.Sanbaemans::getMemberId)
+                .filter(id -> !recordMemberSet.contains(id))
+                .toList();
+
+        if (!invalidSanbaemanMemberIds.isEmpty()) {
+            throw new ValidException("대국 참가자가 아닌 회원이 삼배만 기록에 포함되어 있습니다.");
         }
 
 
@@ -288,6 +303,20 @@ public class RecordServiceImpl implements RecordService {
                     .build();
             yakumanRepository.save(saveYakuman);
             bgmAgitFileService.modifyFileStatus(yakuman.getFiles(), saveYakuman.getId());
+        }
+        List<RecordPostRequest.Sanbaemans> sanbaemans = request.getSanbaemans();
+        for (RecordPostRequest.Sanbaemans sanbaeman : sanbaemans) {
+            BgmAgitMember member = memberRepository.findById(sanbaeman.getMemberId()).orElseThrow(() -> new RuntimeException("존재 하지 않는 회원입니다."));
+            String sanbaemanName = sanbaeman.getSanbaemanName();
+            Sanbaeman saveSanbaeman = Sanbaeman
+                    .builder()
+                    .member(member)
+                    .matchs(matchs)
+                    .sanbaemanName(sanbaemanName)
+                    .sanbaemanCont(sanbaeman.getSanbaemanCont())
+                    .build();
+            sanbaemanRepository.save(saveSanbaeman);
+            bgmAgitFileService.modifyFileStatus(sanbaeman.getFiles(), saveSanbaeman.getId());
         }
         matchsAndRecordHistoryService.createMatchsAndRecordHistory(matchs, recordList);
 
@@ -399,6 +428,15 @@ public class RecordServiceImpl implements RecordService {
 
         if (!invalidMemberIds.isEmpty()) {
             throw new ValidException("대국 참가자가 아닌 회원이 역만 기록에 포함되어 있습니다.");
+        }
+
+        List<Long> invalidSanbaemanMemberIds = request.getSanbaemans().stream()
+                .map(RecordPutRequest.Sanbaemans::getMemberId)
+                .filter(id -> !recordMemberSet.contains(id))
+                .toList();
+
+        if (!invalidSanbaemanMemberIds.isEmpty()) {
+            throw new ValidException("대국 참가자가 아닌 회원이 삼배만 기록에 포함되어 있습니다.");
         }
 
         // 점수 합 검증
@@ -534,7 +572,69 @@ public class RecordServiceImpl implements RecordService {
             orphanFiles.forEach(BgmAgitFile::modifyTemporaryFileStatus);
         }
         yakumanRepository.deleteAll(deletedYakumans);
-        
+
+        // ------------------------
+        // Sanbaeman 수정
+        // ------------------------
+
+        List<Sanbaeman> existingSanbaemans = sanbaemanRepository.findBySanbaemanMatchesId(matchsId);
+
+        Map<Long, Sanbaeman> sanbaemanMap = existingSanbaemans.stream()
+                .collect(Collectors.toMap(Sanbaeman::getId, s -> s));
+
+        Set<Long> requestSanbaemanIds = new HashSet<>();
+
+        for (RecordPutRequest.Sanbaemans dto : request.getSanbaemans()) {
+
+            BgmAgitMember member = memberRepository.findById(dto.getMemberId())
+                    .orElseThrow(() -> new RuntimeException("존재하지않는 회원입니다."));
+
+            Sanbaeman sanbaeman;
+
+            // 신규 생성
+            if (dto.getSanbaemanId() == null) {
+
+                sanbaeman = Sanbaeman.builder()
+                        .matchs(matchs)
+                        .member(member)
+                        .sanbaemanName(dto.getSanbaemanName())
+                        .sanbaemanCont(dto.getSanbaemanCont())
+                        .build();
+
+                sanbaemanRepository.save(sanbaeman);
+
+            }
+            // 기존 수정
+            else {
+
+                sanbaeman = sanbaemanMap.get(dto.getSanbaemanId());
+
+                if (sanbaeman == null) {
+                    throw new RuntimeException("존재하지 않는 Sanbaeman ID: " + dto.getSanbaemanId());
+                }
+
+                sanbaeman.modify(dto, member);
+            }
+
+            // 파일 처리: CREATE/DELETE/NORMAL 의도를 그대로 위임
+            bgmAgitFileService.modifyFileStatus(dto.getFiles(), sanbaeman.getId());
+
+            requestSanbaemanIds.add(sanbaeman.getId());
+        }
+
+        // 삭제 대상 Sanbaeman: 도메인 + 연결된 BgmAgitFile 모두 분리
+        List<Sanbaeman> deletedSanbaemans = existingSanbaemans.stream()
+                .filter(item -> !requestSanbaemanIds.contains(item.getId()))
+                .toList();
+
+        if (!deletedSanbaemans.isEmpty()) {
+            List<Long> deletedSanbaemanIds = deletedSanbaemans.stream().map(Sanbaeman::getId).toList();
+            List<BgmAgitFile> orphanFiles =
+                    bgmAgitFileService.findCompletedByTargets(deletedSanbaemanIds, FileType.SANBAEMAN);
+            orphanFiles.forEach(BgmAgitFile::modifyTemporaryFileStatus);
+        }
+        sanbaemanRepository.deleteAll(deletedSanbaemans);
+
         // 히스토리 기록
         matchsAndRecordHistoryService.updateMatchsAndRecordHistory(
                 matchs,
@@ -569,6 +669,13 @@ public class RecordServiceImpl implements RecordService {
             files.forEach(BgmAgitFile::modifyTemporaryFileStatus);
         }
 
+        List<Sanbaeman> sanbaemans = sanbaemanRepository.findBySanbaemanMatchesId(matchs.getId());
+        if (!sanbaemans.isEmpty()) {
+            List<Long> sanbaemanIds = sanbaemans.stream().map(Sanbaeman::getId).toList();
+            List<BgmAgitFile> files = bgmAgitFileService.findCompletedByTargets(sanbaemanIds, FileType.SANBAEMAN);
+            files.forEach(BgmAgitFile::modifyTemporaryFileStatus);
+        }
+
         matchsAndRecordHistoryService.updateMatchsAndRecordHistory(matchs,findRecord,"삭제",memberId);
         return new ApiResponse(200,true,"삭제 되었습니다.");
     }
@@ -591,6 +698,13 @@ public class RecordServiceImpl implements RecordService {
         if (!yakumans.isEmpty()) {
             List<Long> yakumanIds = yakumans.stream().map(Yakuman::getId).toList();
             List<BgmAgitFile> tempFiles = bgmAgitFileService.findTemporaryByTargets(yakumanIds, FileType.YAKUMAN);
+            tempFiles.forEach(BgmAgitFile::restoreCompleteFileStatus);
+        }
+
+        List<Sanbaeman> sanbaemans = sanbaemanRepository.findBySanbaemanMatchesId(matchs.getId());
+        if (!sanbaemans.isEmpty()) {
+            List<Long> sanbaemanIds = sanbaemans.stream().map(Sanbaeman::getId).toList();
+            List<BgmAgitFile> tempFiles = bgmAgitFileService.findTemporaryByTargets(sanbaemanIds, FileType.SANBAEMAN);
             tempFiles.forEach(BgmAgitFile::restoreCompleteFileStatus);
         }
 
