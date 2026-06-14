@@ -12,6 +12,7 @@ public enum BgmAgitCommonType {
     KML_NOTICE("KML 공지사항"),
     RULE("룰"),
     YAKUMAN("역만"),
+    SANBAEMAN("삼배만"),
     REVIEW("리뷰");
     private final String fileValue;
 }

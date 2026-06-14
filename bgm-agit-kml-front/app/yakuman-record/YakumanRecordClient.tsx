@@ -16,6 +16,16 @@ import {
 } from '@/store/yakuman';
 import { useFetchDetailYakumanList, useFetchYakumanList } from '@/services/yakuman.service';
 import { fetchFileViewUrls } from '@/services/yakumanFile.service';
+import {
+  DetailSanbaemanRow,
+  useDetailSanbaemanRecordStore,
+  useSanbaemanRecordStore,
+  SanbaemanRow,
+} from '@/store/sanbaeman';
+import {
+  useFetchDetailSanbaemanList,
+  useFetchSanbaemanList,
+} from '@/services/sanbaeman.service';
 
 export interface YakumanPageData {
   content: YakumanRow[];
@@ -31,7 +41,8 @@ interface Props {
 export default function YakumanRecordClient({ initialData }: Props) {
   const router = useRouter();
 
-  //토글
+  //토글: 종목(역만/삼배만) + 보기(횟수/상세)
+  const [kind, setKind] = useState<'yakuman' | 'sanbaeman'>('yakuman');
   const [mode, setMode] = useState<'count' | 'detail'>('count');
 
   const fetchYakuman = useFetchYakumanList();
@@ -48,6 +59,11 @@ export default function YakumanRecordClient({ initialData }: Props) {
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);
+
+  // 삼배만 횟수
+  const fetchSanbaeman = useFetchSanbaemanList();
+  const sanbaemanList = useSanbaemanRecordStore((state) => state.sanbaeman);
+  const [sbPage, setSbPage] = useState(0);
 
   const loading = useLoadingStore((state) => state.loading);
   const isReady = !loading && (yakumanList ?? initialData);
@@ -197,6 +213,30 @@ export default function YakumanRecordClient({ initialData }: Props) {
     []
   );
 
+  // 삼배만 횟수 컬럼 (종류 구분 없이 회원별 총 횟수 랭킹)
+  const sanbaemanCountColumns = useMemo<BaseColumn<SanbaemanRow>[]>(
+    () => [
+      {
+        key: 'nickname',
+        header: '닉네임',
+        width: '160px',
+        align: 'center',
+        nowrap: true,
+        sticky: true,
+        render: (row) => row.nickname,
+      },
+      {
+        key: 'totalCount',
+        header: '총 삼배만 횟수',
+        width: '160px',
+        align: 'center',
+        nowrap: true,
+        render: (row) => <CountCell $count={row.totalCount}>{row.totalCount}</CountCell>,
+      },
+    ],
+    []
+  );
+
   //디테일
   const detailYakumanList = useDetailYakumanRecordStore((state) => state.detailYakuman);
   const [detailPage, setDetailPage] = useState(0);
@@ -271,6 +311,79 @@ export default function YakumanRecordClient({ initialData }: Props) {
     [fileViewMap]
   );
 
+  // 삼배만 상세
+  const fetchDetailSanbaeman = useFetchDetailSanbaemanList();
+  const detailSanbaemanList = useDetailSanbaemanRecordStore((state) => state.detailSanbaeman);
+  const [sbDetailPage, setSbDetailPage] = useState(0);
+
+  const [sbFileViewMap, setSbFileViewMap] = useState<Map<number, string>>(new Map());
+
+  useEffect(() => {
+    if (!detailSanbaemanList?.content) return;
+    const newFileIds = detailSanbaemanList.content
+      .map((r) => r.fileId)
+      .filter((id): id is number => !!id);
+
+    if (newFileIds.length === 0) {
+      setSbFileViewMap(new Map());
+      return;
+    }
+
+    fetchFileViewUrls(newFileIds)
+      .then((views) => {
+        setSbFileViewMap(new Map(views.map((v) => [v.fileId, v.url])));
+      })
+      .catch(() => setSbFileViewMap(new Map()));
+  }, [detailSanbaemanList]);
+
+  const resolveSanbaemanImageUrl = (row: DetailSanbaemanRow): string | null => {
+    if (row.fileId && sbFileViewMap.has(row.fileId)) {
+      return sbFileViewMap.get(row.fileId) ?? null;
+    }
+    return row.fileUrl ?? null;
+  };
+
+  const sanbaemanDetailColumns = useMemo<BaseColumn<DetailSanbaemanRow>[]>(
+    () => [
+      {
+        key: 'nickname',
+        header: '이름',
+        width: '120px',
+        align: 'center',
+        render: (row) => row.nickname,
+      },
+      {
+        key: 'sanbaemanName',
+        header: '삼배만이름',
+        align: 'center',
+        render: (row) => row.sanbaemanName,
+      },
+      {
+        key: 'sanbaemanCont',
+        header: '내용',
+        align: 'center',
+        render: (row) => row.sanbaemanCont,
+      },
+      {
+        key: 'fileUrl',
+        header: '이미지',
+        align: 'center',
+        render: (row) => {
+          const url = resolveSanbaemanImageUrl(row);
+          if (!url) return null;
+          return <Thumbnail src={url} onClick={() => setPreviewImg(url)} />;
+        },
+      },
+      {
+        key: 'registDate',
+        header: '일시',
+        align: 'center',
+        render: (row) => row.registDate,
+      },
+    ],
+    [sbFileViewMap]
+  );
+
   // 첫 진입 + SSR 데이터 있으면 첫 fetch 스킵 (불필요한 재요청 방지)
   const firstYakumanFetchSkipRef = useRef(true);
   useEffect(() => {
@@ -285,6 +398,68 @@ export default function YakumanRecordClient({ initialData }: Props) {
   useEffect(() => {
     fetchDetailYakman({ page: detailPage });
   }, [detailPage]);
+
+  // 삼배만은 해당 토글로 진입했을 때만 조회 (lazy)
+  useEffect(() => {
+    if (kind !== 'sanbaeman') return;
+    fetchSanbaeman({ page: sbPage, nickName: searchKeyword });
+  }, [kind, sbPage]);
+
+  useEffect(() => {
+    if (kind !== 'sanbaeman') return;
+    fetchDetailSanbaeman({ page: sbDetailPage });
+  }, [kind, sbDetailPage]);
+
+  const isYakuman = kind === 'yakuman';
+  const isCount = mode === 'count';
+
+  // kind(역만/삼배만) × mode(횟수/상세) 조합으로 테이블 입력을 선택한다.
+  // 컬럼/데이터는 행 타입이 4종으로 갈리므로 BaseTable 경계에서 느슨하게 캐스팅한다.
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const activeColumns = (
+    isYakuman
+      ? isCount
+        ? countColumns
+        : detailColumns
+      : isCount
+        ? sanbaemanCountColumns
+        : sanbaemanDetailColumns
+  ) as unknown as BaseColumn<any>[];
+
+  const activeData = (
+    isYakuman
+      ? isCount
+        ? ((yakumanList ?? initialData)?.content ?? [])
+        : (detailYakumanList?.content ?? [])
+      : isCount
+        ? (sanbaemanList?.content ?? [])
+        : (detailSanbaemanList?.content ?? [])
+  ) as any[];
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+
+  const activePage = isYakuman
+    ? isCount
+      ? page
+      : detailPage
+    : isCount
+      ? sbPage
+      : sbDetailPage;
+
+  const activeTotalPages = isYakuman
+    ? isCount
+      ? ((yakumanList ?? initialData)?.totalPages ?? 0)
+      : (detailYakumanList?.totalPages ?? 0)
+    : isCount
+      ? (sanbaemanList?.totalPages ?? 0)
+      : (detailSanbaemanList?.totalPages ?? 0);
+
+  const activeOnPageChange = isYakuman
+    ? isCount
+      ? setPage
+      : setDetailPage
+    : isCount
+      ? setSbPage
+      : setSbDetailPage;
 
   return (
     <Wrapper>
@@ -308,50 +483,65 @@ export default function YakumanRecordClient({ initialData }: Props) {
         />
 
         <HeroContent>
-          <h1>Yakuman Records</h1>
-          <span>역만 기록과 상세 내역을 확인하세요.</span>
+          <h1>Yakuman / Sanbaeman Records</h1>
+          <span>역만·삼배만 기록과 상세 내역을 확인하세요.</span>
         </HeroContent>
       </Hero>
-      <ToggleBox>
-        <button className={mode === 'count' ? 'active' : ''} onClick={() => setMode('count')}>
-          역만 횟수
-        </button>
-        <button className={mode === 'detail' ? 'active' : ''} onClick={() => setMode('detail')}>
-          역만 상세
-        </button>
-      </ToggleBox>
+      <ToggleWrap>
+        <ToggleBox>
+          <button className={kind === 'yakuman' ? 'active' : ''} onClick={() => setKind('yakuman')}>
+            역만
+          </button>
+          <button
+            className={kind === 'sanbaeman' ? 'active' : ''}
+            onClick={() => setKind('sanbaeman')}
+          >
+            삼배만
+          </button>
+        </ToggleBox>
+        <ToggleBox>
+          <button className={mode === 'count' ? 'active' : ''} onClick={() => setMode('count')}>
+            횟수
+          </button>
+          <button className={mode === 'detail' ? 'active' : ''} onClick={() => setMode('detail')}>
+            상세
+          </button>
+        </ToggleBox>
+      </ToggleWrap>
       <TableBox>
         {isReady ? (
           <BaseTable
-            columns={mode === 'count' ? countColumns : detailColumns}
-            data={
-              mode === 'count'
-                ? (yakumanList ?? initialData)?.content ?? []
-                : detailYakumanList?.content ?? []
-            }
-            page={mode === 'count' ? page : detailPage}
-            totalPages={
-              mode === 'count'
-                ? (yakumanList ?? initialData)?.totalPages ?? 0
-                : detailYakumanList?.totalPages ?? 0
-            }
-            onPageChange={mode === 'count' ? setPage : setDetailPage}
+            columns={activeColumns}
+            data={activeData}
+            page={activePage}
+            totalPages={activeTotalPages}
+            onPageChange={activeOnPageChange}
             searchLabel={mode === 'count' ? '닉네임' : null}
             showWriteButton={true}
             searchKeyword={searchKeyword}
             onSearchKeywordChange={setSearchKeyword}
             onSearch={() => {
               if (mode === 'count') {
-                setPage(0);
-                fetchYakuman({ page: 0, nickName: searchKeyword });
+                if (isYakuman) {
+                  setPage(0);
+                  fetchYakuman({ page: 0, nickName: searchKeyword });
+                } else {
+                  setSbPage(0);
+                  fetchSanbaeman({ page: 0, nickName: searchKeyword });
+                }
               } else {
-                setDetailPage(0);
-                fetchDetailYakman({ page: 0 });
+                if (isYakuman) {
+                  setDetailPage(0);
+                  fetchDetailYakman({ page: 0 });
+                } else {
+                  setSbDetailPage(0);
+                  fetchDetailSanbaeman({ page: 0 });
+                }
               }
             }}
           />
         ) : (
-          <BaseTableSkeleton columns={mode === 'count' ? countColumns : detailColumns} />
+          <BaseTableSkeleton columns={activeColumns} />
         )}
       </TableBox>
     </Wrapper>
@@ -482,6 +672,13 @@ const SkeletonBox = styled.div`
   background-size: 200% 100%;
   animation: ${shimmer} 1.5s infinite;
   border-radius: 4px;
+`;
+
+const ToggleWrap = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 `;
 
 const ToggleBox = styled.div`
