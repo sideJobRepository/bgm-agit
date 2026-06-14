@@ -44,7 +44,7 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                 .from(bgmAgitMemberRole)
                 .join(bgmAgitMemberRole.bgmAgitMember, bgmAgitMember)
                 .join(bgmAgitMemberRole.bgmAgitRole, bgmAgitRole)
-                .where(emailOrNameOrPhoneNo(res))
+                .where(notMahjong(), emailOrNameOrPhoneNo(res))
                 .orderBy(
                        bgmAgitRole.bgmAgitRoleName.asc(),
                         bgmAgitMember.registDate.asc()
@@ -52,13 +52,13 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
-        
+
         content.forEach(item -> item.setMemberPhoneNo(formatPhoneNo(item.getMemberPhoneNo())));
         // 2. 전체 개수 조회
         JPAQuery<Long> countQuery = queryFactory
                 .select(bgmAgitMember.count())
                 .from(bgmAgitMember)
-                .where(emailOrNameOrPhoneNo(res));
+                .where(notMahjong(), emailOrNameOrPhoneNo(res));
         
         return PageableExecutionUtils.getPage(content, pageable,countQuery::fetchOne);
     }
@@ -111,6 +111,11 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
             return digits.substring(0, 3) + "-" + digits.substring(3, 6) + "-" + digits.substring(6);
         }
         return digits;
+    }
+
+    private BooleanExpression notMahjong() {
+        // 권한관리는 BGM 아지트(보드게임) 회원만 대상으로 하며 BML(마작) 회원은 제외한다.
+        return bgmAgitMember.socialType.ne(BgmAgitSocialType.MAHJONG);
     }
 
     private BooleanExpression nicknameOrNameOrPhoneNo(String res) {
