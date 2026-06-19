@@ -11,7 +11,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface RecordService {
-    Page<RecordGetResponse> getRecords(Pageable pageable, String startDate, String endDate, String nickName, String tournamentStatus, List<String> roles);
+    Page<RecordGetResponse> getRecords(Pageable pageable, String startDate, String endDate, String nickName, String tournamentStatus, String bonusType, List<String> roles);
     RecordGetDetailResponse getRecordDetail(Long id);
     ApiResponse createRecord(RecordPostRequest request, Long memberId);
     ApiResponse updateRecord(RecordPutRequest request, Long memberId);

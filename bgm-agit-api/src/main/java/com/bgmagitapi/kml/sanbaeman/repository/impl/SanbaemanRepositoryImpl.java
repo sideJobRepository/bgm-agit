@@ -5,7 +5,9 @@ import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.file.enums.FileStatus;
 import com.bgmagitapi.file.enums.FileType;
 import com.bgmagitapi.kml.record.dto.response.QRecordGetDetailResponse_SanbaemanList;
+import com.bgmagitapi.kml.record.dto.response.QRecordGetResponse_SanbaemanInfo;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
+import com.bgmagitapi.kml.record.dto.response.RecordGetResponse;
 import com.bgmagitapi.kml.sanbaeman.dto.response.QSanbaemanDetailGetResponse;
 import com.bgmagitapi.kml.sanbaeman.dto.response.QSanbaemanPivotResponse;
 import com.bgmagitapi.kml.sanbaeman.dto.response.SanbaemanDetailGetResponse;
@@ -57,6 +59,33 @@ public class SanbaemanRepositoryImpl implements SanbaemanQueryRepository {
                         bgmAgitFile.fileStatus.eq(FileStatus.COMPLETE))
                 .leftJoin(sanbaeman.member, bgmAgitMember)
                 .where(sanbaeman.matchs.id.eq(id))
+                .fetch();
+    }
+
+    @Override
+    public List<RecordGetResponse.SanbaemanInfo> findByMatchsIds(List<Long> matchsIds) {
+        if (matchsIds == null || matchsIds.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return queryFactory
+                .select(
+                        new QRecordGetResponse_SanbaemanInfo(
+                                sanbaeman.matchs.id,
+                                bgmAgitMember.bgmAgitMemberNickname,
+                                sanbaeman.sanbaemanName,
+                                bgmAgitCommonFile.bgmAgitCommonFileUrl,
+                                bgmAgitFile.id
+                        )
+                )
+                .from(sanbaeman)
+                .leftJoin(bgmAgitCommonFile)
+                .on(sanbaeman.id.eq(bgmAgitCommonFile.bgmAgitCommonFileTargetId), bgmAgitCommonFile.bgmAgitCommonFileType.eq(BgmAgitCommonType.SANBAEMAN))
+                .leftJoin(bgmAgitFile)
+                .on(sanbaeman.id.eq(bgmAgitFile.targetId),
+                        bgmAgitFile.fileType.eq(FileType.SANBAEMAN),
+                        bgmAgitFile.fileStatus.eq(FileStatus.COMPLETE))
+                .leftJoin(sanbaeman.member, bgmAgitMember)
+                .where(sanbaeman.matchs.id.in(matchsIds))
                 .fetch();
     }
 

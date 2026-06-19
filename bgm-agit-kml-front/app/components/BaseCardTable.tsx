@@ -8,7 +8,8 @@ import { alertDialog, confirmDialog } from '@/utils/alert';
 import { useDeletePost, useUpdatePost } from '@/services/main.service';
 import { useRouter } from 'next/navigation';
 import { useFetchDayRecordList } from '@/services/dayRecord.service';
-import { useState } from 'react';
+import { fetchFileViewUrls } from '@/services/yakumanFile.service';
+import { useEffect, useState } from 'react';
 import Modal from '@/app/modal/modal';
 import { HistBaseCardTable } from '@/app/components/HistBaseCardTable';
 import { useFetchHistWrite } from '@/services/record.service';
@@ -22,6 +23,20 @@ type RowType = {
   point: number;
 };
 
+type YakumanType = {
+  nickname: string;
+  yakumanName: string;
+  imageUrl?: string | null;
+  fileId?: number | null;
+};
+
+type SanbaemanType = {
+  nickname: string;
+  sanbaemanName?: string | null;
+  imageUrl?: string | null;
+  fileId?: number | null;
+};
+
 type MatchType = {
   matchsId: number;
   registDate: string;
@@ -30,6 +45,8 @@ type MatchType = {
   tournamentName?: string | null;
   delStatus?: string;
   rows: RowType[];
+  yakumans?: YakumanType[];
+  sanbaemans?: SanbaemanType[];
 };
 
 type BaseCardTableProps = {
@@ -58,6 +75,36 @@ export function BaseCardTable({ data, page, onPageChange, onDeleteSuccess }: Bas
   console.log('data', data);
 
   const user = useUserStore((state) => state.user);
+
+  // 역만/삼배만 이미지 보기 — fileId(신규 흐름) presigned URL 일괄 조회 + 미리보기 오버레이
+  const [previewImg, setPreviewImg] = useState<string | null>(null);
+  const [fileViewMap, setFileViewMap] = useState<Map<number, string>>(new Map());
+
+  useEffect(() => {
+    const fileIds = (data.content ?? [])
+      .flatMap((item) => [...(item.yakumans ?? []), ...(item.sanbaemans ?? [])])
+      .map((b) => b.fileId)
+      .filter((id): id is number => !!id);
+
+    if (fileIds.length === 0) {
+      setFileViewMap(new Map());
+      return;
+    }
+
+    fetchFileViewUrls(fileIds)
+      .then((views) => setFileViewMap(new Map(views.map((v) => [v.fileId, v.url]))))
+      .catch(() => setFileViewMap(new Map()));
+  }, [data]);
+
+  const resolveBonusImageUrl = (bonus: {
+    imageUrl?: string | null;
+    fileId?: number | null;
+  }): string | null => {
+    if (bonus.fileId && fileViewMap.has(bonus.fileId)) {
+      return fileViewMap.get(bonus.fileId) ?? null;
+    }
+    return bonus.imageUrl ?? null;
+  };
 
   //히스토리
   const fetchHistRecord = useFetchHistWrite();
@@ -205,6 +252,32 @@ export function BaseCardTable({ data, page, onPageChange, onDeleteSuccess }: Bas
                 <span>{row.point}</span>
               </Row>
             ))}
+            {((item.yakumans?.length ?? 0) > 0 || (item.sanbaemans?.length ?? 0) > 0) && (
+              <BonusSection>
+                {item.yakumans?.map((y, idx) => {
+                  const img = resolveBonusImageUrl(y);
+                  return (
+                    <BonusRow key={`y-${idx}`} $type="yakuman">
+                      <span>
+                        {y.nickname} {y.yakumanName} 화료
+                      </span>
+                      {img && <ImageLink onClick={() => setPreviewImg(img)}>이미지 보기</ImageLink>}
+                    </BonusRow>
+                  );
+                })}
+                {item.sanbaemans?.map((s, idx) => {
+                  const img = resolveBonusImageUrl(s);
+                  return (
+                    <BonusRow key={`s-${idx}`} $type="sanbaeman">
+                      <span>
+                        {s.nickname} {s.sanbaemanName ? `${s.sanbaemanName} ` : ''}삼배만 화료
+                      </span>
+                      {img && <ImageLink onClick={() => setPreviewImg(img)}>이미지 보기</ImageLink>}
+                    </BonusRow>
+                  );
+                })}
+              </BonusSection>
+            )}
           </Card>
           );
         })}
@@ -217,6 +290,16 @@ export function BaseCardTable({ data, page, onPageChange, onDeleteSuccess }: Bas
         <Modal open={historyOpen} onClose={() => setHistoryOpen(false)}>
           <HistBaseCardTable data={histData} />
         </Modal>
+      )}
+      {previewImg && (
+        <ImageOverlay onClick={() => setPreviewImg(null)}>
+          <ImageBox onClick={(e) => e.stopPropagation()}>
+            <CloseButton onClick={() => setPreviewImg(null)} aria-label="닫기">
+              ×
+            </CloseButton>
+            <img src={previewImg} alt="역만/삼배만 이미지" />
+          </ImageBox>
+        </ImageOverlay>
       )}
     </>
   );
@@ -369,6 +452,94 @@ const Row = styled.div<{ $highlight?: boolean }>`
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.mobile.sizes.md};
+  }
+`;
+
+const BonusSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background-color: #f7f8fa;
+  border-top: 2px solid ${({ theme }) => theme.colors.border};
+`;
+
+const BonusRow = styled.div<{ $type: 'yakuman' | 'sanbaeman' }>`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-weight: 700;
+  word-break: break-all;
+  font-size: ${({ theme }) => theme.desktop.sizes.md};
+  color: ${({ $type }) => ($type === 'yakuman' ? '#c0392b' : '#1f618d')};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.mobile.sizes.md};
+  }
+`;
+
+const ImageLink = styled.button`
+  flex-shrink: 0;
+  padding: 2px 10px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    opacity: 0.7;
+  }
+`;
+
+const ImageOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+`;
+
+const ImageBox = styled.div`
+  position: relative;
+  display: inline-flex;
+
+  img {
+    max-width: min(90vw, 560px);
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 6px;
+  }
+`;
+
+const CloseButton = styled.button`
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1d1d1f;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+
+  &:hover {
+    opacity: 0.8;
   }
 `;
 

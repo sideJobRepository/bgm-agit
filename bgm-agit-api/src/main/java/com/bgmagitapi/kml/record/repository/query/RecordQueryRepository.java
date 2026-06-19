@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface RecordQueryRepository {
 
-    Page<Record> findByRecords(Pageable pageable, String startDate, String endDate, String nickName, String tournamentStatus, boolean includeDeleted);
+    Page<Record> findByRecords(Pageable pageable, String startDate, String endDate, String nickName, String tournamentStatus, String bonusType, boolean includeDeleted);
 
     List<RecordGetDetailResponse.RecordList> findByRecord(Long id);
 
@@ -20,5 +20,5 @@ public interface RecordQueryRepository {
 
     List<Record> findRecordsByMatchIds(List<Long> matchIds);
 
-    Long countQuery(String startDate, String endDate, String nickName, String tournamentStatus, boolean includeDeleted);
+    Long countQuery(String startDate, String endDate, String nickName, String tournamentStatus, String bonusType, boolean includeDeleted);
 }

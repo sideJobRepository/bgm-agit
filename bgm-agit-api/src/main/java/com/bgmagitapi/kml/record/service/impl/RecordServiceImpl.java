@@ -88,9 +88,9 @@ public class RecordServiceImpl implements RecordService {
     
     
     @Override
-    public Page<RecordGetResponse> getRecords(Pageable pageable, String startDate, String endDate, String nickName, String tournamentStatus, List<String> roles) {
+    public Page<RecordGetResponse> getRecords(Pageable pageable, String startDate, String endDate, String nickName, String tournamentStatus, String bonusType, List<String> roles) {
         boolean canSeeDeleted = canSeeDeleted(roles);
-        Page<Record> records = recordRepository.findByRecords(pageable, startDate, endDate, nickName, tournamentStatus, canSeeDeleted);
+        Page<Record> records = recordRepository.findByRecords(pageable, startDate, endDate, nickName, tournamentStatus, bonusType, canSeeDeleted);
     
         Map<Long, List<Record>> groupedByMatch = records.getContent().stream()
                         .filter(r -> r.getMatchs() != null)
@@ -143,8 +143,21 @@ public class RecordServiceImpl implements RecordService {
                 .filter(Objects::nonNull)
                 .sorted(Comparator.comparing(RecordGetResponse::getRegistDate).reversed())
                 .toList();
-        
-        Long countQuery = recordRepository.countQuery(startDate, endDate, nickName, tournamentStatus, canSeeDeleted);
+
+        // 이번 페이지에 뜬 대국들의 역만/삼배만을 한 번에 조회해 매칭 (N+1 방지)
+        List<Long> matchsIds = list.stream().map(RecordGetResponse::getMatchsId).toList();
+        if (!matchsIds.isEmpty()) {
+            Map<Long, List<RecordGetResponse.YakumanInfo>> yakumanMap = yakumanRepository.findByMatchsIds(matchsIds).stream()
+                    .collect(Collectors.groupingBy(RecordGetResponse.YakumanInfo::getMatchsId));
+            Map<Long, List<RecordGetResponse.SanbaemanInfo>> sanbaemanMap = sanbaemanRepository.findByMatchsIds(matchsIds).stream()
+                    .collect(Collectors.groupingBy(RecordGetResponse.SanbaemanInfo::getMatchsId));
+            for (RecordGetResponse response : list) {
+                response.setYakumans(yakumanMap.getOrDefault(response.getMatchsId(), new ArrayList<>()));
+                response.setSanbaemans(sanbaemanMap.getOrDefault(response.getMatchsId(), new ArrayList<>()));
+            }
+        }
+
+        Long countQuery = recordRepository.countQuery(startDate, endDate, nickName, tournamentStatus, bonusType, canSeeDeleted);
         return new PageImpl<>(list, pageable, countQuery == null ? 0 : countQuery);
     }
 
