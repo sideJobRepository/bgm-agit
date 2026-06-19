@@ -99,6 +99,11 @@ const YAKU_OPTIONS: YakuOption[] = [
   { key: 'yakuhai_haku', label: '백', han: 1, openHan: 1 },
   { key: 'yakuhai_hatsu', label: '발', han: 1, openHan: 1 },
   { key: 'yakuhai_chun', label: '중', han: 1, openHan: 1 },
+  // 더블 풍패(장풍=자풍): 후로와 무관하게 2한
+  { key: 'double_east', label: '더블동', han: 2, openHan: 2 },
+  { key: 'double_south', label: '더블남', han: 2, openHan: 2 },
+  { key: 'double_west', label: '더블서', han: 2, openHan: 2 },
+  { key: 'double_north', label: '더블북', han: 2, openHan: 2 },
   { key: 'sanshoku', label: '삼색동순', han: 2, openHan: 1 },
   { key: 'sanshokudoukou', label: '삼색동각', han: 2, openHan: 2 },
   { key: 'ittsuu', label: '일기통관', han: 2, openHan: 1 },
@@ -152,6 +157,9 @@ const YAKUHAI_KEYS = [
   'yakuhai_chun',
 ];
 
+// 더블 풍패 — 역패(자패)와 같은 성질이라 단일 역패와 동일한 충돌 규칙을 적용한다.
+const DOUBLE_WIND_KEYS = ['double_east', 'double_south', 'double_west', 'double_north'];
+
 // 함께 성립할 수 없는 역 조합(양립 불가). 대칭으로 채운다. (1차 규칙 — 클럽 기준으로 가감)
 const CONFLICTS: Record<string, Set<string>> = (() => {
   const m: Record<string, Set<string>> = {};
@@ -169,22 +177,26 @@ const CONFLICTS: Record<string, Set<string>> = (() => {
   link(['iipeikou'], ['ryanpeikou']); // 이페코 ↔ 량페코
   link(['chanta'], ['junchan']); // 찬타 ↔ 준찬타
   // 핑후(시퀀스/노트리플) ↔ 트리플·소삼원·혼노두·치또이·역패
-  link(['pinfu'], ['toitoi', 'sanankou', 'sankantsu', 'chiitoitsu', 'shousangen', 'honroutou', ...YAKUHAI_KEYS]);
+  link(['pinfu'], ['toitoi', 'sanankou', 'sankantsu', 'chiitoitsu', 'shousangen', 'honroutou', ...YAKUHAI_KEYS, ...DOUBLE_WIND_KEYS]);
   // 또이또이(올트리플) ↔ 시퀀스 필요 역·치또이·찬타/준찬타(→혼노두/청노두)
   link(['toitoi'], ['iipeikou', 'ryanpeikou', 'sanshoku', 'ittsu', 'chiitoitsu', 'chanta', 'junchan']);
   // 치또이쯔(7페어, 멜드 없음) ↔ 멜드/트리플 계열
   link(
     ['chiitoitsu'],
-    ['sanankou', 'sankantsu', 'iipeikou', 'ryanpeikou', 'sanshoku', 'sanshokudoukou', 'ittsu', 'chanta', 'junchan', 'shousangen', ...YAKUHAI_KEYS]
+    ['sanankou', 'sankantsu', 'iipeikou', 'ryanpeikou', 'sanshoku', 'sanshokudoukou', 'ittsu', 'chanta', 'junchan', 'shousangen', ...YAKUHAI_KEYS, ...DOUBLE_WIND_KEYS]
   );
   // 탕야오(노 야오추/자패) ↔ 찬타/준찬타/혼노두/소삼원/혼일색/역패
-  link(['tanyao'], ['chanta', 'junchan', 'honroutou', 'shousangen', 'honitsu', ...YAKUHAI_KEYS]);
+  link(['tanyao'], ['chanta', 'junchan', 'honroutou', 'shousangen', 'honitsu', ...YAKUHAI_KEYS, ...DOUBLE_WIND_KEYS]);
   // 청일색(자패 없음) ↔ 자패 포함 역
-  link(['chinitsu'], ['chanta', 'honroutou', 'shousangen', ...YAKUHAI_KEYS]);
+  link(['chinitsu'], ['chanta', 'honroutou', 'shousangen', ...YAKUHAI_KEYS, ...DOUBLE_WIND_KEYS]);
   // 준찬타(자패 없음) ↔ 자패 포함 역
-  link(['junchan'], ['honitsu', 'honroutou', 'shousangen', ...YAKUHAI_KEYS]);
+  link(['junchan'], ['honitsu', 'honroutou', 'shousangen', ...YAKUHAI_KEYS, ...DOUBLE_WIND_KEYS]);
   // 혼노두(올 야오추) ↔ 시퀀스/삼색동각
   link(['honroutou'], ['iipeikou', 'ryanpeikou', 'sanshoku', 'sanshokudoukou', 'ittsu', 'pinfu']);
+  // 더블 풍패는 한 손에 하나뿐(장풍=자풍) → 더블끼리, 그리고 단일 풍패(동남서북) 모두 동시 선택 불가
+  const WIND_YAKUHAI_KEYS = ['yakuhai_east', 'yakuhai_south', 'yakuhai_west', 'yakuhai_north'];
+  link(DOUBLE_WIND_KEYS, DOUBLE_WIND_KEYS);
+  link(DOUBLE_WIND_KEYS, WIND_YAKUHAI_KEYS);
 
   return m;
 })();
