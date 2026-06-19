@@ -31,9 +31,10 @@ public class RecordController {
             ,@RequestParam(name = "endDate" , required = false) String endDate
             ,@RequestParam(name= "nickName", required = false) String nickName
             ,@RequestParam(name= "tournamentStatus", required = false) String tournamentStatus
+            ,@RequestParam(name= "bonusType", required = false) String bonusType
             ,@AuthenticationPrincipal Jwt jwt
     ) {
-        Page<RecordGetResponse> records = recordService.getRecords(pageable,startDate,endDate,nickName,tournamentStatus, JwtParserUtil.extractRoles(jwt));
+        Page<RecordGetResponse> records = recordService.getRecords(pageable,startDate,endDate,nickName,tournamentStatus,bonusType, JwtParserUtil.extractRoles(jwt));
         return PageResponse.from(records);
     }
 

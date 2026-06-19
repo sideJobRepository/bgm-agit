@@ -8,6 +8,8 @@ export type params = {
   endDate: string | null;
   nickName: string;
   tournamentStatus?: string;
+  // '' 전체 / 'YAKUMAN' 역만 / 'SANBAEMAN' 삼배만
+  bonusType?: string;
 };
 
 export function useFetchDayRecordList() {

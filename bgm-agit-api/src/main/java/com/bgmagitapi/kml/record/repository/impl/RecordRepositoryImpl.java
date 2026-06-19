@@ -22,6 +22,8 @@ import java.util.List;
 import static com.bgmagitapi.entity.QBgmAgitMember.bgmAgitMember;
 import static com.bgmagitapi.kml.matchs.entity.QMatchs.matchs;
 import static com.bgmagitapi.kml.record.entity.QRecord.record;
+import static com.bgmagitapi.kml.sanbaeman.entity.QSanbaeman.sanbaeman;
+import static com.bgmagitapi.kml.yakuman.entity.QYakuman.yakuman;
 
 @RequiredArgsConstructor
 public class RecordRepositoryImpl implements RecordQueryRepository {
@@ -29,7 +31,7 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
     private final JPAQueryFactory queryFactory;
     
     @Override
-    public Page<Record> findByRecords(Pageable pageable, String startDate, String endDate, String nickName, String tournamentStatus, boolean includeDeleted) {
+    public Page<Record> findByRecords(Pageable pageable, String startDate, String endDate, String nickName, String tournamentStatus, String bonusType, boolean includeDeleted) {
         //  Match 먼저 페이징
         // 1. match 기준으로 페이징
         List<Long> matchIds = queryFactory
@@ -40,7 +42,8 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                         whereDateGoe(startDate),
                         whereDateLt(endDate),
                         whereNickLikeExists(nickName),
-                        whereTournamentStatus(tournamentStatus)
+                        whereTournamentStatus(tournamentStatus),
+                        whereBonusType(bonusType)
                 )
                 .orderBy(matchs.registDate.desc(), matchs.id.desc())
                 .offset(pageable.getOffset())
@@ -71,7 +74,8 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                         whereDateGoe(startDate),
                         whereDateLt(endDate),
                         whereNickLikeExists(nickName),
-                        whereTournamentStatus(tournamentStatus)
+                        whereTournamentStatus(tournamentStatus),
+                        whereBonusType(bonusType)
                 );
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
@@ -106,7 +110,7 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                 .fetch();
     }
     @Override
-    public Long countQuery(String startDate, String endDate, String nickName, String tournamentStatus, boolean includeDeleted){
+    public Long countQuery(String startDate, String endDate, String nickName, String tournamentStatus, String bonusType, boolean includeDeleted){
      return queryFactory
                 .select(matchs.count())
                 .from(matchs)
@@ -115,7 +119,8 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                         whereDateGoe(startDate),
                         whereDateLt(endDate),
                         whereNickLikeExists(nickName),
-                        whereTournamentStatus(tournamentStatus)
+                        whereTournamentStatus(tournamentStatus),
+                        whereBonusType(bonusType)
                 )
              .fetchOne();
     }
@@ -193,5 +198,23 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
     private BooleanExpression whereTournamentStatus(String tournamentStatus) {
         if (!StringUtils.hasText(tournamentStatus)) return null;
         return matchs.tournamentStatus.eq(tournamentStatus);
+    }
+
+    // 역만/삼배만 화료가 있는 대국만 필터 (YAKUMAN / SANBAEMAN, 그 외/빈값은 전체)
+    private BooleanExpression whereBonusType(String bonusType) {
+        if (!StringUtils.hasText(bonusType)) return null;
+        if ("YAKUMAN".equals(bonusType)) {
+            return JPAExpressions.selectOne()
+                    .from(yakuman)
+                    .where(yakuman.matchs.eq(matchs))
+                    .exists();
+        }
+        if ("SANBAEMAN".equals(bonusType)) {
+            return JPAExpressions.selectOne()
+                    .from(sanbaeman)
+                    .where(sanbaeman.matchs.eq(matchs))
+                    .exists();
+        }
+        return null;
     }
 }

@@ -5,7 +5,9 @@ import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.file.enums.FileStatus;
 import com.bgmagitapi.file.enums.FileType;
 import com.bgmagitapi.kml.record.dto.response.QRecordGetDetailResponse_YakumanList;
+import com.bgmagitapi.kml.record.dto.response.QRecordGetResponse_YakumanInfo;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
+import com.bgmagitapi.kml.record.dto.response.RecordGetResponse;
 import com.bgmagitapi.kml.yakuman.dto.response.QYakumanDetailGetResponse;
 import com.bgmagitapi.kml.yakuman.dto.response.QYakumanGetResponse;
 import com.bgmagitapi.kml.yakuman.dto.response.YakumanDetailGetResponse;
@@ -66,6 +68,33 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
                 .fetch();
     }
     
+    @Override
+    public List<RecordGetResponse.YakumanInfo> findByMatchsIds(List<Long> matchsIds) {
+        if (matchsIds == null || matchsIds.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return queryFactory
+                .select(
+                        new QRecordGetResponse_YakumanInfo(
+                                yakuman.matchs.id,
+                                bgmAgitMember.bgmAgitMemberNickname,
+                                yakuman.yakumanName,
+                                bgmAgitCommonFile.bgmAgitCommonFileUrl,
+                                bgmAgitFile.id
+                        )
+                )
+                .from(yakuman)
+                .leftJoin(bgmAgitCommonFile)
+                .on(yakuman.id.eq(bgmAgitCommonFile.bgmAgitCommonFileTargetId), bgmAgitCommonFile.bgmAgitCommonFileType.eq(BgmAgitCommonType.YAKUMAN))
+                .leftJoin(bgmAgitFile)
+                .on(yakuman.id.eq(bgmAgitFile.targetId),
+                        bgmAgitFile.fileType.eq(FileType.YAKUMAN),
+                        bgmAgitFile.fileStatus.eq(FileStatus.COMPLETE))
+                .leftJoin(yakuman.member, bgmAgitMember)
+                .where(yakuman.matchs.id.in(matchsIds))
+                .fetch();
+    }
+
     @Override
     public List<Yakuman> findByYakumanMatchesId(Long matchsId) {
         return queryFactory

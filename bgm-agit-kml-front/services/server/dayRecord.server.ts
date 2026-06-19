@@ -9,6 +9,21 @@ export type DayRecordRow = {
   winner: boolean;
 };
 
+export type DayRecordYakuman = {
+  nickname: string;
+  yakumanName: string;
+  // legacy 풀 URL / new fileId (presigned URL 조회용). 둘 중 하나라도 있으면 이미지 보기 노출
+  imageUrl?: string | null;
+  fileId?: number | null;
+};
+
+export type DayRecordSanbaeman = {
+  nickname: string;
+  sanbaemanName?: string | null;
+  imageUrl?: string | null;
+  fileId?: number | null;
+};
+
 export type DayRecordItem = {
   createNicname: string;
   matchsId: number;
@@ -17,6 +32,9 @@ export type DayRecordItem = {
   tournamentStatus: string;
   delStatus?: string;
   rows: DayRecordRow[];
+  // 이 대국에서 화료된 역만/삼배만 (없으면 빈 배열)
+  yakumans?: DayRecordYakuman[];
+  sanbaemans?: DayRecordSanbaeman[];
 };
 
 export type DayRecordResponse = {
@@ -32,6 +50,8 @@ export type DayRecordParams = {
   endDate: string | null;
   nickName: string;
   tournamentStatus?: string;
+  // '' 전체 / 'YAKUMAN' 역만 / 'SANBAEMAN' 삼배만
+  bonusType?: string;
 };
 
 export async function fetchDayRecordListServer(
@@ -44,6 +64,7 @@ export async function fetchDayRecordListServer(
   if (params.endDate) u.searchParams.set('endDate', params.endDate);
   if (params.nickName) u.searchParams.set('nickName', params.nickName);
   if (params.tournamentStatus) u.searchParams.set('tournamentStatus', params.tournamentStatus);
+  if (params.bonusType) u.searchParams.set('bonusType', params.bonusType);
 
   try {
     const res = await fetch(u.toString(), { cache: 'no-store' });

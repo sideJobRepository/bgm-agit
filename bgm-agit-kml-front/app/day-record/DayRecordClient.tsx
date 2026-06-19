@@ -33,7 +33,15 @@ export default function DayRecordClient({ initialData }: Props) {
     { label: '아니오', value: 'N' },
   ];
 
+  // 역만/삼배만 화료가 있는 대국만 필터
+  const BONUS_OPTIONS = [
+    { label: '전체', value: '' },
+    { label: '역만', value: 'YAKUMAN' },
+    { label: '삼배만', value: 'SANBAEMAN' },
+  ];
+
   const [tournament, setTournament] = useState('');
+  const [bonusType, setBonusType] = useState('');
   const [nickName, setNickName] = useState('');
 
   const today = new Date();
@@ -67,6 +75,7 @@ export default function DayRecordClient({ initialData }: Props) {
       endDate: formatDate(endDate),
       nickName,
       tournamentStatus: tournament,
+      bonusType,
     });
   }, [page, user]);
 
@@ -104,6 +113,7 @@ export default function DayRecordClient({ initialData }: Props) {
                 endDate: formatDate(endDate),
                 nickName,
                 tournamentStatus: tournament,
+                bonusType,
               });
             }}
           >
@@ -112,6 +122,16 @@ export default function DayRecordClient({ initialData }: Props) {
                 <label>대회여부</label>
                 <select value={tournament} onChange={(e) => setTournament(e.target.value)}>
                   {TOURNAMENT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field $width="calc(20% - 8px)" $mobileWidth="100px">
+                <label>역만/삼배만</label>
+                <select value={bonusType} onChange={(e) => setBonusType(e.target.value)}>
+                  {BONUS_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
@@ -166,6 +186,7 @@ export default function DayRecordClient({ initialData }: Props) {
                 endDate: formatDate(endDate),
                 nickName,
                 tournamentStatus: tournament,
+                bonusType,
               });
             }}
           />
