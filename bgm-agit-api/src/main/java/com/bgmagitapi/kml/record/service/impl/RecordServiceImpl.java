@@ -34,6 +34,7 @@ import com.bgmagitapi.kml.yakuman.entity.Yakuman;
 import com.bgmagitapi.kml.yakuman.repository.YakumanRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.util.CalculateUtil;
+import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -180,12 +181,17 @@ public class RecordServiceImpl implements RecordService {
         Integer tournamentTurning = tournamentSetting != null ? tournamentSetting.getTurning() : null;
         String tournamentName = tournament != null ? tournament.getName() : null;
 
+        String matchRegistDate = matchs.getRegistDate() != null
+                ? matchs.getRegistDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                : null;
+
         return new RecordGetDetailResponse(
                 matchs.getId(),
                 matchs.getTournamentStatus(),
                 tournamentTurning,
                 tournamentName,
                 matchs.getWind(),
+                matchRegistDate,
                 records,
                 yakumanLists,
                 sanbaemanLists

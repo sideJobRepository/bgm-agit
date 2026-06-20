@@ -26,6 +26,7 @@ import {
   useFetchDetailSanbaemanList,
   useFetchSanbaemanList,
 } from '@/services/sanbaeman.service';
+import MatchDetailModal from '@/app/components/MatchDetailModal';
 
 export interface YakumanPageData {
   content: YakumanRow[];
@@ -69,6 +70,9 @@ export default function YakumanRecordClient({ initialData }: Props) {
   const isReady = !loading && (yakumanList ?? initialData);
 
   const [previewImg, setPreviewImg] = useState<string | null>(null);
+
+  // 상세 행 클릭 시 그 역만/삼배만이 나온 대국 결과 모달
+  const [selectedMatchId, setSelectedMatchId] = useState<number | null>(null);
 
   const countColumns = useMemo<BaseColumn<YakumanRow>[]>(
     () => [
@@ -273,6 +277,17 @@ export default function YakumanRecordClient({ initialData }: Props) {
   const detailColumns = useMemo<BaseColumn<DetailYakumanRow>[]>(
     () => [
       {
+        key: 'match',
+        header: '대국',
+        width: '88px',
+        align: 'center',
+        nowrap: true,
+        sticky: true,
+        render: (row) => (
+          <MatchChip onClick={() => setSelectedMatchId(row.matchsId)}>상세보기</MatchChip>
+        ),
+      },
+      {
         key: 'nickname',
         header: '이름',
         width: '120px',
@@ -345,6 +360,17 @@ export default function YakumanRecordClient({ initialData }: Props) {
 
   const sanbaemanDetailColumns = useMemo<BaseColumn<DetailSanbaemanRow>[]>(
     () => [
+      {
+        key: 'match',
+        header: '대국',
+        width: '88px',
+        align: 'center',
+        nowrap: true,
+        sticky: true,
+        render: (row) => (
+          <MatchChip onClick={() => setSelectedMatchId(row.matchsId)}>상세보기</MatchChip>
+        ),
+      },
       {
         key: 'nickname',
         header: '이름',
@@ -516,6 +542,11 @@ export default function YakumanRecordClient({ initialData }: Props) {
             page={activePage}
             totalPages={activeTotalPages}
             onPageChange={activeOnPageChange}
+            onRowClick={
+              mode === 'detail'
+                ? (row) => setSelectedMatchId((row as { matchsId: number }).matchsId)
+                : undefined
+            }
             searchLabel={mode === 'count' ? '닉네임' : null}
             showWriteButton={true}
             searchKeyword={searchKeyword}
@@ -544,6 +575,10 @@ export default function YakumanRecordClient({ initialData }: Props) {
           <BaseTableSkeleton columns={activeColumns} />
         )}
       </TableBox>
+      <MatchDetailModal
+        matchsId={selectedMatchId}
+        onClose={() => setSelectedMatchId(null)}
+      />
     </Wrapper>
   );
 }
@@ -703,6 +738,26 @@ const ToggleBox = styled.div`
       color: #1d1d1f;
       border: none;
     }
+  }
+`;
+
+const MatchChip = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 999px;
+  background: ${({ theme }) => theme.colors.blueColor};
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.85;
   }
 `;
 

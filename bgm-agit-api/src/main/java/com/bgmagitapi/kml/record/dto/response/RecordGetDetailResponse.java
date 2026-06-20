@@ -23,6 +23,8 @@ public class RecordGetDetailResponse {
     private Integer tournamentTurning;
     private String tournamentName;
     private MatchsWind wind;
+    // 대국 등록 일시 (포맷 yyyy-MM-dd HH:mm:ss) — 대국 결과 모달 헤더용
+    private String registDate;
     private List<RecordList> records;
     private List<YakumanList> yakumans;
     private List<SanbaemanList> sanbaemans;
@@ -36,14 +38,18 @@ public class RecordGetDetailResponse {
         private String nickName;
         private Integer recordScore;
         private Wind recordSeat;
-        
+        private Integer recordRank;
+        private Double recordPoint;
+
         @QueryProjection
-        public RecordList(Long recordId, Long memberId, String nickName, Integer recordScore, Wind recordSeat) {
+        public RecordList(Long recordId, Long memberId, String nickName, Integer recordScore, Wind recordSeat, Integer recordRank, Double recordPoint) {
             this.recordId = recordId;
             this.memberId = memberId;
             this.nickName = nickName;
             this.recordScore = recordScore;
             this.recordSeat = recordSeat;
+            this.recordRank = recordRank;
+            this.recordPoint = recordPoint;
         }
     }
     

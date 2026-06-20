@@ -93,7 +93,9 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
                                 bgmAgitMember.bgmAgitMemberId,
                                 bgmAgitMember.bgmAgitMemberNickname,
                                 record.recordScore,
-                                record.recordSeat
+                                record.recordSeat,
+                                record.recordRank,
+                                record.recordPoint
                         )
                 )
                 .from(record)

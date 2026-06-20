@@ -28,6 +28,9 @@ export interface RecordItem {
   recordId: number;
   recordScore: number;
   recordSeat: DirectionKey;
+  // 대국 결과 모달에서 순위·승점 표시용 (write 화면은 재계산하므로 미사용)
+  recordRank: number;
+  recordPoint: number;
 }
 
 // yakuman
@@ -64,6 +67,8 @@ export interface DetailRecordData {
   // 대회 기록이면 그 대회의 단일 turning. 자동계산 시 ×4 해서 합계 기준으로 사용
   tournamentTurning: number | null;
   tournamentName: string | null;
+  // 대국 등록 일시 (yyyy-MM-dd HH:mm:ss) — 결과 모달 헤더용
+  registDate: string | null;
   records: RecordItem[];
   yakumans: YakumanItem[];
   sanbaemans: SanbaemanItem[];
