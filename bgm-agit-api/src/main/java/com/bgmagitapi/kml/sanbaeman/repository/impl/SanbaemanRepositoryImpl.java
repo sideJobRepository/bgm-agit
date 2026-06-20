@@ -157,6 +157,7 @@ public class SanbaemanRepositoryImpl implements SanbaemanQueryRepository {
                         sanbaeman.sanbaemanCont,
                         bgmAgitCommonFile.bgmAgitCommonFileUrl,
                         bgmAgitFile.id,
+                        sanbaeman.matchs.id,
                         sanbaeman.registDate
                 ))
                 .from(sanbaeman)

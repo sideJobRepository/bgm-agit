@@ -51,6 +51,8 @@ export interface DetailYakumanRow {
   // new: BgmAgitFile id (presigned URL 은 /bgm-agit/file-view 로 일괄 조회)
   fileId: number | null;
   nickname: string;
+  // 이 역만이 나온 대국 ID (행 클릭 시 대국 결과 모달 조회)
+  matchsId: number;
   registDate: string;
   yakumanCont: string;
   yakumanName: string;

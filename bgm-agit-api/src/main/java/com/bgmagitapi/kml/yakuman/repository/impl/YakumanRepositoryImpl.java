@@ -201,6 +201,7 @@ public class YakumanRepositoryImpl implements YakumanQueryRepository {
                         yakuman.yakumanCont,
                         bgmAgitCommonFile.bgmAgitCommonFileUrl,
                         bgmAgitFile.id,
+                        yakuman.matchs.id,
                         yakuman.registDate
                 ))
                 .from(yakuman)
