@@ -1,5 +1,6 @@
 package com.bgmagitapi.kml.matchs.repository.impl;
 
+import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.matchs.repository.query.MatchsQueryRepository;
 import com.bgmagitapi.kml.years.dto.response.YearRankGetResponse;
 import com.querydsl.core.Tuple;
@@ -137,6 +138,19 @@ public class MatchsRepositoryImpl implements MatchsQueryRepository {
                 .build();
     }
     
+    @Override
+    public List<Matchs> findByMatchsKmlIdIsNull(int limit) {
+        return queryFactory
+                .selectFrom(matchs)
+                .where(
+                        matchs.matchsKmlId.isNull(),
+                        matchs.delStatus.eq("N")
+                )
+                .orderBy(matchs.registDate.asc())
+                .limit(limit)
+                .fetch();
+    }
+
     // SUM(CASE WHEN cond THEN 1 ELSE 0 END)
     private NumberExpression<Long> sumCase(BooleanExpression cond) {
         return Expressions.numberOperation(Long.class, Ops.AggOps.SUM_AGG, new CaseBuilder().when(cond).then(1L).otherwise(0L));
