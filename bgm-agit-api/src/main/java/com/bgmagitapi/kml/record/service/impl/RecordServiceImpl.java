@@ -33,6 +33,7 @@ import com.bgmagitapi.kml.sanbaeman.repository.SanbaemanRepository;
 import com.bgmagitapi.kml.yakuman.entity.Yakuman;
 import com.bgmagitapi.kml.yakuman.repository.YakumanRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
+import com.bgmagitapi.security.service.kml.KmlRecordSubmitEventFactory;
 import com.bgmagitapi.util.CalculateUtil;
 import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
@@ -79,7 +80,9 @@ public class RecordServiceImpl implements RecordService {
     private final BgmAgitPasswordService bgmAgitPasswordService;
 
     private final ApplicationEventPublisher eventPublisher;
-    
+
+    private final KmlRecordSubmitEventFactory kmlRecordSubmitEventFactory;
+
     private static final Map<Wind, Integer> WIND_ORDER = Map.of(
             Wind.EAST, 0,
             Wind.SOUTH, 1,
@@ -347,33 +350,8 @@ public class RecordServiceImpl implements RecordService {
     }
 
     private void publishKmlSubmitEvent(Matchs matchs, List<Record> recordList) {
-        if (recordList.size() != 4) {
-            log.info("[KML] record_submit 송신 생략 — 참가자 수가 4명이 아님 size={}", recordList.size());
-            return;
-        }
-
-        List<KmlRecordSubmitEvent.Player> players = new ArrayList<>();
-        for (Record rec : recordList) {
-            BgmAgitMember member = rec.getMember();
-            Long kmlId = member != null ? member.getBgmAgitMemberKmlId() : null;
-            if (kmlId == null) {
-                log.info("[KML] record_submit 송신 생략 — KML 미연동 회원 포함 memberId={}",
-                        member != null ? member.getBgmAgitMemberId() : null);
-                return;
-            }
-            players.add(new KmlRecordSubmitEvent.Player(
-                    kmlId,
-                    rec.getRecordScore(),
-                    rec.getRecordSeat().ordinal()
-            ));
-        }
-
-        eventPublisher.publishEvent(new KmlRecordSubmitEvent(
-                matchs.getId(),
-                matchs.getWind().ordinal(),
-                0,
-                players
-        ));
+        kmlRecordSubmitEventFactory.build(matchs, recordList)
+                .ifPresent(eventPublisher::publishEvent);
     }
 
     private void publishKmlModifyEvent(Matchs matchs, List<Record> recordList) {
