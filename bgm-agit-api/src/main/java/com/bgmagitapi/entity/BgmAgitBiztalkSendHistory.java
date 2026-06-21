@@ -47,4 +47,9 @@ public class BgmAgitBiztalkSendHistory extends DateSuperClass {
         this.bgmAgitBiztalkSendHistoryMsgIdx = bgmAgitBiztalkSendHistoryMsgIdx;
         this.bgmAgitBiztalkSendHistoryResultCode = bgmAgitBiztalkSendHistoryResultCode;
     }
+
+    // 비즈톡 결과 코드 갱신 (스케줄러가 getResultAll 결과로 PENDING -> 실제 코드 갱신)
+    public void updateResultCode(String bgmAgitBiztalkSendHistoryResultCode) {
+        this.bgmAgitBiztalkSendHistoryResultCode = bgmAgitBiztalkSendHistoryResultCode;
+    }
 }

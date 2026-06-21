@@ -21,7 +21,6 @@ import com.bgmagitapi.repository.BgmAgitImageRepository;
 import com.bgmagitapi.service.BgmAgitBizTalkSandService;
 import com.bgmagitapi.service.BgmAgitBizTalkService;
 import com.bgmagitapi.service.response.Attach;
-import com.bgmagitapi.service.response.BizTalkResponse;
 import com.bgmagitapi.service.response.BizTalkTokenResponse;
 import com.bgmagitapi.service.response.ReservationTalkContext;
 import com.bgmagitapi.util.AlimtalkTemplate;
@@ -39,8 +38,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -347,30 +344,9 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
                 .retrieve()
                 .toEntity(Void.class);
         
-        // 결과 조회
-        BizTalkResponse res = rest.get()
-                .uri(bizTalkUrl + "/v2/kko/getResultAll")
-                .header("Content-Type", "application/json")
-                .header("bt-token", token.getToken())
-                .retrieve()
-                .toEntity(BizTalkResponse.class)
-                .getBody();
-        
+        // 발송 직후엔 비즈톡 결과가 아직 집계되지 않으므로 PENDING 으로만 저장한다.
+        // 실제 결과 코드는 BgmAgitBiztalkResultSyncScheduler 가 주기적으로 getResultAll 을 조회해 갱신한다.
         String msgIdx = Objects.toString(req.get("msgIdx"), null);
-        
-        Map<String, String> codeByIdx = Optional.ofNullable(res)
-                .map(BizTalkResponse::getResponse)
-                .orElseGet(List::of)
-                .stream()
-                .filter(Objects::nonNull)
-                .filter(it -> it.getMsgIdx() != null)
-                .collect(Collectors.toMap(
-                        BizTalkResponse.Item::getMsgIdx,
-                        BizTalkResponse.Item::getResultCode,
-                        (a, b) -> a
-                ));
-        
-        String resultCode = codeByIdx.getOrDefault(msgIdx, "PENDING");
-        bgmAgitBiztalkSendHistoryRepository.save(new BgmAgitBiztalkSendHistory(bgmAgitSubject, subjectId, message, msgIdx, resultCode));
+        bgmAgitBiztalkSendHistoryRepository.save(new BgmAgitBiztalkSendHistory(bgmAgitSubject, subjectId, message, msgIdx, "PENDING"));
     }
 }
