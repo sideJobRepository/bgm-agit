@@ -2,9 +2,8 @@
 
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
-import { withBasePath } from '@/lib/path';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import {
   useFetchDetailWrite,
@@ -340,6 +339,14 @@ export default function Write() {
   const [recentNicks, setRecentNicks] = useState<
     { id: number; nickName: string }[]
   >([]);
+
+  /** 역만/삼배만 행 추가 시 새로 생긴 행으로 스크롤하기 위한 ref + 플래그
+   *  (플래그는 "추가 버튼" 클릭 때만 켜서, 수정 모드 데이터 로드 시엔 스크롤 안 되게 함) */
+  const lastYakumanRef = useRef<HTMLElement | null>(null);
+  const lastSanbaemanRef = useRef<HTMLElement | null>(null);
+  const pendingYakumanScroll = useRef(false);
+  const pendingSanbaemanScroll = useRef(false);
+
   const yakumanData = useYakumanStore((state) => state.yakuman);
 
   //점수
@@ -444,6 +451,21 @@ export default function Write() {
       ...prev,
       [target.key]: { ...prev[target.key], userId: memberId, search: '' },
     }));
+  };
+
+  /** 닉네임 잘못 입력 대비 — 4자리 닉네임 일괄 초기화 (점수는 유지) */
+  const handleResetNicknames = async () => {
+    const has = Object.values(records).some((r) => r.userId != null);
+    if (!has) return;
+    const ok = await confirmDialog('닉네임을 모두 초기화할까요?', 'warning');
+    if (!ok.isConfirmed) return;
+    setRecords((prev) => {
+      const next = { ...prev };
+      (Object.keys(next) as DirectionKey[]).forEach((k) => {
+        next[k] = { ...next[k], userId: null, search: '' };
+      });
+      return next;
+    });
   };
 
   /** 본인 닉네임 자동 입력 - 동/남/서/북 */
@@ -1038,29 +1060,22 @@ export default function Write() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sanbaemanSearchKey]);
 
+  // 역만 행 추가 시 새 행으로 부드럽게 스크롤
+  useEffect(() => {
+    if (!pendingYakumanScroll.current) return;
+    pendingYakumanScroll.current = false;
+    lastYakumanRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [yakumanRows.length]);
+
+  // 삼배만 행 추가 시 새 행으로 부드럽게 스크롤
+  useEffect(() => {
+    if (!pendingSanbaemanScroll.current) return;
+    pendingSanbaemanScroll.current = false;
+    lastSanbaemanRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [sanbaemanRows.length]);
+
   return (
     <Wrapper>
-      <Hero>
-        <HeroBg>
-          <img src={withBasePath('/write.jpg')} alt="" />
-        </HeroBg>
-        <FixedDarkOverlay />
-        <HeroOverlay
-          initial={{ width: '0%' }}
-          animate={{ width: '100%' }}
-          transition={{
-            duration: 1.2,
-            ease: [0.65, 0, 0.35, 1],
-          }}
-        />
-
-        <HeroContent>
-          <>
-            <h1>{title.title}</h1>
-            <span>{title.content}</span>
-          </>
-        </HeroContent>
-      </Hero>
       <TableBox>
         {/* 장 선택 */}
         <Top>
@@ -1097,6 +1112,18 @@ export default function Write() {
         )}
 
         {/* 동서남북 입력 */}
+        <ResetRow>
+          <ResetButton
+            type="button"
+            tabIndex={-1}
+            disabled={!Object.values(records).some((r) => r.userId != null)}
+            onMouseDown={(e) => e.preventDefault()}
+            onTouchStart={(e) => e.preventDefault()}
+            onClick={handleResetNicknames}
+          >
+            닉네임 초기화
+          </ResetButton>
+        </ResetRow>
         <RecordGrid>
         {DIRECTIONS.map(({ key, label, color }) => {
           const row = records[key];
@@ -1233,7 +1260,8 @@ export default function Write() {
         <BottomActions>
           <AddGroup>
             <PlusButton
-              onClick={() =>
+              onClick={() => {
+                pendingYakumanScroll.current = true;
                 setYakumanRows((prev) => [
                   ...prev,
                   {
@@ -1244,14 +1272,15 @@ export default function Write() {
                     originalFileId: null,
                     uploadStatus: 'idle',
                   },
-                ])
-              }
+                ]);
+              }}
             >
               <Plus weight="bold" />
               역만 추가
             </PlusButton>
             <SbPlusButton
-              onClick={() =>
+              onClick={() => {
+                pendingSanbaemanScroll.current = true;
                 setSanbaemanRows((prev) => [
                   ...prev,
                   {
@@ -1263,8 +1292,8 @@ export default function Write() {
                     originalFileId: null,
                     uploadStatus: 'idle',
                   },
-                ])
-              }
+                ]);
+              }}
             >
               <Plus weight="bold" />
               삼배만 추가
@@ -1283,7 +1312,11 @@ export default function Write() {
           const inputId = `yakuman-file-${idx}`;
 
           return (
-            <Center key={`yakuman-${idx}`} $color="#f3f3f3">
+            <Center
+              key={`yakuman-${idx}`}
+              $color="#f3f3f3"
+              ref={idx === yakumanRows.length - 1 ? lastYakumanRef : undefined}
+            >
               <ActionsRow>
                 <MeButton
                   type="button"
@@ -1435,7 +1468,11 @@ export default function Write() {
           );
 
           return (
-            <Center key={`sanbaeman-${idx}`} $color="#f3f3f3">
+            <Center
+              key={`sanbaeman-${idx}`}
+              $color="#f3f3f3"
+              ref={idx === sanbaemanRows.length - 1 ? lastSanbaemanRef : undefined}
+            >
               <ActionsRow>
                 <MeButton
                   type="button"
@@ -1760,8 +1797,8 @@ const TableBox = styled.div`
   margin: 0 auto;
 
   @media ${({ theme }) => theme.device.mobile} {
-    gap: 10px;
-    padding: 12px 4px;
+    gap: 6px;
+    padding: 8px 4px;
   }
 
   select {
@@ -2203,15 +2240,15 @@ const ActionsRow = styled.div`
 
 const RecentSection = styled.section`
   width: 100%;
-  margin-top: 16px;
+  margin-top: 8px;
   padding: 16px;
   background-color: #f6f7f9;
   border: 1px solid #e6e8ec;
   border-radius: 12px;
 
   @media ${({ theme }) => theme.device.mobile} {
-    padding: 12px;
-    margin-top: 12px;
+    padding: 10px 12px;
+    margin-top: 4px;
   }
 `;
 
@@ -2260,6 +2297,43 @@ const RecentChip = styled.button`
   @media ${({ theme }) => theme.device.mobile} {
     padding: 9px 13px;
     font-size: 14px;
+  }
+`;
+
+const ResetRow = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-bottom: 4px;
+`;
+
+const ResetButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  background-color: transparent;
+  color: #b34747;
+  border: 1px solid #e0b4b4;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, opacity 0.15s;
+
+  &:hover {
+    background-color: #fbeeee;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+    background-color: transparent;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    padding: 7px 12px;
+    font-size: 13px;
   }
 `;
 

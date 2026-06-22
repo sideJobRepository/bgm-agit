@@ -205,7 +205,7 @@ public class RecordServiceImpl implements RecordService {
     @Override
     @Transactional(readOnly = true)
     public List<MembersGetResponse> getRecentMembers() {
-        return recordRepository.findRecentMembers(20);
+        return recordRepository.findRecentMembers(10);
     }
 
     @Override
