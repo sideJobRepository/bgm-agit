@@ -313,7 +313,17 @@ export default function YakumanRecordClient({ initialData }: Props) {
         render: (row) => {
           const url = resolveImageUrl(row);
           if (!url) return null;
-          return <Thumbnail src={url} onClick={() => setPreviewImg(url)} />;
+          // 이미지 칸 전체를 클릭 영역으로. 행 onClick(상세 모달)으로 버블링되지 않도록 전파 차단
+          return (
+            <ThumbCell
+              onClick={(e) => {
+                e.stopPropagation();
+                setPreviewImg(url);
+              }}
+            >
+              <Thumbnail src={url} />
+            </ThumbCell>
+          );
         },
       },
       {
@@ -397,7 +407,17 @@ export default function YakumanRecordClient({ initialData }: Props) {
         render: (row) => {
           const url = resolveSanbaemanImageUrl(row);
           if (!url) return null;
-          return <Thumbnail src={url} onClick={() => setPreviewImg(url)} />;
+          // 이미지 칸 전체를 클릭 영역으로. 행 onClick(상세 모달)으로 버블링되지 않도록 전파 차단
+          return (
+            <ThumbCell
+              onClick={(e) => {
+                e.stopPropagation();
+                setPreviewImg(url);
+              }}
+            >
+              <Thumbnail src={url} />
+            </ThumbCell>
+          );
         },
       },
       {
@@ -759,6 +779,16 @@ const MatchChip = styled.button`
   &:hover {
     opacity: 0.85;
   }
+`;
+
+const ThumbCell = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 80px;
+  cursor: zoom-in;
 `;
 
 const Thumbnail = styled.img`

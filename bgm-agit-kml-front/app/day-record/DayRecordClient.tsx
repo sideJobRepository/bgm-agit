@@ -21,6 +21,7 @@ interface Props {
 export default function DayRecordClient({ initialData }: Props) {
   const fetchDayRecord = useFetchDayRecordList();
   const [page, setPage] = useState(0);
+  const [searchSeq, setSearchSeq] = useState(0);
   const dayRecordData = useDayRecordStore((state) => state.dayReord);
   const setDayRecord = useDayRecordStore((state) => state.setDayRecord);
   // 로그인/로그아웃 시 권한별 응답이 달라지므로 재페치 트리거로 사용
@@ -53,6 +54,18 @@ export default function DayRecordClient({ initialData }: Props) {
   const [startDate, setStartDate] = useState<Date | null>(oneMonthLater);
   const [endDate, setEndDate] = useState<Date | null>(today);
 
+  // 역만/삼배만은 드물게 나오는 기록이라 날짜를 비워(전체 기간) 검색. 일반 조회로 돌아오면 기본 1개월 복원
+  const handleBonusChange = (value: string) => {
+    setBonusType(value);
+    if (value === 'YAKUMAN' || value === 'SANBAEMAN') {
+      setStartDate(null);
+      setEndDate(null);
+    } else {
+      setStartDate(oneMonthLater);
+      setEndDate(today);
+    }
+  };
+
   // SSR 초기 데이터를 store에 hydrate (1회) - 첫 렌더에 SSR 결과 사용
   const hydratedRef = useRef(false);
   if (!hydratedRef.current && initialData) {
@@ -77,7 +90,7 @@ export default function DayRecordClient({ initialData }: Props) {
       tournamentStatus: tournament,
       bonusType,
     });
-  }, [page, user]);
+  }, [page, user, searchSeq]);
 
   const data = dayRecordData ?? initialData;
 
@@ -107,14 +120,9 @@ export default function DayRecordClient({ initialData }: Props) {
           <SearchGroup
             onSubmit={(e) => {
               e.preventDefault();
-              fetchDayRecord({
-                page,
-                startDate: formatDate(startDate),
-                endDate: formatDate(endDate),
-                nickName,
-                tournamentStatus: tournament,
-                bonusType,
-              });
+              // 검색은 항상 첫 페이지부터. setPage/setSearchSeq가 같은 핸들러에서 배치되어 effect는 1회만 실행됨
+              setPage(0);
+              setSearchSeq((s) => s + 1);
             }}
           >
             <FieldsWrapper>
@@ -130,7 +138,7 @@ export default function DayRecordClient({ initialData }: Props) {
               </Field>
               <Field $width="calc(20% - 8px)" $mobileWidth="100px">
                 <label>역만/삼배만</label>
-                <select value={bonusType} onChange={(e) => setBonusType(e.target.value)}>
+                <select value={bonusType} onChange={(e) => handleBonusChange(e.target.value)}>
                   {BONUS_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
