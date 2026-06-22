@@ -22,6 +22,7 @@ import com.bgmagitapi.kml.record.entity.Record;
 import com.bgmagitapi.kml.record.enums.Wind;
 import com.bgmagitapi.kml.record.repository.RecordRepository;
 import com.bgmagitapi.kml.record.service.RecordService;
+import com.bgmagitapi.kml.yakamantype.dto.response.MembersGetResponse;
 import com.bgmagitapi.kml.setting.entity.Setting;
 import com.bgmagitapi.kml.setting.repository.SettingRepository;
 import com.bgmagitapi.kml.tournament.entity.Tournament;
@@ -200,7 +201,13 @@ public class RecordServiceImpl implements RecordService {
                 sanbaemanLists
         );
     }
-    
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MembersGetResponse> getRecentMembers() {
+        return recordRepository.findRecentMembers(20);
+    }
+
     @Override
     public ApiResponse createRecord(RecordPostRequest request, Long memberId) {
 

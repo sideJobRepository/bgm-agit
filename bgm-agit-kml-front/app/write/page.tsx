@@ -8,6 +8,7 @@ import React, { useEffect, useState } from 'react';
 
 import {
   useFetchDetailWrite,
+  useFetchRecentMembers,
   useFetchRecordUser,
   useFetchYakuman,
 } from '@/services/record.service';
@@ -331,8 +332,14 @@ export default function Write() {
   };
 
   const fetchRecordUser = useFetchRecordUser();
+  const fetchRecentMembers = useFetchRecentMembers();
   const fetchYakuman = useFetchYakuman();
   const recordUser = useRecordUserStore((state) => state.recordUser);
+
+  /** 최근 기록에 등장한 회원(최근순 distinct) — 칩으로 빠르게 자리 채우기용 */
+  const [recentNicks, setRecentNicks] = useState<
+    { id: number; nickName: string }[]
+  >([]);
   const yakumanData = useYakumanStore((state) => state.yakuman);
 
   //점수
@@ -415,6 +422,7 @@ export default function Write() {
 
   useEffect(() => {
     fetchRecordUser();
+    fetchRecentMembers(setRecentNicks);
     fetchYakuman();
     fetchSettingRefund();
   }, []);
@@ -423,6 +431,19 @@ export default function Write() {
   const filteredUsers = (search: string) => {
     if (!search) return recordUser;
     return recordUser.filter((u) => u.nickName.toLowerCase().includes(search.toLowerCase()));
+  };
+
+  /** 최근 닉네임 칩 클릭 → 비어있는 다음 자리(동→남→서→북)에 채움 */
+  const handleRecentPick = (memberId: number) => {
+    // 이미 다른 자리에 배정된 회원이면 무시 (같은 사람 중복 자리 방지)
+    if (Object.values(records).some((r) => r.userId === memberId)) return;
+    // 동→남→서→북 순서로 첫 빈 자리 탐색
+    const target = DIRECTIONS.find(({ key }) => records[key].userId == null);
+    if (!target) return; // 4자리 모두 참
+    setRecords((prev) => ({
+      ...prev,
+      [target.key]: { ...prev[target.key], userId: memberId, search: '' },
+    }));
   };
 
   /** 본인 닉네임 자동 입력 - 동/남/서/북 */
@@ -1076,14 +1097,15 @@ export default function Write() {
         )}
 
         {/* 동서남북 입력 */}
+        <RecordGrid>
         {DIRECTIONS.map(({ key, label, color }) => {
           const row = records[key];
           const users = filteredUsers(row.search);
 
           return (
-            <Center key={key} $color={color}>
+            <Center key={key} $color={color} $record>
               <h4>{label}</h4>
-              <ActionsRow>
+              <ActionsRow className="record-actions">
                 <MeButton
                   type="button"
                   tabIndex={-1}
@@ -1094,8 +1116,8 @@ export default function Write() {
                   내 닉네임
                 </MeButton>
               </ActionsRow>
-              <WriteCroup>
-                <FieldsWrapper>
+              <WriteCroup className="record-form">
+                <FieldsWrapper className="record-fields">
                   <Field className="search">
                     <label>닉네임 검색</label>
                     <input
@@ -1180,6 +1202,33 @@ export default function Write() {
             </Center>
           );
         })}
+        </RecordGrid>
+
+        {recentNicks.length > 0 && (
+          <RecentSection>
+            <RecentTitle>최근 입력 닉네임</RecentTitle>
+            <RecentChipList>
+              {recentNicks.map((m) => {
+                const seated = Object.values(records).some(
+                  (r) => r.userId === m.id
+                );
+                return (
+                  <RecentChip
+                    key={m.id}
+                    type="button"
+                    tabIndex={-1}
+                    disabled={seated}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onTouchStart={(e) => e.preventDefault()}
+                    onClick={() => handleRecentPick(m.id)}
+                  >
+                    {m.nickName}
+                  </RecentChip>
+                );
+              })}
+            </RecentChipList>
+          </RecentSection>
+        )}
 
         <BottomActions>
           <AddGroup>
@@ -1880,7 +1929,20 @@ const TopGroup = styled.div`
   }
 `;
 
-const Center = styled.section<{ $color: string }>`
+const RecordGrid = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+`;
+
+const Center = styled.section<{ $color: string; $record?: boolean }>`
   display: inline-flex;
   flex-direction: column;
   width: 100%;
@@ -1912,6 +1974,42 @@ const Center = styled.section<{ $color: string }>`
       padding: 6px 8px;
     }
   }
+
+  ${({ $record }) =>
+    $record
+      ? `
+    @media (max-width: 767px) {
+      align-items: stretch;
+
+      h4 {
+        justify-content: center;
+        padding: 8px 4px 2px;
+        font-size: 15px;
+      }
+
+      .record-actions {
+        justify-content: center;
+        padding: 4px 6px 0;
+      }
+
+      .record-actions button {
+        width: 100%;
+        min-height: 28px;
+        margin: 0;
+        padding: 5px 6px;
+        box-shadow: none;
+      }
+
+      .record-form {
+        padding: 6px;
+      }
+
+      .record-fields {
+        gap: 6px;
+      }
+    }
+  `
+      : ''}
 `;
 const FieldsWrapper = styled.div`
   display: flex;
@@ -2100,6 +2198,68 @@ const ActionsRow = styled.div`
 
   && > button {
     margin: 0;
+  }
+`;
+
+const RecentSection = styled.section`
+  width: 100%;
+  margin-top: 16px;
+  padding: 16px;
+  background-color: #f6f7f9;
+  border: 1px solid #e6e8ec;
+  border-radius: 12px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    padding: 12px;
+    margin-top: 12px;
+  }
+`;
+
+const RecentTitle = styled.h4`
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.blackColor};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+`;
+
+const RecentChipList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+const RecentChip = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  background-color: ${({ theme }) => theme.colors.whiteColor};
+  color: #4f7cac;
+  border: 1px solid #cdd6e0;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, opacity 0.15s;
+
+  &:hover {
+    background-color: #eef3f8;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+    background-color: ${({ theme }) => theme.colors.whiteColor};
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    padding: 9px 13px;
+    font-size: 14px;
   }
 `;
 
