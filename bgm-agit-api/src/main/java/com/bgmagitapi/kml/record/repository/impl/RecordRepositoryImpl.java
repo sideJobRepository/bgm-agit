@@ -1,9 +1,12 @@
 package com.bgmagitapi.kml.record.repository.impl;
 
+import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.kml.record.dto.response.QRecordGetDetailResponse_RecordList;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
 import com.bgmagitapi.kml.record.entity.Record;
 import com.bgmagitapi.kml.record.repository.query.RecordQueryRepository;
+import com.bgmagitapi.kml.yakamantype.dto.response.MembersGetResponse;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -17,7 +20,10 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.bgmagitapi.entity.QBgmAgitMember.bgmAgitMember;
 import static com.bgmagitapi.kml.matchs.entity.QMatchs.matchs;
@@ -161,6 +167,41 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
         return PageableExecutionUtils.getPage(ids, pageable, countQuery::fetchOne);
     }
     
+    @Override
+    public List<MembersGetResponse> findRecentMembers(int limit) {
+        // 집계(GROUP BY MAX) 대신, 최근 기록순으로 넉넉히 가져와 메모리에서 dedup.
+        // (QueryDSL 집계 메서드 컴파일 함정 회피 — 기존 record.registDate.desc() 패턴 재사용)
+        int window = Math.max(limit * 20, 400);
+        List<Tuple> rows = queryFactory
+                .select(bgmAgitMember.bgmAgitMemberId, bgmAgitMember.bgmAgitMemberNickname)
+                .from(record)
+                .join(record.matchs, matchs)
+                .join(record.member, bgmAgitMember)
+                .where(
+                        matchs.delStatus.eq("N"),
+                        bgmAgitMember.socialType.eq(BgmAgitSocialType.MAHJONG)
+                )
+                .orderBy(record.registDate.desc(), record.id.desc())
+                .limit(window)
+                .fetch();
+
+        Map<Long, MembersGetResponse> dedup = new LinkedHashMap<>();
+        for (Tuple row : rows) {
+            Long id = row.get(bgmAgitMember.bgmAgitMemberId);
+            if (id == null || dedup.containsKey(id)) {
+                continue;
+            }
+            dedup.put(id, MembersGetResponse.builder()
+                    .id(id)
+                    .nickName(row.get(bgmAgitMember.bgmAgitMemberNickname))
+                    .build());
+            if (dedup.size() >= limit) {
+                break;
+            }
+        }
+        return new ArrayList<>(dedup.values());
+    }
+
     @Override
     public List<Record> findRecordsByMatchIds(List<Long> matchIds) {
         return queryFactory

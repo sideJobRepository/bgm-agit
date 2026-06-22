@@ -17,6 +17,24 @@ export function useFetchRecordUser() {
   return fetchRecordUser;
 }
 
+export function useFetchRecentMembers() {
+  const { request } = useRequest();
+
+  // 최근 기록에 등장한 회원 목록(최근순 distinct)을 받아 setter로 전달.
+  // 보조 기능이라 실패해도 스피너/에러 팝업 없이 조용히 무시한다.
+  const fetchRecentMembers = (
+    setter: (data: { id: number; nickName: string }[]) => void
+  ) => {
+    request(
+      () => api.get(`/bgm-agit/record/recent-members`).then((res) => res.data),
+      setter,
+      { disableLoading: true }
+    ).catch(() => {});
+  };
+
+  return fetchRecentMembers;
+}
+
 export function useFetchYakuman() {
   const { request } = useRequest();
   const setYakuman = useYakumanStore((state) => state.setYakuman);

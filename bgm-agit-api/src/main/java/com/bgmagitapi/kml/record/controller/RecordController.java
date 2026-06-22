@@ -7,6 +7,7 @@ import com.bgmagitapi.kml.record.dto.request.RecordPutRequest;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
 import com.bgmagitapi.kml.record.dto.response.RecordGetResponse;
 import com.bgmagitapi.kml.record.service.RecordService;
+import com.bgmagitapi.kml.yakamantype.dto.response.MembersGetResponse;
 import com.bgmagitapi.page.PageResponse;
 import com.bgmagitapi.util.JwtParserUtil;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -41,6 +44,11 @@ public class RecordController {
     @PutMapping("/record/{id}/restore")
     public ApiResponse restoreRecord(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
         return recordService.restoreRecord(id, JwtParserUtil.extractRoles(jwt));
+    }
+
+    @GetMapping("/record/recent-members")
+    public List<MembersGetResponse> getRecentMembers() {
+        return recordService.getRecentMembers();
     }
 
     @GetMapping("/record/{id}")
