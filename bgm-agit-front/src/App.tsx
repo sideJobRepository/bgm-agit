@@ -26,6 +26,9 @@ import Matches from './pages/Matches.tsx';
 import Review from './pages/Review.tsx';
 import ReviewDetail from './pages/ReviewDetail.tsx';
 import MyPage from './pages/MyPage.tsx';
+import Gatherings from './pages/Gatherings.tsx';
+import GatheringDetail from './pages/GatheringDetail.tsx';
+import MenuManage from './pages/MenuManage.tsx';
 
 function App() {
   return (
@@ -56,6 +59,9 @@ function App() {
               <Route path="my-academy" element={<MyPage />} />
               <Route path="review" element={<Review />} />
               <Route path="review/:id" element={<ReviewDetail />} />
+              <Route path="gatherings" element={<Gatherings />} />
+              <Route path="/gatheringDetail" element={<GatheringDetail />} />
+              <Route path="menuManage" element={<MenuManage />} />
             </Route>
           </Routes>
         </BrowserRouter>

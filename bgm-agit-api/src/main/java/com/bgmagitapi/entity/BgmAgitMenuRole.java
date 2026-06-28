@@ -24,4 +24,9 @@ public class BgmAgitMenuRole extends DateSuperClass {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "BGM_AGIT_MAIN_MENU_ID")
     private BgmAgitMainMenu bgmAgitMainMenu;
+
+    public BgmAgitMenuRole(BgmAgitRole bgmAgitRole, BgmAgitMainMenu bgmAgitMainMenu) {
+        this.bgmAgitRole = bgmAgitRole;
+        this.bgmAgitMainMenu = bgmAgitMainMenu;
+    }
 }
