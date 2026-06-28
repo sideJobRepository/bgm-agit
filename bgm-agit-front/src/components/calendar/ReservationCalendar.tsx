@@ -184,6 +184,9 @@ export default function ReservationCalendar({ id }: { id?: number }) {
               </strong>
             </p>
           )}
+          <p>
+            <strong>※ 수요일은 무인운영으로 예약이 불가합니다.</strong>
+          </p>
         </MessageBox>
       </TitleBox>
 
@@ -199,21 +202,7 @@ export default function ReservationCalendar({ id }: { id?: number }) {
           setValue(val as Date);
           setSelectedTimes([]); // 날짜 변경 시 시간 초기화
         }}
-        tileContent={({ date, view }) => {
-          if (view === 'month') {
-            const dateStr = getLocalDateStr(date);
-            const priceItem = reservation.prices?.find(p => p.date === dateStr);
-
-            return (
-              priceItem && (
-                <div className={`date-price ${priceItem.colorGb ? 'weekend' : ''}`}>
-                  {priceItem.price.toLocaleString()}
-                </div>
-              )
-            );
-          }
-          return null;
-        }}
+        tileDisabled={({ date, view }) => view === 'month' && date.getDay() === 3 /* 수요일 무인운영 */}
         tileClassName={({ date, view }) => {
           if (view !== 'month') return '';
 
@@ -281,6 +270,10 @@ const TitleBox = styled.div<WithTheme>`
   color: ${({ theme }) => theme.colors.subColor};
   width: 50%;
 
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 100%;
+  }
+
   .count-box {
     display: flex;
     margin-top: 10px;
@@ -309,12 +302,14 @@ const TitleBox = styled.div<WithTheme>`
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-wrap: wrap;
 
     h2 {
       color: ${({ theme }) => theme.colors.menuColor};
       font-size: ${({ theme }) => theme.sizes.bigLarge};
       font-weight: ${({ theme }) => theme.weight.bold};
       margin-right: 10px;
+      white-space: nowrap;
     }
 
     svg {
@@ -421,17 +416,19 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
     background-color: transparent;
   }
 
-  .date-price {
-    display: flex;
-    width: 100%;
-    justify-content: center;
-    font-weight: ${({ theme }) => theme.weight.semiBold};
-    font-size: ${({ theme }) => theme.sizes.xsmall};
-    color: ${({ theme }) => theme.colors.greenColor};
+  /* 비활성(수요일 등): 회색 배경 대신 글자만 흐리게 */
+  .react-calendar__tile:disabled {
+    background-color: transparent !important;
+    cursor: not-allowed;
+
+    abbr {
+      color: ${({ theme }) => theme.colors.lineColor};
+      text-decoration: line-through;
+    }
   }
 
-  .date-price.weekend {
-    color: ${({ theme }) => theme.colors.redColor};
+  .react-calendar__tile:disabled:hover abbr {
+    background: transparent;
   }
 `;
 
