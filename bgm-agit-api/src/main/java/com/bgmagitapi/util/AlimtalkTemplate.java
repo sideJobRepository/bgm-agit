@@ -18,6 +18,8 @@ public interface AlimtalkTemplate {
 
     String BGMAGIT_BML_MATCH = "bgmagit-bml-match"; // 대국 기록 등록 시 대국자에게 발송
 
-
+    // 모임 (머더미스터리/시계탑) — 성사 / 취소 2종, 카카오 검수 후 사용
+    String BGMAGIT_GATHERING_CONFIRMED = "bgmagit-gathering-confirmed";  // 모임 성사
+    String BGMAGIT_GATHERING_CANCELLED = "bgmagit-gathering-cancelled";  // 모임 취소(무산)
 
 }

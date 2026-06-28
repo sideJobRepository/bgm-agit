@@ -3,11 +3,14 @@ package com.bgmagitapi.entity;
 
 import com.bgmagitapi.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
 @Table(name = "BGM_AGIT_MAIN_MENU")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BgmAgitMainMenu extends DateSuperClass {
     
     // BGM 아지트 메인 메뉴 ID
@@ -39,5 +42,29 @@ public class BgmAgitMainMenu extends DateSuperClass {
     
     public Long getParentMenuId() {
         return parentMenu != null ? parentMenu.getBgmAgitMainMenuId() : null;
+    }
+
+    public BgmAgitMainMenu(BgmAgitMainMenu parentMenu,
+                           String menuName,
+                           String menuLink,
+                           Long areaId,
+                           Boolean useStatus) {
+        this.parentMenu = parentMenu;
+        this.bgmAgitMenuName = menuName;
+        this.bgmAgitMenuLink = menuLink;
+        this.bgmAgitAreaId = areaId;
+        this.bgmAgitUseStatus = useStatus;
+    }
+
+    public void update(BgmAgitMainMenu parentMenu,
+                       String menuName,
+                       String menuLink,
+                       Long areaId,
+                       Boolean useStatus) {
+        this.parentMenu = parentMenu;
+        this.bgmAgitMenuName = menuName;
+        this.bgmAgitMenuLink = menuLink;
+        this.bgmAgitAreaId = areaId;
+        this.bgmAgitUseStatus = useStatus;
     }
 }
