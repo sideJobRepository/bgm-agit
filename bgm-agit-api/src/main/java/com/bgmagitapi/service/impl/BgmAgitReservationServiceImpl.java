@@ -199,7 +199,12 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .parse(request.getBgmAgitReservationStartDate())
                 .withZoneSameInstant(ZoneId.of("Asia/Seoul"))
                 .toLocalDate();
-        
+
+        // 수요일은 무인운영으로 예약 불가
+        if (kstDate.getDayOfWeek() == java.time.DayOfWeek.WEDNESDAY) {
+            throw new ReservationConflictException("수요일은 무인운영으로 예약이 불가능합니다.");
+        }
+
         // 예약 기본 정보 조회
         BgmAgitMember member = bgmAgitMemberRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User Not Found"));
