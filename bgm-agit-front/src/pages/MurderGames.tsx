@@ -43,7 +43,7 @@ export default function MurderGames() {
             <h2>머미 게임</h2>
             <p>보유 중인 머더미스터리 게임 목록입니다.</p>
           </TitleBox>
-          {user && (
+          {user?.roles.includes('ROLE_ADMIN') && (
             <CreateButton onClick={() => navigate('/murderGameDetail')}>게임 등록</CreateButton>
           )}
         </Header>

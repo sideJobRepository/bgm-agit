@@ -25,20 +25,20 @@ public class BgmAgitMurderGame extends DateSuperClass {
     @Column(name = "BGM_AGIT_MURDER_GAME_NAME")
     private String name;
 
-    @Column(name = "BGM_AGIT_MURDER_GAME_MIN_PLAYERS")
+    @Column(name = "BGM_AGIT_MURDER_GAME_MIN_PEOPLE")
     private Integer minPlayers;
 
-    @Column(name = "BGM_AGIT_MURDER_GAME_MAX_PLAYERS")
+    @Column(name = "BGM_AGIT_MURDER_GAME_MAX_PEOPLE")
     private Integer maxPlayers;
 
-    @Column(name = "BGM_AGIT_MURDER_GAME_PLAY_MINUTES")
+    @Column(name = "BGM_AGIT_MURDER_GAME_PLAY_TIME")
     private Integer playMinutes;
 
     @Column(name = "BGM_AGIT_MURDER_GAME_IMAGE_URL")
     private String imageUrl;
 
     // 사용 여부 Y/N (소프트 삭제)
-    @Column(name = "BGM_AGIT_MURDER_GAME_USE_STATUS")
+    @Column(name = "BGM_AGIT_MURDER_USE_STATUS")
     private String useStatus;
 
     public BgmAgitMurderGame(String name,
