@@ -4,17 +4,17 @@ import type { WithTheme } from '../styles/styled-props.ts';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
-import { playStatsState } from '../recoil/state/murderState.ts';
-import { usePlayStatsFetch } from '../recoil/murderFetch.ts';
+import { clockTowerStatsState } from '../recoil/state/clocktowerState.ts';
+import { useClockTowerStatsFetch } from '../recoil/clocktowerFetch.ts';
 
-export default function PlayStats() {
+export default function ClockTowerStats() {
   const navigate = useNavigate();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
 
-  const stats = useRecoilValue(playStatsState);
-  const fetchStats = usePlayStatsFetch();
+  const stats = useRecoilValue(clockTowerStatsState);
+  const fetchStats = useClockTowerStatsFetch();
 
   useEffect(() => {
     fetchStats(year, month);
@@ -26,10 +26,10 @@ export default function PlayStats() {
   return (
     <Wrapper>
       <Box>
-        <Header bgColor="#093A6E">
+        <Header bgColor="#4A2C82">
           <TitleBox>
             <h2>이번달 게임랭킹</h2>
-            <p>플레이한 게임수 기준 멤버 랭킹입니다.</p>
+            <p>플레이한 시계탑 게임수 기준 멤버 랭킹입니다.</p>
           </TitleBox>
         </Header>
 
@@ -57,7 +57,7 @@ export default function PlayStats() {
             </thead>
             <tbody>
               {(stats?.members ?? []).map((m, i) => (
-                <tr key={m.memberId} onClick={() => navigate(`/play-history?memberId=${m.memberId}`)}>
+                <tr key={m.memberId} onClick={() => navigate(`/clocktower-history?memberId=${m.memberId}`)}>
                   <Td>
                     <Rank $top={i < 3}>{i + 1}</Rank>
                   </Td>
@@ -165,7 +165,7 @@ const Rank = styled.span<{ $top: boolean } & WithTheme>`
   border-radius: 50%;
   font-weight: ${({ theme }) => theme.weight.bold};
   color: ${({ $top }) => ($top ? '#fff' : '#424548')};
-  background: ${({ $top }) => ($top ? '#093A6E' : 'transparent')};
+  background: ${({ $top }) => ($top ? '#4A2C82' : 'transparent')};
 `;
 
 const Empty = styled.div<WithTheme>`

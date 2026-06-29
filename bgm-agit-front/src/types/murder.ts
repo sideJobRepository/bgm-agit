@@ -70,6 +70,13 @@ export interface MemberOption {
   name?: string | null;
 }
 
+export interface ExperiencedMember {
+  memberId: number;
+  nickname: string;
+  playCount: number;
+  lastPlayDate: string | null;
+}
+
 export interface MemberPlayHistoryItem {
   gameId: number;
   gameName: string;

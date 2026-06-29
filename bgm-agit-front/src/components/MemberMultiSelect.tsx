@@ -27,8 +27,11 @@ export default function MemberMultiSelect({
   const [keyword, setKeyword] = useState('');
   const [candidates, setCandidates] = useState<MemberOption[]>([]);
   const [open, setOpen] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(0);
   // id → 표시 라벨 캐시
   const [labels, setLabels] = useState<Record<number, string>>({});
+
+  const wrapRef = useRef<HTMLDivElement | null>(null);
 
   // 본인 + initialOptions 라벨 시드, 본인은 항상 선택에 포함
   useEffect(() => {
@@ -60,10 +63,21 @@ export default function MemberMultiSelect({
     };
   }, [keyword]);
 
+  // 바깥 클릭 시 닫기
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, []);
+
   const labelOf = (id: number) => labels[id] ?? `#${id}`;
 
   const addMember = (m: MemberOption) => {
-    setLabels(prev => ({ ...prev, [m.id]: m.nickname || m.name || `#${m.id}` }));
+    setLabels(prev => ({ ...prev, [m.id]: m.nickname || `#${m.id}` }));
     if (!value.includes(m.id)) onChange([...value, m.id]);
     setKeyword('');
     setOpen(false);
@@ -79,8 +93,43 @@ export default function MemberMultiSelect({
     [candidates, value]
   );
 
+  // 후보 바뀌면 활성 인덱스 리셋
+  useEffect(() => setActiveIdx(0), [visibleCandidates.length, keyword]);
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!open || visibleCandidates.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveIdx(i => Math.min(i + 1, visibleCandidates.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveIdx(i => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const m = visibleCandidates[activeIdx];
+      if (m) addMember(m);
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+    }
+  };
+
+  // 매칭 부분 하이라이트
+  const highlight = (text: string) => {
+    const k = keyword.trim();
+    if (!k) return text;
+    const idx = text.toLowerCase().indexOf(k.toLowerCase());
+    if (idx < 0) return text;
+    return (
+      <>
+        {text.slice(0, idx)}
+        <Mark>{text.slice(idx, idx + k.length)}</Mark>
+        {text.slice(idx + k.length)}
+      </>
+    );
+  };
+
   return (
-    <Wrap>
+    <Wrap ref={wrapRef}>
       <ChipBox>
         {value.map(id => (
           <Chip key={id} $me={id === currentUserId}>
@@ -96,22 +145,31 @@ export default function MemberMultiSelect({
       <SearchBox>
         <input
           type="text"
-          placeholder="닉네임/이름으로 참가자 검색"
+          placeholder="닉네임으로 참가자 검색"
           value={keyword}
           onChange={e => {
             setKeyword(e.target.value);
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
+          onKeyDown={onKeyDown}
         />
-        {open && visibleCandidates.length > 0 && (
+        {open && (visibleCandidates.length > 0 || keyword.trim()) && (
           <Dropdown>
-            {visibleCandidates.map(c => (
-              <Option key={c.id} type="button" onClick={() => addMember(c)}>
-                <strong>{c.nickname || `#${c.id}`}</strong>
-                {c.name && <span>{c.name}</span>}
+            {visibleCandidates.map((c, i) => (
+              <Option
+                key={c.id}
+                type="button"
+                $active={i === activeIdx}
+                onMouseEnter={() => setActiveIdx(i)}
+                onClick={() => addMember(c)}
+              >
+                {highlight(c.nickname || `#${c.id}`)}
               </Option>
             ))}
+            {visibleCandidates.length === 0 && keyword.trim() && (
+              <EmptyOption>검색 결과가 없습니다.</EmptyOption>
+            )}
           </Dropdown>
         )}
       </SearchBox>
@@ -177,7 +235,7 @@ const Dropdown = styled.div<WithTheme>`
   top: 46px;
   left: 0;
   right: 0;
-  max-height: 220px;
+  max-height: 240px;
   overflow-y: auto;
   background: #fff;
   border: 1px solid ${({ theme }) => theme.colors.lineColor};
@@ -185,27 +243,29 @@ const Dropdown = styled.div<WithTheme>`
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
 `;
 
-const Option = styled.button<WithTheme>`
+const Option = styled.button<{ $active: boolean } & WithTheme>`
   display: flex;
   align-items: center;
-  gap: 8px;
   width: 100%;
-  padding: 10px 12px;
-  background: #fff;
+  padding: 11px 12px;
+  background: ${({ $active }) => ($active ? '#f1efe9' : '#fff')};
   border: none;
   border-bottom: 1px solid #f0f0f0;
   text-align: left;
   cursor: pointer;
+  font-size: ${({ theme }) => theme.sizes.small};
+  color: ${({ theme }) => theme.colors.subColor};
+`;
 
-  strong {
-    font-size: ${({ theme }) => theme.sizes.small};
-    color: ${({ theme }) => theme.colors.subColor};
-  }
-  span {
-    font-size: ${({ theme }) => theme.sizes.xsmall};
-    color: ${({ theme }) => theme.colors.navColor};
-  }
-  &:hover {
-    background: #f7f4ef;
-  }
+const Mark = styled.mark`
+  background: #fff1a8;
+  color: inherit;
+  padding: 0;
+`;
+
+const EmptyOption = styled.div<WithTheme>`
+  padding: 12px;
+  text-align: center;
+  font-size: ${({ theme }) => theme.sizes.small};
+  color: ${({ theme }) => theme.colors.navColor};
 `;

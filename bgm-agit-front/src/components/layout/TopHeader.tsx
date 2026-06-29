@@ -267,7 +267,7 @@ const Wrapper = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 1500px;
+  max-width: 1700px;
   min-width: 1023px;
 
   ul {
@@ -317,7 +317,7 @@ const Center = styled.nav<WithTheme>`
     font-weight: ${({ theme }) => theme.weight.bold};
 
     li {
-      width: 170px;
+      width: 160px;
       text-align: center;
     }
   }

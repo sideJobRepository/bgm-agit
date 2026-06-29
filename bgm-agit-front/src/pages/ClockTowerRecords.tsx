@@ -4,16 +4,16 @@ import type { WithTheme } from '../styles/styled-props.ts';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
-import { playRecordListState } from '../recoil/state/murderState.ts';
-import { usePlayRecordListFetch } from '../recoil/murderFetch.ts';
+import { clockTowerRecordListState } from '../recoil/state/clocktowerState.ts';
+import { useClockTowerRecordListFetch } from '../recoil/clocktowerFetch.ts';
 import { userState } from '../recoil/state/userState.ts';
 import Pagination from '../components/Pagination.tsx';
-import type { PlayRecordListItem } from '../types/murder.ts';
+import type { ClockTowerRecordListItem } from '../types/clocktower.ts';
 
-export default function PlayRecords() {
+export default function ClockTowerRecords() {
   const navigate = useNavigate();
-  const fetchRecords = usePlayRecordListFetch();
-  const data = useRecoilValue(playRecordListState);
+  const fetchRecords = useClockTowerRecordListFetch();
+  const data = useRecoilValue(clockTowerRecordListState);
   const user = useRecoilValue(userState);
 
   const [page, setPage] = useState(0);
@@ -25,16 +25,16 @@ export default function PlayRecords() {
   return (
     <Wrapper>
       <Box>
-        <Header bgColor="#1A7D55">
+        <Header bgColor="#2E7D32">
           <TitleBox>
-            <h2>플레이 기록</h2>
-            <p>플레이한 머미 게임을 기록하고 이번달 게임수를 확인하세요.</p>
+            <h2>시계탑 기록</h2>
+            <p>플레이한 시계탑 게임을 기록하고 이번달 게임수를 확인하세요.</p>
           </TitleBox>
           <HeaderButtons>
             {user && (
               <>
-                <GhostButton onClick={() => navigate('/play-history')}>내 기록</GhostButton>
-                <CreateButton onClick={() => navigate('/playRecordDetail')}>기록하기</CreateButton>
+                <GhostButton onClick={() => navigate('/clocktower-history')}>내 기록</GhostButton>
+                <CreateButton onClick={() => navigate('/clockTowerRecordDetail')}>기록하기</CreateButton>
               </>
             )}
           </HeaderButtons>
@@ -42,7 +42,7 @@ export default function PlayRecords() {
 
         <CardList>
           {data.content.map(r => (
-            <RecordCard key={r.id} item={r} onClick={() => navigate(`/playRecordDetail?id=${r.id}`)} />
+            <RecordCard key={r.id} item={r} onClick={() => navigate(`/clockTowerRecordDetail?id=${r.id}`)} />
           ))}
           {data.content.length === 0 && <Empty>아직 플레이 기록이 없습니다.</Empty>}
         </CardList>
@@ -55,14 +55,21 @@ export default function PlayRecords() {
   );
 }
 
-function RecordCard({ item, onClick }: { item: PlayRecordListItem; onClick: () => void }) {
+function RecordCard({ item, onClick }: { item: ClockTowerRecordListItem; onClick: () => void }) {
   return (
     <Card onClick={onClick}>
       <Thumb>
-        {item.gameImageUrl ? <img src={item.gameImageUrl} alt={item.gameName} /> : <NoImage>🎭</NoImage>}
+        {item.gameImageUrl ? <img src={item.gameImageUrl} alt={item.gameName} /> : <NoImage>🕯️</NoImage>}
       </Thumb>
       <CardBody>
-        <CardTitle>{item.gameName}</CardTitle>
+        <CardTitleRow>
+          <CardTitle>{item.gameName}</CardTitle>
+          {item.draft ? (
+            <DraftTag>임시</DraftTag>
+          ) : (
+            item.resultName && <ResultTag $evil={item.result === 'EVIL_WIN'}>{item.resultName}</ResultTag>
+          )}
+        </CardTitleRow>
         <Meta>
           <span>📅 {item.playDate}</span>
           <span>👥 {item.participantCount}명</span>
@@ -115,7 +122,7 @@ const HeaderButtons = styled.div`
 const CreateButton = styled.button<WithTheme>`
   padding: 8px 16px;
   background: #fff;
-  color: #1a7d55;
+  color: #2e7d32;
   border: none;
   border-radius: 6px;
   font-weight: ${({ theme }) => theme.weight.bold};
@@ -185,10 +192,37 @@ const CardBody = styled.div`
   min-width: 0;
 `;
 
+const CardTitleRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
 const CardTitle = styled.div<WithTheme>`
   font-size: ${({ theme }) => theme.sizes.large};
   font-weight: ${({ theme }) => theme.weight.bold};
   color: ${({ theme }) => theme.colors.subColor};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const ResultTag = styled.span<{ $evil: boolean }>`
+  flex: 0 0 auto;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #fff;
+  background: ${({ $evil }) => ($evil ? '#6A1B9A' : '#1565C0')};
+`;
+
+const DraftTag = styled.span`
+  flex: 0 0 auto;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #fff;
+  background: #b5651d;
 `;
 
 const Meta = styled.div<WithTheme>`

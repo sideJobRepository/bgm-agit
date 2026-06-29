@@ -5,26 +5,47 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import { toast } from 'react-toastify';
-import { murderGameDetailState } from '../recoil/state/murderState.ts';
-import { useMurderGameDetailFetch } from '../recoil/murderFetch.ts';
+import { clockTowerGameDetailState } from '../recoil/state/clocktowerState.ts';
+import { useClockTowerGameDetailFetch } from '../recoil/clocktowerFetch.ts';
 import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts';
 import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
-import { playersLabel } from './MurderGames.tsx';
+import { ctPlayersLabel } from './ClockTowerGames.tsx';
+import type { ClockTowerCharacterType } from '../types/clocktower.ts';
 
-export default function MurderGameDetail() {
+const TYPE_OPTIONS: { value: ClockTowerCharacterType; label: string }[] = [
+  { value: 'TOWNSFOLK', label: '마을주민' },
+  { value: 'OUTSIDER', label: '외부인' },
+  { value: 'MINION', label: '하수인' },
+  { value: 'DEMON', label: '악마' },
+];
+
+const TYPE_COLOR: Record<ClockTowerCharacterType, string> = {
+  TOWNSFOLK: '#1565C0',
+  OUTSIDER: '#0097A7',
+  MINION: '#C62828',
+  DEMON: '#6A1B9A',
+};
+
+interface CharRow {
+  name: string;
+  type: ClockTowerCharacterType;
+  description: string;
+}
+
+export default function ClockTowerGameDetail() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const id = searchParams.get('id');
 
   const user = useRecoilValue(userState);
-  const detail = useRecoilValue(murderGameDetailState);
-  const fetchDetail = useMurderGameDetailFetch();
+  const detail = useRecoilValue(clockTowerGameDetailState);
+  const fetchDetail = useClockTowerGameDetailFetch();
   const { insert } = useInsertPost();
   const { update } = useUpdatePost();
   const { remove } = useDeletePost();
 
-  const [editMode, setEditMode] = useState(!id); // id 없으면 등록 모드
+  const [editMode, setEditMode] = useState(!id);
   const [name, setName] = useState('');
   const [minPlayers, setMinPlayers] = useState('');
   const [maxPlayers, setMaxPlayers] = useState('');
@@ -32,6 +53,7 @@ export default function MurderGameDetail() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
+  const [chars, setChars] = useState<CharRow[]>([]);
 
   useEffect(() => {
     if (id) fetchDetail(Number(id));
@@ -46,6 +68,13 @@ export default function MurderGameDetail() {
       setPreview(detail.imageUrl ?? null);
       setRemoveImage(false);
       setImageFile(null);
+      setChars(
+        (detail.characters ?? []).map(c => ({
+          name: c.name,
+          type: c.type,
+          description: c.description ?? '',
+        }))
+      );
     }
   }, [detail, id]);
 
@@ -54,6 +83,11 @@ export default function MurderGameDetail() {
     setRemoveImage(false);
     if (file) setPreview(URL.createObjectURL(file));
   };
+
+  const addChar = () => setChars(prev => [...prev, { name: '', type: 'TOWNSFOLK', description: '' }]);
+  const updateChar = (idx: number, patch: Partial<CharRow>) =>
+    setChars(prev => prev.map((c, i) => (i === idx ? { ...c, ...patch } : c)));
+  const removeChar = (idx: number) => setChars(prev => prev.filter((_, i) => i !== idx));
 
   const onSubmit = () => {
     if (!name.trim()) {
@@ -64,6 +98,9 @@ export default function MurderGameDetail() {
       toast.error('최소 인원이 최대 인원보다 클 수 없습니다.');
       return;
     }
+    const cleanChars = chars
+      .filter(c => c.name.trim())
+      .map(c => ({ name: c.name.trim(), type: c.type, description: c.description.trim() }));
 
     const form = new FormData();
     form.append('name', name.trim());
@@ -71,6 +108,7 @@ export default function MurderGameDetail() {
     if (maxPlayers) form.append('maxPlayers', maxPlayers);
     if (playMinutes) form.append('playMinutes', playMinutes);
     if (imageFile) form.append('image', imageFile);
+    form.append('characters', JSON.stringify(cleanChars));
 
     showConfirmModal({
       message: '저장하시겠습니까?',
@@ -78,7 +116,7 @@ export default function MurderGameDetail() {
         if (id) {
           form.append('removeImage', String(removeImage));
           update({
-            url: `/bgm-agit/murder-games/${id}`,
+            url: `/bgm-agit/clocktower-games/${id}`,
             body: form,
             ignoreHttpError: true,
             onSuccess: () => {
@@ -89,12 +127,12 @@ export default function MurderGameDetail() {
           });
         } else {
           insert({
-            url: '/bgm-agit/murder-games',
+            url: '/bgm-agit/clocktower-games',
             body: form,
             ignoreHttpError: true,
             onSuccess: () => {
               toast.success('게임이 등록되었습니다.');
-              navigate('/murder-games');
+              navigate('/clocktower-games');
             },
           });
         }
@@ -108,11 +146,11 @@ export default function MurderGameDetail() {
       message: '이 게임을 삭제하시겠습니까?',
       onConfirm: () => {
         remove({
-          url: `/bgm-agit/murder-games/${id}`,
+          url: `/bgm-agit/clocktower-games/${id}`,
           ignoreHttpError: true,
           onSuccess: () => {
             toast.success('삭제되었습니다.');
-            navigate('/murder-games');
+            navigate('/clocktower-games');
           },
         });
       },
@@ -127,11 +165,11 @@ export default function MurderGameDetail() {
           <ButtonRow>
             {user?.roles.includes('ROLE_ADMIN') && (
               <>
-                <Button color="#093A6E" onClick={() => setEditMode(true)}>수정</Button>
+                <Button color="#4A2C82" onClick={() => setEditMode(true)}>수정</Button>
                 <Button color="#FF5E57" onClick={onDelete}>삭제</Button>
               </>
             )}
-            <Button color="#988271" onClick={() => navigate('/murder-games')}>목록</Button>
+            <Button color="#988271" onClick={() => navigate('/clocktower-games')}>목록</Button>
           </ButtonRow>
 
           <Cover>
@@ -139,9 +177,26 @@ export default function MurderGameDetail() {
           </Cover>
           <DetailTitle>{detail?.name}</DetailTitle>
           <DetailMeta>
-            <span>👥 {playersLabel(detail?.minPlayers, detail?.maxPlayers)}</span>
+            <span>👥 {ctPlayersLabel(detail?.minPlayers, detail?.maxPlayers)}</span>
             {detail?.playMinutes ? <span>⏱ 약 {detail.playMinutes}분</span> : null}
           </DetailMeta>
+
+          <SectionTitle>캐릭터 ({detail?.characters?.length ?? 0})</SectionTitle>
+          {(detail?.characters?.length ?? 0) === 0 ? (
+            <Empty>등록된 캐릭터가 없습니다.</Empty>
+          ) : (
+            <CharViewList>
+              {detail?.characters?.map(c => (
+                <CharViewItem key={c.id}>
+                  <CharHead>
+                    <CharName>{c.name}</CharName>
+                    <TypeTag color={TYPE_COLOR[c.type]}>{c.typeName}</TypeTag>
+                  </CharHead>
+                  {c.description && <CharDesc>{c.description}</CharDesc>}
+                </CharViewItem>
+              ))}
+            </CharViewList>
+          )}
         </Box>
       </Wrapper>
     );
@@ -165,11 +220,11 @@ export default function MurderGameDetail() {
           </Field>
           <Field>
             <label>최대 인원</label>
-            <input type="number" value={maxPlayers} onChange={e => setMaxPlayers(e.target.value)} placeholder="예: 7" />
+            <input type="number" value={maxPlayers} onChange={e => setMaxPlayers(e.target.value)} placeholder="예: 15" />
           </Field>
           <Field>
             <label>예상 플레이타임(분)</label>
-            <input type="number" value={playMinutes} onChange={e => setPlayMinutes(e.target.value)} placeholder="예: 120" />
+            <input type="number" value={playMinutes} onChange={e => setPlayMinutes(e.target.value)} placeholder="예: 60" />
           </Field>
         </Row>
 
@@ -214,14 +269,43 @@ export default function MurderGameDetail() {
           )}
         </Field>
 
+        <Field>
+          <label>캐릭터 목록</label>
+          <CharEditList>
+            {chars.map((c, i) => (
+              <CharEditRow key={i}>
+                <CharLineTop>
+                  <input
+                    type="text"
+                    value={c.name}
+                    placeholder="캐릭터명"
+                    onChange={e => updateChar(i, { name: e.target.value })}
+                  />
+                  <select
+                    value={c.type}
+                    onChange={e => updateChar(i, { type: e.target.value as ClockTowerCharacterType })}
+                  >
+                    {TYPE_OPTIONS.map(o => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                  <RemoveBtn type="button" onClick={() => removeChar(i)}>삭제</RemoveBtn>
+                </CharLineTop>
+                <textarea
+                  value={c.description}
+                  rows={2}
+                  placeholder="능력 설명 (선택)"
+                  onChange={e => updateChar(i, { description: e.target.value })}
+                />
+              </CharEditRow>
+            ))}
+          </CharEditList>
+          <AddBtn type="button" onClick={addChar}>+ 캐릭터 추가</AddBtn>
+        </Field>
+
         <ButtonRow>
           <Button color="#1A7D55" onClick={onSubmit}>저장</Button>
-          <Button
-            color="#988271"
-            onClick={() => (id ? setEditMode(false) : navigate('/murder-games'))}
-          >
-            취소
-          </Button>
+          <Button color="#988271" onClick={() => (id ? setEditMode(false) : navigate('/clocktower-games'))}>취소</Button>
         </ButtonRow>
       </Box>
     </Wrapper>
@@ -295,6 +379,53 @@ const DetailMeta = styled.div<WithTheme>`
   color: ${({ theme }) => theme.colors.navColor};
 `;
 
+const SectionTitle = styled.h3<WithTheme>`
+  margin: 26px 0 12px;
+  font-size: ${({ theme }) => theme.sizes.medium};
+  font-weight: ${({ theme }) => theme.weight.bold};
+  color: ${({ theme }) => theme.colors.subColor};
+`;
+
+const CharViewList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const CharViewItem = styled.div<WithTheme>`
+  border: 1px solid ${({ theme }) => theme.colors.lineColor};
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: #fff;
+`;
+
+const CharHead = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const CharName = styled.span<WithTheme>`
+  font-weight: ${({ theme }) => theme.weight.bold};
+  color: ${({ theme }) => theme.colors.subColor};
+`;
+
+const TypeTag = styled.span.withConfig({ shouldForwardProp: p => p !== 'color' })<{ color: string }>`
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #fff;
+  background: ${({ color }) => color};
+`;
+
+const CharDesc = styled.div<WithTheme>`
+  margin-top: 6px;
+  font-size: ${({ theme }) => theme.sizes.small};
+  color: ${({ theme }) => theme.colors.navColor};
+  line-height: 1.5;
+  white-space: pre-line;
+`;
+
 const FormTitle = styled.h2<WithTheme>`
   font-size: ${({ theme }) => theme.sizes.xlarge};
   font-weight: ${({ theme }) => theme.weight.bold};
@@ -332,7 +463,7 @@ const Field = styled.div<WithTheme>`
     font-size: 16px;
     &:focus {
       outline: none;
-      border-color: #093a6e;
+      border-color: #4a2c82;
     }
   }
 `;
@@ -347,7 +478,7 @@ const FileButton = styled.label<WithTheme>`
   display: inline-flex;
   align-items: center;
   padding: 9px 16px;
-  background: #093a6e;
+  background: #4a2c82;
   color: #fff;
   border-radius: 6px;
   font-size: ${({ theme }) => theme.sizes.small};
@@ -384,4 +515,85 @@ const CheckLine = styled.label<WithTheme>`
   font-size: ${({ theme }) => theme.sizes.small};
   color: ${({ theme }) => theme.colors.navColor};
   cursor: pointer;
+`;
+
+const CharEditList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const CharEditRow = styled.div<WithTheme>`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid ${({ theme }) => theme.colors.lineColor};
+  border-radius: 8px;
+  padding: 10px;
+
+  textarea {
+    border: 1px solid #c4c4c4;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 16px;
+    font-family: inherit;
+    resize: vertical;
+    &:focus {
+      outline: none;
+      border-color: #4a2c82;
+    }
+  }
+`;
+
+const CharLineTop = styled.div`
+  display: flex;
+  gap: 8px;
+
+  input {
+    flex: 1;
+    min-width: 0;
+    height: 42px;
+    padding: 0 10px;
+    border: 1px solid #c4c4c4;
+    border-radius: 6px;
+    font-size: 16px;
+  }
+  select {
+    flex: 0 0 110px;
+    height: 42px;
+    padding: 0 8px;
+    border: 1px solid #c4c4c4;
+    border-radius: 6px;
+    font-size: 16px;
+  }
+`;
+
+const RemoveBtn = styled.button`
+  flex: 0 0 auto;
+  padding: 0 12px;
+  background: #fff;
+  color: #ff5e57;
+  border: 1px solid #ff5e57;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+`;
+
+const AddBtn = styled.button<WithTheme>`
+  margin-top: 10px;
+  align-self: flex-start;
+  padding: 9px 16px;
+  background: #fff;
+  color: #4a2c82;
+  border: 1px dashed #4a2c82;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+`;
+
+const Empty = styled.div<WithTheme>`
+  text-align: center;
+  padding: 24px 0;
+  color: ${({ theme }) => theme.colors.navColor};
+  font-weight: ${({ theme }) => theme.weight.semiBold};
 `;

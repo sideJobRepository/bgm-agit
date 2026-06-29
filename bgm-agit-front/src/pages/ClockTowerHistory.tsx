@@ -4,18 +4,18 @@ import type { WithTheme } from '../styles/styled-props.ts';
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
-import { playHistoryState } from '../recoil/state/murderState.ts';
-import { usePlayHistoryFetch } from '../recoil/murderFetch.ts';
+import { clockTowerHistoryState } from '../recoil/state/clocktowerState.ts';
+import { useClockTowerHistoryFetch } from '../recoil/clocktowerFetch.ts';
 import { userState } from '../recoil/state/userState.ts';
 
-export default function PlayHistory() {
+export default function ClockTowerHistory() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const memberIdParam = searchParams.get('memberId');
 
   const user = useRecoilValue(userState);
-  const history = useRecoilValue(playHistoryState);
-  const fetchHistory = usePlayHistoryFetch();
+  const history = useRecoilValue(clockTowerHistoryState);
+  const fetchHistory = useClockTowerHistoryFetch();
 
   const targetId = memberIdParam ? Number(memberIdParam) : user?.id ? Number(user.id) : undefined;
 
@@ -38,8 +38,8 @@ export default function PlayHistory() {
       <Box>
         <Header bgColor="#482768">
           <TitleBox>
-            <h2>플레이 이력</h2>
-            <p>지금까지 플레이한 게임 기록이에요.</p>
+            <h2>시계탑 이력</h2>
+            <p>지금까지 플레이한 시계탑 게임 기록이에요.</p>
           </TitleBox>
           <Badges>
             <Badge>
@@ -56,9 +56,9 @@ export default function PlayHistory() {
         <SectionTitle>게임별 기록</SectionTitle>
         <CardList>
           {(history?.games ?? []).map(g => (
-            <Card key={g.gameId} onClick={() => navigate(`/murderGameDetail?id=${g.gameId}`)}>
+            <Card key={g.gameId} onClick={() => navigate(`/clockTowerGameDetail?id=${g.gameId}`)}>
               <Thumb>
-                {g.gameImageUrl ? <img src={g.gameImageUrl} alt={g.gameName} /> : <NoImage>🎭</NoImage>}
+                {g.gameImageUrl ? <img src={g.gameImageUrl} alt={g.gameName} /> : <NoImage>🕯️</NoImage>}
               </Thumb>
               <CardBody>
                 <CardTitle>{g.gameName}</CardTitle>
