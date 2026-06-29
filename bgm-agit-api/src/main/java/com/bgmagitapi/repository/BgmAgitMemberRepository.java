@@ -14,7 +14,8 @@ public interface BgmAgitMemberRepository extends JpaRepository<BgmAgitMember, Lo
     Optional<BgmAgitMember> findByBgmAgitMemberSocialId(String subId);
 
     // 휴대폰 번호로 회원 조회 (소셜 1인 1계정 중복 가입 차단용)
-    Optional<BgmAgitMember> findByBgmAgitMemberPhoneNo(String phoneNo);
+    // findFirst = LIMIT 1 → 같은 폰번호 회원이 2명 이상이어도 NonUniqueResultException 안 남
+    Optional<BgmAgitMember> findFirstByBgmAgitMemberPhoneNo(String phoneNo);
 
     Optional<BgmAgitMember> findByBgmAgitMemberNicknameAndSocialType(String nickname, BgmAgitSocialType socialType);
 

@@ -3,6 +3,7 @@ package com.bgmagitapi.security.service;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitMemberRole;
 import com.bgmagitapi.entity.BgmAgitRole;
+import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.event.dto.MemberJoinedEvent;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRoleRepository;
@@ -59,8 +60,13 @@ public class BgmAgitMemberDetailService implements UserDetailsService {
     private BgmAgitMember registerNewMember(SocialProfile socialProfile) {
         // 카카오는 "+82 10-..." 형태로 주므로 "010-..."로 변환해서 비교 (네이버는 이미 010-...)
         String phoneNo = normalizePhone(socialProfile.phone());
-        if (phoneNo != null && bgmAgitMemberRepository.findByBgmAgitMemberPhoneNo(phoneNo).isPresent()) {
-            throw new DuplicateMemberException("이미 가입된 계정이 있습니다. 기존에 가입한 소셜(카카오/네이버)로 로그인해주세요.");
+        if (phoneNo != null) {
+            BgmAgitMember existing = bgmAgitMemberRepository.findFirstByBgmAgitMemberPhoneNo(phoneNo).orElse(null);
+            if (existing != null) {
+                String provider = socialTypeLabel(existing.getSocialType());
+                throw new DuplicateMemberException(
+                        "이미 " + provider + "(으)로 가입된 계정이 있습니다. " + provider + " 로그인으로 이용해 주세요.");
+            }
         }
 
         BgmAgitMember agitMember = new BgmAgitMember(socialProfile);
@@ -79,6 +85,17 @@ public class BgmAgitMemberDetailService implements UserDetailsService {
         if (phone == null) return null;
         String normalized = phone.replaceAll("^\\+82\\s?", "0").trim();
         return normalized.isEmpty() ? null : normalized;
+    }
+
+    // 기존 가입 계정의 소셜 타입을 안내 문구용 한글로 (카카오/네이버 정확히 표기)
+    private String socialTypeLabel(BgmAgitSocialType socialType) {
+        if (socialType == null) return "다른 방법";
+        return switch (socialType) {
+            case KAKAO -> "카카오";
+            case NAVER -> "네이버";
+            case GOOGLE -> "구글";
+            case MAHJONG -> "일반(마작) 회원가입";
+        };
     }
 
     public List<String> ensureDefaultRole(BgmAgitMember member) {
