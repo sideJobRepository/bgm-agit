@@ -1,6 +1,7 @@
 package com.bgmagitapi.security.handler;
 
 import com.bgmagitapi.advice.response.ErrorMessageResponse;
+import com.bgmagitapi.security.exception.DuplicateMemberException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,9 +27,15 @@ public class BgmAuthenticationFailureHandler implements AuthenticationFailureHan
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json; charset=UTF-8");
-        String message = (exception instanceof UsernameNotFoundException)
-                ? "사용자 정보가 존재하지 않습니다."
-                : "인증에 실패하였습니다.";
+        String message;
+        if (exception instanceof DuplicateMemberException) {
+            // 동일 휴대폰 번호로 이미 가입된 계정이 있는 경우: 안내 메시지 그대로 전달
+            message = exception.getMessage();
+        } else if (exception instanceof UsernameNotFoundException) {
+            message = "사용자 정보가 존재하지 않습니다.";
+        } else {
+            message = "인증에 실패하였습니다.";
+        }
         
         ErrorMessageResponse errorResponse = new ErrorMessageResponse("400", message);
         mapper.writeValue(response.getWriter(), errorResponse);

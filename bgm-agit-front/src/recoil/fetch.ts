@@ -13,7 +13,8 @@ import type { ReservationData } from '../types/reservation.ts';
 import { reservationListDataState, reservationState } from './state/reservationState.ts';
 import { myPageState, userState } from './state/userState.ts';
 import { toast } from 'react-toastify';
-import type { AxiosRequestHeaders } from 'axios';
+import { isAxiosError, type AxiosRequestHeaders } from 'axios';
+import { loadingState } from './state/mainState.ts';
 import { noticePopupState, noticeState } from './state/noticeState.ts';
 import type { params } from '../types/notice.ts';
 import { roleState } from './state/roleState.ts';
@@ -254,27 +255,32 @@ export function useMyPageFetch() {
 }
 
 export function useLoginPost() {
-  const { request } = useRequest();
   const setUser = useSetRecoilState(userState);
+  const setLoading = useSetRecoilState(loadingState);
 
-  const postUser = (code: string, name: string, onSuccess?: () => void) => {
-    request(
-      () =>
-        api.post(`/bgm-agit/${name}-login`, { code }).then(res => {
-          const token = res.data.token as string;
-          tokenStore.set(token);
-
-          const user = res.data.user;
-
-          return user;
-        }),
-      user => {
-        setUser(user);
-
-        onSuccess?.();
-        toast.success('로그인에 성공하였습니다.');
-      }
-    );
+  const postUser = async (
+    code: string,
+    name: string,
+    onSuccess?: () => void,
+    onError?: () => void
+  ) => {
+    setLoading(true);
+    try {
+      const res = await api.post(`/bgm-agit/${name}-login`, { code });
+      tokenStore.set(res.data.token as string);
+      setUser(res.data.user);
+      onSuccess?.();
+      toast.success('로그인에 성공하였습니다.');
+    } catch (e) {
+      // 서버가 내려준 안내 메시지(예: "이미 가입된 계정이 있습니다.")를 그대로 노출
+      const message =
+        (isAxiosError(e) && (e.response?.data as { message?: string })?.message) ||
+        '로그인에 실패하였습니다.';
+      toast.error(message);
+      onError?.();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return { postUser };

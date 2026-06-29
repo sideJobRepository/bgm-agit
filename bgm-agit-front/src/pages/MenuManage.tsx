@@ -207,7 +207,7 @@ export default function MenuManage() {
             <label>링크 (비우면 상위 메뉴 전용)</label>
             <input
               value={form.menuLink}
-              placeholder="/gatherings"
+              placeholder="/murder-games"
               onChange={e => setForm({ ...form, menuLink: e.target.value })}
             />
           </Field>

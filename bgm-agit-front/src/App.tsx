@@ -26,9 +26,13 @@ import Matches from './pages/Matches.tsx';
 import Review from './pages/Review.tsx';
 import ReviewDetail from './pages/ReviewDetail.tsx';
 import MyPage from './pages/MyPage.tsx';
-import Gatherings from './pages/Gatherings.tsx';
-import GatheringDetail from './pages/GatheringDetail.tsx';
 import MenuManage from './pages/MenuManage.tsx';
+import MurderGames from './pages/MurderGames.tsx';
+import MurderGameDetail from './pages/MurderGameDetail.tsx';
+import PlayRecords from './pages/PlayRecords.tsx';
+import PlayRecordDetail from './pages/PlayRecordDetail.tsx';
+import PlayHistory from './pages/PlayHistory.tsx';
+import PlayStats from './pages/PlayStats.tsx';
 
 function App() {
   return (
@@ -59,9 +63,13 @@ function App() {
               <Route path="my-academy" element={<MyPage />} />
               <Route path="review" element={<Review />} />
               <Route path="review/:id" element={<ReviewDetail />} />
-              <Route path="gatherings" element={<Gatherings />} />
-              <Route path="/gatheringDetail" element={<GatheringDetail />} />
               <Route path="menuManage" element={<MenuManage />} />
+              <Route path="murder-games" element={<MurderGames />} />
+              <Route path="/murderGameDetail" element={<MurderGameDetail />} />
+              <Route path="play-records" element={<PlayRecords />} />
+              <Route path="/playRecordDetail" element={<PlayRecordDetail />} />
+              <Route path="play-history" element={<PlayHistory />} />
+              <Route path="play-stats" element={<PlayStats />} />
             </Route>
           </Routes>
         </BrowserRouter>

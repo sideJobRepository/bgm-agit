@@ -13,9 +13,16 @@ public interface BgmAgitMemberRepository extends JpaRepository<BgmAgitMember, Lo
 
     Optional<BgmAgitMember> findByBgmAgitMemberSocialId(String subId);
 
+    // 휴대폰 번호로 회원 조회 (소셜 1인 1계정 중복 가입 차단용)
+    Optional<BgmAgitMember> findByBgmAgitMemberPhoneNo(String phoneNo);
+
     Optional<BgmAgitMember> findByBgmAgitMemberNicknameAndSocialType(String nickname, BgmAgitSocialType socialType);
 
     boolean existsByBgmAgitMemberNicknameAndSocialType(String nickname, BgmAgitSocialType socialType);
 
     List<BgmAgitMember> findByBgmAgitMemberKmlSynk(String syncStatus);
+
+    // 참가자 멀티셀렉트용 회원 검색 (닉네임/이름 부분일치, 상위 50명)
+    List<BgmAgitMember> findTop50ByBgmAgitMemberNicknameContainingOrBgmAgitMemberNameContainingOrderByBgmAgitMemberNicknameAsc(
+            String nickname, String name);
 }
