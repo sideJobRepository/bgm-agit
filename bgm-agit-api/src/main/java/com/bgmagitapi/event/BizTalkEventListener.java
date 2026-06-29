@@ -4,8 +4,6 @@ package com.bgmagitapi.event;
 import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitReservation;
-import com.bgmagitapi.event.dto.GatheringCancelledEvent;
-import com.bgmagitapi.event.dto.GatheringConfirmedEvent;
 import com.bgmagitapi.event.dto.InquiryEvent;
 import com.bgmagitapi.event.dto.MatchRecordRegisteredEvent;
 import com.bgmagitapi.event.dto.MemberJoinedEvent;
@@ -159,28 +157,6 @@ public class BizTalkEventListener {
             bgmAgitBizTalkSandService.sendMatchRecord(e.getMatchsId());
         } catch (Exception ex) {
             bgmAgitBizTalkSandService.sendMatchRecord(e.getMatchsId());
-        }
-    }
-
-    // =========================== 모임 알림 (성사/취소) ===========================
-
-    @Async("bizTalkExecutor")
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onGatheringConfirmed(GatheringConfirmedEvent e) {
-        try {
-            bgmAgitBizTalkSandService.sendGatheringConfirmed(e.getGatheringId());
-        } catch (Exception ex) {
-            bgmAgitBizTalkSandService.sendGatheringConfirmed(e.getGatheringId());
-        }
-    }
-
-    @Async("bizTalkExecutor")
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onGatheringCancelled(GatheringCancelledEvent e) {
-        try {
-            bgmAgitBizTalkSandService.sendGatheringCancelled(e.getGatheringId());
-        } catch (Exception ex) {
-            bgmAgitBizTalkSandService.sendGatheringCancelled(e.getGatheringId());
         }
     }
 }

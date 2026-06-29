@@ -1,17 +1,12 @@
 package com.bgmagitapi.service.impl;
 
 import com.bgmagitapi.entity.BgmAgitBiztalkSendHistory;
-import com.bgmagitapi.entity.BgmAgitGathering;
-import com.bgmagitapi.entity.BgmAgitGatheringParticipant;
 import com.bgmagitapi.entity.BgmAgitImage;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.BgmAgitReservation;
 import com.bgmagitapi.entity.enumeration.BgmAgitImageCategory;
 import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.entity.enumeration.BgmAgitSubject;
-import com.bgmagitapi.entity.enumeration.GatheringParticipantStatus;
-import com.bgmagitapi.repository.BgmAgitGatheringParticipantRepository;
-import com.bgmagitapi.repository.BgmAgitGatheringRepository;
 import com.bgmagitapi.event.dto.InquiryEvent;
 import com.bgmagitapi.kml.lecture.dto.event.LecturePostEvent;
 import com.bgmagitapi.kml.matchs.entity.Matchs;
@@ -58,10 +53,6 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     private final BgmAgitImageRepository bgmAgitImageRepository;
 
     private final RecordRepository recordRepository;
-
-    private final BgmAgitGatheringRepository bgmAgitGatheringRepository;
-
-    private final BgmAgitGatheringParticipantRepository bgmAgitGatheringParticipantRepository;
 
     private static final String PHONE1 = "010-5059-3499";
     private static final String PHONE2 = "010-5592-8832";
@@ -330,89 +321,6 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String nick = m.getBgmAgitMemberNickname();
         return nick == null || nick.isBlank() ? "-" : nick;
     }
-
-    // =========================== 모임 모집 알림 ===========================
-    // 알림 필터: 알림톡 수신 ON("Y") AND 전화번호 존재. (대국과 달리 socialType 제한 없음 — 소셜 회원도 대상)
-
-    private static final DateTimeFormatter GATHERING_DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final DateTimeFormatter GATHERING_TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
-
-    private boolean canReceive(BgmAgitMember member) {
-        return member != null
-                && "Y".equals(member.getBgmAgitMemberAlimtalkStatus())
-                && member.getBgmAgitMemberPhoneNo() != null
-                && !member.getBgmAgitMemberPhoneNo().isBlank();
-    }
-
-    private static final String GATHERING_URL = "https://bgmagit.co.kr";
-    private static final String GATHERING_BUTTON = "사이트 바로가기";
-    private static final String GATHERING_FOOTER =
-            "자세한 내용은 BGM 아지트 홈페이지 로그인 후 모임 > 추리게임모임 에서 확인하실 수 있습니다.";
-
-    private String gatheringDateTimeText(BgmAgitGathering g) {
-        String date = g.getGatheringDate() != null ? GATHERING_DATE_FMT.format(g.getGatheringDate()) : "";
-        String start = g.getStartTime() != null ? GATHERING_TIME_FMT.format(g.getStartTime()) : "";
-        String end = g.getEndTime() != null ? GATHERING_TIME_FMT.format(g.getEndTime()) : "";
-        return date + " " + start + (end.isBlank() ? "" : " ~ " + end);
-    }
-
-    private String typeText(BgmAgitGathering g) {
-        return g.getGatheringType() != null ? g.getGatheringType().getValue() : "모임";
-    }
-
-    private String placeText(BgmAgitGathering g) {
-        return (g.getPlace() == null || g.getPlace().isBlank()) ? "-" : g.getPlace();
-    }
-
-    private String nick(BgmAgitMember m) {
-        String n = m.getBgmAgitMemberNickname();
-        return (n == null || n.isBlank()) ? "고객" : n;
-    }
-
-    @Override
-    public void sendGatheringConfirmed(Long gatheringId) {
-        BgmAgitGathering gathering = bgmAgitGatheringRepository.findById(gatheringId).orElse(null);
-        if (gathering == null) return;
-        List<BgmAgitGatheringParticipant> participants =
-                bgmAgitGatheringParticipantRepository.findByBgmAgitGathering_BgmAgitGatheringIdOrderByAppliedOrderAsc(gatheringId);
-        for (BgmAgitGatheringParticipant p : participants) {
-            if (p.getParticipantStatus() != GatheringParticipantStatus.CONFIRMED) continue;
-            BgmAgitMember member = p.getBgmAgitMember();
-            if (!canReceive(member)) continue;
-            String message = "안녕하세요 " + nick(member) + "님\n\n"
-                    + "[BGM 아지트] 신청하신 모임이 성사되었습니다.\n\n"
-                    + typeText(gathering) + " - " + gathering.getTitle() + "\n"
-                    + "일시: " + gatheringDateTimeText(gathering) + "\n"
-                    + "장소: " + placeText(gathering) + "\n\n"
-                    + GATHERING_FOOTER;
-            sendTalk(message, AlimtalkTemplate.BGMAGIT_GATHERING_CONFIRMED, member.getBgmAgitMemberPhoneNo(),
-                    gatheringId, BgmAgitSubject.GATHERING, GATHERING_BUTTON, GATHERING_URL);
-        }
-    }
-
-    @Override
-    public void sendGatheringCancelled(Long gatheringId) {
-        BgmAgitGathering gathering = bgmAgitGatheringRepository.findById(gatheringId).orElse(null);
-        if (gathering == null) return;
-        List<BgmAgitGatheringParticipant> participants =
-                bgmAgitGatheringParticipantRepository.findByBgmAgitGathering_BgmAgitGatheringIdOrderByAppliedOrderAsc(gatheringId);
-        for (BgmAgitGatheringParticipant p : participants) {
-            // 참가/대기였던 사람에게만
-            if (p.getParticipantStatus() != GatheringParticipantStatus.CONFIRMED
-                    && p.getParticipantStatus() != GatheringParticipantStatus.WAITING) continue;
-            BgmAgitMember member = p.getBgmAgitMember();
-            if (!canReceive(member)) continue;
-            String message = "안녕하세요 " + nick(member) + "님\n\n"
-                    + "[BGM 아지트] 신청하신 모임이 취소되었습니다.\n\n"
-                    + typeText(gathering) + " - " + gathering.getTitle() + "\n"
-                    + "일시: " + gatheringDateTimeText(gathering) + "\n\n"
-                    + "이용에 불편을 드려 죄송합니다.\n"
-                    + GATHERING_FOOTER;
-            sendTalk(message, AlimtalkTemplate.BGMAGIT_GATHERING_CANCELLED, member.getBgmAgitMemberPhoneNo(),
-                    gatheringId, BgmAgitSubject.GATHERING, GATHERING_BUTTON, GATHERING_URL);
-        }
-    }
-
 
     /**
      * 공통 전송 + 히스토리 저장

@@ -26,8 +26,4 @@ public interface BgmAgitBizTalkSandService {
     void sendLectureCancel2(MyAcademyCancelEvent event);
     void sendReview(ReviewPostEvents e);
     void sendMatchRecord(Long matchsId);
-
-    // 모임 (머더미스터리/시계탑) — 성사 / 취소 2종
-    void sendGatheringConfirmed(Long gatheringId);
-    void sendGatheringCancelled(Long gatheringId);
 }

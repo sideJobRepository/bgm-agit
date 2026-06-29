@@ -17,9 +17,12 @@ export default function RedirectPage() {
       return;
     }
 
-    postUser(code, provider, () => {
-      navigate('/');
-    });
+    postUser(
+      code,
+      provider,
+      () => navigate('/'),
+      () => navigate('/'),
+    );
   }, []);
 
   return null;
