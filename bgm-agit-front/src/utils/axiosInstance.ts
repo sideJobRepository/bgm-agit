@@ -15,7 +15,7 @@ const api = axios.create({
 let refreshing: Promise<string | null> | null = null;
 
 function isAuthEndpoint(url?: string) {
-  return !!url && (
+   return !!url && (
     url.includes('/bgm-agit/refresh') ||
     url.includes('/bgm-agit/next/login') ||
     url.includes('/bgm-agit/next/signup') ||

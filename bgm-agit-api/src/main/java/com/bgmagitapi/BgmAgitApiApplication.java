@@ -19,7 +19,7 @@ public class BgmAgitApiApplication {
 	
 	@Bean
 	public JPAQueryFactory jpaQueryFactory(EntityManager em) {
-		return new JPAQueryFactory(em);
+		 return new JPAQueryFactory(em);
 	}
 
 }
