@@ -4,7 +4,10 @@ import com.bgmagitapi.controller.response.BgmAgitMyPageGetResponse;
 import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.repository.custom.BgmAgitMemberCustomRepository;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,4 +29,14 @@ public interface BgmAgitMemberRepository extends JpaRepository<BgmAgitMember, Lo
     // 참가자 멀티셀렉트용 회원 검색 (닉네임/이름 부분일치, 상위 50명)
     List<BgmAgitMember> findTop50ByBgmAgitMemberNicknameContainingOrBgmAgitMemberNameContainingOrderByBgmAgitMemberNicknameAsc(
             String nickname, String name);
+
+    // 참가자 검색 (소셜 가입자만: 카카오/네이버 등). 닉네임/이름 부분일치, 상위 N명은 Pageable 로 제한.
+    @Query("select m from BgmAgitMember m " +
+            "where m.socialType in :socialTypes " +
+            "and (lower(m.bgmAgitMemberNickname) like lower(concat('%', :kw, '%')) " +
+            "  or lower(m.bgmAgitMemberName) like lower(concat('%', :kw, '%'))) " +
+            "order by m.bgmAgitMemberNickname asc")
+    List<BgmAgitMember> searchMembersBySocialTypes(@Param("kw") String kw,
+                                                   @Param("socialTypes") List<BgmAgitSocialType> socialTypes,
+                                                   Pageable pageable);
 }
