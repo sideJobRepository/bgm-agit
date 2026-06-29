@@ -125,7 +125,7 @@ export default function MurderGameDetail() {
       <Wrapper>
         <Box>
           <ButtonRow>
-            {user && (
+            {user?.roles.includes('ROLE_ADMIN') && (
               <>
                 <Button color="#093A6E" onClick={() => setEditMode(true)}>수정</Button>
                 <Button color="#FF5E57" onClick={onDelete}>삭제</Button>
