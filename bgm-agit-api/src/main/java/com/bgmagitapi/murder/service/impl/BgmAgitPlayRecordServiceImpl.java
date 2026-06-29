@@ -19,10 +19,12 @@ import com.bgmagitapi.murder.repository.BgmAgitMurderGameRepository;
 import com.bgmagitapi.murder.repository.BgmAgitPlayRecordParticipantRepository;
 import com.bgmagitapi.murder.repository.BgmAgitPlayRecordRepository;
 import com.bgmagitapi.murder.service.BgmAgitPlayRecordService;
+import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -173,8 +175,10 @@ public class BgmAgitPlayRecordServiceImpl implements BgmAgitPlayRecordService {
     @Transactional(readOnly = true)
     public List<AllMemberResponse> searchMembers(String keyword) {
         String kw = keyword == null ? "" : keyword.trim();
+        // 소셜 가입자(카카오/네이버)만 노출. 폼 가입(MAHJONG) 등은 제외.
+        List<BgmAgitSocialType> socialTypes = List.of(BgmAgitSocialType.KAKAO, BgmAgitSocialType.NAVER);
         return memberRepository
-                .findTop50ByBgmAgitMemberNicknameContainingOrBgmAgitMemberNameContainingOrderByBgmAgitMemberNicknameAsc(kw, kw)
+                .searchMembersBySocialTypes(kw, socialTypes, PageRequest.of(0, 50))
                 .stream()
                 .map(AllMemberResponse::from)
                 .toList();
