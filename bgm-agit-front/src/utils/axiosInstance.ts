@@ -65,7 +65,10 @@ export async function restoreAuthSession(): Promise<void> {
     return;
   }
 
-  await refreshToken();
+  // 인터셉터와 동일한 단일-비행 락 공유 (새로고침 시 refresh 중복 호출 → 토큰 회전 레이스로
+  // 한쪽이 401 나서 auth:expired 로그아웃되는 문제 방지)
+  if (!refreshing) refreshing = refreshToken();
+  await refreshing;
 }
 
 api.interceptors.request.use(async (config: AuthAxiosRequestConfig) => {
