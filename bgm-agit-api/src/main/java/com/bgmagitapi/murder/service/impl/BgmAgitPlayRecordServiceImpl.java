@@ -5,6 +5,7 @@ import com.bgmagitapi.entity.BgmAgitMember;
 import com.bgmagitapi.murder.dto.request.PlayRecordCreateRequest;
 import com.bgmagitapi.murder.dto.request.PlayRecordModifyRequest;
 import com.bgmagitapi.murder.dto.response.AllMemberResponse;
+import com.bgmagitapi.murder.dto.response.ExperiencedMemberResponse;
 import com.bgmagitapi.murder.dto.response.MemberHistoryResponse;
 import com.bgmagitapi.murder.dto.response.MemberMonthlyBucketResponse;
 import com.bgmagitapi.murder.dto.response.MemberPlayHistoryResponse;
@@ -177,6 +178,12 @@ public class BgmAgitPlayRecordServiceImpl implements BgmAgitPlayRecordService {
                 .stream()
                 .map(AllMemberResponse::from)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExperiencedMemberResponse> searchExperienced(Long gameId, List<Long> memberIds, Long excludeRecordId) {
+        return playRecordRepository.findExperiencedMembers(gameId, memberIds, excludeRecordId);
     }
 
     // =========================== helpers ===========================

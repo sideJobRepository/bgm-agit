@@ -4,22 +4,22 @@ import type { WithTheme } from '../styles/styled-props.ts';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
-import { murderGameListState } from '../recoil/state/murderState.ts';
-import { useMurderGameListFetch } from '../recoil/murderFetch.ts';
+import { clockTowerGameListState } from '../recoil/state/clocktowerState.ts';
+import { useClockTowerGameListFetch } from '../recoil/clocktowerFetch.ts';
 import { userState } from '../recoil/state/userState.ts';
 import Pagination from '../components/Pagination.tsx';
-import type { MurderGame } from '../types/murder.ts';
+import type { ClockTowerGame } from '../types/clocktower.ts';
 
-export function playersLabel(min?: number | null, max?: number | null) {
+export function ctPlayersLabel(min?: number | null, max?: number | null) {
   if (!min && !max) return '인원 미정';
   if (min && max) return min === max ? `${min}명` : `${min}~${max}명`;
   return `${min ?? max}명`;
 }
 
-export default function MurderGames() {
+export default function ClockTowerGames() {
   const navigate = useNavigate();
-  const fetchGames = useMurderGameListFetch();
-  const data = useRecoilValue(murderGameListState);
+  const fetchGames = useClockTowerGameListFetch();
+  const data = useRecoilValue(clockTowerGameListState);
   const user = useRecoilValue(userState);
 
   const [page, setPage] = useState(0);
@@ -38,13 +38,13 @@ export default function MurderGames() {
   return (
     <Wrapper>
       <Box>
-        <Header bgColor="#093A6E">
+        <Header bgColor="#4A2C82">
           <TitleBox>
-            <h2>머미 게임</h2>
-            <p>보유 중인 머더미스터리 게임 목록입니다.</p>
+            <h2>시계탑 게임</h2>
+            <p>보유 중인 시계탑(블러드 온 더 클락타워) 시나리오 목록입니다.</p>
           </TitleBox>
           {user?.roles.includes('ROLE_ADMIN') && (
-            <CreateButton onClick={() => navigate('/murderGameDetail')}>게임 등록</CreateButton>
+            <CreateButton onClick={() => navigate('/clockTowerGameDetail')}>게임 등록</CreateButton>
           )}
         </Header>
 
@@ -61,7 +61,7 @@ export default function MurderGames() {
 
         <CardList>
           {data.content.map(g => (
-            <GameCard key={g.id} item={g} onClick={() => navigate(`/murderGameDetail?id=${g.id}`)} />
+            <GameCard key={g.id} item={g} onClick={() => navigate(`/clockTowerGameDetail?id=${g.id}`)} />
           ))}
           {data.content.length === 0 && <Empty>등록된 게임이 없습니다.</Empty>}
         </CardList>
@@ -74,7 +74,7 @@ export default function MurderGames() {
   );
 }
 
-function GameCard({ item, onClick }: { item: MurderGame; onClick: () => void }) {
+function GameCard({ item, onClick }: { item: ClockTowerGame; onClick: () => void }) {
   return (
     <Card onClick={onClick}>
       <Cover>
@@ -83,7 +83,7 @@ function GameCard({ item, onClick }: { item: MurderGame; onClick: () => void }) 
       <CardBody>
         <CardTitle>{item.name}</CardTitle>
         <Meta>
-          <span>👥 {playersLabel(item.minPlayers, item.maxPlayers)}</span>
+          <span>👥 {ctPlayersLabel(item.minPlayers, item.maxPlayers)}</span>
           {item.playMinutes ? <span>⏱ 약 {item.playMinutes}분</span> : null}
         </Meta>
       </CardBody>
@@ -127,7 +127,7 @@ const TitleBox = styled.div<WithTheme>`
 const CreateButton = styled.button<WithTheme>`
   padding: 8px 16px;
   background: #fff;
-  color: #093a6e;
+  color: #4a2c82;
   border: none;
   border-radius: 6px;
   font-weight: ${({ theme }) => theme.weight.bold};
@@ -149,7 +149,7 @@ const SearchRow = styled.div<WithTheme>`
   }
   button {
     padding: 0 18px;
-    background: #093a6e;
+    background: #4a2c82;
     color: #fff;
     border: none;
     border-radius: 6px;

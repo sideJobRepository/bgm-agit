@@ -33,6 +33,12 @@ import PlayRecords from './pages/PlayRecords.tsx';
 import PlayRecordDetail from './pages/PlayRecordDetail.tsx';
 import PlayHistory from './pages/PlayHistory.tsx';
 import PlayStats from './pages/PlayStats.tsx';
+import ClockTowerGames from './pages/ClockTowerGames.tsx';
+import ClockTowerGameDetail from './pages/ClockTowerGameDetail.tsx';
+import ClockTowerRecords from './pages/ClockTowerRecords.tsx';
+import ClockTowerRecordDetail from './pages/ClockTowerRecordDetail.tsx';
+import ClockTowerHistory from './pages/ClockTowerHistory.tsx';
+import ClockTowerStats from './pages/ClockTowerStats.tsx';
 
 function App() {
   return (
@@ -70,6 +76,12 @@ function App() {
               <Route path="/playRecordDetail" element={<PlayRecordDetail />} />
               <Route path="play-history" element={<PlayHistory />} />
               <Route path="play-stats" element={<PlayStats />} />
+              <Route path="clocktower-games" element={<ClockTowerGames />} />
+              <Route path="/clockTowerGameDetail" element={<ClockTowerGameDetail />} />
+              <Route path="clocktower-records" element={<ClockTowerRecords />} />
+              <Route path="/clockTowerRecordDetail" element={<ClockTowerRecordDetail />} />
+              <Route path="clocktower-history" element={<ClockTowerHistory />} />
+              <Route path="clocktower-stats" element={<ClockTowerStats />} />
             </Route>
           </Routes>
         </BrowserRouter>

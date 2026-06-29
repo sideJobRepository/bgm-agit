@@ -1,5 +1,6 @@
 package com.bgmagitapi.murder.repository.query;
 
+import com.bgmagitapi.murder.dto.response.ExperiencedMemberResponse;
 import com.bgmagitapi.murder.dto.response.MemberMonthlyBucketResponse;
 import com.bgmagitapi.murder.dto.response.MemberMonthlyCountResponse;
 import com.bgmagitapi.murder.dto.response.MemberPlayHistoryResponse;
@@ -33,4 +34,7 @@ public interface PlayStatsQueryRepository {
 
     // 회원의 월별 게임수 버킷
     List<MemberMonthlyBucketResponse> findMemberMonthlyBuckets(Long memberId);
+
+    // 특정 게임을 이미 플레이한 경험이 있는 회원 (대상 memberIds 중). excludeRecordId: 수정 중인 기록 제외
+    List<ExperiencedMemberResponse> findExperiencedMembers(Long gameId, List<Long> memberIds, Long excludeRecordId);
 }

@@ -12,7 +12,8 @@ import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts'
 import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import MemberMultiSelect from '../components/MemberMultiSelect.tsx';
-import type { MemberOption, MurderGame } from '../types/murder.ts';
+import GameSelect from '../components/GameSelect.tsx';
+import type { ExperiencedMember, MemberOption, MurderGame } from '../types/murder.ts';
 
 function todayStr() {
   const d = new Date();
@@ -39,6 +40,7 @@ export default function PlayRecordDetail() {
   const [playDate, setPlayDate] = useState(todayStr());
   const [memberIds, setMemberIds] = useState<number[]>([]);
   const [memo, setMemo] = useState('');
+  const [experienced, setExperienced] = useState<ExperiencedMember[]>([]);
 
   useEffect(() => {
     api.get('/bgm-agit/murder-games/simple').then(res => setGames(res.data)).catch(() => setGames([]));
@@ -61,6 +63,29 @@ export default function PlayRecordDetail() {
     () => (detail?.participants ?? []).map(p => ({ id: p.memberId, nickname: p.nickname })),
     [detail]
   );
+
+  const gameName = useMemo(() => games.find(g => g.id === gameId)?.name ?? '', [games, gameId]);
+
+  // 선택한 게임을 참가자 중 누가 전에 플레이했는지 안내
+  useEffect(() => {
+    if (!gameId || memberIds.length === 0) {
+      setExperienced([]);
+      return;
+    }
+    const t = setTimeout(() => {
+      api
+        .get('/bgm-agit/play-records/experienced', {
+          params: {
+            gameId,
+            memberIds: memberIds.join(','),
+            ...(id ? { excludeRecordId: Number(id) } : {}),
+          },
+        })
+        .then(res => setExperienced(res.data as ExperiencedMember[]))
+        .catch(() => setExperienced([]));
+    }, 200);
+    return () => clearTimeout(t);
+  }, [gameId, memberIds, id]);
 
   const onSubmit = () => {
     if (!user) {
@@ -176,12 +201,7 @@ export default function PlayRecordDetail() {
 
         <Field>
           <label>게임 *</label>
-          <select value={gameId} onChange={e => setGameId(e.target.value ? Number(e.target.value) : '')}>
-            <option value="">게임을 선택하세요</option>
-            {games.map(g => (
-              <option key={g.id} value={g.id}>{g.name}</option>
-            ))}
-          </select>
+          <GameSelect games={games} value={gameId} onChange={setGameId} />
         </Field>
 
         <Field>
@@ -200,6 +220,16 @@ export default function PlayRecordDetail() {
               initialOptions={initialOptions}
               forceSelf={!id || detail?.writerId === Number(user.id)}
             />
+          )}
+          {experienced.length > 0 && (
+            <NoticeBox>
+              {experienced.map(m => (
+                <NoticeLine key={m.memberId}>
+                  {m.nickname}님은 {gameName} 게임을 플레이한 경험이 있습니다.
+                  {m.playCount > 1 ? ` (${m.playCount}회)` : ''}
+                </NoticeLine>
+              ))}
+            </NoticeBox>
           )}
         </Field>
 
@@ -316,6 +346,22 @@ const FormTitle = styled.h2<WithTheme>`
   font-weight: ${({ theme }) => theme.weight.bold};
   color: ${({ theme }) => theme.colors.subColor};
   margin-bottom: 18px;
+`;
+
+const NoticeBox = styled.div`
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: #fff7e6;
+  border: 1px solid #ffd591;
+  border-radius: 6px;
+`;
+
+const NoticeLine = styled.div<WithTheme>`
+  font-size: ${({ theme }) => theme.sizes.small};
+  color: #8a5a00;
 `;
 
 const Field = styled.div<WithTheme>`

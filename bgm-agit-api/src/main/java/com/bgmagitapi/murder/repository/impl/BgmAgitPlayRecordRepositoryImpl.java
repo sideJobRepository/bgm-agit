@@ -1,8 +1,10 @@
 package com.bgmagitapi.murder.repository.impl;
 
+import com.bgmagitapi.murder.dto.response.ExperiencedMemberResponse;
 import com.bgmagitapi.murder.dto.response.MemberMonthlyBucketResponse;
 import com.bgmagitapi.murder.dto.response.MemberMonthlyCountResponse;
 import com.bgmagitapi.murder.dto.response.MemberPlayHistoryResponse;
+import com.bgmagitapi.murder.dto.response.QExperiencedMemberResponse;
 import com.bgmagitapi.murder.dto.response.QMemberMonthlyBucketResponse;
 import com.bgmagitapi.murder.dto.response.QMemberMonthlyCountResponse;
 import com.bgmagitapi.murder.dto.response.QMemberPlayHistoryResponse;
@@ -174,6 +176,31 @@ public class BgmAgitPlayRecordRepositoryImpl implements PlayStatsQueryRepository
                 .where(bgmAgitPlayRecordParticipant.bgmAgitMember.bgmAgitMemberId.eq(memberId))
                 .groupBy(ym)
                 .orderBy(ym.desc())
+                .fetch();
+    }
+
+    @Override
+    public List<ExperiencedMemberResponse> findExperiencedMembers(Long gameId, List<Long> memberIds, Long excludeRecordId) {
+        if (gameId == null || memberIds == null || memberIds.isEmpty()) {
+            return List.of();
+        }
+        NumberExpression<Long> playCount = Expressions.numberTemplate(Long.class, "COUNT({0})", bgmAgitPlayRecord.id);
+        var lastDate = Expressions.dateTemplate(LocalDate.class, "MAX({0})", bgmAgitPlayRecord.playDate);
+        return queryFactory
+                .select(new QExperiencedMemberResponse(
+                        bgmAgitMember.bgmAgitMemberId,
+                        bgmAgitMember.bgmAgitMemberNickname,
+                        playCount,
+                        lastDate))
+                .from(bgmAgitPlayRecordParticipant)
+                .join(bgmAgitPlayRecordParticipant.playRecord, bgmAgitPlayRecord)
+                .join(bgmAgitPlayRecordParticipant.bgmAgitMember, bgmAgitMember)
+                .where(
+                        bgmAgitPlayRecord.murderGame.id.eq(gameId),
+                        bgmAgitMember.bgmAgitMemberId.in(memberIds),
+                        excludeRecordId != null ? bgmAgitPlayRecord.id.ne(excludeRecordId) : null
+                )
+                .groupBy(bgmAgitMember.bgmAgitMemberId, bgmAgitMember.bgmAgitMemberNickname)
                 .fetch();
     }
 

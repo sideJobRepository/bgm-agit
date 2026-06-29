@@ -4,6 +4,7 @@ import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.murder.dto.request.PlayRecordCreateRequest;
 import com.bgmagitapi.murder.dto.request.PlayRecordModifyRequest;
 import com.bgmagitapi.murder.dto.response.AllMemberResponse;
+import com.bgmagitapi.murder.dto.response.ExperiencedMemberResponse;
 import com.bgmagitapi.murder.dto.response.MemberHistoryResponse;
 import com.bgmagitapi.murder.dto.response.PlayRecordDetailResponse;
 import com.bgmagitapi.murder.dto.response.PlayRecordListResponse;
@@ -75,5 +76,21 @@ public class BgmAgitPlayRecordController {
     @GetMapping("/all-members")
     public List<AllMemberResponse> getAllMembers(@RequestParam(name = "keyword", required = false) String keyword) {
         return bgmAgitPlayRecordService.searchMembers(keyword);
+    }
+
+    // 선택한 게임을, 선택한 참가자들 중 이미 플레이한 경험이 있는 회원 조회 (기록 폼 안내용)
+    @GetMapping("/play-records/experienced")
+    public List<ExperiencedMemberResponse> getExperienced(
+            @RequestParam(name = "gameId") Long gameId,
+            @RequestParam(name = "memberIds", required = false) String memberIds,
+            @RequestParam(name = "excludeRecordId", required = false) Long excludeRecordId) {
+        List<Long> ids = new java.util.ArrayList<>();
+        if (memberIds != null && !memberIds.isBlank()) {
+            for (String s : memberIds.split(",")) {
+                String t = s.trim();
+                if (!t.isEmpty()) ids.add(Long.valueOf(t));
+            }
+        }
+        return bgmAgitPlayRecordService.searchExperienced(gameId, ids, excludeRecordId);
     }
 }

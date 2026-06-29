@@ -4,6 +4,7 @@ import com.bgmagitapi.apiresponse.ApiResponse;
 import com.bgmagitapi.murder.dto.request.PlayRecordCreateRequest;
 import com.bgmagitapi.murder.dto.request.PlayRecordModifyRequest;
 import com.bgmagitapi.murder.dto.response.AllMemberResponse;
+import com.bgmagitapi.murder.dto.response.ExperiencedMemberResponse;
 import com.bgmagitapi.murder.dto.response.MemberHistoryResponse;
 import com.bgmagitapi.murder.dto.response.PlayRecordDetailResponse;
 import com.bgmagitapi.murder.dto.response.PlayRecordListResponse;
@@ -27,4 +28,6 @@ public interface BgmAgitPlayRecordService {
     MemberHistoryResponse getMemberHistory(Long memberId);
 
     List<AllMemberResponse> searchMembers(String keyword);
+
+    List<ExperiencedMemberResponse> searchExperienced(Long gameId, List<Long> memberIds, Long excludeRecordId);
 }
