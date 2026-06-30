@@ -8,7 +8,7 @@ import kakao from '/kakao.png';
 import { MdClose } from 'react-icons/md';
 import { toast } from 'react-toastify';
 import type { WithTheme } from '../styles/styled-props.ts';
-import { useFormLoginPost, useSignupPost } from '../recoil/fetch.ts';
+import { useFormLoginPost, useSignupPost, useRefetchMainMenu } from '../recoil/fetch.ts';
 
 type Props = {
   onClose: () => void;
@@ -21,6 +21,7 @@ const PHONE_REGEX = /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/;
 export default function LoginMoadl({ onClose }: Props) {
   const { postFormLogin } = useFormLoginPost();
   const { postSignup } = useSignupPost();
+  const refetchMainMenu = useRefetchMainMenu();
 
   const [mode, setMode] = useState<Mode>('login');
 
@@ -58,10 +59,11 @@ export default function LoginMoadl({ onClose }: Props) {
       toast.error('닉네임과 비밀번호를 입력해 주세요.');
       return;
     }
-    // 로그인 성공 직후 새로고침: 서버가 로그인 권한으로 필터링하는 메뉴(마이페이지 등)를
-    // 다시 받아오기 위함. (refreshToken_main 쿠키로 자동 로그인 복원됨)
+    // 로그인 성공 시: 새로고침 없이 메뉴만 다시 받아오고(서버가 로그인 권한으로 필터링하는
+    // 마이페이지 등 권한 메뉴 갱신) 모달을 닫는다. reload를 하지 않으므로 성공 토스트가 정상 노출됨.
     postFormLogin({ nickname, password: loginPassword }, () => {
-      window.location.reload();
+      refetchMainMenu();
+      onClose();
     });
   };
 
@@ -110,7 +112,7 @@ export default function LoginMoadl({ onClose }: Props) {
   };
 
   return (
-    <Modal onClose={onClose}>
+    <Modal onClose={onClose} closeOnBackdrop={false}>
       <LoginModalWrapper>
         <TopModalBox>
           <MdClose onClick={onClose} />

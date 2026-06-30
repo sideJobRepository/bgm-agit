@@ -7,6 +7,7 @@ export type Role = {
   roleId: number;
   roleName: string;
   memberPhoneNo: string;
+  mahjongUseStatus?: string; // 'Y' = 마작(BML) 기록 연동 회원
 };
 
 export type PageRole = {

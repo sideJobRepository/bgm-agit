@@ -434,7 +434,7 @@ export default function ImageGrid({ pageData }: Props) {
         onIndexChange={setLightboxIndex}
       />
       {writeModalOpen && (
-        <Modal onClose={() => setWriteModalOpen(false)}>
+        <Modal onClose={() => setWriteModalOpen(false)} closeOnBackdrop={false}>
           <ImageModalWraaper>
             <ImageUploadWrapper>
               {selectedImage && <PreviewImage src={selectedImage} alt="preview" />}

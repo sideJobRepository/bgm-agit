@@ -17,4 +17,5 @@ public class BgmAgitRoleResponse {
     private String memberEmail;
     private String memberPhoneNo;
     private String memberLoginType;
+    private String mahjongUseStatus; // 'Y' = 마작(BML) 기록 이용/연동 회원. 자체로그인 탭에서 연동 여부 표시용
 }

@@ -3,16 +3,32 @@ import SearchBar from '../components/SearchBar.tsx';
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { useEffect, useState } from 'react';
-import { useRoletFetch, useUpdatePost } from '../recoil/fetch.ts';
+import { useRoletFetch, useUpdatePost, useDeletePost } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { roleState } from '../recoil/state/roleState.ts';
-import { showConfirmModal } from '../components/confirmAlert.tsx';
+import { userState } from '../recoil/state/userState.ts';
+import { showConfirmModal, showInputModal } from '../components/confirmAlert.tsx';
 import { toast } from 'react-toastify';
+import { MdEdit } from 'react-icons/md';
 import Pagination from '../components/Pagination.tsx';
+
+type Tab = 'social' | 'mahjong';
+
+// 로그인 타입 코드 → 한글 라벨
+const LOGIN_TYPE_LABEL: Record<string, string> = {
+  KAKAO: '카카오',
+  NAVER: '네이버',
+  GOOGLE: '구글',
+  MAHJONG: '자체로그인',
+};
 
 export default function Role() {
   const fetchRole = useRoletFetch();
   const { update } = useUpdatePost();
+  const { remove } = useDeletePost();
+
+  // 소셜 / 자체로그인 탭
+  const [tab, setTab] = useState<Tab>('social');
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);
@@ -23,9 +39,20 @@ export default function Role() {
   const [roleMap, setRoleMap] = useState<Record<number, number>>({});
 
   const items = useRecoilValue(roleState);
+  const user = useRecoilValue(userState);
+  const isAdmin = !!user?.roles?.includes('ROLE_ADMIN');
 
   const handlePageClick = (pageNum: number) => {
     setPage(pageNum);
+  };
+
+  // 탭 전환 시 페이지/선택 상태 초기화 (목록은 effect가 tab 변경을 감지해 재조회)
+  const handleTabChange = (next: Tab) => {
+    if (next === tab) return;
+    setTab(next);
+    setPage(0);
+    setCheckedIds([]);
+    setRoleMap({});
   };
 
   //업데이트
@@ -59,9 +86,91 @@ export default function Role() {
     });
   }
 
+  // 닉네임 변경 (자체로그인 탭, 마작 회원 전용 엔드포인트 재사용)
+  function changeNickname(memberId: number, currentNickname: string) {
+    showInputModal({
+      message: '닉네임 변경',
+      label: '새 닉네임',
+      initialValue: currentNickname,
+      placeholder: '새 닉네임을 입력해 주세요.',
+      onConfirm: nickname => {
+        update({
+          url: '/bgm-agit/mahjong-role/nickname',
+          body: { memberId, nickname },
+          ignoreHttpError: true,
+          onSuccess: () => {
+            toast.success('닉네임이 변경되었습니다.');
+            fetchRole(page, searchKeyword, tab === 'mahjong');
+          },
+        });
+      },
+    });
+  }
+
+  // 비밀번호 변경 (자체로그인 탭)
+  function changePassword(memberId: number) {
+    showInputModal({
+      message: '비밀번호 변경',
+      label: '새 비밀번호 (4자 이상)',
+      inputType: 'password',
+      placeholder: '새 비밀번호',
+      minLength: 4,
+      onConfirm: password => {
+        update({
+          url: '/bgm-agit/mahjong-role/password',
+          body: { memberId, password },
+          ignoreHttpError: true,
+          onSuccess: () => {
+            toast.success('비밀번호가 변경되었습니다.');
+          },
+        });
+      },
+    });
+  }
+
+  // 마작 연동 토글 (자체로그인 탭, 관리자)
+  function toggleMahjongUse(memberId: number, currentlyLinked: boolean, label: string) {
+    const next = !currentlyLinked;
+    showConfirmModal({
+      message: next
+        ? `${label} 회원을 마작 기록 연동하시겠습니까?`
+        : `${label} 회원의 마작 기록 연동을 해제하시겠습니까?`,
+      onConfirm: () => {
+        update({
+          url: '/bgm-agit/mahjong-role/mahjong-use',
+          body: { memberId, use: next },
+          ignoreHttpError: true,
+          onSuccess: () => {
+            toast.success(next ? '마작 기록 연동되었습니다.' : '마작 기록 연동이 해제되었습니다.');
+            fetchRole(page, searchKeyword, tab === 'mahjong');
+          },
+        });
+      },
+    });
+  }
+
+  // 소셜 회원 삭제 (소셜 탭)
+  function deleteMember(memberId: number, label: string) {
+    showConfirmModal({
+      message: `${label} 회원을 삭제하시겠습니까? 되돌릴 수 없습니다.`,
+      onConfirm: () => {
+        remove({
+          url: `/bgm-agit/role/${memberId}`,
+          ignoreHttpError: true,
+          onSuccess: () => {
+            toast.success('회원이 삭제되었습니다.');
+            setCheckedIds([]);
+            setRoleMap({});
+            fetchRole(page, searchKeyword, tab === 'mahjong');
+          },
+        });
+      },
+    });
+  }
+
   useEffect(() => {
-    fetchRole(page, searchKeyword);
-  }, [searchKeyword, page]);
+    fetchRole(page, searchKeyword, tab === 'mahjong');
+  }, [searchKeyword, page, tab]);
 
   return (
     <Wrapper>
@@ -82,6 +191,14 @@ export default function Role() {
             />
           </SearchBox>
         </SearchWrapper>
+        <TabBar>
+          <TabButton $active={tab === 'social'} onClick={() => handleTabChange('social')}>
+            소셜 로그인
+          </TabButton>
+          <TabButton $active={tab === 'mahjong'} onClick={() => handleTabChange('mahjong')}>
+            자체로그인
+          </TabButton>
+        </TabBar>
         <TableBox>
           <TableWrapper>
             <ButtonBox>
@@ -96,9 +213,13 @@ export default function Role() {
                   <Th>번호</Th>
                   <Th>아이디</Th>
                   <Th>이름</Th>
+                  {tab === 'mahjong' && <Th>닉네임</Th>}
                   <Th>연락처</Th>
                   <Th>로그인 타입</Th>
+                  {tab === 'mahjong' && <Th>마작 연동</Th>}
                   <Th>권한</Th>
+                  {tab === 'mahjong' && <Th>비밀번호</Th>}
+                  {tab === 'social' && <Th>삭제</Th>}
                 </tr>
               </thead>
               <tbody>
@@ -119,10 +240,47 @@ export default function Role() {
                       />
                     </Td>
                     <Td>{index + 1}</Td>
-                    <Td>{item.memberEmail}</Td>
+                    <Td>{item.memberEmail || '-'}</Td>
                     <Td>{item.memberName}</Td>
+                    {tab === 'mahjong' && (
+                      <Td>
+                        <NicknameCell>
+                          <span>{item.memberNickname}</span>
+                          <IconButton
+                            type="button"
+                            title="닉네임 변경"
+                            onClick={() => changeNickname(item.memberId, item.memberNickname)}
+                          >
+                            <MdEdit />
+                          </IconButton>
+                        </NicknameCell>
+                      </Td>
+                    )}
                     <Td>{item.memberPhoneNo}</Td>
-                    <Td>{item.memberLoginType === "KAKAO" ? "카카오" : "네이버"}</Td>
+                    <Td>{LOGIN_TYPE_LABEL[item.memberLoginType] ?? item.memberLoginType}</Td>
+                    {tab === 'mahjong' && (
+                      <Td>
+                        <LinkBadge
+                          as={isAdmin ? 'button' : 'span'}
+                          type={isAdmin ? 'button' : undefined}
+                          $linked={item.mahjongUseStatus === 'Y'}
+                          $clickable={isAdmin}
+                          title={isAdmin ? '클릭하여 연동/해제' : undefined}
+                          onClick={
+                            isAdmin
+                              ? () =>
+                                  toggleMahjongUse(
+                                    item.memberId,
+                                    item.mahjongUseStatus === 'Y',
+                                    item.memberNickname
+                                  )
+                              : undefined
+                          }
+                        >
+                          {item.mahjongUseStatus === 'Y' ? '연동' : '미연동'}
+                        </LinkBadge>
+                      </Td>
+                    )}
                     <Td>
                       <div>
                         <label>
@@ -157,6 +315,25 @@ export default function Role() {
                         </label>
                       </div>
                     </Td>
+                    {tab === 'mahjong' && (
+                      <Td>
+                        <ActionButton type="button" onClick={() => changePassword(item.memberId)}>
+                          변경
+                        </ActionButton>
+                      </Td>
+                    )}
+                    {tab === 'social' && (
+                      <Td>
+                        <DeleteButton
+                          type="button"
+                          onClick={() =>
+                            deleteMember(item.memberId, item.memberName || item.memberNickname)
+                          }
+                        >
+                          삭제
+                        </DeleteButton>
+                      </Td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -178,6 +355,91 @@ export default function Role() {
 
 const NoticeBox = styled.div`
   padding: 10px;
+`;
+
+const LinkBadge = styled.span.withConfig({
+  shouldForwardProp: prop => prop !== '$linked' && prop !== '$clickable',
+})<{ $linked: boolean; $clickable?: boolean } & WithTheme>`
+  display: inline-block;
+  padding: 2px 10px;
+  border: none;
+  border-radius: 999px;
+  font-size: ${({ theme }) => theme.sizes.xsmall};
+  font-weight: ${({ theme }) => theme.weight.semiBold};
+  color: ${({ $linked }) => ($linked ? '#1a7d55' : '#999999')};
+  background-color: ${({ $linked }) => ($linked ? 'rgba(26,125,85,0.12)' : '#f0f0f0')};
+  cursor: ${({ $clickable }) => ($clickable ? 'pointer' : 'default')};
+`;
+
+const NicknameCell = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+`;
+
+const IconButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  color: #988271;
+  cursor: pointer;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
+const ActionButton = styled.button<WithTheme>`
+  padding: 4px 12px;
+  border: 1px solid #988271;
+  border-radius: 4px;
+  background: transparent;
+  color: #988271;
+  font-size: ${({ theme }) => theme.sizes.xsmall};
+  font-weight: ${({ theme }) => theme.weight.semiBold};
+  cursor: pointer;
+  white-space: nowrap;
+`;
+
+const DeleteButton = styled.button<WithTheme>`
+  padding: 4px 12px;
+  border: 1px solid #ff5e57;
+  border-radius: 4px;
+  background: transparent;
+  color: #ff5e57;
+  font-size: ${({ theme }) => theme.sizes.xsmall};
+  font-weight: ${({ theme }) => theme.weight.semiBold};
+  cursor: pointer;
+  white-space: nowrap;
+`;
+
+const TabBar = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+`;
+
+const TabButton = styled.button.withConfig({
+  shouldForwardProp: prop => prop !== '$active',
+})<{ $active: boolean } & WithTheme>`
+  padding: 8px 20px;
+  border: 1px solid #988271;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: ${({ theme }) => theme.weight.semiBold};
+  font-size: ${({ theme }) => theme.sizes.small};
+  background-color: ${({ $active }) => ($active ? '#988271' : '#ffffff')};
+  color: ${({ $active }) => ($active ? '#ffffff' : '#988271')};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    flex: 1;
+    font-size: ${({ theme }) => theme.sizes.xsmall};
+  }
 `;
 
 const TableBox = styled.div`
@@ -202,7 +464,9 @@ const Table = styled.table<WithTheme>`
   font-size: ${({ theme }) => theme.sizes.medium};
   color: ${({ theme }) => theme.colors.subColor};
 
+  /* 모바일: 컬럼이 많아 가로 스크롤(TableBox overflow-x) 되도록 최소 너비 보장 */
   @media ${({ theme }) => theme.device.mobile} {
+    min-width: 760px;
     font-size: ${({ theme }) => theme.sizes.xsmall};
   }
 
@@ -210,6 +474,10 @@ const Table = styled.table<WithTheme>`
   td {
     padding: 14px;
     text-align: center;
+
+    @media ${({ theme }) => theme.device.mobile} {
+      padding: 10px 8px;
+    }
   }
 
   tbody tr {

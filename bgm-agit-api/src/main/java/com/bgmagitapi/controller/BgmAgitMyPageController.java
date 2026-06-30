@@ -45,4 +45,24 @@ public class BgmAgitMyPageController {
         Long memberId = jwt.getClaim("id");
         return bgmAgitMyPageService.changeMyPassword(memberId, request);
     }
+
+    // 마작(BML) 기록 이용 신청 — 보드게임 회원이 KML 등록되고 마작 검색에 노출되도록 전환
+    @PostMapping("/mahjong-use")
+    public ApiResponse applyMahjongUse(@AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) {
+            throw new RuntimeException("비 로그인입니다.");
+        }
+        Long memberId = jwt.getClaim("id");
+        return bgmAgitMyPageService.applyMahjongUse(memberId);
+    }
+
+    // 마작(BML) 기록 이용 해지 (실수 신청 취소)
+    @DeleteMapping("/mahjong-use")
+    public ApiResponse cancelMahjongUse(@AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) {
+            throw new RuntimeException("비 로그인입니다.");
+        }
+        Long memberId = jwt.getClaim("id");
+        return bgmAgitMyPageService.cancelMahjongUse(memberId);
+    }
 }
