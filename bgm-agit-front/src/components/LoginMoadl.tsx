@@ -58,7 +58,11 @@ export default function LoginMoadl({ onClose }: Props) {
       toast.error('닉네임과 비밀번호를 입력해 주세요.');
       return;
     }
-    postFormLogin({ nickname, password: loginPassword }, onClose);
+    // 로그인 성공 직후 새로고침: 서버가 로그인 권한으로 필터링하는 메뉴(마이페이지 등)를
+    // 다시 받아오기 위함. (refreshToken_main 쿠키로 자동 로그인 복원됨)
+    postFormLogin({ nickname, password: loginPassword }, () => {
+      window.location.reload();
+    });
   };
 
   const handleSignupSubmit = (e: React.FormEvent<HTMLFormElement>) => {
