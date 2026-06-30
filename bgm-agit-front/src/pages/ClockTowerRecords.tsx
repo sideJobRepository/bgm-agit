@@ -15,6 +15,8 @@ export default function ClockTowerRecords() {
   const fetchRecords = useClockTowerRecordListFetch();
   const data = useRecoilValue(clockTowerRecordListState);
   const user = useRecoilValue(userState);
+  // 자체로그인(MAHJONG) 회원만 기록 등록 가능 (소셜 회원은 socialId 보유)
+  const isSelfLogin = !!user && !user.socialId;
 
   const [page, setPage] = useState(0);
 
@@ -34,7 +36,9 @@ export default function ClockTowerRecords() {
             {user && (
               <>
                 <GhostButton onClick={() => navigate('/clocktower-history')}>내 기록</GhostButton>
-                <CreateButton onClick={() => navigate('/clockTowerRecordDetail')}>기록하기</CreateButton>
+                {isSelfLogin && (
+                  <CreateButton onClick={() => navigate('/clockTowerRecordDetail')}>기록하기</CreateButton>
+                )}
               </>
             )}
           </HeaderButtons>

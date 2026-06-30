@@ -14,7 +14,6 @@ export type MyPage = {
   nickName: string;
   phoneNo: string;
   nickNameUseStatus: string;
-  mahjongUseStatus: string;
   name: string;
   mail: string;
   registDate: string;

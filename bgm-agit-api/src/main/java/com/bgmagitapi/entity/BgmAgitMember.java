@@ -47,9 +47,6 @@ public class BgmAgitMember extends DateSuperClass {
     @Column(name = "BGM_AGIT_MEMBER_NICKNAME_USE_STATUS")
     private String bgmAgitMemberNicknameUseStatus;
     
-    @Column(name = "BGM_AGIT_MEMBER_MAHJONG_USE_STATUS")
-    private String bgmAgitMemberMahjongUseStatus;
-    
     @Column(name = "BGM_AGIT_MEMBER_KML_ID")
     private Long bgmAgitMemberKmlId;
 
@@ -71,7 +68,6 @@ public class BgmAgitMember extends DateSuperClass {
         this.bgmAgitMemberPhoneNo = normalizePhone(socialProfile.phone());
         this.bgmAgitMemberNickname = socialProfile.name();
         this.bgmAgitMemberNicknameUseStatus = "Y";
-        this.bgmAgitMemberMahjongUseStatus = "N";
         this.bgmAgitMemberAlimtalkStatus = "Y";
     }
 
@@ -84,7 +80,6 @@ public class BgmAgitMember extends DateSuperClass {
         this.bgmAgitMemberKmlSynk = kmlId != null ? "Y" : "N";
         this.socialType = BgmAgitSocialType.MAHJONG;
         this.bgmAgitMemberNicknameUseStatus = "Y";
-        this.bgmAgitMemberMahjongUseStatus = "N";
         this.bgmAgitMemberAlimtalkStatus = "Y";
     }
 
@@ -119,7 +114,6 @@ public class BgmAgitMember extends DateSuperClass {
         this.bgmAgitMemberNickname =  request.getNickName();
         this.bgmAgitMemberPhoneNo =  request.getPhoneNo();
         this.bgmAgitMemberNicknameUseStatus =  request.getNickNameUseStatus();
-        this.bgmAgitMemberMahjongUseStatus = request.getMahjongUseStatus();
         this.bgmAgitMemberAlimtalkStatus = request.getAlimtalkStatus();
     }
     

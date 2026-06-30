@@ -17,6 +17,7 @@ import com.bgmagitapi.clocktower.repository.BgmAgitClockTowerParticipantReposito
 import com.bgmagitapi.clocktower.repository.BgmAgitClockTowerRecordRepository;
 import com.bgmagitapi.clocktower.service.BgmAgitClockTowerRecordService;
 import com.bgmagitapi.entity.BgmAgitMember;
+import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.entity.enumeration.ClockTowerCharacterType;
 import com.bgmagitapi.entity.enumeration.ClockTowerResult;
 import com.bgmagitapi.murder.dto.response.MemberHistoryResponse;
@@ -119,6 +120,10 @@ public class BgmAgitClockTowerRecordServiceImpl implements BgmAgitClockTowerReco
     public ApiResponse createRecord(ClockTowerRecordCreateRequest request, Long memberId) {
         BgmAgitMember writer = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+        // 시계탑 기록은 자체로그인(마작) 회원만 등록 가능
+        if (writer.getSocialType() != BgmAgitSocialType.MAHJONG) {
+            return new ApiResponse(403, false, "자체로그인(마작) 회원만 시계탑 기록을 등록할 수 있습니다.");
+        }
         BgmAgitClockTowerGame game = gameRepository.findById(request.getGameId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게임입니다."));
         boolean draft = request.isDraft();
@@ -136,6 +141,8 @@ public class BgmAgitClockTowerRecordServiceImpl implements BgmAgitClockTowerReco
     public ApiResponse modifyRecord(Long id, ClockTowerRecordModifyRequest request, Long memberId, List<String> roles) {
         BgmAgitClockTowerRecord record = recordRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 기록입니다."));
+        ApiResponse memberTypeGuard = requireClockTowerWriter(memberId, roles);
+        if (memberTypeGuard != null) return memberTypeGuard;
         if (!canManage(record, memberId, roles)) {
             return new ApiResponse(403, false, "수정 권한이 없습니다.");
         }
@@ -157,6 +164,8 @@ public class BgmAgitClockTowerRecordServiceImpl implements BgmAgitClockTowerReco
     public ApiResponse deleteRecord(Long id, Long memberId, List<String> roles) {
         BgmAgitClockTowerRecord record = recordRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 기록입니다."));
+        ApiResponse memberTypeGuard = requireClockTowerWriter(memberId, roles);
+        if (memberTypeGuard != null) return memberTypeGuard;
         if (!canManage(record, memberId, roles)) {
             return new ApiResponse(403, false, "삭제 권한이 없습니다.");
         }
@@ -245,6 +254,20 @@ public class BgmAgitClockTowerRecordServiceImpl implements BgmAgitClockTowerReco
     private boolean isAdmin(List<String> roles) {
         if (roles == null) return false;
         return roles.contains("ROLE_ADMIN") || roles.contains("ADMIN");
+    }
+
+    /**
+     * 시계탑 기록 수정·삭제는 자체로그인(MAHJONG) 회원만 가능.
+     * 단, 관리자는 모더레이션을 위해 socialType 무관하게 허용한다.
+     * 차단 시 403 ApiResponse 를 반환하고, 통과 시 null 을 반환한다.
+     */
+    private ApiResponse requireClockTowerWriter(Long memberId, List<String> roles) {
+        if (isAdmin(roles)) return null;
+        BgmAgitMember member = memberId != null ? memberRepository.findById(memberId).orElse(null) : null;
+        if (member == null || member.getSocialType() != BgmAgitSocialType.MAHJONG) {
+            return new ApiResponse(403, false, "자체로그인(마작) 회원만 시계탑 기록을 수정·삭제할 수 있습니다.");
+        }
+        return null;
     }
 
     private boolean canManage(BgmAgitClockTowerRecord record, Long memberId, List<String> roles) {

@@ -286,6 +286,71 @@ export function useLoginPost() {
   return { postUser };
 }
 
+// 메인사이트 자체로그인 (닉네임 + 비밀번호). /bgm-agit/login → refreshToken_main 쿠키 발급
+export function useFormLoginPost() {
+  const setUser = useSetRecoilState(userState);
+  const setLoading = useSetRecoilState(loadingState);
+
+  const postFormLogin = async (
+    payload: { nickname: string; password: string },
+    onSuccess?: () => void,
+    onError?: () => void
+  ) => {
+    setLoading(true);
+    try {
+      const res = await api.post('/bgm-agit/login', payload);
+      tokenStore.set(res.data.token as string);
+      setUser(res.data.user);
+      onSuccess?.();
+      toast.success('로그인에 성공하였습니다.');
+    } catch (e) {
+      const message =
+        (isAxiosError(e) && (e.response?.data as { message?: string })?.message) ||
+        '로그인에 실패하였습니다.';
+      toast.error(message);
+      onError?.();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { postFormLogin };
+}
+
+// 메인사이트 자체 회원가입. 기존 폼 가입 엔드포인트 재사용 (socialType=MAHJONG 생성)
+export function useSignupPost() {
+  const setLoading = useSetRecoilState(loadingState);
+
+  const postSignup = async (
+    payload: { name: string; nickname: string; phoneNo: string; password: string },
+    onSuccess?: () => void,
+    onError?: () => void
+  ) => {
+    setLoading(true);
+    try {
+      const res = await api.post('/bgm-agit/next/signup', payload);
+      const data = res.data as { success?: boolean; message?: string };
+      if (data?.success === false) {
+        toast.error(data.message ?? '회원가입에 실패했습니다.');
+        onError?.();
+        return;
+      }
+      toast.success(data?.message ?? '회원가입이 완료되었습니다.');
+      onSuccess?.();
+    } catch (e) {
+      const message =
+        (isAxiosError(e) && (e.response?.data as { message?: string })?.message) ||
+        '회원가입에 실패했습니다.';
+      toast.error(message);
+      onError?.();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { postSignup };
+}
+
 export function useInsertPost() {
   const { request } = useRequest();
 

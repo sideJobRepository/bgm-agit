@@ -2,6 +2,7 @@ package com.bgmagitapi.security.handler;
 
 import com.bgmagitapi.advice.response.ErrorMessageResponse;
 import com.bgmagitapi.security.exception.DuplicateMemberException;
+import com.bgmagitapi.security.exception.SocialLoginNotAllowedException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,6 +31,9 @@ public class BgmAuthenticationFailureHandler implements AuthenticationFailureHan
         String message;
         if (exception instanceof DuplicateMemberException) {
             // 동일 휴대폰 번호로 이미 가입된 계정이 있는 경우: 안내 메시지 그대로 전달
+            message = exception.getMessage();
+        } else if (exception instanceof SocialLoginNotAllowedException) {
+            // 가입되지 않은 소셜 계정으로 로그인 시도: 안내 메시지 그대로 전달
             message = exception.getMessage();
         } else if (exception instanceof UsernameNotFoundException) {
             message = "사용자 정보가 존재하지 않습니다.";
