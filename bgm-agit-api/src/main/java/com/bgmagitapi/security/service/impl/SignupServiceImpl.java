@@ -71,7 +71,11 @@ public class SignupServiceImpl implements SignupService {
         BgmAgitRole userRole = bgmAgitMemberDetailRepository.findByBgmAgitRoleName("USER");
         bgmAgitMemberRoleRepository.save(new BgmAgitMemberRole(saved, userRole));
 
-//        eventPublisher.publishEvent(new MemberJoinedEvent(saved.getBgmAgitMemberId()));
+        // 기존사이트(메인, 보드게임) 자체 회원가입 시에만 관리자에게 회원가입 알림톡 발송.
+        // BML(kml-front) 가입은 mahjongUse=true 라 제외. (AFTER_COMMIT 리스너 onMemberJoin → sendJoinMemberBizTalk)
+        if (!request.isMahjongUse()) {
+            eventPublisher.publishEvent(new MemberJoinedEvent(saved.getBgmAgitMemberId()));
+        }
 
         return new ApiResponse(200, true, "회원가입이 완료되었습니다.");
     }
