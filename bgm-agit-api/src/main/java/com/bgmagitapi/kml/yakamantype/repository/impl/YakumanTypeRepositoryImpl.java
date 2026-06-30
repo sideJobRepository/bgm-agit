@@ -24,7 +24,10 @@ public class YakumanTypeRepositoryImpl implements YakumanTypeQueryRepository {
     public List<BgmAgitMember> getMembers() {
         return queryFactory
                 .selectFrom(bgmAgitMember)
-                .where(bgmAgitMember.socialType.eq(BgmAgitSocialType.MAHJONG))
+                .where(
+                        bgmAgitMember.socialType.eq(BgmAgitSocialType.MAHJONG),
+                        bgmAgitMember.bgmAgitMemberMahjongUseStatus.eq("Y")
+                )
                 .fetch();
     }
     

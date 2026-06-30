@@ -2,6 +2,7 @@ package com.bgmagitapi.controller;
 
 
 import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.controller.request.BgmAgitMahjongUseRequest;
 import com.bgmagitapi.controller.request.BgmAgitMemberNicknameChangeRequest;
 import com.bgmagitapi.controller.request.BgmAgitMemberPasswordChangeRequest;
 import com.bgmagitapi.controller.request.BgmAgitRoleModifyRequest;
@@ -61,6 +62,20 @@ public class BgmAgitRoleController {
     public ApiResponse changeNickname(@AuthenticationPrincipal Jwt jwt,
                                       @Validated @RequestBody BgmAgitMemberNicknameChangeRequest request) {
         return bgmAgitRoleService.changeNickname(request, extractRoles(jwt));
+    }
+
+    // 소셜 회원 삭제 (관리자 전용, 소셜 탭 정리용)
+    @DeleteMapping("/role/{memberId}")
+    public ApiResponse deleteSocialMember(@AuthenticationPrincipal Jwt jwt,
+                                          @PathVariable Long memberId) {
+        return bgmAgitRoleService.deleteSocialMember(memberId, extractRoles(jwt));
+    }
+
+    // 관리자가 자체로그인 회원의 마작(BML) 연동을 켜고 끔
+    @PutMapping("/mahjong-role/mahjong-use")
+    public ApiResponse setMahjongUse(@AuthenticationPrincipal Jwt jwt,
+                                     @Validated @RequestBody BgmAgitMahjongUseRequest request) {
+        return bgmAgitRoleService.setMahjongUse(request.getMemberId(), request.isUse(), extractRoles(jwt));
     }
 
     private List<String> extractRoles(Jwt jwt) {

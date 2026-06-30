@@ -12,11 +12,13 @@ import com.bgmagitapi.entity.BgmAgitRole;
 import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.repository.BgmAgitMemberRoleRepository;
+import com.bgmagitapi.repository.BgmAgitRefreshTokenRepository;
 import com.bgmagitapi.repository.BgmAgitRoleRepository;
 import com.bgmagitapi.security.manager.BgmAgitAuthorizationManager;
 import com.bgmagitapi.security.service.kml.KmlUserClient;
 import com.bgmagitapi.service.BgmAgitRoleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -47,6 +49,8 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
     private final BgmAgitAuthorizationManager bgmAgitAuthorizationManager;
 
     private final KmlUserClient kmlUserClient;
+
+    private final BgmAgitRefreshTokenRepository bgmAgitRefreshTokenRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -169,14 +173,70 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
 
         member.changeNickname(newNickname);
 
-        Long kmlId = kmlUserClient.findOrRegisterKmlIdByNickname(newNickname).orElse(null);
-        if (kmlId != null) {
-            member.linkKml(kmlId);
-        } else {
-            member.markKmlSyncFailed();
+        // 마작(BML) 이용 회원만 KML 동기화. 보드게임 회원(mahjongUse!='Y')은 닉네임만 바꾸고 KML 등록 생략(defer 유지).
+        if ("Y".equals(member.getBgmAgitMemberMahjongUseStatus())) {
+            Long kmlId = kmlUserClient.findOrRegisterKmlIdByNickname(newNickname).orElse(null);
+            if (kmlId != null) {
+                member.linkKml(kmlId);
+            } else {
+                member.markKmlSyncFailed();
+            }
         }
 
         return new ApiResponse(200, true, "닉네임이 변경되었습니다.");
+    }
+
+    @Override
+    public ApiResponse deleteSocialMember(Long memberId, List<String> actorRoles) {
+        if (!hasRole(actorRoles, ROLE_ADMIN)) {
+            throw new RuntimeException("관리자만 회원을 삭제할 수 있습니다.");
+        }
+
+        BgmAgitMember member = bgmAgitMemberRepository.findById(memberId)
+                .orElseThrow(() -> new RuntimeException("해당 회원을 찾을 수 없습니다."));
+
+        // 이 메뉴(소셜 탭)는 소셜 회원 정리용. 자체로그인(마작) 회원은 삭제 차단.
+        if (member.getSocialType() == BgmAgitSocialType.MAHJONG) {
+            throw new ValidException("자체로그인(마작) 회원은 이 메뉴에서 삭제할 수 없습니다.");
+        }
+
+        // 회원 고유 인증 데이터(권한 매핑·리프레시 토큰)는 함께 제거 (FK RESTRICT)
+        bgmAgitRefreshTokenRepository.deleteByBgmAgitMember_BgmAgitMemberId(memberId);
+        bgmAgitMemberRoleRepository.deleteByBgmAgitMember_BgmAgitMemberId(memberId);
+
+        // 예약·문의·게시글 등 콘텐츠 자식이 남아있으면 FK 위반 → 정리 후 삭제 안내
+        try {
+            bgmAgitMemberRepository.delete(member);
+            bgmAgitMemberRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new ValidException("예약·문의·게시글 등 연관 데이터가 있어 삭제할 수 없습니다. 먼저 해당 데이터를 정리한 뒤 삭제해 주세요.");
+        }
+
+        bgmAgitAuthorizationManager.reload();
+        return new ApiResponse(200, true, "회원이 삭제되었습니다.");
+    }
+
+    @Override
+    public ApiResponse setMahjongUse(Long memberId, boolean use, List<String> actorRoles) {
+        if (!hasRole(actorRoles, ROLE_ADMIN)) {
+            throw new RuntimeException("관리자만 마작 연동을 변경할 수 있습니다.");
+        }
+
+        BgmAgitMember member = bgmAgitMemberRepository.findById(memberId)
+                .orElseThrow(() -> new RuntimeException("해당 회원을 찾을 수 없습니다."));
+
+        if (member.getSocialType() != BgmAgitSocialType.MAHJONG) {
+            throw new ValidException("자체로그인 회원만 마작 연동을 설정할 수 있습니다.");
+        }
+
+        if (use) {
+            Long kmlId = kmlUserClient.findOrRegisterKmlIdByNickname(member.getBgmAgitMemberNickname()).orElse(null);
+            member.enableMahjongUse(kmlId);
+            return new ApiResponse(200, true, "마작 기록 연동되었습니다.");
+        } else {
+            member.disableMahjongUse();
+            return new ApiResponse(200, true, "마작 기록 연동이 해제되었습니다.");
+        }
     }
 
     private boolean hasRole(List<String> roles, String role) {

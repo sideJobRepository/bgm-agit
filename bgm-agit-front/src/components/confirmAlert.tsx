@@ -2,6 +2,7 @@ import { confirmAlert } from 'react-confirm-alert';
 import styled from 'styled-components';
 import { useState } from 'react';
 import { MdAdd, MdRemove } from 'react-icons/md';
+import { toast } from 'react-toastify';
 
 interface Props {
   message: React.ReactNode;
@@ -120,6 +121,80 @@ export function showReservationConfirmModal(props: ReservationConfirmProps) {
   });
 }
 
+// 텍스트/비밀번호 입력 모달 (닉네임·비밀번호 변경 등)
+interface InputModalProps {
+  message: React.ReactNode;
+  label?: string;
+  initialValue?: string;
+  inputType?: 'text' | 'password';
+  placeholder?: string;
+  minLength?: number;
+  onConfirm: (value: string) => void;
+  onCancel?: () => void;
+}
+
+function InputModalContent({
+  message,
+  label,
+  initialValue,
+  inputType = 'text',
+  placeholder,
+  minLength,
+  onClose,
+  onConfirm,
+  onCancel,
+}: InputModalProps & { onClose: () => void }) {
+  const [value, setValue] = useState(initialValue ?? '');
+
+  const handleConfirm = () => {
+    const v = value.trim();
+    if (!v) {
+      toast.error('값을 입력해 주세요.');
+      return;
+    }
+    if (minLength && v.length < minLength) {
+      toast.error(`${minLength}자 이상 입력해 주세요.`);
+      return;
+    }
+    onConfirm(v);
+    onClose();
+  };
+
+  return (
+    <AlertWrapper>
+      <Message>{message}</Message>
+      {label && <FieldLabel>{label}</FieldLabel>}
+      <ReasonInput
+        type={inputType}
+        placeholder={placeholder}
+        value={value}
+        autoFocus
+        onChange={e => setValue(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === 'Enter') handleConfirm();
+        }}
+      />
+      <ButtonGroup>
+        <CancelButton
+          onClick={() => {
+            onCancel?.();
+            onClose();
+          }}
+        >
+          취소
+        </CancelButton>
+        <ConfirmButton onClick={handleConfirm}>확인</ConfirmButton>
+      </ButtonGroup>
+    </AlertWrapper>
+  );
+}
+
+export function showInputModal(props: InputModalProps) {
+  confirmAlert({
+    customUI: ({ onClose }) => <InputModalContent {...props} onClose={onClose} />,
+  });
+}
+
 // 스타일 컴포넌트 정의
 const AlertWrapper = styled.div`
   background: #fff;
@@ -138,6 +213,14 @@ const Message = styled.div`
   line-height: 1.5;
   color: #757575;
   white-space: pre-line;
+`;
+
+const FieldLabel = styled.div`
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #9e9e9e;
+  text-align: left;
 `;
 
 const ButtonGroup = styled.div`

@@ -50,7 +50,8 @@ export function useSignupPost() {
 
   const postSignup = (payload: SignupPayload, onSuccess?: () => void) =>
     request(
-      () => api.post('/bgm-agit/next/signup', payload).then((res) => res.data),
+      // BML(kml-front) 가입은 마작 기록 이용 회원(mahjongUse=true) → 가입 시 KML 등록 수행
+      () => api.post('/bgm-agit/next/signup', { ...payload, mahjongUse: true }).then((res) => res.data),
       (res) => {
         if (res?.success) {
           onSuccess?.();

@@ -39,7 +39,8 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                         bgmAgitRole.bgmAgitRoleName,
                         bgmAgitMember.bgmAgitMemberEmail,
                         bgmAgitMember.bgmAgitMemberPhoneNo,
-                        bgmAgitMember.socialType.stringValue()
+                        bgmAgitMember.socialType.stringValue(),
+                        bgmAgitMember.bgmAgitMemberMahjongUseStatus
                 ))
                 .from(bgmAgitMemberRole)
                 .join(bgmAgitMemberRole.bgmAgitMember, bgmAgitMember)
@@ -77,7 +78,8 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
                         bgmAgitRole.bgmAgitRoleName,
                         bgmAgitMember.bgmAgitMemberEmail,
                         bgmAgitMember.bgmAgitMemberPhoneNo,
-                        bgmAgitMember.socialType.stringValue()
+                        bgmAgitMember.socialType.stringValue(),
+                        bgmAgitMember.bgmAgitMemberMahjongUseStatus
                 ))
                 .from(bgmAgitMemberRole)
                 .join(bgmAgitMemberRole.bgmAgitMember, bgmAgitMember)

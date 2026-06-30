@@ -36,6 +36,16 @@ export function useFetchMainMenu() {
   }, []);
 }
 
+// 로그인 직후 등 권한이 바뀐 시점에 메뉴를 명령형으로 다시 받아온다.
+// (reload 없이 서버 권한 필터링된 메뉴를 갱신하기 위함)
+export function useRefetchMainMenu() {
+  const setMainMenu = useSetRecoilState(mainMenuState);
+  const { request } = useRequest();
+
+  return () =>
+    request(() => api.get('/bgm-agit/main-menu').then(res => res.data), setMainMenu);
+}
+
 export function useFetchMainData(param?: {
   labelGb?: number;
   link?: string;
@@ -142,11 +152,14 @@ export function useRoletFetch() {
   const { request } = useRequest();
   const setRole = useSetRecoilState(roleState);
 
-  const fetchRole = (page: number, memberEmail: string) => {
+  // mahjong=true 면 자체로그인(MAHJONG) 회원, 아니면 소셜(KAKAO/NAVER/GOOGLE) 회원 목록을 받는다.
+  // 두 엔드포인트 모두 동일한 BgmAgitRoleResponse 페이지 형태를 반환한다.
+  const fetchRole = (page: number, memberEmail: string, mahjong = false) => {
+    const url = mahjong ? '/bgm-agit/mahjong-role' : '/bgm-agit/role';
     request(
       () =>
         api
-          .get('/bgm-agit/role', {
+          .get(url, {
             params: { page, res: memberEmail },
           })
           .then(res => res.data),
@@ -328,7 +341,9 @@ export function useSignupPost() {
   ) => {
     setLoading(true);
     try {
-      const res = await api.post('/bgm-agit/next/signup', payload);
+      // 메인사이트 가입은 보드게임 회원(mahjongUse=false) → 가입 시 KML 등록하지 않음.
+      // 마작 기록 이용은 마이페이지의 "마작 기록 이용 신청"으로 별도 전환.
+      const res = await api.post('/bgm-agit/next/signup', { ...payload, mahjongUse: false });
       const data = res.data as { success?: boolean; message?: string };
       if (data?.success === false) {
         toast.error(data.message ?? '회원가입에 실패했습니다.');
@@ -349,6 +364,34 @@ export function useSignupPost() {
   };
 
   return { postSignup };
+}
+
+// 마이페이지 비밀번호 변경. 실패 시 백엔드 메시지(예: "현재 비밀번호가 일치하지 않습니다.")를 그대로 노출
+export function useChangeMyPasswordPost() {
+  const setLoading = useSetRecoilState(loadingState);
+
+  const changeMyPassword = async (
+    payload: { currentPassword: string; newPassword: string },
+    onSuccess?: () => void,
+    onError?: () => void
+  ) => {
+    setLoading(true);
+    try {
+      await api.put('/bgm-agit/mypage/password', payload);
+      toast.success('비밀번호가 변경되었습니다.');
+      onSuccess?.();
+    } catch (e) {
+      const message =
+        (isAxiosError(e) && (e.response?.data as { message?: string })?.message) ||
+        '비밀번호 변경에 실패했습니다.';
+      toast.error(message);
+      onError?.();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { changeMyPassword };
 }
 
 export function useInsertPost() {

@@ -56,12 +56,9 @@ CREATE PROCEDURE MERGE_MEMBER(IN p_keep BIGINT, IN p_dup BIGINT)
 BEGIN
     -- (a) 유니크 제약: 충돌 행 선삭제 --------------------------------
 
-    -- BGM_AGIT_MEMBER_ROLE (member_id, role_id)
-    DELETE dr FROM BGM_AGIT_MEMBER_ROLE dr
-        JOIN BGM_AGIT_MEMBER_ROLE kr
-          ON kr.BGM_AGIT_MEMBER_ID = p_keep
-         AND kr.BGM_AGIT_ROLE_ID  = dr.BGM_AGIT_ROLE_ID
-     WHERE dr.BGM_AGIT_MEMBER_ID = p_dup;
+    -- BGM_AGIT_MEMBER_ROLE: dup의 권한 행은 keep으로 이관하지 않고 전부 삭제.
+    --   (keep은 자기 권한 유지. dup 권한을 keep에 합치면 안 되고, 남겨두면 회원 삭제가 FK로 막힘)
+    DELETE FROM BGM_AGIT_MEMBER_ROLE WHERE BGM_AGIT_MEMBER_ID = p_dup;
 
     -- BGM_AGIT_GATHERING_PARTICIPANT (gathering_id, member_id) — 테이블 잔존 시
     IF (SELECT COUNT(*) FROM information_schema.TABLES
@@ -83,11 +80,21 @@ BEGIN
          WHERE dp.BGM_AGIT_MEMBER_ID = p_dup;
     END IF;
 
+    -- BGM_AGIT_CLOCKTOWER_PARTICIPANT (clocktower_record_id, member_id) — 테이블 있을 때만
+    IF (SELECT COUNT(*) FROM information_schema.TABLES
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'BGM_AGIT_CLOCKTOWER_PARTICIPANT') > 0 THEN
+        DELETE dp FROM BGM_AGIT_CLOCKTOWER_PARTICIPANT dp
+            JOIN BGM_AGIT_CLOCKTOWER_PARTICIPANT kp
+              ON kp.BGM_AGIT_MEMBER_ID            = p_keep
+             AND kp.BGM_AGIT_CLOCKTOWER_RECORD_ID = dp.BGM_AGIT_CLOCKTOWER_RECORD_ID
+         WHERE dp.BGM_AGIT_MEMBER_ID = p_dup;
+    END IF;
+
     -- (b) 리프레시 토큰: dup 것 삭제 --------------------------------
     DELETE FROM BGM_AGIT_REFRESH_TOKEN WHERE BGM_AGIT_MEMBER_ID = p_dup;
 
     -- (c) 회원 소유 테이블 전부 이관 (존재하는 것만) ----------------
-    CALL _reassign_member('BGM_AGIT_MEMBER_ROLE',             p_keep, p_dup);
+    --   ※ BGM_AGIT_MEMBER_ROLE 은 위 (a)에서 dup 행을 삭제했으므로 이관하지 않음
     CALL _reassign_member('BGM_AGIT_RESERVATION',             p_keep, p_dup);
     CALL _reassign_member('BGM_AGIT_INQUIRY',                 p_keep, p_dup);
     CALL _reassign_member('BGM_AGIT_FREE',                    p_keep, p_dup);
@@ -104,6 +111,8 @@ BEGIN
     CALL _reassign_member('BGM_AGIT_GATHERING_PARTICIPANT',   p_keep, p_dup);
     CALL _reassign_member('BGM_AGIT_PLAY_RECORD',             p_keep, p_dup);
     CALL _reassign_member('BGM_AGIT_PLAY_RECORD_PARTICIPANT', p_keep, p_dup);
+    CALL _reassign_member('BGM_AGIT_CLOCKTOWER_RECORD',       p_keep, p_dup);
+    CALL _reassign_member('BGM_AGIT_CLOCKTOWER_PARTICIPANT',  p_keep, p_dup);
 
     -- (d) dup 회원 삭제 --------------------------------------------
     DELETE FROM BGM_AGIT_MEMBER WHERE BGM_AGIT_MEMBER_ID = p_dup;
@@ -118,17 +127,6 @@ DELIMITER ;
 START TRANSACTION;
 
 CALL MERGE_MEMBER(1,   41);   -- 010-2331-6538  keep 1(KAKAO 닉넴수정)  / del 41(NAVER 박지수)
-CALL MERGE_MEMBER(25,  42);   -- 010-2488-6213  keep 25(KAKAO 윤어진)    / del 42(NAVER 윤어진)
-CALL MERGE_MEMBER(77,  57);   -- 010-3007-5641  keep 77(NAVER 조영진)    / del 57(KAKAO 조영진)
-CALL MERGE_MEMBER(87,  118);  -- 010-4370-8779  keep 87(KAKAO 박시연)    / del 118(NAVER 박시연)
-CALL MERGE_MEMBER(3,   82);   -- 010-5059-3499  keep 3(KAKAO 밤)         / del 82(NAVER 박범후)
-CALL MERGE_MEMBER(63,  109);  -- 010-5574-9929  keep 63(KAKAO 박성찬)    / del 109(NAVER 박성찬)
-CALL MERGE_MEMBER(93,  27);   -- 010-5674-0597  keep 93(NAVER 김화현)    / del 27(KAKAO 김화현)
-CALL MERGE_MEMBER(4,   38);   -- 010-6280-7022  keep 4(KAKAO 배성환)     / del 38(NAVER 배성환)
-CALL MERGE_MEMBER(114, 86);   -- 010-6415-1550  keep 114(KAKAO 리일쓰)   / del 86(NAVER 서진영)
-CALL MERGE_MEMBER(76,  188);  -- 010-6651-4025  keep 76(KAKAO 문준서)    / del 188(NAVER 문준서)
-CALL MERGE_MEMBER(51,  7);    -- 010-9206-2248  keep 51(NAVER 유준수)    / del 7(KAKAO 황금)
-CALL MERGE_MEMBER(55,  116);  -- 010-9423-0472  keep 55(NAVER 박진민)    / del 116(KAKAO 박진민)
 
 -- 검증([4]) 확인 후:
 -- COMMIT;

@@ -21,4 +21,10 @@ public interface BgmAgitRoleService {
     ApiResponse changePassword(BgmAgitMemberPasswordChangeRequest request, List<String> actorRoles);
 
     ApiResponse changeNickname(BgmAgitMemberNicknameChangeRequest request, List<String> actorRoles);
+
+    // 소셜 회원 하드 삭제 (관리자 전용, 자식 데이터 없을 때만)
+    ApiResponse deleteSocialMember(Long memberId, List<String> actorRoles);
+
+    // 관리자가 자체로그인 회원의 마작(BML) 연동을 켜고 끔 (use=true면 KML 등록까지)
+    ApiResponse setMahjongUse(Long memberId, boolean use, List<String> actorRoles);
 }

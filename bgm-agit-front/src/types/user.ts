@@ -17,4 +17,6 @@ export type MyPage = {
   name: string;
   mail: string;
   registDate: string;
+  alimtalkStatus?: string; // 'Y'/'N' 알림톡 수신 여부 (수정 시 보존용)
+  mahjongUseStatus?: string; // 'Y' = 마작(BML) 기록 이용 회원
 };

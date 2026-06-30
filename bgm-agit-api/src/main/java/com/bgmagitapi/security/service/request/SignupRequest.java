@@ -23,4 +23,8 @@ public class SignupRequest {
     @NotBlank(message = "비밀번호는 필수입니다.")
     @Size(min = 4, message = "비밀번호는 최소 4자 이상이어야 합니다.")
     private String password;
+
+    // 마작(BML) 이용 회원으로 가입할지 여부. 메인사이트(보드게임) 가입은 false(기본), BML(kml-front) 가입은 true.
+    // true일 때만 가입 시점에 KML 등록을 수행한다.
+    private boolean mahjongUse = false;
 }

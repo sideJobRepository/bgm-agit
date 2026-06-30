@@ -30,9 +30,11 @@ public interface BgmAgitMemberRepository extends JpaRepository<BgmAgitMember, Lo
     List<BgmAgitMember> findTop50ByBgmAgitMemberNicknameContainingOrBgmAgitMemberNameContainingOrderByBgmAgitMemberNicknameAsc(
             String nickname, String name);
 
-    // 참가자 검색 (소셜 가입자만: 카카오/네이버 등). 닉네임/이름 부분일치, 상위 N명은 Pageable 로 제한.
+    // 참가자 검색 (마작/BML 이용 회원만). 닉네임/이름 부분일치, 상위 N명은 Pageable 로 제한.
+    // mahjongUseStatus='Y' 조건으로 보드게임 전용 가입자(메인사이트)는 검색에서 제외한다.
     @Query("select m from BgmAgitMember m " +
             "where m.socialType in :socialTypes " +
+            "and m.bgmAgitMemberMahjongUseStatus = 'Y' " +
             "and (lower(m.bgmAgitMemberNickname) like lower(concat('%', :kw, '%')) " +
             "  or lower(m.bgmAgitMemberName) like lower(concat('%', :kw, '%'))) " +
             "order by m.bgmAgitMemberNickname asc")

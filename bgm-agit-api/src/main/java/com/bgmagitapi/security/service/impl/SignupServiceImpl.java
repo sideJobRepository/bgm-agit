@@ -53,14 +53,18 @@ public class SignupServiceImpl implements SignupService {
         }
 
         String hashedPassword = passwordEncoder.encode(request.getPassword());
-        Long kmlId = kmlUserClient.findOrRegisterKmlIdByNickname(nickname).orElse(null);
+        // 마작(BML) 이용 회원으로 가입할 때만 KML 조회·자동등록. 보드게임(메인) 가입은 KML 호출 생략.
+        Long kmlId = request.isMahjongUse()
+                ? kmlUserClient.findOrRegisterKmlIdByNickname(nickname).orElse(null)
+                : null;
 
         BgmAgitMember member = new BgmAgitMember(
                 request.getName(),
                 nickname,
                 request.getPhoneNo(),
                 hashedPassword,
-                kmlId
+                kmlId,
+                request.isMahjongUse()
         );
         BgmAgitMember saved = bgmAgitMemberRepository.save(member);
 
