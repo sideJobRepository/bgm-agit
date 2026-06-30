@@ -175,8 +175,8 @@ public class BgmAgitPlayRecordServiceImpl implements BgmAgitPlayRecordService {
     @Transactional(readOnly = true)
     public List<AllMemberResponse> searchMembers(String keyword) {
         String kw = keyword == null ? "" : keyword.trim();
-        // 소셜 가입자(카카오/네이버)만 노출. 폼 가입(MAHJONG) 등은 제외.
-        List<BgmAgitSocialType> socialTypes = List.of(BgmAgitSocialType.KAKAO, BgmAgitSocialType.NAVER);
+        // 자체로그인(MAHJONG) 회원만 노출. 소셜 가입(카카오/네이버) 등은 제외.
+        List<BgmAgitSocialType> socialTypes = List.of(BgmAgitSocialType.MAHJONG);
         return memberRepository
                 .searchMembersBySocialTypes(kw, socialTypes, PageRequest.of(0, 50))
                 .stream()

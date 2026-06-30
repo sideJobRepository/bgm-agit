@@ -23,7 +23,6 @@ export default function MyPageModal({ onClose }: Props) {
 
   const [nickName, setNickName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [mahjongUse, setMahjongUse] = useState<'Y' | 'N'>('N');
   //휴대폰 정규식
   const PHONE_REGEX = /^01[0-9]-[0-9]{3,4}-[0-9]{4}$/;
 
@@ -47,7 +46,6 @@ export default function MyPageModal({ onClose }: Props) {
       nickName: nickName,
       phoneNo: phoneNumber,
       nickNameUseStatus: 'Y',
-      mahjongUseStatus: mahjongUse,
     };
 
     showConfirmModal({
@@ -73,7 +71,6 @@ export default function MyPageModal({ onClose }: Props) {
   useEffect(() => {
     setNickName(items?.nickName);
     setPhoneNumber(items?.phoneNo);
-    setMahjongUse(items?.mahjongUseStatus === 'Y' ? 'Y' : 'N');
   }, [items]);
 
   return (
@@ -87,17 +84,6 @@ export default function MyPageModal({ onClose }: Props) {
           <h2>회원정보</h2>
         </CenterModalBox>
         <BottomModalBox>
-          <InputBox>
-            <label htmlFor="email">EMAIL</label>
-            <input
-              id="email"
-              className="readonly-input"
-              type="text"
-              placeholder="이메일을 입력해주세요."
-              value={items?.mail}
-              readOnly
-            />
-          </InputBox>
           <InputBox>
             <label htmlFor="registDate">가입일자</label>
             <input
@@ -140,16 +126,6 @@ export default function MyPageModal({ onClose }: Props) {
               value={phoneNumber}
               onChange={e => setPhoneNumber(e.target.value)}
             />
-          </InputBox>
-          <InputBox>
-            <CheckRow>
-              <label>마작기록 사용 여부</label>
-              <input
-                type="checkbox"
-                checked={mahjongUse === 'Y'}
-                onChange={e => setMahjongUse(e.target.checked ? 'Y' : 'N')}
-              />
-            </CheckRow>
           </InputBox>
           <button onClick={() => updateData()}>수정하기</button>
         </BottomModalBox>
@@ -265,17 +241,5 @@ const InputBox = styled.div<WithTheme>`
   .readonly-input {
     background-color: transparent;
     border: none;
-  }
-`;
-
-const CheckRow = styled.div`
-  display: flex;
-  align-items: center;
-
-  width: 100%;
-
-  input {
-    width: 40px;
-    height: 20px;
   }
 `;

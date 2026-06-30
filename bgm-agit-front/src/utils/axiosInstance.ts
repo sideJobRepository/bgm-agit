@@ -17,6 +17,7 @@ let refreshing: Promise<string | null> | null = null;
 function isAuthEndpoint(url?: string) {
    return !!url && (
     url.includes('/bgm-agit/refresh') ||
+    url.includes('/bgm-agit/login') ||
     url.includes('/bgm-agit/next/login') ||
     url.includes('/bgm-agit/next/signup') ||
     url.includes('/bgm-agit/kakao-login') ||

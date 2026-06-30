@@ -170,6 +170,10 @@ export default function ClockTowerRecordDetail() {
   const id = searchParams.get('id');
 
   const user = useRecoilValue(userState);
+  // 자체로그인(MAHJONG) 회원만 등록·수정·삭제 가능. 소셜 회원은 socialId 보유. 관리자는 모더레이션 예외.
+  const isSelfLogin = !!user && !user.socialId;
+  const isAdmin = !!user && (user.roles ?? []).some(r => r === 'ROLE_ADMIN' || r === 'ADMIN');
+  const canWrite = isSelfLogin || isAdmin;
   const detail = useRecoilValue(clockTowerRecordDetailState);
   const fetchDetail = useClockTowerRecordDetailFetch();
   const { insert } = useInsertPost();
@@ -369,6 +373,10 @@ export default function ClockTowerRecordDetail() {
       toast.error('로그인이 필요합니다.');
       return;
     }
+    if (!canWrite) {
+      toast.error('자체로그인(마작) 회원만 시계탑 기록을 작성할 수 있습니다.');
+      return;
+    }
     if (!gameId) {
       toast.error('게임을 선택해주세요.');
       return;
@@ -472,7 +480,7 @@ export default function ClockTowerRecordDetail() {
       <Wrapper>
         <Box>
           <ButtonRow>
-            {detail?.canManage && (
+            {detail?.canManage && canWrite && (
               <>
                 <Button color="#4A2C82" onClick={() => setEditMode(true)}>수정</Button>
                 <Button color="#FF5E57" onClick={onDelete}>삭제</Button>

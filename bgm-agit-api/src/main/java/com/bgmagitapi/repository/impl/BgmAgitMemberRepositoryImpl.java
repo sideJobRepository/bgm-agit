@@ -24,7 +24,6 @@ public class BgmAgitMemberRepositoryImpl implements BgmAgitMemberCustomRepositor
                                 bgmAgitMember.bgmAgitMemberNickname,
                                 bgmAgitMember.bgmAgitMemberPhoneNo,
                                 bgmAgitMember.bgmAgitMemberNicknameUseStatus,
-                                bgmAgitMember.bgmAgitMemberMahjongUseStatus,
                                 bgmAgitMember.bgmAgitMemberAlimtalkStatus,
                                 bgmAgitMember.registDate
                         )

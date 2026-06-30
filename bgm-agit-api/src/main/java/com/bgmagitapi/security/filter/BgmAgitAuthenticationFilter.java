@@ -21,12 +21,16 @@ import java.io.IOException;
 public class BgmAgitAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
     public static final String FORM_LOGIN_PATH = "/bgm-agit/next/login";
+    // 메인사이트(bgm-agit-front) 자체로그인 경로. /next/login 과 동일한 폼 인증을 쓰되,
+    // 성공 핸들러가 URI로 쿠키 이름을 구분하므로 이 경로는 refreshToken_main 쿠키를 받는다.
+    public static final String MAIN_FORM_LOGIN_PATH = "/bgm-agit/login";
 
     public BgmAgitAuthenticationFilter() {
         super(new OrRequestMatcher(
                 new AntPathRequestMatcher("/bgm-agit/kakao-login", "POST"),
                 new AntPathRequestMatcher("/bgm-agit/naver-login", "POST"),
-                new AntPathRequestMatcher(FORM_LOGIN_PATH, "POST")
+                new AntPathRequestMatcher(FORM_LOGIN_PATH, "POST"),
+                new AntPathRequestMatcher(MAIN_FORM_LOGIN_PATH, "POST")
         ));
     }
 
@@ -35,7 +39,7 @@ public class BgmAgitAuthenticationFilter extends AbstractAuthenticationProcessin
         String uri = request.getRequestURI();
         ObjectMapper objectMapper = new ObjectMapper();
 
-        if (FORM_LOGIN_PATH.equals(uri)) {
+        if (FORM_LOGIN_PATH.equals(uri) || MAIN_FORM_LOGIN_PATH.equals(uri)) {
             FormLoginRequest loginRequest = objectMapper.readValue(request.getReader(), FormLoginRequest.class);
             if (loginRequest.getNickname() == null || loginRequest.getNickname().isBlank()
                     || loginRequest.getPassword() == null || loginRequest.getPassword().isBlank()) {

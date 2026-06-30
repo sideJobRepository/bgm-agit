@@ -3,6 +3,12 @@ Disallow: /bgm-agit/
 Disallow: /api/
 Disallow: /admin/
 Disallow: /private/
+Disallow: /role
+Disallow: /menuManage
+Disallow: /my-academy
+Disallow: /play-history
+Disallow: /clocktower-history
+Disallow: /reservationList
 Disallow: /record/login
 Disallow: /record/role
 Disallow: /record/signup
@@ -15,6 +21,12 @@ Disallow: /bgm-agit/
 Disallow: /api/
 Disallow: /admin/
 Disallow: /private/
+Disallow: /role
+Disallow: /menuManage
+Disallow: /my-academy
+Disallow: /play-history
+Disallow: /clocktower-history
+Disallow: /reservationList
 Disallow: /record/login
 Disallow: /record/role
 Disallow: /record/signup
