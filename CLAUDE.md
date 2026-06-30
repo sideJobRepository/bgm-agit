@@ -5,7 +5,7 @@
 ## 구성
 
 - `bgm-agit-api` — Spring Boot 3.4.7 / Java 17 / JPA + QueryDSL / MySQL 8.0
-- `bgm-agit-front` — 메인 도메인 프론트 (Vite, 포트 5173 예상). 여기선 **소셜 로그인** 사용
+- `bgm-agit-front` — 메인 도메인 프론트 (Vite, 포트 5173 예상). **자체로그인(폼) 주력 + 소셜은 기존 회원 전용** (2026-06-30 전환, 아래 "메인사이트 자체로그인 전환" 참고)
 - `bgm-agit-kml-front` — Next.js 15+ (`basePath: /record`). 여기선 **일반 폼 로그인** 사용
 - 같은 API·같은 DB·같은 JWT를 공유하는 SSO 구조
 
@@ -14,16 +14,17 @@
 ### 로그인 경로 3가지
 | 경로 | 누가 쓰나 | 입력 |
 |---|---|---|
-| `POST /bgm-agit/kakao-login` | `bgm-agit-front` | 카카오 `code` |
-| `POST /bgm-agit/naver-login` | `bgm-agit-front` | 네이버 `code` |
-| `POST /bgm-agit/next/login` | `bgm-agit-kml-front` | `{ nickname, password }` |
+| `POST /bgm-agit/kakao-login` | `bgm-agit-front` | 카카오 `code` (**기존 가입 회원만**, 신규 소셜 가입 차단) |
+| `POST /bgm-agit/naver-login` | `bgm-agit-front` | 네이버 `code` (**기존 가입 회원만**) |
+| `POST /bgm-agit/login` | `bgm-agit-front` | `{ nickname, password }` (자체로그인, MAHJONG) → `refreshToken_main` |
+| `POST /bgm-agit/next/login` | `bgm-agit-kml-front` | `{ nickname, password }` (자체로그인, MAHJONG) → `refreshToken_record` |
 
-성공 시 세 경로 모두 동일한 JWT 액세스 토큰을 발급하지만, **리프레시 쿠키는 앱별로 분리**됨. 발급 로직은 `BgmAgitAuthenticationSuccessHandler`.
+성공 시 네 경로 모두 동일한 JWT 액세스 토큰을 발급하지만, **리프레시 쿠키는 앱별로 분리**됨. 발급 로직은 `BgmAgitAuthenticationSuccessHandler`. **쿠키 이름은 요청 URI로 결정** (`/bgm-agit/next/login`이면 `refreshToken_record`, 그 외(`/login`, `/kakao-login`, `/naver-login`)는 `refreshToken_main`). 그래서 메인 폼로그인은 `/bgm-agit/login`(= `/next/login` 아님)으로 둬서 `refreshToken_main`을 받게 한 것.
 
 ### 리프레시 토큰 쿠키 분리 (메인 ↔ /record 자동 로그인 차단)
 같은 도메인 하위 `/`(bgm-agit-front, 소셜 로그인)와 `/record`(kml-front, 폼 로그인)에서 서로 다른 쿠키를 사용해 한쪽 로그인이 다른 쪽으로 새지 않도록 함.
 - `/bgm-agit/next/login` 성공 → `refreshToken_record` 쿠키
-- `/bgm-agit/kakao-login`, `/bgm-agit/naver-login` 성공 → `refreshToken_main` 쿠키
+- `/bgm-agit/login`, `/bgm-agit/kakao-login`, `/bgm-agit/naver-login` 성공 → `refreshToken_main` 쿠키
 - 쿠키 이름 상수: `BgmAgitAuthenticationSuccessHandler.COOKIE_NAME_MAIN/_RECORD`
 - `POST/DELETE /bgm-agit/refresh?source=main|record` — `source` 쿼리 파라미터로 어느 쿠키를 읽고 다시 굽거나 지울지 결정 (`BgmAgitRefreshTokenController`). 디폴트는 `main`.
 - 프론트는 자기 쪽 source를 박아서 호출:
@@ -41,11 +42,50 @@
 - 이유: 소셜 유저와 닉네임이 우연히 겹쳐도 계정이 섞이지 않게
 
 ### 회원가입 (폼)
-- 엔드포인트: `POST /bgm-agit/next/signup`
-- 입력: `{ name, nickname, phoneNo, password(8자+) }`
+- 엔드포인트: `POST /bgm-agit/next/signup` (kml-front `/record/signup` + **메인 `bgm-agit-front` 회원가입 모달** 둘 다 이 엔드포인트 사용)
+- 입력: `{ name, nickname, phoneNo, password(백엔드 @Size min=4) }`
 - BCrypt 해시(`PasswordEncoder` Bean은 `security/config/PasswordConfig.java`)
 - `USER` role 자동 부여 (`BgmAgitMemberDetailRepositoryImpl.findByBgmAgitRoleName("USER")`)
 - 회원가입 시 알림톡 발행은 **주석 처리된 상태** (`SignupServiceImpl.signup` 내 `eventPublisher.publishEvent(...)` 주석)
+
+## 메인사이트 자체로그인 전환 (2026-06-30)
+
+`bgm-agit-front`를 소셜 전용에서 **자체로그인(폼) 주력**으로 전환. 신규 회원은 자체가입으로만 받고, 소셜은 기존 회원 로그인만 유지. 같은 MAHJONG 계정이 메인↔BML 양쪽에서 동일 자격증명으로 로그인됨(리프레시 쿠키는 `_main`/`_record`로 계속 분리).
+
+### 신규 소셜 가입 차단
+- `BgmAgitMemberDetailService.loadUserByUsername(SocialProfile)`: 소셜ID 미존재 시 신규 생성 대신 `SocialLoginNotAllowedException("소셜 로그인은 기존 가입 회원만 이용할 수 있습니다. 신규 회원은 자체 회원가입을 이용해 주세요.")` 발생. 기존 `registerNewMember`/`normalizePhone`/`socialTypeLabel`·`eventPublisher` 제거
+- `BgmAuthenticationFailureHandler`에 `SocialLoginNotAllowedException` 메시지 그대로 전달 분기 추가 (`DuplicateMemberException`과 동일 패턴. `BadCredentialsException`은 "인증에 실패하였습니다"로 덮이므로 메시지 노출하려면 전용 예외 필요)
+
+### 메인 폼로그인 엔드포인트 `POST /bgm-agit/login`
+- 로그인 경로 매처가 **두 곳**: `BgmAgitAuthenticationFilter` 생성자 + `BgmAgitSecurityDsl.LOGIN_MATCHER`. 둘 다 추가해야 함
+- `BgmAgitAuthenticationFilter`: 상수 `MAIN_FORM_LOGIN_PATH = "/bgm-agit/login"`, 폼 분기 조건 `FORM_LOGIN_PATH || MAIN_FORM_LOGIN_PATH`. 인증은 기존 `FormAuthenticationProvider`(닉네임+비번, MAHJONG) 재사용
+- 성공 핸들러·permitAll 변경 불필요 (로그인 프로세싱 URL은 필터가 인가 전 가로챔)
+
+### 프론트 (bgm-agit-front)
+- `utils/axiosInstance.ts` `isAuthEndpoint`에 `/bgm-agit/login` 추가 (리프레시는 이미 `?source=main`)
+- `recoil/fetch.ts`: `useFormLoginPost`(`/bgm-agit/login`), `useSignupPost`(`/bgm-agit/next/signup`) 추가 (기존 소셜 `useLoginPost` 패턴 미러)
+- `components/LoginMoadl.tsx`: 자체로그인 폼 + 회원가입 토글(한 모달 내 mode 전환) + 소셜 버튼은 "기존 소셜 회원 로그인" 보조. **로그인 성공 직후 `window.location.reload()`** — `getMainMenu`가 서버에서 로그인 권한으로 메뉴 필터링하므로, 새로고침해야 권한 메뉴(마이페이지 등)가 보임. 카카오는 OAuth 왕복으로 자연 재조회됨
+- 자체로그인 판별 신호: **`user.socialId`가 없으면 MAHJONG(자체로그인)**. 소셜 회원은 socialId 보유
+
+### KML 연동 (의도적으로 유지)
+- 메인 회원가입도 `/next/signup`을 쓰므로 `kmlUserClient.findOrRegisterKmlIdByNickname`로 KML 조회·자동등록 호출됨. 계정 공유 구조상 무해하다고 판단해 **그대로 둠**(메인 가입만 빼려면 signup 요청에 skipKml 플래그 추가)
+
+### 함정: ApiResponse(403) 은 HTTP 200
+`ApiResponse(code, success, message)`는 컨트롤러에서 평범히 반환되어 **항상 HTTP 200**. 프론트 `useRequest`는 2xx면 `onSuccess` 실행 → 403 본문이어도 "성공" 토스트가 뜨는 false-success. 권한/타입 차단은 백엔드 enforcement + **프론트 UI 가드(버튼 숨김/제출 가드)** 둘 다 필요.
+
+## 시계탑/머더 자체로그인 전용화 (2026-06-30)
+
+### 회원 검색 MAHJONG만
+- `/bgm-agit/all-members`(`BgmAgitPlayRecordServiceImpl.searchMembers`) 필터를 `KAKAO/NAVER` → **`MAHJONG`**로 반전. 시계탑(`ClockTowerRecordDetail` 인라인 검색)·머더(`MemberMultiSelect`)가 공유하는 엔드포인트라 양쪽 드롭다운 동시 적용
+
+### 시계탑 기록 등록·수정·삭제 = 자체로그인 전용 (조회는 누구나)
+- 백엔드 `BgmAgitClockTowerRecordServiceImpl`: `createRecord`는 writer socialType이 MAHJONG 아니면 403. `modify/deleteRecord`는 `requireClockTowerWriter(memberId, roles)` 가드 — 비MAHJONG 403, **관리자는 모더레이션 위해 예외 허용**
+- 프론트: `ClockTowerRecords` "기록하기" 버튼·`ClockTowerRecordDetail` 수정/삭제 버튼·`onSubmit`을 `canWrite = isSelfLogin || isAdmin`로 가드 (`isSelfLogin = !!user && !user.socialId`)
+
+## 마이페이지 정리 (2026-06-30)
+- `MyPageModal`에서 **EMAIL·마작기록 사용 여부 제거** (자체로그인 회원정보엔 불필요). 남는 항목: 가입일자/이름/닉네임/휴대폰번호
+- **`mahjongUseStatus`(BGM_AGIT_MEMBER_MAHJONG_USE_STATUS) 컬럼 코드 전부 제거** — DB 컬럼 드롭 예정. 제거 위치: 엔티티 필드·`@Column`·두 생성자·`modifyMyPage`, `BgmAgitMemberRepositoryImpl`의 마이페이지 QueryDSL 프로젝션 인자(이게 컬럼 SELECT), `BgmAgitMyPageGetResponse`(필드+@QueryProjection 생성자), `BgmAgitMyPagePutRequest`, 프론트 `types/user.ts`·`userState.ts`. 드롭 SQL: `ALTER TABLE BGM_AGIT_MEMBER DROP COLUMN BGM_AGIT_MEMBER_MAHJONG_USE_STATUS;`
+- 마이페이지 조회(`getMyPage`)는 socialType 무관(누구나 노출). socialType 분기는 `changeMyPassword`에만 있고 **MAHJONG만 비번 변경 가능**(소셜은 비번 없음)
 
 ### 보호막: 로그인 시 role 누락되면 USER 자동 부여
 `BgmAgitMemberDetailService.ensureDefaultRole(BgmAgitMember)` — 소셜·폼 두 경로 공통 호출.
