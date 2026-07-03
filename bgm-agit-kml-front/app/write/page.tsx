@@ -347,6 +347,14 @@ export default function Write() {
   const pendingYakumanScroll = useRef(false);
   const pendingSanbaemanScroll = useRef(false);
 
+  /** 모바일 키보드 "다음" - 같은 종류 칸끼리 동→남→서→북 포커스 이동용 ref 맵 */
+  const searchRefs = useRef<Record<DirectionKey, HTMLInputElement | null>>({
+    EAST: null, SOUTH: null, WEST: null, NORTH: null,
+  });
+  const scoreRefs = useRef<Record<DirectionKey, HTMLInputElement | null>>({
+    EAST: null, SOUTH: null, WEST: null, NORTH: null,
+  });
+
   const yakumanData = useYakumanStore((state) => state.yakuman);
 
   //점수
@@ -440,6 +448,12 @@ export default function Write() {
     return recordUser.filter((u) => u.nickName.toLowerCase().includes(search.toLowerCase()));
   };
 
+  // 최근 닉네임 칩은 드롭다운 목록(recordUser = 마작 이용 회원)에 있는 사람만 노출.
+  // 드롭다운에 없는 회원은 골라도 select에 표시되지 않아 "보이지 않게 배정"되는 문제 방지.
+  const selectableRecentNicks = recentNicks.filter((m) =>
+    recordUser.some((u) => u.id === m.id)
+  );
+
   /** 최근 닉네임 칩 클릭 → 비어있는 다음 자리(동→남→서→북)에 채움 */
   const handleRecentPick = (memberId: number) => {
     // 이미 다른 자리에 배정된 회원이면 무시 (같은 사람 중복 자리 방지)
@@ -468,21 +482,16 @@ export default function Write() {
     });
   };
 
-  /** 본인 닉네임 자동 입력 - 동/남/서/북 */
-  const handleSelfFillRecord = async (key: DirectionKey) => {
-    if (!user) {
-      await alertDialog('로그인이 필요합니다.', 'error');
-      return;
-    }
-    const meId = Number(user.id);
-    if (!recordUser.some((u) => u.id === meId)) {
-      await alertDialog('회원 목록에서 본인 정보를 찾을 수 없습니다.', 'error');
-      return;
-    }
-    setRecords((prev) => ({
-      ...prev,
-      [key]: { ...prev[key], userId: meId, search: '' },
-    }));
+  /** 모바일 키보드 "다음" - 같은 종류 칸끼리 동→남→서→북 이동 (마지막은 키보드 닫기) */
+  const focusNextField = (
+    refs: React.RefObject<Record<DirectionKey, HTMLInputElement | null>>,
+    key: DirectionKey,
+    el: HTMLInputElement,
+  ) => {
+    const order = DIRECTIONS.map((d) => d.key);
+    const nextKey = order[order.indexOf(key) + 1];
+    if (nextKey) refs.current[nextKey]?.focus();
+    else el.blur(); // 북(마지막)이면 가상 키보드 닫기
   };
 
   /** 본인 닉네임 자동 입력 - 역만 행 */
@@ -1132,22 +1141,15 @@ export default function Write() {
           return (
             <Center key={key} $color={color} $record>
               <h4>{label}</h4>
-              <ActionsRow className="record-actions">
-                <MeButton
-                  type="button"
-                  tabIndex={-1}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onTouchStart={(e) => e.preventDefault()}
-                  onClick={() => handleSelfFillRecord(key)}
-                >
-                  내 닉네임
-                </MeButton>
-              </ActionsRow>
               <WriteCroup className="record-form">
                 <FieldsWrapper className="record-fields">
                   <Field className="search">
                     <label>닉네임 검색</label>
                     <input
+                      ref={(el) => {
+                        searchRefs.current[key] = el;
+                      }}
+                      enterKeyHint={key === 'NORTH' ? 'done' : 'next'}
                       value={row.search}
                       onChange={(e) =>
                         setRecords((prev) => ({
@@ -1155,6 +1157,12 @@ export default function Write() {
                           [key]: { ...prev[key], search: e.target.value },
                         }))
                       }
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          focusNextField(searchRefs, key, e.currentTarget);
+                        }
+                      }}
                     />
                   </Field>
                   <Field className="user">
@@ -1207,8 +1215,12 @@ export default function Write() {
                       </SignButton>
                     </ScoreLabelRow>
                     <input
+                      ref={(el) => {
+                        scoreRefs.current[key] = el;
+                      }}
                       type="text"
                       inputMode="numeric"
+                      enterKeyHint={key === 'NORTH' ? 'done' : 'next'}
                       value={row.score}
                       onChange={(e) => {
                         const v = e.target.value;
@@ -1222,6 +1234,12 @@ export default function Write() {
                         }));
                         markScoreEdited(key, v);
                       }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          focusNextField(scoreRefs, key, e.currentTarget);
+                        }
+                      }}
                     />
                   </Field>
                 </FieldsWrapper>
@@ -1231,11 +1249,11 @@ export default function Write() {
         })}
         </RecordGrid>
 
-        {recentNicks.length > 0 && (
+        {selectableRecentNicks.length > 0 && (
           <RecentSection>
             <RecentTitle>최근 입력 닉네임</RecentTitle>
             <RecentChipList>
-              {recentNicks.map((m) => {
+              {selectableRecentNicks.map((m) => {
                 const seated = Object.values(records).some(
                   (r) => r.userId === m.id
                 );
@@ -2024,18 +2042,6 @@ const Center = styled.section<{ $color: string; $record?: boolean }>`
         font-size: 15px;
       }
 
-      .record-actions {
-        justify-content: center;
-        padding: 4px 6px 0;
-      }
-
-      .record-actions button {
-        width: 100%;
-        min-height: 28px;
-        margin: 0;
-        padding: 5px 6px;
-        box-shadow: none;
-      }
 
       .record-form {
         padding: 6px;
