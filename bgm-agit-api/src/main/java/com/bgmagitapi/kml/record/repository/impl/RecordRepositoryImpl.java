@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.record.repository.impl;
 
-import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
+import com.bgmagitapi.origin.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.kml.record.dto.response.QRecordGetDetailResponse_RecordList;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
 import com.bgmagitapi.kml.record.entity.Record;
@@ -25,7 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.bgmagitapi.entity.QBgmAgitMember.bgmAgitMember;
+import static com.bgmagitapi.origin.entity.QBgmAgitMember.bgmAgitMember;
 import static com.bgmagitapi.kml.matchs.entity.QMatchs.matchs;
 import static com.bgmagitapi.kml.record.entity.QRecord.record;
 import static com.bgmagitapi.kml.sanbaeman.entity.QSanbaeman.sanbaeman;

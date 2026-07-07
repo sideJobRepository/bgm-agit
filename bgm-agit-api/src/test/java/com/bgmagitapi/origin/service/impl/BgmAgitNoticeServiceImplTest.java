@@ -1,0 +1,43 @@
+package com.bgmagitapi.origin.service.impl;
+
+import com.bgmagitapi.RepositoryAndServiceTestSupport;
+import com.bgmagitapi.origin.controller.response.notice.BgmAgitNoticeResponse;
+import com.bgmagitapi.origin.service.BgmAgitNoticeService;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
+import java.util.List;
+
+class BgmAgitNoticeServiceImplTest extends RepositoryAndServiceTestSupport {
+    
+    
+    @Autowired
+    private BgmAgitNoticeService bgmAgitNoticeService;
+    
+    @DisplayName("")
+    @Test
+    void test(){
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "bgmAgitNoticeId"));
+        
+        String title = null;
+        
+        Page<BgmAgitNoticeResponse> result = bgmAgitNoticeService.getNotice(pageable, title);
+        System.out.println("result = " + result);
+    
+    }
+    
+    @DisplayName("")
+    @Test
+    void test2(){
+        
+        List<BgmAgitNoticeResponse> popupNotice = bgmAgitNoticeService.getPopupNotice();
+        
+        System.out.println("popupNotice = " + popupNotice);
+        
+    }
+}

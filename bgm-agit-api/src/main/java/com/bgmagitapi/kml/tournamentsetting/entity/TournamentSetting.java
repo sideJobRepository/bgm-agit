@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.tournamentsetting.entity;
 
-import com.bgmagitapi.entity.mapperd.DateSuperClass;
+import com.bgmagitapi.origin.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
 import lombok.*;
 

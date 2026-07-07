@@ -1,0 +1,41 @@
+package com.bgmagitapi.origin.entity;
+
+import com.bgmagitapi.origin.controller.request.BgmAgitFreePostRequest;
+import com.bgmagitapi.origin.controller.request.BgmAgitFreePutRequest;
+import com.bgmagitapi.origin.entity.mapperd.DateSuperClass;
+import jakarta.persistence.*;
+import lombok.*;
+
+@Table(name = "BGM_AGIT_FREE")
+@Entity
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+public class BgmAgitFree extends DateSuperClass {
+
+    
+    // BGM 아지트 자유 ID
+    @Column(name = "BGM_AGIT_FREE_ID")
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long bgmAgitFreeId;
+
+    // BGM 아지트 회원 ID
+    @JoinColumn(name = "BGM_AGIT_MEMBER_ID")
+    @ManyToOne(fetch = FetchType.LAZY)
+    private BgmAgitMember bgmAgitMember;
+
+    // BGM 아지트 자유 제목
+    @Column(name = "BGM_AGIT_FREE_TITLE")
+    private String bgmAgitFreeTitle;
+
+    // BGM 아지트 자유 내용
+    @Column(name = "BGM_AGIT_FREE_CONT")
+    private String bgmAgitFreeCont;
+    
+    public void modifyFree(BgmAgitFreePutRequest request) {
+        this.bgmAgitFreeTitle = request.getTitle();
+        this.bgmAgitFreeCont = request.getContent();
+    }
+}

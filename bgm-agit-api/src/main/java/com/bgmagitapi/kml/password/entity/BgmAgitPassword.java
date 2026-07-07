@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.password.entity;
 
-import com.bgmagitapi.entity.mapperd.DateSuperClass;
+import com.bgmagitapi.origin.entity.mapperd.DateSuperClass;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

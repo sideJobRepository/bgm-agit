@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
-import static com.bgmagitapi.entity.QBgmAgitRole.bgmAgitRole;
+import static com.bgmagitapi.origin.entity.QBgmAgitRole.bgmAgitRole;
 import static com.bgmagitapi.kml.menurole.entity.QKmlMenuRole.kmlMenuRole;
 
 @RequiredArgsConstructor

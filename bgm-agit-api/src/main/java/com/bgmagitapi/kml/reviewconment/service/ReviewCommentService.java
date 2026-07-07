@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.reviewconment.service;
 
-import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.reviewconment.dto.request.ReviewCommentPostRequest;
 import com.bgmagitapi.kml.reviewconment.dto.request.ReviewCommentPutRequest;
 

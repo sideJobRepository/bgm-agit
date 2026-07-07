@@ -1,18 +1,18 @@
 package com.bgmagitapi.kml.review.controller;
 
-import com.bgmagitapi.apiresponse.ApiResponse;
-import com.bgmagitapi.config.S3FileUtils;
-import com.bgmagitapi.config.UploadResult;
-import com.bgmagitapi.controller.request.BgmAgitFreePostRequest;
-import com.bgmagitapi.controller.request.BgmAgitFreePutRequest;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.config.S3FileUtils;
+import com.bgmagitapi.origin.config.UploadResult;
+import com.bgmagitapi.origin.controller.request.BgmAgitFreePostRequest;
+import com.bgmagitapi.origin.controller.request.BgmAgitFreePutRequest;
 import com.bgmagitapi.kml.review.dto.request.ReviewPostRequest;
 import com.bgmagitapi.kml.review.dto.request.ReviewPutRequest;
 import com.bgmagitapi.kml.review.dto.response.ReviewGetDetailResponse;
 import com.bgmagitapi.kml.review.dto.response.ReviewGetResponse;
 import com.bgmagitapi.kml.review.service.ReviewService;
-import com.bgmagitapi.page.PageResponse;
-import com.bgmagitapi.security.xss.HtmlSanitizerService;
-import com.bgmagitapi.util.JwtParserUtil;
+import com.bgmagitapi.origin.page.PageResponse;
+import com.bgmagitapi.origin.security.xss.HtmlSanitizerService;
+import com.bgmagitapi.origin.util.JwtParserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
@@ -46,9 +46,6 @@ public class ReviewController {
     
     private final ReviewService reviewService;
     
-    private final S3Client s3Client;
-    
-    private final S3FileUtils s3FileUtils;
     
     private final HtmlSanitizerService sanitizer;
     

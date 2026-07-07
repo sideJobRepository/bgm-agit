@@ -1,15 +1,15 @@
 package com.bgmagitapi.kml.record.controller;
 
 
-import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.record.dto.request.RecordPostRequest;
 import com.bgmagitapi.kml.record.dto.request.RecordPutRequest;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
 import com.bgmagitapi.kml.record.dto.response.RecordGetResponse;
 import com.bgmagitapi.kml.record.service.RecordService;
 import com.bgmagitapi.kml.yakamantype.dto.response.MembersGetResponse;
-import com.bgmagitapi.page.PageResponse;
-import com.bgmagitapi.util.JwtParserUtil;
+import com.bgmagitapi.origin.page.PageResponse;
+import com.bgmagitapi.origin.util.JwtParserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

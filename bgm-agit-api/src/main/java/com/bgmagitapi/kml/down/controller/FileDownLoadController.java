@@ -1,9 +1,9 @@
 package com.bgmagitapi.kml.down.controller;
 
-import com.bgmagitapi.config.S3FileUtils;
-import com.bgmagitapi.config.UploadResult;
-import com.bgmagitapi.file.enums.FileType;
-import com.bgmagitapi.file.service.BgmAgitFileService;
+import com.bgmagitapi.origin.config.S3FileUtils;
+import com.bgmagitapi.origin.config.UploadResult;
+import com.bgmagitapi.origin.file.enums.FileType;
+import com.bgmagitapi.origin.file.service.BgmAgitFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;

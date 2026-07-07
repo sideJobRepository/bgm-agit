@@ -1,14 +1,14 @@
 package com.bgmagitapi.kml.rule.repository.impl;
 
-import com.bgmagitapi.entity.BgmAgitCommonFile;
-import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
+import com.bgmagitapi.origin.entity.BgmAgitCommonFile;
+import com.bgmagitapi.origin.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.kml.rule.repository.query.RuleQueryRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
-import static com.bgmagitapi.entity.QBgmAgitCommonFile.bgmAgitCommonFile;
+import static com.bgmagitapi.origin.entity.QBgmAgitCommonFile.bgmAgitCommonFile;
 
 @RequiredArgsConstructor
 public class RuleRepositoryImpl implements RuleQueryRepository {

@@ -1,12 +1,12 @@
 package com.bgmagitapi.kml.notice.controller;
 
-import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.notice.dto.request.KmlNoticePostRequest;
 import com.bgmagitapi.kml.notice.dto.request.KmlNoticePutRequest;
 import com.bgmagitapi.kml.notice.dto.response.KmlNoticeGetDetailResponse;
 import com.bgmagitapi.kml.notice.dto.response.KmlNoticeGetResponse;
 import com.bgmagitapi.kml.notice.service.KmlNoticeService;
-import com.bgmagitapi.page.PageResponse;
+import com.bgmagitapi.origin.page.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.history.repository.impl;
 
-import com.bgmagitapi.entity.QBgmAgitMember;
+import com.bgmagitapi.origin.entity.QBgmAgitMember;
 import com.bgmagitapi.kml.history.dto.MatchsAndRecordHistoryResponse;
 import com.bgmagitapi.kml.history.dto.QMatchsAndRecordHistoryResponse;
 import com.bgmagitapi.kml.history.dto.QMatchsAndRecordHistoryResponse_RecordHistList;

@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.record.service;
 
-import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.record.dto.request.RecordPostRequest;
 import com.bgmagitapi.kml.record.dto.request.RecordPutRequest;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;

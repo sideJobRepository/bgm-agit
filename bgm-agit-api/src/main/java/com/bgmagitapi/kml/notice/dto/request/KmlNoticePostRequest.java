@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.notice.dto.request;
 
-import com.bgmagitapi.file.dto.request.FileRequest;
+import com.bgmagitapi.origin.file.dto.request.FileRequest;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
