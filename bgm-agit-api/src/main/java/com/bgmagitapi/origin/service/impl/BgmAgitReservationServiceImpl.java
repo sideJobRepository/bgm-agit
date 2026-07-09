@@ -15,6 +15,8 @@ import com.bgmagitapi.origin.entity.enumeration.BgmAgitImageCategory;
 import com.bgmagitapi.origin.event.dto.ReservationTalkEvent;
 import com.bgmagitapi.origin.event.dto.ReservationWaitingEvent;
 import com.bgmagitapi.origin.event.dto.TalkAction;
+import com.bgmagitapi.origin.payment.controller.response.PaymentOrderResponse;
+import com.bgmagitapi.origin.payment.service.PaymentService;
 import com.bgmagitapi.origin.repository.BgmAgitImageRepository;
 import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
@@ -53,8 +55,10 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     private final BgmAgitMemberRepository bgmAgitMemberRepository;
     
     private final BgmAgitReservationRepository bgmAgitReservationRepository;
-    
+
     private final ApplicationEventPublisher eventPublisher;
+
+    private final PaymentService paymentService;
     
     @Override
     @Transactional(readOnly = true)
@@ -251,6 +255,41 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         
         eventPublisher.publishEvent(new ReservationWaitingEvent(member,bgmAgitImage,list));
         return new ApiResponse(200, true, "예약이 완료되었습니다.");
+    }
+
+    @Override
+    public PaymentOrderResponse createPaymentOrder(Long reservationNo, Long userId) {
+        // 예약 그룹(같은 RESERVATION_NO 슬롯 행들) 조회
+        List<BgmAgitReservation> group = bgmAgitReservationRepository.findReservationList(reservationNo);
+        if (group.isEmpty()) {
+            throw new ReservationConflictException("존재하지 않는 예약입니다.");
+        }
+        BgmAgitReservation first = group.get(0);
+
+        // 소유자 검증: 본인 예약만 결제 가능
+        if (!Objects.equals(first.getBgmAgitMember().getBgmAgitMemberId(), userId)) {
+            throw new ReservationConflictException("본인의 예약이 아닙니다.");
+        }
+        // 취소된 예약은 결제 불가
+        boolean canceled = group.stream()
+                .anyMatch(r -> "Y".equals(r.getBgmAgitReservationCancelStatus()));
+        if (canceled) {
+            throw new ReservationConflictException("취소된 예약입니다.");
+        }
+        // 이미 확정(결제완료)된 예약은 재결제 불가
+        boolean approved = group.stream()
+                .anyMatch(r -> "Y".equals(r.getBgmAgitReservationApprovalStatus()));
+        if (approved) {
+            throw new ReservationConflictException("이미 확정된 예약입니다.");
+        }
+
+        // 금액 서버 계산(기본 1만, M룸 3만) + 주문명 구성
+        BgmAgitImage image = first.getBgmAgitImage();
+        int amount = SlotSchedule.resolveDepositAmount(image.getBgmAgitImageCategory(), image.getBgmAgitImageLabel());
+        String orderName = "BGM아지트 예약 - " + first.getBgmAgitReservationStartDate();
+
+        // 공통 결제 모듈에 주문 생성 위임
+        return paymentService.createOrder(userId, reservationNo, amount, orderName);
     }
     
     @Override

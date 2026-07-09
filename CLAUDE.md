@@ -9,6 +9,9 @@
 - `bgm-agit-kml-front` — Next.js 15+ (`basePath: /record`). 여기선 **일반 폼 로그인** 사용
 - 같은 API·같은 DB·같은 JWT를 공유하는 SSO 구조
 
+### 패키지 재배치 (2026-07-08)
+`bgm-agit-api`에서 `kml`·`log`·`BgmAgitApiApplication`(루트)만 남기고 나머지 도메인 패키지 전부를 **`com.bgmagitapi.origin`** 아래로 이동 (advice, annotation, apiresponse, clocktower, config, controller, entity, event, file, lecture, murder, my, page, repository, security, service, slot, util, valid). 메인 클래스가 루트에 남아 컴포넌트/엔티티/리포지토리 스캔 기준(base = `com.bgmagitapi`)은 그대로라 origin/kml/log 전부 스캔됨. **아래 "자주 쓰는 경로"의 `com.bgmagitapi.<pkg>` 표기는 대부분 `com.bgmagitapi.origin.<pkg>`로 읽을 것** (kml/log 제외). 테스트도 non-kml 패키지는 origin으로 미러링 이동.
+
 ## 인증 설계
 
 ### 로그인 경로 3가지
@@ -170,6 +173,43 @@ kml:
 현재 마이페이지 닉네임 변경 로직에서 `kml_synk` 리셋은 **미구현**. 나중에 변경 기능 손볼 때:
 - 닉네임 바뀌면 `markKmlSyncFailed()` 호출해서 `'N'`으로 리셋
 - 다음 스케줄러 주기에 새 닉네임으로 다시 KML 조회됨
+
+## 예약 결제 (토스페이먼츠) — 설계 확정 (2026-07-08)
+
+`bgm-agit-front` 예약에 토스페이먼츠 결제 연동 예정. 현재 예약금은 순수 오프라인 계좌이체 안내 텍스트뿐(`ReservationList.tsx`), DB(`BGM_AGIT_RESERVATION`)에 금액/결제 개념 없음. 예약 상태는 승인여부(`..._APPROVAL_STATUS` Y/N)·취소여부(`..._CANCEL_STATUS` Y/N)만 존재.
+
+### 결제 흐름 (확정)
+- 예약금은 **정적 고정값**(예: 1만원)으로 시작. 요일별/타입별 요금정책·관리자 요금설정 화면은 **지금 안 만듦**(YAGNI). 필요해지면 별도 설정 테이블 추가 — 순수 추가라 나중에 붙여도 기존 구조 무해
+- 사용자 예약 생성(대기 N/N) → 결제 주문(READY) 생성 → 사용자 토스 결제 → confirm 성공 시 예약 `approvalStatus='Y'` **자동 확정** + 확정 알림톡 (기존 관리자 수동 확정 대체)
+- 예약 취소 시 결제가 DONE이면 토스 결제취소(cancel) API로 **자동 환불**
+- 한 예약 = 1시간 슬롯 여러 행이 `BGM_AGIT_RESERVATION_NO`(그룹키)로 묶임 → 결제 1건은 개별 행이 아니라 `RESERVATION_NO` 그룹 하나에 대응
+
+### 테이블 `BGM_AGIT_PAYMENT` (신설)
+- 주요 컬럼: `BGM_AGIT_MEMBER_ID`(FK→`BGM_AGIT_MEMBER`, ON DELETE RESTRICT), `BGM_AGIT_RESERVATION_NO`, `BGM_AGIT_ORDER_NO`(토스 orderId, 서버 발급), `BGM_AGIT_PAYMENT_KEY`(토스 paymentKey), `..._AMOUNT`, `..._STATUS`(READY/DONE/CANCELED/ABORTED), `..._TYPE`(토스 method: 카드/간편결제/계좌이체/가상계좌/휴대폰/상품권), 승인일시/취소일시, `..._CANCEL_AMOUNT`/`..._CANCEL_REASON`, `..._RECEIPT_URL`, `..._FAIL_REASON`, `REGIST_DATE`/`MODIFY_DATE`
+- 바챠 길이는 **프로젝트 관례상 기본 VARCHAR(500)**
+- **`BGM_AGIT_ORDER_NO`만 UNIQUE** (중복 결제 승인 방지 + confirm 조회 키)
+- **`BGM_AGIT_RESERVATION_NO`에 UNIQUE 걸지 말 것** — 걸면 결제 실패 후 재시도/재결제 때 같은 예약번호로 새 행 INSERT가 중복키로 터짐. 조회 성능용 일반 인덱스만(선택). "그룹당 유효 결제 1건"은 서비스단에서 관리
+- 예약↔결제 연결은 **A안**: payment가 `RESERVATION_NO` 보관(논리 연결). `RESERVATION_NO`는 예약 PK가 아니라 그룹키(중복)라 물리 FK 불가. 진짜 FK 원하면 **B안**(예약 테이블에 `BGM_AGIT_PAYMENT_ID` nullable FK 추가, 다:일 방향) 가능하나 현재는 A안 유지
+- confirm 시 프론트가 보낸 amount와 저장 amount 대조(위변조 차단), orderId 멱등 처리 필수
+- 토스 clientKey/secretKey는 `application.yml`(env), 테이블 아님
+
+### 안 하기로 한 것
+- **예약 테이블 2테이블 정규화**(부모=예약묶음 PK=예약번호 + 자식=슬롯행): 정석이지만 운영 데이터 이관 + 예약 생성/조회/취소/알림톡 로직 대수술이라 결제 작업과 섞지 않고 나중으로 미룸. 현행 1테이블(그룹키 방식) 위에서 결제 진행
+
+### 구현 진행 (STEP 1 완료, 2026-07-09)
+- **모듈 구조**: 공통 결제부 `com.bgmagitapi.origin.payment` (도메인 모름 → 재사용). 예약 연결은 이벤트로 붙일 예정.
+  - `payment/entity/BgmAgitPayment`(+`enumeration/PaymentStatus` READY/DONE/CANCELED/ABORTED), `payment/repository/BgmAgitPaymentRepository`(`findByBgmAgitOrderNo`/`findByBgmAgitReservationNo`), `payment/service/PaymentService(+Impl).createOrder`, `payment/controller/BgmAgitPaymentController`
+- **STEP 1 = 주문 생성**(완료·컴파일 통과): `POST /bgm-agit/payments/order { reservationNo }` → `PaymentOrderResponse { orderId, amount, orderName, clientKey }`. 예약 검증·금액계산은 `BgmAgitReservationService.createPaymentOrder`(소유자·취소·확정 검증 후 공통 `createOrder` 위임).
+- **예약금**: `SlotSchedule.resolveDepositAmount(category,label)` — 기본 10000, M룸(`ROOM` + label `"M Room"`) 30000. 슬롯 수 무관 정액.
+- **토스 키 주의**: 결제위젯이므로 **위젯용 키**(`test_gck_`/`test_gsk_`)를 써야 함. `test_ck_`/`test_sk_`(API 개별 연동 키)를 위젯에 쓰면 `INVALID_API_KEY`. `application.yml`의 `toss.client-key/secret-key/confirm-url/cancel-url`, 값은 `.env`/GitHub Secrets로 주입. clientKey는 주문 응답으로 프론트에 내려주므로 프론트 env에 저장 불필요.
+- **미해결(결정 대기)**: 예약 생성 `POST /bgm-agit/reservation`이 `reservationNo`를 응답에 안 실어줌(값은 `createReservation`에서 이미 계산됨, 반환만 안 함). 결제 진입점 2안 중 택1 — **A**: 예약내역(`ReservationList.tsx`) 대기행에 결제버튼(기존 `reservationNo` 사용, 백엔드 무변경) / **B**: 예약 직후 결제(`createReservation`이 `reservationNo` 반환하도록 소폭 변경).
+- **다음**: STEP 2 승인(`TossPaymentsClient.confirm` + `confirmPayment` 금액대조·멱등 + `PaymentConfirmedEvent`→예약 approval='Y'), STEP 3 실패/취소·환불.
+
+## 환경변수 (.env) (2026-07-09 도입)
+- `bgm-agit-api`는 `me.paulschwarz:spring-dotenv:3.0.0`로 `.env`를 읽음(cham-equality와 동일 방식). 파일: `bgm-agit-api/src/main/resources/.env`. `application.yml`의 `${DB_URL}` 등 플레이스홀더를 여기서 치환.
+- `.env`는 `.gitignore` 처리(커밋 금지). 시크릿(DB/AWS/소셜/비즈톡/JWT/토스)은 레포에 없음.
+- CI/CD·서버 배포는 **GitHub Secrets → 시스템 환경변수**로 주입. 시스템 환경변수가 `.env`보다 우선순위 높음. 토스 키(`TOSS_CLIENT_KEY`/`TOSS_SECRET_KEY`)는 GitHub Secrets에도 추가 필요.
+- 주의: `.env`는 `=` 뒤 공백 넣지 말 것(dotenv는 trim 안 함). `spring.config.import`는 불필요(spring-dotenv가 자동 로드).
 
 ## 데이터베이스
 
