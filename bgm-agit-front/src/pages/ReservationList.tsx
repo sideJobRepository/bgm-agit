@@ -34,10 +34,18 @@ export default function ReservationList() {
     setPage(pageNum);
   };
 
-  function todayFunction(date) {
-    const today = new Date().toISOString().slice(0, 10);
+  function getTodayText() {
+    return new Date().toLocaleDateString('sv-SE');
+  }
+
+  function todayFunction(date: string) {
+    const today = getTodayText();
 
     return date >= today;
+  }
+
+  function canCancelBeforeReservationDate(item: Reservation) {
+    return item.cancelStatus !== 'Y' && item.reservationDate > getTodayText();
   }
 
   useEffect(() => {
@@ -140,6 +148,7 @@ export default function ReservationList() {
           <TextBox>
             <span>
               ※ 예약 대기 상태에서 결제 버튼을 눌러 예약금을 결제하면 예약이 확정됩니다.
+              <br />※ 예약 취소는 예약일 전날까지만 가능합니다. 당일 취소는 불가합니다.
               <br />※ 확정 후 취소 또는 환불 문의는 0507-1445-3503로 연락 부탁드립니다.
             </span>
           </TextBox>
@@ -220,8 +229,7 @@ export default function ReservationList() {
 
                           {todayFunction(item.reservationDate) &&
                             !user?.roles.includes('ROLE_ADMIN') &&
-                            item.approvalStatus !== 'Y' &&
-                            item.cancelStatus !== 'Y' && (
+                            canCancelBeforeReservationDate(item) && (
                               <Button
                                 color="#FF5E57"
                                 onClick={() => updateData(item, false, 'Y', 'N')}

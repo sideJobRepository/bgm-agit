@@ -344,6 +344,13 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         String approvalStatus = request.getApprovalStatus();
         
         List<BgmAgitReservation> reservations = bgmAgitReservationRepository.findReservationList(reservationNo);
+        if (reservations.isEmpty()) {
+            throw new ReservationConflictException("존재하지 않는 예약입니다.");
+        }
+
+        if ("Y".equalsIgnoreCase(cancelStatus) && !isAdmin(role)) {
+            validateUserCancelableReservation(id, reservations);
+        }
         
         List<Long> idList = reservations.stream()
                 .map(BgmAgitReservation::getBgmAgitReservationId)
@@ -386,5 +393,22 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         
         // 전송 조건이 아닌 경우
         return new ApiResponse(200, true, "수정 되었습니다.");
+    }
+
+    private void validateUserCancelableReservation(Long memberId, List<BgmAgitReservation> reservations) {
+        BgmAgitReservation first = reservations.get(0);
+        Long reservationMemberId = first.getBgmAgitMember().getBgmAgitMemberId();
+        if (!Objects.equals(reservationMemberId, memberId)) {
+            throw new ReservationConflictException("본인의 예약만 취소할 수 있습니다.");
+        }
+
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        if (!first.getBgmAgitReservationStartDate().isAfter(today)) {
+            throw new ReservationConflictException("예약 취소는 예약일 전날까지만 가능합니다.");
+        }
+    }
+
+    private boolean isAdmin(String role) {
+        return "ROLE_ADMIN".equals(role);
     }
 }
