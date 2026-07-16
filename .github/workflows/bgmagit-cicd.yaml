@@ -185,8 +185,6 @@ jobs:
           tags: peachcoolpis/bgmagit-kml-front:latest
           build-args: |
             ENV_FILE=.env.production
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: SSH 접속 후 Next 컨테이너 실행
         uses: appleboy/ssh-action@v1.0.3

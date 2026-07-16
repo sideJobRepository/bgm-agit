@@ -1,6 +1,8 @@
 package com.bgmagitapi.origin.event;
 
+import com.bgmagitapi.origin.event.dto.KmlRecordDeleteEvent;
 import com.bgmagitapi.origin.event.dto.KmlRecordModifyEvent;
+import com.bgmagitapi.origin.event.dto.KmlRecordRestoreEvent;
 import com.bgmagitapi.origin.event.dto.KmlRecordSubmitEvent;
 import com.bgmagitapi.origin.security.service.kml.KmlMatchsLinker;
 import com.bgmagitapi.origin.security.service.kml.KmlRecordClient;
@@ -39,6 +41,26 @@ public class KmlRecordEventListener {
             kmlRecordClient.modify(event);
         } catch (Exception e) {
             log.warn("[KML] record_modify 리스너 처리 실패 cause={}", e.toString());
+        }
+    }
+
+    @Async("bizTalkExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onRecordDelete(KmlRecordDeleteEvent event) {
+        try {
+            kmlRecordClient.delete(event);
+        } catch (Exception e) {
+            log.warn("[KML] record_del 리스너 처리 실패 cause={}", e.toString());
+        }
+    }
+
+    @Async("bizTalkExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onRecordRestore(KmlRecordRestoreEvent event) {
+        try {
+            kmlRecordClient.restore(event);
+        } catch (Exception e) {
+            log.warn("[KML] record_restore 리스너 처리 실패 cause={}", e.toString());
         }
     }
 }

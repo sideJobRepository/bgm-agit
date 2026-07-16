@@ -1,6 +1,8 @@
 package com.bgmagitapi.origin.security.service.kml;
 
+import com.bgmagitapi.origin.event.dto.KmlRecordDeleteEvent;
 import com.bgmagitapi.origin.event.dto.KmlRecordModifyEvent;
+import com.bgmagitapi.origin.event.dto.KmlRecordRestoreEvent;
 import com.bgmagitapi.origin.event.dto.KmlRecordSubmitEvent;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -86,6 +88,56 @@ public class KmlRecordClient {
             log.info("[KML] record_modify 송신 성공 url={}, modifyId={}, response={}", url, event.getModifyId(), rawBody);
         } catch (Exception e) {
             log.warn("[KML] record_modify 송신 실패 url={}, body={}, cause={}", url, body, e.toString());
+        }
+    }
+
+    /**
+     * KML api_record_del.php 로 기존 게임 기록을 삭제 송신.
+     * 실패해도 예외를 던지지 않는다 (DB 삭제 트랜잭션과 분리).
+     */
+    public void delete(KmlRecordDeleteEvent event) {
+        String url = kmlBaseUrl + "/api_record_del.php";
+
+        Map<String, Object> body = Map.of(
+                "record_id", event.getKmlRecordId()
+        );
+
+        try {
+            String rawBody = RestClient.create().post()
+                    .uri(url)
+                    .header("x-api-key", kmlApiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .body(String.class);
+            log.info("[KML] record_del 송신 성공 url={}, recordId={}, response={}", url, event.getKmlRecordId(), rawBody);
+        } catch (Exception e) {
+            log.warn("[KML] record_del 송신 실패 url={}, body={}, cause={}", url, body, e.toString());
+        }
+    }
+
+    /**
+     * KML api_record_restore.php 로 삭제된 게임 기록을 복구 송신.
+     * 실패해도 예외를 던지지 않는다 (DB 복구 트랜잭션과 분리).
+     */
+    public void restore(KmlRecordRestoreEvent event) {
+        String url = kmlBaseUrl + "/api_record_restore.php";
+
+        Map<String, Object> body = Map.of(
+                "record_id", event.getKmlRecordId()
+        );
+
+        try {
+            String rawBody = RestClient.create().post()
+                    .uri(url)
+                    .header("x-api-key", kmlApiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .body(String.class);
+            log.info("[KML] record_restore 송신 성공 url={}, recordId={}, response={}", url, event.getKmlRecordId(), rawBody);
+        } catch (Exception e) {
+            log.warn("[KML] record_restore 송신 실패 url={}, body={}, cause={}", url, body, e.toString());
         }
     }
 
