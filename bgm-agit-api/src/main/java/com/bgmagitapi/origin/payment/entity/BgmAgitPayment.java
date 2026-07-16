@@ -8,6 +8,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "BGM_AGIT_PAYMENT")
 @Getter
@@ -52,11 +54,11 @@ public class BgmAgitPayment extends DateSuperClass {
 
     // BGM 아지트 결제 승인 일시
     @Column(name = "BGM_AGIT_PAYMENT_APPROVAL_DATE")
-    private java.time.LocalDateTime bgmAgitPaymentApprovalDate;
+    private LocalDateTime bgmAgitPaymentApprovalDate;
 
     // BGM 아지트 결제 취소 일시
     @Column(name = "BGM_AGIT_PAYMENT_CANCEL_DATE")
-    private java.time.LocalDateTime bgmAgitPaymentCancelDate;
+    private LocalDateTime bgmAgitPaymentCancelDate;
 
     // BGM 아지트 취소 금액
     @Column(name = "BGM_AGIT_CANCEL_AMOUNT")
@@ -84,4 +86,28 @@ public class BgmAgitPayment extends DateSuperClass {
     }
 
     // 상태 변경 도메인 메서드(markDone/markCanceled/markAborted)는 STEP 2 승인 단계에서 추가
+    public boolean isDone() {
+        return PaymentStatus.DONE.equals(this.bgmAgitPaymentStatus);
+    }
+
+    public void markDone(String paymentKey, String method, LocalDateTime approvedAt, String receiptUrl) {
+        this.bgmAgitPaymentKey = paymentKey;
+        this.bgmAgitPaymentType = method;
+        this.bgmAgitPaymentApprovalDate = approvedAt;
+        this.bgmAgitPaymentReceiptUrl = receiptUrl;
+        this.bgmAgitPaymentStatus = PaymentStatus.DONE;
+        this.bgmAgitPaymentFailReason = null;
+    }
+
+    public void markCanceled(Integer cancelAmount, String cancelReason, LocalDateTime canceledAt) {
+        this.bgmAgitCancelAmount = cancelAmount;
+        this.bgmAgitCancelReason = cancelReason;
+        this.bgmAgitPaymentCancelDate = canceledAt;
+        this.bgmAgitPaymentStatus = PaymentStatus.CANCELED;
+    }
+
+    public void markAborted(String failReason) {
+        this.bgmAgitPaymentStatus = PaymentStatus.ABORTED;
+        this.bgmAgitPaymentFailReason = failReason;
+    }
 }

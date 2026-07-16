@@ -11,6 +11,9 @@ import { showConfirmModal } from '../components/confirmAlert.tsx';
 import { toast } from 'react-toastify';
 import type { Reservation } from '../types/reservation.ts';
 import Pagination from '../components/Pagination.tsx';
+import api from '../utils/axiosInstance.ts';
+import PaymentCheckoutModal from '../components/payment/PaymentCheckoutModal.tsx';
+import type { PaymentOrderResponse } from '../types/tossPayments.ts';
 
 export default function ReservationList() {
   const user = useRecoilValue(userState);
@@ -23,6 +26,8 @@ export default function ReservationList() {
   const { update } = useUpdatePost();
   const items = useRecoilValue(reservationListDataState);
   const [page, setPage] = useState(0);
+  const [paymentOrder, setPaymentOrder] = useState<PaymentOrderResponse | null>(null);
+  const [payingReservationNo, setPayingReservationNo] = useState<number | null>(null);
 
   const handlePageClick = (pageNum: number) => {
     setPage(pageNum);
@@ -91,6 +96,26 @@ export default function ReservationList() {
         webUrl: 'https://bgmagit.co.kr',
       },
     });
+  }
+
+  async function openPayment(item: Reservation) {
+    if (!user) {
+      toast.error('로그인이 필요합니다.');
+      return;
+    }
+
+    setPayingReservationNo(item.reservationNo);
+    try {
+      const { data } = await api.post<PaymentOrderResponse>('/bgm-agit/payments/order', {
+        reservationNo: item.reservationNo,
+      });
+      setPaymentOrder(data);
+    } catch (error) {
+      console.error(error);
+      toast.error('결제 주문을 생성하지 못했습니다.');
+    } finally {
+      setPayingReservationNo(null);
+    }
   }
 
   return (
@@ -206,6 +231,18 @@ export default function ReservationList() {
                                 취소
                               </Button>
                             )}
+                          {todayFunction(item.reservationDate) &&
+                            !user?.roles.includes('ROLE_ADMIN') &&
+                            item.approvalStatus !== 'Y' &&
+                            item.cancelStatus !== 'Y' && (
+                              <Button
+                                color="#1A7D55"
+                                disabled={payingReservationNo === item.reservationNo}
+                                onClick={() => openPayment(item)}
+                              >
+                                {payingReservationNo === item.reservationNo ? '준비중' : '결제'}
+                              </Button>
+                            )}
                           <Button color="#093A6E" onClick={() => shareReservation(item)}>
                             공유
                           </Button>
@@ -227,6 +264,13 @@ export default function ReservationList() {
           </TableWrapper>
         </TableBox>
       </NoticeBox>
+      {paymentOrder && user && (
+        <PaymentCheckoutModal
+          order={paymentOrder}
+          user={user}
+          onClose={() => setPaymentOrder(null)}
+        />
+      )}
     </Wrapper>
   );
 }
@@ -398,6 +442,11 @@ const Button = styled.button<WithTheme & { color: string }>`
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.sizes.xxsmall};
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
   }
 `;
 

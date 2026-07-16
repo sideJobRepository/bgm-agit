@@ -348,6 +348,10 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         List<Long> idList = reservations.stream()
                 .map(BgmAgitReservation::getBgmAgitReservationId)
                 .toList();
+
+        if ("Y".equalsIgnoreCase(cancelStatus)) {
+            paymentService.cancelDonePaymentByReservationNo(reservationNo, "예약 취소");
+        }
         
         BizTalkCancel bizTalkCancel = bgmAgitReservationRepository.findBizTalkCancel(reservationNo);
         

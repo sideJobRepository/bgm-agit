@@ -39,6 +39,8 @@ import ClockTowerRecords from './pages/ClockTowerRecords.tsx';
 import ClockTowerRecordDetail from './pages/ClockTowerRecordDetail.tsx';
 import ClockTowerHistory from './pages/ClockTowerHistory.tsx';
 import ClockTowerStats from './pages/ClockTowerStats.tsx';
+import PaymentSuccess from './pages/PaymentSuccess.tsx';
+import PaymentFail from './pages/PaymentFail.tsx';
 
 function App() {
   return (
@@ -59,6 +61,8 @@ function App() {
               <Route path="notice" element={<Notice mainGb={true} />} />
               <Route path="/noticeDetail" element={<NoticeDetail />} />
               <Route path="reservationList" element={<ReservationList />} />
+              <Route path="payment/success" element={<PaymentSuccess />} />
+              <Route path="payment/fail" element={<PaymentFail />} />
               <Route path="role" element={<Role />} />
               <Route path="free" element={<Free />} />
               <Route path="/freeDetail" element={<FreeDetail />} />
