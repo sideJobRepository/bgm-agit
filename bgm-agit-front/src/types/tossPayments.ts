@@ -18,8 +18,21 @@ export type TossPaymentWidgets = {
   }) => Promise<void>;
 };
 
+export type TossPaymentWindow = {
+  requestPayment: (options: {
+    method: 'CARD';
+    amount: { currency: 'KRW'; value: number };
+    orderId: string;
+    orderName: string;
+    successUrl: string;
+    failUrl: string;
+    customerName?: string;
+  }) => Promise<void>;
+};
+
 export type TossPaymentsInstance = {
   widgets: (options: { customerKey: string }) => TossPaymentWidgets;
+  payment: (options: { customerKey: string }) => TossPaymentWindow;
 };
 
 declare global {

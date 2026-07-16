@@ -11,11 +11,11 @@ import com.bgmagitapi.origin.payment.entity.enumeration.PaymentStatus;
 import com.bgmagitapi.origin.payment.repository.BgmAgitPaymentRepository;
 import com.bgmagitapi.origin.payment.service.PaymentService;
 import com.bgmagitapi.origin.payment.service.TossPaymentsClient;
+import com.bgmagitapi.origin.payment.service.response.TossPaymentResponse;
 import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.origin.service.response.BizTalkCancel;
 import com.bgmagitapi.origin.service.response.ReservationTalkContext;
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,7 +67,7 @@ public class PaymentServiceImpl implements PaymentService {
             return toConfirmResponse(payment);
         }
 
-        JsonNode result;
+        TossPaymentResponse result;
         try {
             result = tossPaymentsClient.confirm(paymentKey, orderId, amount);
         } catch (RuntimeException e) {
@@ -76,10 +76,10 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         payment.markDone(
-                text(result, "paymentKey"),
-                text(result, "method"),
-                parseDateTime(text(result, "approvedAt")),
-                result.path("receipt").path("url").asText(null)
+                result.getPaymentKey(),
+                result.getMethod(),
+                parseDateTime(result.getApprovedAt()),
+                result.getReceiptUrl()
         );
 
         approveReservation(payment.getBgmAgitReservationNo());
@@ -95,12 +95,16 @@ public class PaymentServiceImpl implements PaymentService {
             return;
         }
 
-        JsonNode result = tossPaymentsClient.cancel(payment.getBgmAgitPaymentKey(), cancelReason);
-        JsonNode lastCancel = last(result.path("cancels"));
+        TossPaymentResponse result = tossPaymentsClient.cancel(payment.getBgmAgitPaymentKey(), cancelReason);
+        TossPaymentResponse.Cancel lastCancel = result == null ? null : result.getLatestCancel();
         payment.markCanceled(
-                lastCancel.path("cancelAmount").isMissingNode() ? payment.getBgmAgitPaymentAmount() : lastCancel.path("cancelAmount").asInt(),
-                lastCancel.path("cancelReason").asText(cancelReason),
-                parseDateTime(lastCancel.path("canceledAt").asText(null))
+                lastCancel == null || lastCancel.getCancelAmount() == null
+                        ? payment.getBgmAgitPaymentAmount()
+                        : lastCancel.getCancelAmount(),
+                lastCancel == null || lastCancel.getCancelReason() == null
+                        ? cancelReason
+                        : lastCancel.getCancelReason(),
+                parseDateTime(lastCancel == null ? null : lastCancel.getCanceledAt())
         );
     }
 
@@ -147,21 +151,10 @@ public class PaymentServiceImpl implements PaymentService {
         );
     }
 
-    private String text(JsonNode node, String field) {
-        return node == null ? null : node.path(field).asText(null);
-    }
-
     private LocalDateTime parseDateTime(String value) {
         if (value == null || value.isBlank()) {
             return LocalDateTime.now();
         }
         return OffsetDateTime.parse(value).toLocalDateTime();
-    }
-
-    private JsonNode last(JsonNode array) {
-        if (array == null || !array.isArray() || array.isEmpty()) {
-            return com.fasterxml.jackson.databind.node.MissingNode.getInstance();
-        }
-        return array.get(array.size() - 1);
     }
 }

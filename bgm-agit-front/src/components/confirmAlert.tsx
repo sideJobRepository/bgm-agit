@@ -61,38 +61,60 @@ function ReservationConfirmContent({
   const [reason, setReason] = useState('');
 
   return (
-    <AlertWrapper>
-      <Message>
-        {label} {count}명
-      </Message>
-      <CountBox>
-        <MdRemove
-          style={{
-            cursor: count > minPeople ? 'pointer' : 'not-allowed',
-            opacity: count > minPeople ? 1 : 0.3,
-          }}
-          onClick={() => setCount(c => Math.max(minPeople, c - 1))}
+    <AlertWrapper $wide>
+      <ReservationHeader>
+        <span>예약 정보 확인</span>
+        <strong>{label}</strong>
+      </ReservationHeader>
+
+      <FieldGroup>
+        <FieldTitle>
+          <span>예약 인원</span>
+          <small>
+            {minPeople}명 - {maxPeople}명
+          </small>
+        </FieldTitle>
+        <Stepper>
+          <IconButton
+            type="button"
+            disabled={count <= minPeople}
+            onClick={() => setCount(c => Math.max(minPeople, c - 1))}
+            aria-label="인원 줄이기"
+          >
+            <MdRemove />
+          </IconButton>
+          <CountValue>
+            <strong>{count}</strong>
+            <span>명</span>
+          </CountValue>
+          <IconButton
+            type="button"
+            disabled={count >= maxPeople}
+            onClick={() => setCount(c => Math.min(maxPeople, c + 1))}
+            aria-label="인원 늘리기"
+          >
+            <MdAdd />
+          </IconButton>
+        </Stepper>
+      </FieldGroup>
+
+      <FieldGroup>
+        <FieldTitle>
+          <span>요청사항</span>
+          <small>선택 입력</small>
+        </FieldTitle>
+        <ReasonTextarea
+          placeholder="필요한 내용이 있으면 적어주세요."
+          value={reason}
+          maxLength={200}
+          onChange={e => setReason(e.target.value)}
         />
-        <span>{count}명</span>
-        <MdAdd
-          style={{
-            cursor: count < maxPeople ? 'pointer' : 'not-allowed',
-            opacity: count < maxPeople ? 1 : 0.3,
-          }}
-          onClick={() => setCount(c => Math.min(maxPeople, c + 1))}
-        />
-      </CountBox>
-      <ReasonInput
-        type="text"
-        placeholder="요청사항을 적어주세요."
-        value={reason}
-        onChange={e => setReason(e.target.value)}
-      />
-      <Message>
-        해당 일자를 예약하시겠습니까?
-        <br />
-        예약금 입금 후 예약 확정이 완료됩니다.
-      </Message>
+        <HelperText>{reason.length}/200</HelperText>
+      </FieldGroup>
+
+      <NoticeMessage>
+        예약을 등록한 뒤 예약내역에서 예약금을 결제하면 예약이 확정됩니다.
+      </NoticeMessage>
       <ButtonGroup>
         <CancelButton
           onClick={() => {
@@ -104,11 +126,11 @@ function ReservationConfirmContent({
         </CancelButton>
         <ConfirmButton
           onClick={() => {
-            onConfirm({ count, reason });
+            onConfirm({ count, reason: reason.trim() });
             onClose();
           }}
         >
-          확인
+          예약 등록
         </ConfirmButton>
       </ButtonGroup>
     </AlertWrapper>
@@ -196,15 +218,16 @@ export function showInputModal(props: InputModalProps) {
 }
 
 // 스타일 컴포넌트 정의
-const AlertWrapper = styled.div`
+const AlertWrapper = styled.div<{ $wide?: boolean }>`
   background: #fff;
-  padding: 18px 50px;
-  border-radius: 12px;
+  padding: ${({ $wide }) => ($wide ? '24px' : '18px 50px')};
+  border-radius: 8px;
   width: 100%;
-  max-width: 360px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+  max-width: ${({ $wide }) => ($wide ? '420px' : '360px')};
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
   text-align: center;
   animation: fadeIn 0.25s ease;
+  box-sizing: border-box;
 `;
 
 const Message = styled.div`
@@ -229,6 +252,142 @@ const ButtonGroup = styled.div`
   margin-top: 24px;
   gap: 12px;
   font-weight: 600;
+`;
+
+const ReservationHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  margin-bottom: 18px;
+
+  span {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a7d55;
+  }
+
+  strong {
+    font-size: 20px;
+    line-height: 1.3;
+    color: #333;
+  }
+`;
+
+const FieldGroup = styled.div`
+  padding: 14px 0;
+  border-top: 1px solid #eeeeee;
+`;
+
+const FieldTitle = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  text-align: left;
+
+  span {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+  }
+
+  small {
+    font-size: 12px;
+    color: #999;
+  }
+`;
+
+const Stepper = styled.div`
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 10px;
+`;
+
+const IconButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #d7d7d7;
+  border-radius: 8px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+
+  svg {
+    font-size: 22px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+  }
+`;
+
+const CountValue = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 8px;
+  background: #f7f8f8;
+  color: #333;
+
+  strong {
+    font-size: 24px;
+    line-height: 1;
+  }
+
+  span {
+    margin-left: 3px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+`;
+
+const ReasonTextarea = styled.textarea`
+  width: 100%;
+  min-height: 92px;
+  padding: 12px;
+  border: 1px solid #d7d7d7;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  color: #333;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: #1a7d55;
+    box-shadow: 0 0 0 3px rgba(26, 125, 85, 0.1);
+  }
+
+  &::placeholder {
+    color: #aaa;
+  }
+`;
+
+const HelperText = styled.div`
+  margin-top: 6px;
+  text-align: right;
+  font-size: 12px;
+  color: #aaa;
+`;
+
+const NoticeMessage = styled.div`
+  padding: 12px;
+  border-radius: 8px;
+  background: #f2f7f5;
+  color: #1a7d55;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: left;
 `;
 
 const BaseButton = styled.button`
@@ -257,26 +416,6 @@ const ConfirmButton = styled(BaseButton)`
 
   &:hover {
     opacity: 0.8;
-  }
-`;
-
-const CountBox = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 14px;
-  color: #757575;
-
-  svg {
-    font-size: 22px;
-  }
-
-  span {
-    font-size: 16px;
-    font-weight: 600;
-    min-width: 48px;
-    text-align: center;
   }
 `;
 

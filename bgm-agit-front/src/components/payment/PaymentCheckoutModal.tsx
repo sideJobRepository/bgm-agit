@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { toast } from 'react-toastify';
 import type { CustomUser } from '../../types/user.ts';
-import type { PaymentOrderResponse, TossPaymentWidgets } from '../../types/tossPayments.ts';
+import type {
+  PaymentOrderResponse,
+  TossPaymentWidgets,
+  TossPaymentWindow,
+} from '../../types/tossPayments.ts';
 
 type PaymentCheckoutModalProps = {
   order: PaymentOrderResponse;
@@ -37,21 +41,41 @@ function loadTossPaymentsScript() {
   });
 }
 
+function getPaymentErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) {
+    return `결제창을 불러오지 못했습니다. (${error.message})`;
+  }
+  return '결제창을 불러오지 못했습니다.';
+}
+
 export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCheckoutModalProps) {
   const [ready, setReady] = useState(false);
   const [paying, setPaying] = useState(false);
   const widgetsRef = useRef<TossPaymentWidgets | null>(null);
+  const paymentRef = useRef<TossPaymentWindow | null>(null);
   const renderedOrderId = useRef<string | null>(null);
+  const isWidgetKey = /^test_gck_|^live_gck_/.test(order.clientKey);
+  const isPaymentKey = /^test_ck_|^live_ck_/.test(order.clientKey);
 
   useEffect(() => {
     let alive = true;
 
-    async function renderWidget() {
+    async function initializePayment() {
       if (renderedOrderId.current === order.orderId) {
         return;
       }
       renderedOrderId.current = order.orderId;
       setReady(false);
+
+      if (!order.clientKey) {
+        throw new Error('토스 clientKey가 비어 있습니다.');
+      }
+      if (!isWidgetKey && !isPaymentKey) {
+        throw new Error('토스 clientKey 형식이 올바르지 않습니다.');
+      }
+      if (!order.amount || order.amount < 1000) {
+        throw new Error('결제 금액이 올바르지 않습니다.');
+      }
 
       await loadTossPaymentsScript();
       if (!window.TossPayments) {
@@ -59,42 +83,61 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
       }
 
       const tossPayments = window.TossPayments(order.clientKey);
-      const widgets = tossPayments.widgets({ customerKey: `bgmagit_${user.id}` });
-      widgetsRef.current = widgets;
 
-      await widgets.setAmount({ currency: 'KRW', value: order.amount });
-      await widgets.renderPaymentMethods({ selector: '#payment-methods', variantKey: 'DEFAULT' });
-      await widgets.renderAgreement({ selector: '#payment-agreement', variantKey: 'AGREEMENT' });
+      if (isWidgetKey) {
+        const widgets = tossPayments.widgets({ customerKey: `bgmagit_${user.id}` });
+        widgetsRef.current = widgets;
+
+        await widgets.setAmount({ currency: 'KRW', value: order.amount });
+        await widgets.renderPaymentMethods({ selector: '#payment-methods', variantKey: 'DEFAULT' });
+        await widgets.renderAgreement({ selector: '#payment-agreement', variantKey: 'AGREEMENT' });
+      } else {
+        paymentRef.current = tossPayments.payment({ customerKey: `bgmagit_${user.id}` });
+      }
 
       if (alive) {
         setReady(true);
       }
     }
 
-    renderWidget().catch(error => {
+    initializePayment().catch(error => {
+      if (!alive) {
+        return;
+      }
       console.error(error);
-      toast.error('결제창을 불러오지 못했습니다.');
+      toast.error(getPaymentErrorMessage(error), { toastId: `payment-widget-${order.orderId}` });
       onClose();
     });
 
     return () => {
       alive = false;
     };
-  }, [order, user.id, onClose]);
+  }, [isPaymentKey, isWidgetKey, order, user.id, onClose]);
 
   async function requestPayment() {
-    if (!widgetsRef.current) {
+    if (!widgetsRef.current && !paymentRef.current) {
       return;
     }
 
     setPaying(true);
     try {
-      await widgetsRef.current.requestPayment({
+      const paymentOptions = {
         orderId: order.orderId,
         orderName: order.orderName,
         successUrl: `${window.location.origin}/payment/success`,
         failUrl: `${window.location.origin}/payment/fail`,
         customerName: user.name,
+      };
+
+      if (widgetsRef.current) {
+        await widgetsRef.current.requestPayment(paymentOptions);
+        return;
+      }
+
+      await paymentRef.current?.requestPayment({
+        method: 'CARD',
+        amount: { currency: 'KRW', value: order.amount },
+        ...paymentOptions,
       });
     } catch (error) {
       console.error(error);
@@ -116,8 +159,17 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
           <strong>{order.orderName}</strong>
           <span>{order.amount.toLocaleString()}원</span>
         </Summary>
-        <WidgetBox id="payment-methods" />
-        <WidgetBox id="payment-agreement" />
+        {isWidgetKey ? (
+          <>
+            <WidgetBox id="payment-methods" />
+            <WidgetBox id="payment-agreement" />
+          </>
+        ) : (
+          <GuideBox>
+            개발용 API 개별 연동 키로 카드 결제창을 실행합니다. 결제수단 선택 UI가 필요하면
+            토스 결제위젯 키를 사용하세요.
+          </GuideBox>
+        )}
         <PayButton type="button" onClick={requestPayment} disabled={!ready || paying}>
           {paying ? '결제 요청 중' : `${order.amount.toLocaleString()}원 결제하기`}
         </PayButton>
@@ -176,6 +228,16 @@ const Summary = styled.div`
 
 const WidgetBox = styled.div`
   margin-top: 12px;
+`;
+
+const GuideBox = styled.div`
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 8px;
+  background: #f7f8f8;
+  color: #555;
+  font-size: 14px;
+  line-height: 1.5;
 `;
 
 const PayButton = styled.button`

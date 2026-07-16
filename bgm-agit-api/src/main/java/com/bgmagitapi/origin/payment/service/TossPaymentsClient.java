@@ -1,6 +1,8 @@
 package com.bgmagitapi.origin.payment.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.bgmagitapi.origin.payment.service.request.TossPaymentCancelRequest;
+import com.bgmagitapi.origin.payment.service.request.TossPaymentConfirmRequest;
+import com.bgmagitapi.origin.payment.service.response.TossPaymentResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -10,7 +12,6 @@ import org.springframework.web.client.RestClient;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -27,30 +28,26 @@ public class TossPaymentsClient {
     @Value("${toss.cancel-url}")
     private String cancelUrl;
 
-    public JsonNode confirm(String paymentKey, String orderId, Integer amount) {
+    public TossPaymentResponse confirm(String paymentKey, String orderId, Integer amount) {
         return restClientBuilder.build()
                 .post()
                 .uri(confirmUrl)
                 .header(HttpHeaders.AUTHORIZATION, basicAuthorization())
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of(
-                        "paymentKey", paymentKey,
-                        "orderId", orderId,
-                        "amount", amount
-                ))
+                .body(new TossPaymentConfirmRequest(paymentKey, orderId, amount))
                 .retrieve()
-                .body(JsonNode.class);
+                .body(TossPaymentResponse.class);
     }
 
-    public JsonNode cancel(String paymentKey, String cancelReason) {
+    public TossPaymentResponse cancel(String paymentKey, String cancelReason) {
         return restClientBuilder.build()
                 .post()
                 .uri(cancelUrl + "/" + paymentKey + "/cancel")
                 .header(HttpHeaders.AUTHORIZATION, basicAuthorization())
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("cancelReason", cancelReason))
+                .body(new TossPaymentCancelRequest(cancelReason))
                 .retrieve()
-                .body(JsonNode.class);
+                .body(TossPaymentResponse.class);
     }
 
     private String basicAuthorization() {

@@ -134,9 +134,9 @@ export default function ReservationCalendar({ id }: { id?: number }) {
             showConfirmModal({
               message: (
                 <>
-                  예약이 완료되었습니다.
+                  예약이 등록되었습니다.
                   <br />
-                  예약금 입금 계좌번호 및 예약 상태는 예약내역에서 확인 가능합니다.
+                  예약내역에서 예약금을 결제하면 예약이 확정됩니다.
                   <br />
                   예약내역으로 이동하시겠습니까?
                 </>

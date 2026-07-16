@@ -2,7 +2,7 @@ import { Wrapper } from '../styles';
 import SearchBar from '../components/SearchBar.tsx';
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useReservationListFetch, useUpdatePost } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { reservationListDataState } from '../recoil/state/reservationState.ts';
@@ -28,6 +28,7 @@ export default function ReservationList() {
   const [page, setPage] = useState(0);
   const [paymentOrder, setPaymentOrder] = useState<PaymentOrderResponse | null>(null);
   const [payingReservationNo, setPayingReservationNo] = useState<number | null>(null);
+  const closePaymentModal = useCallback(() => setPaymentOrder(null), []);
 
   const handlePageClick = (pageNum: number) => {
     setPage(pageNum);
@@ -137,12 +138,9 @@ export default function ReservationList() {
 
         <TableBox>
           <TextBox>
-            <p>
-              • 계좌 : 카카오뱅크 79795151308 <br />• 예금주 : 박x후
-            </p>
             <span>
-              ※ 예약금은 10,000원이며, 반드시 예약자명으로 입금해주시기 바랍니다.
-              <br />※ 확정 후 취소의 경우 0507-1445-3503로 문의 주시기 바랍니다.
+              ※ 예약 대기 상태에서 결제 버튼을 눌러 예약금을 결제하면 예약이 확정됩니다.
+              <br />※ 확정 후 취소 또는 환불 문의는 0507-1445-3503로 연락 부탁드립니다.
             </span>
           </TextBox>
           <TableWrapper>
@@ -240,7 +238,9 @@ export default function ReservationList() {
                                 disabled={payingReservationNo === item.reservationNo}
                                 onClick={() => openPayment(item)}
                               >
-                                {payingReservationNo === item.reservationNo ? '준비중' : '결제'}
+                                {payingReservationNo === item.reservationNo
+                                  ? '결제 준비중'
+                                  : '예약금 결제'}
                               </Button>
                             )}
                           <Button color="#093A6E" onClick={() => shareReservation(item)}>
@@ -268,7 +268,7 @@ export default function ReservationList() {
         <PaymentCheckoutModal
           order={paymentOrder}
           user={user}
-          onClose={() => setPaymentOrder(null)}
+          onClose={closePaymentModal}
         />
       )}
     </Wrapper>
