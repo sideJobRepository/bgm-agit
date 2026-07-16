@@ -3,7 +3,7 @@ package com.bgmagitapi.kml.sanbaeman.controller;
 import com.bgmagitapi.kml.sanbaeman.dto.response.SanbaemanDetailGetResponse;
 import com.bgmagitapi.kml.sanbaeman.dto.response.SanbaemanPivotResponse;
 import com.bgmagitapi.kml.sanbaeman.service.SanbaemanService;
-import com.bgmagitapi.page.PageResponse;
+import com.bgmagitapi.origin.page.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

@@ -1,7 +1,7 @@
 package com.bgmagitapi.kml.rank.service;
 
 
-import com.bgmagitapi.entity.BgmAgitMember;
+import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.kml.rank.dto.response.MemberRecentGameResponse;
 import com.bgmagitapi.kml.rank.dto.response.MemberStatsResponse;
 import com.bgmagitapi.kml.rank.dto.response.RankGetResponse;
@@ -9,7 +9,7 @@ import com.bgmagitapi.kml.rank.enums.RankType;
 import com.bgmagitapi.kml.rank.repository.RankRepository;
 import com.bgmagitapi.kml.record.entity.Record;
 import com.bgmagitapi.kml.record.repository.RecordRepository;
-import com.bgmagitapi.repository.BgmAgitMemberRepository;
+import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;

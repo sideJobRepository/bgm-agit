@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.notice.service;
 
-import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.notice.dto.request.KmlNoticePostRequest;
 import com.bgmagitapi.kml.notice.dto.request.KmlNoticePutRequest;
 import com.bgmagitapi.kml.notice.dto.response.KmlNoticeGetDetailResponse;

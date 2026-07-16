@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.tournament.controller;
 
-import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.tournament.dto.request.TournamentPostRequest;
 import com.bgmagitapi.kml.tournament.dto.response.TournamentArchiveResponse;
 import com.bgmagitapi.kml.tournament.dto.response.TournamentLeaderboardResponse;

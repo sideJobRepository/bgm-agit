@@ -130,7 +130,10 @@ kml:
 - `POST /api_user_register.php` — 신규 사용자 등록 `{nick}` → `{status, user_id, nick, message}` (409면 이미 존재)
 - `POST /api_record_submit.php` — 기록 전송 `{game_length, common_point, players[4]{user_id, point, wind}}` → `{status, record_id, sum_check}`
 - `POST /api_record_modify.php` — 기록 수정 `{modify_id, game_length, common_point, players[4]}` → `{status, modify_id, sum_check}` (404면 대상 미존재)
-- 모두 `x-api-key` 헤더 필요. 삭제 API는 KML이 아직 안 만들어줌
+- `POST /api_record_del.php` — 기록 삭제 `{record_id}` → `{status, message, record_id}` (404면 없거나 이미 삭제됨)
+- `POST /api_record_restore.php` — 기록 복구 `{record_id}` → `{status, message, record_id}` (404면 없거나 이미 정상)
+- 모두 `x-api-key` 헤더 필요
+- (역만 del/restore API도 KML에 존재하나 역만은 애초에 KML 전송 파이프라인이 없어 미연동 — `api_user_guide.md` 참고)
 - 매핑: `MatchsWind`/`Wind` enum의 `ordinal()`이 그대로 0=동/1=남/2=서/3=북. `point`는 `recordScore` (정수). `common_point`는 현재 추적하지 않아 0 고정
 
 ### 기록 송신 (등록) 흐름
@@ -144,7 +147,11 @@ kml:
 - 4명 중 KML 미연동 회원 있으면 스킵 (등록과 동일)
 - `KmlRecordEventListener.onRecordModify` → `KmlRecordClient.modify(...)`
 - 응답은 따로 저장하지 않음 (`modifyId`는 이미 알고 있음)
-- 삭제(`removeRecord`)는 KML 송신 안 함 — KML 측 delete API 없음
+### 기록 송신 (삭제/복구) 흐름 (2026-07-16 추가)
+- `RecordServiceImpl.removeRecord` 마지막에 `publishKmlDeleteEvent(matchs)`, `restoreRecord` 마지막에 `publishKmlRestoreEvent(matchs)` — 둘 다 `matchs.matchsKmlId`가 null이면 스킵 (등록 미송신 게임)
+- 바디는 `{record_id: matchsKmlId}` 하나뿐 (플레이어 페이로드 없음). 4명 KML 연동 여부는 등록 시점에 이미 걸러짐(matchsKmlId 유무로 판별)
+- `KmlRecordEventListener.onRecordDelete/onRecordRestore` → `KmlRecordClient.delete(...)`/`restore(...)`. 응답은 로그만, 실패는 catch+log (DB 트랜잭션과 분리)
+- 이벤트 DTO: `KmlRecordDeleteEvent`/`KmlRecordRestoreEvent` (`origin/event/dto/`)
 
 ### 회원-KML 연결
 - 회원가입 시 닉네임으로 KML 조회·자동 등록(`KmlUserClient.findOrRegisterKmlIdByNickname`) — **단, `mahjongUse=true`(BML 가입) 일 때만**. 메인(보드게임) 가입은 KML 호출 생략. "마작(BML) 이용 회원 분리" 참고

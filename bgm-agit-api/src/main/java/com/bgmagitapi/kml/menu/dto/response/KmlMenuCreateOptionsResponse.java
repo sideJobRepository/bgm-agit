@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.menu.dto.response;
 
-import com.bgmagitapi.controller.response.BgmAgitRoleOptionResponse;
+import com.bgmagitapi.origin.controller.response.BgmAgitRoleOptionResponse;
 import lombok.Builder;
 import lombok.Getter;
 

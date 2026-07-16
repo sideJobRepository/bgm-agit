@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.review.dto.response;
 
-import com.bgmagitapi.controller.response.BgmAgitFreeGetDetailResponse;
+import com.bgmagitapi.origin.controller.response.BgmAgitFreeGetDetailResponse;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.querydsl.core.annotations.QueryProjection;
 import lombok.AllArgsConstructor;

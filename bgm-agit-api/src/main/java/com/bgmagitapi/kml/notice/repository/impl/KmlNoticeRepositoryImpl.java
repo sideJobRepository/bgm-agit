@@ -1,7 +1,7 @@
 package com.bgmagitapi.kml.notice.repository.impl;
 
-import com.bgmagitapi.entity.BgmAgitCommonFile;
-import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
+import com.bgmagitapi.origin.entity.BgmAgitCommonFile;
+import com.bgmagitapi.origin.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.kml.notice.dto.response.KmlNoticeGetResponse;
 import com.bgmagitapi.kml.notice.dto.response.QKmlNoticeGetResponse;
 import com.bgmagitapi.kml.notice.repository.query.KmlNoticeQueryRepository;
@@ -20,7 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static com.bgmagitapi.entity.QBgmAgitCommonFile.*;
+import static com.bgmagitapi.origin.entity.QBgmAgitCommonFile.*;
 import static com.bgmagitapi.kml.notice.entity.QKmlNotice.*;
 
 @RequiredArgsConstructor

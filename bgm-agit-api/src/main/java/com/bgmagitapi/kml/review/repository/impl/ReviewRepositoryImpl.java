@@ -1,7 +1,7 @@
 package com.bgmagitapi.kml.review.repository.impl;
 
-import com.bgmagitapi.entity.BgmAgitMember;
-import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
+import com.bgmagitapi.origin.entity.BgmAgitMember;
+import com.bgmagitapi.origin.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.kml.review.dto.response.QReviewGetDetailResponse;
 import com.bgmagitapi.kml.review.dto.response.QReviewGetResponse;
 import com.bgmagitapi.kml.review.dto.response.ReviewGetDetailResponse;
@@ -24,9 +24,9 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 
-import static com.bgmagitapi.entity.QBgmAgitCommonComment.bgmAgitCommonComment;
-import static com.bgmagitapi.entity.QBgmAgitCommonFile.bgmAgitCommonFile;
-import static com.bgmagitapi.entity.QBgmAgitMember.bgmAgitMember;
+import static com.bgmagitapi.origin.entity.QBgmAgitCommonComment.bgmAgitCommonComment;
+import static com.bgmagitapi.origin.entity.QBgmAgitCommonFile.bgmAgitCommonFile;
+import static com.bgmagitapi.origin.entity.QBgmAgitMember.bgmAgitMember;
 import static com.bgmagitapi.kml.review.entity.QReview.review;
 
 @RequiredArgsConstructor

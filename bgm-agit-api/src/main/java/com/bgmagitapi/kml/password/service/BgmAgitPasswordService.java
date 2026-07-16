@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.password.service;
 
-import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.password.dto.request.BgmAgitPasswordRequest;
 
 public interface BgmAgitPasswordService {

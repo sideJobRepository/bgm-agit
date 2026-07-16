@@ -1,14 +1,16 @@
 package com.bgmagitapi.kml.record.service.impl;
 
-import com.bgmagitapi.advice.exception.ValidException;
-import com.bgmagitapi.apiresponse.ApiResponse;
-import com.bgmagitapi.entity.BgmAgitMember;
-import com.bgmagitapi.event.dto.KmlRecordModifyEvent;
-import com.bgmagitapi.event.dto.KmlRecordSubmitEvent;
-import com.bgmagitapi.event.dto.MatchRecordRegisteredEvent;
-import com.bgmagitapi.file.entity.BgmAgitFile;
-import com.bgmagitapi.file.enums.FileType;
-import com.bgmagitapi.file.service.BgmAgitFileService;
+import com.bgmagitapi.origin.advice.exception.ValidException;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.entity.BgmAgitMember;
+import com.bgmagitapi.origin.event.dto.KmlRecordDeleteEvent;
+import com.bgmagitapi.origin.event.dto.KmlRecordModifyEvent;
+import com.bgmagitapi.origin.event.dto.KmlRecordRestoreEvent;
+import com.bgmagitapi.origin.event.dto.KmlRecordSubmitEvent;
+import com.bgmagitapi.origin.event.dto.MatchRecordRegisteredEvent;
+import com.bgmagitapi.origin.file.entity.BgmAgitFile;
+import com.bgmagitapi.origin.file.enums.FileType;
+import com.bgmagitapi.origin.file.service.BgmAgitFileService;
 import com.bgmagitapi.kml.history.service.MatchsAndRecordHistoryService;
 import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
@@ -33,9 +35,9 @@ import com.bgmagitapi.kml.sanbaeman.entity.Sanbaeman;
 import com.bgmagitapi.kml.sanbaeman.repository.SanbaemanRepository;
 import com.bgmagitapi.kml.yakuman.entity.Yakuman;
 import com.bgmagitapi.kml.yakuman.repository.YakumanRepository;
-import com.bgmagitapi.repository.BgmAgitMemberRepository;
-import com.bgmagitapi.security.service.kml.KmlRecordSubmitEventFactory;
-import com.bgmagitapi.util.CalculateUtil;
+import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
+import com.bgmagitapi.origin.security.service.kml.KmlRecordSubmitEventFactory;
+import com.bgmagitapi.origin.util.CalculateUtil;
 import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -394,7 +396,23 @@ public class RecordServiceImpl implements RecordService {
                 players
         ));
     }
-    
+
+    private void publishKmlDeleteEvent(Matchs matchs) {
+        if (matchs.getMatchsKmlId() == null) {
+            log.info("[KML] record_del 송신 생략 — matchsKmlId 없음 (등록 미송신 게임) matchsId={}", matchs.getId());
+            return;
+        }
+        eventPublisher.publishEvent(new KmlRecordDeleteEvent(matchs.getMatchsKmlId()));
+    }
+
+    private void publishKmlRestoreEvent(Matchs matchs) {
+        if (matchs.getMatchsKmlId() == null) {
+            log.info("[KML] record_restore 송신 생략 — matchsKmlId 없음 (등록 미송신 게임) matchsId={}", matchs.getId());
+            return;
+        }
+        eventPublisher.publishEvent(new KmlRecordRestoreEvent(matchs.getMatchsKmlId()));
+    }
+
     @Override
     public ApiResponse updateRecord(RecordPutRequest request, Long requestMemberId) {
 
@@ -681,6 +699,9 @@ public class RecordServiceImpl implements RecordService {
         }
 
         matchsAndRecordHistoryService.updateMatchsAndRecordHistory(matchs,findRecord,"삭제",memberId);
+
+        publishKmlDeleteEvent(matchs);
+
         return new ApiResponse(200,true,"삭제 되었습니다.");
     }
 
@@ -711,6 +732,8 @@ public class RecordServiceImpl implements RecordService {
             List<BgmAgitFile> tempFiles = bgmAgitFileService.findTemporaryByTargets(sanbaemanIds, FileType.SANBAEMAN);
             tempFiles.forEach(BgmAgitFile::restoreCompleteFileStatus);
         }
+
+        publishKmlRestoreEvent(matchs);
 
         return new ApiResponse(200, true, "기록이 복구되었습니다.");
     }

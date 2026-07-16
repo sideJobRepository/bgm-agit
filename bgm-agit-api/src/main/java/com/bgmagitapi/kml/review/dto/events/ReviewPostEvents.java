@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.review.dto.events;
 
-import com.bgmagitapi.entity.enumeration.BgmAgitSubject;
+import com.bgmagitapi.origin.entity.enumeration.BgmAgitSubject;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

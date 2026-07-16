@@ -1,8 +1,8 @@
 package com.bgmagitapi.kml.menu.service.impl;
 
-import com.bgmagitapi.apiresponse.ApiResponse;
-import com.bgmagitapi.controller.response.BgmAgitRoleOptionResponse;
-import com.bgmagitapi.entity.BgmAgitRole;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.controller.response.BgmAgitRoleOptionResponse;
+import com.bgmagitapi.origin.entity.BgmAgitRole;
 import com.bgmagitapi.kml.menu.dto.request.KmlMenuPostRequest;
 import com.bgmagitapi.kml.menu.dto.response.KmlMenuCreateOptionsResponse;
 import com.bgmagitapi.kml.menu.dto.response.KmlMenuGetResponse;
@@ -12,7 +12,7 @@ import com.bgmagitapi.kml.menu.repository.KmlMenuRepository;
 import com.bgmagitapi.kml.menu.service.KmlMenuService;
 import com.bgmagitapi.kml.menurole.entity.KmlMenuRole;
 import com.bgmagitapi.kml.menurole.repository.KmlMenuRoleRepository;
-import com.bgmagitapi.repository.BgmAgitRoleRepository;
+import com.bgmagitapi.origin.repository.BgmAgitRoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;

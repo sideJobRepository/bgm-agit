@@ -1,14 +1,14 @@
 package com.bgmagitapi.kml.review.service.impl;
 
 
-import com.bgmagitapi.advice.exception.ValidException;
-import com.bgmagitapi.apiresponse.ApiResponse;
-import com.bgmagitapi.config.S3FileUtils;
-import com.bgmagitapi.config.UploadResult;
-import com.bgmagitapi.entity.BgmAgitCommonFile;
-import com.bgmagitapi.entity.BgmAgitMember;
-import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
-import com.bgmagitapi.entity.enumeration.BgmAgitSubject;
+import com.bgmagitapi.origin.advice.exception.ValidException;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.config.S3FileUtils;
+import com.bgmagitapi.origin.config.UploadResult;
+import com.bgmagitapi.origin.entity.BgmAgitCommonFile;
+import com.bgmagitapi.origin.entity.BgmAgitMember;
+import com.bgmagitapi.origin.entity.enumeration.BgmAgitCommonType;
+import com.bgmagitapi.origin.entity.enumeration.BgmAgitSubject;
 import com.bgmagitapi.kml.review.dto.events.ReviewPostEvents;
 import com.bgmagitapi.kml.review.dto.request.ReviewPostRequest;
 import com.bgmagitapi.kml.review.dto.request.ReviewPutRequest;
@@ -17,10 +17,10 @@ import com.bgmagitapi.kml.review.dto.response.ReviewGetResponse;
 import com.bgmagitapi.kml.review.entity.Review;
 import com.bgmagitapi.kml.review.repository.ReviewRepository;
 import com.bgmagitapi.kml.review.service.ReviewService;
-import com.bgmagitapi.repository.BgmAgitCommonCommentRepository;
-import com.bgmagitapi.repository.BgmAgitCommonFileRepository;
-import com.bgmagitapi.repository.BgmAgitMemberRepository;
-import com.bgmagitapi.security.xss.HtmlSanitizerService;
+import com.bgmagitapi.origin.repository.BgmAgitCommonCommentRepository;
+import com.bgmagitapi.origin.repository.BgmAgitCommonFileRepository;
+import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
+import com.bgmagitapi.origin.security.xss.HtmlSanitizerService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;

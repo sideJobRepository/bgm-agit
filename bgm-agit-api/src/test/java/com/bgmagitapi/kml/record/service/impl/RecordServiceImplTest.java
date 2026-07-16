@@ -1,7 +1,7 @@
 package com.bgmagitapi.kml.record.service.impl;
 
 import com.bgmagitapi.RepositoryAndServiceTestSupport;
-import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.record.dto.request.RecordPostRequest;
 import com.bgmagitapi.kml.record.dto.request.RecordPutRequest;

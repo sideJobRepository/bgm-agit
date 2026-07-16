@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.notice.repository.query;
 
-import com.bgmagitapi.entity.BgmAgitCommonFile;
+import com.bgmagitapi.origin.entity.BgmAgitCommonFile;
 import com.bgmagitapi.kml.notice.dto.response.KmlNoticeGetResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

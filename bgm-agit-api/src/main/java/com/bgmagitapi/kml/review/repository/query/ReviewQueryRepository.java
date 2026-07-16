@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.review.repository.query;
 
-import com.bgmagitapi.entity.BgmAgitMember;
+import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.kml.review.dto.response.ReviewGetDetailResponse;
 import com.bgmagitapi.kml.review.dto.response.ReviewGetResponse;
 import com.bgmagitapi.kml.review.entity.Review;

@@ -1,7 +1,7 @@
 package com.bgmagitapi.kml.history.service.impl;
 
 
-import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.history.dto.MatchsAndRecordHistoryResponse;
 import com.bgmagitapi.kml.history.entity.MatchsHistory;
 import com.bgmagitapi.kml.history.entity.RecordHistory;

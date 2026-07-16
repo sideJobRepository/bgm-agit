@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.setting.service;
 
-import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.setting.dto.request.SettingPostRequest;
 import com.bgmagitapi.kml.setting.dto.response.SettingGetResponse;
 
