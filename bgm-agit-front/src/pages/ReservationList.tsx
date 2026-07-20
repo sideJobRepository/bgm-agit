@@ -2,7 +2,7 @@ import { Wrapper } from '../styles';
 import SearchBar from '../components/SearchBar.tsx';
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useReservationListFetch, useUpdatePost } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { reservationListDataState } from '../recoil/state/reservationState.ts';
@@ -11,6 +11,9 @@ import { showConfirmModal } from '../components/confirmAlert.tsx';
 import { toast } from 'react-toastify';
 import type { Reservation } from '../types/reservation.ts';
 import Pagination from '../components/Pagination.tsx';
+import api from '../utils/axiosInstance.ts';
+import PaymentCheckoutModal from '../components/payment/PaymentCheckoutModal.tsx';
+import type { PaymentOrderResponse } from '../types/tossPayments.ts';
 
 export default function ReservationList() {
   const user = useRecoilValue(userState);
@@ -23,15 +26,26 @@ export default function ReservationList() {
   const { update } = useUpdatePost();
   const items = useRecoilValue(reservationListDataState);
   const [page, setPage] = useState(0);
+  const [paymentOrder, setPaymentOrder] = useState<PaymentOrderResponse | null>(null);
+  const [payingReservationNo, setPayingReservationNo] = useState<number | null>(null);
+  const closePaymentModal = useCallback(() => setPaymentOrder(null), []);
 
   const handlePageClick = (pageNum: number) => {
     setPage(pageNum);
   };
 
-  function todayFunction(date) {
-    const today = new Date().toISOString().slice(0, 10);
+  function getTodayText() {
+    return new Date().toLocaleDateString('sv-SE');
+  }
+
+  function todayFunction(date: string) {
+    const today = getTodayText();
 
     return date >= today;
+  }
+
+  function canCancelBeforeReservationDate(item: Reservation) {
+    return item.cancelStatus !== 'Y' && item.reservationDate > getTodayText();
   }
 
   useEffect(() => {
@@ -93,6 +107,26 @@ export default function ReservationList() {
     });
   }
 
+  async function openPayment(item: Reservation) {
+    if (!user) {
+      toast.error('로그인이 필요합니다.');
+      return;
+    }
+
+    setPayingReservationNo(item.reservationNo);
+    try {
+      const { data } = await api.post<PaymentOrderResponse>('/bgm-agit/payments/order', {
+        reservationNo: item.reservationNo,
+      });
+      setPaymentOrder(data);
+    } catch (error) {
+      console.error(error);
+      toast.error('결제 주문을 생성하지 못했습니다.');
+    } finally {
+      setPayingReservationNo(null);
+    }
+  }
+
   return (
     <Wrapper>
       <NoticeBox>
@@ -112,12 +146,12 @@ export default function ReservationList() {
 
         <TableBox>
           <TextBox>
-            <p>
-              • 계좌 : 카카오뱅크 79795151308 <br />• 예금주 : 박x후
-            </p>
             <span>
-              ※ 예약금은 10,000원이며, 반드시 예약자명으로 입금해주시기 바랍니다.
-              <br />※ 확정 후 취소의 경우 0507-1445-3503로 문의 주시기 바랍니다.
+              ※ 예약 대기 상태에서 결제 버튼을 눌러 예약금을 결제하면 예약이 확정됩니다.
+              <br />※ 예약금은 M Room 30,000원, 그 외 예약 10,000원입니다.
+              <br />※ 잔여 이용요금은 현장에서 결제합니다.
+              <br />※ 예약 취소는 예약일 전날까지만 가능합니다. 당일 취소는 불가합니다.
+              <br />※ 확정 후 취소 또는 환불 문의는 0507-1445-3503로 연락 부탁드립니다.
             </span>
           </TextBox>
           <TableWrapper>
@@ -197,8 +231,7 @@ export default function ReservationList() {
 
                           {todayFunction(item.reservationDate) &&
                             !user?.roles.includes('ROLE_ADMIN') &&
-                            item.approvalStatus !== 'Y' &&
-                            item.cancelStatus !== 'Y' && (
+                            canCancelBeforeReservationDate(item) && (
                               <Button
                                 color="#FF5E57"
                                 onClick={() => updateData(item, false, 'Y', 'N')}
@@ -206,6 +239,34 @@ export default function ReservationList() {
                                 취소
                               </Button>
                             )}
+                          {todayFunction(item.reservationDate) &&
+                            !user?.roles.includes('ROLE_ADMIN') &&
+                            item.approvalStatus !== 'Y' &&
+                            item.cancelStatus !== 'Y' && (
+                              <Button
+                                color="#1A7D55"
+                                disabled={payingReservationNo === item.reservationNo}
+                                onClick={() => openPayment(item)}
+                              >
+                                {payingReservationNo === item.reservationNo
+                                  ? '결제 준비중'
+                                  : '예약금 결제'}
+                              </Button>
+                            )}
+                          {item.receiptUrl && (
+                            <Button
+                              color="#988271"
+                              onClick={() =>
+                                window.open(
+                                  item.receiptUrl as string,
+                                  '_blank',
+                                  'noopener,noreferrer',
+                                )
+                              }
+                            >
+                              영수증
+                            </Button>
+                          )}
                           <Button color="#093A6E" onClick={() => shareReservation(item)}>
                             공유
                           </Button>
@@ -227,6 +288,13 @@ export default function ReservationList() {
           </TableWrapper>
         </TableBox>
       </NoticeBox>
+      {paymentOrder && user && (
+        <PaymentCheckoutModal
+          order={paymentOrder}
+          user={user}
+          onClose={closePaymentModal}
+        />
+      )}
     </Wrapper>
   );
 }
@@ -398,6 +466,11 @@ const Button = styled.button<WithTheme & { color: string }>`
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.sizes.xxsmall};
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
   }
 `;
 

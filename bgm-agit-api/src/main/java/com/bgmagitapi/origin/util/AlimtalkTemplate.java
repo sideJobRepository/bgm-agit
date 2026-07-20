@@ -3,6 +3,7 @@ package com.bgmagitapi.origin.util;
 public interface AlimtalkTemplate {
     
     String BGMAGIT_RES_ACCOUNT2 = "bgmagit-res-account2"; // 예약대기 카카오뱅크 계좌
+    String BGMAGIT_RES_PAYMENT = "bgmagit-res-payment"; // 예약대기 예약금 결제안내 (결제 라이브 후 스위칭)
     
     //kml 용
     

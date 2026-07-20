@@ -15,6 +15,9 @@ import com.bgmagitapi.origin.entity.enumeration.BgmAgitImageCategory;
 import com.bgmagitapi.origin.event.dto.ReservationTalkEvent;
 import com.bgmagitapi.origin.event.dto.ReservationWaitingEvent;
 import com.bgmagitapi.origin.event.dto.TalkAction;
+import com.bgmagitapi.origin.payment.controller.response.PaymentOrderResponse;
+import com.bgmagitapi.origin.payment.repository.BgmAgitPaymentRepository;
+import com.bgmagitapi.origin.payment.service.PaymentService;
 import com.bgmagitapi.origin.repository.BgmAgitImageRepository;
 import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
@@ -53,8 +56,12 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     private final BgmAgitMemberRepository bgmAgitMemberRepository;
     
     private final BgmAgitReservationRepository bgmAgitReservationRepository;
-    
+
     private final ApplicationEventPublisher eventPublisher;
+
+    private final PaymentService paymentService;
+
+    private final BgmAgitPaymentRepository bgmAgitPaymentRepository;
     
     @Override
     @Transactional(readOnly = true)
@@ -252,6 +259,41 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         eventPublisher.publishEvent(new ReservationWaitingEvent(member,bgmAgitImage,list));
         return new ApiResponse(200, true, "예약이 완료되었습니다.");
     }
+
+    @Override
+    public PaymentOrderResponse createPaymentOrder(Long reservationNo, Long userId) {
+        // 예약 그룹(같은 RESERVATION_NO 슬롯 행들) 조회
+        List<BgmAgitReservation> group = bgmAgitReservationRepository.findReservationList(reservationNo);
+        if (group.isEmpty()) {
+            throw new ReservationConflictException("존재하지 않는 예약입니다.");
+        }
+        BgmAgitReservation first = group.get(0);
+
+        // 소유자 검증: 본인 예약만 결제 가능
+        if (!Objects.equals(first.getBgmAgitMember().getBgmAgitMemberId(), userId)) {
+            throw new ReservationConflictException("본인의 예약이 아닙니다.");
+        }
+        // 취소된 예약은 결제 불가
+        boolean canceled = group.stream()
+                .anyMatch(r -> "Y".equals(r.getBgmAgitReservationCancelStatus()));
+        if (canceled) {
+            throw new ReservationConflictException("취소된 예약입니다.");
+        }
+        // 이미 확정(결제완료)된 예약은 재결제 불가
+        boolean approved = group.stream()
+                .anyMatch(r -> "Y".equals(r.getBgmAgitReservationApprovalStatus()));
+        if (approved) {
+            throw new ReservationConflictException("이미 확정된 예약입니다.");
+        }
+
+        // 금액 서버 계산(기본 1만, M룸 3만) + 주문명 구성
+        BgmAgitImage image = first.getBgmAgitImage();
+        int amount = SlotSchedule.resolveDepositAmount(image.getBgmAgitImageCategory(), image.getBgmAgitImageLabel());
+        String orderName = "BGM아지트 예약 - " + first.getBgmAgitReservationStartDate();
+
+        // 공통 결제 모듈에 주문 생성 위임
+        return paymentService.createOrder(userId, reservationNo, amount, orderName);
+    }
     
     @Override
     @Transactional(readOnly = true)
@@ -278,6 +320,9 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         Map<Long, List<BgmAgitReservation>> bucket = rows.stream()
                 .collect(Collectors.groupingBy(BgmAgitReservation::getBgmAgitReservationNo));
 
+        // 결제 완료건 영수증 URL 배치 조회 (예약번호별 최신 DONE)
+        Map<Long, String> receiptUrls = bgmAgitPaymentRepository.findDoneReceiptUrlsByReservationNos(pageNos);
+
         // pageNos 순서대로 DTO 만들기
         List<GroupedReservationResponse> content = new ArrayList<>();
         for (Long no : pageNos) {
@@ -286,6 +331,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 continue;
             }
             GroupedReservationResponse dto = new GroupedReservationResponse(no,list);
+            dto.setReceiptUrl(receiptUrls.get(no));
             content.add(dto);
         }
         
@@ -305,10 +351,21 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         String approvalStatus = request.getApprovalStatus();
         
         List<BgmAgitReservation> reservations = bgmAgitReservationRepository.findReservationList(reservationNo);
+        if (reservations.isEmpty()) {
+            throw new ReservationConflictException("존재하지 않는 예약입니다.");
+        }
+
+        if ("Y".equalsIgnoreCase(cancelStatus) && !isAdmin(role)) {
+            validateUserCancelableReservation(id, reservations);
+        }
         
         List<Long> idList = reservations.stream()
                 .map(BgmAgitReservation::getBgmAgitReservationId)
                 .toList();
+
+        if ("Y".equalsIgnoreCase(cancelStatus)) {
+            paymentService.cancelDonePaymentByReservationNo(reservationNo, "예약 취소");
+        }
         
         BizTalkCancel bizTalkCancel = bgmAgitReservationRepository.findBizTalkCancel(reservationNo);
         
@@ -343,5 +400,22 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         
         // 전송 조건이 아닌 경우
         return new ApiResponse(200, true, "수정 되었습니다.");
+    }
+
+    private void validateUserCancelableReservation(Long memberId, List<BgmAgitReservation> reservations) {
+        BgmAgitReservation first = reservations.get(0);
+        Long reservationMemberId = first.getBgmAgitMember().getBgmAgitMemberId();
+        if (!Objects.equals(reservationMemberId, memberId)) {
+            throw new ReservationConflictException("본인의 예약만 취소할 수 있습니다.");
+        }
+
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        if (!first.getBgmAgitReservationStartDate().isAfter(today)) {
+            throw new ReservationConflictException("예약 취소는 예약일 전날까지만 가능합니다.");
+        }
+    }
+
+    private boolean isAdmin(String role) {
+        return "ROLE_ADMIN".equals(role);
     }
 }

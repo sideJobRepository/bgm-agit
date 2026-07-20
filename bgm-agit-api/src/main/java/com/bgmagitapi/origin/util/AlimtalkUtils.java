@@ -67,6 +67,31 @@ public class AlimtalkUtils {
                 .append("자세한 예약내역은 BGM 아지트 홈페이지 로그인 후 마이페이지 > 예약내역에서 확인하실 수 있습니다.")
                 .toString();
     }
+
+    /**
+     * 예약 대기 안내 메시지 (결제 버전, 템플릿 bgmagit-res-payment)
+     * 결제 라이브 전환 후 계좌안내(buildReservationMessage) 대신 사용.
+     * 카카오 검수 통과한 템플릿 내용과 고정 문구가 정확히 일치해야 하므로 임의로 바꾸지 말 것.
+     */
+    public static String buildReservationPaymentMessage(String userName, String date, String times, String roomName, String people, String request) {
+        return new StringBuilder()
+                .append("안녕하세요. ").append(userName).append("님\n")
+                .append("BGM 아지트 예약 내역을 안내드립니다.\n\n")
+                .append("예약자: ").append(userName).append("\n")
+                .append("예약 일자: ").append(date).append("\n")
+                .append("예약 시간: ").append(times).append("\n")
+                .append("예약 상태: 예약 대기\n")
+                .append("예약 룸: ").append(roomName).append("\n")
+                .append("예약 인원: ").append(people).append("\n")
+                .append("요청 사항: ").append(request).append("\n\n")
+                .append("예약은 예약금 결제가 완료되는 시점에 최종 확정됩니다.\n")
+                .append("BGM 아지트 홈페이지 로그인 후 마이페이지 > 예약내역에서 [예약금 결제] 버튼을 눌러 결제해 주세요.\n")
+                .append("예약금은 M룸 30,000원, 그 외 10,000원이며 잔여 이용요금은 현장에서 결제합니다.\n\n")
+                .append("취소는 예약일 전날까지 가능하며, 당일 취소나 노쇼 시 예약금은 환불되지 않습니다.\n\n")
+                .append("자세한 예약내역은 BGM 아지트 홈페이지 로그인 후 마이페이지 > 예약내역에서 확인하실 수 있습니다.")
+                .toString();
+    }
+
     /* 예약 취소 메시지 필드 1*/
     public static String reservationCancelMessage1(String userName, String date, String times, String roomName,String people, String request) {
         return new StringBuilder()

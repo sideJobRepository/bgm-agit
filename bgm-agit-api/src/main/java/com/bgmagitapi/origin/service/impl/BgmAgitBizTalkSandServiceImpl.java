@@ -56,6 +56,11 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
 
     private static final String PHONE1 = "010-5059-3499";
     private static final String PHONE2 = "010-5592-8832";
+
+    // 예약금 결제(토스) 라이브 전환 스위치.
+    // true 로 바꾸면 예약 대기 알림톡이 계좌안내 → 예약금 결제안내(bgmagit-res-payment)로 전환됨.
+    // 토스 심사 통과 + 라이브 키 교체 시점에 함께 true 로 변경할 것.
+    private static final boolean RESERVATION_PAYMENT_LIVE = false;
     
     @Value("${biztalk.sender-key}")
     private String senderKey;
@@ -77,17 +82,27 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         boolean isRoom = agitImage.getBgmAgitImageCategory() == BgmAgitImageCategory.ROOM;
         String roomName = agitImage.getBgmAgitImageLabel();
         
-        // 메시지 구성
-        String message = AlimtalkUtils.buildReservationMessage(
-                member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, reservationRequest
-        );
-        
-        String ownerMessage = AlimtalkUtils.buildOwnerReservationMessage(
-                member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, reservationRequest
-        );
-        
-        // 템플릿명 및 버튼명 정의
-        String template = AlimtalkTemplate.BGMAGIT_RES_ACCOUNT2;
+        // 메시지 구성 (결제 라이브 전환 시 계좌안내 → 예약금 결제안내로 스위칭)
+        String message;
+        String ownerMessage;
+        String template;
+        if (RESERVATION_PAYMENT_LIVE) {
+            message = AlimtalkUtils.buildReservationPaymentMessage(
+                    member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, reservationRequest
+            );
+            ownerMessage = message; // 결제 버전은 사용자/관리자 문구 동일
+            template = AlimtalkTemplate.BGMAGIT_RES_PAYMENT;
+        } else {
+            message = AlimtalkUtils.buildReservationMessage(
+                    member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, reservationRequest
+            );
+            ownerMessage = AlimtalkUtils.buildOwnerReservationMessage(
+                    member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, reservationRequest
+            );
+            template = AlimtalkTemplate.BGMAGIT_RES_ACCOUNT2;
+        }
+
+        // 버튼명 정의
         String buttonName = "예약 내역 확인 하기";
         Long subjectId = bgmAgitReservation.getBgmAgitReservationNo();
         BgmAgitSubject subject = isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL;

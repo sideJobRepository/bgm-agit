@@ -79,3 +79,10 @@ kml:
   url: https://kml.or.kr/stat52
   api:
     key: ${KML_API_KEY}
+
+
+toss:
+  client-key: ${STAGING_TOSS_CLIENT_KEY}
+  secret-key: ${STAGING_TOSS_SECRET_KEY}
+  confirm-url: https://api.tosspayments.com/v1/payments/confirm
+  cancel-url: https://api.tosspayments.com/v1/payments

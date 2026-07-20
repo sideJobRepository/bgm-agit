@@ -17,6 +17,8 @@ import ReservationList from './pages/ReservationList.tsx';
 import Role from './pages/Role.tsx';
 import NoticeDetail from './pages/NoticeDetail.tsx';
 import Privacy from './pages/Privacy.tsx';
+import Terms from './pages/Terms.tsx';
+import RefundPolicy from './pages/RefundPolicy.tsx';
 import Free from './pages/Free.tsx';
 import FreeDetail from './pages/FreeDetail.tsx';
 import Inquiry from './pages/Inquiry.tsx';
@@ -39,6 +41,8 @@ import ClockTowerRecords from './pages/ClockTowerRecords.tsx';
 import ClockTowerRecordDetail from './pages/ClockTowerRecordDetail.tsx';
 import ClockTowerHistory from './pages/ClockTowerHistory.tsx';
 import ClockTowerStats from './pages/ClockTowerStats.tsx';
+import PaymentSuccess from './pages/PaymentSuccess.tsx';
+import PaymentFail from './pages/PaymentFail.tsx';
 
 function App() {
   return (
@@ -52,6 +56,8 @@ function App() {
             <Route path="/oauth/:provider/callback" element={<RedirectPage />} />
             <Route path="/error" element={<Error />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/refund-policy" element={<RefundPolicy />} />
             <Route path="/" element={<Layout />}>
               <Route index element={<MainPage />} />
               <Route path="about" element={<About />} />
@@ -59,6 +65,8 @@ function App() {
               <Route path="notice" element={<Notice mainGb={true} />} />
               <Route path="/noticeDetail" element={<NoticeDetail />} />
               <Route path="reservationList" element={<ReservationList />} />
+              <Route path="payment/success" element={<PaymentSuccess />} />
+              <Route path="payment/fail" element={<PaymentFail />} />
               <Route path="role" element={<Role />} />
               <Route path="free" element={<Free />} />
               <Route path="/freeDetail" element={<FreeDetail />} />

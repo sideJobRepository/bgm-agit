@@ -40,6 +40,7 @@ export type Reservation = {
   phoneNo: string;
   approvalStatus: 'Y' | 'N';
   cancelStatus: 'Y' | 'N';
+  receiptUrl?: string | null;
   timeSlots: {
     startTime: string;
     endTime: string;

@@ -24,7 +24,9 @@ public class GroupedReservationResponse {
     private Integer reservationPeople;
     private String reservationRequest;
     private String phoneNo;
-    
+    // 결제 완료(DONE)건의 토스 영수증 URL. 미결제/취소건은 null
+    private String receiptUrl;
+
     private List<TimeSlot> timeSlots;
     
     public GroupedReservationResponse(Long reservationNo, List<BgmAgitReservation> list) {

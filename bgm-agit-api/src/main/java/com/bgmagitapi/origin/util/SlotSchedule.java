@@ -60,4 +60,12 @@ public class SlotSchedule {
     public static boolean isMahjongRental(BgmAgitImageCategory category) {
         return category == BgmAgitImageCategory.MAHJONG;
     }
+
+    // 예약 예약금(정액): 기본 1만원, M룸만 3만원
+    public static int resolveDepositAmount(BgmAgitImageCategory category, String label) {
+        if (category == BgmAgitImageCategory.ROOM && "M Room".equals(label)) {
+            return 30000;
+        }
+        return 10000;
+    }
 }
