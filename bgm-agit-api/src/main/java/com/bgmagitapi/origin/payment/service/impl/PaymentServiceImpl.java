@@ -42,6 +42,10 @@ public class PaymentServiceImpl implements PaymentService {
     @Value("${toss.client-key}")
     private String tossClientKey;
 
+    // 결제 라이브 여부. false(심사 기간)면 결제 성공해도 예약 자동확정을 하지 않는다(공짜 예약 방지).
+    @Value("${payment.live:false}")
+    private boolean paymentLive;
+
     @Override
     public PaymentOrderResponse createOrder(Long memberId, Long reservationNo, int amount, String orderName) {
         BgmAgitMember member = bgmAgitMemberRepository.findById(memberId)
@@ -82,7 +86,11 @@ public class PaymentServiceImpl implements PaymentService {
                 result.getReceiptUrl()
         );
 
-        approveReservation(payment.getBgmAgitReservationNo());
+        // 심사 기간(payment.live=false)엔 결제행만 DONE 처리하고 예약 자동확정은 하지 않는다.
+        // (테스트키라 실입금이 없는데 자동확정되면 공짜 예약이 되므로. 카드사 심사는 결제창 작동만 확인)
+        if (paymentLive) {
+            approveReservation(payment.getBgmAgitReservationNo());
+        }
         return toConfirmResponse(payment);
     }
 

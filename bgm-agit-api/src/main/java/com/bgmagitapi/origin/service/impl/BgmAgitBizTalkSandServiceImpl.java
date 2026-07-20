@@ -57,10 +57,11 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     private static final String PHONE1 = "010-5059-3499";
     private static final String PHONE2 = "010-5592-8832";
 
-    // 예약금 결제(토스) 라이브 전환 스위치.
-    // true 로 바꾸면 예약 대기 알림톡이 계좌안내 → 예약금 결제안내(bgmagit-res-payment)로 전환됨.
-    // 토스 심사 통과 + 라이브 키 교체 시점에 함께 true 로 변경할 것.
-    private static final boolean RESERVATION_PAYMENT_LIVE = false;
+    // 예약금 결제(토스) 라이브 전환 스위치 (payment.live 프로퍼티).
+    // true 면 예약 대기 알림톡이 계좌안내 → 예약금 결제안내(bgmagit-res-payment)로 전환됨.
+    // real 은 심사 기간 동안 false, 라이브 계약 완료 시 application-real.yml 에서 true 로 변경.
+    @Value("${payment.live:false}")
+    private boolean paymentLive;
     
     @Value("${biztalk.sender-key}")
     private String senderKey;
@@ -86,7 +87,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String message;
         String ownerMessage;
         String template;
-        if (RESERVATION_PAYMENT_LIVE) {
+        if (paymentLive) {
             message = AlimtalkUtils.buildReservationPaymentMessage(
                     member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, reservationRequest
             );
