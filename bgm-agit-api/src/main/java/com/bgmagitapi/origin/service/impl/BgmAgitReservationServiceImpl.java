@@ -16,6 +16,7 @@ import com.bgmagitapi.origin.event.dto.ReservationTalkEvent;
 import com.bgmagitapi.origin.event.dto.ReservationWaitingEvent;
 import com.bgmagitapi.origin.event.dto.TalkAction;
 import com.bgmagitapi.origin.payment.controller.response.PaymentOrderResponse;
+import com.bgmagitapi.origin.payment.repository.BgmAgitPaymentRepository;
 import com.bgmagitapi.origin.payment.service.PaymentService;
 import com.bgmagitapi.origin.repository.BgmAgitImageRepository;
 import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
@@ -59,6 +60,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     private final ApplicationEventPublisher eventPublisher;
 
     private final PaymentService paymentService;
+
+    private final BgmAgitPaymentRepository bgmAgitPaymentRepository;
     
     @Override
     @Transactional(readOnly = true)
@@ -317,6 +320,9 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         Map<Long, List<BgmAgitReservation>> bucket = rows.stream()
                 .collect(Collectors.groupingBy(BgmAgitReservation::getBgmAgitReservationNo));
 
+        // 결제 완료건 영수증 URL 배치 조회 (예약번호별 최신 DONE)
+        Map<Long, String> receiptUrls = bgmAgitPaymentRepository.findDoneReceiptUrlsByReservationNos(pageNos);
+
         // pageNos 순서대로 DTO 만들기
         List<GroupedReservationResponse> content = new ArrayList<>();
         for (Long no : pageNos) {
@@ -325,6 +331,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 continue;
             }
             GroupedReservationResponse dto = new GroupedReservationResponse(no,list);
+            dto.setReceiptUrl(receiptUrls.get(no));
             content.add(dto);
         }
         

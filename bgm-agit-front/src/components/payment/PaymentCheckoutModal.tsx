@@ -141,7 +141,11 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
       });
     } catch (error) {
       console.error(error);
-      toast.error('결제 요청이 취소되었거나 실패했습니다.');
+      // 사용자가 결제창을 닫거나 취소한 경우는 조용히 무시 (실패 토스트 X)
+      const code = (error as { code?: string })?.code;
+      if (code !== 'USER_CANCEL' && code !== 'PAY_PROCESS_CANCELED') {
+        toast.error('결제 요청이 취소되었거나 실패했습니다.');
+      }
       setPaying(false);
     }
   }
@@ -166,16 +170,11 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
           <br />
           예약일 당일 취소 및 노쇼 시 예약금은 환불되지 않습니다.
         </NoticeBox>
-        {isWidgetKey ? (
+        {isWidgetKey && (
           <>
             <WidgetBox id="payment-methods" />
             <WidgetBox id="payment-agreement" />
           </>
-        ) : (
-          <GuideBox>
-            개발용 API 개별 연동 키로 카드 결제창을 실행합니다. 결제수단 선택 UI가 필요하면
-            토스 결제위젯 키를 사용하세요.
-          </GuideBox>
         )}
         <PayButton type="button" onClick={requestPayment} disabled={!ready || paying}>
           {paying ? '결제 요청 중' : `${order.amount.toLocaleString()}원 결제하기`}
@@ -246,16 +245,6 @@ const NoticeBox = styled.div`
 
 const WidgetBox = styled.div`
   margin-top: 12px;
-`;
-
-const GuideBox = styled.div`
-  margin-top: 12px;
-  padding: 14px;
-  border-radius: 8px;
-  background: #f7f8f8;
-  color: #555;
-  font-size: 14px;
-  line-height: 1.5;
 `;
 
 const PayButton = styled.button`

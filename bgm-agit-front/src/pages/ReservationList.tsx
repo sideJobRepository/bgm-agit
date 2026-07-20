@@ -253,6 +253,20 @@ export default function ReservationList() {
                                   : '예약금 결제'}
                               </Button>
                             )}
+                          {item.receiptUrl && (
+                            <Button
+                              color="#988271"
+                              onClick={() =>
+                                window.open(
+                                  item.receiptUrl as string,
+                                  '_blank',
+                                  'noopener,noreferrer',
+                                )
+                              }
+                            >
+                              영수증
+                            </Button>
+                          )}
                           <Button color="#093A6E" onClick={() => shareReservation(item)}>
                             공유
                           </Button>

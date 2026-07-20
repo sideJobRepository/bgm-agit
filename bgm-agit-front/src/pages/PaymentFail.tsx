@@ -19,6 +19,8 @@ export default function PaymentFail() {
 
 const ResultBox = styled.div`
   display: flex;
+  flex: 1;
+  width: 100%;
   min-height: 360px;
   flex-direction: column;
   align-items: center;
