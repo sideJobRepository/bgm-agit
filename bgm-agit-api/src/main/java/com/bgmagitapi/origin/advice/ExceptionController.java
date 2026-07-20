@@ -28,7 +28,7 @@ public class ExceptionController {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ErrorMessageResponse exceptionHandler(MethodArgumentNotValidException e) {
         log.info("검증 예외 에러 메시지 ", e);
-         BindingResult bindingResult = e.getBindingResult();
+        BindingResult bindingResult = e.getBindingResult();
         List<FieldError> fieldErrors = bindingResult.getFieldErrors();
         ErrorMessageResponse errorResponse = new ErrorMessageResponse(String.valueOf(HttpStatus.BAD_REQUEST.value()), "잘못된 요청입니다.");
         fieldErrors.forEach(err -> errorResponse.addValidation(err.getField(), err.getDefaultMessage()));

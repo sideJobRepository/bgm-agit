@@ -82,7 +82,7 @@ kml:
 
 
 toss:
-  client-key: ${TOSS_CLIENT_KEY}
-  secret-key: ${TOSS_SECRET_KEY}
+  client-key: ${STAGING_TOSS_CLIENT_KEY}
+  secret-key: ${STAGING_TOSS_SECRET_KEY}
   confirm-url: https://api.tosspayments.com/v1/payments/confirm
   cancel-url: https://api.tosspayments.com/v1/payments
