@@ -185,6 +185,14 @@ export default function ReservationCalendar({ id }: { id?: number }) {
             </p>
           )}
           <p>
+            <strong>
+              ※ 예약금은 M Room 30,000원, 그 외 예약 10,000원이며 예약금 결제 후 예약이 확정됩니다.
+            </strong>
+          </p>
+          <p>
+            <strong>※ 잔여 이용요금은 현장에서 결제합니다.</strong>
+          </p>
+          <p>
             <strong>※ 수요일은 무인운영으로 예약이 불가합니다.</strong>
           </p>
         </MessageBox>

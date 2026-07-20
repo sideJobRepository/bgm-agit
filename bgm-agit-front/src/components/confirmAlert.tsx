@@ -113,7 +113,9 @@ function ReservationConfirmContent({
       </FieldGroup>
 
       <NoticeMessage>
-        예약을 등록한 뒤 예약내역에서 예약금을 결제하면 예약이 확정됩니다.
+        예약금은 M Room 30,000원, 그 외 예약 10,000원입니다.
+        <br />
+        예약내역에서 예약금을 결제하면 예약이 확정되며, 잔여 이용요금은 현장에서 결제합니다.
       </NoticeMessage>
       <ButtonGroup>
         <CancelButton

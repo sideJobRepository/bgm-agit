@@ -17,6 +17,8 @@ import ReservationList from './pages/ReservationList.tsx';
 import Role from './pages/Role.tsx';
 import NoticeDetail from './pages/NoticeDetail.tsx';
 import Privacy from './pages/Privacy.tsx';
+import Terms from './pages/Terms.tsx';
+import RefundPolicy from './pages/RefundPolicy.tsx';
 import Free from './pages/Free.tsx';
 import FreeDetail from './pages/FreeDetail.tsx';
 import Inquiry from './pages/Inquiry.tsx';
@@ -54,6 +56,8 @@ function App() {
             <Route path="/oauth/:provider/callback" element={<RedirectPage />} />
             <Route path="/error" element={<Error />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/refund-policy" element={<RefundPolicy />} />
             <Route path="/" element={<Layout />}>
               <Route index element={<MainPage />} />
               <Route path="about" element={<About />} />

@@ -159,6 +159,13 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
           <strong>{order.orderName}</strong>
           <span>{order.amount.toLocaleString()}원</span>
         </Summary>
+        <NoticeBox>
+          이 결제는 예약 확정을 위한 예약금 결제입니다.
+          <br />
+          예약금은 M Room 30,000원, 그 외 예약 10,000원이며 잔여 이용요금은 현장에서 결제합니다.
+          <br />
+          예약일 당일 취소 및 노쇼 시 예약금은 환불되지 않습니다.
+        </NoticeBox>
         {isWidgetKey ? (
           <>
             <WidgetBox id="payment-methods" />
@@ -224,6 +231,17 @@ const Summary = styled.div`
   gap: 12px;
   margin-bottom: 16px;
   font-size: 16px;
+`;
+
+const NoticeBox = styled.div`
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f2f7f5;
+  color: #1a7d55;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
 `;
 
 const WidgetBox = styled.div`
