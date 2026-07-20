@@ -14,9 +14,12 @@ import Pagination from '../components/Pagination.tsx';
 import api from '../utils/axiosInstance.ts';
 import PaymentCheckoutModal from '../components/payment/PaymentCheckoutModal.tsx';
 import type { PaymentOrderResponse } from '../types/tossPayments.ts';
+import { PAYMENT_LIVE } from '../config/payment.ts';
 
 export default function ReservationList() {
   const user = useRecoilValue(userState);
+  // 결제 라이브 여부. false(심사 기간)면 결제해도 실제 출금/자동확정이 안 되므로 안내 배너 노출
+  const paymentLive = PAYMENT_LIVE;
 
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
   const start = dateRange[0]?.toISOString().slice(0, 10) ?? null;
@@ -145,6 +148,12 @@ export default function ReservationList() {
         </SearchWrapper>
 
         <TableBox>
+          {!paymentLive && (
+            <ReviewBanner>
+              예약 확정은 예약금 계좌이체 입금이 확인된 후 처리됩니다. 예약 후 안내되는 계좌로
+              예약금을 입금해 주시기 바랍니다.
+            </ReviewBanner>
+          )}
           <TextBox>
             <span>
               ※ 예약 대기 상태에서 결제 버튼을 눌러 예약금을 결제하면 예약이 확정됩니다.
@@ -253,7 +262,7 @@ export default function ReservationList() {
                                   : '예약금 결제'}
                               </Button>
                             )}
-                          {item.receiptUrl && (
+                          {paymentLive && item.receiptUrl && (
                             <Button
                               color="#988271"
                               onClick={() =>
@@ -471,6 +480,22 @@ const Button = styled.button<WithTheme & { color: string }>`
   &:disabled {
     cursor: not-allowed;
     opacity: 0.55;
+  }
+`;
+
+const ReviewBanner = styled.div<WithTheme>`
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid #f0d9a8;
+  border-radius: 8px;
+  background: #fff7e6;
+  color: #7a5b16;
+  font-size: ${({ theme }) => theme.sizes.medium};
+  font-weight: ${({ theme }) => theme.weight.semiBold};
+  line-height: 1.5;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.xxsmall};
   }
 `;
 
