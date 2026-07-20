@@ -32,7 +32,7 @@ public class ExceptionController {
         List<FieldError> fieldErrors = bindingResult.getFieldErrors();
         ErrorMessageResponse errorResponse = new ErrorMessageResponse(String.valueOf(HttpStatus.BAD_REQUEST.value()), "잘못된 요청입니다.");
         fieldErrors.forEach(err -> errorResponse.addValidation(err.getField(), err.getDefaultMessage()));
-        return errorResponse;
+         return errorResponse;
     }
     
     /**
