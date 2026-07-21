@@ -156,8 +156,13 @@ export default function ReservationList() {
           )}
           <TextBox>
             <span>
-              ※ 예약 대기 상태에서 결제 버튼을 눌러 예약금을 결제하면 예약이 확정됩니다.
-              <br />※ 예약금은 M Room 30,000원, 그 외 예약 10,000원입니다.
+              {paymentLive && (
+                <>
+                  ※ 예약 대기 상태에서 결제 버튼을 눌러 예약금을 결제하면 예약이 확정됩니다.
+                  <br />
+                </>
+              )}
+              ※ 예약금은 M Room 30,000원, 그 외 예약 10,000원입니다.
               <br />※ 잔여 이용요금은 현장에서 결제합니다.
               <br />※ 예약 취소는 예약일 전날까지만 가능합니다. 당일 취소는 불가합니다.
               <br />※ 확정 후 취소 또는 환불 문의는 0507-1445-3503로 연락 부탁드립니다.
@@ -248,7 +253,8 @@ export default function ReservationList() {
                                 취소
                               </Button>
                             )}
-                          {todayFunction(item.reservationDate) &&
+                          {paymentLive &&
+                            todayFunction(item.reservationDate) &&
                             !user?.roles.includes('ROLE_ADMIN') &&
                             item.approvalStatus !== 'Y' &&
                             item.cancelStatus !== 'Y' && (

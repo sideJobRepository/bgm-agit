@@ -205,6 +205,27 @@ kml:
 - **미해결(결정 대기)**: 예약 생성 `POST /bgm-agit/reservation`이 `reservationNo`를 응답에 안 실어줌(값은 `createReservation`에서 이미 계산됨, 반환만 안 함). 결제 진입점 2안 중 택1 — **A**: 예약내역(`ReservationList.tsx`) 대기행에 결제버튼(기존 `reservationNo` 사용, 백엔드 무변경) / **B**: 예약 직후 결제(`createReservation`이 `reservationNo` 반환하도록 소폭 변경).
 - **다음**: STEP 2 승인(`TossPaymentsClient.confirm` + `confirmPayment` 금액대조·멱등 + `PaymentConfirmedEvent`→예약 approval='Y'), STEP 3 실패/취소·환불.
 
+### 토스 심사 준비/현재 구현 메모 (2026-07-20)
+- 심사용 결제는 테스트키로 진행 가능. 운영 예약/알림톡 플로우는 건드리지 않고, 결제/정책/문구 위주로 정리.
+- 결제 진입은 A안으로 구현됨: 예약 생성 직후 결제하지 않고 `ReservationList.tsx`의 대기 예약 행에서 `예약금 결제` 버튼으로 주문 생성.
+- 예약금 정책은 `SlotSchedule.resolveDepositAmount(category, label)` 기준:
+  - M Room: 30,000원
+  - 그 외 예약: 10,000원
+  - 잔여 이용요금은 현장 결제
+- 토스 결제 모달(`PaymentCheckoutModal.tsx`)에는 “예약 확정을 위한 예약금 결제”, 예약금 금액, 현장 잔여금 결제, 당일 취소/노쇼 환불 불가 문구를 노출.
+- 예약 화면(`ReservationCalendar.tsx`), 예약 확인 모달(`confirmAlert.tsx`), 예약내역(`ReservationList.tsx`)에도 예약금/잔여금 안내 문구 추가.
+- 심사용 정책 페이지 추가:
+  - `/terms` -> `bgm-agit-front/src/pages/Terms.tsx`
+  - `/refund-policy` -> `bgm-agit-front/src/pages/RefundPolicy.tsx`
+  - 기존 `/privacy` 유지
+- 푸터(`Footer.tsx`)에 사업자정보와 정책 링크 노출:
+  - 상호: 보드게임카페BGM(비지엠)아지트
+  - 대표자: 박범후
+  - 사업자등록번호: 896-17-02241
+  - 주소: 대전광역시 서구 문정로 62, 3층 일부호(탄방동, 프라임빌딩)
+  - 연락처: 0507-1445-3503
+- 빌드 확인: `bgm-agit-front`에서 `npm.cmd run build` 통과. 큰 번들 경고만 있음.
+
 ## 환경변수 (.env) (2026-07-09 도입)
 - `bgm-agit-api`는 `me.paulschwarz:spring-dotenv:3.0.0`로 `.env`를 읽음(cham-equality와 동일 방식). 파일: `bgm-agit-api/src/main/resources/.env`. `application.yml`의 `${DB_URL}` 등 플레이스홀더를 여기서 치환.
 - `.env`는 `.gitignore` 처리(커밋 금지). 시크릿(DB/AWS/소셜/비즈톡/JWT/토스)은 레포에 없음.
