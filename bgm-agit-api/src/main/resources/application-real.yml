@@ -86,3 +86,6 @@ toss:
   secret-key: ${STAGING_TOSS_SECRET_KEY}
   confirm-url: https://api.tosspayments.com/v1/payments/confirm
   cancel-url: https://api.tosspayments.com/v1/payments
+
+payment:
+  live: true
