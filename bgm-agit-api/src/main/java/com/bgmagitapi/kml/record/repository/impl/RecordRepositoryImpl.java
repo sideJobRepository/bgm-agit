@@ -111,10 +111,10 @@ public class RecordRepositoryImpl implements RecordQueryRepository {
     }
     
     @Override
-    public List<Record> findByRecordByMatchsId(Long id) {
+    public List<Record> findRecordsByMatchsId(Long matchsId) {
         return queryFactory
                 .selectFrom(record)
-                .where(record.matchs.id.eq(id))
+                .where(record.matchs.id.eq(matchsId))
                 .fetch();
     }
     @Override

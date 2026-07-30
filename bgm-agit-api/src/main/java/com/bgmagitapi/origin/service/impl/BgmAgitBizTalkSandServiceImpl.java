@@ -279,7 +279,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
      */
     @Override
     public void sendMatchRecord(Long matchsId) {
-        List<Record> records = recordRepository.findByRecordByMatchsId(matchsId);
+        List<Record> records = recordRepository.findRecordsByMatchsId(matchsId);
         if (records.size() != 4) {
             log.info("[ALIMTALK] 대국기록 알림 발송 생략 — 참가자 수가 4명이 아님 matchsId={} size={}", matchsId, records.size());
             return;

@@ -28,8 +28,7 @@ public class Record extends DateSuperClass {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "BGM_AGIT_MEMBER_ID")
     private BgmAgitMember member;
-    
-    
+
     @Column(name = "BGM_AGIT_RECORD_RANK")
     private Integer recordRank;
     

@@ -483,7 +483,7 @@ public class RecordServiceImpl implements RecordService {
         // Record 수정
         // ------------------------
         
-        List<Record> records = recordRepository.findByRecordByMatchsId(matchsId);
+        List<Record> records = recordRepository.findRecordsByMatchsId(matchsId);
         
         Map<Long, Record> recordMap = records.stream()
                 .collect(Collectors.toMap(Record::getId, r -> r));
@@ -681,7 +681,7 @@ public class RecordServiceImpl implements RecordService {
     public ApiResponse removeRecord(Long id, Long memberId) {
         Matchs matchs = matchsRepository.findById(id).orElseThrow(() -> new RuntimeException("존재하지 않은 대국입니다."));
         matchs.modifyDelStatus();
-        List<Record> findRecord = recordRepository.findByRecordByMatchsId(matchs.getId());
+        List<Record> findRecord = recordRepository.findRecordsByMatchsId(matchs.getId());
 
         // 대국에 묶인 yakuman 첨부 파일을 TEMPORARY 로 되돌려 일일 배치가 정리하도록
         List<Yakuman> yakumans = yakumanRepository.findByYakumanMatchesId(matchs.getId());

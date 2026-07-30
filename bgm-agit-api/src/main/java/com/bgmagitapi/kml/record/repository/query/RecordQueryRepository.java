@@ -3,7 +3,6 @@ package com.bgmagitapi.kml.record.repository.query;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
 import com.bgmagitapi.kml.record.entity.Record;
 import com.bgmagitapi.kml.yakamantype.dto.response.MembersGetResponse;
-import com.querydsl.jpa.impl.JPAQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -18,7 +17,7 @@ public interface RecordQueryRepository {
 
     List<RecordGetDetailResponse.RecordList> findByRecord(Long id);
 
-    List<Record> findByRecordByMatchsId(Long id);
+    List<Record> findRecordsByMatchsId(Long matchsId);
 
     Page<Long> findMatchIdsByYear(Pageable pageable, Integer year);
 
