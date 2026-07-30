@@ -159,6 +159,7 @@ export default function ReservationList() {
               {paymentLive && (
                 <>
                   ※ 예약 대기 상태에서 결제 버튼을 눌러 예약금을 결제하면 예약이 확정됩니다.
+                  <br />※ 현재 토스페이먼츠 심사 기간으로 실제 결제 및 출금은 발생하지 않습니다.
                   <br />
                 </>
               )}
