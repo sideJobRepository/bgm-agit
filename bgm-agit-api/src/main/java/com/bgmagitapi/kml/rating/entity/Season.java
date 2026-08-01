@@ -1,5 +1,7 @@
 package com.bgmagitapi.kml.rating.entity;
 
+import com.bgmagitapi.kml.matchs.enums.MatchsWind;
+import com.bgmagitapi.kml.rating.enums.SeasonProgressStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -37,8 +39,9 @@ public class Season {
     private LocalDate endDate;
 
     // BGM 아지트 시즌 진행 상태
+    @Enumerated(EnumType.STRING)
     @Column(name = "BGM_AGIT_SEASON_PROGRESS_STATUS")
-    private String progressStatus;
+    private SeasonProgressStatus progressStatus;
 
     // BGM 아지트 시즌 리셋 타입
     @Column(name = "BGM_AGIT_SEASON_RESET_TYPE")
@@ -50,7 +53,7 @@ public class Season {
 
     // BGM 아지트 시즌 기준 레이팅
     @Column(name = "BGM_AGIT_SEASON_BASE_RATING")
-    private Integer baseRating;
+    private BigDecimal baseRating;
 
     // BGM 아지트 시즌 1등 점수
     @Column(name = "BGM_AGIT_SEASON_FIRST_SCORE")
@@ -65,8 +68,8 @@ public class Season {
     private BigDecimal thirdScore;
 
     // BGM 아지트 시즌 4등 점수
-    @Column(name = "BGM_AGIT_SEASON_FOUR_SCORE")
-    private BigDecimal fourScore;
+    @Column(name = "BGM_AGIT_SEASON_FOURTH_SCORE")
+    private BigDecimal fourthScore;
 
     // BGM 아지트 시즌 동 배수
     @Column(name = "BGM_AGIT_SEASON_EAST_MULTIPLE")
@@ -79,4 +82,17 @@ public class Season {
     // BGM 아지트 시즌 서 배수
     @Column(name = "BGM_AGIT_SEASON_WEST_MULTIPLE")
     private BigDecimal westMultiple;
+
+    // BGM 아지트 시즌 북 배수
+    @Column(name = "BGM_AGIT_SEASON_NORTH_MULTIPLE")
+    private BigDecimal northMultiple;
+
+    public BigDecimal getMultipleBy(MatchsWind matchsWind){
+        return switch (matchsWind) {
+            case EAST -> eastMultiple;
+            case SOUTH -> southMultiple;
+            case WEST -> westMultiple;
+            case NORTH -> northMultiple;
+        };
+    }
 }

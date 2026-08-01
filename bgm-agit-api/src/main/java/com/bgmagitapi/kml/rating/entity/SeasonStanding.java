@@ -1,5 +1,6 @@
 package com.bgmagitapi.kml.rating.entity;
 
+import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
@@ -9,10 +10,8 @@ import java.math.BigDecimal;
 
 @Table(name = "BGM_AGIT_SEASON_STANDING")
 @Entity
-@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-@Builder
 public class SeasonStanding extends DateSuperClass {
 
     // BGM 아지트 시즌 현황 ID
@@ -34,4 +33,19 @@ public class SeasonStanding extends DateSuperClass {
     // BGM 아지트 시즌 현황 레이팅
     @Column(name = "BGM_AGIT_SEASON_STANDING_RATING")
     private BigDecimal rating;
+
+    public static SeasonStanding create(Season season, BgmAgitMember member){
+        SeasonStanding seasonStanding = new SeasonStanding();
+        seasonStanding.season = season;
+        seasonStanding.member = member;
+        seasonStanding.rating = season.getBaseRating();
+        return seasonStanding;
+    }
+
+    public void addRatingValue(MatchsWind matchsWind, BigDecimal value){
+        BigDecimal multiple = season.getMultipleBy(matchsWind);
+        BigDecimal multipleValue = value.multiply(multiple);
+        this.rating = this.rating.add(multipleValue);
+    }
+
 }
