@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.menurole.entity;
 
-import com.bgmagitapi.entity.BgmAgitRole;
+import com.bgmagitapi.origin.entity.BgmAgitRole;
 import com.bgmagitapi.kml.menu.entity.KmlMenu;
 import jakarta.persistence.*;
 import lombok.*;

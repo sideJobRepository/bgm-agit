@@ -1,18 +1,18 @@
 package com.bgmagitapi.kml.rule.service.impl;
 
 
-import com.bgmagitapi.apiresponse.ApiResponse;
-import com.bgmagitapi.config.S3FileUtils;
-import com.bgmagitapi.config.UploadResult;
-import com.bgmagitapi.entity.BgmAgitCommonFile;
-import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.config.S3FileUtils;
+import com.bgmagitapi.origin.config.UploadResult;
+import com.bgmagitapi.origin.entity.BgmAgitCommonFile;
+import com.bgmagitapi.origin.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.kml.rule.dto.request.RulePostRequest;
 import com.bgmagitapi.kml.rule.dto.request.RulePutRequest;
 import com.bgmagitapi.kml.rule.dto.response.RuleGetResponse;
 import com.bgmagitapi.kml.rule.entity.Rule;
 import com.bgmagitapi.kml.rule.repository.RuleRepository;
 import com.bgmagitapi.kml.rule.service.RuleService;
-import com.bgmagitapi.repository.BgmAgitCommonFileRepository;
+import com.bgmagitapi.origin.repository.BgmAgitCommonFileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

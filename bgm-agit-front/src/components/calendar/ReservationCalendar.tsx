@@ -134,9 +134,9 @@ export default function ReservationCalendar({ id }: { id?: number }) {
             showConfirmModal({
               message: (
                 <>
-                  예약이 완료되었습니다.
+                  예약이 등록되었습니다.
                   <br />
-                  예약금 입금 계좌번호 및 예약 상태는 예약내역에서 확인 가능합니다.
+                  예약내역에서 예약금을 결제하면 예약이 확정됩니다.
                   <br />
                   예약내역으로 이동하시겠습니까?
                 </>
@@ -184,6 +184,14 @@ export default function ReservationCalendar({ id }: { id?: number }) {
               </strong>
             </p>
           )}
+          <p>
+            <strong>
+              ※ 예약금은 M Room 30,000원, 그 외 예약 10,000원이며 예약금 결제 후 예약이 확정됩니다.
+            </strong>
+          </p>
+          <p>
+            <strong>※ 잔여 이용요금은 현장에서 결제합니다.</strong>
+          </p>
           <p>
             <strong>※ 수요일은 무인운영으로 예약이 불가합니다.</strong>
           </p>

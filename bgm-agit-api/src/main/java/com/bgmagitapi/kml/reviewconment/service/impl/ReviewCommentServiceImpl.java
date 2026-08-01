@@ -1,14 +1,14 @@
 package com.bgmagitapi.kml.reviewconment.service.impl;
 
-import com.bgmagitapi.apiresponse.ApiResponse;
-import com.bgmagitapi.entity.BgmAgitCommonComment;
-import com.bgmagitapi.entity.BgmAgitMember;
-import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.entity.BgmAgitCommonComment;
+import com.bgmagitapi.origin.entity.BgmAgitMember;
+import com.bgmagitapi.origin.entity.enumeration.BgmAgitCommonType;
 import com.bgmagitapi.kml.reviewconment.dto.request.ReviewCommentPostRequest;
 import com.bgmagitapi.kml.reviewconment.dto.request.ReviewCommentPutRequest;
 import com.bgmagitapi.kml.reviewconment.service.ReviewCommentService;
-import com.bgmagitapi.repository.BgmAgitCommonCommentRepository;
-import com.bgmagitapi.repository.BgmAgitMemberRepository;
+import com.bgmagitapi.origin.repository.BgmAgitCommonCommentRepository;
+import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

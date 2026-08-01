@@ -1,7 +1,7 @@
 package com.bgmagitapi.kml.notice.service.impl;
 
 import com.bgmagitapi.RepositoryAndServiceTestSupport;
-import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.notice.dto.enums.FileStatus;
 import com.bgmagitapi.kml.notice.dto.request.KmlNoticePostRequest;
 import com.bgmagitapi.kml.notice.dto.request.KmlNoticePutRequest;

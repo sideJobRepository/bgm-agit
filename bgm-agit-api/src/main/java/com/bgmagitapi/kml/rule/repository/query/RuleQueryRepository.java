@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.rule.repository.query;
 
-import com.bgmagitapi.entity.BgmAgitCommonFile;
+import com.bgmagitapi.origin.entity.BgmAgitCommonFile;
 
 import java.util.List;
 

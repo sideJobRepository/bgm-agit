@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>마작 랭크(등급) 시스템 계획서</title>
+<style>
+  :root{
+    --navy:#093A6E; --green:#1A7D55; --brown:#988271; --red:#FF5E57;
+    --ink:#23303a; --sub:#5b6b78; --line:#e3e8ee; --bg:#f4f6f9; --card:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    background:var(--bg); color:var(--ink); -webkit-font-smoothing:antialiased;
+  }
+  .deck{height:100vh;overflow:hidden;position:relative}
+  .slide{
+    position:absolute;inset:0;display:none;flex-direction:column;
+    padding:64px 72px;animation:fade .25s ease;
+  }
+  .slide.active{display:flex}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .kicker{font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--brown);text-transform:uppercase}
+  h1{font-size:46px;line-height:1.2;margin-top:10px;color:var(--navy)}
+  h2{font-size:32px;color:var(--navy);margin-bottom:8px}
+  h2 .num{color:var(--brown);font-size:20px;font-weight:700;margin-right:10px}
+  .lead{font-size:18px;color:var(--sub);margin-top:14px;line-height:1.6;max-width:60ch}
+
+  .grid{display:grid;gap:16px;margin-top:24px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr 1fr 1fr}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+  .card h3{font-size:18px;color:var(--navy);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .card p,.card li{font-size:15.5px;color:var(--ink);line-height:1.62}
+  .card ul{margin-left:18px}
+  .muted{color:var(--sub)}
+  .tag{display:inline-block;font-size:12.5px;font-weight:700;color:#fff;background:var(--navy);
+       border-radius:999px;padding:3px 11px;margin:0 6px 6px 0}
+  .tag.g{background:var(--green)} .tag.b{background:var(--brown)} .tag.r{background:var(--red)}
+  code{background:#eef2f6;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:13.5px;color:#0b3b66}
+  .flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:26px}
+  .step{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-weight:600;color:var(--navy);font-size:15px}
+  .arrow{color:var(--brown);font-size:22px;font-weight:800}
+  .pill{display:inline-flex;gap:8px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px;margin:4px 6px 0 0}
+
+  .tiers{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .tier{color:#fff;border-radius:12px;padding:12px 16px;min-width:104px}
+  .tier b{font-size:20px;display:block}
+  .tier span{font-size:12.5px;opacity:.92}
+
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:14.5px;background:#fff}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}
+  th{background:#eef2f6;color:var(--navy)}
+
+  .footer{position:absolute;left:72px;right:72px;bottom:24px;display:flex;justify-content:space-between;
+          align-items:center;font-size:13px;color:var(--sub);border-top:1px solid var(--line);padding-top:12px}
+  .nav{position:fixed;right:22px;bottom:18px;display:flex;gap:8px;z-index:10}
+  .nav button{border:1px solid var(--line);background:#fff;border-radius:10px;width:40px;height:40px;
+              font-size:18px;cursor:pointer;color:var(--navy)}
+  .nav button:hover{background:#eef2f6}
+  .title-slide{background:linear-gradient(135deg,#093A6E,#11538f);color:#fff;justify-content:center}
+  .title-slide .kicker{color:#bcd4ee}
+  .title-slide h1{color:#fff;font-size:54px}
+  .title-slide .lead{color:#dce8f5}
+  .title-slide .meta{margin-top:34px;display:flex;gap:10px;flex-wrap:wrap}
+  .title-slide .meta .pill{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2);color:#fff}
+  .note{margin-top:18px;background:#fff7e6;border:1px solid #f0d9a8;border-radius:12px;padding:14px 18px;color:#7a5b16;font-size:14.5px}
+  @media print{ .nav{display:none} .slide{display:flex!important;position:relative;height:100vh;page-break-after:always} }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- 1 -->
+  <section class="slide title-slide active">
+    <div class="kicker">bgm-agit-kml-front · 마작 기록 시스템</div>
+    <h1>마작 랭크(등급) 시스템<br/>계획서</h1>
+    <p class="lead">시즌(월간) 누적 승점으로 등급을 부여하고, 전용 랭크 페이지와 닉네임 옆 등급 뱃지로 노출한다.</p>
+    <div class="meta">
+      <span class="pill">누적 승점 등급</span>
+      <span class="pill">게임마다 저장(이벤트)</span>
+      <span class="pill">시즌/월간 리셋</span>
+      <span class="pill">전용 페이지 + 뱃지</span>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide">
+    <div class="kicker">Context</div>
+    <h2>배경 &amp; 목표</h2>
+    <p class="lead">현재는 기간별 랭킹(<code>/rank</code>)과 개인기록만 있고 <b>등급(티어) 개념이 없다</b>. 승점(<code>recordPoint</code>)은 이미 게임마다 계산·저장되므로 이를 재료로 등급을 매긴다.</p>
+    <div class="grid g3">
+      <div class="card"><h3>문제</h3><p>실력/성취를 한눈에 보여줄 등급 체계 부재. 멤버 동기부여 약함.</p></div>
+      <div class="card"><h3>해결</h3><p>시즌 누적 승점 → 구간별 등급(S/A/B…). 매월 리셋되는 시즌 경쟁.</p></div>
+      <div class="card"><h3>결과</h3><p>전용 랭크 페이지 + 곳곳 닉네임 옆 등급 뱃지로 즉시 인지.</p></div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide">
+    <div class="kicker">Requirements</div>
+    <h2>확정 요구사항</h2>
+    <div class="grid g2">
+      <div class="card"><h3>① 누적 승점 등급</h3><p>시즌 누적 <code>recordPoint</code> 합을 구간으로 잘라 등급 부여(단순).</p></div>
+      <div class="card"><h3>② 게임마다 저장</h3><p>기록 등록/수정/삭제 시 해당 회원 시즌 standing 갱신·저장 → 뱃지 조회 O(1).</p></div>
+      <div class="card"><h3>③ 시즌/월간 리셋</h3><p>시즌 = 월(<code>YYYY-MM</code>), 매월 자동 리셋 + 시즌별 기록.</p></div>
+      <div class="card"><h3>④ 전용 페이지 + 뱃지</h3><p><code>/rank-tier</code> 페이지 + 닉네임 옆 등급 뱃지.</p></div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide">
+    <div class="kicker">Architecture</div>
+    <h2>전체 흐름</h2>
+    <div class="flow">
+      <span class="step">마작 기록 등록/수정/삭제</span>
+      <span class="arrow">→</span>
+      <span class="step">RankTierRecalcEvent (AFTER_COMMIT, 비동기)</span>
+      <span class="arrow">→</span>
+      <span class="step">시즌 승점 SUM 재계산</span>
+      <span class="arrow">→</span>
+      <span class="step">STANDING upsert (점수·등급)</span>
+    </div>
+    <div class="flow">
+      <span class="step">STANDING 테이블</span>
+      <span class="arrow">→</span>
+      <span class="step">/rank-tier 리더보드 · 내 등급 진행바</span>
+      <span class="arrow">→</span>
+      <span class="step">닉네임 옆 등급 뱃지(/rank 등)</span>
+    </div>
+    <p class="lead" style="margin-top:30px">설계 원칙 — standing은 <b>이벤트 시 SUM 재계산으로 upsert</b>(증분가산 아님 → drift 없음). 소프트 삭제(<code>delStatus='Y'</code>)도 재계산으로 자연 반영.</p>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide">
+    <div class="kicker">Database</div>
+    <h2>DB 설계 <span class="muted" style="font-size:16px">(수동 DDL · ddl-auto:none)</span></h2>
+    <div class="grid g2">
+      <div class="card">
+        <h3>BGM_AGIT_RANK_TIER <span class="tag b">등급 구간 설정</span></h3>
+        <ul>
+          <li>NAME / MIN_POINT / SORT / COLOR</li>
+          <li><code>point ≥ MIN_POINT</code> 중 SORT 최상위로 판정</li>
+          <li class="muted">관리자가 임계값·라벨을 SQL로 튜닝(코드 변경 X)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>BGM_AGIT_RANK_STANDING <span class="tag">회원 × 시즌</span></h3>
+        <ul>
+          <li>MEMBER_ID / SEASON(YYYY-MM) / POINT / GAME_COUNT / TIER_NAME</li>
+          <li><code>UNIQUE(member, season)</code>, <code>INDEX(season, point)</code></li>
+          <li class="muted">기존 기록 백필 INSERT…SELECT 포함</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tiers">
+      <div class="tier" style="background:#7B2FF7"><b>S</b><span>300점~</span></div>
+      <div class="tier" style="background:#093A6E"><b>A</b><span>150점~</span></div>
+      <div class="tier" style="background:#1A7D55"><b>B</b><span>50점~</span></div>
+      <div class="tier" style="background:#988271"><b>C</b><span>0점~</span></div>
+      <div class="tier" style="background:#B58B00"><b>D</b><span>-100점~</span></div>
+      <div class="tier" style="background:#FF5E57"><b>F</b><span>그 외</span></div>
+    </div>
+    <p class="note">임계값은 운영 데이터 보고 조정하는 <b>placeholder</b>입니다.</p>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide">
+    <div class="kicker">Backend</div>
+    <h2>백엔드 설계 <span class="muted" style="font-size:16px">com.bgmagitapi.kml.ranktier</span></h2>
+    <div class="grid g2">
+      <div class="card"><h3>엔티티 · 리포</h3><ul>
+        <li>BgmAgitRankTier / BgmAgitRankStanding</li>
+        <li>SUM 집계: QueryDSL <code>numberTemplate("SUM({0})")</code> (인스턴스 .sum() 금지)</li>
+      </ul></div>
+      <div class="card"><h3>RankTierService</h3><ul>
+        <li>recalc(member, season) · getStandings · getMemberStanding(진행바) · getTiers · getBadges</li>
+      </ul></div>
+      <div class="card"><h3>이벤트 (기존 패턴 복제)</h3><ul>
+        <li>RecordServiceImpl 등록/수정/삭제/복구 → <code>RankTierRecalcEvent</code></li>
+        <li><code>@TransactionalEventListener(AFTER_COMMIT)</code> 비동기 재계산</li>
+      </ul></div>
+      <div class="card"><h3>컨트롤러 /bgm-agit/rank-tiers</h3><ul>
+        <li>/standings · /members/{id} · /config · /badges</li>
+        <li>GET 공개(기존 /ranks와 동일)</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide">
+    <div class="kicker">Frontend</div>
+    <h2>프론트 설계 <span class="muted" style="font-size:16px">bgm-agit-kml-front</span></h2>
+    <div class="grid g2">
+      <div class="card"><h3>전용 페이지 /rank-tier</h3><ul>
+        <li>시즌(월) 픽커 · 등급 구간표</li>
+        <li>리더보드(순위/닉네임+뱃지/등급/승점/게임수)</li>
+        <li>내 등급 카드 + 다음 등급까지 진행바</li>
+        <li class="muted">hybrid SSR (rank 페이지 패턴)</li>
+      </ul></div>
+      <div class="card"><h3>등급 뱃지 전파</h3><ul>
+        <li>TierBadge 컴포넌트 + zustand 뱃지 캐시</li>
+        <li>배치 로드(<code>/badges?memberIds=…</code>) — N+1 없음</li>
+        <li>노출: /rank-tier · /rank 리스트 · 개인기록 헤더</li>
+      </ul></div>
+    </div>
+    <div style="margin-top:18px">
+      <span class="pill">store/rankTier.ts</span>
+      <span class="pill">services/rankTier.service.ts</span>
+      <span class="pill">app/rank-tier/*</span>
+      <span class="pill">components/TierBadge.tsx</span>
+      <span class="pill">Sidebar 메뉴(/rank-tier, Medal)</span>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide">
+    <div class="kicker">Logic</div>
+    <h2>등급 산정 로직</h2>
+    <table>
+      <tr><th>단계</th><th>내용</th></tr>
+      <tr><td>시즌 결정</td><td><code>matchs.registDate</code> → <code>YYYY-MM</code> (현재월 = 현재 시즌)</td></tr>
+      <tr><td>승점 집계</td><td>해당 시즌 범위 + 삭제 안 된 대국의 <code>recordPoint</code> 합 (회원별)</td></tr>
+      <tr><td>등급 판정</td><td><code>point ≥ MIN_POINT</code> 만족하는 최상위 등급</td></tr>
+      <tr><td>저장</td><td>STANDING upsert (point · gameCount · tierName 스냅샷)</td></tr>
+      <tr><td>진행바</td><td>다음 등급 MIN_POINT − 현재 point = 남은 점수</td></tr>
+    </table>
+    <p class="lead" style="margin-top:18px">토너먼트 기록 포함(기존 랭킹과 동일). 매월 자동 리셋(새 시즌 키 생성).</p>
+  </section>
+
+  <!-- 9 -->
+  <section class="slide">
+    <div class="kicker">Rollout &amp; Verify</div>
+    <h2>실행 순서 &amp; 검증</h2>
+    <div class="grid g2">
+      <div class="card"><h3>실행 순서</h3><ol style="margin-left:18px">
+        <li><code>create-rank-tier.sql</code> 실행 (테이블·시드·백필·메뉴)</li>
+        <li>백엔드 재배포</li>
+        <li>프론트 <code>npm install &amp;&amp; npm run build</code> 배포</li>
+      </ol></div>
+      <div class="card"><h3>검증</h3><ul>
+        <li>기록 등록 → 4명 시즌 standing/등급 갱신</li>
+        <li>삭제(soft) → 재계산으로 승점 감소</li>
+        <li>/rank-tier 리더보드·진행바, /rank 뱃지 노출</li>
+        <li>월 경계 → 새 시즌 자동 생성</li>
+      </ul></div>
+    </div>
+    <p class="note">⚠️ 등급 임계값은 운영 데이터 보고 <code>BGM_AGIT_RANK_TIER</code> UPDATE로 튜닝(코드 변경 불필요).</p>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide title-slide">
+    <div class="kicker">Summary</div>
+    <h1>요약</h1>
+    <p class="lead">기존 승점 데이터 위에 <b>시즌 누적 등급</b>을 얹는다. 기록 이벤트로 standing을 재계산 저장하고, 전용 페이지와 닉네임 뱃지로 노출. 임계값·시즌은 운영에서 유연하게 조정.</p>
+    <div class="meta">
+      <span class="pill">신규 테이블 2 + 백필</span>
+      <span class="pill">kml.ranktier 패키지</span>
+      <span class="pill">이벤트 재계산</span>
+      <span class="pill">/rank-tier + 뱃지</span>
+    </div>
+  </section>
+
+</div>
+
+<div class="nav">
+  <button id="prev" aria-label="이전">‹</button>
+  <button id="next" aria-label="다음">›</button>
+</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=0;
+  function show(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,idx)=>s.classList.toggle('active',idx===i));
+  }
+  document.getElementById('next').onclick=()=>show(i+1);
+  document.getElementById('prev').onclick=()=>show(i-1);
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ')show(i+1);
+    if(e.key==='ArrowLeft'||e.key==='PageUp')show(i-1);
+  });
+  show(0);
+</script>
+</body>
+</html>

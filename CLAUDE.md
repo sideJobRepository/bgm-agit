@@ -9,6 +9,9 @@
 - `bgm-agit-kml-front` — Next.js 15+ (`basePath: /record`). 여기선 **일반 폼 로그인** 사용
 - 같은 API·같은 DB·같은 JWT를 공유하는 SSO 구조
 
+### 패키지 재배치 (2026-07-08)
+`bgm-agit-api`에서 `kml`·`log`·`BgmAgitApiApplication`(루트)만 남기고 나머지 도메인 패키지 전부를 **`com.bgmagitapi.origin`** 아래로 이동 (advice, annotation, apiresponse, clocktower, config, controller, entity, event, file, lecture, murder, my, page, repository, security, service, slot, util, valid). 메인 클래스가 루트에 남아 컴포넌트/엔티티/리포지토리 스캔 기준(base = `com.bgmagitapi`)은 그대로라 origin/kml/log 전부 스캔됨. **아래 "자주 쓰는 경로"의 `com.bgmagitapi.<pkg>` 표기는 대부분 `com.bgmagitapi.origin.<pkg>`로 읽을 것** (kml/log 제외). 테스트도 non-kml 패키지는 origin으로 미러링 이동.
+
 ## 인증 설계
 
 ### 로그인 경로 3가지
@@ -130,7 +133,10 @@ kml:
 - `POST /api_user_register.php` — 신규 사용자 등록 `{nick}` → `{status, user_id, nick, message}` (409면 이미 존재)
 - `POST /api_record_submit.php` — 기록 전송 `{game_length, common_point, players[4]{user_id, point, wind}}` → `{status, record_id, sum_check}`
 - `POST /api_record_modify.php` — 기록 수정 `{modify_id, game_length, common_point, players[4]}` → `{status, modify_id, sum_check}` (404면 대상 미존재)
-- 모두 `x-api-key` 헤더 필요. 삭제 API는 KML이 아직 안 만들어줌
+- `POST /api_record_del.php` — 기록 삭제 `{record_id}` → `{status, message, record_id}` (404면 없거나 이미 삭제됨)
+- `POST /api_record_restore.php` — 기록 복구 `{record_id}` → `{status, message, record_id}` (404면 없거나 이미 정상)
+- 모두 `x-api-key` 헤더 필요
+- (역만 del/restore API도 KML에 존재하나 역만은 애초에 KML 전송 파이프라인이 없어 미연동 — `api_user_guide.md` 참고)
 - 매핑: `MatchsWind`/`Wind` enum의 `ordinal()`이 그대로 0=동/1=남/2=서/3=북. `point`는 `recordScore` (정수). `common_point`는 현재 추적하지 않아 0 고정
 
 ### 기록 송신 (등록) 흐름
@@ -144,7 +150,11 @@ kml:
 - 4명 중 KML 미연동 회원 있으면 스킵 (등록과 동일)
 - `KmlRecordEventListener.onRecordModify` → `KmlRecordClient.modify(...)`
 - 응답은 따로 저장하지 않음 (`modifyId`는 이미 알고 있음)
-- 삭제(`removeRecord`)는 KML 송신 안 함 — KML 측 delete API 없음
+### 기록 송신 (삭제/복구) 흐름 (2026-07-16 추가)
+- `RecordServiceImpl.removeRecord` 마지막에 `publishKmlDeleteEvent(matchs)`, `restoreRecord` 마지막에 `publishKmlRestoreEvent(matchs)` — 둘 다 `matchs.matchsKmlId`가 null이면 스킵 (등록 미송신 게임)
+- 바디는 `{record_id: matchsKmlId}` 하나뿐 (플레이어 페이로드 없음). 4명 KML 연동 여부는 등록 시점에 이미 걸러짐(matchsKmlId 유무로 판별)
+- `KmlRecordEventListener.onRecordDelete/onRecordRestore` → `KmlRecordClient.delete(...)`/`restore(...)`. 응답은 로그만, 실패는 catch+log (DB 트랜잭션과 분리)
+- 이벤트 DTO: `KmlRecordDeleteEvent`/`KmlRecordRestoreEvent` (`origin/event/dto/`)
 
 ### 회원-KML 연결
 - 회원가입 시 닉네임으로 KML 조회·자동 등록(`KmlUserClient.findOrRegisterKmlIdByNickname`) — **단, `mahjongUse=true`(BML 가입) 일 때만**. 메인(보드게임) 가입은 KML 호출 생략. "마작(BML) 이용 회원 분리" 참고
@@ -163,6 +173,64 @@ kml:
 현재 마이페이지 닉네임 변경 로직에서 `kml_synk` 리셋은 **미구현**. 나중에 변경 기능 손볼 때:
 - 닉네임 바뀌면 `markKmlSyncFailed()` 호출해서 `'N'`으로 리셋
 - 다음 스케줄러 주기에 새 닉네임으로 다시 KML 조회됨
+
+## 예약 결제 (토스페이먼츠) — 설계 확정 (2026-07-08)
+
+`bgm-agit-front` 예약에 토스페이먼츠 결제 연동 예정. 현재 예약금은 순수 오프라인 계좌이체 안내 텍스트뿐(`ReservationList.tsx`), DB(`BGM_AGIT_RESERVATION`)에 금액/결제 개념 없음. 예약 상태는 승인여부(`..._APPROVAL_STATUS` Y/N)·취소여부(`..._CANCEL_STATUS` Y/N)만 존재.
+
+### 결제 흐름 (확정)
+- 예약금은 **정적 고정값**(예: 1만원)으로 시작. 요일별/타입별 요금정책·관리자 요금설정 화면은 **지금 안 만듦**(YAGNI). 필요해지면 별도 설정 테이블 추가 — 순수 추가라 나중에 붙여도 기존 구조 무해
+- 사용자 예약 생성(대기 N/N) → 결제 주문(READY) 생성 → 사용자 토스 결제 → confirm 성공 시 예약 `approvalStatus='Y'` **자동 확정** + 확정 알림톡 (기존 관리자 수동 확정 대체)
+- 예약 취소 시 결제가 DONE이면 토스 결제취소(cancel) API로 **자동 환불**
+- 한 예약 = 1시간 슬롯 여러 행이 `BGM_AGIT_RESERVATION_NO`(그룹키)로 묶임 → 결제 1건은 개별 행이 아니라 `RESERVATION_NO` 그룹 하나에 대응
+
+### 테이블 `BGM_AGIT_PAYMENT` (신설)
+- 주요 컬럼: `BGM_AGIT_MEMBER_ID`(FK→`BGM_AGIT_MEMBER`, ON DELETE RESTRICT), `BGM_AGIT_RESERVATION_NO`, `BGM_AGIT_ORDER_NO`(토스 orderId, 서버 발급), `BGM_AGIT_PAYMENT_KEY`(토스 paymentKey), `..._AMOUNT`, `..._STATUS`(READY/DONE/CANCELED/ABORTED), `..._TYPE`(토스 method: 카드/간편결제/계좌이체/가상계좌/휴대폰/상품권), 승인일시/취소일시, `..._CANCEL_AMOUNT`/`..._CANCEL_REASON`, `..._RECEIPT_URL`, `..._FAIL_REASON`, `REGIST_DATE`/`MODIFY_DATE`
+- 바챠 길이는 **프로젝트 관례상 기본 VARCHAR(500)**
+- **`BGM_AGIT_ORDER_NO`만 UNIQUE** (중복 결제 승인 방지 + confirm 조회 키)
+- **`BGM_AGIT_RESERVATION_NO`에 UNIQUE 걸지 말 것** — 걸면 결제 실패 후 재시도/재결제 때 같은 예약번호로 새 행 INSERT가 중복키로 터짐. 조회 성능용 일반 인덱스만(선택). "그룹당 유효 결제 1건"은 서비스단에서 관리
+- 예약↔결제 연결은 **A안**: payment가 `RESERVATION_NO` 보관(논리 연결). `RESERVATION_NO`는 예약 PK가 아니라 그룹키(중복)라 물리 FK 불가. 진짜 FK 원하면 **B안**(예약 테이블에 `BGM_AGIT_PAYMENT_ID` nullable FK 추가, 다:일 방향) 가능하나 현재는 A안 유지
+- confirm 시 프론트가 보낸 amount와 저장 amount 대조(위변조 차단), orderId 멱등 처리 필수
+- 토스 clientKey/secretKey는 `application.yml`(env), 테이블 아님
+
+### 안 하기로 한 것
+- **예약 테이블 2테이블 정규화**(부모=예약묶음 PK=예약번호 + 자식=슬롯행): 정석이지만 운영 데이터 이관 + 예약 생성/조회/취소/알림톡 로직 대수술이라 결제 작업과 섞지 않고 나중으로 미룸. 현행 1테이블(그룹키 방식) 위에서 결제 진행
+
+### 구현 진행 (STEP 1 완료, 2026-07-09)
+- **모듈 구조**: 공통 결제부 `com.bgmagitapi.origin.payment` (도메인 모름 → 재사용). 예약 연결은 이벤트로 붙일 예정.
+  - `payment/entity/BgmAgitPayment`(+`enumeration/PaymentStatus` READY/DONE/CANCELED/ABORTED), `payment/repository/BgmAgitPaymentRepository`(`findByBgmAgitOrderNo`/`findByBgmAgitReservationNo`), `payment/service/PaymentService(+Impl).createOrder`, `payment/controller/BgmAgitPaymentController`
+- **STEP 1 = 주문 생성**(완료·컴파일 통과): `POST /bgm-agit/payments/order { reservationNo }` → `PaymentOrderResponse { orderId, amount, orderName, clientKey }`. 예약 검증·금액계산은 `BgmAgitReservationService.createPaymentOrder`(소유자·취소·확정 검증 후 공통 `createOrder` 위임).
+- **예약금**: `SlotSchedule.resolveDepositAmount(category,label)` — 기본 10000, M룸(`ROOM` + label `"M Room"`) 30000. 슬롯 수 무관 정액.
+- **토스 키 주의**: 결제위젯이므로 **위젯용 키**(`test_gck_`/`test_gsk_`)를 써야 함. `test_ck_`/`test_sk_`(API 개별 연동 키)를 위젯에 쓰면 `INVALID_API_KEY`. `application.yml`의 `toss.client-key/secret-key/confirm-url/cancel-url`, 값은 `.env`/GitHub Secrets로 주입. clientKey는 주문 응답으로 프론트에 내려주므로 프론트 env에 저장 불필요.
+- **미해결(결정 대기)**: 예약 생성 `POST /bgm-agit/reservation`이 `reservationNo`를 응답에 안 실어줌(값은 `createReservation`에서 이미 계산됨, 반환만 안 함). 결제 진입점 2안 중 택1 — **A**: 예약내역(`ReservationList.tsx`) 대기행에 결제버튼(기존 `reservationNo` 사용, 백엔드 무변경) / **B**: 예약 직후 결제(`createReservation`이 `reservationNo` 반환하도록 소폭 변경).
+- **다음**: STEP 2 승인(`TossPaymentsClient.confirm` + `confirmPayment` 금액대조·멱등 + `PaymentConfirmedEvent`→예약 approval='Y'), STEP 3 실패/취소·환불.
+
+### 토스 심사 준비/현재 구현 메모 (2026-07-20)
+- 심사용 결제는 테스트키로 진행 가능. 운영 예약/알림톡 플로우는 건드리지 않고, 결제/정책/문구 위주로 정리.
+- 결제 진입은 A안으로 구현됨: 예약 생성 직후 결제하지 않고 `ReservationList.tsx`의 대기 예약 행에서 `예약금 결제` 버튼으로 주문 생성.
+- 예약금 정책은 `SlotSchedule.resolveDepositAmount(category, label)` 기준:
+  - M Room: 30,000원
+  - 그 외 예약: 10,000원
+  - 잔여 이용요금은 현장 결제
+- 토스 결제 모달(`PaymentCheckoutModal.tsx`)에는 “예약 확정을 위한 예약금 결제”, 예약금 금액, 현장 잔여금 결제, 당일 취소/노쇼 환불 불가 문구를 노출.
+- 예약 화면(`ReservationCalendar.tsx`), 예약 확인 모달(`confirmAlert.tsx`), 예약내역(`ReservationList.tsx`)에도 예약금/잔여금 안내 문구 추가.
+- 심사용 정책 페이지 추가:
+  - `/terms` -> `bgm-agit-front/src/pages/Terms.tsx`
+  - `/refund-policy` -> `bgm-agit-front/src/pages/RefundPolicy.tsx`
+  - 기존 `/privacy` 유지
+- 푸터(`Footer.tsx`)에 사업자정보와 정책 링크 노출:
+  - 상호: 보드게임카페BGM(비지엠)아지트
+  - 대표자: 박범후
+  - 사업자등록번호: 896-17-02241
+  - 주소: 대전광역시 서구 문정로 62, 3층 일부호(탄방동, 프라임빌딩)
+  - 연락처: 0507-1445-3503
+- 빌드 확인: `bgm-agit-front`에서 `npm.cmd run build` 통과. 큰 번들 경고만 있음.
+
+## 환경변수 (.env) (2026-07-09 도입)
+- `bgm-agit-api`는 `me.paulschwarz:spring-dotenv:3.0.0`로 `.env`를 읽음(cham-equality와 동일 방식). 파일: `bgm-agit-api/src/main/resources/.env`. `application.yml`의 `${DB_URL}` 등 플레이스홀더를 여기서 치환.
+- `.env`는 `.gitignore` 처리(커밋 금지). 시크릿(DB/AWS/소셜/비즈톡/JWT/토스)은 레포에 없음.
+- CI/CD·서버 배포는 **GitHub Secrets → 시스템 환경변수**로 주입. 시스템 환경변수가 `.env`보다 우선순위 높음. 토스 키(`TOSS_CLIENT_KEY`/`TOSS_SECRET_KEY`)는 GitHub Secrets에도 추가 필요.
+- 주의: `.env`는 `=` 뒤 공백 넣지 말 것(dotenv는 trim 안 함). `spring.config.import`는 불필요(spring-dotenv가 자동 로드).
 
 ## 데이터베이스
 
@@ -351,6 +419,31 @@ DB의 `BGM_AGIT_KML_MENU.BGM_AGIT_KML_SUB_MENU_ID`가 부모 메뉴 ID. 백엔�
 - **새 엔드포인트 권한 매핑** — `/bgm-agit/ranks/{memberId}/stats`, `/bgm-agit/ranks/{memberId}/games`, `/my-rank` 라우트가 `BGM_AGIT_URL_RESOURCES` / `BGM_AGIT_KML_MENU_ROLE`에 등록 안 됐을 수 있음. 기존 `/bgm-agit/ranks` 권한과 동일하게 추가 필요
 - **대국 기록 알림톡 — 수정/삭제 흐름 미적용** — 현재 `createRecord`만 발송. `updateRecord`/`removeRecord`에서도 발송하려면 `eventPublisher.publishEvent(new MatchRecordRegisteredEvent(matchs.getId()))` 한 줄씩 추가
 - **`bgmagit-bml-match` 카카오 검수 통과 대기** — 통과 후 첫 발송 시 URL 중복(`https://https://...`) 여부 모니터링. 문제 있으면 `BgmAgitBizTalkSandServiceImpl.sendMatchRecord`의 url 변수에서 `https://` 제거
+
+## 랭크 티어(Rank Tier) 시스템 — 계획 확정, 미구현 (2026-07-08)
+
+기존 `kml/rank`(기간별 통계 순위표, 누적 승점 합산)와 **별개**로, **레이팅형(작혼/롤식) 시즌 티어 시스템**을 신설하기로 함. 누적 합산은 "많이 친 사람"이 이기는 볼륨 편향이 있어, 판당 레이팅 ±로 실력을 반영. **아직 코드 없음.** 상세 계획서: `C:\Users\ulim\.claude\plans\c-users-ulim-desktop-work-bgm-agit-bgm-a-woolly-crown.md`. 원 아이디어 문서: `랭크시스템_계획서.html`(단, 그건 누적 승점+월 리셋안 → 아래 결정으로 대체됨).
+
+### 확정 결정 (사용자 합의)
+- **모델**: 레이팅형. 판마다 **착순별 고정 포인트 × 게임길이 가중치**(동0.5/반1.0/서1.5/전2.0)로 레이팅 ±, 레이팅 밴드로 티어 결정. (가중치는 `RankRepository.findRanks`에 이미 있는 idiom 재사용. `MatchsWind` 기준이지 `recordSeat` 아님. `CalculateUtil.seatMultiplier`(우마용 1/2/3/4)와 혼동 금지)
+- **시즌**: `YYYY-MM` 자동파생 폐기. **관리자가 DB로 시즌(이름·기간·리셋방식·티어이름·밴드·포인트) 정의.** 수치 튜닝은 당분간 SQL UPDATE, 설정 UI는 후순위.
+- **리셋 방식(시즌별)**: HARD(base부터)/SOFT(전 시즌 일부 계승)/CONTINUOUS(리셋 없는 상시 래더).
+- **강등 방지 있음 (작혼식 바닥 보호)**: 시즌 중 한번 도달한 티어 밑으로 레이팅 안 떨어짐(`PEAK_FLOOR` 추적). → **순차 의존이라 SQL 합산 백필 불가, 코드 기반 replay(`recalc-all`)만 정확.**
+- **CLOSED 시즌도 재계산**: 과거 기록 정정 시 그 시즌 랭킹도 다시 계산.
+- **배치(placement)**: 시즌 최소 판수 미만은 티어 미확정(provisional). `MatchsRepositoryImpl.getYearRanks`의 requiredGames 선례 참고.
+
+### 설계 요지
+- **테이블 4종**(`BGM_AGIT_RANK_SEASON / _TIER / _POINT / _STANDING`, `ddl-auto:none` 수동 DDL). TIER는 시즌 종속(시즌마다 이름/컷 변경). POINT는 tier NULL=시즌 기본 + 티어별 오버라이드 가능. STANDING은 회원×시즌 실시간값(rating/gameCount/peakFloor/tierName).
+- **패키지**: `com.bgmagitapi.kml.ranktier`(entity/enums/repository/service/controller/event/dto). 이벤트 DTO만 관례상 `origin/event/dto/RankTierRecalcEvent`.
+- **레이팅 = 재합산 아니라 replay**: 각 판 ±가 그 시점 티어에 의존(경로 의존)이라, 기록 변경 시 시즌 시작부터 `matchs.registDate` 순으로 회원별 재생. 소규모라 부담 없음.
+- **이벤트 통합(중요)**: `RecordServiceImpl`의 **생성·수정·삭제·복구 4곳 모두**에서 `RankTierRecalcEvent` 발행 필요. 현재 `createRecord`만 이벤트(알림톡용) 발행하고 `updateRecord/removeRecord/restoreRecord`는 미발행. 리스너는 `KmlRecordEventListener` 패턴(`@Async("bizTalkExecutor")` + `@TransactionalEventListener(AFTER_COMMIT)`) 미러, 실패는 삼켜 로깅(기록 트랜잭션 롤백 방지).
+- **조회 API**: 공개 GET 4종 `/bgm-agit/rank-tiers/{standings,members/{id},config,badges}`. GET은 `BgmAgitAuthorizationManager` 기본 permit이라 URL_RESOURCES 등록 불필요. **단 관리자 `POST /recalc-all`은 등록 안 하면 무방비 공개 → 반드시 ADMIN 매핑 + 앱 재시작.**
+- **프론트**: `/rank-tier` 페이지 + `TierBadge`(zustand 배지 캐시, `/badges` 배치로 N+1 방지) — 기존 `/rank` 리스트·개인기록 헤더에도 표시.
+
+### 집에서 생각할 거리 (미결)
+- 티어 이름·개수·레이팅 컷·착순 포인트 실제 값 (현재 계획서 시드는 placeholder: base 1500, 급위/초단/삼단/사범, 1위+60~4위-60).
+- `PROTECTED`: v1은 전 티어 바닥보호. 작혼처럼 상위 티어만 강등 허용할지.
+- 첫 시즌 리셋방식(CONTINUOUS로 기존 기록 전체 흡수 vs 특정 시점부터 HARD 시작).
 
 ## 자주 쓰는 경로
 

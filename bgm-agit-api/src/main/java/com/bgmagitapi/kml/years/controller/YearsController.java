@@ -4,7 +4,7 @@ import com.bgmagitapi.kml.record.dto.response.RecordGetResponse;
 import com.bgmagitapi.kml.years.dto.response.YearRankGetResponse;
 import com.bgmagitapi.kml.years.dto.response.YearsRecordGetResponse;
 import com.bgmagitapi.kml.years.service.YearsService;
-import com.bgmagitapi.page.PageResponse;
+import com.bgmagitapi.origin.page.PageResponse;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

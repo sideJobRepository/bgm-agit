@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.bgmagitapi.entity.QBgmAgitMember.*;
+import static com.bgmagitapi.origin.entity.QBgmAgitMember.*;
 import static com.bgmagitapi.kml.matchs.entity.QMatchs.*;
 import static com.bgmagitapi.kml.record.entity.QRecord.*;
 

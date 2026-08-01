@@ -72,3 +72,14 @@ kml:
   url: https://kml.or.kr/stat52
   api:
     key: ${KML_API_KEY}
+
+toss:
+  client-key: ${TOSS_CLIENT_KEY}
+  secret-key: ${TOSS_SECRET_KEY}
+  confirm-url: https://api.tosspayments.com/v1/payments/confirm
+  cancel-url: https://api.tosspayments.com/v1/payments
+
+# false = 심사 기간: 결제 성공해도 예약 자동확정/확정 알림톡 미발동, 예약 대기 알림톡=계좌이체 버전.
+# 토스 심사 통과 후 true 로 변경.
+payment:
+  live: true

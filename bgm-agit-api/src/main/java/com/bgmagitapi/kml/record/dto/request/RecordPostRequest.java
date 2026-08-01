@@ -35,7 +35,7 @@ package com.bgmagitapi.kml.record.dto.request;
 //}
 
 
-import com.bgmagitapi.file.dto.request.FileRequest;
+import com.bgmagitapi.origin.file.dto.request.FileRequest;
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.record.enums.Wind;
 import jakarta.validation.Valid;

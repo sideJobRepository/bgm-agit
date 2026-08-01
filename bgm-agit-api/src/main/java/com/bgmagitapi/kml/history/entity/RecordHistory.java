@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.history.entity;
 
-import com.bgmagitapi.entity.mapperd.DateSuperClass;
+import com.bgmagitapi.origin.entity.mapperd.DateSuperClass;
 import com.bgmagitapi.kml.record.enums.Wind;
 import jakarta.persistence.*;
 import lombok.*;

@@ -1,7 +1,7 @@
 package com.bgmagitapi.kml.notice.entity;
 
 
-import com.bgmagitapi.entity.mapperd.DateSuperClass;
+import com.bgmagitapi.origin.entity.mapperd.DateSuperClass;
 import com.bgmagitapi.kml.notice.dto.request.KmlNoticePutRequest;
 import jakarta.persistence.*;
 import lombok.*;

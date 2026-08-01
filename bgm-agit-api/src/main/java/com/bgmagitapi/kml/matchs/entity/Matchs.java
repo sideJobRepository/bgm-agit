@@ -1,7 +1,7 @@
 package com.bgmagitapi.kml.matchs.entity;
 
-import com.bgmagitapi.entity.BgmAgitMember;
-import com.bgmagitapi.entity.mapperd.DateSuperClass;
+import com.bgmagitapi.origin.entity.BgmAgitMember;
+import com.bgmagitapi.origin.entity.mapperd.DateSuperClass;
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.kml.setting.entity.Setting;
 import com.bgmagitapi.kml.tournament.entity.Tournament;

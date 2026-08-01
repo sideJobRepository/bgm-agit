@@ -1,8 +1,8 @@
 package com.bgmagitapi.kml.yakamantype.repository.impl;
 
-import com.bgmagitapi.entity.BgmAgitMember;
-import com.bgmagitapi.entity.QBgmAgitMember;
-import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
+import com.bgmagitapi.origin.entity.BgmAgitMember;
+import com.bgmagitapi.origin.entity.QBgmAgitMember;
+import com.bgmagitapi.origin.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.kml.setting.entity.QSetting;
 import com.bgmagitapi.kml.setting.entity.Setting;
 import com.bgmagitapi.kml.yakamantype.repository.query.YakumanTypeQueryRepository;
@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
-import static com.bgmagitapi.entity.QBgmAgitMember.*;
+import static com.bgmagitapi.origin.entity.QBgmAgitMember.*;
 import static com.bgmagitapi.kml.setting.entity.QSetting.*;
 
 @RequiredArgsConstructor

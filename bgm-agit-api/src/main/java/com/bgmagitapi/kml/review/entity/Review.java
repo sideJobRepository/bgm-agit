@@ -1,7 +1,7 @@
 package com.bgmagitapi.kml.review.entity;
 
-import com.bgmagitapi.entity.BgmAgitMember;
-import com.bgmagitapi.entity.mapperd.DateSuperClass;
+import com.bgmagitapi.origin.entity.BgmAgitMember;
+import com.bgmagitapi.origin.entity.mapperd.DateSuperClass;
 import com.bgmagitapi.kml.review.dto.request.ReviewPutRequest;
 import jakarta.persistence.*;
 import lombok.*;

@@ -101,6 +101,8 @@ jobs:
             -e SENDER_KEY=${{ secrets.SENDER_KEY }} \
             -e NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET }} \
             -e KML_API_KEY=${{ secrets.KML_API_KEY }} \
+            -e STAGING_TOSS_CLIENT_KEY=${{ secrets.STAGING_TOSS_CLIENT_KEY }} \
+            -e STAGING_TOSS_SECRET_KEY=${{ secrets.STAGING_TOSS_SECRET_KEY }} \
             -e SPRING_PROFILES_ACTIVE=real \
             -v $(pwd)/logs:/app/logs \
             -p 127.0.0.1:8080:8080 \
@@ -185,8 +187,6 @@ jobs:
           tags: peachcoolpis/bgmagit-kml-front:latest
           build-args: |
             ENV_FILE=.env.production
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: SSH 접속 후 Next 컨테이너 실행
         uses: appleboy/ssh-action@v1.0.3

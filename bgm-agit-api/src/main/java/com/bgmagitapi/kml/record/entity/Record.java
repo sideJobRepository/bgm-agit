@@ -1,7 +1,7 @@
 package com.bgmagitapi.kml.record.entity;
 
-import com.bgmagitapi.entity.BgmAgitMember;
-import com.bgmagitapi.entity.mapperd.DateSuperClass;
+import com.bgmagitapi.origin.entity.BgmAgitMember;
+import com.bgmagitapi.origin.entity.mapperd.DateSuperClass;
 import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.record.dto.request.RecordPutRequest;
 import com.bgmagitapi.kml.record.enums.Wind;

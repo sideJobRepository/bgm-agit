@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.tournament.entity;
 
-import com.bgmagitapi.entity.mapperd.DateSuperClass;
+import com.bgmagitapi.origin.entity.mapperd.DateSuperClass;
 import com.bgmagitapi.kml.tournament.enums.TournamentProgressStatus;
 import com.bgmagitapi.kml.tournamentsetting.entity.TournamentSetting;
 import jakarta.persistence.*;

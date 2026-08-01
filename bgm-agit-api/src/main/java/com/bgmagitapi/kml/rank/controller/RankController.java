@@ -6,7 +6,7 @@ import com.bgmagitapi.kml.rank.dto.response.MemberStatsResponse;
 import com.bgmagitapi.kml.rank.dto.response.RankGetResponse;
 import com.bgmagitapi.kml.rank.enums.RankType;
 import com.bgmagitapi.kml.rank.service.RankServiceImpl;
-import com.bgmagitapi.page.PageResponse;
+import com.bgmagitapi.origin.page.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

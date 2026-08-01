@@ -1,11 +1,11 @@
 package com.bgmagitapi.kml.notice.service.impl;
 
-import com.bgmagitapi.apiresponse.ApiResponse;
-import com.bgmagitapi.entity.BgmAgitCommonFile;
-import com.bgmagitapi.file.entity.BgmAgitFile;
-import com.bgmagitapi.file.enums.FileType;
-import com.bgmagitapi.file.service.BgmAgitFileService;
-import com.bgmagitapi.file.service.InlineFileTracker;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.entity.BgmAgitCommonFile;
+import com.bgmagitapi.origin.file.entity.BgmAgitFile;
+import com.bgmagitapi.origin.file.enums.FileType;
+import com.bgmagitapi.origin.file.service.BgmAgitFileService;
+import com.bgmagitapi.origin.file.service.InlineFileTracker;
 import com.bgmagitapi.kml.notice.dto.request.KmlNoticePostRequest;
 import com.bgmagitapi.kml.notice.dto.request.KmlNoticePutRequest;
 import com.bgmagitapi.kml.notice.dto.response.KmlNoticeGetDetailResponse;

@@ -3,7 +3,7 @@ package com.bgmagitapi.kml.yakuman.controller;
 import com.bgmagitapi.kml.yakuman.dto.response.YakumanDetailGetResponse;
 import com.bgmagitapi.kml.yakuman.dto.response.YakumanGetResponse;
 import com.bgmagitapi.kml.yakuman.service.YakumanService;
-import com.bgmagitapi.page.PageResponse;
+import com.bgmagitapi.origin.page.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

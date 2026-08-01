@@ -1,9 +1,9 @@
 package com.bgmagitapi.kml.yakuman.repository.impl;
 
-import com.bgmagitapi.entity.enumeration.BgmAgitCommonType;
-import com.bgmagitapi.entity.enumeration.BgmAgitSocialType;
-import com.bgmagitapi.file.enums.FileStatus;
-import com.bgmagitapi.file.enums.FileType;
+import com.bgmagitapi.origin.entity.enumeration.BgmAgitCommonType;
+import com.bgmagitapi.origin.entity.enumeration.BgmAgitSocialType;
+import com.bgmagitapi.origin.file.enums.FileStatus;
+import com.bgmagitapi.origin.file.enums.FileType;
 import com.bgmagitapi.kml.record.dto.response.QRecordGetDetailResponse_YakumanList;
 import com.bgmagitapi.kml.record.dto.response.QRecordGetResponse_YakumanInfo;
 import com.bgmagitapi.kml.record.dto.response.RecordGetDetailResponse;
@@ -32,9 +32,9 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 
-import static com.bgmagitapi.entity.QBgmAgitCommonFile.bgmAgitCommonFile;
-import static com.bgmagitapi.entity.QBgmAgitMember.bgmAgitMember;
-import static com.bgmagitapi.file.entity.QBgmAgitFile.bgmAgitFile;
+import static com.bgmagitapi.origin.entity.QBgmAgitCommonFile.bgmAgitCommonFile;
+import static com.bgmagitapi.origin.entity.QBgmAgitMember.bgmAgitMember;
+import static com.bgmagitapi.origin.file.entity.QBgmAgitFile.bgmAgitFile;
 import static com.bgmagitapi.kml.yakuman.entity.QYakuman.yakuman;
 
 @RequiredArgsConstructor

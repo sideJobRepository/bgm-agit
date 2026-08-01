@@ -1,0 +1,39 @@
+package com.bgmagitapi.origin.repository.impl;
+
+import com.bgmagitapi.origin.entity.BgmAgitRole;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+import static com.bgmagitapi.origin.entity.QBgmAgitMember.bgmAgitMember;
+import static com.bgmagitapi.origin.entity.QBgmAgitMemberRole.bgmAgitMemberRole;
+import static com.bgmagitapi.origin.entity.QBgmAgitRole.bgmAgitRole;
+
+@Repository
+@RequiredArgsConstructor
+public class BgmAgitMemberDetailRepositoryImpl {
+    
+    
+    private final JPAQueryFactory queryFactory;
+    
+    
+    public BgmAgitRole findByBgmAgitRoleName(String roleName) {
+         return queryFactory
+                .selectFrom(bgmAgitRole)
+                .where(bgmAgitRole.bgmAgitRoleName.eq(roleName))
+                .fetchOne();
+    }
+    
+    public List<String> getRoleName(Long id){
+        return queryFactory
+                .select(bgmAgitRole.bgmAgitRoleName)
+                .from(bgmAgitMemberRole)
+                .join(bgmAgitMemberRole.bgmAgitMember,bgmAgitMember)
+                .join(bgmAgitMemberRole.bgmAgitRole , bgmAgitRole)
+                .where(bgmAgitMemberRole.bgmAgitMember.bgmAgitMemberId.eq(id))
+                .fetch();
+    }
+    
+}

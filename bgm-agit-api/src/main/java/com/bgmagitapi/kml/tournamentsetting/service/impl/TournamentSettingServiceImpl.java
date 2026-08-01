@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.tournamentsetting.service.impl;
 
-import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.tournamentsetting.dto.request.TournamentSettingPostRequest;
 import com.bgmagitapi.kml.tournamentsetting.dto.response.TournamentSettingGetResponse;
 import com.bgmagitapi.kml.tournamentsetting.entity.TournamentSetting;

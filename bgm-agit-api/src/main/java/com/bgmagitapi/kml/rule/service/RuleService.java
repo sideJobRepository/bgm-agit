@@ -1,6 +1,6 @@
 package com.bgmagitapi.kml.rule.service;
 
-import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.rule.dto.request.RulePostRequest;
 import com.bgmagitapi.kml.rule.dto.request.RulePutRequest;
 import com.bgmagitapi.kml.rule.dto.response.RuleGetResponse;

@@ -1,7 +1,7 @@
 package com.bgmagitapi.kml.review.service.impl;
 
 import com.bgmagitapi.RepositoryAndServiceTestSupport;
-import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.review.dto.request.ReviewPostRequest;
 import com.bgmagitapi.kml.review.dto.request.ReviewPutRequest;
 import com.bgmagitapi.kml.review.dto.response.ReviewGetDetailResponse;

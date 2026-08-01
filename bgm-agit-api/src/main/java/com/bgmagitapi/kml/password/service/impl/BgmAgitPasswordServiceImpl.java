@@ -1,7 +1,7 @@
 package com.bgmagitapi.kml.password.service.impl;
 
-import com.bgmagitapi.advice.exception.ValidException;
-import com.bgmagitapi.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.advice.exception.ValidException;
+import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.kml.password.dto.request.BgmAgitPasswordRequest;
 import com.bgmagitapi.kml.password.entity.BgmAgitPassword;
 import com.bgmagitapi.kml.password.repository.BgmAgitPasswordRepository;

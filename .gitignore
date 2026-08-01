@@ -7,6 +7,9 @@
 /dataSources.local.xml
 .idea
 
+# 환경변수(.env) - 시크릿, 커밋 금지
+.env
+
 /bgm-agit-api/.gradle/
 /bgm-agit-api/build/
 /bgm-agit-api/*.iml

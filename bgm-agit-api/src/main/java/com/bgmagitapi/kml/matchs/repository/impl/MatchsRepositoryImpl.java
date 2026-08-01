@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.bgmagitapi.entity.QBgmAgitMember.bgmAgitMember;
+import static com.bgmagitapi.origin.entity.QBgmAgitMember.bgmAgitMember;
 import static com.bgmagitapi.kml.matchs.entity.QMatchs.matchs;
 import static com.bgmagitapi.kml.record.entity.QRecord.record;
 
