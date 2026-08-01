@@ -2,12 +2,14 @@ package com.bgmagitapi.kml.rating.service.impl;
 
 import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.matchs.repository.MatchsRepository;
+import com.bgmagitapi.kml.rating.entity.Rating;
 import com.bgmagitapi.kml.rating.entity.Season;
 import com.bgmagitapi.kml.rating.entity.SeasonStanding;
 import com.bgmagitapi.kml.rating.enums.SeasonProgressStatus;
 import com.bgmagitapi.kml.rating.exception.InvalidRecordRankException;
 import com.bgmagitapi.kml.rating.exception.MatchsNotFoundException;
 import com.bgmagitapi.kml.rating.exception.SeasonNotFoundException;
+import com.bgmagitapi.kml.rating.repository.RatingRepository;
 import com.bgmagitapi.kml.rating.repository.SeasonRepository;
 import com.bgmagitapi.kml.rating.repository.SeasonStandingRepository;
 import com.bgmagitapi.kml.rating.service.RatingService;
@@ -18,9 +20,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,7 +35,11 @@ public class RatingServiceImpl implements RatingService {
     private final RecordRepository recordRepository;
     private final SeasonRepository seasonRepository;
     private final SeasonStandingRepository seasonStandingRepository;
+    private final RatingRepository ratingRepository;
 
+    // TODO
+    //   - rating 별 가중치 정해지면 수정 (대국별 가중치는 적용함)
+    //   - 운영 DB, staging DB 에 테이블 추가 및 season 정보 추가
     @Override
     @Transactional
     public void process(Long matchsId) {
@@ -47,34 +54,30 @@ public class RatingServiceImpl implements RatingService {
                         r -> r
                 ));
 
-        Record first  = requireRank(recordByRank, matchsId, 1);
-        Record second = requireRank(recordByRank, matchsId, 2);
-        Record third  = requireRank(recordByRank, matchsId, 3);
-        Record fourth = requireRank(recordByRank, matchsId, 4);
-
         List<BgmAgitMember> members = recordByRank.values().stream()
                 .map(Record::getMember)
                 .toList();
-
         Map<Long, SeasonStanding> seasonStandingMap = loadSeasonStandingOrDefault(season, members);
 
-        // TODO
-        //   - rating 저장 (ratingValue, ratingResult 가 뭔지 확인하고)
-        //   - rating 별 가중치 정해지면 수정 (대국별 가중치는 적용함)
-        SeasonStanding firstSeasonStanding = seasonStandingMap.get(first.getMember().getBgmAgitMemberId());
-        SeasonStanding secondStanding = seasonStandingMap.get(second.getMember().getBgmAgitMemberId());
-        SeasonStanding thirdSeasonStanding = seasonStandingMap.get(third.getMember().getBgmAgitMemberId());
-        SeasonStanding fourthSeasonStanding = seasonStandingMap.get(fourth.getMember().getBgmAgitMemberId());
 
-        firstSeasonStanding.addRatingValue(matchs.getWind(), season.getFirstScore());
-        secondStanding.addRatingValue(matchs.getWind(), season.getSecondScore());
-        thirdSeasonStanding.addRatingValue(matchs.getWind(), season.getThirdScore());
-        fourthSeasonStanding.addRatingValue(matchs.getWind(), season.getFourthScore());
+        List<Rating> ratings = new ArrayList<>();
+        List<SeasonStanding> seasonStandings = new ArrayList<>();
 
-        // 저장
-        seasonStandingRepository.saveAll(List.of(
-                firstSeasonStanding, secondStanding, thirdSeasonStanding, fourthSeasonStanding
-        ));
+        for (int rank = 1; rank <= 4; rank++) {
+            Record record = requireRank(recordByRank, matchsId, rank);
+            BgmAgitMember member = record.getMember();
+
+            SeasonStanding seasonStanding = seasonStandingMap.get(member.getBgmAgitMemberId());
+            BigDecimal score = season.calculateScore(rank, matchs.getWind());
+            seasonStanding.addRatingValue(score);
+            Rating rating = Rating.create(season, matchs, member, score, seasonStanding.getRating());
+
+            ratings.add(rating);
+            seasonStandings.add(seasonStanding);
+        }
+
+        ratingRepository.saveAll(ratings);
+        seasonStandingRepository.saveAll(seasonStandings);
     }
 
     private Season loadOngoingSeason() {
@@ -94,7 +97,7 @@ public class RatingServiceImpl implements RatingService {
                 );
 
         for (BgmAgitMember member : members) {
-            seasonStandingMap.putIfAbsent(member.getBgmAgitMemberId(), SeasonStanding.create(season,member));
+            seasonStandingMap.putIfAbsent(member.getBgmAgitMemberId(), SeasonStanding.create(season, member));
         }
 
         return seasonStandingMap;

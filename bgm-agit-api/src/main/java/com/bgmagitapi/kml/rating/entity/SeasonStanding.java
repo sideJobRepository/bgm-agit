@@ -42,10 +42,8 @@ public class SeasonStanding extends DateSuperClass {
         return seasonStanding;
     }
 
-    public void addRatingValue(MatchsWind matchsWind, BigDecimal value){
-        BigDecimal multiple = season.getMultipleBy(matchsWind);
-        BigDecimal multipleValue = value.multiply(multiple);
-        this.rating = this.rating.add(multipleValue);
+    public void addRatingValue(BigDecimal value){
+        this.rating = this.rating.add(value);
     }
 
 }

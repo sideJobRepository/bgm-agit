@@ -3,6 +3,7 @@ package com.bgmagitapi.kml.rating.entity;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.mapperd.DateSuperClass;
 import com.bgmagitapi.kml.matchs.entity.Matchs;
+import com.fasterxml.jackson.databind.deser.DataFormatReaders;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -44,4 +45,14 @@ public class Rating extends DateSuperClass {
     // BGM 아지트 레이팅 결과
     @Column(name = "BGM_AGIT_RATING_RESULT")
     private BigDecimal ratingResult;
+
+    public static Rating create(Season season, Matchs matchs, BgmAgitMember member, BigDecimal ratingValue, BigDecimal ratingResult){
+        return Rating.builder()
+                .season(season)
+                .matchs(matchs)
+                .member(member)
+                .ratingValue(ratingValue)
+                .ratingResult(ratingResult)
+                .build();
+    }
 }

@@ -87,7 +87,21 @@ public class Season {
     @Column(name = "BGM_AGIT_SEASON_NORTH_MULTIPLE")
     private BigDecimal northMultiple;
 
-    public BigDecimal getMultipleBy(MatchsWind matchsWind){
+    public BigDecimal calculateScore(int rank, MatchsWind wind) {
+        return getScoreByRank(rank).multiply(getMultipleBy(wind));
+    }
+
+    private BigDecimal getScoreByRank(int rank) {
+        return switch (rank) {
+            case 1 -> firstScore;
+            case 2 -> secondScore;
+            case 3 -> thirdScore;
+            case 4 -> fourthScore;
+            default -> throw new IllegalArgumentException("지원하지 않는 등수입니다. rank=" + rank);
+        };
+    }
+
+    private BigDecimal getMultipleBy(MatchsWind matchsWind) {
         return switch (matchsWind) {
             case EAST -> eastMultiple;
             case SOUTH -> southMultiple;
@@ -95,4 +109,6 @@ public class Season {
             case NORTH -> northMultiple;
         };
     }
+
+
 }
