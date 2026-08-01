@@ -9,6 +9,7 @@ import { MdClose } from 'react-icons/md';
 import { toast } from 'react-toastify';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { useFormLoginPost, useSignupPost, useRefetchMainMenu } from '../recoil/fetch.ts';
+import { formatPhoneNo } from '../utils/phone.ts';
 
 type Props = {
   onClose: () => void;
@@ -183,9 +184,11 @@ export default function LoginMoadl({ onClose }: Props) {
               />
               <Input
                 type="tel"
+                inputMode="numeric"
+                maxLength={13}
                 placeholder="전화번호 (예: 010-1234-5678)"
                 value={phoneNo}
-                onChange={e => setPhoneNo(e.target.value)}
+                onChange={e => setPhoneNo(formatPhoneNo(e.target.value))}
                 autoComplete="tel"
               />
               <Input

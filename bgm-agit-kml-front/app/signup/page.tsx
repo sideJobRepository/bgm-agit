@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { withBasePath } from '@/lib/path';
+import { formatPhoneNo } from '@/lib/phone';
 import { useSignupPost } from '@/services/auth.service';
 import { alertDialog } from '@/utils/alert';
 
@@ -87,9 +88,11 @@ export default function Signup() {
           />
           <Input
             type="tel"
+            inputMode="numeric"
+            maxLength={13}
             placeholder="전화번호 (예: 010-1234-5678 또는 01012345678)"
             value={form.phoneNo}
-            onChange={handleChange('phoneNo')}
+            onChange={(e) => setForm((prev) => ({ ...prev, phoneNo: formatPhoneNo(e.target.value) }))}
             autoComplete="tel"
           />
           <Input

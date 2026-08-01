@@ -138,16 +138,26 @@ public class BgmAgitMember extends DateSuperClass {
     }
     public void modifyMyPage(BgmAgitMyPagePutRequest request) {
         this.bgmAgitMemberNickname =  request.getNickName();
-        this.bgmAgitMemberPhoneNo =  request.getPhoneNo();
+        this.bgmAgitMemberPhoneNo =  normalizePhone(request.getPhoneNo());
         this.bgmAgitMemberNicknameUseStatus =  request.getNickNameUseStatus();
         this.bgmAgitMemberAlimtalkStatus = request.getAlimtalkStatus();
     }
     
+    /**
+     * 휴대폰 번호 저장 형식 통일. +82 → 0 변환 후 하이픈을 자동으로 채워 넣는다.
+     * (01092062248 → 010-9206-2248). 사용자가 하이픈을 안 넣어도 DB에는 항상 같은 모양으로 들어가야
+     * 번호 기준 중복 조회·검색이 정상 동작한다.
+     * 알 수 없는 형식이면 입력을 그대로 보존한다.
+     */
     private String normalizePhone(String phone) {
         if (phone == null) return null;
         // +82로 시작하면 0으로 변경
-        phone = phone.replaceAll("^\\+82\\s?", "0");
-        return phone;
+        String normalized = phone.replaceAll("^\\+82\\s?", "0").trim();
+        String digits = normalized.replaceAll("\\D", "");
+        String hyphenated = digits.startsWith("02")
+                ? digits.replaceFirst("^(02)(\\d{3,4})(\\d{4})$", "$1-$2-$3")
+                : digits.replaceFirst("^(0\\d{2})(\\d{3,4})(\\d{4})$", "$1-$2-$3");
+        return hyphenated.contains("-") ? hyphenated : normalized;
     }
     
     

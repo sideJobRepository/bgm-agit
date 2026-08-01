@@ -12,15 +12,39 @@
 
 
 -- =====================================================================
--- [0] (실행 전 점검) 회원을 참조하는 FK 자식 테이블 전수 조회
+-- [0] (실행 전 점검) 회원을 참조하는 자식 테이블 전수 조회
 --     아래 결과 테이블이 MERGE_MEMBER 프로시저에 모두 들어있는지 확인.
 --     빠진 게 있으면 프로시저의 _reassign 호출 목록에 추가.
 -- =====================================================================
--- SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME
--- FROM information_schema.KEY_COLUMN_USAGE
--- WHERE REFERENCED_TABLE_NAME = 'BGM_AGIT_MEMBER'
---   AND TABLE_SCHEMA = DATABASE()
--- ORDER BY TABLE_NAME;
+-- 0-1) ★ COLUMNS 기준으로 봐야 함 ★
+--   FK(KEY_COLUMN_USAGE) 기준으로 보면 BGM_AGIT_MATCHS / MATCHS_HISTORY /
+--   RECORD_HISTORY 가 안 잡힘 — 회원 컬럼만 있고 FK 제약이 없는 테이블들
+--   (create2.sql:85, :120, :141 참고. 엔티티엔 @JoinColumn 있음).
+-- SELECT c.TABLE_NAME,
+--        (SELECT k.CONSTRAINT_NAME
+--           FROM information_schema.KEY_COLUMN_USAGE k
+--          WHERE k.TABLE_SCHEMA = c.TABLE_SCHEMA
+--            AND k.TABLE_NAME   = c.TABLE_NAME
+--            AND k.COLUMN_NAME  = c.COLUMN_NAME
+--            AND k.REFERENCED_TABLE_NAME = 'BGM_AGIT_MEMBER'
+--          LIMIT 1) AS FK_NAME   -- NULL = FK 없음(고아행 생길 수 있는 테이블)
+-- FROM information_schema.COLUMNS c
+-- WHERE c.TABLE_SCHEMA = DATABASE()
+--   AND c.COLUMN_NAME  = 'BGM_AGIT_MEMBER_ID'
+--   AND c.TABLE_NAME  <> 'BGM_AGIT_MEMBER'
+-- ORDER BY c.TABLE_NAME;
+
+-- 0-2) ★ 마작 테이블 제외에 따른 사전 점검 ★
+--   마작 테이블은 이관하지 않으므로, dup 계정에 마작 데이터가 있으면 안 됨.
+--   아래 전부 0건이어야 병합 안전. 1건이라도 나오면 그 그룹은 보류하고
+--   프로시저의 마작 _reassign 주석을 풀거나 수동 처리할 것.
+--   (:dup 자리에 이번에 지울 dup id 목록을 넣어서 실행)
+-- SELECT 'RECORD'         t, COUNT(*) c FROM BGM_AGIT_RECORD         WHERE BGM_AGIT_MEMBER_ID IN (41)
+-- UNION ALL SELECT 'YAKUMAN',        COUNT(*) FROM BGM_AGIT_YAKUMAN        WHERE BGM_AGIT_MEMBER_ID IN (41)
+-- UNION ALL SELECT 'SANBAEMAN',      COUNT(*) FROM BGM_AGIT_SANBAEMAN      WHERE BGM_AGIT_MEMBER_ID IN (41)
+-- UNION ALL SELECT 'MATCHS',         COUNT(*) FROM BGM_AGIT_MATCHS         WHERE BGM_AGIT_MEMBER_ID IN (41)
+-- UNION ALL SELECT 'MATCHS_HISTORY', COUNT(*) FROM BGM_AGIT_MATCHS_HISTORY WHERE BGM_AGIT_MEMBER_ID IN (41)
+-- UNION ALL SELECT 'RECORD_HISTORY', COUNT(*) FROM BGM_AGIT_RECORD_HISTORY WHERE BGM_AGIT_MEMBER_ID IN (41);
 
 
 -- =====================================================================
@@ -101,12 +125,6 @@ BEGIN
     CALL _reassign_member('BGM_AGIT_COMMON_COMMENT',          p_keep, p_dup);
     CALL _reassign_member('BGM_AGIT_REVIEW',                  p_keep, p_dup);
     CALL _reassign_member('BGM_AGIT_LECTURE',                 p_keep, p_dup);
-    CALL _reassign_member('BGM_AGIT_RECORD',                  p_keep, p_dup);
-    CALL _reassign_member('BGM_AGIT_YAKUMAN',                 p_keep, p_dup);
-    CALL _reassign_member('BGM_AGIT_SANBAEMAN',              p_keep, p_dup);
-    CALL _reassign_member('BGM_AGIT_MATCHS',                  p_keep, p_dup);
-    CALL _reassign_member('BGM_AGIT_MATCHS_HISTORY',          p_keep, p_dup);
-    CALL _reassign_member('BGM_AGIT_RECORD_HISTORY',          p_keep, p_dup);
     CALL _reassign_member('BGM_AGIT_GATHERING',              p_keep, p_dup);
     CALL _reassign_member('BGM_AGIT_GATHERING_PARTICIPANT',   p_keep, p_dup);
     CALL _reassign_member('BGM_AGIT_PLAY_RECORD',             p_keep, p_dup);
