@@ -9,6 +9,7 @@ import { useUpdatePost } from '@/services/main.service';
 import { alertDialog, confirmDialog } from '@/utils/alert';
 import { useMyPageStore } from '@/store/myPage';
 import { useUserStore } from '@/store/user';
+import { formatPhoneNo } from '@/lib/phone';
 
 export default function MyPageModal() {
   const isOpen = useMyPageStore((state) => state.isOpen);
@@ -26,7 +27,8 @@ export default function MyPageModal() {
     if (!isOpen || !user) return;
     fetchMyPage((data) => {
       setInfo(data);
-      setPhoneNo(data.phoneNo ?? '');
+      // 기존에 하이픈 없이 저장된 번호도 화면에선 하이픈 형태로 보이게 함
+      setPhoneNo(formatPhoneNo(data.phoneNo ?? ''));
     });
     setPw({ current: '', next: '', confirm: '' });
   }, [isOpen, user]);
@@ -173,8 +175,10 @@ export default function MyPageModal() {
                     <Row>
                       <input
                         type="tel"
+                        inputMode="numeric"
+                        maxLength={13}
                         value={phoneNo}
-                        onChange={(e) => setPhoneNo(e.target.value)}
+                        onChange={(e) => setPhoneNo(formatPhoneNo(e.target.value))}
                         placeholder="010-1234-5678 또는 01012345678"
                         autoComplete="tel"
                       />

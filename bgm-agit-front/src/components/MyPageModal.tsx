@@ -14,6 +14,7 @@ import {
   useChangeMyPasswordPost,
 } from '../recoil/fetch.ts';
 import { showConfirmModal } from './confirmAlert.tsx';
+import { formatPhoneNo } from '../utils/phone.ts';
 import { toast } from 'react-toastify';
 
 type Props = {
@@ -151,7 +152,8 @@ export default function MyPageModal({ onClose }: Props) {
 
   useEffect(() => {
     setNickName(items?.nickName);
-    setPhoneNumber(items?.phoneNo);
+    // 기존에 하이픈 없이 저장된 번호도 화면에선 하이픈 형태로 보이게 함
+    setPhoneNumber(formatPhoneNo(items?.phoneNo ?? ''));
   }, [items]);
 
   return (
@@ -204,8 +206,10 @@ export default function MyPageModal({ onClose }: Props) {
               id="phoneNumber"
               type="text"
               placeholder="휴대폰번호를 입력해주세요."
+              inputMode="numeric"
+              maxLength={13}
               value={phoneNumber}
-              onChange={e => setPhoneNumber(e.target.value)}
+              onChange={e => setPhoneNumber(formatPhoneNo(e.target.value))}
             />
           </InputBox>
           <button onClick={() => updateData()}>수정하기</button>
