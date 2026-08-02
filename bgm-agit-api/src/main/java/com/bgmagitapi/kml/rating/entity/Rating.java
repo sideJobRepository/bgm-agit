@@ -1,9 +1,8 @@
 package com.bgmagitapi.kml.rating.entity;
 
+import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.mapperd.DateSuperClass;
-import com.bgmagitapi.kml.matchs.entity.Matchs;
-import com.fasterxml.jackson.databind.deser.DataFormatReaders;
 import jakarta.persistence.*;
 import lombok.*;
 

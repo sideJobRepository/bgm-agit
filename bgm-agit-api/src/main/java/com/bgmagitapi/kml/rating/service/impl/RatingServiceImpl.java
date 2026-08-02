@@ -8,6 +8,7 @@ import com.bgmagitapi.kml.rating.entity.SeasonStanding;
 import com.bgmagitapi.kml.rating.enums.SeasonProgressStatus;
 import com.bgmagitapi.kml.rating.exception.InvalidRecordRankException;
 import com.bgmagitapi.kml.rating.exception.MatchsNotFoundException;
+import com.bgmagitapi.kml.rating.exception.MultipleOngoingSeasonException;
 import com.bgmagitapi.kml.rating.exception.SeasonNotFoundException;
 import com.bgmagitapi.kml.rating.repository.RatingRepository;
 import com.bgmagitapi.kml.rating.repository.SeasonRepository;
@@ -81,8 +82,15 @@ public class RatingServiceImpl implements RatingService {
     }
 
     private Season loadOngoingSeason() {
-        return seasonRepository.findByProgressStatus(SeasonProgressStatus.ONGOING)
-                .orElseThrow(() -> new SeasonNotFoundException("진행중인 시즌이 없습니다."));
+        List<Season> ongoingSeasons = seasonRepository.findAllByProgressStatus(SeasonProgressStatus.ONGOING);
+
+        if(ongoingSeasons.size() > 1)
+            throw new MultipleOngoingSeasonException();
+
+        return ongoingSeasons
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new SeasonNotFoundException());
     }
 
     private Map<Long, SeasonStanding> loadSeasonStandingOrDefault(Season season, List<BgmAgitMember> members) {

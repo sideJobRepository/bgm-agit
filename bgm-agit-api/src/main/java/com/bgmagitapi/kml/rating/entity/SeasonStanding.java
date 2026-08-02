@@ -1,10 +1,11 @@
 package com.bgmagitapi.kml.rating.entity;
 
-import com.bgmagitapi.kml.matchs.enums.MatchsWind;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
