@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>랭크(등급) 시스템 화면 목업 - BGM 아지트 BML</title>
+<style>
+  :root{
+    /* bgm-agit-kml-front / styles/theme.ts 색 토큰 */
+    --side:#00002E;
+    --panel:#1D1E3D;
+    --page:#0C0E42;
+    --menu:#A3A7AC;
+    --submenu:#F8FAFC;
+    --blue:#4A90E2;
+    --blue-d:#093A6E;
+    --orange:#FF7113;
+    --red:#FF5E57;
+    --green:#1A7D55;
+    --yellow:#FBE157;
+    --purple:#482768;
+    --bronze:#5C3A21;
+    --gray:#757575;
+    --line:rgba(255,255,255,.10);
+    --line2:rgba(255,255,255,.18);
+
+    /* 등급 색 시안 */
+    --t-s:#FBE157;
+    --t-a:#7A4FB6;
+    --t-b:#4A90E2;
+    --t-c:#1A7D55;
+    --t-d:#8B6244;
+    --t-f:#575A6E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    background:#05061f;color:#E8EAF2;-webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+
+  /* ============ 문서 셸 ============ */
+  .doc{max-width:1420px;margin:0 auto;padding:28px 24px 80px}
+  .doc-head{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+  .kicker{font-size:12px;letter-spacing:.14em;color:var(--orange);font-weight:700;text-transform:uppercase}
+  .doc-head h1{font-size:30px;margin-top:8px;font-weight:800}
+  .doc-head p{color:var(--menu);font-size:14px;margin-top:8px;max-width:78ch}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0 10px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+  .tab{
+    background:var(--panel);border:1px solid var(--line2);color:var(--menu);
+    border-radius:9px;padding:9px 13px;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .tab:hover{color:#fff}
+  .tab.on{background:var(--blue);border-color:var(--blue);color:#fff}
+  .devtoggle{display:flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden}
+  .devtoggle button{
+    background:var(--panel);border:0;color:var(--menu);padding:9px 14px;font-size:13px;
+    font-weight:600;cursor:pointer;font-family:inherit
+  }
+  .devtoggle button.on{background:var(--orange);color:#fff}
+
+  .screen{display:none}
+  .screen.on{display:block}
+  .sec-title{font-size:19px;font-weight:800;margin:26px 0 6px}
+  .sec-title .no{color:var(--orange);font-size:13px;margin-right:8px}
+  .sec-desc{color:var(--menu);font-size:13.5px;margin-bottom:14px;max-width:88ch}
+  .note{
+    background:rgba(255,113,19,.10);border:1px solid rgba(255,113,19,.35);
+    border-radius:10px;padding:11px 15px;font-size:13px;color:#FFD3AE;margin:14px 0
+  }
+  .note b{color:#fff}
+  .todo{
+    background:rgba(74,144,226,.10);border:1px solid rgba(74,144,226,.35);
+    border-radius:10px;padding:11px 15px;font-size:13px;color:#BBD8F7;margin:14px 0
+  }
+  .api{
+    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:#9FD0FF;
+    background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:8px;
+    padding:10px 13px;margin-top:12px;overflow-x:auto;white-space:pre
+  }
+
+  /* ============ 목업 프레임 ============ */
+  .frame{
+    border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:var(--page);
+    box-shadow:0 14px 40px rgba(0,0,0,.42)
+  }
+  .frame-bar{
+    background:var(--side);padding:9px 14px;display:flex;align-items:center;gap:9px;
+    border-bottom:1px solid var(--line)
+  }
+  .dot{width:9px;height:9px;border-radius:50%;background:#3a3d5c}
+  .url{
+    margin-left:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;
+    color:var(--menu);background:rgba(0,0,0,.35);padding:3px 10px;border-radius:6px
+  }
+  .badge-admin{
+    margin-left:auto;font-size:10.5px;font-weight:800;letter-spacing:.06em;
+    background:var(--orange);color:#fff;border-radius:5px;padding:3px 7px
+  }
+  .frame-body{padding:0}
+  .mobile-wrap{display:none;justify-content:center;padding:22px 0;background:#05061f}
+  .mobile-wrap .frame{width:390px;max-width:100%}
+  body.mob .desk-wrap{display:none}
+  body.mob .mobile-wrap{display:flex}
+  .nomob{display:none}
+  body.mob .nomob{display:block}
+
+  /* ============ 앱 내부 UI ============ */
+  .hero{
+    position:relative;height:120px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:6px;
+    background:linear-gradient(135deg,#0b1150 0%,#1D1E3D 55%,#2a1c3f 100%);
+    border-bottom:1px solid var(--line)
+  }
+  .hero h2{font-size:30px;font-weight:800;letter-spacing:.01em}
+  .hero span{font-size:13px;color:#C3C8DA}
+  .pad{padding:18px}
+
+  .rowbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .select,.inp{
+    background:var(--panel);border:1px solid var(--line2);color:#fff;border-radius:8px;
+    padding:8px 11px;font-size:13px;font-family:inherit
+  }
+  .inp{width:88px;text-align:right}
+  .period{font-size:12.5px;color:var(--menu)}
+  .dday{
+    font-size:11.5px;font-weight:800;background:var(--red);color:#fff;
+    border-radius:999px;padding:3px 9px
+  }
+  .st{font-size:11px;font-weight:800;border-radius:5px;padding:3px 7px}
+  .st.live{background:var(--green);color:#fff}
+  .st.wait{background:#3a3d5c;color:#cfd4e6}
+  .st.done{background:#2a2c46;color:var(--menu)}
+
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px
+  }
+  .card-h{font-size:13px;font-weight:700;color:var(--menu);margin-bottom:12px}
+
+  /* 내 등급 카드 */
+  .me{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .me-info{flex:1;min-width:220px}
+  .me-name{font-size:17px;font-weight:800}
+  .me-name small{font-size:12px;color:var(--menu);font-weight:600;margin-left:8px}
+  .me-rating{font-size:30px;font-weight:800;line-height:1.15;margin-top:2px}
+  .me-rating span{font-size:13px;color:var(--menu);font-weight:600;margin-left:5px}
+  .recent{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+  .chip{
+    font-size:11.5px;font-weight:700;border-radius:5px;padding:2px 7px;
+    background:rgba(255,255,255,.06);border:1px solid var(--line2)
+  }
+  .chip.up{color:#8FD0FF;border-color:rgba(74,144,226,.5)}
+  .chip.dn{color:#FFA7A3;border-color:rgba(255,94,87,.5)}
+  .gauge-lb{display:flex;justify-content:space-between;font-size:12px;color:var(--menu);margin:12px 0 6px}
+  .gauge{height:9px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+  .gauge i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--t-s))}
+  .guest{
+    text-align:center;color:var(--menu);font-size:13px;padding:20px;
+    border:1px dashed var(--line2);border-radius:12px
+  }
+
+  /* 표 */
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:640px;background:var(--panel)}
+  th{
+    background:#161825;color:#C3C8DA;font-size:11.5px;font-weight:700;letter-spacing:.02em;
+    padding:10px 8px;text-align:center;white-space:nowrap;border-bottom:1px solid var(--line)
+  }
+  td{padding:9px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,.05);white-space:nowrap}
+  tbody tr:last-child td{border-bottom:0}
+  .nm{color:var(--blue);font-weight:700;text-align:left;padding-left:12px}
+  .r-gold{background:rgba(251,225,87,.09)}
+  .r-silver{background:rgba(200,207,225,.07)}
+  .r-bronze{background:rgba(140,98,57,.11)}
+  .prov{background:rgba(0,0,0,.22);color:var(--menu)}
+  .prov .nm{color:#9aa0b8}
+  .split td{
+    background:#12142a;font-size:11.5px;color:var(--menu);text-align:left;
+    padding:7px 12px;font-weight:700;letter-spacing:.03em
+  }
+  .up{color:#8FD0FF;font-weight:700}
+  .dn{color:#FFA7A3;font-weight:700}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+
+  /* 등급 배지 */
+  .tb{
+    display:inline-flex;align-items:center;justify-content:center;font-weight:900;
+    border-radius:6px;line-height:1
+  }
+  .tb.sm{width:22px;height:22px;font-size:12px}
+  .tb.md{height:28px;padding:0 11px;font-size:14px;gap:7px;border-radius:7px}
+  .tb.lg{
+    width:62px;height:62px;font-size:30px;border-radius:14px;flex-direction:column;
+    box-shadow:0 4px 14px rgba(0,0,0,.35)
+  }
+  .tb-S{background:var(--t-s);color:#3a2f00}
+  .tb-A{background:var(--t-a);color:#fff}
+  .tb-B{background:var(--t-b);color:#fff}
+  .tb-C{background:var(--t-c);color:#fff}
+  .tb-D{background:var(--t-d);color:#fff}
+  .tb-F{background:var(--t-f);color:#e6e8f2}
+  .tb-P{background:#2a2c46;color:#9aa0b8;font-size:11px;font-weight:800;
+        width:auto;padding:0 8px;height:22px;border:1px dashed var(--line2)}
+
+  /* 등급표 */
+  .bands{display:flex;gap:8px;flex-wrap:wrap}
+  .band{
+    flex:1;min-width:132px;border-radius:11px;padding:12px 13px;color:#fff;
+    border:1px solid rgba(255,255,255,.14)
+  }
+  .band b{display:block;font-size:19px;font-weight:900}
+  .band span{font-size:11.5px;opacity:.9}
+  .b-S{background:linear-gradient(135deg,#8a7500,#FBE157);color:#241d00}
+  .b-A{background:linear-gradient(135deg,#3d1f63,#7A4FB6)}
+  .b-B{background:linear-gradient(135deg,#093A6E,#4A90E2)}
+  .b-C{background:linear-gradient(135deg,#0d4d34,#1A7D55)}
+  .b-D{background:linear-gradient(135deg,#3c2914,#8B6244)}
+  .b-F{background:linear-gradient(135deg,#2a2c46,#575A6E)}
+
+  /* 접이식 */
+  details{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:0;margin-top:14px;overflow:hidden
+  }
+  summary{
+    padding:13px 16px;cursor:pointer;font-size:13.5px;font-weight:700;color:#DDE2F0;
+    list-style:none
+  }
+  summary::-webkit-details-marker{display:none}
+  summary:before{content:"+ ";color:var(--orange);font-weight:900}
+  details[open] summary:before{content:"- "}
+  .det-body{padding:0 16px 16px;font-size:13px;color:#C9CFE2}
+  .formula{
+    background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:9px;
+    padding:12px 14px;font-size:14px;font-weight:700;color:#fff;margin-bottom:12px
+  }
+  .formula em{color:var(--orange);font-style:normal;font-weight:900;margin:0 6px}
+  .kv{display:grid;grid-template-columns:110px 1fr;gap:7px 12px;font-size:13px}
+  .kv dt{color:var(--menu);font-weight:700}
+
+  /* 관리자 폼 */
+  .form-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);flex-wrap:wrap}
+  .form-row:last-child{border-bottom:0}
+  .lb{width:110px;font-size:12.5px;color:var(--menu);font-weight:700;flex-shrink:0}
+  .hint{font-size:12px;color:var(--gray)}
+  .radios{display:flex;gap:16px;flex-wrap:wrap;font-size:13px}
+  .radios label{display:flex;gap:6px;align-items:center;cursor:pointer}
+  .btns{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
+  .bt{
+    border:0;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:700;
+    cursor:pointer;font-family:inherit;color:#fff;background:var(--blue)
+  }
+  .bt.ghost{background:transparent;border:1px solid var(--line2);color:#C9CFE2}
+  .bt.warn{background:var(--orange)}
+  .bt.danger{background:var(--red)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  @media (max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
+  .subtabs{display:flex;gap:6px;margin-bottom:14px}
+  .subtab{
+    background:transparent;border:1px solid var(--line2);color:var(--menu);border-radius:8px;
+    padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit
+  }
+  .subtab.on{background:var(--panel);color:#fff;border-color:var(--blue)}
+  .pane{display:none}
+  .pane.on{display:block}
+
+  /* 시뮬레이터 */
+  .sim-out{
+    margin-top:14px;background:rgba(0,0,0,.32);border:1px solid var(--line2);
+    border-radius:11px;padding:15px 17px
+  }
+  .sim-eq{font-size:14px;color:#C9CFE2;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .sim-total{font-size:32px;font-weight:900;margin-top:8px}
+  .sim-total.p{color:#8FD0FF}
+  .sim-total.m{color:#FFA7A3}
+  .sim-sub{font-size:12.5px;color:var(--menu);margin-top:4px}
+  .sim-check{display:flex;gap:8px;align-items:center;font-size:12.5px;color:#C9CFE2;margin-top:10px}
+
+  /* 사이드바 목업 */
+  .sb{background:var(--side);border-radius:12px;padding:12px;border:1px solid var(--line)}
+  .sb-i{
+    display:flex;justify-content:space-between;padding:9px 11px;border-radius:8px;
+    font-size:13px;color:var(--menu)
+  }
+  .sb-i.new{background:rgba(74,144,226,.16);color:#fff;font-weight:700}
+  .sb-i.sub{padding-left:26px;font-size:12.5px}
+  .sb-tag{font-size:10.5px;color:var(--orange);font-weight:800}
+  .quick{display:flex;gap:9px;flex-wrap:wrap}
+  .qi{
+    background:var(--panel);border:1px solid var(--line2);border-radius:11px;
+    padding:14px 16px;font-size:12.5px;font-weight:700;text-align:center;min-width:96px
+  }
+  .qi.new{border-color:var(--blue);background:rgba(74,144,226,.14)}
+
+  .foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--gray)}
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <div class="doc-head">
+    <div class="kicker">bgm-agit-kml-front 화면 목업</div>
+    <h1>랭크(등급) 시스템 화면 설계</h1>
+    <p>
+      판마다 레이팅이 오르내리는 시즌 등급 체계를 얹기 위해 필요한 화면 9개를 실제 다크 네이비 테마
+      (styles/theme.ts 색 토큰)로 그린 목업입니다. 상단 탭으로 화면을 전환하고, 데스크탑/모바일 토글로
+      반응형 형태를 확인할 수 있습니다. 계산 시뮬레이터는 실제로 동작합니다.
+    </p>
+  </div>
+
+  <div class="toolbar">
+    <div class="tabs" id="tabs">
+      <button class="tab on" data-s="s1">1. 시즌 등급 순위표</button>
+      <button class="tab" data-s="s2">2. 개인 등급 상세</button>
+      <button class="tab" data-s="s3">3. 등급 배지</button>
+      <button class="tab" data-s="s4">4. 관리자 시즌 관리</button>
+      <button class="tab" data-s="s5">5. 관리자 등급/포인트</button>
+      <button class="tab" data-s="s6">6. 메뉴 동선</button>
+      <button class="tab" data-s="s7">7. 요약</button>
+    </div>
+    <div class="devtoggle">
+      <button id="btnDesk" class="on">데스크탑</button>
+      <button id="btnMob">모바일</button>
+    </div>
+  </div>
+
+<!-- ==================== 화면 1 ==================== -->
+<section class="screen on" id="s1">
+  <div class="sec-title"><span class="no">화면 1 + 2</span>시즌 등급 순위표 · 등급 안내 <span style="color:var(--orange);font-size:13px">신설</span></div>
+  <div class="sec-desc">
+    누적 승점 랭킹(/rank)과 별개인 신설 페이지. 기간 픽커(주/월/커스텀) 대신 시즌 셀렉터가 들어갑니다.
+    지난 시즌 결과는 셀렉터로 흡수해서 아카이브 화면을 따로 만들지 않습니다.
+    등급표와 계산식은 같은 화면 하단 접이식으로 붙여 별도 안내 페이지를 줄였습니다.
+  </div>
+
+  <div class="desk-wrap">
+  <div class="frame">
+    <div class="frame-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+      <span class="url">bgmagit.co.kr/record/rank-tier</span></div>
+    <div class="frame-body">
+      <div class="hero"><h2>Season Rank</h2><span>판마다 오르내리는 레이팅 등급</span></div>
+      <div class="pad">
+
+        <div class="rowbar">
+          <select class="select"><option>2026 시즌1 (진행중)</option><option>2025 시즌2 (마감)</option><option>2025 시즌1 (마감)</option></select>
+          <span class="period">2026.08.01 ~ 2026.09.30</span>
+          <span class="dday">D-14</span>
+          <span style="margin-left:auto" class="period">참여 24명 / 312판 / 배치 기준 10판</span>
+        </div>
+
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-h">내 등급</div>
+          <div class="me">
+            <div class="tb lg tb-A">A</div>
+            <div class="me-info">
+              <div class="me-name">홍길동 <small>시즌 2위 / 31판</small></div>
+              <div class="me-rating">1880<span>점</span></div>
+              <div class="recent">
+                <span class="chip">최근 5판</span>
+                <span class="chip up">+70</span><span class="chip dn">-50</span>
+                <span class="chip up">+30</span><span class="chip up">+70</span><span class="chip dn">-20</span>
+              </div>
+            </div>
+            <div style="flex:1;min-width:240px">
+              <div class="gauge-lb"><span>S 등급까지 120점</span><span>1880 / 2000</span></div>
+              <div class="gauge"><i style="width:94%"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th style="width:56px">순위</th><th style="width:56px">등급</th><th style="text-align:left;padding-left:12px">이름</th>
+              <th>레이팅</th><th>판수</th><th>최근변동</th><th>1위%</th><th>4위%</th><th>평균순위</th>
+            </tr></thead>
+            <tbody>
+              <tr class="r-gold"><td><b>1</b></td><td><span class="tb sm tb-S">S</span></td><td class="nm">김철수</td><td class="mono"><b>2140</b></td><td>48</td><td class="up">+70</td><td>34.2</td><td>12.5</td><td>2.21</td></tr>
+              <tr class="r-silver"><td><b>2</b></td><td><span class="tb sm tb-A">A</span></td><td class="nm">홍길동</td><td class="mono"><b>1880</b></td><td>31</td><td class="dn">-50</td><td>29.0</td><td>19.4</td><td>2.35</td></tr>
+              <tr class="r-bronze"><td><b>3</b></td><td><span class="tb sm tb-B">B</span></td><td class="nm">이영희</td><td class="mono"><b>1712</b></td><td>27</td><td class="up">+30</td><td>25.9</td><td>22.2</td><td>2.44</td></tr>
+              <tr><td>4</td><td><span class="tb sm tb-C">C</span></td><td class="nm">박민수</td><td class="mono">1498</td><td>15</td><td class="dn">-70</td><td>20.0</td><td>26.7</td><td>2.60</td></tr>
+              <tr><td>5</td><td><span class="tb sm tb-D">D</span></td><td class="nm">최지우</td><td class="mono">1310</td><td>22</td><td class="up">+20</td><td>13.6</td><td>31.8</td><td>2.77</td></tr>
+              <tr><td>6</td><td><span class="tb sm tb-F">F</span></td><td class="nm">윤서준</td><td class="mono">1142</td><td>18</td><td class="dn">-60</td><td>11.1</td><td>38.9</td><td>2.94</td></tr>
+              <tr class="split"><td colspan="9">배치 중 (10판 미만, 순위 미부여)</td></tr>
+              <tr class="prov"><td>-</td><td><span class="tb tb-P">배치중</span></td><td class="nm">정다은</td><td class="mono">1530</td><td>4</td><td class="up">+70</td><td>25.0</td><td>25.0</td><td>2.50</td></tr>
+              <tr class="prov"><td>-</td><td><span class="tb tb-P">배치중</span></td><td class="nm">강현우</td><td class="mono">1470</td><td>2</td><td class="dn">-60</td><td>0.0</td><td>50.0</td><td>3.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:16px">
+          <div class="card-h">등급표</div>
+          <div class="bands">
+            <div class="band b-S"><b>S</b><span>2000 이상</span></div>
+            <div class="band b-A"><b>A</b><span>1800 ~ 1999</span></div>
+            <div class="band b-B"><b>B</b><span>1600 ~ 1799</span></div>
+            <div class="band b-C"><b>C</b><span>1400 ~ 1599 · 시작 구간</span></div>
+            <div class="band b-D"><b>D</b><span>1200 ~ 1399</span></div>
+            <div class="band b-F"><b>F</b><span>1200 미만</span></div>
+          </div>
+        </div>
+
+        <details>
+          <summary>점수는 어떻게 계산되나요?</summary>
+          <div class="det-body">
+            <div class="formula">레이팅 변화 = (착순 점수 <em>x</em> 게임길이 가중치) <em>+</em> 상대 등급 보정</div>
+            <dl class="kv">
+              <dt>착순 점수</dt><dd>1위 +60 · 2위 +20 · 3위 -20 · 4위 -60</dd>
+              <dt>게임길이</dt><dd>동장 x0.5 · 반장 x1.0 · 서장 x1.5 · 일장 x2.0</dd>
+              <dt>상대 보정</dt><dd>나머지 3명의 평균 레이팅과 내 레이팅 차이를 반영합니다. 200점 차이가 10점.</dd>
+            </dl>
+            <div style="margin-top:12px;font-size:13px;color:#C9CFE2">
+              내 레이팅 1500, 반장전 기준<br>
+              1위 · 상대 평균 1700 (나보다 높음) : +60 에 보정 +10 이 붙어 <b class="up">최종 +70</b><br>
+              1위 · 상대 평균 1300 (나보다 낮음) : +60 에 보정 -10 이 붙어 <b class="up">최종 +50</b><br>
+              4위 · 상대 평균 1300 (나보다 낮음) : -60 에 보정 -10 이 붙어 <b class="dn">최종 -70</b><br>
+              4위 · 상대 평균 1700 (나보다 높음) : -60 에 보정 +10 이 붙어 <b class="dn">최종 -50</b><br>
+              상대 평균이 나와 같으면 보정 0 이라 순수 착순으로만 갈립니다.
+            </div>
+            <div class="note" style="margin-bottom:0">
+              한 테이블 4명의 보정을 모두 더하면 <b>0</b> 이라 게임 전체 점수 총합은 항상 균형을 유지합니다.
+            </div>
+          </div>
+        </details>
+
+      </div>
+    </div>
+  </div>
+  </div><!-- /desk -->
+
+  <div class="mobile-wrap">
+    <div class="frame">
+      <div class="frame-bar"><i class="dot"></i><span class="url">/record/rank-tier</span></div>
+      <div class="frame-body">
+        <div class="hero" style="height:96px"><h2 style="font-size:22px">Season Rank</h2><span style="font-size:11px">판마다 오르내리는 레이팅 등급</span></div>
+        <div class="pad" style="padding:14px">
+          <div class="rowbar" style="gap:7px">
+            <select class="select" style="flex:1;font-size:16px;padding:9px"><option>2026 시즌1</option></select>
+            <span class="dday">D-14</span>
+          </div>
+          <div class="card" style="margin-bottom:12px;padding:13px">
+            <div class="me" style="gap:12px">
+              <div class="tb lg tb-A" style="width:52px;height:52px;font-size:25px">A</div>
+              <div class="me-info" style="min-width:0">
+                <div class="me-name" style="font-size:15px">홍길동 <small>2위 / 31판</small></div>
+                <div class="me-rating" style="font-size:24px">1880<span>점</span></div>
+              </div>
+            </div>
+            <div class="gauge-lb" style="font-size:11px"><span>S 등급까지 120점</span><span>94%</span></div>
+            <div class="gauge"><i style="width:94%"></i></div>
+          </div>
+          <div class="tbl-wrap">
+            <table style="min-width:0;font-size:12px">
+              <thead><tr><th style="width:34px">#</th><th style="text-align:left">이름</th><th>레이팅</th><th>판</th><th>변동</th></tr></thead>
+              <tbody>
+                <tr class="r-gold"><td><b>1</b></td><td class="nm" style="padding-left:8px"><span class="tb sm tb-S" style="width:19px;height:19px;font-size:11px">S</span> 김철수</td><td class="mono"><b>2140</b></td><td>48</td><td class="up">+70</td></tr>
+                <tr class="r-silver"><td><b>2</b></td><td class="nm" style="padding-left:8px"><span class="tb sm tb-A" style="width:19px;height:19px;font-size:11px">A</span> 홍길동</td><td class="mono"><b>1880</b></td><td>31</td><td class="dn">-50</td></tr>
+                <tr class="r-bronze"><td><b>3</b></td><td class="nm" style="padding-left:8px"><span class="tb sm tb-B" style="width:19px;height:19px;font-size:11px">B</span> 이영희</td><td class="mono">1712</td><td>27</td><td class="up">+30</td></tr>
+                <tr><td>4</td><td class="nm" style="padding-left:8px"><span class="tb sm tb-C" style="width:19px;height:19px;font-size:11px">C</span> 박민수</td><td class="mono">1498</td><td>15</td><td class="dn">-70</td></tr>
+                <tr class="split"><td colspan="5">배치 중</td></tr>
+                <tr class="prov"><td>-</td><td class="nm" style="padding-left:8px">정다은</td><td class="mono">1530</td><td>4</td><td class="up">+70</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="margin-top:14px">
+            <div class="card-h">등급표</div>
+            <div class="bands" style="gap:6px">
+              <div class="band b-S" style="min-width:0;flex:1 1 30%;padding:9px"><b style="font-size:15px">S</b><span style="font-size:10px">2000+</span></div>
+              <div class="band b-A" style="min-width:0;flex:1 1 30%;padding:9px"><b style="font-size:15px">A</b><span style="font-size:10px">1800+</span></div>
+              <div class="band b-B" style="min-width:0;flex:1 1 30%;padding:9px"><b style="font-size:15px">B</b><span style="font-size:10px">1600+</span></div>
+              <div class="band b-C" style="min-width:0;flex:1 1 30%;padding:9px"><b style="font-size:15px">C</b><span style="font-size:10px">1400+</span></div>
+              <div class="band b-D" style="min-width:0;flex:1 1 30%;padding:9px"><b style="font-size:15px">D</b><span style="font-size:10px">1200+</span></div>
+              <div class="band b-F" style="min-width:0;flex:1 1 30%;padding:9px"><b style="font-size:15px">F</b><span style="font-size:10px">1200-</span></div>
+            </div>
+          </div>
+          <details><summary>점수는 어떻게 계산되나요?</summary>
+            <div class="det-body" style="font-size:12px">
+              <div class="formula" style="font-size:12.5px">(착순 점수 <em>x</em> 게임길이) <em>+</em> 상대 등급 보정</div>
+              1위 +60 · 2위 +20 · 3위 -20 · 4위 -60<br>
+              동장 x0.5 · 반장 x1.0 · 서장 x1.5 · 일장 x2.0
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="todo">
+    <b>구현 메모</b> · 표는 <code>app/components/BaseTable.tsx</code> 재사용 가능하나 기간 픽커 대신 시즌 셀렉터가 필요해
+    <code>seasonSelector</code> 모드를 추가하거나 이 화면만 자체 표를 씁니다. 컬럼이 9개뿐이라 자체 표가 더 단순할 수 있습니다.
+    모바일 카드형은 <code>BaseCardTable.tsx</code> 선례를 따르고, SSR 하이브리드는 <code>app/rank/page.tsx</code> + <code>RankClient.tsx</code> 패턴을 미러합니다.
+    <code>metadata.title</code> 은 layout template 이 suffix 를 붙이므로 <code>'시즌 랭크'</code> 로만 적습니다.
+  </div>
+  <div class="api">GET  /bgm-agit/rank-tiers/seasons                       시즌 셀렉터 목록
+GET  /bgm-agit/rank-tiers/standings?seasonId=&page=     순위표 (배치중 분리 플래그 포함)
+GET  /bgm-agit/rank-tiers/config?seasonId=              등급 구간 · 착순 점수 · 가중치 · 기간</div>
+</section>
+
+<!-- ==================== 화면 2 ==================== -->
+<section class="screen" id="s2">
+  <div class="sec-title"><span class="no">화면 3</span>개인 등급 상세 <span style="color:var(--blue);font-size:13px">기존 /rank/[memberId] 에 섹션 2개 추가</span></div>
+  <div class="sec-desc">
+    기존 개인기록 화면(헤더 · 기본통계 · 자리별 표 · 같이 친 TOP3 · 최근 경기)의 맨 위에 등급 카드,
+    기본통계 아래에 레이팅 변동 로그를 끼웁니다. 변동 로그는 착순 점수 · 가중치 · 보정을 컬럼으로 분해해서
+    왜 그 점수가 나왔는지 그 자리에서 읽히게 합니다.
+  </div>
+
+  <div class="desk-wrap">
+  <div class="frame">
+    <div class="frame-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+      <span class="url">bgmagit.co.kr/record/rank/12</span></div>
+    <div class="frame-body"><div class="pad">
+
+      <div class="rowbar" style="border-bottom:1px solid var(--line);padding-bottom:14px">
+        <button class="bt ghost">&lt; 뒤로</button>
+        <div style="font-size:17px;font-weight:800;display:flex;align-items:center;gap:9px">
+          <span class="tb md tb-A">A <span style="font-size:12px;opacity:.85">1880</span></span>
+          홍길동님의 개인 기록
+        </div>
+        <select class="select" style="margin-left:auto"><option>전체</option><option>2026년</option></select>
+      </div>
+
+      <div class="card-h" style="margin-top:18px">시즌 등급 <span style="color:var(--orange)">신설 섹션</span></div>
+      <div class="card">
+        <div class="me">
+          <div class="tb lg tb-A">A</div>
+          <div class="me-info">
+            <div class="me-rating">1880<span>점</span></div>
+            <div style="font-size:12.5px;color:var(--menu);margin-top:4px">시즌 2위 / 31판 · 배치 완료</div>
+          </div>
+          <div style="flex:1;min-width:230px">
+            <div class="gauge-lb"><span>S 등급까지 120점</span><span>94%</span></div>
+            <div class="gauge"><i style="width:94%"></i></div>
+            <div style="display:flex;gap:14px;font-size:12px;color:var(--menu);margin-top:10px">
+              <span>시즌 최고 <b style="color:#8FD0FF">1920</b> (07-19)</span>
+              <span>시즌 최저 <b style="color:#FFA7A3">1640</b> (07-03)</span>
+            </div>
+          </div>
+          <select class="select"><option>2026 시즌1</option><option>2025 시즌2</option></select>
+        </div>
+      </div>
+
+      <div class="card-h" style="margin-top:18px">기본 통계 <span style="color:var(--menu)">기존 그대로</span></div>
+      <div class="grid3">
+        <div class="card" style="padding:13px"><div style="font-size:11.5px;color:var(--menu)">총 국수</div><div style="font-size:22px;font-weight:800">31</div></div>
+        <div class="card" style="padding:13px"><div style="font-size:11.5px;color:var(--menu)">평균 순위</div><div style="font-size:22px;font-weight:800">2.35</div></div>
+        <div class="card" style="padding:13px"><div style="font-size:11.5px;color:var(--menu)">총 승점</div><div style="font-size:22px;font-weight:800" class="up">+84.2</div></div>
+      </div>
+
+      <div class="card-h" style="margin-top:18px">레이팅 변동 <span style="color:var(--orange)">신설 섹션</span></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th style="text-align:left;padding-left:12px">일시</th><th>길이</th><th>착순</th><th>상대 평균</th>
+            <th style="background:#1b1e33">착순 점수</th><th style="background:#1b1e33">가중치</th><th style="background:#1b1e33">보정</th>
+            <th>최종</th><th>누적</th>
+          </tr></thead>
+          <tbody>
+            <tr><td style="text-align:left;padding-left:12px" class="mono">07.27 21:40</td><td>반장</td><td>1위</td><td class="mono">1700</td><td class="mono">+60</td><td class="mono">x1.0</td><td class="mono up">+10</td><td class="up">+70</td><td class="mono"><b>1880</b></td></tr>
+            <tr><td style="text-align:left;padding-left:12px" class="mono">07.27 19:05</td><td>반장</td><td>4위</td><td class="mono">1300</td><td class="mono">-60</td><td class="mono">x1.0</td><td class="mono dn">-10</td><td class="dn">-70</td><td class="mono">1810</td></tr>
+            <tr><td style="text-align:left;padding-left:12px" class="mono">07.26 22:30</td><td>일장</td><td>1위</td><td class="mono">1520</td><td class="mono">+60</td><td class="mono">x2.0</td><td class="mono up">+1</td><td class="up">+121</td><td class="mono">1880</td></tr>
+            <tr><td style="text-align:left;padding-left:12px" class="mono">07.26 20:10</td><td>동장</td><td>3위</td><td class="mono">1600</td><td class="mono">-20</td><td class="mono">x0.5</td><td class="mono up">+5</td><td class="dn">-5</td><td class="mono">1759</td></tr>
+            <tr><td style="text-align:left;padding-left:12px" class="mono">07.25 21:15</td><td>서장</td><td>2위</td><td class="mono">1880</td><td class="mono">+20</td><td class="mono">x1.5</td><td class="mono up">+7</td><td class="up">+37</td><td class="mono">1764</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:12px;color:var(--menu);margin-top:9px">
+        행을 누르면 기존 <b>MatchDetailModal</b> 이 열려 그 대국 4명 점수를 그대로 볼 수 있습니다.
+        최종 컬럼은 기존 <code>cell-blue</code> / <code>cell-red</code> 클래스를 재사용합니다.
+      </div>
+      <div class="btns"><button class="bt ghost">더보기</button></div>
+
+      <div class="card-h" style="margin-top:22px">자리별 성적 · 같이 친 TOP3 · 최근 경기 <span style="color:var(--menu)">기존 그대로</span></div>
+    </div></div>
+  </div>
+  </div>
+
+  <div class="mobile-wrap">
+    <div class="frame">
+      <div class="frame-bar"><i class="dot"></i><span class="url">/record/rank/12</span></div>
+      <div class="frame-body"><div class="pad" style="padding:14px">
+        <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;padding-bottom:12px;border-bottom:1px solid var(--line)">
+          <span class="tb sm tb-A">A</span> 홍길동님의 개인 기록
+        </div>
+        <div class="card" style="margin-top:12px;padding:13px">
+          <div class="me" style="gap:12px">
+            <div class="tb lg tb-A" style="width:48px;height:48px;font-size:23px">A</div>
+            <div class="me-info" style="min-width:0">
+              <div class="me-rating" style="font-size:23px">1880<span>점</span></div>
+              <div style="font-size:11.5px;color:var(--menu)">시즌 2위 / 31판</div>
+            </div>
+          </div>
+          <div class="gauge-lb" style="font-size:11px"><span>S까지 120점</span><span>94%</span></div>
+          <div class="gauge"><i style="width:94%"></i></div>
+        </div>
+        <div class="card-h" style="margin-top:14px">레이팅 변동</div>
+        <div class="tbl-wrap">
+          <table style="min-width:0;font-size:12px">
+            <thead><tr><th style="text-align:left">일시</th><th>착순</th><th>최종</th><th>누적</th></tr></thead>
+            <tbody>
+              <tr><td style="text-align:left;padding-left:8px" class="mono">07.27 21:40</td><td>반장 1위</td><td class="up">+70</td><td class="mono">1880</td></tr>
+              <tr><td style="text-align:left;padding-left:8px" class="mono">07.27 19:05</td><td>반장 4위</td><td class="dn">-70</td><td class="mono">1810</td></tr>
+              <tr><td style="text-align:left;padding-left:8px" class="mono">07.26 22:30</td><td>일장 1위</td><td class="up">+121</td><td class="mono">1880</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:11.5px;color:var(--menu);margin-top:8px">
+          모바일은 4컬럼으로 줄이고, 행을 누르면 상세(착순 점수 · 가중치 · 보정)가 펼쳐집니다.
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="api">GET  /bgm-agit/rank-tiers/members/{memberId}?seasonId=            등급 카드 · 시즌 최고/최저
+GET  /bgm-agit/rank-tiers/members/{memberId}/deltas?seasonId=&page=  판별 변동 로그</div>
+</section>
+
+<!-- ==================== 화면 3 ==================== -->
+<section class="screen" id="s3">
+  <div class="sec-title"><span class="no">화면 4 + 5</span>등급 배지 컴포넌트 · 기존 화면 노출 <span style="color:var(--orange);font-size:13px">신설 컴포넌트</span></div>
+  <div class="sec-desc">
+    <code>TierBadge</code> 하나로 3사이즈 + 배치중 상태를 처리하고, 기존 화면 3곳에 꽂습니다.
+    등급 색은 theme.ts 의 yellowColor · purpleColor · writeBgColor · greenColor · bronzeColor 계열을 씁니다.
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-h">사이즈 3종</div>
+      <div style="display:flex;align-items:center;gap:22px;flex-wrap:wrap">
+        <div style="text-align:center">
+          <div style="display:flex;gap:5px;justify-content:center;margin-bottom:8px">
+            <span class="tb sm tb-S">S</span><span class="tb sm tb-A">A</span><span class="tb sm tb-B">B</span>
+            <span class="tb sm tb-C">C</span><span class="tb sm tb-D">D</span><span class="tb sm tb-F">F</span>
+          </div>
+          <div style="font-size:11.5px;color:var(--menu)">sm · 표 안 닉네임 앞, 대국 상세</div>
+        </div>
+        <div style="text-align:center">
+          <div style="margin-bottom:8px"><span class="tb md tb-A">A <span style="font-size:12px;opacity:.85">1880</span></span></div>
+          <div style="font-size:11.5px;color:var(--menu)">md · 개인기록 헤더</div>
+        </div>
+        <div style="text-align:center">
+          <div style="margin-bottom:8px"><span class="tb lg tb-A">A</span></div>
+          <div style="font-size:11.5px;color:var(--menu)">lg · 등급 카드</div>
+        </div>
+        <div style="text-align:center">
+          <div style="margin-bottom:8px;padding-top:4px"><span class="tb tb-P">배치중</span></div>
+          <div style="font-size:11.5px;color:var(--menu)">배치중 · 레이팅 미표시</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">등급 색 시안</div>
+      <div class="bands" style="gap:6px">
+        <div class="band b-S" style="min-width:0;flex:1 1 30%"><b>S</b><span>금색</span></div>
+        <div class="band b-A" style="min-width:0;flex:1 1 30%"><b>A</b><span>자색</span></div>
+        <div class="band b-B" style="min-width:0;flex:1 1 30%"><b>B</b><span>청색</span></div>
+        <div class="band b-C" style="min-width:0;flex:1 1 30%"><b>C</b><span>녹색</span></div>
+        <div class="band b-D" style="min-width:0;flex:1 1 30%"><b>D</b><span>갈색</span></div>
+        <div class="band b-F" style="min-width:0;flex:1 1 30%"><b>F</b><span>회색</span></div>
+      </div>
+      <div style="font-size:12px;color:var(--menu);margin-top:12px">
+        등급 이름과 색은 관리자 화면에서 시즌마다 바꿀 수 있어야 하므로, 색은 코드 하드코딩이 아니라
+        시즌 설정값(색 키)으로 내려받아 매핑합니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="card-h" style="margin-top:20px">노출 지점 3곳 (기존 화면 수정)</div>
+  <div class="grid3">
+    <div class="frame">
+      <div class="frame-bar"><i class="dot"></i><span class="url">/record/rank</span></div>
+      <div class="frame-body"><div style="padding:12px">
+        <div style="font-size:11.5px;color:var(--menu);margin-bottom:9px">1) 누적 승점 랭킹 이름 컬럼</div>
+        <table style="min-width:0;font-size:12.5px">
+          <tbody>
+            <tr class="r-gold"><td style="width:30px"><b>1</b></td><td class="nm"><span class="tb sm tb-S" style="width:19px;height:19px;font-size:11px">S</span> 김철수</td><td class="mono">+412.5</td></tr>
+            <tr class="r-silver"><td><b>2</b></td><td class="nm"><span class="tb sm tb-A" style="width:19px;height:19px;font-size:11px">A</span> 홍길동</td><td class="mono">+318.0</td></tr>
+            <tr><td>3</td><td class="nm"><span class="tb sm tb-C" style="width:19px;height:19px;font-size:11px">C</span> 박민수</td><td class="mono">+204.1</td></tr>
+          </tbody>
+        </table>
+        <div style="font-size:11px;color:var(--gray);margin-top:8px">링크는 유지하고 배지만 앞에 붙임</div>
+      </div></div>
+    </div>
+    <div class="frame">
+      <div class="frame-bar"><i class="dot"></i><span class="url">/record/rank/12</span></div>
+      <div class="frame-body"><div style="padding:12px">
+        <div style="font-size:11.5px;color:var(--menu);margin-bottom:9px">2) 개인기록 헤더</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800">
+          <span class="tb md tb-A">A <span style="font-size:11px;opacity:.85">1880</span></span> 홍길동님의 개인 기록
+        </div>
+        <div style="font-size:11px;color:var(--gray);margin-top:10px">md 사이즈로 레이팅까지 같이 노출</div>
+      </div></div>
+    </div>
+    <div class="frame">
+      <div class="frame-bar"><i class="dot"></i><span class="url">MatchDetailModal</span></div>
+      <div class="frame-body"><div style="padding:12px">
+        <div style="font-size:11.5px;color:var(--menu);margin-bottom:9px">3) 대국 상세 모달 4명</div>
+        <table style="min-width:0;font-size:12.5px">
+          <tbody>
+            <tr><td style="width:26px">東</td><td class="nm"><span class="tb sm tb-S" style="width:19px;height:19px;font-size:11px">S</span> 김철수</td><td class="mono">38,100</td><td class="up">+18.1</td></tr>
+            <tr><td>南</td><td class="nm"><span class="tb sm tb-A" style="width:19px;height:19px;font-size:11px">A</span> 홍길동</td><td class="mono">31,200</td><td class="up">+6.2</td></tr>
+            <tr><td>西</td><td class="nm"><span class="tb sm tb-C" style="width:19px;height:19px;font-size:11px">C</span> 박민수</td><td class="mono">22,400</td><td class="dn">-7.6</td></tr>
+            <tr><td>北</td><td class="nm"><span class="tb tb-P" style="height:19px;font-size:10px">배치중</span> 정다은</td><td class="mono">8,300</td><td class="dn">-39.6</td></tr>
+          </tbody>
+        </table>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>N+1 주의</b> · 목록 화면마다 배지를 개별 조회하면 요청이 폭발합니다. 화면에 뜬 memberId 만 모아
+    한 번에 조회하고 zustand(<code>store/rankTier.ts</code>)에 캐시합니다.
+    프로젝트 관례상 ids 목록이 있는 조회는 GET 쿼리스트링이 아니라 POST + JSON body 로 갑니다.
+  </div>
+  <div class="api">POST /bgm-agit/rank-tiers/badges     { "memberIds": [1, 2, 3, 12] }
+     -> [{ memberId, seasonId, tierName, tierColor, rating, provisional }]</div>
+</section>
+
+<!-- ==================== 화면 4 ==================== -->
+<section class="screen" id="s4">
+  <div class="sec-title"><span class="no">화면 6 + 8</span>관리자 시즌 관리 · 시즌 운영 <span style="color:var(--orange);font-size:13px">신설</span></div>
+  <div class="sec-desc">
+    기존 <code>app/setting/page.tsx</code>(반환점/우마 룰 설정) 구조를 그대로 미러합니다.
+    시즌 기간이 고정이 아니라 시즌마다 관리자가 정하는 방식이므로, 목록 + 편집 + 운영 액션 세 블록으로 구성합니다.
+    관리자 화면은 데스크탑 기준으로 그렸습니다.
+  </div>
+
+  <div class="frame">
+    <div class="frame-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+      <span class="url">bgmagit.co.kr/record/rank-tier-setting</span><span class="badge-admin">ADMIN</span></div>
+    <div class="frame-body"><div class="pad">
+
+      <div style="font-size:19px;font-weight:800;margin-bottom:14px">랭크 시즌 관리</div>
+      <div class="subtabs">
+        <button class="subtab on">시즌</button>
+        <button class="subtab" onclick="go('s5')">등급 / 포인트</button>
+      </div>
+
+      <div class="card-h">시즌 목록</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th style="width:70px">상태</th><th style="text-align:left;padding-left:12px">이름</th><th>기간</th><th>리셋</th><th>기준</th><th>최소 판수</th><th>참여</th><th style="width:120px"></th></tr></thead>
+          <tbody>
+            <tr><td><span class="st live">진행중</span></td><td class="nm">2026 시즌1</td><td class="mono">2026.08.01 ~ 09.30</td><td>HARD</td><td class="mono">1500</td><td>10</td><td>24명</td><td><button class="bt ghost" style="padding:5px 11px;font-size:12px">수정</button></td></tr>
+            <tr><td><span class="st wait">대기</span></td><td class="nm">2026 시즌2</td><td class="mono">2026.10.01 ~ 12.31</td><td>SOFT 50%</td><td class="mono">1500</td><td>10</td><td>-</td><td><button class="bt ghost" style="padding:5px 11px;font-size:12px">수정</button></td></tr>
+            <tr><td><span class="st done">마감</span></td><td class="nm">2025 시즌2</td><td class="mono">2025.10.01 ~ 12.31</td><td>SOFT 50%</td><td class="mono">1500</td><td>8</td><td>19명</td><td><button class="bt ghost" style="padding:5px 11px;font-size:12px">보기</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="btns"><button class="bt">+ 새 시즌 만들기</button></div>
+
+      <div class="card-h" style="margin-top:22px">시즌 편집</div>
+      <div class="card">
+        <div class="form-row"><span class="lb">시즌 이름</span><input class="inp" style="width:240px;text-align:left" value="2026 시즌2"></div>
+        <div class="form-row"><span class="lb">기간</span>
+          <input class="inp" style="width:140px;text-align:left" value="2026-10-01">
+          <span style="color:var(--menu)">~</span>
+          <input class="inp" style="width:140px;text-align:left" value="2026-12-31">
+          <span class="hint">시즌 기간은 고정이 아니라 시즌마다 설정합니다</span>
+        </div>
+        <div class="form-row"><span class="lb">기준 레이팅</span><input class="inp" value="1500"><span class="hint">C 등급 중간</span></div>
+        <div class="form-row"><span class="lb">최소 판수</span><input class="inp" value="10"><span class="hint">미만이면 등급 미확정(배치중) 표시</span></div>
+        <div class="form-row"><span class="lb">리셋 방식</span>
+          <div class="radios">
+            <label><input type="radio" name="rst"> HARD <span class="hint">전원 기준 레이팅부터</span></label>
+            <label><input type="radio" name="rst" checked> SOFT <span class="hint">직전 시즌 일부 계승</span></label>
+            <label><input type="radio" name="rst"> CONTINUOUS <span class="hint">리셋 없는 상시 래더</span></label>
+          </div>
+        </div>
+        <div class="form-row" style="align-items:flex-start">
+          <span class="lb">계승 비율</span>
+          <div>
+            <input class="inp" id="carry" value="50" oninput="carryPreview()"> <span class="hint">%</span>
+            <div class="hint" style="margin-top:8px">새 시즌 시작 = 기준 1500 + (직전 시즌 점수 - 1500) x 비율</div>
+            <div id="carryOut" class="mono" style="font-size:12.5px;color:#9FD0FF;margin-top:6px"></div>
+          </div>
+        </div>
+        <div class="btns"><button class="bt">저장</button><button class="bt ghost">취소</button><button class="bt danger">삭제</button></div>
+      </div>
+
+      <div class="card-h" style="margin-top:22px">시즌 운영</div>
+      <div class="card">
+        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+          <div><div style="font-size:11.5px;color:var(--menu)">진행중 시즌</div><div style="font-size:16px;font-weight:800">2026 시즌1</div></div>
+          <div><div style="font-size:11.5px;color:var(--menu)">참여</div><div style="font-size:16px;font-weight:800">24명</div></div>
+          <div><div style="font-size:11.5px;color:var(--menu)">반영 기록</div><div style="font-size:16px;font-weight:800">312판</div></div>
+          <div><div style="font-size:11.5px;color:var(--menu)">마지막 재계산</div><div style="font-size:13px;font-weight:700" class="mono">2026-07-28 14:20 (1.4초)</div></div>
+        </div>
+        <div class="btns" style="margin-top:0">
+          <button class="bt">시즌 시작</button>
+          <button class="bt warn">시즌 마감</button>
+          <button class="bt ghost">전체 재계산</button>
+        </div>
+        <div style="font-size:12px;color:var(--menu);margin-top:12px">
+          시즌 마감은 순위를 확정하고 대기 시즌으로 넘깁니다. 되돌리기가 번거로우니 확인창을 한 번 띄웁니다.
+          전체 재계산은 시즌 시작부터 판 순서대로 다시 계산합니다.
+        </div>
+      </div>
+
+    </div></div>
+  </div>
+
+  <div class="note">
+    <b>권한 등록 필수</b> · <code>POST /bgm-agit/rank-tiers/recalc-all</code> 같은 관리자 POST 엔드포인트는
+    <code>BGM_AGIT_URL_RESOURCES</code> 에 ADMIN 매핑 후 앱을 재시작해야 합니다. 등록하지 않으면 무방비로 공개됩니다.
+    GET 은 <code>BgmAgitAuthorizationManager</code> 기본 permit 이라 등록이 필요 없습니다.
+    화면 권한은 <code>/url-role</code>, 메뉴는 <code>/menu-create</code> 에서 등록합니다.
+  </div>
+  <div class="api">GET    /bgm-agit/rank-tiers/seasons                 목록
+POST   /bgm-agit/rank-tiers/seasons                 생성          ADMIN
+PUT    /bgm-agit/rank-tiers/seasons/{id}            수정          ADMIN
+PUT    /bgm-agit/rank-tiers/seasons/{id}/start      대기 -> 진행중  ADMIN
+PUT    /bgm-agit/rank-tiers/seasons/{id}/close      진행중 -> 마감  ADMIN
+POST   /bgm-agit/rank-tiers/recalc-all              전체 재계산     ADMIN</div>
+</section>
+
+<!-- ==================== 화면 5 ==================== -->
+<section class="screen" id="s5">
+  <div class="sec-title"><span class="no">화면 7</span>관리자 등급 / 포인트 설정 <span style="color:var(--orange);font-size:13px">신설 · 시즌 종속</span></div>
+  <div class="sec-desc">
+    등급 이름 · 개수 · 레이팅 컷과 착순 점수는 첫 시즌 기준값이고 조정될 수 있으므로, SQL 없이 화면에서 바꿉니다.
+    설정이 시즌에 종속되어 시즌마다 다른 등급 체계를 쓸 수 있습니다. 시뮬레이터는 실제로 동작합니다.
+  </div>
+
+  <div class="frame">
+    <div class="frame-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+      <span class="url">bgmagit.co.kr/record/rank-tier-setting</span><span class="badge-admin">ADMIN</span></div>
+    <div class="frame-body"><div class="pad">
+
+      <div style="font-size:19px;font-weight:800;margin-bottom:14px">랭크 시즌 관리</div>
+      <div class="subtabs">
+        <button class="subtab" onclick="go('s4')">시즌</button>
+        <button class="subtab on">등급 / 포인트</button>
+      </div>
+
+      <div class="rowbar">
+        <span class="lb" style="width:auto">대상 시즌</span>
+        <select class="select"><option>2026 시즌1 (진행중)</option><option>2026 시즌2 (대기)</option></select>
+      </div>
+
+      <div class="card-h">등급 구간</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th style="width:80px">등급 이름</th><th style="width:130px">하한 레이팅</th><th>표시 구간</th><th style="width:110px">색</th><th style="width:80px"></th></tr></thead>
+          <tbody id="bandRows"></tbody>
+        </table>
+      </div>
+      <div class="btns"><button class="bt ghost">+ 등급 추가</button></div>
+      <div style="font-size:12px;color:var(--menu);margin-top:9px">
+        등급 이름도 입력값입니다. 상한은 위 등급의 하한에서 자동 계산되어 표시만 됩니다.
+        현재 기준값은 200점 간격 6단계이고 기준 1500 은 C 등급 중간입니다.
+      </div>
+
+      <div class="grid2" style="margin-top:20px">
+        <div class="card">
+          <div class="card-h">착순 점수</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <div><div class="hint">1위</div><input class="inp" id="p1" value="60" oninput="sim()"></div>
+            <div><div class="hint">2위</div><input class="inp" id="p2" value="20" oninput="sim()"></div>
+            <div><div class="hint">3위</div><input class="inp" id="p3" value="-20" oninput="sim()"></div>
+            <div><div class="hint">4위</div><input class="inp" id="p4" value="-60" oninput="sim()"></div>
+          </div>
+          <div id="zsum" style="font-size:12.5px;margin-top:10px"></div>
+        </div>
+        <div class="card">
+          <div class="card-h">게임길이 가중치</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <div><div class="hint">동장</div><input class="inp" id="w0" value="0.5" oninput="sim()"></div>
+            <div><div class="hint">반장</div><input class="inp" id="w1" value="1.0" oninput="sim()"></div>
+            <div><div class="hint">서장</div><input class="inp" id="w2" value="1.5" oninput="sim()"></div>
+            <div><div class="hint">일장</div><input class="inp" id="w3" value="2.0" oninput="sim()"></div>
+          </div>
+          <div class="hint" style="margin-top:10px">기준은 대국의 게임 길이(MatchsWind)이고 좌석이 아닙니다.</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <div class="card-h">상대 등급 보정</div>
+        <div class="form-row" style="border:0;padding-top:0">
+          <span class="lb">보정 계수 K</span>
+          <input class="inp" id="kk" value="0.05" oninput="sim()">
+          <span class="hint">보정 = (나머지 3명 평균 레이팅 - 내 레이팅) x K · 200점 차이면 10점</span>
+        </div>
+        <div class="form-row" style="border:0">
+          <span class="lb">가중치 적용</span>
+          <label style="display:flex;gap:7px;align-items:center;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="kw" onchange="sim()"> 보정에도 게임길이 가중치를 곱한다
+          </label>
+        </div>
+        <div class="todo" style="margin:6px 0 0">
+          <b>남은 결정</b> · 지금 계산식은 보정이 괄호 밖이라 일장전에서 착순 점수만 2배가 되고 보정은 그대로입니다.
+          즉 긴 대국일수록 상대 등급의 영향이 상대적으로 줄어듭니다. 그대로 둘지 가중치를 곱할지 이 스위치로 비교해보세요.
+          어느 쪽이든 4명 보정 합계는 0 이라 제로섬은 깨지지 않습니다.
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <div class="card-h">계산 시뮬레이터</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div><div class="hint">내 레이팅</div><input class="inp" id="mr" value="1500" oninput="sim()"></div>
+          <div><div class="hint">나머지 3명 평균</div><input class="inp" id="oa" value="1700" oninput="sim()"></div>
+          <div><div class="hint">게임 길이</div>
+            <select class="select" id="gl" onchange="sim()">
+              <option value="0">동장</option><option value="1" selected>반장</option>
+              <option value="2">서장</option><option value="3">일장</option>
+            </select>
+          </div>
+          <div><div class="hint">착순</div>
+            <select class="select" id="rk" onchange="sim()">
+              <option value="1" selected>1위</option><option value="2">2위</option>
+              <option value="3">3위</option><option value="4">4위</option>
+            </select>
+          </div>
+        </div>
+        <div class="sim-out">
+          <div class="sim-eq" id="simEq"></div>
+          <div class="sim-total p" id="simTotal"></div>
+          <div class="sim-sub" id="simSub"></div>
+          <div class="sim-check" id="simCheck"></div>
+        </div>
+      </div>
+
+      <div class="btns"><button class="bt">설정 저장</button><button class="bt ghost">되돌리기</button></div>
+      <div class="note" style="margin-bottom:0">
+        수치를 바꾸면 이미 계산된 레이팅과 어긋납니다. 저장할 때 "이 시즌 전체 재계산이 필요합니다" 안내와
+        재계산 동시 실행 옵션을 띄우고, 진행중 또는 마감 시즌이면 확인창을 한 번 더 띄웁니다.
+      </div>
+
+    </div></div>
+  </div>
+
+  <div class="api">GET  /bgm-agit/rank-tiers/config?seasonId=       등급 구간 · 착순 점수 · 가중치 · 보정 계수
+PUT  /bgm-agit/rank-tiers/config?seasonId=       저장 + 재계산 옵션        ADMIN</div>
+</section>
+
+<!-- ==================== 화면 6 ==================== -->
+<section class="screen" id="s6">
+  <div class="sec-title"><span class="no">화면 9</span>메뉴 진입 동선 <span style="color:var(--blue);font-size:13px">DB 등록 + 기존 화면 수정</span></div>
+  <div class="sec-desc">
+    메뉴는 <code>BGM_AGIT_KML_MENU</code> DB 행으로 등록합니다(<code>/menu-create</code> 화면).
+    관리자 메뉴는 <code>BGM_AGIT_KML_MENU_ROLE</code> 에 ADMIN 을 매핑합니다.
+  </div>
+
+  <div class="grid2">
+    <div>
+      <div class="card-h">사이드바</div>
+      <div class="sb">
+        <div class="sb-i">기록하기 <span></span></div>
+        <div class="sb-i">랭킹 <span style="font-size:11px">/rank</span></div>
+        <div class="sb-i new">시즌 랭크 <span class="sb-tag">신설 /rank-tier</span></div>
+        <div class="sb-i">내 기록 <span style="font-size:11px">/my-rank</span></div>
+        <div class="sb-i">월간/일간 기록 <span></span></div>
+        <div class="sb-i">역만 기록 <span></span></div>
+        <div class="sb-i">대회 <span></span></div>
+        <div class="sb-i">설정 <span style="font-size:11px">/sub</span></div>
+        <div class="sb-i sub">룰 설정 <span style="font-size:11px">/setting</span></div>
+        <div class="sb-i sub new">랭크 시즌 <span class="sb-tag">신설 ADMIN</span></div>
+        <div class="sb-i sub">권한 관리 <span style="font-size:11px">/role</span></div>
+      </div>
+      <div style="font-size:12px;color:var(--menu);margin-top:10px">
+        링크 없는 부모(<code>/sub</code>)는 펼침 토글로 동작합니다. 데스크탑은 absolute 드롭다운,
+        모바일은 인라인 펼침입니다.
+      </div>
+    </div>
+    <div>
+      <div class="card-h">메인 페이지 퀵메뉴</div>
+      <div class="quick">
+        <div class="qi">기록하기</div>
+        <div class="qi new">시즌 랭크</div>
+        <div class="qi">랭킹</div>
+        <div class="qi">내 기록</div>
+        <div class="qi">역만 기록</div>
+        <div class="qi">대회</div>
+        <div class="qi">공지</div>
+        <div class="qi">규정</div>
+      </div>
+      <div style="font-size:12px;color:var(--menu);margin-top:12px">
+        메인 퀵메뉴 필터가 <code>!!menuLink &amp;&amp; menuLink !== '/sub' &amp;&amp; menuLink !== '/my-page'</code> 이므로
+        DB 에 링크만 제대로 넣으면 자동으로 노출됩니다. 관리자 메뉴는 권한 필터에서 걸러지므로 일반 사용자에게는 안 보입니다.
+      </div>
+      <div class="note">
+        <b>지난 시즌 결과</b>는 별도 화면을 만들지 않고 <code>/rank-tier</code> 의 시즌 셀렉터로 봅니다.
+        대회 아카이브처럼 따로 두면 화면과 메뉴가 하나씩 더 늘어납니다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 화면 7 ==================== -->
+<section class="screen" id="s7">
+  <div class="sec-title"><span class="no">요약</span>필요 화면 9개와 작업 순서</div>
+
+  <div class="tbl-wrap">
+    <table style="min-width:820px">
+      <thead><tr><th style="width:44px">#</th><th style="text-align:left;padding-left:12px">화면</th><th>경로</th><th>성격</th><th>순서</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td class="nm">시즌 등급 순위표</td><td class="mono">/rank-tier</td><td>신설 · SSR 하이브리드</td><td><b>1</b></td></tr>
+        <tr><td>2</td><td class="nm">등급표 + 계산식 안내</td><td class="mono">/rank-tier 내 접이식</td><td>신설 · 같은 화면</td><td><b>1</b></td></tr>
+        <tr><td>3</td><td class="nm">등급 배지 TierBadge</td><td class="mono">components/TierBadge</td><td>신설 컴포넌트</td><td><b>1</b></td></tr>
+        <tr><td>4</td><td class="nm">개인 등급 상세 (등급 카드 + 변동 로그)</td><td class="mono">/rank/[memberId]</td><td>기존 수정</td><td>2</td></tr>
+        <tr><td>5</td><td class="nm">배지 노출 3곳</td><td class="mono">/rank · 개인기록 · 대국상세</td><td>기존 수정</td><td>2</td></tr>
+        <tr><td>6</td><td class="nm">관리자 시즌 관리</td><td class="mono">/rank-tier-setting 시즌 탭</td><td>신설</td><td>2</td></tr>
+        <tr><td>7</td><td class="nm">관리자 등급/포인트 설정</td><td class="mono">/rank-tier-setting 설정 탭</td><td>신설 · 같은 화면</td><td>2</td></tr>
+        <tr><td>8</td><td class="nm">시즌 시작/마감/재계산 액션</td><td class="mono">위 화면 내</td><td>신설 · 같은 화면</td><td>3</td></tr>
+        <tr><td>9</td><td class="nm">사이드바 메뉴 + 메인 퀵메뉴</td><td class="mono">DB + Sidebar.tsx</td><td>기존 수정</td><td>3</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid2" style="margin-top:20px">
+    <div class="card">
+      <div class="card-h">기존 확정 문서와 달라진 점</div>
+      <table style="min-width:0;font-size:12.5px">
+        <thead><tr><th style="text-align:left">항목</th><th>기존</th><th>새 규칙</th></tr></thead>
+        <tbody>
+          <tr><td style="text-align:left">착순 점수</td><td class="mono">+30/+10/-10/-30</td><td class="mono up">+60/+20/-20/-60</td></tr>
+          <tr><td style="text-align:left">상대 등급 보정</td><td>없음</td><td class="up">신규 · 제로섬</td></tr>
+          <tr><td style="text-align:left">등급 체계</td><td>롤식 7단계</td><td class="up">F~S 6단계 · 200점</td></tr>
+          <tr><td style="text-align:left">시즌 설정</td><td>SQL UPDATE</td><td class="up">관리자 화면</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-h">남은 결정</div>
+      <div style="font-size:13px;color:#C9CFE2;line-height:1.75">
+        1. 보정에도 게임길이 가중치를 곱할지 (화면 5 스위치로 비교 가능)<br>
+        2. 강등 방지를 넣을지. 기존 문서에는 한번 올라간 등급 밑으로 안 떨어지는 바닥 보호가 있었으나 새 규칙에는 언급이 없습니다.
+           넣으면 배지에 보호 표시가 추가되고, 결과가 판 순서에 의존해 재계산이 무거워집니다.<br>
+        3. 최소 판수 기본값과 첫 시즌 시작 기준일
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    화면 확정 다음 단계는 백엔드입니다. 테이블 4종(<code>BGM_AGIT_RANK_SEASON / _TIER / _POINT / _STANDING</code>)
+    수동 DDL, 기록 등록·수정·삭제·복구 4곳에서 재계산 이벤트 발행(현재는 등록만 이벤트를 발행합니다),
+    그리고 관리자 POST 엔드포인트 ADMIN 매핑입니다.
+  </div>
+</section>
+
+  <div class="foot">
+    BGM 아지트 BML · 랭크(등급) 시스템 화면 목업 · 2026-07-28 · 색 토큰은 bgm-agit-kml-front/styles/theme.ts 기준
+  </div>
+</div>
+
+<script>
+  /* 화면 전환 */
+  function go(id){
+    document.querySelectorAll('.screen').forEach(function(s){s.classList.toggle('on', s.id===id)});
+    document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('on', t.dataset.s===id)});
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  document.getElementById('tabs').addEventListener('click', function(e){
+    var b=e.target.closest('.tab'); if(b) go(b.dataset.s);
+  });
+
+  /* 데스크탑 / 모바일 토글 */
+  var bd=document.getElementById('btnDesk'), bm=document.getElementById('btnMob');
+  bd.onclick=function(){document.body.classList.remove('mob');bd.classList.add('on');bm.classList.remove('on')};
+  bm.onclick=function(){document.body.classList.add('mob');bm.classList.add('on');bd.classList.remove('on')};
+
+  /* 등급 구간 표 */
+  var BANDS=[
+    {n:'S',min:2000,cls:'tb-S',color:'금색'},
+    {n:'A',min:1800,cls:'tb-A',color:'자색'},
+    {n:'B',min:1600,cls:'tb-B',color:'청색'},
+    {n:'C',min:1400,cls:'tb-C',color:'녹색'},
+    {n:'D',min:1200,cls:'tb-D',color:'갈색'},
+    {n:'F',min:0,   cls:'tb-F',color:'회색'}
+  ];
+  (function(){
+    var html='';
+    for(var i=0;i<BANDS.length;i++){
+      var b=BANDS[i];
+      var range = i===0 ? (b.min+' 이상')
+                : (i===BANDS.length-1 ? (BANDS[i-1].min+' 미만')
+                : (b.min+' ~ '+(BANDS[i-1].min-1)));
+      var note = b.n==='C' ? ' <span style="color:var(--menu);font-size:11.5px">시작 구간</span>' : '';
+      html += '<tr>'
+        + '<td><span class="tb sm '+b.cls+'">'+b.n+'</span></td>'
+        + '<td><input class="inp" value="'+b.min+'" style="width:96px"></td>'
+        + '<td class="mono" style="text-align:left;padding-left:12px">'+range+note+'</td>'
+        + '<td>'+b.color+'</td>'
+        + '<td><button class="bt ghost" style="padding:4px 10px;font-size:11.5px">삭제</button></td>'
+        + '</tr>';
+    }
+    document.getElementById('bandRows').innerHTML=html;
+  })();
+
+  /* 소프트 리셋 계승 미리보기 */
+  function carryPreview(){
+    var r=parseFloat(document.getElementById('carry').value)/100;
+    if(!isFinite(r)) r=0;
+    var base=1500;
+    var out=[2000,1800,1500,1200].map(function(v){
+      return v+' -> '+Math.round(base+(v-base)*r);
+    }).join('   ');
+    document.getElementById('carryOut').textContent='미리보기   '+out;
+  }
+  carryPreview();
+
+  /* 계산 시뮬레이터 */
+  var WNAME=['동장','반장','서장','일장'];
+  function num(id){var v=parseFloat(document.getElementById(id).value);return isFinite(v)?v:0}
+  function sim(){
+    var pts=[num('p1'),num('p2'),num('p3'),num('p4')];
+    var ws=[num('w0'),num('w1'),num('w2'),num('w3')];
+    var k=num('kk'), applyW=document.getElementById('kw').checked;
+    var my=num('mr'), opp=num('oa');
+    var gi=parseInt(document.getElementById('gl').value,10);
+    var rk=parseInt(document.getElementById('rk').value,10);
+
+    var base=pts[rk-1], w=ws[gi];
+    var corr=(opp-my)*k*(applyW?w:1);
+    var total=base*w+corr;
+
+    var sgn=function(v){return (v>0?'+':'')+ (Math.round(v*10)/10)};
+    document.getElementById('simEq').textContent =
+      sgn(base)+' x '+w+(applyW?(' + ('+sgn(opp-my)+' x '+k+' x '+w+')'):(' + ('+sgn(opp-my)+' x '+k+')'))
+      +'  =  '+sgn(base*w)+' '+sgn(corr);
+    var t=document.getElementById('simTotal');
+    t.textContent=sgn(total);
+    t.className='sim-total '+(total>=0?'p':'m');
+    document.getElementById('simSub').textContent =
+      WNAME[gi]+' '+rk+'위 · 내 레이팅 '+my+' · 상대 평균 '+opp
+      +' · 착순 '+sgn(base)+' x 가중 '+w+' · 보정 '+sgn(corr);
+
+    /* 제로섬 확인 */
+    var sum=pts[0]+pts[1]+pts[2]+pts[3];
+    var z=document.getElementById('zsum');
+    if(Math.abs(sum)<0.001){
+      z.innerHTML='<span class="up">합계 0 · 제로섬 유지</span>';
+    }else{
+      z.innerHTML='<span class="dn">합계 '+sgn(sum)+' · 제로섬이 깨져 전체 점수 총합이 흘러갑니다</span>';
+    }
+
+    /* 사용자 예시 4개 자동 검증 */
+    var cases=[
+      {r:1,o:1700,e:70},{r:1,o:1300,e:50},
+      {r:4,o:1300,e:-70},{r:4,o:1700,e:-50}
+    ];
+    var okAll=true, parts=[];
+    for(var i=0;i<cases.length;i++){
+      var c=cases[i];
+      var b=pts[c.r-1], ww=ws[1];
+      var cc=(c.o-1500)*k*(applyW?ww:1);
+      var tt=b*ww+cc;
+      var ok=Math.abs(tt-c.e)<0.001;
+      if(!ok) okAll=false;
+      parts.push(c.r+'위/상대'+c.o+' '+sgn(tt));
+    }
+    document.getElementById('simCheck').innerHTML =
+      (okAll?'<span class="up">계획서 예시 4개 일치</span>':'<span class="dn">계획서 예시와 불일치</span>')
+      +' <span style="color:var(--menu)">(반장 · 내 1500 기준: '+parts.join(' · ')+')</span>';
+  }
+  sim();
+</script>
+</body>
+</html>

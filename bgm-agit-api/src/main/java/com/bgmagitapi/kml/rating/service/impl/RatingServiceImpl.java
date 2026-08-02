@@ -90,7 +90,7 @@ public class RatingServiceImpl implements RatingService {
         return ongoingSeasons
                 .stream()
                 .findFirst()
-                .orElseThrow(() -> new SeasonNotFoundException());
+                .orElseThrow(() -> new SeasonNotFoundException("진행중인 시즌을 찾을 수 없습니다."));
     }
 
     private Map<Long, SeasonStanding> loadSeasonStandingOrDefault(Season season, List<BgmAgitMember> members) {

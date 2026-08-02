@@ -3,9 +3,9 @@ package com.bgmagitapi.kml.rating.exception;
 import com.bgmagitapi.origin.advice.exception.CustomException;
 import org.springframework.http.HttpStatus;
 
-public class SeasonNotFoundException extends CustomException {
+public class SeasonStandingNotFoundException extends CustomException {
 
-    public SeasonNotFoundException(String message) {
+    public SeasonStandingNotFoundException(String message) {
         super(message);
     }
 

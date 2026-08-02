@@ -4,6 +4,8 @@ import com.bgmagitapi.origin.entity.mapperd.DateSuperClass;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Table(name = "BGM_AGIT_TIER")
 @Entity
 @AllArgsConstructor
@@ -30,4 +32,14 @@ public class Tier extends DateSuperClass {
     // BGM 아지트 등급 최소 레이팅
     @Column(name = "BGM_AGIT_TIER_MIN_RATING")
     private Integer minRating;
+
+    public boolean isReachedBy(BigDecimal rating){
+        BigDecimal minRating = BigDecimal.valueOf(this.minRating);
+        return minRating.compareTo(rating) <= 0;
+    }
+
+    public BigDecimal pointsToReach(BigDecimal rating){
+        BigDecimal minRating = BigDecimal.valueOf(this.minRating);
+        return minRating.subtract(rating).max(BigDecimal.ZERO);
+    }
 }
