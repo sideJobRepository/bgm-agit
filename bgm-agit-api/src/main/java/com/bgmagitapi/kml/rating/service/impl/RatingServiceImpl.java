@@ -2,6 +2,9 @@ package com.bgmagitapi.kml.rating.service.impl;
 
 import com.bgmagitapi.kml.matchs.entity.Matchs;
 import com.bgmagitapi.kml.matchs.repository.MatchsRepository;
+import com.bgmagitapi.kml.rating.domain.RatingCalculator;
+import com.bgmagitapi.kml.rating.domain.RatingEntry;
+import com.bgmagitapi.kml.rating.domain.RatingResult;
 import com.bgmagitapi.kml.rating.entity.Rating;
 import com.bgmagitapi.kml.rating.entity.Season;
 import com.bgmagitapi.kml.rating.entity.SeasonStanding;
@@ -39,7 +42,6 @@ public class RatingServiceImpl implements RatingService {
     private final RatingRepository ratingRepository;
 
     // TODO
-    //   - rating 별 가중치 정해지면 수정 (대국별 가중치는 적용함)
     //   - 운영 DB, staging DB 에 테이블 추가 및 season 정보 추가
     @Override
     @Transactional
@@ -60,6 +62,14 @@ public class RatingServiceImpl implements RatingService {
                 .toList();
         Map<Long, SeasonStanding> seasonStandingMap = loadSeasonStandingOrDefault(season, members);
 
+        // 이번 판 적용 전 레이팅으로 4명의 델타를 한 번에 계산
+        RatingCalculator ratingCalculator = new RatingCalculator(season);
+        RatingResult ratingResult = ratingCalculator.calculate(
+                toRatingEntry(recordByRank, seasonStandingMap, matchsId, 1),
+                toRatingEntry(recordByRank, seasonStandingMap, matchsId, 2),
+                toRatingEntry(recordByRank, seasonStandingMap, matchsId, 3),
+                toRatingEntry(recordByRank, seasonStandingMap, matchsId, 4),
+                matchs.getWind());
 
         List<Rating> ratings = new ArrayList<>();
         List<SeasonStanding> seasonStandings = new ArrayList<>();
@@ -69,9 +79,9 @@ public class RatingServiceImpl implements RatingService {
             BgmAgitMember member = record.getMember();
 
             SeasonStanding seasonStanding = seasonStandingMap.get(member.getBgmAgitMemberId());
-            BigDecimal score = season.calculateScore(rank, matchs.getWind());
-            seasonStanding.addRatingValue(score);
-            Rating rating = Rating.create(season, matchs, member, score, seasonStanding.getRating());
+            BigDecimal delta = ratingResult.getByRank(rank).ratingValue();
+            seasonStanding.addRatingValue(delta);
+            Rating rating = Rating.create(season, matchs, member, delta, seasonStanding.getRating());
 
             ratings.add(rating);
             seasonStandings.add(seasonStanding);
@@ -79,6 +89,12 @@ public class RatingServiceImpl implements RatingService {
 
         ratingRepository.saveAll(ratings);
         seasonStandingRepository.saveAll(seasonStandings);
+    }
+
+    private RatingEntry toRatingEntry(Map<Integer, Record> recordByRank, Map<Long, SeasonStanding> seasonStandingMap, Long matchsId, int rank) {
+        Record record = requireRank(recordByRank, matchsId, rank);
+        SeasonStanding seasonStanding = seasonStandingMap.get(record.getMember().getBgmAgitMemberId());
+        return new RatingEntry(record, seasonStanding.getRating());
     }
 
     private Season loadOngoingSeason() {

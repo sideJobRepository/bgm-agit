@@ -1,8 +1,10 @@
 package com.bgmagitapi.kml.rating.service.impl;
 
+import com.bgmagitapi.kml.rating.domain.RatingCalculator;
+import com.bgmagitapi.kml.rating.domain.Ratings;
+import com.bgmagitapi.kml.rating.domain.Tiers;
 import com.bgmagitapi.kml.rating.dto.MemberStandingResponse;
 import com.bgmagitapi.kml.rating.dto.SeasonOptionResponse;
-import com.bgmagitapi.kml.rating.dto.TierResponse;
 import com.bgmagitapi.kml.rating.entity.*;
 import com.bgmagitapi.kml.rating.enums.SeasonProgressStatus;
 import com.bgmagitapi.kml.rating.exception.SeasonNotFoundException;
@@ -18,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;

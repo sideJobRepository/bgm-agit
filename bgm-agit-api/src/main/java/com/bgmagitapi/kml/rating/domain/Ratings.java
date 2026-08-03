@@ -1,13 +1,12 @@
-package com.bgmagitapi.kml.rating.entity;
+package com.bgmagitapi.kml.rating.domain;
+
+import com.bgmagitapi.kml.rating.entity.Rating;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Ratings는 List<Rating> 를 다루는 일급객체.
- * jpa entity가 아님
- */
+
 public class Ratings {
 
     private final List<Rating> ratings;

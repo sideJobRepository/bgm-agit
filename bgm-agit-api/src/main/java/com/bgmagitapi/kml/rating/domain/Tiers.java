@@ -1,15 +1,13 @@
-package com.bgmagitapi.kml.rating.entity;
+package com.bgmagitapi.kml.rating.domain;
 
+
+import com.bgmagitapi.kml.rating.entity.Tier;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Tiers는 List<Tier> 를 다루는 일급객체.
- * jpa entity가 아님
- */
 public class Tiers {
 
     private final List<Tier> sortedTiers;
