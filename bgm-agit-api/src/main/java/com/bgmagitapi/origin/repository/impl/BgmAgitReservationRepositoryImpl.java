@@ -15,6 +15,8 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.bgmagitapi.origin.entity.QBgmAgitImage.bgmAgitImage;
 import static com.bgmagitapi.origin.entity.QBgmAgitMember.bgmAgitMember;
@@ -101,7 +103,9 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
     
     @Override
     public BizTalkCancel findBizTalkCancel(Long reservationNo) {
-        return queryFactory
+        // 항목을 합쳐 예약(M-1 + M-2)하면 항목 수만큼 행이 나오므로 fetchOne 금지.
+        // 항목명만 합쳐 한 건으로 만든다.
+        List<BizTalkCancel> rows = queryFactory
                 .select(Projections.constructor(
                         BizTalkCancel.class,
                         bgmAgitMember.bgmAgitMemberName,
@@ -114,7 +118,26 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
                 .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember)
                 .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage)
                 .where(bgmAgitReservation.bgmAgitReservationNo.eq(reservationNo))
-                .fetchOne();
+                .fetch();
+
+        if (rows.isEmpty()) {
+            return null;
+        }
+        BizTalkCancel first = rows.get(0);
+        if (rows.size() == 1) {
+            return first;
+        }
+        String labels = rows.stream()
+                .map(BizTalkCancel::getLabel)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.joining(", "));
+        return new BizTalkCancel(
+                first.getMemberName(),
+                labels,
+                first.getMemberPhoneNo(),
+                first.getApprovalStatus()
+        );
     }
     
     @Override
