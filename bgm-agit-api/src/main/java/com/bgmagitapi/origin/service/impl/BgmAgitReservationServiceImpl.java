@@ -183,11 +183,18 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                         slot.end().format(formatter)))
                 .toList();
 
+        // 예약금은 항목별 합산 (합쳐 예약이면 M-1 + M-2 = 2만원)
+        int depositAmount = images.stream()
+                .mapToInt(image -> SlotSchedule.resolveDepositAmount(
+                        image.getBgmAgitImageCategory(), image.getBgmAgitImageLabel()))
+                .sum();
+
         return new BgmAgitReservationResponse(
                 timeSlots, prices, label, group, minPeople, maxPeople,
                 slotRanges,
                 SlotSchedule.maxSelectableSlots(category, imageLabel),
-                SlotSchedule.resolveReservationType(category).name()
+                SlotSchedule.resolveReservationType(category).name(),
+                depositAmount
         );
 
     }
