@@ -54,6 +54,12 @@ public class BgmAgitNoticeController {
         return PageResponse.from(notice);
     }
     
+    // 상세 단건 조회 (목록 페이지에 없는 글도 열 수 있게)
+    @GetMapping("/notice/detail/{id}")
+    public BgmAgitNoticeResponse getNoticeDetail(@PathVariable(name = "id") Long id) {
+        return bgmAgitNoticeService.getNoticeDetail(id);
+    }
+
     @GetMapping("/notice/popup")
     public List<BgmAgitNoticeResponse> getNoticePopup() {
         return bgmAgitNoticeService.getPopupNotice();

@@ -269,6 +269,12 @@ kml:
 ### TODO: `BGM_AGIT_ROOM` 테이블 분리
 예약 대상 메타(라벨/인원/슬롯정책/예약금/코멘트/옵션/노출여부)를 이미지 테이블에 얹은 게 근본 원인. 별도 테이블로 떼내면 코멘트·옵션 하드코딩과 라벨 문자열 비교(`"G Room".equals(...)`)도 같이 사라진다.
 
+## 공지 상세 단건 조회 (2026-08-03)
+
+`bgm-agit-front`의 `NoticeDetail.tsx`가 상세 API 없이 **목록 1페이지(`page = 0`)를 받아 `find(id)`** 하던 구조라, 목록 2페이지 이후 글은 본문이 `undefined`로 렌더됐음.
+- 백엔드 `GET /bgm-agit/notice/detail/{id}` 추가 (`BgmAgitNoticeController` → `BgmAgitNoticeService.getNoticeDetail`). 목록·팝업·상세가 공통 `toResponse(BgmAgitNotice)` 매퍼 사용 (경로는 `/notice/popup`·`/notice/download/**`와 안 겹치게 `detail` 세그먼트 사용)
+- 프론트: `noticeDetailState` atom + `useNoticeDetailFetch()` 추가, 상세/수정 프리필 모두 단건 응답 사용. GET이라 URL_RESOURCES 등록 불필요
+
 ## 환경변수 (.env) (2026-07-09 도입)
 - `bgm-agit-api`는 `me.paulschwarz:spring-dotenv:3.0.0`로 `.env`를 읽음(cham-equality와 동일 방식). 파일: `bgm-agit-api/src/main/resources/.env`. `application.yml`의 `${DB_URL}` 등 플레이스홀더를 여기서 치환.
 - `.env`는 `.gitignore` 처리(커밋 금지). 시크릿(DB/AWS/소셜/비즈톡/JWT/토스)은 레포에 없음.

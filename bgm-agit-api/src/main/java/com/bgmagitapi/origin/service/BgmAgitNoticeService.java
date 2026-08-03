@@ -13,6 +13,9 @@ public interface BgmAgitNoticeService {
     
     
     Page<BgmAgitNoticeResponse> getNotice(Pageable pageable, String title);
+
+    /** 공지 단건 조회. 상세 화면이 목록 1페이지에서 찾던 방식(2페이지 이후 글은 못 찾음)을 대체 */
+    BgmAgitNoticeResponse getNoticeDetail(Long noticeId);
     
     List<BgmAgitNoticeResponse> getPopupNotice();
     

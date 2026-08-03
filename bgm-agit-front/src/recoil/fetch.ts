@@ -15,7 +15,7 @@ import { myPageState, userState } from './state/userState.ts';
 import { toast } from 'react-toastify';
 import { isAxiosError, type AxiosRequestHeaders } from 'axios';
 import { loadingState } from './state/mainState.ts';
-import { noticePopupState, noticeState } from './state/noticeState.ts';
+import { noticeDetailState, noticePopupState, noticeState } from './state/noticeState.ts';
 import type { params } from '../types/notice.ts';
 import { roleState } from './state/roleState.ts';
 import { tokenStore } from '../utils/tokenStore';
@@ -180,6 +180,20 @@ export function useNoticeFetch() {
   };
 
   return fetchNotice;
+}
+
+export function useNoticeDetailFetch() {
+  const { request } = useRequest();
+  const setNoticeDetail = useSetRecoilState(noticeDetailState);
+
+  const fetchNoticeDetail = (id: string | number) => {
+    request(
+      () => api.get(`/bgm-agit/notice/detail/${id}`).then(res => res.data),
+      setNoticeDetail
+    );
+  };
+
+  return fetchNoticeDetail;
 }
 
 export function useNoticePopupFetch() {

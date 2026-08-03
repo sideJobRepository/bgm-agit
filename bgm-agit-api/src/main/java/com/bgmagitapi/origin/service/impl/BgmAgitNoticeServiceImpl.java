@@ -33,52 +33,46 @@ public class BgmAgitNoticeServiceImpl implements BgmAgitNoticeService {
     private final S3FileUtils s3FileUtils;
     
     
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
     @Override
     @Transactional(readOnly = true)
     public Page<BgmAgitNoticeResponse> getNotice(Pageable pageable, String titleOrCont) {
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         Page<BgmAgitNotice> result = bgmAgitNoticeRepository.getNotices(pageable, titleOrCont);
-        
-        return result.map(n ->
-                new BgmAgitNoticeResponse(
-                        n.getBgmAgitNoticeId(),
-                        n.getBgmAgitNoticeTitle(),
-                        n.getBgmAgitNoticeCont(),
-                        n.getRegistDate().format(dateFormatter),
-                        n.getBgmAgitNoticeType().name(),
-                        n.getBgmAgitPopupUseStatus(),
-                        n.getBgmAgitNoticeFiles().stream()
-                                .map(f -> new BgmAgitNoticeFileResponse(
-                                        f.getBgmAgitNoticeFileId(),
-                                        f.getBgmAgitNoticeFileName(),
-                                        f.getBgmAgitNoticeFileUuidName(),
-                                        f.getBgmAgitNoticeFileUrl()))
-                                .toList()
-                )
+
+        return result.map(this::toResponse);
+    }
+
+    private BgmAgitNoticeResponse toResponse(BgmAgitNotice n) {
+        return new BgmAgitNoticeResponse(
+                n.getBgmAgitNoticeId(),
+                n.getBgmAgitNoticeTitle(),
+                n.getBgmAgitNoticeCont(),
+                n.getRegistDate().format(DATE_FORMATTER),
+                n.getBgmAgitNoticeType().name(),
+                n.getBgmAgitPopupUseStatus(),
+                n.getBgmAgitNoticeFiles().stream()
+                        .map(f -> new BgmAgitNoticeFileResponse(
+                                f.getBgmAgitNoticeFileId(),
+                                f.getBgmAgitNoticeFileName(),
+                                f.getBgmAgitNoticeFileUuidName(),
+                                f.getBgmAgitNoticeFileUrl()))
+                        .toList()
         );
     }
     
     @Override
+    @Transactional(readOnly = true)
+    public BgmAgitNoticeResponse getNoticeDetail(Long noticeId) {
+        BgmAgitNotice notice = bgmAgitNoticeRepository.findById(noticeId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 공지사항입니다."));
+        return toResponse(notice);
+    }
+
+    @Override
     public List<BgmAgitNoticeResponse> getPopupNotice() {
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        List<BgmAgitNotice> popupNotices = bgmAgitNoticeRepository.getPopupNotices();
-        return popupNotices.stream()
-                .map(n -> new BgmAgitNoticeResponse(
-                        n.getBgmAgitNoticeId(),
-                        n.getBgmAgitNoticeTitle(),
-                        n.getBgmAgitNoticeCont(),
-                        n.getRegistDate().format(dateFormatter),
-                        n.getBgmAgitNoticeType().name(),
-                        n.getBgmAgitPopupUseStatus(),
-                        n.getBgmAgitNoticeFiles().stream()
-                                .map(f -> new BgmAgitNoticeFileResponse(
-                                        f.getBgmAgitNoticeFileId(),
-                                        f.getBgmAgitNoticeFileName(),
-                                        f.getBgmAgitNoticeFileUuidName(),
-                                        f.getBgmAgitNoticeFileUrl()
-                                ))
-                                .toList()
-                ))
+        return bgmAgitNoticeRepository.getPopupNotices().stream()
+                .map(this::toResponse)
                 .toList();
     }
     
