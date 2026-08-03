@@ -259,6 +259,7 @@ kml:
 - **예약금은 항목 수만큼 합산** (`createPaymentOrder`가 그룹의 distinct 이미지별 `resolveDepositAmount` 합) → M-1+M-2 = 2만원
 - 예약내역(`GroupedReservationResponse`): 같은 시간대가 항목 수만큼 들어오므로 `timeSlots` 중복 제거, `reservationAddr`는 라벨 조합. 알림톡 `예약 룸`도 `sandBizTalk`에서 라벨 조합(템플릿 **변수**라 카카오 검수 영향 없음)
 - 프론트: `RESERVATION_COMBINABLE_GROUPS`(`[['M-1','M-2','M-3']]`)로 후보 산출 → `ImageGrid`가 `ReservationCalendar`에 `combinable` prop 전달. 캘린더 상단 토글로 선택하면 `ids` 붙여 재조회
+- **함정: 예약번호로 단건 조회하던 쿼리는 항목 수만큼 행이 늘어난다.** `findBizTalkCancel`이 `fetchOne`이라 `NonUniqueResultException`으로 관리자 확정·결제 승인이 터졌음 → `fetch()` 후 라벨만 합쳐 한 건으로 조립하도록 수정. 예약번호 기준으로 뭔가 단건 가정하는 코드를 새로 쓸 때 같은 함정 주의(`AlimtalkUtils.formatTimes`는 이미 `distinct()` 있음)
 
 ### 이용 방식 토글 (F룸 일반룸 ↔ 대탁)
 - `RESERVATION_USE_MODES`(`'F Room': ['일반룸','대탁룸(JP-COLOR)']`, 첫 값이 기본) → 캘린더 시간대 **위**에 토글로 노출
