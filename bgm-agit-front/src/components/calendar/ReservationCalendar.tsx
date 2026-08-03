@@ -69,6 +69,9 @@ export default function ReservationCalendar({
   // 함께 예약할 항목(테이블 합치기)
   const [combineIds, setCombineIds] = useState<number[]>([]);
 
+  // 예약금은 서버가 선택 항목 기준으로 합산해서 내려준다 (예약 확인 모달에서 표시)
+  const depositAmount = reservation.depositAmount;
+
   const [value, setValue] = useState<Date>(today);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
 
@@ -147,6 +150,7 @@ export default function ReservationCalendar({
       minPeople: reservation.minPeople!,
       maxPeople: reservation.maxPeople!,
       summary,
+      depositAmount,
       onConfirm: ({ count, reason }) => {
         // 이용 방식은 요청사항 맨 위에 기록 → 예약내역·알림톡에서 바로 확인 가능
         const modeText = useModes.length ? `[이용 방식] ${selectedUseMode}` : '';
@@ -288,9 +292,6 @@ export default function ReservationCalendar({
               </ToggleButton>
             ))}
           </ToggleGroup>
-          <OptionHelp>
-            선택한 항목이 모두 비어 있는 시간대만 표시되며, 예약금은 항목 수만큼 계산됩니다.
-          </OptionHelp>
         </OptionBox>
       )}
 
@@ -587,12 +588,6 @@ const ToggleButton = styled.button<WithTheme & { $active: boolean }>`
   &:hover {
     opacity: 0.85;
   }
-`;
-
-const OptionHelp = styled.p<WithTheme>`
-  margin-top: 6px;
-  font-size: ${({ theme }) => theme.sizes.xsmall};
-  color: ${({ theme }) => theme.colors.subColor};
 `;
 
 const Button = styled.button<WithTheme>`

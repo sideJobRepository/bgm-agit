@@ -38,6 +38,8 @@ export type ReservationDatas = {
   slotRanges?: SlotRange[];
   maxSelectableSlots?: number | null;
   reservationType?: string;
+  // 선택한 항목들의 예약금 합계 (서버 계산)
+  depositAmount?: number;
 };
 
 // 예약 내역

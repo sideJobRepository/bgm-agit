@@ -24,6 +24,8 @@ public class BgmAgitReservationResponse {
     private Integer maxSelectableSlots;
     // 예약 타입(ROOM / DELEGATE_PLAY) — 서버가 카테고리로 결정
     private String reservationType;
+    // 선택한 항목들의 예약금 합계 (합쳐 예약이면 항목 수만큼 합산)
+    private Integer depositAmount;
 
     @Getter
     @AllArgsConstructor

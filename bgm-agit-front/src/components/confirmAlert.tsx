@@ -17,6 +17,8 @@ interface ReservationConfirmProps {
   maxPeople: number;
   // 예약 요약에 함께 보여줄 부가 정보 (예: 이용 방식, 합쳐 예약한 항목)
   summary?: string[];
+  // 서버가 계산한 예약금 합계. 없으면 기본 10,000원 안내
+  depositAmount?: number;
   onConfirm: (values: { count: number; reason: string }) => void;
   onCancel?: () => void;
 }
@@ -56,6 +58,7 @@ function ReservationConfirmContent({
   minPeople,
   maxPeople,
   summary = [],
+  depositAmount,
   onClose,
   onConfirm,
   onCancel,
@@ -129,7 +132,7 @@ function ReservationConfirmContent({
       </FieldGroup>
 
       <NoticeMessage>
-        예약금은 10,000원입니다.
+        예약금은 {(depositAmount ?? 10000).toLocaleString()}원입니다.
         <br />
         예약내역에서 예약금을 결제하면 예약이 확정되며, 잔여 이용요금은 현장에서 결제합니다.
       </NoticeMessage>
