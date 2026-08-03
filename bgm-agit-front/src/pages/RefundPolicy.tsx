@@ -10,8 +10,7 @@ export default function RefundPolicy() {
         <SubTitle>1. 예약금 안내</SubTitle>
         <List>
           <li>예약금은 예약 확정을 위한 선결제 금액입니다.</li>
-          <li>M Room 예약금은 30,000원입니다.</li>
-          <li>그 외 예약금은 10,000원입니다.</li>
+          <li>예약금은 10,000원입니다.</li>
           <li>잔여 이용요금은 현장에서 결제합니다.</li>
         </List>
       </Section>

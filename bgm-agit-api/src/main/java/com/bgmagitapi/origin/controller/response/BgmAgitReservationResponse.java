@@ -18,7 +18,20 @@ public class BgmAgitReservationResponse {
     private String group;
     private Integer minPeople;
     private Integer maxPeople;
-    
+    // 예약 후보 시간대 전체(가능/불가 무관). 프론트는 이걸 그대로 그린다.
+    private List<SlotRange> slotRanges;
+    // 한 번에 선택 가능한 시간대 수. null = 제한 없음
+    private Integer maxSelectableSlots;
+    // 예약 타입(ROOM / DELEGATE_PLAY) — 서버가 카테고리로 결정
+    private String reservationType;
+
+    @Getter
+    @AllArgsConstructor
+    public static class SlotRange {
+        private String start;   // "13:00"
+        private String end;     // "14:00"
+    }
+
     @Getter
     @AllArgsConstructor
     public static class TimeSlotByDate {

@@ -38,6 +38,9 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
+
+import org.springframework.util.StringUtils;
 
 
 @Slf4j
@@ -80,7 +83,15 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         BgmAgitImage agitImage = bgmAgitImageRepository.findById(image.getBgmAgitImageId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 룸입니다."));
         boolean isRoom = agitImage.getBgmAgitImageCategory() == BgmAgitImageCategory.ROOM;
-        String roomName = agitImage.getBgmAgitImageLabel();
+        // 항목을 합쳐 예약한 경우 "M-1, M-2" 처럼 예약된 항목 전체를 노출 (템플릿 변수라 검수 영향 없음)
+        String roomName = list.stream()
+                .map(r -> r.getBgmAgitImage().getBgmAgitImageLabel())
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.joining(", "));
+        if (!StringUtils.hasText(roomName)) {
+            roomName = agitImage.getBgmAgitImageLabel();
+        }
         
         // 메시지 구성 (명시적으로 켠 경우에만 계좌안내 → 예약금 결제안내로 스위칭)
         String message;

@@ -40,7 +40,7 @@ public class BgmAgitImageRepositoryImpl implements BgmAgitImageCustomRepository 
                 ))
                 .from(bgmAgitImage)
                 .join(bgmAgitImage.bgmAgitMainMenu, bgmAgitMainMenu)
-                .where(mainMenuIdEq(labelGb), menuLinkEq(link))
+                .where(mainMenuIdEq(labelGb), menuLinkEq(link), notHidden())
                 .fetch();
     }
     
@@ -65,6 +65,7 @@ public class BgmAgitImageRepositoryImpl implements BgmAgitImageCustomRepository 
                 .where(mainMenuIdEq(labelGb),
                         menuLinkEq(link),
                         labelLike(name),
+                        notHidden(),
                         isGame ? categoryEq(category) : null)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -78,11 +79,18 @@ public class BgmAgitImageRepositoryImpl implements BgmAgitImageCustomRepository 
                 .where(mainMenuIdEq(labelGb),
                         menuLinkEq(link),
                         labelLike(name),
+                        notHidden(),
                         isGame ? categoryEq(category) : null);
         
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
     
+    // 노출 여부. 컬럼이 null인 과거 행도 노출로 취급
+    private BooleanExpression notHidden() {
+        return bgmAgitImage.bgmAgitImageUseStatus.isNull()
+                .or(bgmAgitImage.bgmAgitImageUseStatus.ne("N"));
+    }
+
     private BooleanExpression categoryEq(String category) {
         return StringUtils.hasText(category) ? bgmAgitImage.bgmAgitImageCategory.eq(BgmAgitImageCategory.valueOf(category)) : null;
     }

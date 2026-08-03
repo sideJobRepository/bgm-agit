@@ -15,6 +15,8 @@ interface ReservationConfirmProps {
   initialCount: number;
   minPeople: number;
   maxPeople: number;
+  // 예약 요약에 함께 보여줄 부가 정보 (예: 이용 방식, 합쳐 예약한 항목)
+  summary?: string[];
   onConfirm: (values: { count: number; reason: string }) => void;
   onCancel?: () => void;
 }
@@ -53,6 +55,7 @@ function ReservationConfirmContent({
   initialCount,
   minPeople,
   maxPeople,
+  summary = [],
   onClose,
   onConfirm,
   onCancel,
@@ -98,6 +101,19 @@ function ReservationConfirmContent({
         </Stepper>
       </FieldGroup>
 
+      {summary.length > 0 && (
+        <FieldGroup>
+          <FieldTitle>
+            <span>이용 정보</span>
+          </FieldTitle>
+          <SummaryList>
+            {summary.map(item => (
+              <li key={item}>{item}</li>
+            ))}
+          </SummaryList>
+        </FieldGroup>
+      )}
+
       <FieldGroup>
         <FieldTitle>
           <span>요청사항</span>
@@ -113,7 +129,7 @@ function ReservationConfirmContent({
       </FieldGroup>
 
       <NoticeMessage>
-        예약금은 M Room 30,000원, 그 외 예약 10,000원입니다.
+        예약금은 10,000원입니다.
         <br />
         예약내역에서 예약금을 결제하면 예약이 확정되며, 잔여 이용요금은 현장에서 결제합니다.
       </NoticeMessage>
@@ -348,6 +364,23 @@ const CountValue = styled.div`
     margin-left: 3px;
     font-size: 14px;
     font-weight: 700;
+  }
+`;
+
+const SummaryList = styled.ul`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f7f8f8;
+  text-align: left;
+  list-style: none;
+
+  li {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
   }
 `;
 
