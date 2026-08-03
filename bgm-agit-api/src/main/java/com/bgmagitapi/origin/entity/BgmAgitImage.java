@@ -55,8 +55,12 @@ public class BgmAgitImage extends DateSuperClass {
     
     @Column(name = "BGM_AGIT_IMAGE_MAX_PEOPLE")
     private Integer bgmAgitImageMaxPeople;
-    
-    
+
+    // BGM 아지트 이미지 노출 여부 (Y: 노출 / N: 숨김 — 운영 종료된 예약 항목은 이력 보존 위해 삭제하지 않고 숨김)
+    @Column(name = "BGM_AGIT_IMAGE_USE_STATUS")
+    private String bgmAgitImageUseStatus;
+
+
     public BgmAgitImage(BgmAgitMainMenu bgmAgitMainMenu, BgmAgitImageCreateRequest request, UploadResult image) {
         this.bgmAgitMainMenu = bgmAgitMainMenu;
         this.bgmAgitImageLabel = request.getBgmAgitImageLabel();
@@ -64,6 +68,11 @@ public class BgmAgitImage extends DateSuperClass {
         this.bgmAgitImageCategory = request.getBgmAgitImageCategory();
         this.bgmAgitMenuLink = request.getBgmAgitMenuLink();
         this.bgmAgitImageUrl = image.getUrl();
+        this.bgmAgitImageUseStatus = "Y";
+    }
+
+    public boolean isHidden() {
+        return "N".equals(this.bgmAgitImageUseStatus);
     }
     
     public void modifyBgmAgitImage(BgmAgitImageModifyRequest request, UploadResult image) {

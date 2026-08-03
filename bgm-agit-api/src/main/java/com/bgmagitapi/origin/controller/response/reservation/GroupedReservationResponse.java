@@ -7,6 +7,7 @@ import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @NoArgsConstructor
@@ -31,19 +32,26 @@ public class GroupedReservationResponse {
     
     public GroupedReservationResponse(Long reservationNo, List<BgmAgitReservation> list) {
         this.reservationNo = reservationNo;
+        // 항목을 합쳐 예약하면 같은 시간대가 항목 수만큼 들어오므로 중복 제거
         this.timeSlots = list.stream()
-                .map(r -> new GroupedReservationResponse.TimeSlot(
-                        r.getBgmAgitReservationStartTime().toString(),
-                        r.getBgmAgitReservationEndTime().toString()))
+                .map(r -> r.getBgmAgitReservationStartTime() + "~" + r.getBgmAgitReservationEndTime())
+                .distinct()
+                .map(slot -> slot.split("~"))
+                .map(times -> new GroupedReservationResponse.TimeSlot(times[0], times[1]))
                 .toList();
-        
+        // 예약 항목명 (합쳐 예약이면 "M-1, M-2")
+        this.reservationAddr = list.stream()
+                .map(r -> r.getBgmAgitImage().getBgmAgitImageLabel())
+                .distinct()
+                .collect(Collectors.joining(", "));
+
+
         for (BgmAgitReservation reservation : list) {
             this.reservationDate =  reservation.getBgmAgitReservationStartDate();
             this.registDate = reservation.getRegistDate();
             this.approvalStatus =   reservation.getBgmAgitReservationApprovalStatus();
             this.cancelStatus =   reservation.getBgmAgitReservationCancelStatus();
             this.reservationMemberName =  reservation.getBgmAgitMember().getBgmAgitMemberName();
-            this.reservationAddr =  reservation.getBgmAgitImage().getBgmAgitImageLabel();
             this.reservationPeople = reservation.getBgmAgitReservationPeople();
             this.reservationRequest =  reservation.getBgmAgitReservationRequest();
             boolean isMember = reservation.getBgmAgitMember() != null;

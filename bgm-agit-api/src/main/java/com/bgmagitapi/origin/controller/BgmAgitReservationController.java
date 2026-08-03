@@ -33,9 +33,11 @@ public class BgmAgitReservationController {
             @RequestParam(name = "labelGb") Long labelGb,
             @RequestParam(name = "link") String link,
             @RequestParam(name = "id") Long id,
+            // 합쳐 예약할 항목들(예: M-1 조회에 M-2를 붙이면 두 항목이 모두 비어 있는 시간만 내려온다)
+            @RequestParam(name = "ids", required = false) List<Long> ids,
             @RequestParam(name = "date") String dateStr) {
         LocalDate date = LocalDate.parse(dateStr.substring(0, 10));
-        return bgmAgitReservationService.getReservation(labelGb, link, id, date);
+        return bgmAgitReservationService.getReservation(labelGb, link, id, ids, date);
     }
     
     @PostMapping("/reservation")

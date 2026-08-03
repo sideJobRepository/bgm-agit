@@ -24,6 +24,7 @@ import { imageUploadState, mainMenuState, searchState } from '../../recoil';
 import { useLocation } from 'react-router-dom';
 import type { PageItem } from '../../types/main.ts';
 import Pagination from '../Pagination.tsx';
+import { getCombinableLabels, getReservationComment } from '../../config/reservationComments.ts';
 
 interface GridItem {
   image: string;
@@ -131,22 +132,6 @@ export default function ImageGrid({ pageData }: Props) {
     return `${year}-${month}-${day}`;
   }
 
-  function getKoreanDateStringPlusDays(days: number = 0): string {
-    const now = new Date();
-
-    // 9시간 오프셋 기준으로 한국 시간 만들고
-    const offsetDate = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-
-    // 여기서 날짜 더해줌
-    offsetDate.setUTCDate(offsetDate.getUTCDate() + days);
-
-    const year = offsetDate.getUTCFullYear();
-    const month = String(offsetDate.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(offsetDate.getUTCDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
-  }
-
   const today = getKoreanDateString();
 
   const {
@@ -183,17 +168,22 @@ export default function ImageGrid({ pageData }: Props) {
   const [reservationData, setReservationData] = useRecoilState(reservationDataState);
 
   function newItemDatas(item: GridItem) {
-    //M룸의 경우 3일 후 부터 예약가능
-    const threeDaysLater = getKoreanDateStringPlusDays(3);
-
     const newItem = {
       labelGb: item.labelGb,
       link: item.link,
       id: item.imageId,
-      date: item.imageId === 19 ? threeDaysLater : today,
+      date: today,
     } as ReservationData;
 
     setReservationData(newItem);
+  }
+
+  // 같은 묶음(예: M-1/M-2/M-3)에서 함께 예약할 수 있는 항목들
+  function combinableItems(item: GridItem) {
+    return getCombinableLabels(item.label)
+      .map(label => filteredItems?.find(candidate => candidate.label === label))
+      .filter((candidate): candidate is GridItem => !!candidate)
+      .map(candidate => ({ id: candidate.imageId, label: candidate.label }));
   }
 
   function reservationClickEvent(item: GridItem) {
@@ -386,6 +376,9 @@ export default function ImageGrid({ pageData }: Props) {
                     <FaUsers /> <span>{item.group}</span>
                   </TopLabel>
                 )}
+                {labelGb === 3 && getReservationComment(item.label) && (
+                  <CommentLabel>{getReservationComment(item.label)}</CommentLabel>
+                )}
                 {user?.roles.includes('ROLE_ADMIN') && (
                   <DeleteBox
                     onClick={e => {
@@ -410,7 +403,10 @@ export default function ImageGrid({ pageData }: Props) {
                   }}
                   $visible={item.imageId === reservationData?.id}
                 >
-                  <ReservationCalendar id={reservationData?.id} />
+                  <ReservationCalendar
+                    id={reservationData?.id}
+                    combinable={combinableItems(item)}
+                  />
                 </CalendarSection>
               )}
 
@@ -650,6 +646,23 @@ const TopLabel = styled.div<WithTheme>`
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.sizes.xxsmall};
     }
+  }
+`;
+
+const CommentLabel = styled.div<WithTheme>`
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  max-width: calc(100% - 12px);
+  background-color: rgba(66, 69, 72, 0.6);
+  border-radius: 8px;
+  padding: 6px 12px;
+  color: ${({ theme }) => theme.colors.white};
+  font-size: ${({ theme }) => theme.sizes.small};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.xxsmall};
+    padding: 4px 8px;
   }
 `;
 

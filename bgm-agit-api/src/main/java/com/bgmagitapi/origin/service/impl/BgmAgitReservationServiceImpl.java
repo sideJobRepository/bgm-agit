@@ -44,6 +44,7 @@ import org.springframework.util.StringUtils;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -66,26 +67,51 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     @Override
     @Transactional(readOnly = true)
     public BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id, LocalDate date) {
+        return getReservation(labelGb, link, id, null, date);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id, List<Long> extraIds, LocalDate date) {
         Authentication authentication = SecurityContextHolder.getContextHolderStrategy().getContext().getAuthentication();
         Long userId = (authentication instanceof JwtAuthenticationToken bearerAuth)
                 ? ((Jwt) bearerAuth.getPrincipal()).getClaim("id")
                 : null;
         LocalDate today = date;
         LocalDate endOfYear = today.plusMonths(3);
-        String label = "", group = "";
-        Integer minPeople = null, maxPeople = null;
-        // 1. 예약 정보 조회
-        // 1. 예약 정보 조회 (Y: 확정 / N: 대기)
-        List<ReservedTimeDto> reservations = bgmAgitReservationRepository.findReservations(labelGb, link, id, today, endOfYear);
-        BgmAgitImage bgmAgitImage = bgmAgitImageRepository.findById(id).orElseThrow(() -> new RuntimeException("존재 하지않는 이미지 입니다."));
-        // 2. 예약 시간 Map<날짜, List<TimeRange>> 으로 변환
-        Map<LocalDate, List<TimeRange>> reservedMap = ReservedTimeDto.groupedReservation(reservations);
-        
+        // 1. 대상 항목 조회 (첫 번째가 기준 항목, 나머지는 합쳐 쓸 항목)
+        List<BgmAgitImage> images = loadReservableImages(mergeImageIds(id, extraIds));
+        BgmAgitImage bgmAgitImage = images.get(0);
+        BgmAgitImageCategory category = bgmAgitImage.getBgmAgitImageCategory();
+        String imageLabel = bgmAgitImage.getBgmAgitImageLabel();
+        // 항목 정보는 이미지 기준으로 1회 세팅 (전 기간 만실이어도 제목/인원이 비지 않게)
+        String label = images.stream()
+                .map(BgmAgitImage::getBgmAgitImageLabel)
+                .collect(Collectors.joining(", "));
+        String group = bgmAgitImage.getBgmAgitImageGroups();
+        // 합쳐 쓸 때 최소인원은 가장 큰 최소값, 최대인원은 합산
+        Integer minPeople = images.stream()
+                .map(BgmAgitImage::getBgmAgitImageMinPeople)
+                .filter(Objects::nonNull)
+                .max(Integer::compareTo)
+                .orElse(null);
+        Integer maxPeople = images.stream()
+                .map(BgmAgitImage::getBgmAgitImageMaxPeople)
+                .filter(Objects::nonNull)
+                .reduce(0, Integer::sum);
+
+        // 2. 항목별 예약 현황 Map<날짜, List<TimeRange>> (Y: 확정 / N: 대기)
+        List<Map<LocalDate, List<TimeRange>>> reservedMaps = images.stream()
+                .map(image -> ReservedTimeDto.groupedReservation(
+                        bgmAgitReservationRepository.findReservations(
+                                labelGb, link, image.getBgmAgitImageId(), today, endOfYear)))
+                .toList();
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
-        // 3. 날짜별 시간 슬롯 생성
+        // 3. 날짜별 시간 슬롯 생성 (여러 항목이면 전부 비어 있는 시간만 = 교집합)
         List<BgmAgitReservationResponse.TimeSlotByDate> timeSlots = new ArrayList<>();
-        
+
         for (LocalDate d = today; !d.isAfter(endOfYear); d = d.plusDays(1)) {
             if (d.isEqual(LocalDate.now())) {
                 timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(
@@ -95,69 +121,29 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 ));
                 continue;
             }
-            SlotSchedule schedule = SlotSchedule.of(bgmAgitImage.getBgmAgitImageCategory() , bgmAgitImage.getBgmAgitImageLabel(), d);
-            
-            LocalDateTime open = schedule.open();
-            LocalDateTime close = schedule.close();
-            int slotIntervalHours = schedule.intervalHours();
-            
-            LocalDateTime cursor = open;
-            List<String> availableSlots = new ArrayList<>();
-            List<TimeRange> reserved = reservedMap
-                    .getOrDefault(d, Collections.emptyList())
-                    .stream()
-                    .sorted(Comparator.comparing(TimeRange::getStart))
-                    .toList();
-            
-            if (userId != null && SlotSchedule.isGroom(bgmAgitImage.getBgmAgitImageCategory(), bgmAgitImage.getBgmAgitImageLabel())) {
-                boolean alreadyBookedTodayByMe = reserved.stream().anyMatch(r ->
-                        Objects.equals(r.getMemberId(), userId) &&
-                                !"Y".equals(r.getCancelStatus())
-                );
-                if (alreadyBookedTodayByMe) {
-                    timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(d, List.of(),"G룸은 하루에 1팀당 1개의 예약이 가능하여 다른 시간대의 예약이 불가능 합니다."));
-                    continue;
+
+            List<String> availableSlots = null;
+            String blockedMessage = null;
+
+            for (int i = 0; i < images.size(); i++) {
+                DayAvailability availability = resolveDayAvailability(
+                        images.get(i), reservedMaps.get(i), d, today, userId, formatter);
+                if (availability.message() != null) {
+                    blockedMessage = availability.message();
+                    availableSlots = List.of();
+                    break;
                 }
-            }
-            
-            while (cursor.isBefore(close)) {
-                LocalDateTime slotStart = cursor;
-                LocalDateTime slotEnd = cursor.plusHours(slotIntervalHours);
-                
-                if (d.isEqual(today) && slotEnd.isBefore(LocalDateTime.now())) {
-                    cursor = cursor.plusHours(slotIntervalHours);
-                    continue;
-                }
-                
-                boolean overlapped = reserved.stream()
-                        .anyMatch(r -> r.isOverlapping(slotStart, slotEnd, userId));
-                if (!overlapped) {
-                    availableSlots.add(slotStart.format(formatter));
-                }
-                if (SlotSchedule.isMahjongRental(bgmAgitImage.getBgmAgitImageCategory()) && slotStart.format(formatter).equals("01:00")) {
-                    availableSlots.remove(slotStart.format(formatter));
-                }
-                cursor = cursor.plusHours(slotIntervalHours);
-            }
-            if (!availableSlots.isEmpty()) {
-                if (!reservations.isEmpty()) {
-                    ReservedTimeDto dto = reservations.get(0);
-                    label = dto.getLabel();
-                    group = dto.getGroup();
-                    minPeople = dto.getMinPeople();
-                    maxPeople = dto.getMaxPeople();
+                if (availableSlots == null) {
+                    availableSlots = new ArrayList<>(availability.slots());
                 } else {
-                    BgmAgitImage image = bgmAgitImageRepository.findById(id).orElse(null);
-                    if (image != null) {
-                        label = image.getBgmAgitImageLabel();
-                        group = image.getBgmAgitImageGroups();
-                        minPeople = image.getBgmAgitImageMinPeople();
-                        maxPeople = image.getBgmAgitImageMaxPeople();
-                    }
+                    availableSlots.retainAll(availability.slots());
                 }
             }
-            
-            timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(d, availableSlots,null));
+
+            timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(
+                    d,
+                    availableSlots == null ? List.of() : availableSlots,
+                    blockedMessage));
         }
 
         // 4. 공휴일/주말 가격 계산
@@ -182,20 +168,36 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             boolean isWeekend = d.getDayOfWeek() == DayOfWeek.SATURDAY || d.getDayOfWeek() == DayOfWeek.SUNDAY;
             boolean isHoliday = holidaySet.contains(dateStr);
             int price = (isWeekend || isHoliday) ? 4000 : 3000;
-            if (SlotSchedule.isMahjongRental(bgmAgitImage.getBgmAgitImageCategory())) {
+            if (SlotSchedule.isMahjongRental(category)) {
                 price = 40000;
             }
             prices.add(new BgmAgitReservationResponse.PriceByDate(d, price, isWeekend || isHoliday));
         }
-        
-        return new BgmAgitReservationResponse(timeSlots, prices, label, group,minPeople, maxPeople);
-        
+
+        // 5. 슬롯 정책(후보 시간대 / 선택 제한 / 예약 타입) — 프론트가 하드코딩 대신 이걸 쓴다
+        List<BgmAgitReservationResponse.SlotRange> slotRanges = SlotSchedule.of(category, imageLabel, today)
+                .slots()
+                .stream()
+                .map(slot -> new BgmAgitReservationResponse.SlotRange(
+                        slot.start().format(formatter),
+                        slot.end().format(formatter)))
+                .toList();
+
+        return new BgmAgitReservationResponse(
+                timeSlots, prices, label, group, minPeople, maxPeople,
+                slotRanges,
+                SlotSchedule.maxSelectableSlots(category, imageLabel),
+                SlotSchedule.resolveReservationType(category).name()
+        );
+
     }
     
     @Override
     public ApiResponse createReservation(BgmAgitReservationCreateRequest request, Long userId) {
-        Long imageId = request.getBgmAgitImageId();
-        BgmAgitImage  bgmAgitImage = bgmAgitImageRepository.findById(imageId).orElseThrow(() -> new RuntimeException("존재하지 않는 이미지 입니다."));
+        // 합쳐 예약(예: M-1 + M-2)이면 항목이 여러 개. 첫 번째가 기준 항목
+        List<BgmAgitImage> images = loadReservableImages(
+                mergeImageIds(request.getBgmAgitImageId(), request.getBgmAgitImageIds()));
+        BgmAgitImage  bgmAgitImage = images.get(0);
         BgmAgitImageCategory bgmAgitImageCategory = bgmAgitImage.getBgmAgitImageCategory();
         String imageLabel = bgmAgitImage.getBgmAgitImageLabel();
         List<String> timeList = request.getReservationExpandedTimeSlots(bgmAgitImageCategory, imageLabel);
@@ -215,47 +217,51 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         // 예약 기본 정보 조회
         BgmAgitMember member = bgmAgitMemberRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User Not Found"));
-        String reservationType = request.getBgmAgitReservationType();
+        // 예약 타입은 클라이언트 값이 아니라 이미지 카테고리로 서버가 결정
+        String reservationType = SlotSchedule.resolveReservationType(bgmAgitImageCategory).name();
         
-        // 기존 예약 조회
-        List<BgmAgitReservation> existingReservations = bgmAgitReservationRepository.findExistingReservations(bgmAgitImage, kstDate, "N");
-        
-        // 중복된 시간대 구성 (Set으로 빠르게 비교)
-        Set<String> existingTimeSlots = existingReservations.stream()
-                .filter(r ->
-                        "Y".equals(r.getBgmAgitReservationApprovalStatus()) ||
-                                (
-                                        "N".equals(r.getBgmAgitReservationApprovalStatus()) &&
-                                                Objects.equals(r.getBgmAgitMember().getBgmAgitMemberId(), userId)
-                                )
-                )
-                .map(r -> r.getBgmAgitReservationStartTime() + "-" + r.getBgmAgitReservationEndTime())
-                .collect(Collectors.toSet());
         Long maxReservationNo = bgmAgitReservationRepository.findMaxReservationNo();
         maxReservationNo = (maxReservationNo == null) ? 1L : maxReservationNo + 1L;
-        // 신규 예약 생성
+        // 신규 예약 생성 — 합쳐 예약이면 같은 예약번호에 항목별 슬롯 행을 만든다
         List<BgmAgitReservation> list = new ArrayList<>();
-        for (String timeSlot : timeList) {
-            // "14:00 ~ 15:00" → ["14:00", "15:00"]
-            String[] times = timeSlot.split(" ~ ");
-            if (times.length != 2) {
-                throw new IllegalArgumentException("잘못된 시간 슬롯 형식입니다: " + timeSlot);
+        for (BgmAgitImage image : images) {
+            // 항목별 기존 예약(확정 + 내 대기건) 시간대
+            Set<String> existingTimeSlots = bgmAgitReservationRepository
+                    .findExistingReservations(image, kstDate, "N")
+                    .stream()
+                    .filter(r ->
+                            "Y".equals(r.getBgmAgitReservationApprovalStatus()) ||
+                                    (
+                                            "N".equals(r.getBgmAgitReservationApprovalStatus()) &&
+                                                    Objects.equals(r.getBgmAgitMember().getBgmAgitMemberId(), userId)
+                                    )
+                    )
+                    .map(r -> r.getBgmAgitReservationStartTime() + "-" + r.getBgmAgitReservationEndTime())
+                    .collect(Collectors.toSet());
+
+            for (String timeSlot : timeList) {
+                // "14:00 ~ 15:00" → ["14:00", "15:00"]
+                String[] times = timeSlot.split(" ~ ");
+                if (times.length != 2) {
+                    throw new IllegalArgumentException("잘못된 시간 슬롯 형식입니다: " + timeSlot);
+                }
+                LocalTime startTime = LocalTime.parse(times[0]);
+                LocalTime endTime = LocalTime.parse(times[1]);
+
+                String slotKey = startTime + "-" + endTime;
+                if (existingTimeSlots.contains(slotKey)) {
+                    throw new ReservationConflictException(
+                            image.getBgmAgitImageLabel() + " 이미 예약된 시간대입니다: " + slotKey);
+                }
+
+                BgmAgitReservation reservation = new BgmAgitReservation(
+                        member, image, reservationType, startTime, endTime, kstDate,maxReservationNo,people,reservationRequest
+                );
+                bgmAgitReservationRepository.save(reservation);
+                list.add(reservation);
             }
-            LocalTime startTime = LocalTime.parse(times[0]);
-            LocalTime endTime = LocalTime.parse(times[1]);
-            
-            String slotKey = startTime + "-" + endTime;
-            if (existingTimeSlots.contains(slotKey)) {
-                throw new ReservationConflictException("이미 예약된 시간대입니다: " + slotKey);
-            }
-            
-            BgmAgitReservation reservation = new BgmAgitReservation(
-                    member, bgmAgitImage, reservationType, startTime, endTime, kstDate,maxReservationNo,people,reservationRequest
-            );
-            bgmAgitReservationRepository.save(reservation);
-            list.add(reservation);
         }
-        
+
         eventPublisher.publishEvent(new ReservationWaitingEvent(member,bgmAgitImage,list));
         return new ApiResponse(200, true, "예약이 완료되었습니다.");
     }
@@ -286,9 +292,15 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             throw new ReservationConflictException("이미 확정된 예약입니다.");
         }
 
-        // 금액 서버 계산(기본 1만, M룸 3만) + 주문명 구성
-        BgmAgitImage image = first.getBgmAgitImage();
-        int amount = SlotSchedule.resolveDepositAmount(image.getBgmAgitImageCategory(), image.getBgmAgitImageLabel());
+        // 금액 서버 계산(항목당 기본 1만, M룸 3만) — 합쳐 예약이면 항목 수만큼 합산
+        List<BgmAgitImage> images = group.stream()
+                .map(BgmAgitReservation::getBgmAgitImage)
+                .filter(distinctByImageId())
+                .toList();
+        int amount = images.stream()
+                .mapToInt(image -> SlotSchedule.resolveDepositAmount(
+                        image.getBgmAgitImageCategory(), image.getBgmAgitImageLabel()))
+                .sum();
         String orderName = "BGM아지트 예약 - " + first.getBgmAgitReservationStartDate();
 
         // 공통 결제 모듈에 주문 생성 위임
@@ -400,6 +412,98 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         
         // 전송 조건이 아닌 경우
         return new ApiResponse(200, true, "수정 되었습니다.");
+    }
+
+    /** 예약 그룹에서 이미지 중복 제거용 (같은 항목의 여러 시간 슬롯 행을 1개로) */
+    private Predicate<BgmAgitImage> distinctByImageId() {
+        Set<Long> seen = new HashSet<>();
+        return image -> seen.add(image.getBgmAgitImageId());
+    }
+
+    /** 기준 항목 + 합쳐 쓸 항목을 중복 없이 합친다(기준 항목이 항상 첫 번째). */
+    private List<Long> mergeImageIds(Long id, List<Long> extraIds) {
+        List<Long> merged = new ArrayList<>();
+        merged.add(id);
+        if (extraIds != null) {
+            extraIds.stream()
+                    .filter(Objects::nonNull)
+                    .filter(extraId -> !merged.contains(extraId))
+                    .forEach(merged::add);
+        }
+        return merged;
+    }
+
+    /**
+     * 예약 가능한 항목들을 조회하고 합쳐 쓸 수 있는 조합인지 검증한다.
+     * 같은 카테고리·같은 메뉴(페이지)여야 하고, 하루 1팀 제한이 있는 항목(G룸)은 합칠 수 없다.
+     */
+    private List<BgmAgitImage> loadReservableImages(List<Long> imageIds) {
+        List<BgmAgitImage> images = new ArrayList<>();
+        for (Long imageId : imageIds) {
+            BgmAgitImage image = bgmAgitImageRepository.findById(imageId)
+                    .orElseThrow(() -> new RuntimeException("존재 하지않는 이미지 입니다."));
+            if (image.isHidden()) {
+                throw new ReservationConflictException("예약이 종료된 항목입니다.");
+            }
+            images.add(image);
+        }
+
+        if (images.size() > 1) {
+            BgmAgitImage primary = images.get(0);
+            for (BgmAgitImage image : images) {
+                boolean sameKind = image.getBgmAgitImageCategory() == primary.getBgmAgitImageCategory()
+                        && Objects.equals(image.getBgmAgitMenuLink(), primary.getBgmAgitMenuLink());
+                boolean limitedItem = SlotSchedule.maxSelectableSlots(
+                        image.getBgmAgitImageCategory(), image.getBgmAgitImageLabel()) != null;
+                if (!sameKind || limitedItem) {
+                    throw new ReservationConflictException("함께 예약할 수 없는 항목입니다.");
+                }
+            }
+        }
+        return images;
+    }
+
+    /** 항목 하나의 특정 날짜 예약 가능 시간대. message 가 있으면 그 날짜는 전체 불가. */
+    private DayAvailability resolveDayAvailability(BgmAgitImage image,
+                                                  Map<LocalDate, List<TimeRange>> reservedMap,
+                                                  LocalDate d,
+                                                  LocalDate today,
+                                                  Long userId,
+                                                  DateTimeFormatter formatter) {
+        BgmAgitImageCategory category = image.getBgmAgitImageCategory();
+        String imageLabel = image.getBgmAgitImageLabel();
+
+        List<TimeRange> reserved = reservedMap
+                .getOrDefault(d, Collections.emptyList())
+                .stream()
+                .sorted(Comparator.comparing(TimeRange::getStart))
+                .toList();
+
+        if (userId != null && SlotSchedule.isGroom(category, imageLabel)) {
+            boolean alreadyBookedTodayByMe = reserved.stream().anyMatch(r ->
+                    Objects.equals(r.getMemberId(), userId) &&
+                            !"Y".equals(r.getCancelStatus())
+            );
+            if (alreadyBookedTodayByMe) {
+                return new DayAvailability(List.of(), "G룸은 하루에 1팀당 1개의 예약이 가능하여 다른 시간대의 예약이 불가능 합니다.");
+            }
+        }
+
+        List<String> availableSlots = new ArrayList<>();
+        for (SlotSchedule.Slot slot : SlotSchedule.of(category, imageLabel, d).slots()) {
+            if (d.isEqual(today) && slot.end().isBefore(LocalDateTime.now())) {
+                continue;
+            }
+            boolean overlapped = reserved.stream()
+                    .anyMatch(r -> r.isOverlapping(slot.start(), slot.end(), userId));
+            if (!overlapped) {
+                availableSlots.add(slot.start().format(formatter));
+            }
+        }
+        return new DayAvailability(availableSlots, null);
+    }
+
+    private record DayAvailability(List<String> slots, String message) {
     }
 
     private void validateUserCancelableReservation(Long memberId, List<BgmAgitReservation> reservations) {

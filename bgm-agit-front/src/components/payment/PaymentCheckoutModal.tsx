@@ -166,7 +166,7 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
         <NoticeBox>
           이 결제는 예약 확정을 위한 예약금 결제입니다.
           <br />
-          예약금은 M Room 30,000원, 그 외 예약 10,000원이며 잔여 이용요금은 현장에서 결제합니다.
+          예약금은 10,000원이며 잔여 이용요금은 현장에서 결제합니다.
           <br />
           예약일 당일 취소 및 노쇼 시 예약금은 환불되지 않습니다.
         </NoticeBox>

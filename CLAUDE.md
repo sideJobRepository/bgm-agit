@@ -226,6 +226,48 @@ kml:
   - 연락처: 0507-1445-3503
 - 빌드 확인: `bgm-agit-front`에서 `npm.cmd run build` 통과. 큰 번들 경고만 있음.
 
+## 예약 항목 정비 + 예약 정책 서버화 (2026-08-03)
+
+예약 대상(룸/대탁)은 여전히 `BGM_AGIT_IMAGE` 행이다(`category=ROOM|MAHJONG`, `link=/detail/room|/detail/mahjongRental`, `BGM_AGIT_MAIN_MENU_ID=3` = 프론트 `labelGb 3`). 실행 SQL은 레포 루트 `room-open-space.sql`.
+
+### 데이터 변경
+- **`BGM_AGIT_IMAGE_USE_STATUS`(varchar(1), default 'Y') 신설** — 운영 종료 항목은 삭제(FK RESTRICT로 예약 이력에 물림) 대신 `'N'`으로 숨김. 필터는 `BgmAgitImageRepositoryImpl.notHidden()`(null도 노출 취급)이 `getMainMenuImage`/`getDetailImage` 양쪽에 적용. 직접 호출 차단은 `BgmAgitReservationServiceImpl`의 `getReservation`/`createReservation`에서 `BgmAgitImage.isHidden()` 체크
+- 대탁 JP류(`AMOS-JP2 - 1/2`, id 34·35) 숨김 — 실제로는 F Room을 스왑해서 운영
+- **M Room(id 19) 노출 종료**(`USE_STATUS='N'`, 예약 이력 1건 있어 삭제 대신 숨김). 3일전·최소 15명 제약도 함께 폐기
+- **오픈 공간 M-1/M-2/M-3 추가**(id 83·84·85, **5~7명**) — M Room 대체. `category=ROOM` + `/detail/room` 이라 1시간 슬롯·예약금 1만원이 자동 적용(라벨이 `'M Room'`이 아니므로 3만원 아님). 이미지는 M Room 사진 임시 재사용(관리자 연필 버튼으로 교체)
+- M Room이 사라져 **예약금은 전 항목 1만원** → 화면·약관 문구를 "예약금은 10,000원"으로 통일(`confirmAlert.tsx`, `PaymentCheckoutModal.tsx`, `ReservationList.tsx`, `Terms.tsx`, `RefundPolicy.tsx`). `SlotSchedule.resolveDepositAmount`의 M룸 3만원 분기는 남겨둠(재개 시 문구까지 되살릴 것)
+- **알림톡 `bgmagit-res-payment` 문구는 그대로 유지** — 카카오 검수 통과 템플릿과 고정 문구가 정확히 일치해야 발송되므로 "M룸 30,000원" 문장을 코드에서 바꾸면 발송이 거부된다. 바꾸려면 카카오 템플릿 재심사 필요(`AlimtalkUtils.buildReservationPaymentMessage` 주석 참고)
+
+### 예약 정책은 서버가 유일한 출처 (프론트 magic id 금지)
+`SlotSchedule`(origin/util)에 정책을 모았다: `of()`(open/close/interval/**durationHours**), `slots()`(날짜별 후보 슬롯), `maxSelectableSlots()`, `resolveReservationType()`, `resolveDepositAmount()`.
+- G Room = 6시간 간격·이용 5시간(13~18, 19~00) / MAHJONG = 3시간 / 그 외 = 1시간
+- `GET /bgm-agit/reservation` 응답에 **`slotRanges[{start,end}]`, `maxSelectableSlots`(G룸 1, 그 외 null), `reservationType`(ROOM|DELEGATE_PLAY)** 추가. 프론트 `ReservationCalendar.tsx`는 이걸 그대로 그린다(기존 `id === 18/19`, `link === '/detail/mahjongRental'` 하드코딩 제거)
+- `createReservation`은 **클라이언트가 보낸 예약타입을 무시하고** 이미지 카테고리로 결정(기존 `id === (32||33||34||35)`는 `32`로 평가되던 버그였음)
+- `label/group/minPeople/maxPeople`는 이미지 기준으로 1회 세팅(전 기간 만실이어도 제목·인원이 비지 않게)
+- 이용시간 계산 중복(`BgmAgitReservationCreateRequest`의 `groom?5:mahjong?3:1`)도 `SlotSchedule.durationHours()` 호출로 통일
+
+### 프론트 (bgm-agit-front)
+- `src/config/reservationComments.ts` — **라벨 키** 하드코딩 맵 2종. `RESERVATION_COMMENTS`(F Room → "대탁룸(JP-COLOR)으로 변경 가능", M-1~3 → "룸이 아닌 오픈된 공간입니다.")는 예약 카드·캘린더 안내에 노출. `RESERVATION_OPTIONS`(F Room → "대탁룸(JP-COLOR)으로 변경")는 예약 확인 모달 체크박스로 뜨고, 선택 시 **요청사항 맨 앞에 `[요청 옵션] …`** 으로 붙어 예약내역·알림톡에 그대로 실린다(DB 컬럼 추가 없음)
+- 캘린더 안내 문구에서 예약금 안내와 M Room 3일전·15명 문구 삭제. 예약금 고지는 결제 모달·예약내역·`/terms`·`/refund-policy`·알림톡에 유지(토스 심사)
+- `ImageGrid.tsx`의 `imageId === 19 ? 3일 후 : today` 제약 제거
+
+### 테이블 합쳐 예약 (M-1 + M-2 …)
+한 예약이 이미 `BGM_AGIT_RESERVATION_NO` 그룹키로 여러 행을 묶고 **행마다 이미지 FK가 따로** 있어서, 테이블 구조 변경 없이 "같은 예약번호에 이미지가 다른 행"으로 구현.
+- 조회: `GET /bgm-agit/reservation?...&ids=84,85` — `ids`는 기준 항목(`id`)에 **합쳐 쓸 항목**. 응답 시간대는 **전 항목 교집합**, `label`은 `"M-1, M-2"`, `minPeople`=각 최소값 중 최대, `maxPeople`=합산
+- 등록: `POST /bgm-agit/reservation`에 `bgmAgitImageIds: [84,85]` 추가. `createReservation`이 항목별로 충돌 검증 후 **같은 `maxReservationNo`** 로 행 생성
+- 조합 검증(`loadReservableImages`): 같은 카테고리 + 같은 메뉴링크 + `maxSelectableSlots == null`(하루 1팀 제한 있는 G룸은 합치기 불가). 숨김 항목도 거부
+- **예약금은 항목 수만큼 합산** (`createPaymentOrder`가 그룹의 distinct 이미지별 `resolveDepositAmount` 합) → M-1+M-2 = 2만원
+- 예약내역(`GroupedReservationResponse`): 같은 시간대가 항목 수만큼 들어오므로 `timeSlots` 중복 제거, `reservationAddr`는 라벨 조합. 알림톡 `예약 룸`도 `sandBizTalk`에서 라벨 조합(템플릿 **변수**라 카카오 검수 영향 없음)
+- 프론트: `RESERVATION_COMBINABLE_GROUPS`(`[['M-1','M-2','M-3']]`)로 후보 산출 → `ImageGrid`가 `ReservationCalendar`에 `combinable` prop 전달. 캘린더 상단 토글로 선택하면 `ids` 붙여 재조회
+
+### 이용 방식 토글 (F룸 일반룸 ↔ 대탁)
+- `RESERVATION_USE_MODES`(`'F Room': ['일반룸','대탁룸(JP-COLOR)']`, 첫 값이 기본) → 캘린더 시간대 **위**에 토글로 노출
+- 선택값은 요청사항 맨 앞에 `[이용 방식] 대탁룸(JP-COLOR)` 으로 붙어 저장 → 예약내역·알림톡 `요청 사항`에 그대로 보임. **DB 컬럼/알림톡 템플릿 변경 없음**
+- 서버 label이 합쳐 예약 시 `"M-1, M-2"`로 오므로 프론트는 `label.split(',')[0]`(기준 라벨)로 코멘트·이용방식 조회
+
+### TODO: `BGM_AGIT_ROOM` 테이블 분리
+예약 대상 메타(라벨/인원/슬롯정책/예약금/코멘트/옵션/노출여부)를 이미지 테이블에 얹은 게 근본 원인. 별도 테이블로 떼내면 코멘트·옵션 하드코딩과 라벨 문자열 비교(`"G Room".equals(...)`)도 같이 사라진다.
+
 ## 환경변수 (.env) (2026-07-09 도입)
 - `bgm-agit-api`는 `me.paulschwarz:spring-dotenv:3.0.0`로 `.env`를 읽음(cham-equality와 동일 방식). 파일: `bgm-agit-api/src/main/resources/.env`. `application.yml`의 `${DB_URL}` 등 플레이스홀더를 여기서 치환.
 - `.env`는 `.gitignore` 처리(커밋 금지). 시크릿(DB/AWS/소셜/비즈톡/JWT/토스)은 레포에 없음.

@@ -10,10 +10,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public interface BgmAgitReservationService {
 
     BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id,LocalDate date);
+
+    /**
+     * 항목 여러 개를 합쳐 예약할 때(예: M-1 + M-2) 쓰는 조회.
+     * 가능 시간대는 선택 항목 전체의 교집합, 최대인원은 합산으로 내려준다.
+     */
+    BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id, List<Long> extraIds, LocalDate date);
 
     ApiResponse createReservation(BgmAgitReservationCreateRequest request, Long jwt);
 
