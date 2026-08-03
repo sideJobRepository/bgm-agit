@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import {
   useDeletePost,
   useInsertPost,
+  useNoticeDetailFetch,
   useNoticeDownloadFetch,
   useNoticeFetch,
   useUpdatePost,
 } from '../recoil/fetch.ts';
 import { useEffect, useRef, useState } from 'react';
 import { useRecoilValue } from 'recoil';
-import { noticeState } from '../recoil/state/noticeState.ts';
+import { noticeDetailState } from '../recoil/state/noticeState.ts';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import type { default as ClassicEditorType } from '@ckeditor/ckeditor5-build-classic';
@@ -35,6 +36,7 @@ type NewNoticeState = {
 export default function NoticeDetail() {
   const user = useRecoilValue(userState);
   const fetchNotice = useNoticeFetch();
+  const fetchNoticeDetail = useNoticeDetailFetch();
   const fetchNoticeDownload = useNoticeDownloadFetch();
 
   const [searchParams] = useSearchParams();
@@ -46,7 +48,7 @@ export default function NoticeDetail() {
   const { update } = useUpdatePost();
   const { remove } = useDeletePost();
 
-  const notices = useRecoilValue(noticeState);
+  const noticeDetail = useRecoilValue(noticeDetailState);
 
   const navigate = useNavigate();
 
@@ -172,25 +174,25 @@ export default function NoticeDetail() {
     return true;
   }
 
-  const notice = notices.content?.find(item => item.bgmAgitNoticeId === Number(id));
+  // 상세는 단건 API로 조회한다. 목록에서 find 하면 2페이지 이후 글은 못 찾음
+  const notice = noticeDetail;
 
   useEffect(() => {
-    if (id) fetchNotice({ page, titleOrCont: '' });
-  }, []);
+    if (id) fetchNoticeDetail(id);
+  }, [id]);
 
   useEffect(() => {
-    const matched = notices.content?.find(item => item.bgmAgitNoticeId === Number(id));
-    if (matched) {
+    if (notice && notice.bgmAgitNoticeId === Number(id)) {
       setNewNotice({
-        id: matched.bgmAgitNoticeId,
-        title: matched.bgmAgitNoticeTitle,
-        content: matched.bgmAgitNoticeCont,
-        type: matched.bgmAgitNoticeType,
-        popupUseStatus: matched.bgmAgitPopupUseStatus,
+        id: notice.bgmAgitNoticeId,
+        title: notice.bgmAgitNoticeTitle,
+        content: notice.bgmAgitNoticeCont,
+        type: notice.bgmAgitNoticeType,
+        popupUseStatus: notice.bgmAgitPopupUseStatus,
       });
-      setAttachedFiles(matched.bgmAgitNoticeFileList ?? []);
+      setAttachedFiles(notice.bgmAgitNoticeFileList ?? []);
     }
-  }, [notices, id]);
+  }, [notice, id]);
 
   //동영상 변환 함수
   function convertOembedToIframe(html: string): string {
@@ -302,18 +304,15 @@ export default function NoticeDetail() {
                   setDeletedFileNames([]);
                   setDeletedFileUuid([]);
 
-                  const matched = notices.content?.find(
-                    item => item.bgmAgitNoticeId === Number(id)
-                  );
-                  if (matched) {
+                  if (notice) {
                     setNewNotice({
-                      id: matched.bgmAgitNoticeId,
-                      title: matched.bgmAgitNoticeTitle,
-                      content: matched.bgmAgitNoticeCont,
-                      type: matched.bgmAgitNoticeType,
-                      popupUseStatus: matched.bgmAgitPopupUseStatus,
+                      id: notice.bgmAgitNoticeId,
+                      title: notice.bgmAgitNoticeTitle,
+                      content: notice.bgmAgitNoticeCont,
+                      type: notice.bgmAgitNoticeType,
+                      popupUseStatus: notice.bgmAgitPopupUseStatus,
                     });
-                    setAttachedFiles(matched.bgmAgitNoticeFileList ?? []);
+                    setAttachedFiles(notice.bgmAgitNoticeFileList ?? []);
                   }
                 } else {
                   navigate('/notice');

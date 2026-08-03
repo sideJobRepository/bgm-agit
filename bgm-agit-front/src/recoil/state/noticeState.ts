@@ -15,6 +15,12 @@ export const noticeState = atom<PagedNotice>({
   },
 });
 
+// 공지 상세(단건). 목록 페이지에 없는 글도 열 수 있게 별도 조회
+export const noticeDetailState = atom<NoticeContent | null>({
+  key: 'noticeDetailState',
+  default: null,
+});
+
 export const noticePopupState = atom<NoticeContent[]>({
   key: 'noticePopupState',
   default: [],
