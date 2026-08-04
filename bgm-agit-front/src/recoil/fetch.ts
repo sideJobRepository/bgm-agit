@@ -126,9 +126,11 @@ export function useReservationListFetch() {
   const { request } = useRequest();
   const setReservationList = useSetRecoilState(reservationListDataState);
 
+  // size 는 컨트롤러의 Pageable 이 그대로 받는다 (@PageableDefault size = 10)
   const fetchReservationList = (
     page: number,
-    dateRange: { startDate: string | null; endDate: string | null }
+    dateRange: { startDate: string | null; endDate: string | null },
+    size?: number
   ) => {
     request(
       () =>
@@ -136,6 +138,7 @@ export function useReservationListFetch() {
           .get('/bgm-agit/reservation/detail', {
             params: {
               page,
+              size,
               startDate: dateRange.startDate,
               endDate: dateRange.endDate,
             },

@@ -46,6 +46,8 @@ export type ReservationDatas = {
 export type Reservation = {
   reservationNo: number;
   reservationDate: string;
+  // GroupedReservationResponse 의 @JsonFormat 으로 분까지 포맷되어 온다 ('2026-08-04 14:20')
+  registDate: string;
   reservationMemberName: string;
   reservationAddr: string;
   reservationPeople: number;
