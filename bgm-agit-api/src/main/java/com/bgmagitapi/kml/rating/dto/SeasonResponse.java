@@ -17,7 +17,6 @@ import java.time.LocalDate;
 public class SeasonResponse {
 
     private Long id;                          // 시즌 ID
-    private Long prevSeasonId;                // 이전 시즌 ID
     private String name;                      // 시즌 이름
     private LocalDate startDate;              // 시작 일시
     private LocalDate endDate;                // 종료 일시
@@ -37,7 +36,6 @@ public class SeasonResponse {
     public static SeasonResponse fromDomain(Season season) {
         return SeasonResponse.builder()
                 .id(season.getId())
-                .prevSeasonId(season.getPrevSeasonId())
                 .name(season.getName())
                 .startDate(season.getStartDate())
                 .endDate(season.getEndDate())

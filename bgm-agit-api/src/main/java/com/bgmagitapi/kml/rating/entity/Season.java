@@ -1,7 +1,9 @@
 package com.bgmagitapi.kml.rating.entity;
 
 import com.bgmagitapi.kml.matchs.enums.MatchsWind;
+import com.bgmagitapi.kml.rating.dto.SeasonCreateRequest;
 import com.bgmagitapi.kml.rating.enums.SeasonProgressStatus;
+import com.bgmagitapi.kml.rating.exception.InvalidSeasonStatusException;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,10 +23,6 @@ public class Season {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "BGM_AGIT_SEASON_ID")
     private Long id;
-
-    // BGM 아지트 시즌 이전 시즌 ID
-    @Column(name = "BGM_AGIT_SEASON_PREV_SEASON_ID")
-    private Long prevSeasonId;
 
     // BGM 아지트 시즌 이름
     @Column(name = "BGM_AGIT_SEASON_NAME")
@@ -86,6 +84,72 @@ public class Season {
     // BGM 아지트 시즌 북 배수
     @Column(name = "BGM_AGIT_SEASON_NORTH_MULTIPLE")
     private BigDecimal northMultiple;
+
+    // BGM 아지트 시즌 사용 여부 (Y: 사용, N: 삭제)
+    @Column(name = "BGM_AGIT_SEASON_USE_STATUS")
+    private String useStatus;
+
+    public static Season create(SeasonCreateRequest request) {
+        return Season.builder()
+                .name(request.getName())
+                .startDate(request.getStartDate())
+                .endDate(request.getEndDate())
+                .progressStatus(SeasonProgressStatus.SCHEDULED)
+                .resetType(request.getResetType())
+                .carryRate(request.getCarryRate())
+                .baseRating(request.getBaseRating())
+                .firstScore(request.getFirstScore())
+                .secondScore(request.getSecondScore())
+                .thirdScore(request.getThirdScore())
+                .fourthScore(request.getFourthScore())
+                .eastMultiple(request.getEastMultiple())
+                .southMultiple(request.getSouthMultiple())
+                .westMultiple(request.getWestMultiple())
+                .northMultiple(request.getNorthMultiple())
+                .useStatus("Y")
+                .build();
+    }
+
+    // 시즌 시작 (대기 -> 진행중)
+    public void start() {
+        if (progressStatus != SeasonProgressStatus.SCHEDULED) {
+            throw new InvalidSeasonStatusException("대기 상태의 시즌만 시작할 수 있습니다. 현재 상태=" + progressStatus);
+        }
+        this.progressStatus = SeasonProgressStatus.ONGOING;
+    }
+
+    // 시즌 마감 (진행중 -> 종료)
+    public void close() {
+        if (progressStatus != SeasonProgressStatus.ONGOING) {
+            throw new InvalidSeasonStatusException("진행중인 시즌만 마감할 수 있습니다. 현재 상태=" + progressStatus);
+        }
+        this.progressStatus = SeasonProgressStatus.CLOSED;
+    }
+
+    public void delete() {
+        this.useStatus = "N";
+    }
+
+    public void update(String name, LocalDate startDate, LocalDate endDate,
+                       String resetType, BigDecimal carryRate,
+                       BigDecimal baseRating, BigDecimal firstScore, BigDecimal secondScore,
+                       BigDecimal thirdScore, BigDecimal fourthScore, BigDecimal eastMultiple,
+                       BigDecimal southMultiple, BigDecimal westMultiple, BigDecimal northMultiple) {
+        this.name = name;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.resetType = resetType;
+        this.carryRate = carryRate;
+        this.baseRating = baseRating;
+        this.firstScore = firstScore;
+        this.secondScore = secondScore;
+        this.thirdScore = thirdScore;
+        this.fourthScore = fourthScore;
+        this.eastMultiple = eastMultiple;
+        this.southMultiple = southMultiple;
+        this.westMultiple = westMultiple;
+        this.northMultiple = northMultiple;
+    }
 
     public BigDecimal calculateScore(int rank, MatchsWind wind) {
         return getScoreByRank(rank).multiply(getMultipleBy(wind));

@@ -4,9 +4,13 @@ import com.bgmagitapi.kml.rating.domain.RatingCalculator;
 import com.bgmagitapi.kml.rating.domain.Ratings;
 import com.bgmagitapi.kml.rating.domain.Tiers;
 import com.bgmagitapi.kml.rating.dto.MemberStandingResponse;
+import com.bgmagitapi.kml.rating.dto.SeasonCreateRequest;
 import com.bgmagitapi.kml.rating.dto.SeasonOptionResponse;
+import com.bgmagitapi.kml.rating.dto.SeasonResponse;
+import com.bgmagitapi.kml.rating.dto.SeasonUpdateRequest;
 import com.bgmagitapi.kml.rating.entity.*;
 import com.bgmagitapi.kml.rating.enums.SeasonProgressStatus;
+import com.bgmagitapi.kml.rating.exception.OngoingSeasonExistsException;
 import com.bgmagitapi.kml.rating.exception.SeasonNotFoundException;
 import com.bgmagitapi.kml.rating.exception.SeasonStandingNotFoundException;
 import com.bgmagitapi.kml.rating.repository.RatingRepository;
@@ -47,8 +51,83 @@ public class SeasonServiceImpl implements SeasonService {
     }
 
     @Override
+    public List<SeasonResponse> getSeasons() {
+        return seasonRepository.findAllActive().stream()
+                .map(SeasonResponse::fromDomain)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public SeasonResponse createSeason(SeasonCreateRequest request) {
+        Season season = seasonRepository.save(Season.create(request));
+        return SeasonResponse.fromDomain(season);
+    }
+
+    @Override
+    @Transactional
+    public SeasonResponse updateSeason(Long seasonId, SeasonUpdateRequest request) {
+        Season season = seasonRepository.findByIdActive(seasonId)
+                .orElseThrow(() -> new SeasonNotFoundException("시즌이 존재하지 않습니다. seasonId=" + seasonId));
+
+        season.update(
+                request.getName(),
+                request.getStartDate(),
+                request.getEndDate(),
+                request.getResetType(),
+                request.getCarryRate(),
+                request.getBaseRating(),
+                request.getFirstScore(),
+                request.getSecondScore(),
+                request.getThirdScore(),
+                request.getFourthScore(),
+                request.getEastMultiple(),
+                request.getSouthMultiple(),
+                request.getWestMultiple(),
+                request.getNorthMultiple()
+        );
+
+        return SeasonResponse.fromDomain(season);
+    }
+
+    @Override
+    @Transactional
+    public SeasonResponse startSeason(Long seasonId) {
+        if (seasonRepository.existsByProgressStatus(SeasonProgressStatus.ONGOING)) {
+            throw new OngoingSeasonExistsException();
+        }
+
+        Season season = seasonRepository.findByIdActive(seasonId)
+                .orElseThrow(() -> new SeasonNotFoundException("시즌이 존재하지 않습니다. seasonId=" + seasonId));
+
+        season.start();
+
+        return SeasonResponse.fromDomain(season);
+    }
+
+    @Override
+    @Transactional
+    public SeasonResponse closeSeason(Long seasonId) {
+        Season season = seasonRepository.findByIdActive(seasonId)
+                .orElseThrow(() -> new SeasonNotFoundException("시즌이 존재하지 않습니다. seasonId=" + seasonId));
+
+        season.close();
+
+        return SeasonResponse.fromDomain(season);
+    }
+
+    @Override
+    @Transactional
+    public void deleteSeason(Long seasonId) {
+        Season season = seasonRepository.findByIdActive(seasonId)
+                .orElseThrow(() -> new SeasonNotFoundException("시즌이 존재하지 않습니다. seasonId=" + seasonId));
+
+        season.delete();
+    }
+
+    @Override
     public MemberStandingResponse getMemberStanding(Long seasonId, Long memberId) {
-        Season season = seasonRepository.findById(seasonId)
+        Season season = seasonRepository.findByIdActive(seasonId)
                 .orElseThrow(() -> new SeasonNotFoundException("시즌이 존재하지 않습니다. seasonId=" + seasonId));
 
         Tiers tiers = new Tiers(tierRepository.findBySeasonIdOrderByMinRatingDesc(seasonId));
