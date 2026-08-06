@@ -3,9 +3,7 @@ package com.bgmagitapi.kml.rating.controller;
 
 import com.bgmagitapi.kml.rating.dto.MemberStandingResponse;
 import com.bgmagitapi.kml.rating.dto.SeasonOptionResponse;
-import com.bgmagitapi.kml.rating.dto.TierResponse;
 import com.bgmagitapi.kml.rating.service.SeasonService;
-import com.bgmagitapi.kml.rating.service.TierService;
 import com.bgmagitapi.origin.util.JwtParserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,16 +21,10 @@ import java.util.List;
 public class RatingController {
 
     private final SeasonService seasonService;
-    private final TierService tierService;
 
     @GetMapping("/rating/seasons/options")
     public List<SeasonOptionResponse> getSeasonOptions(){
         return seasonService.getSeasonOptions();
-    }
-
-    @GetMapping("/rating/seasons/{seasonId}/tiers")
-    public List<TierResponse> getTiers(@PathVariable Long seasonId){
-        return tierService.getTiers(seasonId);
     }
 
     /**

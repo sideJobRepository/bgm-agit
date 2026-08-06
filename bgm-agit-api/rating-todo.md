@@ -80,7 +80,8 @@ VALUES ('/bgm-agit/rating/seasons',            'POST',   NOW()),
        ('/bgm-agit/rating/seasons/{seasonId}', 'PUT',    NOW()),
        ('/bgm-agit/rating/seasons/{seasonId}', 'DELETE', NOW()),
        ('/bgm-agit/rating/seasons/{seasonId}/start', 'POST', NOW()),
-       ('/bgm-agit/rating/seasons/{seasonId}/close', 'POST', NOW());       
+       ('/bgm-agit/rating/seasons/{seasonId}/close', 'POST', NOW()),
+       ('/rating/seasons/{seasonId}/tiers', 'PUT', NOW());
 
 -- BGM_AGIT_URL_RESOURCES_ROLE 에도 추가
 ```
