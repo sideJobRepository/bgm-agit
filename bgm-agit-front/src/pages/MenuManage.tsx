@@ -1,7 +1,7 @@
 import { Wrapper } from '../styles';
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { toast } from 'react-toastify';
 import api from '../utils/axiosInstance';
@@ -43,6 +43,80 @@ interface FormState {
   roleIds: number[];
 }
 
+// select > option 안에서는 일반 공백이 접히므로 들여쓰기는 nbsp로 넣는다
+const NBSP = String.fromCharCode(160);
+
+interface MenuNode extends MenuOption {
+  children: MenuNode[];
+  depth: number;
+}
+
+/** 같은 depth는 영역/순서(areaId) → ID 순으로 정렬한다 (헤더 노출 순서와 동일) */
+function sortNodes(nodes: MenuNode[]) {
+  nodes.sort((a, b) => (a.areaId ?? 0) - (b.areaId ?? 0) || a.menuId - b.menuId);
+}
+
+/** 평면 목록을 부모-자식 트리로 조립. 부모가 목록에 없는 메뉴는 최상위로 올린다. */
+function buildTree(menus: MenuOption[]): MenuNode[] {
+  const byId = new Map<number, MenuNode>(
+    menus.map(menu => [menu.menuId, { ...menu, children: [], depth: 0 }])
+  );
+
+  const roots: MenuNode[] = [];
+  byId.forEach(node => {
+    const parent = node.parentMenuId != null ? byId.get(node.parentMenuId) : undefined;
+    if (parent && parent.menuId !== node.menuId) {
+      parent.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+
+  const seen = new Set<number>();
+  const walk = (nodes: MenuNode[], depth: number) => {
+    sortNodes(nodes);
+    nodes.forEach(node => {
+      node.depth = depth;
+      seen.add(node.menuId);
+      walk(node.children, depth + 1);
+    });
+  };
+  walk(roots, 0);
+
+  // 부모 참조가 순환하면 어느 root에서도 닿지 않는다. 누락되지 않게 최상위로 끌어올린다.
+  byId.forEach(node => {
+    if (!seen.has(node.menuId)) {
+      node.depth = 0;
+      node.children = [];
+      roots.push(node);
+    }
+  });
+  sortNodes(roots);
+
+  return roots;
+}
+
+/** 자기 자신 + 모든 하위 메뉴 ID (상위 메뉴 선택지에서 제외하는 용도) */
+function collectSubtreeIds(node: MenuNode, acc: Set<number> = new Set()): Set<number> {
+  acc.add(node.menuId);
+  node.children.forEach(child => collectSubtreeIds(child, acc));
+  return acc;
+}
+
+function flatten(nodes: MenuNode[], collapsed?: Set<number>): MenuNode[] {
+  const rows: MenuNode[] = [];
+  const walk = (list: MenuNode[]) => {
+    list.forEach(node => {
+      rows.push(node);
+      if (node.children.length > 0 && !collapsed?.has(node.menuId)) {
+        walk(node.children);
+      }
+    });
+  };
+  walk(nodes);
+  return rows;
+}
+
 const EMPTY: FormState = {
   parentMenuId: null,
   menuName: '',
@@ -65,6 +139,30 @@ export default function MenuManage() {
   const [options, setOptions] = useState<OptionsResponse>({ menus: [], roles: [] });
   const [form, setForm] = useState<FormState>(EMPTY);
   const [editId, setEditId] = useState<number | null>(null);
+  const [collapsed, setCollapsed] = useState<Set<number>>(new Set());
+
+  const tree = useMemo(() => buildTree(options.menus), [options.menus]);
+  const rows = useMemo(() => flatten(tree, collapsed), [tree, collapsed]);
+
+  // 상위 메뉴 선택지. 자기 자신과 하위 메뉴를 고르면 트리가 끊기므로 제외한다.
+  const parentOptions = useMemo(() => {
+    if (editId == null) return flatten(tree);
+    const editing = flatten(tree).find(node => node.menuId === editId);
+    const banned = editing ? collectSubtreeIds(editing) : new Set<number>([editId]);
+    return flatten(tree).filter(node => !banned.has(node.menuId));
+  }, [tree, editId]);
+
+  const toggleCollapse = (menuId: number) => {
+    setCollapsed(prev => {
+      const next = new Set(prev);
+      if (next.has(menuId)) next.delete(menuId);
+      else next.add(menuId);
+      return next;
+    });
+  };
+
+  const collapseAll = () => setCollapsed(new Set(tree.map(node => node.menuId)));
+  const expandAll = () => setCollapsed(new Set());
 
   const loadOptions = () => {
     request(() => api.get('/bgm-agit/main-menu/options').then(res => res.data), setOptions, {
@@ -106,6 +204,13 @@ export default function MenuManage() {
       useStatus: m.useStatus ?? true,
       roleIds: m.roleIds ?? [],
     });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  /** 해당 메뉴를 상위로 잡고 추가 폼을 연다 */
+  const startAddChild = (parent: MenuNode) => {
+    setEditId(null);
+    setForm({ ...EMPTY, parentMenuId: parent.menuId, areaId: parent.children.length + 1 });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -160,9 +265,6 @@ export default function MenuManage() {
     });
   };
 
-  const menuName = (id: number | null) =>
-    id == null ? '-' : options.menus.find(m => m.menuId === id)?.menuName ?? '-';
-
   if (!isAdmin) {
     return (
       <Wrapper>
@@ -190,13 +292,12 @@ export default function MenuManage() {
               onChange={e => setForm({ ...form, parentMenuId: e.target.value ? Number(e.target.value) : null })}
             >
               <option value="">없음 (최상위)</option>
-              {options.menus
-                .filter(m => m.menuId !== editId)
-                .map(m => (
-                  <option key={m.menuId} value={m.menuId}>
-                    {m.menuName}
-                  </option>
-                ))}
+              {parentOptions.map(node => (
+                <option key={node.menuId} value={node.menuId}>
+                  {node.depth > 0 ? NBSP.repeat(node.depth * 4) + '\u2514 ' : ''}
+                  {node.menuName}
+                </option>
+              ))}
             </select>
           </Field>
           <Field>
@@ -253,44 +354,78 @@ export default function MenuManage() {
           </FormButtons>
         </FormCard>
 
-        <TableWrap>
-          <Table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>상위</th>
-                <th>메뉴명</th>
-                <th>링크</th>
-                <th>순서</th>
-                <th>사용</th>
-                <th>관리</th>
-              </tr>
-            </thead>
-            <tbody>
-              {options.menus.map(m => (
-                <tr key={m.menuId}>
-                  <td>{m.menuId}</td>
-                  <td>{menuName(m.parentMenuId)}</td>
-                  <td>{m.menuName}</td>
-                  <td>{m.menuLink ?? '-'}</td>
-                  <td>{m.areaId ?? '-'}</td>
-                  <td>{m.useStatus ? 'O' : 'X'}</td>
-                  <td>
-                    <RowButton onClick={() => startEdit(m)}>수정</RowButton>
-                    <RowButton $danger onClick={() => onDelete(m.menuId)}>
-                      삭제
-                    </RowButton>
-                  </td>
-                </tr>
-              ))}
-              {options.menus.length === 0 && (
-                <tr>
-                  <td colSpan={7}>등록된 메뉴가 없습니다.</td>
-                </tr>
-              )}
-            </tbody>
-          </Table>
-        </TableWrap>
+        <TreeHeader>
+          <TreeTitle>메뉴 구조</TreeTitle>
+          <TreeTools>
+            <GhostButton type="button" onClick={expandAll}>
+              모두 펼치기
+            </GhostButton>
+            <GhostButton type="button" onClick={collapseAll}>
+              모두 접기
+            </GhostButton>
+          </TreeTools>
+        </TreeHeader>
+
+        <TreeHint>
+          상위 메뉴는 <strong>하위 메뉴가 하나 이상 있어야</strong> 헤더에 노출됩니다. 같은 단계에서는
+          순서(영역/순서 값)가 작은 것부터 표시됩니다.
+        </TreeHint>
+
+        <TreeWrap>
+          {rows.map(node => {
+            const hasChildren = node.children.length > 0;
+            const isCollapsed = collapsed.has(node.menuId);
+
+            return (
+              <TreeRow key={node.menuId} $depth={node.depth} $editing={editId === node.menuId}>
+                <RowMain>
+                  <Indent $depth={node.depth}>
+                    {hasChildren ? (
+                      <ToggleButton
+                        type="button"
+                        aria-label={isCollapsed ? '펼치기' : '접기'}
+                        onClick={() => toggleCollapse(node.menuId)}
+                      >
+                        {isCollapsed ? '▸' : '▾'}
+                      </ToggleButton>
+                    ) : (
+                      <LeafMark>·</LeafMark>
+                    )}
+                  </Indent>
+
+                  <NameArea>
+                    <NameLine>
+                      <MenuTitle $muted={!node.useStatus}>{node.menuName}</MenuTitle>
+                      {hasChildren && <CountBadge>하위 {node.children.length}</CountBadge>}
+                      {!node.useStatus && <OffBadge>미사용</OffBadge>}
+                    </NameLine>
+                    <MetaLine>
+                      <LinkText $empty={!node.menuLink}>
+                        {node.menuLink ?? '링크 없음 (상위 메뉴 전용)'}
+                      </LinkText>
+                      <MetaDim>
+                        순서 {node.areaId ?? '-'} · ID {node.menuId}
+                      </MetaDim>
+                    </MetaLine>
+                  </NameArea>
+                </RowMain>
+
+                <RowActions>
+                  <RowButton type="button" onClick={() => startAddChild(node)}>
+                    하위 추가
+                  </RowButton>
+                  <RowButton type="button" onClick={() => startEdit(node)}>
+                    수정
+                  </RowButton>
+                  <RowButton type="button" $danger onClick={() => onDelete(node.menuId)}>
+                    삭제
+                  </RowButton>
+                </RowActions>
+              </TreeRow>
+            );
+          })}
+          {rows.length === 0 && <Notice>등록된 메뉴가 없습니다.</Notice>}
+        </TreeWrap>
       </Box>
     </Wrapper>
   );
@@ -423,34 +558,187 @@ const GhostButton = styled.button<WithTheme>`
   cursor: pointer;
 `;
 
-const TableWrap = styled.div`
-  overflow-x: auto;
+const TreeHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
 `;
 
-const Table = styled.table<WithTheme>`
-  width: 100%;
-  min-width: 640px;
-  border-collapse: collapse;
-  font-size: ${({ theme }) => theme.sizes.small};
-  th,
-  td {
-    border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
-    padding: 12px;
-    text-align: center;
+const TreeTitle = styled.h3<WithTheme>`
+  font-size: ${({ theme }) => theme.sizes.large};
+  font-weight: ${({ theme }) => theme.weight.bold};
+  color: ${({ theme }) => theme.colors.subColor};
+`;
+
+const TreeTools = styled.div`
+  display: flex;
+  gap: 8px;
+
+  button {
+    padding: 7px 14px;
+    font-size: 13px;
   }
-  th {
-    background: ${({ theme }) => theme.colors.basicColor};
-    font-weight: ${({ theme }) => theme.weight.semiBold};
+`;
+
+const TreeHint = styled.p<WithTheme>`
+  margin: 10px 0 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: ${({ theme }) => theme.colors.softColor};
+  font-size: ${({ theme }) => theme.sizes.small};
+  line-height: 1.5;
+  color: ${({ theme }) => theme.colors.navColor};
+
+  strong {
+    color: ${({ theme }) => theme.colors.subColor};
+    font-weight: ${({ theme }) => theme.weight.bold};
+  }
+`;
+
+const TreeWrap = styled.div<WithTheme>`
+  border: 1px solid ${({ theme }) => theme.colors.lineColor};
+  border-radius: 10px;
+  overflow: hidden;
+`;
+
+const TreeRow = styled.div<{ $depth: number; $editing: boolean } & WithTheme>`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
+  /* 최상위는 흰 배경, 하위로 갈수록 살짝 눕혀 계층이 보이게 */
+  background: ${({ $depth, $editing }) =>
+    $editing ? '#E8EEF6' : $depth === 0 ? '#ffffff' : '#FAFAFA'};
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px;
+  }
+`;
+
+const RowMain = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+`;
+
+const Indent = styled.div<{ $depth: number }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  margin-left: ${({ $depth }) => $depth * 24}px;
+
+  @media (max-width: 844px) {
+    margin-left: ${({ $depth }) => $depth * 14}px;
+  }
+`;
+
+const ToggleButton = styled.button<WithTheme>`
+  width: 24px;
+  height: 24px;
+  border: 1px solid ${({ theme }) => theme.colors.lineColor};
+  border-radius: 4px;
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.subColor};
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+`;
+
+const LeafMark = styled.span<WithTheme>`
+  color: ${({ theme }) => theme.colors.lineColor};
+  font-size: 18px;
+  line-height: 1;
+`;
+
+const NameArea = styled.div`
+  min-width: 0;
+  flex: 1;
+`;
+
+const NameLine = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+`;
+
+const MenuTitle = styled.span<{ $muted: boolean } & WithTheme>`
+  font-size: ${({ theme }) => theme.sizes.medium};
+  font-weight: ${({ theme }) => theme.weight.semiBold};
+  color: ${({ $muted, theme }) => ($muted ? theme.colors.navColor : theme.colors.subColor)};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    font-size: ${({ theme }) => theme.sizes.small};
+  }
+`;
+
+const CountBadge = styled.span<WithTheme>`
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: ${({ theme }) => theme.colors.basicColor};
+  color: ${({ theme }) => theme.colors.navColor};
+  font-size: ${({ theme }) => theme.sizes.xxsmall};
+  font-weight: ${({ theme }) => theme.weight.semiBold};
+`;
+
+const OffBadge = styled(CountBadge)`
+  background: #f6dcdb;
+  color: #b2413c;
+`;
+
+const MetaLine = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 3px;
+`;
+
+const LinkText = styled.span<{ $empty: boolean } & WithTheme>`
+  font-size: ${({ theme }) => theme.sizes.xsmall};
+  color: ${({ $empty, theme }) => ($empty ? theme.colors.navColor : theme.colors.blueColor)};
+  font-style: ${({ $empty }) => ($empty ? 'italic' : 'normal')};
+  word-break: break-all;
+`;
+
+const MetaDim = styled.span<WithTheme>`
+  font-size: ${({ theme }) => theme.sizes.xsmall};
+  color: ${({ theme }) => theme.colors.navColor};
+  font-variant-numeric: tabular-nums;
+`;
+
+const RowActions = styled.div`
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+
+  @media (max-width: 844px) {
+    justify-content: flex-end;
   }
 `;
 
 const RowButton = styled.button<{ $danger?: boolean } & WithTheme>`
-  margin: 0 3px;
   padding: 5px 10px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   color: #fff;
   font-size: ${({ theme }) => theme.sizes.xsmall};
+  white-space: nowrap;
   background: ${({ $danger }) => ($danger ? '#FF5E57' : '#988271')};
 `;

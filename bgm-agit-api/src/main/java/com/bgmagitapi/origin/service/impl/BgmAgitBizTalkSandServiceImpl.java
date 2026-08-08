@@ -18,6 +18,7 @@ import com.bgmagitapi.kml.record.repository.RecordRepository;
 import com.bgmagitapi.kml.review.dto.events.ReviewPostEvents;
 import com.bgmagitapi.origin.repository.BgmAgitBiztalkSendHistoryRepository;
 import com.bgmagitapi.origin.repository.BgmAgitImageRepository;
+import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.origin.service.BgmAgitBizTalkSandService;
 import com.bgmagitapi.origin.service.BgmAgitBizTalkService;
 import com.bgmagitapi.origin.service.response.Attach;
@@ -32,9 +33,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -56,6 +60,8 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     private final BgmAgitImageRepository bgmAgitImageRepository;
 
     private final RecordRepository recordRepository;
+
+    private final BgmAgitReservationRepository bgmAgitReservationRepository;
 
     private static final String PHONE1 = "010-5059-3499";
     private static final String PHONE2 = "010-5592-8832";
@@ -339,6 +345,78 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
                     matchsId, BgmAgitSubject.MATCH_RECORD,
                     "사이트 바로가기", url);
         }
+    }
+
+    /**
+     * 관리자 당일 예약 알림 (매일 09:00 KST, 스케줄러에서 호출).
+     * 취소건은 제외하고, 예약이 0건이어도 "없음"으로 채워 발송한다.
+     */
+    @Override
+    public void sendAdminDailyReservation(LocalDate date) {
+
+        // 한 예약 = 1시간 슬롯 여러 행. 예약번호로 묶고 취소건은 뺀다.
+        Map<Long, List<BgmAgitReservation>> grouped =
+                bgmAgitReservationRepository.findReservationsByDate(date).stream()
+                        .filter(row -> row.getBgmAgitReservationNo() != null)
+                        .filter(row -> row.getBgmAgitReservationStartTime() != null)
+                        .filter(row -> !"Y".equalsIgnoreCase(row.getBgmAgitReservationCancelStatus()))
+                        .collect(Collectors.groupingBy(BgmAgitReservation::getBgmAgitReservationNo,
+                                LinkedHashMap::new, Collectors.toList()));
+
+        // 예약 묶음별 대표 행(가장 이른 슬롯)을 영업일 순서로 정렬
+        List<BgmAgitReservation> heads = grouped.values().stream()
+                .map(slots -> slots.stream().min(AlimtalkUtils.businessTimeOrder()).orElseThrow())
+                .sorted(AlimtalkUtils.businessTimeOrder())
+                .toList();
+
+        int totalPeople = heads.stream()
+                .mapToInt(head -> head.getBgmAgitReservationPeople() == null ? 0 : head.getBgmAgitReservationPeople())
+                .sum();
+
+        List<String> lines = heads.stream()
+                .map(head -> {
+                    LocalTime end = lastEndTime(grouped.get(head.getBgmAgitReservationNo()));
+                    String roomName = head.getBgmAgitImage() != null
+                            ? Objects.toString(head.getBgmAgitImage().getBgmAgitImageLabel(), "") : "";
+                    String memberName = head.getBgmAgitMember() != null
+                            ? Objects.toString(head.getBgmAgitMember().getBgmAgitMemberName(), "") : "";
+                    String state = "Y".equalsIgnoreCase(head.getBgmAgitReservationApprovalStatus()) ? "확정" : "대기";
+                    int people = head.getBgmAgitReservationPeople() == null ? 0 : head.getBgmAgitReservationPeople();
+
+                    return AlimtalkUtils.TIME_FMT.format(head.getBgmAgitReservationStartTime())
+                            + " ~ " + (end == null ? "" : AlimtalkUtils.TIME_FMT.format(end))
+                            + " " + roomName
+                            + " " + memberName
+                            + " " + people + "명"
+                            + " (" + state + ")";
+                })
+                .toList();
+
+        String message = AlimtalkUtils.buildAdminDailyReservationMessage(
+                AlimtalkUtils.formatDate(date),
+                String.valueOf(heads.size()),
+                String.valueOf(totalPeople),
+                heads.isEmpty() ? "없음" : AlimtalkUtils.TIME_FMT.format(heads.get(0).getBgmAgitReservationStartTime()),
+                AlimtalkUtils.formatAdminReservationList(lines)
+        );
+
+        String template = AlimtalkTemplate.BGMAGIT_ADMIN_RESERVATION_REMIND;
+        sendTalk(message, template, PHONE1, null, BgmAgitSubject.ADMIN_RESERVATION_NOTICE, "사이트 바로가기", "https://bgmagit.co.kr");
+        sendTalk(message, template, PHONE2, null, BgmAgitSubject.ADMIN_RESERVATION_NOTICE, "사이트 바로가기", "https://bgmagit.co.kr");
+    }
+
+    /**
+     * 예약 묶음의 마지막 종료 시각.
+     * 마감이 00:00·02:00 로 넘어가는 슬롯(G룸·대탁)이 있어 단순 max 로는 23:00 이 뒤로 잡히므로,
+     * 06시 이전은 익일로 보고 비교한다.
+     */
+    private LocalTime lastEndTime(List<BgmAgitReservation> slots) {
+        if (slots == null || slots.isEmpty()) return null;
+        return slots.stream()
+                .map(BgmAgitReservation::getBgmAgitReservationEndTime)
+                .filter(Objects::nonNull)
+                .max(Comparator.comparingInt(t -> t.getHour() < 6 ? t.toSecondOfDay() + 86400 : t.toSecondOfDay()))
+                .orElse(null);
     }
 
     private String nicknameOf(Record record) {

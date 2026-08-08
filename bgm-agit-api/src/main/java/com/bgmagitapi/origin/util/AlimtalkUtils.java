@@ -433,6 +433,55 @@ public class AlimtalkUtils {
     
     
     /** 기본 버튼 세트(필요 시 수정) */
+    /* ===================== 관리자 당일 예약 알림 (bgmagit-admin--reservation-rem) ===================== */
+
+    /** 예약 목록에 넣을 최대 줄 수. 알림톡 본문 1,000자 제한 때문에 넘치면 "외 N건"으로 접는다. */
+    private static final int ADMIN_LIST_MAX_LINES = 15;
+
+    /**
+     * 관리자 당일 예약 알림 메시지.
+     * 카카오 검수 통과한 템플릿과 고정 문구가 정확히 일치해야 하므로 임의로 바꾸지 말 것.
+     * 변수: 예약일자 / 예약건수 / 총인원 / 첫예약시간 / 예약목록
+     */
+    public static String buildAdminDailyReservationMessage(
+            String date, String count, String people, String firstTime, String list) {
+        return new StringBuilder()
+                .append("[BGM 아지트] 오늘 예약 안내\n\n")
+                .append("안녕하세요 관리자님\n")
+                .append(date).append(" 예약 현황을 안내드립니다.\n\n")
+                .append("총 예약: ").append(count).append("건\n")
+                .append("총 인원: ").append(people).append("명\n")
+                .append("가장 빠른 예약: ").append(firstTime).append("\n\n")
+                .append("[예약 목록]\n")
+                .append(list)
+                .toString();
+    }
+
+    /**
+     * 예약 목록 본문. 한 줄에 "13:00 ~ 15:00 B Room 홍길동 4명 (확정)".
+     * 비어 있으면 "없음" — 변수가 빈 문자열이면 알림톡 치환이 실패한다.
+     */
+    public static String formatAdminReservationList(List<String> lines) {
+        if (lines == null || lines.isEmpty()) {
+            return "없음";
+        }
+        if (lines.size() <= ADMIN_LIST_MAX_LINES) {
+            return String.join("\n", lines);
+        }
+        return String.join("\n", lines.subList(0, ADMIN_LIST_MAX_LINES))
+                + "\n외 " + (lines.size() - ADMIN_LIST_MAX_LINES) + "건";
+    }
+
+    /**
+     * 영업일 기준 정렬 비교자. 13:00 이상을 먼저 두고, 자정 넘어간 시간을 뒤로 보낸다.
+     * (formatTimes 와 같은 규칙)
+     */
+    public static Comparator<BgmAgitReservation> businessTimeOrder() {
+        return Comparator
+                .comparing((BgmAgitReservation r) -> r.getBgmAgitReservationStartTime().isBefore(BOUNDARY))
+                .thenComparing(BgmAgitReservation::getBgmAgitReservationStartTime);
+    }
+
     public static Attach defaultAttach(String message,String url) {
         return new Attach(List.of(
                 Attach.Button.wl(message, url)

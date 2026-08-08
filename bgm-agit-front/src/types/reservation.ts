@@ -62,6 +62,45 @@ export type Reservation = {
   }[];
 };
 
+// 관리자 예약 현황판
+export type ReservationBoardItem = {
+  reservationNo: number;
+  memberName: string | null;
+  phoneNo: string | null;
+  people: number | null;
+  request: string | null;
+  approvalStatus: 'Y' | 'N';
+  cancelStatus: 'Y' | 'N';
+  receiptUrl: string | null;
+  registDate: string;
+  startTime: string;
+  endTime: string;
+  // 자정 기준 분값. 06시 이전 슬롯은 +1440 되어 있음 (익일 새벽 마감 대응)
+  startMinutes: number;
+  endMinutes: number;
+};
+
+export type ReservationBoardRoom = {
+  roomName: string;
+  // BgmAgitImageCategory 이름 (ROOM / MAHJONG ...). 탭 분류에 사용
+  category: string | null;
+  reservations: ReservationBoardItem[];
+};
+
+export type ReservationBoardSummary = {
+  total: number;
+  confirmed: number;
+  waiting: number;
+  canceled: number;
+  people: number;
+};
+
+export type ReservationBoard = {
+  date: string;
+  summary: ReservationBoardSummary;
+  rooms: ReservationBoardRoom[];
+};
+
 export type PagedReservation = {
   content: Reservation[];
   totalPages: number;

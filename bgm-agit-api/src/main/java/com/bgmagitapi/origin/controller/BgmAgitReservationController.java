@@ -5,6 +5,7 @@ import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationModifyRequest;
 import com.bgmagitapi.origin.controller.response.BgmAgitReservationResponse;
+import com.bgmagitapi.origin.controller.response.reservation.AdminReservationBoardResponse;
 import com.bgmagitapi.origin.controller.response.reservation.GroupedReservationResponse;
 import com.bgmagitapi.origin.page.PageResponse;
 import com.bgmagitapi.origin.service.BgmAgitReservationService;
@@ -18,6 +19,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 @RestController
@@ -58,9 +60,21 @@ public class BgmAgitReservationController {
         Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(memberId, role, startDate, endDate, pageable);
         return PageResponse.from(reservationDetail);
     }
-    
-    
-    
+    /**
+     * 관리자 예약 현황판. date 미지정이면 오늘(KST) 기준.
+     * URL_RESOURCES 매핑이 없으면 기본 permit 이므로 서비스단에서도 관리자 여부를 다시 확인한다.
+     */
+    @GetMapping("/reservation/board")
+    public AdminReservationBoardResponse getReservationBoard(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(name = "date", required = false) String date) {
+        LocalDate target = (date != null && !date.isBlank())
+                ? LocalDate.parse(date.substring(0, 10))
+                : LocalDate.now(ZoneId.of("Asia/Seoul"));
+        return bgmAgitReservationService.getReservationBoard(target, extractRoles(jwt));
+    }
+
+
     @PutMapping("/reservation")
     public ApiResponse modifyReservation(@AuthenticationPrincipal Jwt jwt , @RequestBody BgmAgitReservationModifyRequest request) {
         Long id = jwt.getClaim("id");
@@ -85,6 +99,14 @@ public class BgmAgitReservationController {
     private String extractRole(Jwt jwt) {
         List<String> roles = jwt.getClaim("roles");
         return roles != null && !roles.isEmpty() ? roles.get(0) : "GUEST";
+    }
+
+    private List<String> extractRoles(Jwt jwt) {
+        if (jwt == null) {
+            return List.of();
+        }
+        List<String> roles = jwt.getClaim("roles");
+        return roles != null ? roles : List.of();
     }
     
     

@@ -275,6 +275,46 @@ kml:
 - 백엔드 `GET /bgm-agit/notice/detail/{id}` 추가 (`BgmAgitNoticeController` → `BgmAgitNoticeService.getNoticeDetail`). 목록·팝업·상세가 공통 `toResponse(BgmAgitNotice)` 매퍼 사용 (경로는 `/notice/popup`·`/notice/download/**`와 안 겹치게 `detail` 세그먼트 사용)
 - 프론트: `noticeDetailState` atom + `useNoticeDetailFetch()` 추가, 상세/수정 프리필 모두 단건 응답 사용. GET이라 URL_RESOURCES 등록 불필요
 
+## 관리자 예약 현황판 (2026-08-08)
+
+기존 예약내역(`/reservationList`)은 10건씩 페이징된 테이블이라 "오늘 어느 방이 몇 시에 차 있나"를 한눈에 볼 수 없어서, **관리자 전용 일별 타임라인 보드**를 신설.
+
+- 프론트: `bgm-agit-front/src/pages/ReservationBoard.tsx`, 라우트 `/reservation-board` (`App.tsx`)
+  - **세로축 = 시간, 가로축 = 예약 장소(`BGM_AGIT_IMAGE.LABEL`)**. 날짜 이동(◀/▶/오늘/date input) + 요약칩(예약/확정/대기/취소/인원) + 룸 그룹 탭 + 상태 필터
+  - 블록 클릭 → 하단 상세 패널에서 확정/취소(`PUT /bgm-agit/reservation/admin` 재사용)·영수증
+  - `isAdmin` 아니면 안내 문구만 렌더 (메뉴 자체를 ADMIN 전용으로 걸어도 직접 URL 진입 대비)
+  - 조회 실패와 "예약 없음"을 구분해 표시 (실패 시 다시 시도 버튼)
+  - **지난 예약은 확정·취소 불가** — `canManage = date >= todayYmd()`. `ReservationList`의 admin 규칙(`todayFunction`)과 동일. 안 걸어두면 지난 날짜에도 취소 버튼이 뜬다
+
+### 그리드 / 목록 뷰 전환
+모바일은 탭으로 가로 스크롤이 없어져도 1시간 블록(세로 48px)에 이름·시간·인원 3줄이 안 들어가 글자가 잘림. 그래서 **모바일 기본은 목록(아젠다) 뷰**.
+- `viewMode` state가 `null`이면 화면 크기에 맡기고(`isMobile ? 'list' : 'grid'`), 사용자가 토글하면 그 선택을 따름. effect 없이 `view = viewMode ?? 기본값`으로 처리
+- 목록 뷰 = 룸 구분 없이 **시작 시간순** 카드. 카드가 상세·확정/취소/영수증을 자체적으로 가지므로 하단 `DetailPanel`은 그리드 뷰에서만 렌더 (블록 클릭 → 패널 구조라 목록에선 불필요)
+- 카드 왼쪽 6px 색 바 = 룸 색상. 범례는 그리드 뷰에서만 노출
+
+### 레이아웃이 세로 타임라인인 이유 (모바일 가로 스크롤)
+초안은 가로축이 시간이었는데, 영업시간이 13:00~익일 02:00라 **모바일에서 항상 가로 스크롤**이 생겨 사장님 요청으로 전치함. 단 전치만으로는 룸이 8~10개면 가로 스크롤이 그대로라, **룸 그룹 탭**을 같이 넣어야 해결됨.
+- 탭 분류는 **카테고리 우선 → 그 다음 라벨 첫 알파벳**:
+  - `MAHJONG` 카테고리(마작탁: 대탁·렉스탁 등) → `마작탁` 탭. **라벨이 한글이라 첫 알파벳 규칙으로는 룸과 구분이 안 되므로**, 응답 `Room.category`(= `BgmAgitImageCategory.name()`)로 먼저 갈라냄
+  - `ROOM` 카테고리 → `ROOM_GROUPS`로 `C·D·E` / `B·F·G` / `M`
+  - 나머지 → `기타`
+- 현황판 조회에는 **카테고리 필터가 없음**. 그날 예약 행 전부를 라벨별 열로 만들기 때문에 룸·마작탁 모두 나옴
+- 그날 예약이 있는 그룹만 탭으로 노출. 선택한 탭이 사라지면 `전체`로 되돌림
+- 룸 열은 `flex: 1; min-width: 96px` — 2~3개면 화면을 채우고, `전체` 탭처럼 많으면 가로 스크롤. 시간 열은 `position: sticky; left: 0`
+
+### 색상 규약
+블록 **바탕색 = 예약 장소(룸)**, 상태는 채움 방식으로 구분 — 확정=꽉 찬 색 / 대기=같은 색 점선 테두리+옅은 배경 / 취소=회색+취소선. `ROOM_PALETTE`(10색)를 **필터·탭 적용 전** 룸 목록 순서로 배정해서, 필터를 바꿔도 룸 색이 안 흔들림. 색은 `blockStyle()`이 inline style로 주입(styled-components 정적 맵으로는 동적 룸 색 표현 불가)
+- 백엔드: `GET /bgm-agit/reservation/board?date=YYYY-MM-DD` (`BgmAgitReservationController.getReservationBoard`)
+  - `BgmAgitReservationServiceImpl.getReservationBoard(date, roles)` — 예약번호로 슬롯 묶고 → 장소별 그룹 + 요약 집계. 영수증은 `findDoneReceiptUrlsByReservationNos` 배치
+  - 쿼리: `BgmAgitReservationRepositoryImpl.findReservationsByDate(date)` (페이징 없음, member/image fetch join)
+  - DTO: `origin/controller/response/reservation/AdminReservationBoardResponse`
+- **시간축 분값 규약** — `startMinutes`/`endMinutes`는 자정 기준 분값이되 **06시 이전은 +1440**. G룸(19:00~00:00)·마작대여(23:00~02:00)처럼 마감이 익일로 넘어가는 슬롯이 있어서, 그대로 두면 종료가 시작보다 앞선 것으로 계산됨. 프론트도 이 규약 그대로 쓰고 별도 변환 안 함
+- **권한 2중** — `BgmAgitAuthorizationManager`는 URL_RESOURCES에 없는 경로를 **기본 permit**으로 통과시킴. 이 API는 회원 연락처가 나가므로 서비스단에서 `isAdmin(roles)` 검사(`ValidException`) + `reservation-board-url-resources.sql`로 URL 레벨 ADMIN 매핑 둘 다 적용. **SQL 실행 후 앱 재시작 필요**(매핑 로딩이 `@PostConstruct` 1회)
+- **메뉴 등록** — `/menuManage`에서 추가. 링크 `/reservation-board`, 권한은 ADMIN만 체크. `BgmAgitMainMenuServiceImpl.getMainMenu`가 **subMenu 없는 root는 걸러내므로** 반드시 기존 부모 메뉴의 하위로 넣을 것
+
+### 날짜 파라미터 함정 (`toISOString`)
+`Date.toISOString()`은 UTC 변환이라 **KST 자정 기준 Date가 하루 앞 날짜로 밀림**. `ReservationList.tsx`의 예약일자 검색이 이 버그로 하루 밀려 조회되고 있었음 → `src/utils/date.ts`의 `toLocalYmd()`(`toLocaleDateString('sv-SE')` 기반)로 교체. 서버로 보내는 날짜는 항상 이 헬퍼 사용. 같은 파일에 `todayYmd`/`addDaysYmd`/`formatYmdWithWeekday` 있음
+
 ## 환경변수 (.env) (2026-07-09 도입)
 - `bgm-agit-api`는 `me.paulschwarz:spring-dotenv:3.0.0`로 `.env`를 읽음(cham-equality와 동일 방식). 파일: `bgm-agit-api/src/main/resources/.env`. `application.yml`의 `${DB_URL}` 등 플레이스홀더를 여기서 치환.
 - `.env`는 `.gitignore` 처리(커밋 금지). 시크릿(DB/AWS/소셜/비즈톡/JWT/토스)은 레포에 없음.
@@ -435,6 +475,17 @@ DB의 `BGM_AGIT_KML_MENU.BGM_AGIT_KML_SUB_MENU_ID`가 부모 메뉴 ID. 백엔�
 - 점수 포맷 `38,100` (천 단위 콤마), 승점 포맷 `+18.1`/`-39.6` (양수면 부호 붙음)
 - 버튼 URL: 코드는 `https://bgmagit.co.kr/record/rank/{memberId}`로 보냄. 카카오 템플릿엔 `https://bgmagit.co.kr/record/rank/#{memberId}` 패턴 권장 (`https://#{url}`보다 검수 통과 잘됨)
 - **수정/삭제 흐름엔 미적용** — `updateRecord`/`removeRecord`에서도 발송하려면 같은 이벤트 발행 한 줄 추가
+
+### 관리자 당일 예약 알림 (`bgmagit-admin--reservation-rem`, 2026-08-08)
+매일 **09:00 KST**에 관리자 2명(`BgmAgitBizTalkSandServiceImpl.PHONE1/PHONE2`)에게 그날 예약 현황 발송.
+- 스케줄러: `origin/service/BgmAgitAdminReservationNotifyScheduler` (`@Scheduled(cron="0 0 9 * * *", zone="Asia/Seoul")`). 실패는 삼키고 로깅만
+- 발송: `BgmAgitBizTalkSandServiceImpl.sendAdminDailyReservation(date)` — 현황판이 쓰는 `findReservationsByDate` 재사용, 예약번호로 묶고 **취소건 제외**
+- 메시지 빌더: `AlimtalkUtils.buildAdminDailyReservationMessage(...)`. 변수 5개 = 예약일자/예약건수/총인원/첫예약시간/예약목록
+- **예약 0건이어도 매일 발송** — 건수·인원 0, 첫예약시간·예약목록은 `"없음"`. 변수가 빈 문자열이면 알림톡 치환이 실패하므로 반드시 뭔가 채울 것
+- **목록 15줄 제한** (`ADMIN_LIST_MAX_LINES`) — 본문 1,000자 제한 때문. 넘치면 `외 N건`으로 접음
+- 템플릿 코드의 **하이픈 2개(`admin--reservation`)는 카카오 등록값 그대로**. 오타로 보고 고치지 말 것
+- 버튼은 `사이트 바로가기` → `https://bgmagit.co.kr` (다른 관리자 알림톡과 동일)
+- 종료시각 계산은 `lastEndTime()` — 06시 이전은 익일로 보고 비교(G룸 00:00, 대탁 02:00 마감 대응)
 
 ### 알림톡 ON/OFF (마작 회원 전용)
 - 컬럼: `BGM_AGIT_MEMBER.BGM_AGIT_MEMBER_ALIMTALK_STATUS` (`Y`/`N`)

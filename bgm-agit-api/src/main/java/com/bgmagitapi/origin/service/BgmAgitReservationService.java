@@ -4,6 +4,7 @@ import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationModifyRequest;
 import com.bgmagitapi.origin.controller.response.BgmAgitReservationResponse;
+import com.bgmagitapi.origin.controller.response.reservation.AdminReservationBoardResponse;
 import com.bgmagitapi.origin.controller.response.reservation.GroupedReservationResponse;
 import com.bgmagitapi.origin.payment.controller.response.PaymentOrderResponse;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,12 @@ public interface BgmAgitReservationService {
     ApiResponse createReservation(BgmAgitReservationCreateRequest request, Long jwt);
 
     Page<GroupedReservationResponse> getReservationDetail(Long memberId, String role, String startDate, String endDate, Pageable pageable);
+
+    /**
+     * 관리자 예약 현황판. 하루치 예약을 예약장소 × 시간축으로 묶어서 반환한다.
+     * 회원 연락처가 그대로 나가므로 관리자 외에는 차단한다.
+     */
+    AdminReservationBoardResponse getReservationBoard(LocalDate date, List<String> roles);
 
     ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request, String role);
 

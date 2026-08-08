@@ -19,4 +19,7 @@ public interface AlimtalkTemplate {
 
     String BGMAGIT_BML_MATCH = "bgmagit-bml-match"; // 대국 기록 등록 시 대국자에게 발송
 
+    // 매일 09:00(KST) 관리자에게 당일 예약 현황 발송. 하이픈 2개는 카카오에 등록된 코드 그대로임(오타 아님)
+    String BGMAGIT_ADMIN_RESERVATION_REMIND = "bgmagit-admin--reservation-rem";
+
 }
