@@ -186,6 +186,23 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
     }
     
     
+    @Override
+    public List<BgmAgitReservation> findReservationsByDate(LocalDate date) {
+
+        return queryFactory
+                .selectFrom(bgmAgitReservation)
+                .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember).fetchJoin()
+                .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage).fetchJoin()
+                .where(bgmAgitReservation.bgmAgitReservationStartDate.eq(date))
+                .orderBy(
+                        bgmAgitImage.bgmAgitImageLabel.asc(),
+                        bgmAgitReservation.bgmAgitReservationNo.asc(),
+                        bgmAgitReservation.bgmAgitReservationStartTime.asc()
+                )
+                .fetch();
+    }
+
+
     private BooleanExpression isUserFilter(Long memberId, boolean isUser) {
         return isUser ? bgmAgitReservation.bgmAgitMember.bgmAgitMemberId.eq(memberId) : null;
     }

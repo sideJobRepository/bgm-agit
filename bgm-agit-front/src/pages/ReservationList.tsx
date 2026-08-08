@@ -17,6 +17,7 @@ import api from '../utils/axiosInstance.ts';
 import PaymentCheckoutModal from '../components/payment/PaymentCheckoutModal.tsx';
 import type { PaymentOrderResponse } from '../types/tossPayments.ts';
 import { PAYMENT_LIVE } from '../config/payment.ts';
+import { todayYmd, toLocalYmd } from '../utils/date.ts';
 import { theme } from '../styles/theme.ts';
 
 type StatusTone = 'waiting' | 'approved' | 'canceled';
@@ -59,8 +60,9 @@ export default function ReservationList() {
   const paymentLive = PAYMENT_LIVE;
 
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
-  const start = dateRange[0]?.toISOString().slice(0, 10) ?? null;
-  const end = dateRange[1]?.toISOString().slice(0, 10) ?? null;
+  // toISOString()은 UTC 변환이라 KST 자정 기준 Date가 하루 앞 날짜로 밀린다. 로컬 기준으로 포맷할 것.
+  const start = toLocalYmd(dateRange[0]);
+  const end = toLocalYmd(dateRange[1]);
 
   const fetchReservationList = useReservationListFetch();
   const { update } = useUpdatePost();
@@ -84,18 +86,12 @@ export default function ReservationList() {
     setPage(pageNum);
   };
 
-  function getTodayText() {
-    return new Date().toLocaleDateString('sv-SE');
-  }
-
   function todayFunction(date: string) {
-    const today = getTodayText();
-
-    return date >= today;
+    return date >= todayYmd();
   }
 
   function canCancelBeforeReservationDate(item: Reservation) {
-    return item.cancelStatus !== 'Y' && item.reservationDate > getTodayText();
+    return item.cancelStatus !== 'Y' && item.reservationDate > todayYmd();
   }
 
   // pageSize 를 deps 에 둔다. useMediaQuery 가 첫 렌더 직후 값이 바뀌는 경우 재조회가 필요하다

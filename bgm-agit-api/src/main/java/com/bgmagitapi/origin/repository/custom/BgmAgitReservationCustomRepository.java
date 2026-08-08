@@ -29,6 +29,9 @@ public interface BgmAgitReservationCustomRepository{
     List<Long> findReservationNosPageForDetail(Long memberId, boolean isUserRole, LocalDate start, LocalDate end, Pageable pageable);
     
     List<BgmAgitReservation> findReservationsByNosForDetail(List<Long> reservationNos, Long memberId, boolean isUserRole, LocalDate start, LocalDate end);
-    
-    
+
+    /** 관리자 현황판용. 해당 일자의 예약 슬롯 전체를 페이징 없이 조회한다. */
+    List<BgmAgitReservation> findReservationsByDate(LocalDate date);
+
+
 }

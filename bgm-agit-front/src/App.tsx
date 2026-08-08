@@ -14,6 +14,7 @@ import ScrollToTop from './components/layout/ScrollToTop.tsx';
 import RedirectPage from './pages/RedirectPage.tsx';
 import { ToastContainer } from 'react-toastify';
 import ReservationList from './pages/ReservationList.tsx';
+import ReservationBoard from './pages/ReservationBoard.tsx';
 import Role from './pages/Role.tsx';
 import NoticeDetail from './pages/NoticeDetail.tsx';
 import Privacy from './pages/Privacy.tsx';
@@ -65,6 +66,7 @@ function App() {
               <Route path="notice" element={<Notice mainGb={true} />} />
               <Route path="/noticeDetail" element={<NoticeDetail />} />
               <Route path="reservationList" element={<ReservationList />} />
+              <Route path="reservation-board" element={<ReservationBoard />} />
               <Route path="payment/success" element={<PaymentSuccess />} />
               <Route path="payment/fail" element={<PaymentFail />} />
               <Route path="role" element={<Role />} />

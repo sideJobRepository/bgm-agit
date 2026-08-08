@@ -11,7 +11,8 @@ public enum BgmAgitSubject {
     INQUIRY("1:1문의"),
     LECTURE("마작강의"),
     REVIEW("마작강의리뷰"),
-    MATCH_RECORD("대국기록");
+    MATCH_RECORD("대국기록"),
+    ADMIN_RESERVATION_NOTICE("관리자 당일 예약 알림");
     
     private final String value;
     

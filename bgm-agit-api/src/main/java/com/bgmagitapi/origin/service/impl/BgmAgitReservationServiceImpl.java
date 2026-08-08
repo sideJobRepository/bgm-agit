@@ -1,10 +1,12 @@
 package com.bgmagitapi.origin.service.impl;
 
 import com.bgmagitapi.origin.advice.exception.ReservationConflictException;
+import com.bgmagitapi.origin.advice.exception.ValidException;
 import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationModifyRequest;
 import com.bgmagitapi.origin.controller.response.BgmAgitReservationResponse;
+import com.bgmagitapi.origin.controller.response.reservation.AdminReservationBoardResponse;
 import com.bgmagitapi.origin.controller.response.reservation.GroupedReservationResponse;
 import com.bgmagitapi.origin.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.origin.controller.response.reservation.TimeRange;
@@ -362,6 +364,131 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     }
     
     @Override
+    @Transactional(readOnly = true)
+    public AdminReservationBoardResponse getReservationBoard(LocalDate date, List<String> roles) {
+
+        if (!isAdmin(roles)) {
+            throw new ValidException("관리자만 조회할 수 있습니다.");
+        }
+
+        List<BgmAgitReservation> rows = bgmAgitReservationRepository.findReservationsByDate(date);
+
+        // 한 예약 = 1시간 슬롯 여러 행. 예약번호로 먼저 묶는다.
+        // groupingBy 는 키가 null 이면 NPE 라, 예약번호 없는 legacy 행은 건너뛴다.
+        Map<Long, List<BgmAgitReservation>> grouped = rows.stream()
+                .filter(row -> row.getBgmAgitReservationNo() != null)
+                .collect(Collectors.groupingBy(
+                        BgmAgitReservation::getBgmAgitReservationNo,
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        Map<Long, String> receiptUrls =
+                bgmAgitPaymentRepository.findDoneReceiptUrlsByReservationNos(new ArrayList<>(grouped.keySet()));
+
+        Map<String, List<AdminReservationBoardResponse.Item>> byRoom = new LinkedHashMap<>();
+        // 예약 장소 → 이미지 카테고리(ROOM / MAHJONG ...). 프론트 탭 분류용
+        Map<String, String> roomCategories = new LinkedHashMap<>();
+        int confirmed = 0;
+        int waiting = 0;
+        int canceled = 0;
+        int people = 0;
+
+        for (Map.Entry<Long, List<BgmAgitReservation>> entry : grouped.entrySet()) {
+            List<BgmAgitReservation> slots = entry.getValue();
+            if (slots.isEmpty()) {
+                continue;
+            }
+            BgmAgitReservation head = slots.get(0);
+
+            boolean isCanceled = "Y".equalsIgnoreCase(head.getBgmAgitReservationCancelStatus());
+            boolean isConfirmed = !isCanceled && "Y".equalsIgnoreCase(head.getBgmAgitReservationApprovalStatus());
+
+            if (isCanceled) {
+                canceled++;
+            } else if (isConfirmed) {
+                confirmed++;
+            } else {
+                waiting++;
+            }
+            if (!isCanceled && head.getBgmAgitReservationPeople() != null) {
+                people += head.getBgmAgitReservationPeople();
+            }
+
+            BgmAgitReservation first = slots.stream()
+                    .min(Comparator.comparingInt(r -> toBoardMinutes(r.getBgmAgitReservationStartTime())))
+                    .orElse(head);
+            BgmAgitReservation last = slots.stream()
+                    .max(Comparator.comparingInt(r -> toBoardMinutes(r.getBgmAgitReservationEndTime())))
+                    .orElse(head);
+
+            AdminReservationBoardResponse.Item item = new AdminReservationBoardResponse.Item(
+                    entry.getKey(),
+                    head.getBgmAgitMember() != null ? head.getBgmAgitMember().getBgmAgitMemberName() : null,
+                    extractPhoneNo(head),
+                    head.getBgmAgitReservationPeople(),
+                    head.getBgmAgitReservationRequest(),
+                    head.getBgmAgitReservationApprovalStatus(),
+                    head.getBgmAgitReservationCancelStatus(),
+                    receiptUrls.get(entry.getKey()),
+                    head.getRegistDate(),
+                    formatTime(first.getBgmAgitReservationStartTime()),
+                    formatTime(last.getBgmAgitReservationEndTime()),
+                    toBoardMinutes(first.getBgmAgitReservationStartTime()),
+                    toBoardMinutes(last.getBgmAgitReservationEndTime())
+            );
+
+            String roomName = head.getBgmAgitImage() != null ? head.getBgmAgitImage().getBgmAgitImageLabel() : null;
+            String roomKey = StringUtils.hasText(roomName) ? roomName : "기타";
+            byRoom.computeIfAbsent(roomKey, key -> new ArrayList<>()).add(item);
+
+            if (head.getBgmAgitImage() != null && head.getBgmAgitImage().getBgmAgitImageCategory() != null) {
+                roomCategories.putIfAbsent(roomKey, head.getBgmAgitImage().getBgmAgitImageCategory().name());
+            }
+        }
+
+        List<AdminReservationBoardResponse.Room> roomList = byRoom.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> {
+                    List<AdminReservationBoardResponse.Item> items = new ArrayList<>(e.getValue());
+                    items.sort(Comparator.comparingInt(AdminReservationBoardResponse.Item::getStartMinutes));
+                    return new AdminReservationBoardResponse.Room(e.getKey(), roomCategories.get(e.getKey()), items);
+                })
+                .toList();
+
+        AdminReservationBoardResponse.Summary summary =
+                new AdminReservationBoardResponse.Summary(confirmed + waiting, confirmed, waiting, canceled, people);
+
+        return new AdminReservationBoardResponse(date, summary, roomList);
+    }
+
+    /**
+     * 현황판 가로축용 분값. 06시 이전은 익일 새벽(마감이 00:00·02:00 로 넘어가는 슬롯)으로 보고 +1440 한다.
+     */
+    private int toBoardMinutes(LocalTime time) {
+        if (time == null) {
+            return 0;
+        }
+        int minutes = time.getHour() * 60 + time.getMinute();
+        return time.getHour() < 6 ? minutes + 24 * 60 : minutes;
+    }
+
+    private String formatTime(LocalTime time) {
+        return time != null ? time.format(DateTimeFormatter.ofPattern("HH:mm")) : null;
+    }
+
+    private String extractPhoneNo(BgmAgitReservation reservation) {
+        if (reservation.getBgmAgitMember() == null) {
+            return null;
+        }
+        String phoneNo = reservation.getBgmAgitMember().getBgmAgitMemberPhoneNo();
+        if (phoneNo == null) {
+            return null;
+        }
+        return phoneNo.replace("+82", "0").replaceAll("\\s+", "");
+    }
+
+    @Override
     public ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request, String role) {
         
         
@@ -528,5 +655,12 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
 
     private boolean isAdmin(String role) {
         return "ROLE_ADMIN".equals(role);
+    }
+
+    private boolean isAdmin(List<String> roles) {
+        if (roles == null) {
+            return false;
+        }
+        return roles.contains("ROLE_ADMIN") || roles.contains("ADMIN");
     }
 }
