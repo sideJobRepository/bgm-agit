@@ -68,12 +68,18 @@ public class AlimtalkUtils {
                 .toString();
     }
 
+    /** 예약금 등 금액 표기. 1000 단위 콤마 + "원". */
+    public static String formatAmount(int amount) {
+        return String.format("%,d원", amount);
+    }
+
     /**
-     * 예약 대기 안내 메시지 (결제 버전, 템플릿 bgmagit-res-payment)
+     * 예약 대기 안내 메시지 (결제 버전, 템플릿 bgmagit-res-payment-1)
      * 결제 라이브 전환 후 계좌안내(buildReservationMessage) 대신 사용.
      * 카카오 검수 통과한 템플릿 내용과 고정 문구가 정확히 일치해야 하므로 임의로 바꾸지 말 것.
+     * 단 예약금은 템플릿 변수 #{예약금}이라 금액이 얼마로 바뀌든 재심사 없이 값만 넣으면 된다.
      */
-    public static String buildReservationPaymentMessage(String userName, String date, String times, String roomName, String people, String request) {
+    public static String buildReservationPaymentMessage(String userName, String date, String times, String roomName, String people, String deposit, String request) {
         return new StringBuilder()
                 .append("안녕하세요. ").append(userName).append("님\n")
                 .append("BGM 아지트 예약 내역을 안내드립니다.\n\n")
@@ -83,10 +89,10 @@ public class AlimtalkUtils {
                 .append("예약 상태: 예약 대기\n")
                 .append("예약 룸: ").append(roomName).append("\n")
                 .append("예약 인원: ").append(people).append("\n")
+                .append("예약금: ").append(deposit).append("\n")
                 .append("요청 사항: ").append(request).append("\n\n")
                 .append("예약은 예약금 결제가 완료되는 시점에 최종 확정됩니다.\n")
-                .append("BGM 아지트 홈페이지 로그인 후 마이페이지 > 예약내역에서 [예약금 결제] 버튼을 눌러 결제해 주세요.\n")
-                .append("예약금은 M룸 30,000원, 그 외 10,000원이며 잔여 이용요금은 현장에서 결제합니다.\n\n")
+                .append("BGM 아지트 홈페이지 로그인 후 마이페이지 > 예약내역에서 [예약금 결제] 버튼을 눌러 결제해 주세요.\n\n")
                 .append("취소는 예약일 전날까지 가능하며, 당일 취소나 노쇼 시 예약금은 환불되지 않습니다.\n\n")
                 .append("자세한 예약내역은 BGM 아지트 홈페이지 로그인 후 마이페이지 > 예약내역에서 확인하실 수 있습니다.")
                 .toString();

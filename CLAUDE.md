@@ -1,559 +1,445 @@
 # bgm-agit
 
-한국마작연맹(KML) 기록 생태계와 연동되는 bgm-agit(마작장) 도메인 시스템.
+한국마작연맹(KML) 기록 생태계와 연동되는 bgm-agit(마작장 + 보드게임카페) 도메인 시스템.
 
 ## 구성
 
-- `bgm-agit-api` — Spring Boot 3.4.7 / Java 17 / JPA + QueryDSL / MySQL 8.0
-- `bgm-agit-front` — 메인 도메인 프론트 (Vite, 포트 5173 예상). **자체로그인(폼) 주력 + 소셜은 기존 회원 전용** (2026-06-30 전환, 아래 "메인사이트 자체로그인 전환" 참고)
-- `bgm-agit-kml-front` — Next.js 15+ (`basePath: /record`). 여기선 **일반 폼 로그인** 사용
-- 같은 API·같은 DB·같은 JWT를 공유하는 SSO 구조
+| 앱 | 스택 | 경로 | 비고 |
+|---|---|---|---|
+| `bgm-agit-api` | Spring Boot 3.4.7 / Java 17 / JPA + QueryDSL / MySQL 8.0 | `/bgm-agit/**` | 8080 |
+| `bgm-agit-front` | Vite + React 18 + recoil | `/` | 5173. 메인 도메인 |
+| `bgm-agit-kml-front` | Next.js 16 + zustand | `basePath: /record` | 3000. 마작 기록(BML) |
+| `bgm-agit-murder-front` | Next.js 16 + Tailwind 4 | `basePath: /murder` | 3002. 머더미스터리 |
 
-### 패키지 재배치 (2026-07-08)
-`bgm-agit-api`에서 `kml`·`log`·`BgmAgitApiApplication`(루트)만 남기고 나머지 도메인 패키지 전부를 **`com.bgmagitapi.origin`** 아래로 이동 (advice, annotation, apiresponse, clocktower, config, controller, entity, event, file, lecture, murder, my, page, repository, security, service, slot, util, valid). 메인 클래스가 루트에 남아 컴포넌트/엔티티/리포지토리 스캔 기준(base = `com.bgmagitapi`)은 그대로라 origin/kml/log 전부 스캔됨. **아래 "자주 쓰는 경로"의 `com.bgmagitapi.<pkg>` 표기는 대부분 `com.bgmagitapi.origin.<pkg>`로 읽을 것** (kml/log 제외). 테스트도 non-kml 패키지는 origin으로 미러링 이동.
+같은 API·같은 DB·같은 JWT를 공유하는 SSO 구조. Next 앱은 도커 컨테이너(각자 `Dockerfile`, `ENV_FILE` build-arg로 `.env.staging`/`.env.production` 선택), 메인 프론트는 정적 빌드를 nginx로 서빙. nginx가 `/record`→3000, `/murder`→3002로 프록시(`proxy_pass`에 **후행 슬래시 금지** — 붙이면 basePath 프리픽스가 잘려 404).
 
-## 인증 설계
+### 패키지 구조 (bgm-agit-api)
+`com.bgmagitapi` 아래 **`origin`**(원래 bgm-agit 도메인 전부: advice, annotation, apiresponse, clocktower, config, controller, entity, event, file, lecture, murder, my, page, payment, repository, security, service, slot, util, valid) / **`kml`**(마작 기록·랭킹·대회) / **`log`** 3갈래. 메인 클래스만 루트에 있어 스캔 기준(`com.bgmagitapi`)은 셋 다 커버.
 
-### 로그인 경로 3가지
-| 경로 | 누가 쓰나 | 입력 |
-|---|---|---|
-| `POST /bgm-agit/kakao-login` | `bgm-agit-front` | 카카오 `code` (**기존 가입 회원만**, 신규 소셜 가입 차단) |
-| `POST /bgm-agit/naver-login` | `bgm-agit-front` | 네이버 `code` (**기존 가입 회원만**) |
-| `POST /bgm-agit/login` | `bgm-agit-front` | `{ nickname, password }` (자체로그인, MAHJONG) → `refreshToken_main` |
-| `POST /bgm-agit/next/login` | `bgm-agit-kml-front` | `{ nickname, password }` (자체로그인, MAHJONG) → `refreshToken_record` |
+---
 
-성공 시 네 경로 모두 동일한 JWT 액세스 토큰을 발급하지만, **리프레시 쿠키는 앱별로 분리**됨. 발급 로직은 `BgmAgitAuthenticationSuccessHandler`. **쿠키 이름은 요청 URI로 결정** (`/bgm-agit/next/login`이면 `refreshToken_record`, 그 외(`/login`, `/kakao-login`, `/naver-login`)는 `refreshToken_main`). 그래서 메인 폼로그인은 `/bgm-agit/login`(= `/next/login` 아님)으로 둬서 `refreshToken_main`을 받게 한 것.
+## 인증
 
-### 리프레시 토큰 쿠키 분리 (메인 ↔ /record 자동 로그인 차단)
-같은 도메인 하위 `/`(bgm-agit-front, 소셜 로그인)와 `/record`(kml-front, 폼 로그인)에서 서로 다른 쿠키를 사용해 한쪽 로그인이 다른 쪽으로 새지 않도록 함.
-- `/bgm-agit/next/login` 성공 → `refreshToken_record` 쿠키
-- `/bgm-agit/login`, `/bgm-agit/kakao-login`, `/bgm-agit/naver-login` 성공 → `refreshToken_main` 쿠키
-- 쿠키 이름 상수: `BgmAgitAuthenticationSuccessHandler.COOKIE_NAME_MAIN/_RECORD`
-- `POST/DELETE /bgm-agit/refresh?source=main|record` — `source` 쿼리 파라미터로 어느 쿠키를 읽고 다시 굽거나 지울지 결정 (`BgmAgitRefreshTokenController`). 디폴트는 `main`.
-- 프론트는 자기 쪽 source를 박아서 호출:
-  - `bgm-agit-front/src/utils/axiosInstance.ts` → `?source=main`
-  - `bgm-agit-kml-front/lib/axiosInstance.ts` → `?source=record`
-  - 로그아웃 DELETE도 동일 (`Sidebar.tsx`, `TopHeader.tsx`)
-- 결과: 카카오로 메인 로그인해도 `/record`에는 `refreshToken_record`가 없어서 자동 로그인이 안 되고, `/record`에서 폼 로그인해도 메인은 영향 없음. 기존 단일 `refreshToken` 쿠키는 더 이상 사용 안 함 (만료까지 무해하게 남아있음).
+### 로그인 경로 4가지
+| 경로 | 누가 쓰나 | 입력 | 리프레시 쿠키 |
+|---|---|---|---|
+| `POST /bgm-agit/login` | `bgm-agit-front` | `{ nickname, password }` (MAHJONG) | `refreshToken_main` |
+| `POST /bgm-agit/kakao-login` | `bgm-agit-front` | 카카오 `code` (**기존 회원만**) | `refreshToken_main` |
+| `POST /bgm-agit/naver-login` | `bgm-agit-front` | 네이버 `code` (**기존 회원만**) | `refreshToken_main` |
+| `POST /bgm-agit/next/login` | `bgm-agit-kml-front` | `{ nickname, password }` (MAHJONG) | `refreshToken_record` |
 
-### 소셜타입 네임스페이스 분리
+- 네 경로 모두 **동일한 JWT 액세스 토큰**을 발급. 발급 로직 `BgmAgitAuthenticationSuccessHandler`
+- **쿠키 이름은 요청 URI로 결정** — `/next/login`이면 `_record`, 그 외는 `_main`. 메인 폼로그인을 `/bgm-agit/login`(≠`/next/login`)에 둔 이유가 이것
+- 로그인 경로 매처가 **두 곳**(`BgmAgitAuthenticationFilter` 생성자 + `BgmAgitSecurityDsl.LOGIN_MATCHER`)이라 새 로그인 경로는 둘 다 추가해야 함. 로그인 프로세싱 URL은 필터가 인가 전에 가로채므로 permitAll 변경은 불필요
+
+### 리프레시 쿠키 분리 (메인 ↔ /record 자동 로그인 차단)
+- `POST/DELETE /bgm-agit/refresh?source=main|record` — `source`로 어느 쿠키를 읽고 다시 굽거나 지울지 결정(`BgmAgitRefreshTokenController`, 디폴트 `main`)
+- 상수: `BgmAgitAuthenticationSuccessHandler.COOKIE_NAME_MAIN/_RECORD`
+- 프론트는 자기 source를 박아 호출 — `bgm-agit-front/src/utils/axiosInstance.ts`→`main`, `bgm-agit-kml-front/lib/axiosInstance.ts`→`record`. 로그아웃 DELETE도 동일(`Sidebar.tsx`, `TopHeader.tsx`)
+- 결과: 카카오로 메인 로그인해도 `/record`는 자동 로그인 안 됨(반대도 마찬가지). 구 단일 `refreshToken` 쿠키는 미사용
+
+### 소셜타입 = 인증수단 축
 `BgmAgitSocialType`: `KAKAO / NAVER / GOOGLE / MAHJONG`
-- **`MAHJONG`** = 폼 가입(일반 로그인) 유저. `bgm-agit-kml-front`의 회원가입으로만 생성
-- 폼 로그인 시 닉네임 조회는 **반드시 `socialType = MAHJONG` 필터** 포함
-  - `findByBgmAgitMemberNicknameAndSocialType(nickname, MAHJONG)`
-  - `existsByBgmAgitMemberNicknameAndSocialType(nickname, MAHJONG)`
-- 이유: 소셜 유저와 닉네임이 우연히 겹쳐도 계정이 섞이지 않게
+- **`MAHJONG`** = 폼 가입(자체로그인) 유저
+- 폼 로그인 닉네임 조회는 **반드시 `socialType=MAHJONG` 필터** 포함 — `findByBgmAgitMemberNicknameAndSocialType` / `existsBy...AndSocialType`. 필터 없는 `findByBgmAgitMemberNickname`류는 **버그**(소셜 유저와 닉네임 충돌 시 계정 섞임)
+- 프론트 판별 신호: **`user.socialId`가 없으면 자체로그인**. 소셜 회원은 socialId 보유
 
 ### 회원가입 (폼)
-- 엔드포인트: `POST /bgm-agit/next/signup` (kml-front `/record/signup` + **메인 `bgm-agit-front` 회원가입 모달** 둘 다 이 엔드포인트 사용)
-- 입력: `{ name, nickname, phoneNo, password(백엔드 @Size min=4) }`
-- BCrypt 해시(`PasswordEncoder` Bean은 `security/config/PasswordConfig.java`)
-- `USER` role 자동 부여 (`BgmAgitMemberDetailRepositoryImpl.findByBgmAgitRoleName("USER")`)
-- 회원가입 시 알림톡 발행은 **주석 처리된 상태** (`SignupServiceImpl.signup` 내 `eventPublisher.publishEvent(...)` 주석)
-
-## 메인사이트 자체로그인 전환 (2026-06-30)
-
-`bgm-agit-front`를 소셜 전용에서 **자체로그인(폼) 주력**으로 전환. 신규 회원은 자체가입으로만 받고, 소셜은 기존 회원 로그인만 유지. 같은 MAHJONG 계정이 메인↔BML 양쪽에서 동일 자격증명으로 로그인됨(리프레시 쿠키는 `_main`/`_record`로 계속 분리).
+- `POST /bgm-agit/next/signup` — kml-front `/record/signup` + **메인 회원가입 모달** 둘 다 이 엔드포인트
+- 입력 `{ name, nickname, phoneNo, password(@Size min=4), mahjongUse }`. BCrypt(`security/config/PasswordConfig`), `USER` role 자동 부여
+- 가입 알림톡 발행은 **주석 처리 상태**(`SignupServiceImpl.signup`)
 
 ### 신규 소셜 가입 차단
-- `BgmAgitMemberDetailService.loadUserByUsername(SocialProfile)`: 소셜ID 미존재 시 신규 생성 대신 `SocialLoginNotAllowedException("소셜 로그인은 기존 가입 회원만 이용할 수 있습니다. 신규 회원은 자체 회원가입을 이용해 주세요.")` 발생. 기존 `registerNewMember`/`normalizePhone`/`socialTypeLabel`·`eventPublisher` 제거
-- `BgmAuthenticationFailureHandler`에 `SocialLoginNotAllowedException` 메시지 그대로 전달 분기 추가 (`DuplicateMemberException`과 동일 패턴. `BadCredentialsException`은 "인증에 실패하였습니다"로 덮이므로 메시지 노출하려면 전용 예외 필요)
+메인은 자체로그인 주력이고 소셜은 **기존 회원 로그인 전용**.
+- `BgmAgitMemberDetailService.loadUserByUsername(SocialProfile)`: 소셜ID 미존재 시 신규 생성 대신 `SocialLoginNotAllowedException` 발생
+- `BgmAuthenticationFailureHandler`에 해당 예외 메시지 그대로 전달하는 분기 있음. **`BadCredentialsException`은 "인증에 실패하였습니다"로 덮이므로 메시지를 노출하려면 전용 예외가 필요**
 
-### 메인 폼로그인 엔드포인트 `POST /bgm-agit/login`
-- 로그인 경로 매처가 **두 곳**: `BgmAgitAuthenticationFilter` 생성자 + `BgmAgitSecurityDsl.LOGIN_MATCHER`. 둘 다 추가해야 함
-- `BgmAgitAuthenticationFilter`: 상수 `MAIN_FORM_LOGIN_PATH = "/bgm-agit/login"`, 폼 분기 조건 `FORM_LOGIN_PATH || MAIN_FORM_LOGIN_PATH`. 인증은 기존 `FormAuthenticationProvider`(닉네임+비번, MAHJONG) 재사용
-- 성공 핸들러·permitAll 변경 불필요 (로그인 프로세싱 URL은 필터가 인가 전 가로챔)
+### 로그인 시 role 누락되면 USER 자동 부여
+`BgmAgitMemberDetailService.ensureDefaultRole(...)` — 소셜·폼 공통. DELETE 사고로 `BGM_AGIT_MEMBER_ROLE`가 날아간 유저도 로그인하면 복구됨.
 
-### 프론트 (bgm-agit-front)
-- `utils/axiosInstance.ts` `isAuthEndpoint`에 `/bgm-agit/login` 추가 (리프레시는 이미 `?source=main`)
-- `recoil/fetch.ts`: `useFormLoginPost`(`/bgm-agit/login`), `useSignupPost`(`/bgm-agit/next/signup`) 추가 (기존 소셜 `useLoginPost` 패턴 미러)
-- `components/LoginMoadl.tsx`: 자체로그인 폼 + 회원가입 토글(한 모달 내 mode 전환) + 소셜 버튼은 "기존 소셜 회원 로그인" 보조. **로그인 성공 직후 `window.location.reload()`** — `getMainMenu`가 서버에서 로그인 권한으로 메뉴 필터링하므로, 새로고침해야 권한 메뉴(마이페이지 등)가 보임. 카카오는 OAuth 왕복으로 자연 재조회됨
-- 자체로그인 판별 신호: **`user.socialId`가 없으면 MAHJONG(자체로그인)**. 소셜 회원은 socialId 보유
+### 권한 관리 `/role` (bgm-agit-front, `pages/Role.tsx`)
+**소셜 로그인 / 자체로그인 탭**으로 갈림.
+- 목록: 소셜 탭 `GET /bgm-agit/role`(notMahjong), 자체 탭 `GET /bgm-agit/mahjong-role`(MAHJONG). `useRoletFetch(page, kw, mahjong)` 3번째 인자로 분기
+- `BgmAgitRoleResponse`에 `mahjongUseStatus` 포함 — **`Projections.constructor`가 위치 기반이라 두 프로젝션을 항상 동시 수정**
+- 자체 탭: 닉네임 변경 `PUT /bgm-agit/mahjong-role/nickname`, 비번 변경 `PUT /bgm-agit/mahjong-role/password`(BCrypt, MAHJONG만). 입력 UI는 `confirmAlert.tsx`의 `showInputModal`
+- 소셜 탭 회원 삭제: `DELETE /bgm-agit/role/{memberId}`(`BgmAgitRoleServiceImpl.deleteSocialMember`). ADMIN 전용, `socialType!=MAHJONG`만. **하드 삭제** — `MEMBER_ROLE`·`REFRESH_TOKEN`을 먼저 지우고, 그 외 콘텐츠 자식이 남아 있으면 `DataIntegrityViolationException` catch → 안내. 모든 FK가 `ON DELETE RESTRICT`라 이 순서 필수
+- 회원 병합/삭제 SQL: `merge-duplicate-members.sql`의 `MERGE_MEMBER(keep, dup)` (시계탑 테이블 reassign 포함). 실행 전 information_schema FK 점검
+- 권한 변경(kml-front `/role`)은 `PUT /bgm-agit/role` 재사용. roleId **1=관리자, 4=멘토, 2=유저**
 
-### KML 연동 (의도적으로 유지)
-- 메인 회원가입도 `/next/signup`을 쓰므로 `kmlUserClient.findOrRegisterKmlIdByNickname`로 KML 조회·자동등록 호출됨. 계정 공유 구조상 무해하다고 판단해 **그대로 둠**(메인 가입만 빼려면 signup 요청에 skipKml 플래그 추가)
+### 함정: `ApiResponse(403)`은 HTTP 200
+`ApiResponse(code, success, message)`는 컨트롤러가 평범히 반환하므로 **항상 HTTP 200**. 프론트 `useRequest`는 2xx면 `onSuccess`를 타서 403 본문에도 "성공" 토스트가 뜬다. 권한 차단은 **백엔드 enforcement + 프론트 UI 가드(버튼 숨김/제출 가드)** 둘 다 필요.
 
-### 함정: ApiResponse(403) 은 HTTP 200
-`ApiResponse(code, success, message)`는 컨트롤러에서 평범히 반환되어 **항상 HTTP 200**. 프론트 `useRequest`는 2xx면 `onSuccess` 실행 → 403 본문이어도 "성공" 토스트가 뜨는 false-success. 권한/타입 차단은 백엔드 enforcement + **프론트 UI 가드(버튼 숨김/제출 가드)** 둘 다 필요.
+### 함정: `CustomException`의 상태코드
+`ExceptionController`가 `e.getStatus()`를 따른다(리프레시 토큰류 401, `ReservationConflictException` 409). **전부 401로 내보내면 프론트 axios 인터셉터가 토큰 갱신 후 요청을 자동 재시도**하므로 결제 승인 같은 건 두 번 날아간다.
 
-## 시계탑/머더 자체로그인 전용화 (2026-06-30)
+---
 
-### 회원 검색 MAHJONG만
-- `/bgm-agit/all-members`(`BgmAgitPlayRecordServiceImpl.searchMembers`) 필터를 `KAKAO/NAVER` → **`MAHJONG`**로 반전. 시계탑(`ClockTowerRecordDetail` 인라인 검색)·머더(`MemberMultiSelect`)가 공유하는 엔드포인트라 양쪽 드롭다운 동시 적용
-- **(2026-06-30 추가)** 여기에 **`mahjongUseStatus='Y'`** 조건도 더해 보드게임 전용 가입자 제외. 아래 "마작(BML) 이용 회원 분리" 참고
+## 회원 축: 마작(BML) 이용 여부
 
-### 시계탑 기록 등록·수정·삭제 = 자체로그인 전용 (조회는 누구나)
-- 백엔드 `BgmAgitClockTowerRecordServiceImpl`: `createRecord`는 writer socialType이 MAHJONG 아니면 403. `modify/deleteRecord`는 `requireClockTowerWriter(memberId, roles)` 가드 — 비MAHJONG 403, **관리자는 모더레이션 위해 예외 허용**
-- 프론트: `ClockTowerRecords` "기록하기" 버튼·`ClockTowerRecordDetail` 수정/삭제 버튼·`onSubmit`을 `canWrite = isSelfLogin || isAdmin`로 가드 (`isSelfLogin = !!user && !user.socialId`)
-
-## 마이페이지 정리 (2026-06-30)
-- `MyPageModal`에서 **EMAIL·마작기록 사용 여부 제거** (자체로그인 회원정보엔 불필요). 남는 항목: 가입일자/이름/닉네임/휴대폰번호
-- ~~`mahjongUseStatus` 컬럼 전부 제거 / 드롭 예정~~ → **번복됨**. 아래 "마작(BML) 이용 회원 분리" 참고. `BGM_AGIT_MEMBER_MAHJONG_USE_STATUS` 컬럼·엔티티 필드 **부활**(의미 재정의), 마이페이지 응답에도 `mahjongUseStatus` 재노출.
-
-## 마작(BML) 이용 회원 분리 + KML 등록 defer (2026-06-30)
-
-메인 자체로그인 전환으로 메인(보드게임) 가입자도 BML 가입자도 모두 `socialType=MAHJONG`가 되면서 (1) 보드게임 가입자까지 가입 시 KML 등록되고 (2) 마작 회원 검색에 보드게임 가입자가 섞이는 문제 발생. **`socialType`(인증수단)과 별개로 "마작 이용 회원 여부" 축**을 둠.
+메인 자체로그인 전환으로 보드게임 가입자도 BML 가입자도 전부 `socialType=MAHJONG`이 되면서, **인증수단과 별개로 "마작 이용 회원" 축**을 뒀다.
 
 - 컬럼/필드: `BGM_AGIT_MEMBER.BGM_AGIT_MEMBER_MAHJONG_USE_STATUS` / `BgmAgitMember.bgmAgitMemberMahjongUseStatus`
-  - `'Y'` = 마작/BML 이용 회원 → KML 등록 대상 + 마작/시계탑/머더 검색 노출
+  - `'Y'` = 마작/BML 회원 → **KML 등록 대상 + 마작/시계탑/머더 검색 노출**
   - `'N'`/`null` = 보드게임 등 일반 가입자 → KML 미등록 + 검색 제외
-- **가입 분기**: `SignupRequest.mahjongUse`(boolean, 기본 false). 폼 생성자 `BgmAgitMember(..., kmlId, mahjongUse)`.
-  - `bgm-agit-front` 가입 → `mahjongUse:false` (보드게임). `SignupServiceImpl`이 KML 호출 생략, `kml_synk=null`(스케줄러가 `'N'`만 재시도하므로 건너뜀)
-  - `bgm-agit-kml-front` 가입 → `mahjongUse:true` (기존처럼 즉시 KML 등록)
-- **전환(신청)**: 메인 마이페이지 "마작 기록 이용 신청" → `POST /bgm-agit/mahjong-use`(`BgmAgitMyPageController`/`...ServiceImpl.applyMahjongUse`). `BgmAgitMember.enableMahjongUse(kmlId)`로 `'Y'` 전환 + KML 등록(실패 시 `synk='N'`→스케줄러 재시도). 멱등.
-- **검색 필터에 `mahjongUseStatus='Y'` 추가**: `YakumanTypeRepositoryImpl.getMembers()`(기록 입력 드롭다운), `BgmAgitMemberRepository.searchMembersBySocialTypes`(시계탑/머더 `/all-members`)
-- 프론트 신청 버튼: `bgm-agit-front/src/components/MyPageModal.tsx` (`isSelfLogin && mahjongUseStatus!=='Y'`일 때 노출)
+- 가입 분기: `SignupRequest.mahjongUse`(기본 false)
+  - `bgm-agit-front` 가입 → `false`. KML 호출 생략, `kml_synk=null`(스케줄러는 `'N'`만 재시도하므로 건너뜀)
+  - `bgm-agit-kml-front` 가입 → `true`. 즉시 KML 등록
+- 전환(신청): 메인 마이페이지 "마작 기록 이용 신청" → `POST /bgm-agit/mahjong-use`(`BgmAgitMyPageServiceImpl.applyMahjongUse`) → `enableMahjongUse(kmlId)`로 `'Y'` + KML 등록(실패 시 `synk='N'`→스케줄러 재시도). 멱등. 버튼은 `MyPageModal.tsx`에서 `isSelfLogin && mahjongUseStatus!=='Y'`일 때 노출
+- **검색 필터 두 곳에 `mahjongUseStatus='Y'` 적용**: `YakumanTypeRepositoryImpl.getMembers()`(기록 입력 드롭다운), `BgmAgitMemberRepository.searchMembersBySocialTypes`(`/bgm-agit/all-members` — 시계탑·머더 공용)
 
-## 권한 관리(/role, bgm-agit-front) — 소셜/자체 탭 + 회원 관리 (2026-06-30)
+### 시계탑 기록 = 자체로그인 전용 (조회는 누구나)
+- `BgmAgitClockTowerRecordServiceImpl`: `createRecord`는 writer가 MAHJONG 아니면 403. `modify/deleteRecord`는 `requireClockTowerWriter(memberId, roles)` — 비MAHJONG 403, **관리자는 모더레이션 위해 예외 허용**
+- 프론트 가드: `canWrite = isSelfLogin || isAdmin` (`ClockTowerRecords` 기록하기 버튼, `ClockTowerRecordDetail` 수정/삭제·`onSubmit`)
 
-`bgm-agit-front` `/role`(`pages/Role.tsx`)에 **소셜 로그인 / 자체로그인 탭** 추가. 탭에 따라 다른 엔드포인트·기능.
-- 목록: 소셜 탭 `GET /bgm-agit/role`(notMahjong), 자체 탭 `GET /bgm-agit/mahjong-role`(MAHJONG). `useRoletFetch(page, kw, mahjong)`의 3번째 인자로 분기
-- `BgmAgitRoleResponse`에 `mahjongUseStatus` 추가(두 프로젝션 모두 인자 추가 — `Projections.constructor` 위치 기반이라 동시 수정 필수). 자체 탭에 "마작 연동(연동/미연동)" 컬럼 표시
-- **자체 탭**: 닉네임 변경(`PUT /bgm-agit/mahjong-role/nickname`)·비밀번호 변경(`PUT /bgm-agit/mahjong-role/password`) — 기존 BML 엔드포인트 재사용. 입력은 `confirmAlert.tsx`의 `showInputModal`
-- **소셜 탭 회원 삭제**: `DELETE /bgm-agit/role/{memberId}`(`BgmAgitRoleServiceImpl.deleteSocialMember`). 관리자 전용, `socialType!=MAHJONG`만. **하드 삭제(자식 없을 때만)** — 회원의 `MEMBER_ROLE`·`REFRESH_TOKEN`은 먼저 삭제, 그 외 콘텐츠 자식(예약/문의 등)이 있으면 `DataIntegrityViolationException` catch → "정리 후 삭제" 안내. 모든 FK가 `ON DELETE RESTRICT`라 회원 직삭제는 항상 실패하므로 이 순서 필수
-- **회원 병합/삭제 SQL**: `merge-duplicate-members.sql`의 `MERGE_MEMBER(keep, dup)` 사용. 시계탑 테이블(`CLOCKTOWER_RECORD/PARTICIPANT`)까지 reassign 포함하도록 보완됨. 실행 전 [0] information_schema FK 점검 필수
-- 마이페이지 조회(`getMyPage`)는 socialType 무관(누구나 노출). socialType 분기는 `changeMyPassword`에만 있고 **MAHJONG만 비번 변경 가능**(소셜은 비번 없음)
+### 마이페이지
+노출 항목: 가입일자/이름/닉네임/휴대폰번호 + `mahjongUseStatus` + 알림톡 ON/OFF. (EMAIL은 제거됨)
+조회 `getMyPage`는 socialType 무관. **비밀번호 변경만 MAHJONG 전용**(소셜은 비번이 없음).
 
-### 보호막: 로그인 시 role 누락되면 USER 자동 부여
-`BgmAgitMemberDetailService.ensureDefaultRole(BgmAgitMember)` — 소셜·폼 두 경로 공통 호출.
-DELETE 사고로 `BGM_AGIT_MEMBER_ROLE`가 날아간 기존 유저도 로그인하면 자연 복구됨.
+---
+
+## 예약
+
+### 데이터 모델
+- 예약 대상(룸/대탁)은 **`BGM_AGIT_IMAGE` 행**이다. `category=ROOM|MAHJONG`, `link=/detail/room|/detail/mahjongRental`, `BGM_AGIT_MAIN_MENU_ID=3`(프론트 `labelGb 3`)
+- 한 예약 = 시간 슬롯 여러 행이 **`BGM_AGIT_RESERVATION_NO`(그룹키)** 로 묶임. 예약 PK가 아니라 그룹키라 **중복값**
+- 상태는 승인여부(`..._APPROVAL_STATUS` Y/N) + 취소여부(`..._CANCEL_STATUS` Y/N) 두 컬럼
+- **`BGM_AGIT_IMAGE_USE_STATUS`**(varchar(1), default 'Y') — 운영 종료 항목은 삭제(FK RESTRICT로 예약 이력에 물림) 대신 `'N'`으로 숨김. 필터는 `BgmAgitImageRepositoryImpl.notHidden()`(null도 노출 취급)이 `getMainMenuImage`/`getDetailImage`에 적용, 직접 호출 차단은 `getReservation`/`createReservation`의 `BgmAgitImage.isHidden()` 체크
+  - 현재 숨김: 대탁 JP류(id 34·35, 실제로는 F Room 스왑 운영), **M Room(id 19)**
+  - **오픈 공간 M-1/M-2/M-3**(id 83·84·85, 5~7명)이 M Room 대체. `category=ROOM`이라 1시간 슬롯·예약금 1만원 자동 적용
+
+### 예약 정책은 서버가 유일한 출처 (프론트 magic id 금지)
+`SlotSchedule`(origin/util)에 전부 모임: `of()`(open/close/interval/durationHours), `slots()`, `maxSelectableSlots()`, `resolveReservationType()`, `resolveDepositAmount()`.
+- **G Room** = 6시간 간격·이용 5시간(13~18, 19~00) / **MAHJONG** = 3시간 / 그 외 = 1시간
+- `GET /bgm-agit/reservation` 응답에 `slotRanges[{start,end}]`, `maxSelectableSlots`(G룸 1, 그 외 null), `reservationType`(ROOM|DELEGATE_PLAY) 포함 → `ReservationCalendar.tsx`가 그대로 그림
+- `createReservation`은 **클라이언트가 보낸 예약타입을 무시**하고 이미지 카테고리로 결정
+- 수요일은 무인운영이라 예약 불가
+
+### 합쳐 예약 (M-1 + M-2 …)
+행마다 이미지 FK가 따로 있어서, 테이블 변경 없이 "같은 예약번호에 이미지가 다른 행"으로 구현.
+- 조회 `GET /bgm-agit/reservation?...&ids=84,85` — 시간대는 **전 항목 교집합**, `label`은 `"M-1, M-2"`, `minPeople`=최소값들 중 최대, `maxPeople`=합산
+- 등록 `POST /bgm-agit/reservation`에 `bgmAgitImageIds: [84,85]` — 항목별 충돌 검증 후 **같은 예약번호**로 행 생성
+- 조합 검증(`loadReservableImages`): 같은 카테고리 + 같은 메뉴링크 + `maxSelectableSlots == null`(하루 1팀 제한인 G룸은 불가). 숨김 항목 거부
+- **예약금은 항목 수만큼 합산** → M-1+M-2 = 2만원
+- 프론트 `RESERVATION_COMBINABLE_GROUPS`(`[['M-1','M-2','M-3']]`) → `ImageGrid`가 `combinable` prop 전달, 캘린더 상단 토글
+
+> **함정: 예약번호 단건 조회는 항목 수만큼 행이 늘어난다.** `findBizTalkCancel`이 `fetchOne`이라 `NonUniqueResultException`으로 관리자 확정·결제 승인이 터진 적 있음 → `fetch()` 후 라벨만 합쳐 조립하도록 수정됨. 예약번호로 단건을 가정하는 코드를 새로 쓸 때 같은 함정 주의.
+
+### 코멘트 / 이용 방식 (프론트 하드코딩 맵)
+`bgm-agit-front/src/config/reservationComments.ts` — **라벨을 키로** 쓰는 맵 3종. DB 컬럼·알림톡 템플릿 변경 없이 요청사항 문자열에 얹는 방식.
+- `RESERVATION_COMMENTS` — 예약 카드·캘린더 안내 문구 (F Room "대탁룸(JP-COLOR)으로 변경 가능", M-1~3 "룸이 아닌 오픈된 공간입니다.")
+- `RESERVATION_OPTIONS` — 예약 확인 모달 체크박스. 선택 시 요청사항 맨 앞에 `[요청 옵션] …`
+- `RESERVATION_USE_MODES` — 캘린더 시간대 **위** 토글(`'F Room': ['일반룸','대탁룸(JP-COLOR)']`, 첫 값 기본). 선택 시 `[이용 방식] …`
+- 합쳐 예약이면 서버 label이 `"M-1, M-2"`로 오므로 프론트는 `label.split(',')[0]`(기준 라벨)로 조회
+
+### 취소 규칙
+- 사용자: 본인 예약만 + **예약일 전날까지**(`validateUserCancelableReservation`)
+- 관리자: 제한 없음. 단 현황판은 **지난 예약 확정·취소 불가**(`canManage = date >= todayYmd()`)
+- 사용자·관리자 모두 `modifyReservation` 한 곳으로 모여서 `cancelStatus='Y'`면 결제 환불이 함께 돈다(아래 결제 참고)
+
+### 관리자 예약 현황판 `/reservation-board`
+`bgm-agit-front/src/pages/ReservationBoard.tsx`. 예약내역(10건 페이징)으로는 "오늘 어느 방이 몇 시에 차 있나"가 안 보여서 신설.
+- **세로축 = 시간, 가로축 = 장소** — 초안은 가로축이 시간이었는데 영업시간이 13:00~익일 02:00라 모바일에서 항상 가로 스크롤이 생겨 전치함. 전치만으로는 룸이 8~10개일 때 여전해서 **룸 그룹 탭**을 같이 넣어야 해결됨
+- 탭 분류는 **카테고리 우선 → 라벨 첫 알파벳**: `MAHJONG` 카테고리(라벨이 한글이라 알파벳 규칙으로 안 갈림)→`마작탁`, `ROOM`→`ROOM_GROUPS`(C·D·E / B·F·G / M), 나머지→`기타`. 그날 예약 있는 그룹만 노출
+- 모바일 기본은 **목록(아젠다) 뷰** — 1시간 블록(48px)에 이름·시간·인원 3줄이 안 들어감. `viewMode`가 `null`이면 화면 크기에 맡기고(`isMobile ? 'list' : 'grid'`), 토글하면 그 선택을 따름
+- 색상: **바탕색 = 룸**, 상태는 채움으로 — 확정=꽉 참 / 대기=점선+옅은 배경 / 취소=회색+취소선. `ROOM_PALETTE`(10색)를 **필터·탭 적용 전** 순서로 배정해 필터를 바꿔도 색이 안 흔들림. `blockStyle()`이 inline style로 주입
+- 백엔드 `GET /bgm-agit/reservation/board?date=YYYY-MM-DD` → `getReservationBoard(date, roles)`. 쿼리 `findReservationsByDate`(페이징 없음, member/image fetch join), DTO `AdminReservationBoardResponse`, 영수증은 `findDoneReceiptUrlsByReservationNos` 배치
+- **시간축 분값 규약 — 06시 이전은 +1440.** G룸(19:00~00:00)·마작대여(23:00~02:00)처럼 마감이 익일로 넘어가는 슬롯 때문. 프론트도 이 규약 그대로 사용
+- **권한 2중** — `BgmAgitAuthorizationManager`는 URL_RESOURCES에 없는 경로를 **기본 permit**으로 통과시킨다. 이 API는 회원 연락처가 나가므로 서비스단 `isAdmin(roles)` 검사 + URL 레벨 ADMIN 매핑 둘 다 필요(**매핑 INSERT 후 앱 재시작** — 로딩이 `@PostConstruct` 1회)
+- 메뉴 등록은 `/menuManage`에서. `getMainMenu`가 **subMenu 없는 root를 걸러내므로** 반드시 기존 부모 메뉴의 하위로
+
+### 함정: `toISOString()` 날짜 밀림
+`Date.toISOString()`은 UTC 변환이라 **KST 자정 Date가 하루 앞으로 밀린다**(`ReservationList` 검색이 실제로 이 버그였음). 서버로 보내는 날짜는 항상 `src/utils/date.ts`의 `toLocalYmd()`(`toLocaleDateString('sv-SE')` 기반) 사용. 같은 파일에 `todayYmd`/`addDaysYmd`/`formatYmdWithWeekday`.
+
+### TODO: `BGM_AGIT_ROOM` 테이블 분리
+예약 대상 메타(라벨/인원/슬롯정책/예약금/코멘트/옵션/노출여부)를 이미지 테이블에 얹은 게 근본 원인. 떼내면 프론트 하드코딩 맵과 라벨 문자열 비교(`"G Room".equals(...)`)도 같이 사라진다.
+**예약 2테이블 정규화**(부모=예약묶음 + 자식=슬롯행)도 정석이지만, 운영 데이터 이관 + 생성/조회/취소/알림톡 대수술이라 보류.
+
+---
+
+## 예약금 결제 (토스페이먼츠)
+
+### 모듈·테이블
+- 패키지 `com.bgmagitapi.origin.payment` — entity / repository / service / controller / schedule
+- 테이블 `BGM_AGIT_PAYMENT`: `BGM_AGIT_MEMBER_ID`(FK, RESTRICT), `BGM_AGIT_RESERVATION_NO`, `BGM_AGIT_ORDER_NO`(토스 orderId, 서버 발급), `BGM_AGIT_PAYMENT_KEY`, `..._AMOUNT`, `..._STATUS`, `..._TYPE`(토스 method), 승인/취소일시, `..._CANCEL_AMOUNT`/`_REASON`, `..._RECEIPT_URL`, `..._FAIL_REASON`, `REGIST_DATE`/`MODIFY_DATE`. varchar 기본 500
+- **`BGM_AGIT_ORDER_NO`만 UNIQUE.** `BGM_AGIT_RESERVATION_NO`엔 **UNIQUE 걸지 말 것** — 재결제 시 같은 예약번호로 새 행이 들어가서 터진다. "그룹당 유효 결제 1건"은 서비스단 관리
+- 예약↔결제는 논리 연결(payment가 `RESERVATION_NO` 보관). 그룹키라 물리 FK 불가
+- `PaymentStatus`: `READY`(주문 생성) / `DONE`(승인) / `CANCELED`(환불) / `ABORTED`(실패)
+
+### 흐름
+1. 예약 생성(대기 N/N) → 예약내역(`ReservationList.tsx`) 대기행의 **`예약금 결제`** 버튼
+2. `POST /bgm-agit/payments/order { reservationNo }` → `BgmAgitReservationService.createPaymentOrder`가 소유자·취소·확정 검증 + **금액 서버 계산** 후 공통 `createOrder` 위임 → `{ orderId, amount, orderName, clientKey }`
+3. 토스 위젯(`components/payment/PaymentCheckoutModal.tsx`) → 성공 시 `/payment/success`로 리다이렉트
+4. `POST /bgm-agit/payments/confirm` → 금액 대조·멱등 → 토스 승인 → **예약 `approvalStatus='Y'` 자동 확정 + 확정 알림톡**
+5. 취소(`modifyReservation`, `cancelStatus='Y'`) → DONE 결제가 있으면 **토스 전액 취소로 자동 환불**
+
+- **예약금**: `SlotSchedule.resolveDepositAmount(category, label)` — **전 항목 10,000원 정액**. 슬롯 수 무관, 합쳐 예약이면 항목 수만큼 합산(M-1+M-2+M-3 = 3만원). M Room 3만원 예외는 M-1/M-2/M-3 분리와 함께 제거됨. 약관(`Terms.tsx`)·환불정책(`RefundPolicy.tsx`) 문구도 1만원
+- **향후 인원수 기준 전환 예정** — `bgmAgitReservationPeople`(예약 생성 시 이미 수집)로 인원 x 단가 계산. `resolveDepositAmount` 시그니처에 인원 인자 추가 + 약관·환불정책 문구 + 알림톡 템플릿(재심사) 동반 수정 필요. 토스페이먼츠 가맹점 재심사는 불필요(금액 산정 방식 변경은 심사 대상 아님)
+- 잔여 이용요금은 현장 결제
+- `payment.live`(yml) — `false`면 결제행만 처리하고 **예약 자동확정을 하지 않는다**(심사 기간 공짜 예약 방지). staging·real 모두 현재 `true`
+
+### 동시성·정합성 방어
+- **승인 직전 슬롯 재검증**(`PaymentServiceImpl.validateReservationSlotAvailable`) — 대기 예약은 서로의 자리를 막지 않아서, 같은 시간대를 여럿이 대기로 들고 있다가 각자 결제하면 전부 확정되는 이중 예약이 가능했다. 확정건과 겹치면 **토스 승인(=과금) 전에** 409로 차단. 쿼리 `findConfirmedReservations(imageIds, date, excludeReservationNo)`
+- **승인 직렬화**(`PaymentConfirmExecutor`) — 재검증만으론 동시 통과 창이 남아 `ReentrantLock`(fair)으로 승인 전체를 한 줄로 세움. **서버 인스턴스 1대 전제**(다중화하면 DB/분산 락 필요)
+  - ⚠️ **`@Transactional` 메서드 안에 `synchronized`를 걸면 무의미** — 커밋은 프록시가 메서드 반환 후에 하므로 락이 먼저 풀리고, 뒤 스레드가 미커밋 확정건을 못 본다. 그래서 락을 트랜잭션 **바깥** 컴포넌트에 두고 컨트롤러가 그걸 거친다
+- **가상계좌 차단** — 승인 응답 `status`가 `DONE`이 아니면(가상계좌는 200 + `WAITING_FOR_DEPOSIT`) 발급을 즉시 취소하고 실패 처리. 입금 웹훅이 없어 나중에 확정을 걸 수단이 없기 때문. **근본 차단은 토스 상점관리자에서 가상계좌 수단 끄기**
+- **타임아웃**(`TossPaymentsClient`) — connect 5초 / read 30초. read를 짧게 잡으면 "토스는 승인했는데 우리는 실패 처리"라는 최악의 불일치가 늘어나므로 넉넉히 둠. 전역 `spring.http.client.*` 대신 이 클라이언트에만 적용(KML·비즈톡·소셜이 같은 빌더를 공유)
+
+### 정리 스케줄러
+`BgmAgitPaymentSchedule` — 매일 **01:00 KST**, `READY` + `REGIST_DATE < 지금-1일` 행 삭제(`deleteAbandonedOrders`). 결제 버튼을 누를 때마다 주문행이 생기는데 대부분 승인까지 안 가서 쌓인다.
+- **하루 여유가 핵심** — 진행 중인 주문을 지우면 confirm이 "존재하지 않는 주문"으로 실패해 토스엔 승인, 우리 DB엔 근거 없음이 된다
+- `DONE`/`CANCELED`는 결제 이력이라 절대 삭제하지 않음
+- S3 임시파일 정리(`BgmAgitFileSchedule`)와 같은 시각이지만 **별도 컴포넌트** — 그쪽은 try/catch가 없어 한쪽 실패가 다른 쪽을 막지 않게
+
+### 알려진 한계 (미해결)
+- **`ABORTED`가 DB에 안 쌓인다** — `markAborted()` 직후 예외를 다시 던져서 트랜잭션이 롤백된다. 결제 실패 이력이 `BGM_AGIT_PAYMENT_FAIL_REASON`에 전혀 안 남고 결제행은 `READY`로 남음. 고치려면 실패 기록만 `@Transactional(REQUIRES_NEW)`로 분리(그러면 `ABORTED`도 정리 대상에 추가해야 함. `markDone`이 failReason을 null로 미는 것도 같이 검토)
+- **외부 호출이 트랜잭션 안에 있음** — 토스 승인/취소 성공 후 뒤쪽에서 예외가 나면 롤백되어 "돈은 움직였는데 DB엔 없음". 반대로 토스가 4xx면(예: 상점관리자에서 직접 환불해 `ALREADY_CANCELED_PAYMENT`) 예약 취소 자체가 막힌다
+- **DONE 결제가 2건 이상이면 최신 1건만 환불**(`findLatestPaymentByReservationNoAndStatus`가 `fetchFirst`)
+- **노쇼/당일취소 위약금 없음** — 관리자가 취소하면 전액 환불. 약관의 "당일 취소·노쇼 환불 불가"는 사용자 취소가 전날까지만 가능해서 성립하는 것
+- **관리자 수동 확정에는 슬롯 충돌 재검증이 없음**(`modifyReservation`의 `approvalStatus='Y'`)
+
+### 키·심사 메모
+- 결제위젯이므로 **위젯용 키**(`test_gck_`/`test_gsk_`, `live_gck_`/`live_gsk_`). `test_ck_`/`test_sk_`(API 개별 연동 키)를 위젯에 쓰면 `INVALID_API_KEY`
+- yml `toss.client-key/secret-key/confirm-url/cancel-url`, 값은 `.env`/GitHub Secrets. clientKey는 주문 응답으로 내려주므로 프론트 env 불필요
+- 정책 페이지: `/terms`(`pages/Terms.tsx`), `/refund-policy`(`pages/RefundPolicy.tsx`), `/privacy`
+- 푸터(`Footer.tsx`) 사업자정보 — 보드게임카페BGM(비지엠)아지트 / 대표 박범후 / 896-17-02241 / 대전광역시 서구 문정로 62, 3층 일부호(탄방동, 프라임빌딩) / 0507-1445-3503
+
+---
 
 ## KML 연동
 
-### 설정 (application.yml)
+### 설정
 ```yaml
 kml:
-  url: https://kml.or.kr/stat52     # stat 번호 52 = bgm-agit
+  url: https://kml.or.kr/stat52     # stat 52 = bgm-agit
   api:
-    key: ${KML_API_KEY}                    # x-api-key 헤더 값
+    key: ${KML_API_KEY}             # x-api-key 헤더
 ```
 
-### KML API (bgm-agit 기준)
-- `GET /api_users.php` — 전체 사용자 리스트 반환 `{status, count, users: [{id, nick}]}`
-- `POST /api_user_register.php` — 신규 사용자 등록 `{nick}` → `{status, user_id, nick, message}` (409면 이미 존재)
-- `POST /api_record_submit.php` — 기록 전송 `{game_length, common_point, players[4]{user_id, point, wind}}` → `{status, record_id, sum_check}`
-- `POST /api_record_modify.php` — 기록 수정 `{modify_id, game_length, common_point, players[4]}` → `{status, modify_id, sum_check}` (404면 대상 미존재)
-- `POST /api_record_del.php` — 기록 삭제 `{record_id}` → `{status, message, record_id}` (404면 없거나 이미 삭제됨)
-- `POST /api_record_restore.php` — 기록 복구 `{record_id}` → `{status, message, record_id}` (404면 없거나 이미 정상)
-- 모두 `x-api-key` 헤더 필요
-- (역만 del/restore API도 KML에 존재하나 역만은 애초에 KML 전송 파이프라인이 없어 미연동 — `api_user_guide.md` 참고)
-- 매핑: `MatchsWind`/`Wind` enum의 `ordinal()`이 그대로 0=동/1=남/2=서/3=북. `point`는 `recordScore` (정수). `common_point`는 현재 추적하지 않아 0 고정
+### API (모두 `x-api-key` 필요)
+| 엔드포인트 | 바디 | 응답 |
+|---|---|---|
+| `GET /api_users.php` | — | `{status, count, users:[{id, nick}]}` |
+| `POST /api_user_register.php` | `{nick}` | `{status, user_id, nick, message}` (409=이미 존재) |
+| `POST /api_record_submit.php` | `{game_length, common_point, players[4]{user_id, point, wind}}` | `{status, record_id, sum_check}` |
+| `POST /api_record_modify.php` | `{modify_id, …}` | `{status, modify_id, sum_check}` (404=대상 없음) |
+| `POST /api_record_del.php` | `{record_id}` | `{status, message, record_id}` |
+| `POST /api_record_restore.php` | `{record_id}` | `{status, message, record_id}` |
 
-### 기록 송신 (등록) 흐름
-- `RecordServiceImpl.createRecord` 마지막에 `KmlRecordSubmitEvent` 발행 (`publishKmlSubmitEvent`) — 이벤트에 `matchsId` 포함
-- 4명 중 한 명이라도 `bgmAgitMemberKmlId == null`이면 송신 자체를 생략 (KML이 4명 정확히 요구하기 때문)
-- `KmlRecordEventListener.onRecordSubmit` (`@Async("bizTalkExecutor")`, `@TransactionalEventListener AFTER_COMMIT`) → `KmlRecordClient.submit(...)` → 응답의 `record_id` 추출 → `KmlMatchsLinker.linkKmlMatchsId(matchsId, recordId)` 별도 트랜잭션에서 `BGM_AGIT_MATCHS.BGM_AGIT_MATCHS_KML_ID` 저장
-- 송신 실패는 모두 catch 후 `log.warn`만. **DB 저장 트랜잭션과 분리**되어 있어 KML이 에러나도 우리쪽 기록은 정상 저장됨
+- 매핑: `MatchsWind`/`Wind` enum의 `ordinal()`이 그대로 0=동/1=남/2=서/3=북. `point`는 `recordScore`(정수). `common_point`는 추적 안 해서 0 고정
+- 역만 del/restore API도 KML엔 있으나 역만은 전송 파이프라인 자체가 없어 미연동(`api_user_guide.md`)
 
-### 기록 송신 (수정) 흐름
-- `RecordServiceImpl.updateRecord` 마지막에 `publishKmlModifyEvent` — `matchs.matchsKmlId`가 null이면 스킵 (등록 미송신 게임은 수정도 송신 안 함, fallback submit 안 함)
-- 4명 중 KML 미연동 회원 있으면 스킵 (등록과 동일)
-- `KmlRecordEventListener.onRecordModify` → `KmlRecordClient.modify(...)`
-- 응답은 따로 저장하지 않음 (`modifyId`는 이미 알고 있음)
-### 기록 송신 (삭제/복구) 흐름 (2026-07-16 추가)
-- `RecordServiceImpl.removeRecord` 마지막에 `publishKmlDeleteEvent(matchs)`, `restoreRecord` 마지막에 `publishKmlRestoreEvent(matchs)` — 둘 다 `matchs.matchsKmlId`가 null이면 스킵 (등록 미송신 게임)
-- 바디는 `{record_id: matchsKmlId}` 하나뿐 (플레이어 페이로드 없음). 4명 KML 연동 여부는 등록 시점에 이미 걸러짐(matchsKmlId 유무로 판별)
-- `KmlRecordEventListener.onRecordDelete/onRecordRestore` → `KmlRecordClient.delete(...)`/`restore(...)`. 응답은 로그만, 실패는 catch+log (DB 트랜잭션과 분리)
-- 이벤트 DTO: `KmlRecordDeleteEvent`/`KmlRecordRestoreEvent` (`origin/event/dto/`)
+### 기록 송신
+전부 `RecordServiceImpl`이 이벤트를 발행하고 `KmlRecordEventListener`(`@Async("bizTalkExecutor")` + `@TransactionalEventListener(AFTER_COMMIT)`)가 처리. **DB 트랜잭션과 분리**돼 있어 KML이 죽어도 우리 기록은 정상 저장되고, 실패는 catch 후 `log.warn`만.
+
+| 흐름 | 발행 | 스킵 조건 | 후처리 |
+|---|---|---|---|
+| 등록 | `createRecord` → `KmlRecordSubmitEvent` | 4명 중 하나라도 `kmlId == null` | 응답 `record_id`를 `KmlMatchsLinker`가 별도 트랜잭션에서 `BGM_AGIT_MATCHS_KML_ID`에 저장 |
+| 수정 | `updateRecord` → modify | `matchsKmlId == null` (fallback submit 안 함) + 미연동 회원 | 없음 |
+| 삭제/복구 | `removeRecord`/`restoreRecord` | `matchsKmlId == null` | 없음. 바디는 `{record_id}` 하나뿐 |
 
 ### 회원-KML 연결
-- 회원가입 시 닉네임으로 KML 조회·자동 등록(`KmlUserClient.findOrRegisterKmlIdByNickname`) — **단, `mahjongUse=true`(BML 가입) 일 때만**. 메인(보드게임) 가입은 KML 호출 생략. "마작(BML) 이용 회원 분리" 참고
-- 단건 매칭 → `BGM_AGIT_MEMBER.BGM_AGIT_MEMBER_KML_ID` 저장 + `BGM_AGIT_MEMBER_KML_SYNK = 'Y'`
-- **0건 매칭 → KML `api_user_register.php` 호출하여 자동 등록 후 발급된 `user_id` 저장 + `synk = 'Y'`**
-  - 등록 시 409 충돌이면 단건 재조회로 폴백, 그래도 안 되면 `synk = 'N'`
-- 다건 매칭(`AMBIGUOUS`) / 502·네트워크·파싱 오류 → `kml_id = null` + `synk = 'N'` (가입은 계속 진행)
+- 가입 시 닉네임으로 조회·자동 등록(`KmlUserClient.findOrRegisterKmlIdByNickname`) — **`mahjongUse=true`일 때만**
+- 단건 매칭 → `BGM_AGIT_MEMBER_KML_ID` 저장 + `KML_SYNK='Y'`
+- 0건 → `api_user_register.php`로 자동 등록 후 `user_id` 저장 + `'Y'` (409면 단건 재조회 폴백, 그래도 안 되면 `'N'`)
+- 다건(`AMBIGUOUS`) / 502·네트워크·파싱 오류 → `kml_id=null` + `'N'` (가입은 계속 진행)
+- 재시도: `KmlSyncScheduler`(매시 정각)가 `synk='N'`을 다시 조회 → 성공 시 `'Y'`
+- **닉네임 변경 시 `kml_synk` 리셋 미구현** — 변경 기능 손볼 때 `markKmlSyncFailed()` 호출 추가할 것
 
-### 자동 재시도 스케줄러
-`KmlSyncScheduler` + `KmlSyncService`
-- `@Scheduled(cron = "0 0 * * * *", zone = "Asia/Seoul")` — 매시 정각
-- `synk = 'N'` 유저 배치 조회 → `findOrRegisterKmlIdByNickname` 재호출 → 성공 시(매칭 또는 신규 등록) `linkKml(id)`로 상태 `'Y'` 전환
-- `BgmAgitApiApplication`에 `@EnableScheduling` 이미 있음
-
-### 닉네임 변경 시 주의
-현재 마이페이지 닉네임 변경 로직에서 `kml_synk` 리셋은 **미구현**. 나중에 변경 기능 손볼 때:
-- 닉네임 바뀌면 `markKmlSyncFailed()` 호출해서 `'N'`으로 리셋
-- 다음 스케줄러 주기에 새 닉네임으로 다시 KML 조회됨
-
-## 예약 결제 (토스페이먼츠) — 설계 확정 (2026-07-08)
-
-`bgm-agit-front` 예약에 토스페이먼츠 결제 연동 예정. 현재 예약금은 순수 오프라인 계좌이체 안내 텍스트뿐(`ReservationList.tsx`), DB(`BGM_AGIT_RESERVATION`)에 금액/결제 개념 없음. 예약 상태는 승인여부(`..._APPROVAL_STATUS` Y/N)·취소여부(`..._CANCEL_STATUS` Y/N)만 존재.
-
-### 결제 흐름 (확정)
-- 예약금은 **정적 고정값**(예: 1만원)으로 시작. 요일별/타입별 요금정책·관리자 요금설정 화면은 **지금 안 만듦**(YAGNI). 필요해지면 별도 설정 테이블 추가 — 순수 추가라 나중에 붙여도 기존 구조 무해
-- 사용자 예약 생성(대기 N/N) → 결제 주문(READY) 생성 → 사용자 토스 결제 → confirm 성공 시 예약 `approvalStatus='Y'` **자동 확정** + 확정 알림톡 (기존 관리자 수동 확정 대체)
-- 예약 취소 시 결제가 DONE이면 토스 결제취소(cancel) API로 **자동 환불**
-- 한 예약 = 1시간 슬롯 여러 행이 `BGM_AGIT_RESERVATION_NO`(그룹키)로 묶임 → 결제 1건은 개별 행이 아니라 `RESERVATION_NO` 그룹 하나에 대응
-
-### 테이블 `BGM_AGIT_PAYMENT` (신설)
-- 주요 컬럼: `BGM_AGIT_MEMBER_ID`(FK→`BGM_AGIT_MEMBER`, ON DELETE RESTRICT), `BGM_AGIT_RESERVATION_NO`, `BGM_AGIT_ORDER_NO`(토스 orderId, 서버 발급), `BGM_AGIT_PAYMENT_KEY`(토스 paymentKey), `..._AMOUNT`, `..._STATUS`(READY/DONE/CANCELED/ABORTED), `..._TYPE`(토스 method: 카드/간편결제/계좌이체/가상계좌/휴대폰/상품권), 승인일시/취소일시, `..._CANCEL_AMOUNT`/`..._CANCEL_REASON`, `..._RECEIPT_URL`, `..._FAIL_REASON`, `REGIST_DATE`/`MODIFY_DATE`
-- 바챠 길이는 **프로젝트 관례상 기본 VARCHAR(500)**
-- **`BGM_AGIT_ORDER_NO`만 UNIQUE** (중복 결제 승인 방지 + confirm 조회 키)
-- **`BGM_AGIT_RESERVATION_NO`에 UNIQUE 걸지 말 것** — 걸면 결제 실패 후 재시도/재결제 때 같은 예약번호로 새 행 INSERT가 중복키로 터짐. 조회 성능용 일반 인덱스만(선택). "그룹당 유효 결제 1건"은 서비스단에서 관리
-- 예약↔결제 연결은 **A안**: payment가 `RESERVATION_NO` 보관(논리 연결). `RESERVATION_NO`는 예약 PK가 아니라 그룹키(중복)라 물리 FK 불가. 진짜 FK 원하면 **B안**(예약 테이블에 `BGM_AGIT_PAYMENT_ID` nullable FK 추가, 다:일 방향) 가능하나 현재는 A안 유지
-- confirm 시 프론트가 보낸 amount와 저장 amount 대조(위변조 차단), orderId 멱등 처리 필수
-- 토스 clientKey/secretKey는 `application.yml`(env), 테이블 아님
-
-### 안 하기로 한 것
-- **예약 테이블 2테이블 정규화**(부모=예약묶음 PK=예약번호 + 자식=슬롯행): 정석이지만 운영 데이터 이관 + 예약 생성/조회/취소/알림톡 로직 대수술이라 결제 작업과 섞지 않고 나중으로 미룸. 현행 1테이블(그룹키 방식) 위에서 결제 진행
-
-### 구현 진행 (STEP 1 완료, 2026-07-09)
-- **모듈 구조**: 공통 결제부 `com.bgmagitapi.origin.payment` (도메인 모름 → 재사용). 예약 연결은 이벤트로 붙일 예정.
-  - `payment/entity/BgmAgitPayment`(+`enumeration/PaymentStatus` READY/DONE/CANCELED/ABORTED), `payment/repository/BgmAgitPaymentRepository`(`findByBgmAgitOrderNo`/`findByBgmAgitReservationNo`), `payment/service/PaymentService(+Impl).createOrder`, `payment/controller/BgmAgitPaymentController`
-- **STEP 1 = 주문 생성**(완료·컴파일 통과): `POST /bgm-agit/payments/order { reservationNo }` → `PaymentOrderResponse { orderId, amount, orderName, clientKey }`. 예약 검증·금액계산은 `BgmAgitReservationService.createPaymentOrder`(소유자·취소·확정 검증 후 공통 `createOrder` 위임).
-- **예약금**: `SlotSchedule.resolveDepositAmount(category,label)` — 기본 10000, M룸(`ROOM` + label `"M Room"`) 30000. 슬롯 수 무관 정액.
-- **토스 키 주의**: 결제위젯이므로 **위젯용 키**(`test_gck_`/`test_gsk_`)를 써야 함. `test_ck_`/`test_sk_`(API 개별 연동 키)를 위젯에 쓰면 `INVALID_API_KEY`. `application.yml`의 `toss.client-key/secret-key/confirm-url/cancel-url`, 값은 `.env`/GitHub Secrets로 주입. clientKey는 주문 응답으로 프론트에 내려주므로 프론트 env에 저장 불필요.
-- **미해결(결정 대기)**: 예약 생성 `POST /bgm-agit/reservation`이 `reservationNo`를 응답에 안 실어줌(값은 `createReservation`에서 이미 계산됨, 반환만 안 함). 결제 진입점 2안 중 택1 — **A**: 예약내역(`ReservationList.tsx`) 대기행에 결제버튼(기존 `reservationNo` 사용, 백엔드 무변경) / **B**: 예약 직후 결제(`createReservation`이 `reservationNo` 반환하도록 소폭 변경).
-- **다음**: STEP 2 승인(`TossPaymentsClient.confirm` + `confirmPayment` 금액대조·멱등 + `PaymentConfirmedEvent`→예약 approval='Y'), STEP 3 실패/취소·환불.
-
-### 토스 심사 준비/현재 구현 메모 (2026-07-20)
-- 심사용 결제는 테스트키로 진행 가능. 운영 예약/알림톡 플로우는 건드리지 않고, 결제/정책/문구 위주로 정리.
-- 결제 진입은 A안으로 구현됨: 예약 생성 직후 결제하지 않고 `ReservationList.tsx`의 대기 예약 행에서 `예약금 결제` 버튼으로 주문 생성.
-- 예약금 정책은 `SlotSchedule.resolveDepositAmount(category, label)` 기준:
-  - M Room: 30,000원
-  - 그 외 예약: 10,000원
-  - 잔여 이용요금은 현장 결제
-- 토스 결제 모달(`PaymentCheckoutModal.tsx`)에는 “예약 확정을 위한 예약금 결제”, 예약금 금액, 현장 잔여금 결제, 당일 취소/노쇼 환불 불가 문구를 노출.
-- 예약 화면(`ReservationCalendar.tsx`), 예약 확인 모달(`confirmAlert.tsx`), 예약내역(`ReservationList.tsx`)에도 예약금/잔여금 안내 문구 추가.
-- 심사용 정책 페이지 추가:
-  - `/terms` -> `bgm-agit-front/src/pages/Terms.tsx`
-  - `/refund-policy` -> `bgm-agit-front/src/pages/RefundPolicy.tsx`
-  - 기존 `/privacy` 유지
-- 푸터(`Footer.tsx`)에 사업자정보와 정책 링크 노출:
-  - 상호: 보드게임카페BGM(비지엠)아지트
-  - 대표자: 박범후
-  - 사업자등록번호: 896-17-02241
-  - 주소: 대전광역시 서구 문정로 62, 3층 일부호(탄방동, 프라임빌딩)
-  - 연락처: 0507-1445-3503
-- 빌드 확인: `bgm-agit-front`에서 `npm.cmd run build` 통과. 큰 번들 경고만 있음.
-
-## 예약 항목 정비 + 예약 정책 서버화 (2026-08-03)
-
-예약 대상(룸/대탁)은 여전히 `BGM_AGIT_IMAGE` 행이다(`category=ROOM|MAHJONG`, `link=/detail/room|/detail/mahjongRental`, `BGM_AGIT_MAIN_MENU_ID=3` = 프론트 `labelGb 3`). 실행 SQL은 레포 루트 `room-open-space.sql`.
-
-### 데이터 변경
-- **`BGM_AGIT_IMAGE_USE_STATUS`(varchar(1), default 'Y') 신설** — 운영 종료 항목은 삭제(FK RESTRICT로 예약 이력에 물림) 대신 `'N'`으로 숨김. 필터는 `BgmAgitImageRepositoryImpl.notHidden()`(null도 노출 취급)이 `getMainMenuImage`/`getDetailImage` 양쪽에 적용. 직접 호출 차단은 `BgmAgitReservationServiceImpl`의 `getReservation`/`createReservation`에서 `BgmAgitImage.isHidden()` 체크
-- 대탁 JP류(`AMOS-JP2 - 1/2`, id 34·35) 숨김 — 실제로는 F Room을 스왑해서 운영
-- **M Room(id 19) 노출 종료**(`USE_STATUS='N'`, 예약 이력 1건 있어 삭제 대신 숨김). 3일전·최소 15명 제약도 함께 폐기
-- **오픈 공간 M-1/M-2/M-3 추가**(id 83·84·85, **5~7명**) — M Room 대체. `category=ROOM` + `/detail/room` 이라 1시간 슬롯·예약금 1만원이 자동 적용(라벨이 `'M Room'`이 아니므로 3만원 아님). 이미지는 M Room 사진 임시 재사용(관리자 연필 버튼으로 교체)
-- M Room이 사라져 **예약금은 전 항목 1만원** → 화면·약관 문구를 "예약금은 10,000원"으로 통일(`confirmAlert.tsx`, `PaymentCheckoutModal.tsx`, `ReservationList.tsx`, `Terms.tsx`, `RefundPolicy.tsx`). `SlotSchedule.resolveDepositAmount`의 M룸 3만원 분기는 남겨둠(재개 시 문구까지 되살릴 것)
-- **알림톡 `bgmagit-res-payment` 문구는 그대로 유지** — 카카오 검수 통과 템플릿과 고정 문구가 정확히 일치해야 발송되므로 "M룸 30,000원" 문장을 코드에서 바꾸면 발송이 거부된다. 바꾸려면 카카오 템플릿 재심사 필요(`AlimtalkUtils.buildReservationPaymentMessage` 주석 참고)
-
-### 예약 정책은 서버가 유일한 출처 (프론트 magic id 금지)
-`SlotSchedule`(origin/util)에 정책을 모았다: `of()`(open/close/interval/**durationHours**), `slots()`(날짜별 후보 슬롯), `maxSelectableSlots()`, `resolveReservationType()`, `resolveDepositAmount()`.
-- G Room = 6시간 간격·이용 5시간(13~18, 19~00) / MAHJONG = 3시간 / 그 외 = 1시간
-- `GET /bgm-agit/reservation` 응답에 **`slotRanges[{start,end}]`, `maxSelectableSlots`(G룸 1, 그 외 null), `reservationType`(ROOM|DELEGATE_PLAY)** 추가. 프론트 `ReservationCalendar.tsx`는 이걸 그대로 그린다(기존 `id === 18/19`, `link === '/detail/mahjongRental'` 하드코딩 제거)
-- `createReservation`은 **클라이언트가 보낸 예약타입을 무시하고** 이미지 카테고리로 결정(기존 `id === (32||33||34||35)`는 `32`로 평가되던 버그였음)
-- `label/group/minPeople/maxPeople`는 이미지 기준으로 1회 세팅(전 기간 만실이어도 제목·인원이 비지 않게)
-- 이용시간 계산 중복(`BgmAgitReservationCreateRequest`의 `groom?5:mahjong?3:1`)도 `SlotSchedule.durationHours()` 호출로 통일
-
-### 프론트 (bgm-agit-front)
-- `src/config/reservationComments.ts` — **라벨 키** 하드코딩 맵 2종. `RESERVATION_COMMENTS`(F Room → "대탁룸(JP-COLOR)으로 변경 가능", M-1~3 → "룸이 아닌 오픈된 공간입니다.")는 예약 카드·캘린더 안내에 노출. `RESERVATION_OPTIONS`(F Room → "대탁룸(JP-COLOR)으로 변경")는 예약 확인 모달 체크박스로 뜨고, 선택 시 **요청사항 맨 앞에 `[요청 옵션] …`** 으로 붙어 예약내역·알림톡에 그대로 실린다(DB 컬럼 추가 없음)
-- 캘린더 안내 문구에서 예약금 안내와 M Room 3일전·15명 문구 삭제. 예약금 고지는 결제 모달·예약내역·`/terms`·`/refund-policy`·알림톡에 유지(토스 심사)
-- `ImageGrid.tsx`의 `imageId === 19 ? 3일 후 : today` 제약 제거
-
-### 테이블 합쳐 예약 (M-1 + M-2 …)
-한 예약이 이미 `BGM_AGIT_RESERVATION_NO` 그룹키로 여러 행을 묶고 **행마다 이미지 FK가 따로** 있어서, 테이블 구조 변경 없이 "같은 예약번호에 이미지가 다른 행"으로 구현.
-- 조회: `GET /bgm-agit/reservation?...&ids=84,85` — `ids`는 기준 항목(`id`)에 **합쳐 쓸 항목**. 응답 시간대는 **전 항목 교집합**, `label`은 `"M-1, M-2"`, `minPeople`=각 최소값 중 최대, `maxPeople`=합산
-- 등록: `POST /bgm-agit/reservation`에 `bgmAgitImageIds: [84,85]` 추가. `createReservation`이 항목별로 충돌 검증 후 **같은 `maxReservationNo`** 로 행 생성
-- 조합 검증(`loadReservableImages`): 같은 카테고리 + 같은 메뉴링크 + `maxSelectableSlots == null`(하루 1팀 제한 있는 G룸은 합치기 불가). 숨김 항목도 거부
-- **예약금은 항목 수만큼 합산** (`createPaymentOrder`가 그룹의 distinct 이미지별 `resolveDepositAmount` 합) → M-1+M-2 = 2만원
-- 예약내역(`GroupedReservationResponse`): 같은 시간대가 항목 수만큼 들어오므로 `timeSlots` 중복 제거, `reservationAddr`는 라벨 조합. 알림톡 `예약 룸`도 `sandBizTalk`에서 라벨 조합(템플릿 **변수**라 카카오 검수 영향 없음)
-- 프론트: `RESERVATION_COMBINABLE_GROUPS`(`[['M-1','M-2','M-3']]`)로 후보 산출 → `ImageGrid`가 `ReservationCalendar`에 `combinable` prop 전달. 캘린더 상단 토글로 선택하면 `ids` 붙여 재조회
-- **함정: 예약번호로 단건 조회하던 쿼리는 항목 수만큼 행이 늘어난다.** `findBizTalkCancel`이 `fetchOne`이라 `NonUniqueResultException`으로 관리자 확정·결제 승인이 터졌음 → `fetch()` 후 라벨만 합쳐 한 건으로 조립하도록 수정. 예약번호 기준으로 뭔가 단건 가정하는 코드를 새로 쓸 때 같은 함정 주의(`AlimtalkUtils.formatTimes`는 이미 `distinct()` 있음)
-
-### 이용 방식 토글 (F룸 일반룸 ↔ 대탁)
-- `RESERVATION_USE_MODES`(`'F Room': ['일반룸','대탁룸(JP-COLOR)']`, 첫 값이 기본) → 캘린더 시간대 **위**에 토글로 노출
-- 선택값은 요청사항 맨 앞에 `[이용 방식] 대탁룸(JP-COLOR)` 으로 붙어 저장 → 예약내역·알림톡 `요청 사항`에 그대로 보임. **DB 컬럼/알림톡 템플릿 변경 없음**
-- 서버 label이 합쳐 예약 시 `"M-1, M-2"`로 오므로 프론트는 `label.split(',')[0]`(기준 라벨)로 코멘트·이용방식 조회
-
-### TODO: `BGM_AGIT_ROOM` 테이블 분리
-예약 대상 메타(라벨/인원/슬롯정책/예약금/코멘트/옵션/노출여부)를 이미지 테이블에 얹은 게 근본 원인. 별도 테이블로 떼내면 코멘트·옵션 하드코딩과 라벨 문자열 비교(`"G Room".equals(...)`)도 같이 사라진다.
-
-## 공지 상세 단건 조회 (2026-08-03)
-
-`bgm-agit-front`의 `NoticeDetail.tsx`가 상세 API 없이 **목록 1페이지(`page = 0`)를 받아 `find(id)`** 하던 구조라, 목록 2페이지 이후 글은 본문이 `undefined`로 렌더됐음.
-- 백엔드 `GET /bgm-agit/notice/detail/{id}` 추가 (`BgmAgitNoticeController` → `BgmAgitNoticeService.getNoticeDetail`). 목록·팝업·상세가 공통 `toResponse(BgmAgitNotice)` 매퍼 사용 (경로는 `/notice/popup`·`/notice/download/**`와 안 겹치게 `detail` 세그먼트 사용)
-- 프론트: `noticeDetailState` atom + `useNoticeDetailFetch()` 추가, 상세/수정 프리필 모두 단건 응답 사용. GET이라 URL_RESOURCES 등록 불필요
-
-## 관리자 예약 현황판 (2026-08-08)
-
-기존 예약내역(`/reservationList`)은 10건씩 페이징된 테이블이라 "오늘 어느 방이 몇 시에 차 있나"를 한눈에 볼 수 없어서, **관리자 전용 일별 타임라인 보드**를 신설.
-
-- 프론트: `bgm-agit-front/src/pages/ReservationBoard.tsx`, 라우트 `/reservation-board` (`App.tsx`)
-  - **세로축 = 시간, 가로축 = 예약 장소(`BGM_AGIT_IMAGE.LABEL`)**. 날짜 이동(◀/▶/오늘/date input) + 요약칩(예약/확정/대기/취소/인원) + 룸 그룹 탭 + 상태 필터
-  - 블록 클릭 → 하단 상세 패널에서 확정/취소(`PUT /bgm-agit/reservation/admin` 재사용)·영수증
-  - `isAdmin` 아니면 안내 문구만 렌더 (메뉴 자체를 ADMIN 전용으로 걸어도 직접 URL 진입 대비)
-  - 조회 실패와 "예약 없음"을 구분해 표시 (실패 시 다시 시도 버튼)
-  - **지난 예약은 확정·취소 불가** — `canManage = date >= todayYmd()`. `ReservationList`의 admin 규칙(`todayFunction`)과 동일. 안 걸어두면 지난 날짜에도 취소 버튼이 뜬다
-
-### 그리드 / 목록 뷰 전환
-모바일은 탭으로 가로 스크롤이 없어져도 1시간 블록(세로 48px)에 이름·시간·인원 3줄이 안 들어가 글자가 잘림. 그래서 **모바일 기본은 목록(아젠다) 뷰**.
-- `viewMode` state가 `null`이면 화면 크기에 맡기고(`isMobile ? 'list' : 'grid'`), 사용자가 토글하면 그 선택을 따름. effect 없이 `view = viewMode ?? 기본값`으로 처리
-- 목록 뷰 = 룸 구분 없이 **시작 시간순** 카드. 카드가 상세·확정/취소/영수증을 자체적으로 가지므로 하단 `DetailPanel`은 그리드 뷰에서만 렌더 (블록 클릭 → 패널 구조라 목록에선 불필요)
-- 카드 왼쪽 6px 색 바 = 룸 색상. 범례는 그리드 뷰에서만 노출
-
-### 레이아웃이 세로 타임라인인 이유 (모바일 가로 스크롤)
-초안은 가로축이 시간이었는데, 영업시간이 13:00~익일 02:00라 **모바일에서 항상 가로 스크롤**이 생겨 사장님 요청으로 전치함. 단 전치만으로는 룸이 8~10개면 가로 스크롤이 그대로라, **룸 그룹 탭**을 같이 넣어야 해결됨.
-- 탭 분류는 **카테고리 우선 → 그 다음 라벨 첫 알파벳**:
-  - `MAHJONG` 카테고리(마작탁: 대탁·렉스탁 등) → `마작탁` 탭. **라벨이 한글이라 첫 알파벳 규칙으로는 룸과 구분이 안 되므로**, 응답 `Room.category`(= `BgmAgitImageCategory.name()`)로 먼저 갈라냄
-  - `ROOM` 카테고리 → `ROOM_GROUPS`로 `C·D·E` / `B·F·G` / `M`
-  - 나머지 → `기타`
-- 현황판 조회에는 **카테고리 필터가 없음**. 그날 예약 행 전부를 라벨별 열로 만들기 때문에 룸·마작탁 모두 나옴
-- 그날 예약이 있는 그룹만 탭으로 노출. 선택한 탭이 사라지면 `전체`로 되돌림
-- 룸 열은 `flex: 1; min-width: 96px` — 2~3개면 화면을 채우고, `전체` 탭처럼 많으면 가로 스크롤. 시간 열은 `position: sticky; left: 0`
-
-### 색상 규약
-블록 **바탕색 = 예약 장소(룸)**, 상태는 채움 방식으로 구분 — 확정=꽉 찬 색 / 대기=같은 색 점선 테두리+옅은 배경 / 취소=회색+취소선. `ROOM_PALETTE`(10색)를 **필터·탭 적용 전** 룸 목록 순서로 배정해서, 필터를 바꿔도 룸 색이 안 흔들림. 색은 `blockStyle()`이 inline style로 주입(styled-components 정적 맵으로는 동적 룸 색 표현 불가)
-- 백엔드: `GET /bgm-agit/reservation/board?date=YYYY-MM-DD` (`BgmAgitReservationController.getReservationBoard`)
-  - `BgmAgitReservationServiceImpl.getReservationBoard(date, roles)` — 예약번호로 슬롯 묶고 → 장소별 그룹 + 요약 집계. 영수증은 `findDoneReceiptUrlsByReservationNos` 배치
-  - 쿼리: `BgmAgitReservationRepositoryImpl.findReservationsByDate(date)` (페이징 없음, member/image fetch join)
-  - DTO: `origin/controller/response/reservation/AdminReservationBoardResponse`
-- **시간축 분값 규약** — `startMinutes`/`endMinutes`는 자정 기준 분값이되 **06시 이전은 +1440**. G룸(19:00~00:00)·마작대여(23:00~02:00)처럼 마감이 익일로 넘어가는 슬롯이 있어서, 그대로 두면 종료가 시작보다 앞선 것으로 계산됨. 프론트도 이 규약 그대로 쓰고 별도 변환 안 함
-- **권한 2중** — `BgmAgitAuthorizationManager`는 URL_RESOURCES에 없는 경로를 **기본 permit**으로 통과시킴. 이 API는 회원 연락처가 나가므로 서비스단에서 `isAdmin(roles)` 검사(`ValidException`) + `reservation-board-url-resources.sql`로 URL 레벨 ADMIN 매핑 둘 다 적용. **SQL 실행 후 앱 재시작 필요**(매핑 로딩이 `@PostConstruct` 1회)
-- **메뉴 등록** — `/menuManage`에서 추가. 링크 `/reservation-board`, 권한은 ADMIN만 체크. `BgmAgitMainMenuServiceImpl.getMainMenu`가 **subMenu 없는 root는 걸러내므로** 반드시 기존 부모 메뉴의 하위로 넣을 것
-
-### 날짜 파라미터 함정 (`toISOString`)
-`Date.toISOString()`은 UTC 변환이라 **KST 자정 기준 Date가 하루 앞 날짜로 밀림**. `ReservationList.tsx`의 예약일자 검색이 이 버그로 하루 밀려 조회되고 있었음 → `src/utils/date.ts`의 `toLocalYmd()`(`toLocaleDateString('sv-SE')` 기반)로 교체. 서버로 보내는 날짜는 항상 이 헬퍼 사용. 같은 파일에 `todayYmd`/`addDaysYmd`/`formatYmdWithWeekday` 있음
-
-## 환경변수 (.env) (2026-07-09 도입)
-- `bgm-agit-api`는 `me.paulschwarz:spring-dotenv:3.0.0`로 `.env`를 읽음(cham-equality와 동일 방식). 파일: `bgm-agit-api/src/main/resources/.env`. `application.yml`의 `${DB_URL}` 등 플레이스홀더를 여기서 치환.
-- `.env`는 `.gitignore` 처리(커밋 금지). 시크릿(DB/AWS/소셜/비즈톡/JWT/토스)은 레포에 없음.
-- CI/CD·서버 배포는 **GitHub Secrets → 시스템 환경변수**로 주입. 시스템 환경변수가 `.env`보다 우선순위 높음. 토스 키(`TOSS_CLIENT_KEY`/`TOSS_SECRET_KEY`)는 GitHub Secrets에도 추가 필요.
-- 주의: `.env`는 `=` 뒤 공백 넣지 말 것(dotenv는 trim 안 함). `spring.config.import`는 불필요(spring-dotenv가 자동 로드).
-
-## 데이터베이스
-
-### 접근 방식
-- 서버 도커 컨테이너 MySQL 8.0.43
-- `binlog_format = ROW`, `binlog_row_image = FULL` (플래쉬백 가능)
-- 실수 DELETE 났을 때 절대 하지 말 것: 컨테이너 재시작, `RESET MASTER`, `PURGE BINARY LOGS`
-- 복구는 `mysqlbinlog --base64-output=DECODE-ROWS -v` 로 덤프 후 역변환
-
-### 핵심 테이블 (auth 관련)
-- `BGM_AGIT_MEMBER` — 회원. 소셜·폼 혼재. 폼 유저는 `socialType = 'MAHJONG'`
-- `BGM_AGIT_MEMBER_ROLE` — 회원 ↔ 역할 매핑
-- `BGM_AGIT_ROLE` — 역할 정의 (USER, ADMIN 등)
-- `BGM_AGIT_URL_RESOURCES` / `BGM_AGIT_URL_RESOURCES_ROLE` — URL별 권한 매핑(DB 기반 동적 인가, `BgmAgitAuthorizationManager` 참조)
-
-### Hibernate DDL
-`ddl-auto: none`. 스키마 변경은 수동 ALTER. `create.sql`/`create2.sql` 참고.
-
-## 프론트 개발 팁 (kml-front)
-
-- `basePath: /record` — 모든 경로에 `/record` 프리픽스
-- API 호출은 Next.js rewrite로 `/bgm-agit/*` → `${NEXT_PUBLIC_API_URL}/bgm-agit/*` 프록시
-- `axiosInstance`가 access token(`tokenStore` 메모리) / refresh token(HttpOnly 쿠키) 자동 처리
-- 보호 라우트 가드: `RouteAuthGuard.tsx`, 리다이렉트는 `/login?redirect=...`
-- Kakao SDK(`KakaoProvider`)는 **공유하기 SDK**용 (`NEXT_PUBLIC_KAKAO_JS_KEY`). 로그인과는 무관
-- **반응형 원칙** — 사용자가 거의 휴대폰으로 입력. `theme.device.mobile`(`max-width: 844px`) 기준으로 점검:
-  - input/select 모바일은 `font-size: 16px` (iOS Safari 자동 줌 방지)
-  - 데스크탑에서 `flex-wrap: nowrap; overflow-x: auto` 인 검색/필드는 모바일에서 `flex-wrap: wrap`으로 풀어주기 (`write/page.tsx`, `BaseTable.tsx`, `role/page.tsx` 패턴 참고)
-  - 표는 모바일에서 부모에 `overflow-x: auto`, table에 `min-width` 두고 가로 스크롤
-  - `Wrapper`의 `min-width: 1280px`은 `@media tablet` 블록에서 `100%`로 풀어줘야 함
-
-### 사이드바 sub 메뉴 (`Sidebar.tsx`)
-DB의 `BGM_AGIT_KML_MENU.BGM_AGIT_KML_SUB_MENU_ID`가 부모 메뉴 ID. 백엔드(`KmlMenuServiceImpl`)에서 `parentMenuId`로 트리 구성, `subMenus[]` 배열로 묶어 반환.
-- **부모 메뉴 분기 (Sidebar)**:
-  - `menuLink === '/my-page'` → 마이페이지 모달 오픈
-  - `!menuLink || menuLink === '/sub'` → sub 펼침 토글 (link 없는 부모도 sub 컨테이너로 동작)
-  - 그 외 → 일반 `<Link>`
-- **sub 안 `/my-page`** 도 모달 오픈 (마이페이지를 sub로 옮긴 경우 대응)
-- 데스크탑: sub `position: absolute` 드롭다운. **`SidebarWrapper { overflow: visible }`** 필수 — 헤더가 가로 일렬이라 absolute로 안 띄우면 다른 메뉴가 밀리거나 잘림
-- 태블릿/모바일: sub `position: static` 인라인 펼침 + `padding-left: 16px` 들여쓰기. `SidebarWrapper { overflow-y: auto }`
-- 라우트 변경 시 `setOpenSubMenuId(null)` (펼친 채 남는 버그 방지)
-- **메인 페이지 `quickMenus` 필터** — `!!menuLink && menuLink !== '/sub' && menuLink !== '/my-page'`. 즉 link 없는 부모도 제외 (root만 단일 액션 가능, 부모는 sub 컨테이너 역할이라 메인 퀵메뉴엔 안 띄움)
-
-## SSR / SEO 패턴 (kml-front)
-
-### Hybrid SSR
-`day-record`, `yakuman-record`, `rank`, `notice` 4개 페이지는 hybrid SSR로 변환됨.
-- `app/<page>/page.tsx` — server component. 비로그인 기준으로 초기 데이터 fetch + `metadata` export
-- `app/<page>/<Page>Client.tsx` — `'use client'`. `initialData` prop을 받아 `useRef` 가드로 zustand store에 1회 hydrate
-- 첫 진입 + `initialData` 있으면 client 측 첫 fetch 스킵 (`firstFetchSkipRef`) — 불필요한 재요청 방지
-- 검색·페이지네이션·필터는 기존 hook 그대로 (CSR)
-- 서버 fetch는 plain `fetch(`${process.env.NEXT_PUBLIC_API_URL}/...`)` 사용. `lib/axiosInstance.ts`는 `tokenStore.get()`/`window.dispatchEvent` 등 클라이언트 전용 API를 써서 서버에서 못 부름
-  - 분리 폴더: `services/server/*.server.ts` (`'server-only'` 가드) 또는 `page.tsx` 내부에 inline 정의 — 둘 다 혼재 중
-
-### Metadata 주의 (title 중복 함정)
-- `app/layout.tsx`에 `title.template = '%s | BGM 아지트 BML'` 있음. 자식 페이지의 `metadata.title`이 자동으로 ` | BGM 아지트 BML` suffix를 받음
-- 따라서 페이지별 `metadata.title`은 **suffix 없이 짧게** 작성: `'역만 기록'`, `'랭킹'`, `'월간/일간 기록'` 등
-- 잘못 작성하면 `'역만 기록 | BGM 아지트 BML | BGM 아지트 BML'`로 중복됨
-- `openGraph.title`은 template 안 거치므로 풀 텍스트(`'역만 기록 | BGM 아지트 BML'`)로 명시
-- `alternates.canonical`, `openGraph.url`도 페이지별로 명시
-
-### Soft 404 대응
-구글 서치콘솔에서 컨텐츠가 적은 목록 페이지(공지 1개, 랭킹 4명 등)가 **soft 404**로 분류되어 색인 거부될 수 있음.
-- 대응: server `page.tsx`에서 `<script type="application/ld+json">` 으로 페이지별 `CollectionPage` + `ItemList` 구조화 데이터 추가 (`app/notice/page.tsx`, `app/rank/page.tsx` 참고)
-- 본문 한국어 텍스트량 늘리는 것도 효과적 (특히 rank처럼 칼럼이 숫자/율 위주인 페이지)
-
-## 기록 입력 UX 규칙 (write/page.tsx)
-
-### 점수 자동 계산
-- 4자리(동/남/서/북) 중 **사용자가 직접 입력 안 한 자리**(`scoreEditTime[key] === 0`)가 자동 계산 대상
-- 어느 3자리든 입력하면 나머지 1자리가 `refund - sum(others)`로 자동 계산
-- 기본 자동 계산 대상은 NORTH (기존 동작 호환)
-- 4자리 모두 사용자가 직접 입력 시 자동 계산 정지 (수동 모드). 칸 비우면(`score === ''`) timestamp가 0으로 리셋되어 다시 자동 계산 후보로 복귀
-- 자동 계산 effect는 `Number.isNaN` 체크로 `'-'` 단독 입력시 NaN 발산 방지
-
-### 모바일 ± 부호 토글 (`SignButton`)
-- 점수 input은 `type="text"` + `inputMode="numeric"` + `^-?\d*$` 정규식 검증 — `-`만 단독으로 표시하기 위해 (type=number는 안 됨)
-- 빈 값에서 ± 누르면 `-` 입력 → 이후 숫자 타이핑하면 음수 완성
-- `0`에서 누르면 무시 (`-0` 방지)
-- 값이 있으면 부호 토글 (`'1000'` ↔ `'-1000'`)
-
-### "내 닉네임" 버튼
-- 동/남/서/북 각 자리 + 역만 행마다 `<MeButton>` 좌측 배치, 휴지통(역만 전용)은 우측. 같은 줄로 분리해 오클릭 방지
-- 클릭 시 `Number(user.id)`를 `recordUser`(`socialType=MAHJONG` 멤버 목록)에서 찾아 해당 자리 `userId`로 세팅
-- 회원 목록에 본인 정보 없으면 alert 출력 (마작 회원 미등록자 대응)
-
-## 기록 권한·랭킹 (bgm-agit-kml-front 운영)
-
-### 마작 회원 식별
-- 닉네임 드롭다운(기록 입력)은 `socialType = MAHJONG` **AND `mahjongUseStatus='Y'`** 필터 (`YakumanTypeRepositoryImpl.getMembers()`). 2026-06-30 마작 이용 회원 분리로 `mahjongUseStatus` 필터 부활 (보드게임 가입자 제외)
-- 관리자가 권한을 주려면 `socialType=MAHJONG` 회원을 만든 뒤 권한 부여 화면에서 ROLE 변경
-
-### `/role` (관리자, kml-front)
-- `app/role/page.tsx` — `socialType=MAHJONG` 회원만 페이지네이션, 닉네임/이름/연락처 검색
-- `GET /bgm-agit/mahjong-role` (BgmAgitRoleController) → 마작 회원 + 권한 페이지 반환
-- 권한 변경: 기존 `PUT /bgm-agit/role` 재사용 (memberId, roleId 배열). roleId: 1=관리자, 4=멘토, 2=유저
-- 비밀번호 변경: `PUT /bgm-agit/mahjong-role/password` — `socialType=MAHJONG`인 경우만, BCrypt 해시. `BgmAgitMember.changePassword(...)`
-
-### 랭킹 검색 타입 (RankType)
-- `WEEKLY` — `baseDate`가 속한 주 월요일 00:00 ~ 다음 주 월요일 00:00
-- `MONTHLY` — `baseDate`의 1일 00:00 ~ 다음 달 1일 00:00
-- `CUSTOM` — `startDateTime`/`endDateTime` 그대로 사용 (시·분 단위 필터). 검증: 둘 다 필수, end > start
-- 컨트롤러: `GET /bgm-agit/ranks?type=...&baseDate=...|startDateTime=...&endDateTime=...`
-- repository는 `LocalDateTime` 범위로 비교 (`record.registDate.goe(start).and(.lt(end))`)
-- 프론트 UI: `BaseTable`이 `rankType` 따라 주 픽커 / 년월 픽커 / datetime 두 개로 분기
-
-### 개인기록 (memberId 기준)
-랭킹 표 닉네임 클릭 → `/rank/{memberId}`로 진입. 차트·단(段) 시스템 안 씀, 표·카드 중심 (실용적 방향).
-- 백엔드: `RankServiceImpl.findMemberStats / findMemberRecentGames`, 쿼리는 `RankRepository`에 4개 메서드(`findMemberCards / findMemberSeatStats / findMemberTopRivals / findMemberMatchIds`)
-  - `GET /bgm-agit/ranks/{memberId}/stats?year=` — 카드 통계(총국수/평균순위/총승점/1·4위/토비/+30000/-2등) + 자리별×순위별 표(동·남·서·북장 각각, 1~4위 + 토비 행) + 같이 친 TOP3
-  - `GET /bgm-agit/ranks/{memberId}/games?page=&year=` — 최근 경기 페이징. matchs id를 본인 record로 페이징 → `RecordRepository.findRecordsByMatchIds`로 4명 record 묶어 반환
-  - `year` 생략 = 전체 기간
-- 프론트: `app/rank/[memberId]/page.tsx` + `MemberRankClient.tsx` — **CSR (SSR 안 씀)**. styled-components로 작성, 외부 차트 라이브러리 의존 없음
-- 진입 동선:
-  - `app/rank/RankClient.tsx`의 닉네임 셀 → `Link href="/rank/{memberId}"`
-  - 메인 퀵메뉴 "내 기록"(로그인 시 노출, `UserCircle` 아이콘) → `/rank/{user.id}`
-  - DB 메뉴로 등록할 땐 `/my-rank`로 적기 — `app/my-rank/page.tsx`가 본인 id로 redirect (비로그인이면 `/login?redirect=/my-rank`)
-- 자리별 표 비율 규약 (스샷 기준):
-  - **전체%** = 그 wind 총국수 분모
-  - **동·남·서·북%** = 그 자리에 앉은 합계(rank 1~4 합) 분모. 토비 행도 동일 분모
-  - 표시: 소수점 2자리, 끝의 0 자동 제거 (`23.80%` → `23.8%`, `25.00%` → `25%`)
-- **QueryDSL 함정** — 이 프로젝트 환경에서 다음이 컴파일 실패:
-  - `new CaseBuilder().when(...).then(1L).otherwise(0L).sum()` → `method sum cannot be applied: required: Class<P>`
-  - `record.recordPoint.sum()`, `record.recordRank.avg()` 등 NumberPath 인스턴스 집계 메서드도 동일 증상
-  - 우회: 모두 `Expressions.numberTemplate(Long.class, "SUM({0})", flag)` / `Expressions.numberTemplate(Double.class, "AVG({0})", path)` 패턴으로. 기존 `findRanks` 메서드도 같은 패턴 사용 중
-- **RecordQueryRepository 주입 충돌** — 인터페이스로 주입하면 `RecordRepository`(JpaRepository extends) + `RecordRepositoryImpl` 두 빈이 매칭되어 기동 실패. 주입은 항상 `RecordRepository`로 (다른 서비스도 모두 그렇게 함)
+---
 
 ## 알림톡 (BizTalk)
 
-비즈톡 API(`https://www.biztalk-api.com/v2/kko/sendAlimTalk`)로 카카오 알림톡 발송. 센더키는 `biztalk.sender-key` env.
+`https://www.biztalk-api.com/v2/kko/sendAlimTalk`. 센더키는 `biztalk.sender-key`.
 
 ### 코드 구조
-- 템플릿 코드 상수: `util/AlimtalkTemplate.java` (interface, `String` 상수만)
-- 메시지 빌더: `util/AlimtalkUtils.java` — StringBuilder 기반 정적 메서드. 점수 포맷터(`formatMatchScore`, `formatMatchPoint`)·전화번호 정규화(`formatRecipientKr`)도 여기
-- 발송 서비스: `service/BgmAgitBizTalkSandService(.Impl)` — `sendTalk(...)` 공통 + 발송이력(`BgmAgitBiztalkSendHistory`) 저장
-- 이벤트 리스너: `event/BizTalkEventListener.java` — `@Async("bizTalkExecutor")` + `@TransactionalEventListener(AFTER_COMMIT)`. catch에서 1회 재시도하는 패턴 (부분 실패 시 중복 발송 가능성 있음)
+- 템플릿 코드 상수 `util/AlimtalkTemplate.java` / 메시지 빌더 `util/AlimtalkUtils.java`(점수·전화번호 포맷터도 여기)
+- 발송 `service/BgmAgitBizTalkSandService(.Impl)` — `sendTalk(...)` 공통 + 이력 `BgmAgitBiztalkSendHistory`
+- 리스너 `event/BizTalkEventListener` — `@Async("bizTalkExecutor")` + `AFTER_COMMIT`. catch에서 1회 재시도(부분 실패 시 중복 발송 가능)
 
-### 발송 이벤트 종류
-- `MemberJoinedEvent` — 회원가입 (현재 발행 주석처리)
-- `ReservationWaitingEvent` / `ReservationTalkEvent` — 룸 예약 대기·완료·취소
-- `InquiryEvent` — 1:1 문의 등록/답변
-- `LecturePostEvent` / `MyAcademyApprovalEvent` / `MyAcademyCancelEvent` — 마작 강의
-- `ReviewPostEvents` — 강의 리뷰
-- **`MatchRecordRegisteredEvent`** — 대국 기록 등록 (이번에 추가)
+### 이벤트 종류
+`MemberJoinedEvent`(발행 주석처리) / `ReservationWaitingEvent`·`ReservationTalkEvent` / `InquiryEvent` / `LecturePostEvent`·`MyAcademyApprovalEvent`·`MyAcademyCancelEvent` / `ReviewPostEvents` / `MatchRecordRegisteredEvent`
 
 ### 대국 기록 알림톡 (`bgmagit-bml-match`)
-- 카카오 검수 진행중 — 통과 전엔 BizTalk가 발송 거부
-- 발행: `RecordServiceImpl.createRecord` 마지막에 `eventPublisher.publishEvent(new MatchRecordRegisteredEvent(matchs.getId()))`
-- 리스너: `BizTalkEventListener.onMatchRecordRegistered` → `BgmAgitBizTalkSandServiceImpl.sendMatchRecord(matchsId)`
-- 발송 필터 (4명 각각): **`socialType=MAHJONG` AND `bgmAgitMemberAlimtalkStatus="Y"` AND `phoneNo` 존재** 셋 다 만족해야
-- 4인 대국 + 동남서북 자리 모두 채워졌을 때만 발송 (1명이라도 누락이면 전체 skip)
-- 메시지 변수: `#{기록ID}`, `#{기록일자}`, `#{동/남/서/북닉네임}`, `#{...점수}`, `#{...승점}` (총 14개)
-- 점수 포맷 `38,100` (천 단위 콤마), 승점 포맷 `+18.1`/`-39.6` (양수면 부호 붙음)
-- 버튼 URL: 코드는 `https://bgmagit.co.kr/record/rank/{memberId}`로 보냄. 카카오 템플릿엔 `https://bgmagit.co.kr/record/rank/#{memberId}` 패턴 권장 (`https://#{url}`보다 검수 통과 잘됨)
-- **수정/삭제 흐름엔 미적용** — `updateRecord`/`removeRecord`에서도 발송하려면 같은 이벤트 발행 한 줄 추가
+- 발행은 `createRecord`만. **수정/삭제 흐름 미적용**
+- 발송 필터(4명 각각): `socialType=MAHJONG` **AND** `alimtalkStatus='Y'` **AND** phoneNo 존재. 4인 + 동남서북 다 채워졌을 때만, 하나라도 빠지면 전체 skip
+- 변수 14개(기록ID/기록일자/각 자리 닉네임·점수·승점). 점수 `38,100`, 승점 `+18.1`/`-39.6`
+- 버튼 URL은 `https://bgmagit.co.kr/record/rank/{memberId}`. 템플릿엔 `.../rank/#{memberId}` 패턴이 검수 통과가 잘 됨
 
-### 관리자 당일 예약 알림 (`bgmagit-admin--reservation-rem`, 2026-08-08)
-매일 **09:00 KST**에 관리자 2명(`BgmAgitBizTalkSandServiceImpl.PHONE1/PHONE2`)에게 그날 예약 현황 발송.
-- 스케줄러: `origin/service/BgmAgitAdminReservationNotifyScheduler` (`@Scheduled(cron="0 0 9 * * *", zone="Asia/Seoul")`). 실패는 삼키고 로깅만
-- 발송: `BgmAgitBizTalkSandServiceImpl.sendAdminDailyReservation(date)` — 현황판이 쓰는 `findReservationsByDate` 재사용, 예약번호로 묶고 **취소건 제외**
-- 메시지 빌더: `AlimtalkUtils.buildAdminDailyReservationMessage(...)`. 변수 5개 = 예약일자/예약건수/총인원/첫예약시간/예약목록
-- **예약 0건이어도 매일 발송** — 건수·인원 0, 첫예약시간·예약목록은 `"없음"`. 변수가 빈 문자열이면 알림톡 치환이 실패하므로 반드시 뭔가 채울 것
-- **목록 15줄 제한** (`ADMIN_LIST_MAX_LINES`) — 본문 1,000자 제한 때문. 넘치면 `외 N건`으로 접음
-- 템플릿 코드의 **하이픈 2개(`admin--reservation`)는 카카오 등록값 그대로**. 오타로 보고 고치지 말 것
-- 버튼은 `사이트 바로가기` → `https://bgmagit.co.kr` (다른 관리자 알림톡과 동일)
-- 종료시각 계산은 `lastEndTime()` — 06시 이전은 익일로 보고 비교(G룸 00:00, 대탁 02:00 마감 대응)
+### 관리자 당일 예약 알림 (`bgmagit-admin--reservation-rem`)
+매일 **09:00 KST** 관리자 2명(`BgmAgitBizTalkSandServiceImpl.PHONE1/PHONE2`)에게 발송.
+- 스케줄러 `BgmAgitAdminReservationNotifyScheduler`, 발송 `sendAdminDailyReservation(date)` — 현황판의 `findReservationsByDate` 재사용, 예약번호로 묶고 취소건 제외
+- 변수 5개(예약일자/건수/총인원/첫예약시간/예약목록). **0건이어도 매일 발송** — 빈 문자열이면 치환이 실패하므로 `"없음"`으로 채움
+- 목록 **15줄 제한**(`ADMIN_LIST_MAX_LINES`, 본문 1,000자 한계). 넘치면 `외 N건`
+- 템플릿 코드의 **하이픈 2개(`admin--reservation`)는 카카오 등록값 그대로** — 오타로 보고 고치지 말 것
+- 종료시각 `lastEndTime()`은 06시 이전을 익일로 보고 비교
 
-### 알림톡 ON/OFF (마작 회원 전용)
-- 컬럼: `BGM_AGIT_MEMBER.BGM_AGIT_MEMBER_ALIMTALK_STATUS` (`Y`/`N`)
-- 엔티티 필드: `BgmAgitMember.bgmAgitMemberAlimtalkStatus`
-- 신규 가입 시 두 생성자 모두 `"Y"` 박음. 소셜 회원도 박혀있긴 한데 발송 필터에 `socialType=MAHJONG`이 같이 있어서 사실상 무시됨
-- 마이페이지 토글: `MyPageModal.tsx` "알림 설정" 섹션. 토글 시 confirm → `PUT /bgm-agit/mypage`로 즉시 저장. 백엔드는 `BgmAgitMyPagePutRequest.alimtalkStatus` → `BgmAgitMember.modifyMyPage()`
-- 조회 응답에도 포함: `BgmAgitMyPageGetResponse.alimtalkStatus` (QueryProjection 생성자에 인자 추가됨, Q-class 재생성 필요)
+### 예약 결제 안내 (`bgmagit-res-payment-1`)
+구 템플릿 `bgmagit-res-payment`는 고정 문구에 "예약금은 M룸 30,000원, 그 외 10,000원이며 잔여 이용요금은 현장에서 결제합니다."가 박혀 있어 금액 정책이 바뀔 때마다 재심사가 필요했다. **`-1` 개정판에서 그 줄을 지우고 정보 블록에 `예약금: #{예약금}` 변수를 추가**해 금액이 바뀌어도 소스만 고치면 되게 했다.
+- 금액은 `SlotSchedule.totalDepositAmount(images)` 결과를 `AlimtalkUtils.formatAmount`로 포맷해 넣는다. **결제 주문 금액(`createPaymentOrder`)과 같은 메서드**라 합쳐 예약(M-1+M-2 = 20,000원)도 실제 청구액이 그대로 나간다. 두 곳이 갈리면 고지 금액과 청구 금액 불일치가 되므로 계산을 따로 만들지 말 것
+- **카카오 검수 통과 템플릿과 고정 문구는 여전히 글자 단위로 일치해야 한다.** 변수(`#{예약금}`, `#{룸}` 등) 값만 자유롭게 조립 가능
+- 검수 통과 **전에 배포하면 발송이 거부된다.** 다만 `biztalk.reservation-payment-live`(기본 false, yml·.env·워크플로우 어디에도 미설정)가 꺼져 있는 동안은 계좌안내 템플릿 `bgmagit-res-account2`가 나가므로 이 템플릿은 아예 쓰이지 않는다. 결제 안내로 전환할 때 이 값을 켜면 된다
 
-### 휴대폰 번호 형식
-- `@PhoneValid` 정규식: `^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$` — **하이픈 선택**
-- 통과: `010-1234-5678`, `01012345678`, 혼합도 OK
-- DB 저장은 사용자 입력 그대로 (`normalizePhone`은 `+82`만 `0`으로 변환)
-- 발송 시 `formatRecipientKr()`이 숫자만 추출해 `010-1234-5678`로 재포맷하므로 어떤 형식으로 저장돼도 발송 가능
+### 알림톡 ON/OFF
+- `BGM_AGIT_MEMBER_ALIMTALK_STATUS`(Y/N). 신규 가입 시 두 생성자 모두 `"Y"`
+- 마이페이지 토글(`MyPageModal.tsx` "알림 설정") → `PUT /bgm-agit/mypage` → `modifyMyPage()`. 조회 응답에도 포함(`BgmAgitMyPageGetResponse.alimtalkStatus`, QueryProjection이라 Q-class 재생성 필요)
 
-## 운영상 주의사항 (현장에서 겪은 이슈)
+### 휴대폰 번호
+- `@PhoneValid`: `^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$` — **하이픈 선택**
+- DB엔 입력 그대로 저장(`normalizePhone`은 `+82`→`0`만), 발송 시 `formatRecipientKr()`이 `010-1234-5678`로 재포맷
 
+---
 
-1.**KML 닉네임 중복** — 동일 닉네임 여러 명 있을 수 있음. 단건일 때만 자동 연결, 다건은 `AMBIGUOUS` 취급되어 스케줄러도 연결·자동 등록 안 함 (수동 개입 필요). 0건일 때만 신규 등록함
-2.**회원가입 시 알림톡 발행은 주석처리** — 활성화 하려면 `SignupServiceImpl`의 `eventPublisher.publishEvent(...)` 주석 해제
-3.**소셜·폼 닉네임 네임스페이스 분리** — `findByBgmAgitMemberNickname` 같은 무조건 조회는 버그. 항상 `AndSocialType` 버전 사용
-4.**`bgmagit-bml-match` 검수 진행중** — 코드는 wired 완료. 검수 통과 전엔 발송 시도가 실패하고 catch에서 1회 재시도 후 종료. 통과 즉시 자동 발송됨
+## 기록 · 랭킹 (kml-front)
 
-## 아직 안 한 것 (TODO 후보)
+### 기록 입력 UX (`write/page.tsx`)
+- **점수 자동 계산**: 4자리 중 사용자가 직접 안 건드린 자리(`scoreEditTime[key]===0`)가 대상. 3자리 입력하면 나머지가 `refund - sum(others)`. 기본 대상은 NORTH. 4자리 다 입력하면 수동 모드, 칸을 비우면 timestamp가 0으로 리셋돼 다시 후보 복귀. `Number.isNaN` 체크로 `'-'` 단독 입력 시 NaN 발산 방지
+- **± 토글**(`SignButton`): input은 `type="text"` + `inputMode="numeric"` + `^-?\d*$` — `-` 단독 표시를 위해(type=number 불가). 빈 값에서 누르면 `-`, `0`에선 무시(`-0` 방지), 값 있으면 부호 토글
+- **"내 닉네임" 버튼**: 각 자리 + 역만 행마다 좌측 `<MeButton>`, 휴지통은 우측(오클릭 방지). 회원 목록에 본인이 없으면 alert
+
+### 랭킹 검색 (`RankType`)
+- `WEEKLY`(월요일~다음 월요일) / `MONTHLY`(1일~다음 달 1일) / `CUSTOM`(`startDateTime`/`endDateTime`, 둘 다 필수·end>start)
+- `GET /bgm-agit/ranks?type=…&baseDate=…|startDateTime=…&endDateTime=…`. repository는 `LocalDateTime` 범위 비교
+- 프론트 `BaseTable`이 rankType 따라 주 픽커 / 년월 픽커 / datetime 2개로 분기
+
+### 개인기록 `/rank/{memberId}`
+차트·단 시스템 없이 표·카드 중심. **CSR**(SSR 안 씀), styled-components, 외부 차트 라이브러리 없음.
+- `GET /bgm-agit/ranks/{memberId}/stats?year=` — 카드 통계(총국수/평균순위/총승점/1·4위/토비/+30000/-2등) + 자리별×순위별 표 + 같이 친 TOP3
+- `GET /bgm-agit/ranks/{memberId}/games?page=&year=` — 최근 경기 페이징. `year` 생략 = 전체 기간
+- 서비스 `RankServiceImpl.findMemberStats/findMemberRecentGames`, 쿼리는 `RankRepository`의 `findMemberCards/findMemberSeatStats/findMemberTopRivals/findMemberMatchIds`
+- 진입: 랭킹 표 닉네임 링크 / 메인 퀵메뉴 "내 기록" / DB 메뉴는 **`/my-rank`로 등록**(`app/my-rank/page.tsx`가 본인 id로 redirect)
+- **비율 규약**: 전체% = 그 wind 총국수 분모, 동·남·서·북% = 그 자리 합계(rank 1~4 합) 분모(토비 행도 동일). 소수점 2자리 + 끝 0 제거(`23.80%`→`23.8%`)
+
+### QueryDSL 함정 (이 프로젝트 환경)
+- `new CaseBuilder()...sum()`, `record.recordPoint.sum()`, `.avg()` 등 **인스턴스 집계 메서드가 컴파일 실패**(`method sum cannot be applied`)
+- 우회: `Expressions.numberTemplate(Long.class, "SUM({0})", flag)` / `numberTemplate(Double.class, "AVG({0})", path)`. 기존 `findRanks`도 이 패턴
+- **`RecordQueryRepository`를 인터페이스로 주입하면 기동 실패**(`RecordRepository` + `RecordRepositoryImpl` 두 빈 매칭). 주입은 항상 `RecordRepository`로
+
+---
+
+## 프론트 개발 팁 (kml-front)
+
+- API는 Next rewrite로 `/bgm-agit/*` → `${NEXT_PUBLIC_API_URL}/bgm-agit/*` 프록시
+- `axiosInstance`가 access token(`tokenStore` 메모리) / refresh token(HttpOnly 쿠키) 자동 처리. 보호 라우트는 `RouteAuthGuard.tsx`, 리다이렉트 `/login?redirect=…`
+- Kakao SDK(`KakaoProvider`)는 **공유하기용**(`NEXT_PUBLIC_KAKAO_JS_KEY`), 로그인과 무관
+- **반응형** — 사용자가 거의 휴대폰으로 입력. `theme.device.mobile`(`max-width: 844px`) 기준:
+  - input/select는 모바일 `font-size: 16px`(iOS Safari 자동 줌 방지)
+  - 데스크탑 `flex-wrap: nowrap; overflow-x: auto`인 검색/필드는 모바일에서 `wrap`으로 풀기
+  - 표는 부모 `overflow-x: auto` + table `min-width`
+  - `Wrapper`의 `min-width: 1280px`은 `@media tablet`에서 `100%`로 해제
+
+### 사이드바 sub 메뉴 (`Sidebar.tsx`)
+`BGM_AGIT_KML_MENU.BGM_AGIT_KML_SUB_MENU_ID`가 부모 ID. `KmlMenuServiceImpl`이 트리로 묶어 `subMenus[]` 반환.
+- 부모 분기: `/my-page`→모달 / `!menuLink || '/sub'`→펼침 토글 / 그 외→`<Link>`. sub 안의 `/my-page`도 모달
+- 데스크탑 sub는 `position: absolute` 드롭다운 → **`SidebarWrapper { overflow: visible }` 필수**(헤더가 가로 일렬이라 안 그러면 밀리거나 잘림). 태블릿/모바일은 `static` 인라인 펼침 + `padding-left: 16px`, `overflow-y: auto`
+- 라우트 변경 시 `setOpenSubMenuId(null)`. **외부 클릭 시 자동 닫기는 미구현**
+- 메인 `quickMenus` 필터: `!!menuLink && menuLink !== '/sub' && menuLink !== '/my-page'`
+
+## SSR / SEO (kml-front)
+
+### Hybrid SSR
+`day-record`, `yakuman-record`, `rank`, `notice` 4개.
+- `page.tsx`(server) — 비로그인 기준 초기 데이터 fetch + `metadata` export / `<Page>Client.tsx` — `initialData`를 `useRef` 가드로 store에 1회 hydrate
+- 첫 진입 + `initialData` 있으면 client 첫 fetch 스킵(`firstFetchSkipRef`). 검색·페이징·필터는 기존 hook 그대로 CSR
+- 서버 fetch는 plain `fetch()` — `lib/axiosInstance.ts`는 `tokenStore.get()`/`window.dispatchEvent` 같은 클라 전용 API를 써서 서버에서 못 부름. 분리 폴더 `services/server/*.server.ts`(`'server-only'`)와 inline 정의가 혼재
+
+### Metadata title 중복 함정
+`app/layout.tsx`에 `title.template = '%s | BGM 아지트 BML'`이 있어 자식 `metadata.title`은 **suffix 없이 짧게**(`'역만 기록'`). 잘못 쓰면 `'역만 기록 | BGM 아지트 BML | BGM 아지트 BML'`. `openGraph.title`은 template을 안 거치므로 풀 텍스트로, `alternates.canonical`·`openGraph.url`도 페이지별 명시.
+
+### Soft 404
+컨텐츠가 적은 목록 페이지(공지 1개, 랭킹 4명)가 서치콘솔에서 soft 404로 색인 거부될 수 있음 → server `page.tsx`에 `CollectionPage` + `ItemList` JSON-LD 추가(`app/notice/page.tsx`, `app/rank/page.tsx` 참고). 한국어 본문량 늘리는 것도 효과적.
+
+---
+
+## 인프라
+
+### 환경변수
+- `bgm-agit-api`는 `me.paulschwarz:spring-dotenv`로 `bgm-agit-api/src/main/resources/.env`를 읽어 yml 플레이스홀더 치환. `.env`는 커밋 금지(`.gitignore`)
+- 배포는 **GitHub Secrets → 시스템 환경변수**(시스템 쪽이 `.env`보다 우선)
+- **`=` 뒤에 공백 넣지 말 것**(dotenv가 trim 안 함). `spring.config.import`는 불필요
+- Next 앱의 `.env.development/.staging/.production`은 **커밋됨**(시크릿 아님). 도커 빌드가 `ENV_FILE` build-arg로 골라 씀
+
+### CI/CD (`.github/workflows`)
+- `bgmagit-staging-cicd.yaml`(staging 브랜치) / `bgmagit-cicd.yaml`(main)
+- `dorny/paths-filter`로 앱별 변경 감지 → 해당 잡만 실행 (`backend` / `frontend` / `kml_frontend` / `murder_frontend`)
+- 백엔드·Next 앱은 도커허브 push 후 SSH로 컨테이너 교체, 메인 프론트는 scp + nginx reload
+- staging은 SSH 포트 2222 + `STAGING_*` 시크릿, 운영은 22 + `HOST`/`USERNAME`/`PASSWORD`
+
+### 데이터베이스
+- 서버 도커 컨테이너 MySQL 8.0.43. `binlog_format=ROW`, `binlog_row_image=FULL`(플래시백 가능)
+- **실수 DELETE 났을 때 절대 하지 말 것**: 컨테이너 재시작, `RESET MASTER`, `PURGE BINARY LOGS`. 복구는 `mysqlbinlog --base64-output=DECODE-ROWS -v` 덤프 후 역변환
+- `ddl-auto: none` — 스키마 변경은 **수동 ALTER**(`create.sql`/`create2.sql` 참고)
+- 인증 관련 핵심 테이블: `BGM_AGIT_MEMBER` / `BGM_AGIT_MEMBER_ROLE` / `BGM_AGIT_ROLE` / `BGM_AGIT_URL_RESOURCES`(+`_ROLE`, DB 기반 동적 인가 — `BgmAgitAuthorizationManager`)
+
+### 스케줄러 목록
+`@EnableScheduling`은 `BgmAgitApiApplication`에 있음. 전부 KST.
+
+| 주기 | 클래스 | 하는 일 |
+|---|---|---|
+| 매분 | `kml/tournament/.../TournamentScheduler` | 종료시각 지난 대회 CLOSED 전환 |
+| 5분 | `BgmAgitBiztalkResultSyncScheduler` | 알림톡 발송 결과 동기화 |
+| 매시 정각 | `KmlSyncScheduler` | `kml_synk='N'` 회원 재조회·등록 |
+| 매시 30분 | `KmlMatchsRetryScheduler` | KML 기록 전송 실패분 재시도 |
+| 09:00 | `BgmAgitAdminReservationNotifyScheduler` | 관리자 당일 예약 알림톡 |
+| 01:00 | `BgmAgitFileSchedule` | S3 임시파일 정리 |
+| 01:00 | `origin/payment/schedule/BgmAgitPaymentSchedule` | 버려진 READY 주문 정리 |
+| 10시간 간격 | `BgmAgitBizTalkServiceImpl.scheduled` | 비즈톡 토큰 재발급 |
+
+---
+
+## 운영 주의사항
+
+1. **KML 닉네임 중복** — 동일 닉네임이 여럿이면 `AMBIGUOUS`로 자동 연결·등록을 안 한다(스케줄러도 마찬가지). 수동 개입 필요. 0건일 때만 신규 등록
+2. **회원가입 알림톡은 발행이 주석 처리됨** — 켜려면 `SignupServiceImpl`의 `eventPublisher.publishEvent(...)` 주석 해제
+3. **소셜·폼 닉네임 네임스페이스 분리** — `AndSocialType` 없는 조회는 버그
+4. **`bgmagit-bml-match` 카카오 검수 대기 중** — 통과 전엔 발송이 거부되고 catch에서 1회 재시도 후 종료. 통과 즉시 자동 발송. 첫 발송 때 URL 중복(`https://https://…`) 여부 확인할 것
+5. **URL_RESOURCES에 없는 경로는 기본 permit** — 새 관리자용 POST/PUT/DELETE는 매핑을 넣지 않으면 무방비. 매핑 INSERT 후 **앱 재시작** 필요
+
+## TODO 후보
 
 - 닉네임 변경 시 KML synk 리셋
-- `AMBIGUOUS`(다건 매칭) 수동 해결 UI — 마이페이지에서 KML ID 직접 선택
-- `application-*.yml` 정리 (`kakao.redirecturi2`, `naver.redirecturi2`, `bgm-agit-kml-front`의 소셜 OAuth env vars)
-- **메인 퀵메뉴 추가** — *부분 진행 중*. 로그인 사용자에게 "내 기록"(`/rank/{user.id}`) QuickItem 추가됨 (`UserCircle` 아이콘). 추가 후보(월간 랭킹/주간 랭킹/다국왕 등)와 그리드/행 레이아웃·모바일 슬라이더 높이는 미결.
-- **개인기록 더보기 영역 미구현** — 스샷에 있던 "월간/주간/요일별/시간대별 성적·역만·기록" 링크 라인은 `/rank/[memberId]`에 안 들어갔음
-- **외부 클릭 시 사이드바 sub 자동 닫기 미구현** — 현재는 라우트 변경 시에만 닫힘
-- **새 엔드포인트 권한 매핑** — `/bgm-agit/ranks/{memberId}/stats`, `/bgm-agit/ranks/{memberId}/games`, `/my-rank` 라우트가 `BGM_AGIT_URL_RESOURCES` / `BGM_AGIT_KML_MENU_ROLE`에 등록 안 됐을 수 있음. 기존 `/bgm-agit/ranks` 권한과 동일하게 추가 필요
-- **대국 기록 알림톡 — 수정/삭제 흐름 미적용** — 현재 `createRecord`만 발송. `updateRecord`/`removeRecord`에서도 발송하려면 `eventPublisher.publishEvent(new MatchRecordRegisteredEvent(matchs.getId()))` 한 줄씩 추가
-- **`bgmagit-bml-match` 카카오 검수 통과 대기** — 통과 후 첫 발송 시 URL 중복(`https://https://...`) 여부 모니터링. 문제 있으면 `BgmAgitBizTalkSandServiceImpl.sendMatchRecord`의 url 변수에서 `https://` 제거
+- `AMBIGUOUS` 수동 해결 UI(마이페이지에서 KML ID 직접 선택)
+- `application-*.yml` 정리(`kakao.redirecturi2`, `naver.redirecturi2`, kml-front 소셜 OAuth env)
+- 결제: `ABORTED` 기록 남기기(`REQUIRES_NEW`), 외부 호출 트랜잭션 분리, 관리자 확정 슬롯 검증, 노쇼 위약금
+- `BGM_AGIT_ROOM` 테이블 분리 / 예약 2테이블 정규화
+- 새 엔드포인트 권한 매핑 확인 — `/bgm-agit/ranks/{memberId}/stats`, `.../games`, `/my-rank`
+- 대국 기록 알림톡을 수정/삭제 흐름에도 적용(`eventPublisher.publishEvent(new MatchRecordRegisteredEvent(...))` 한 줄씩)
+- 메인 퀵메뉴 추가(현재 "내 기록"만 들어감) / 개인기록 "더보기" 영역 / 사이드바 외부 클릭 닫기
 
-## 랭크 티어(Rank Tier) 시스템 — 계획 확정, 미구현 (2026-07-08)
+---
 
-기존 `kml/rank`(기간별 통계 순위표, 누적 승점 합산)와 **별개**로, **레이팅형(작혼/롤식) 시즌 티어 시스템**을 신설하기로 함. 누적 합산은 "많이 친 사람"이 이기는 볼륨 편향이 있어, 판당 레이팅 ±로 실력을 반영. **아직 코드 없음.** 상세 계획서: `C:\Users\ulim\.claude\plans\c-users-ulim-desktop-work-bgm-agit-bgm-a-woolly-crown.md`. 원 아이디어 문서: `랭크시스템_계획서.html`(단, 그건 누적 승점+월 리셋안 → 아래 결정으로 대체됨).
+## 랭크 티어 시스템 — 계획만, 코드 없음
 
-### 확정 결정 (사용자 합의)
-- **모델**: 레이팅형. 판마다 **착순별 고정 포인트 × 게임길이 가중치**(동0.5/반1.0/서1.5/전2.0)로 레이팅 ±, 레이팅 밴드로 티어 결정. (가중치는 `RankRepository.findRanks`에 이미 있는 idiom 재사용. `MatchsWind` 기준이지 `recordSeat` 아님. `CalculateUtil.seatMultiplier`(우마용 1/2/3/4)와 혼동 금지)
-- **시즌**: `YYYY-MM` 자동파생 폐기. **관리자가 DB로 시즌(이름·기간·리셋방식·티어이름·밴드·포인트) 정의.** 수치 튜닝은 당분간 SQL UPDATE, 설정 UI는 후순위.
-- **리셋 방식(시즌별)**: HARD(base부터)/SOFT(전 시즌 일부 계승)/CONTINUOUS(리셋 없는 상시 래더).
-- **강등 방지 있음 (작혼식 바닥 보호)**: 시즌 중 한번 도달한 티어 밑으로 레이팅 안 떨어짐(`PEAK_FLOOR` 추적). → **순차 의존이라 SQL 합산 백필 불가, 코드 기반 replay(`recalc-all`)만 정확.**
-- **CLOSED 시즌도 재계산**: 과거 기록 정정 시 그 시즌 랭킹도 다시 계산.
-- **배치(placement)**: 시즌 최소 판수 미만은 티어 미확정(provisional). `MatchsRepositoryImpl.getYearRanks`의 requiredGames 선례 참고.
+기존 `kml/rank`(기간별 누적 승점 순위표)와 **별개**로 레이팅형(작혼/롤식) 시즌 티어를 신설하기로 함. 누적 합산은 "많이 친 사람"이 이기는 볼륨 편향이 있어서. 원 아이디어 문서 `랭크시스템_계획서.html`은 누적 승점+월 리셋안이라 아래 결정으로 대체됨.
+
+### 확정된 결정
+- **모델**: 착순별 고정 포인트 × 게임길이 가중치(동0.5/반1.0/서1.5/전2.0)로 판마다 레이팅 ±, 밴드로 티어 결정
+  - 가중치 idiom은 `RankRepository.findRanks`에 이미 있음. **`MatchsWind` 기준이지 `recordSeat` 아님**. `CalculateUtil.seatMultiplier`(우마용 1/2/3/4)와 혼동 금지
+- **시즌**: 관리자가 DB로 정의(이름·기간·리셋방식·티어이름·밴드·포인트). 튜닝은 SQL UPDATE, 설정 UI는 후순위
+- **리셋 방식**: HARD / SOFT(일부 계승) / CONTINUOUS(상시 래더)
+- **강등 방지 있음** — 시즌 중 도달한 티어 밑으로 안 떨어짐(`PEAK_FLOOR`). 순차 의존이라 **SQL 백필 불가, 코드 replay만 정확**
+- **CLOSED 시즌도 재계산**(과거 기록 정정 시)
+- **배치(placement)**: 최소 판수 미만은 provisional. `MatchsRepositoryImpl.getYearRanks`의 requiredGames 선례 참고
 
 ### 설계 요지
-- **테이블 4종**(`BGM_AGIT_RANK_SEASON / _TIER / _POINT / _STANDING`, `ddl-auto:none` 수동 DDL). TIER는 시즌 종속(시즌마다 이름/컷 변경). POINT는 tier NULL=시즌 기본 + 티어별 오버라이드 가능. STANDING은 회원×시즌 실시간값(rating/gameCount/peakFloor/tierName).
-- **패키지**: `com.bgmagitapi.kml.ranktier`(entity/enums/repository/service/controller/event/dto). 이벤트 DTO만 관례상 `origin/event/dto/RankTierRecalcEvent`.
-- **레이팅 = 재합산 아니라 replay**: 각 판 ±가 그 시점 티어에 의존(경로 의존)이라, 기록 변경 시 시즌 시작부터 `matchs.registDate` 순으로 회원별 재생. 소규모라 부담 없음.
-- **이벤트 통합(중요)**: `RecordServiceImpl`의 **생성·수정·삭제·복구 4곳 모두**에서 `RankTierRecalcEvent` 발행 필요. 현재 `createRecord`만 이벤트(알림톡용) 발행하고 `updateRecord/removeRecord/restoreRecord`는 미발행. 리스너는 `KmlRecordEventListener` 패턴(`@Async("bizTalkExecutor")` + `@TransactionalEventListener(AFTER_COMMIT)`) 미러, 실패는 삼켜 로깅(기록 트랜잭션 롤백 방지).
-- **조회 API**: 공개 GET 4종 `/bgm-agit/rank-tiers/{standings,members/{id},config,badges}`. GET은 `BgmAgitAuthorizationManager` 기본 permit이라 URL_RESOURCES 등록 불필요. **단 관리자 `POST /recalc-all`은 등록 안 하면 무방비 공개 → 반드시 ADMIN 매핑 + 앱 재시작.**
-- **프론트**: `/rank-tier` 페이지 + `TierBadge`(zustand 배지 캐시, `/badges` 배치로 N+1 방지) — 기존 `/rank` 리스트·개인기록 헤더에도 표시.
+- 테이블 4종 `BGM_AGIT_RANK_SEASON / _TIER / _POINT / _STANDING`(수동 DDL). TIER는 시즌 종속, POINT는 tier NULL=시즌 기본 + 티어별 오버라이드, STANDING은 회원×시즌 실시간값
+- 패키지 `com.bgmagitapi.kml.ranktier`. 이벤트 DTO만 관례상 `origin/event/dto/RankTierRecalcEvent`
+- **레이팅은 재합산이 아니라 replay** — 각 판 ±가 그 시점 티어에 의존(경로 의존)이라 시즌 시작부터 `matchs.registDate` 순으로 재생
+- **이벤트를 4곳 모두에 달아야 함** — `RecordServiceImpl`의 생성·수정·삭제·복구. 현재 `createRecord`만 알림톡용 이벤트를 발행한다. 리스너는 `KmlRecordEventListener` 패턴 미러, 실패는 삼켜 로깅
+- 조회 API는 공개 GET 4종(`/bgm-agit/rank-tiers/{standings,members/{id},config,badges}`). **관리자 `POST /recalc-all`은 URL_RESOURCES에 ADMIN 매핑 필수**
+- 프론트 `/rank-tier` + `TierBadge`(zustand 캐시, `/badges` 배치로 N+1 방지)
 
-### 집에서 생각할 거리 (미결)
-- 티어 이름·개수·레이팅 컷·착순 포인트 실제 값 (현재 계획서 시드는 placeholder: base 1500, 급위/초단/삼단/사범, 1위+60~4위-60).
-- `PROTECTED`: v1은 전 티어 바닥보호. 작혼처럼 상위 티어만 강등 허용할지.
-- 첫 시즌 리셋방식(CONTINUOUS로 기존 기록 전체 흡수 vs 특정 시점부터 HARD 시작).
+### 미결
+티어 이름·개수·레이팅 컷·착순 포인트 실제 값(현재 placeholder: base 1500, 급위/초단/삼단/사범, 1위 +60 ~ 4위 -60) / 전 티어 바닥보호 유지할지 / 첫 시즌 리셋 방식.
+
+---
 
 ## 자주 쓰는 경로
 
-- 인증/시큐리티: `bgm-agit-api/src/main/java/com/bgmagitapi/security/`
-- KML 연동: `bgm-agit-api/src/main/java/com/bgmagitapi/security/service/kml/`
-- 도메인 패키지: `bgm-agit-api/src/main/java/com/bgmagitapi/kml/{lecture,notice,record,rank,...}/`
-- 랭킹·개인기록: `bgm-agit-api/.../kml/rank/{controller,service,repository,dto/response}/`
-- 프론트 로그인/가입: `bgm-agit-kml-front/app/{login,signup}/page.tsx`
-- 프론트 인증 서비스: `bgm-agit-kml-front/services/auth.service.ts`
-- 프론트 개인기록: `bgm-agit-kml-front/app/rank/[memberId]/{page,MemberRankClient}.tsx`, `app/my-rank/page.tsx`
-- 프론트 사이드바: `bgm-agit-kml-front/app/components/Sidebar.tsx`
-- 알림톡 (백엔드): `bgm-agit-api/src/main/java/com/bgmagitapi/{util/Alimtalk*.java, service/BgmAgitBizTalk*.java, service/impl/BgmAgitBizTalk*Impl.java, event/BizTalkEventListener.java, event/dto/*Event.java}`
-- 마이페이지: `bgm-agit-api/.../service/{BgmAgitMyPageService,impl/BgmAgitMyPageServiceImpl}.java`, `controller/BgmAgitMyPageController.java`, 프론트 `app/components/MyPageModal.tsx`
+- 인증·시큐리티: `bgm-agit-api/.../origin/security/`
+- KML 연동: `bgm-agit-api/.../origin/security/service/kml/`
+- 결제: `bgm-agit-api/.../origin/payment/`, 프론트 `bgm-agit-front/src/components/payment/`, `src/pages/Payment{Success,Fail}.tsx`
+- 예약: `bgm-agit-api/.../origin/{controller/BgmAgitReservationController, service/impl/BgmAgitReservationServiceImpl, util/SlotSchedule}.java`, 프론트 `src/pages/{ReservationList,ReservationBoard}.tsx`, `src/components/ReservationCalendar.tsx`
+- 알림톡: `bgm-agit-api/.../origin/{util/Alimtalk*, service/BgmAgitBizTalk*, service/impl/BgmAgitBizTalk*Impl, event/BizTalkEventListener, event/dto/*Event}.java`
+- 마이페이지: `bgm-agit-api/.../origin/service/{BgmAgitMyPageService,impl/BgmAgitMyPageServiceImpl}.java`, 프론트 `bgm-agit-front/src/components/MyPageModal.tsx`
+- 마작 도메인: `bgm-agit-api/.../kml/{lecture,notice,record,rank,tournament,...}/`
+- kml-front: `app/{login,signup}/page.tsx`, `services/auth.service.ts`, `app/components/Sidebar.tsx`, `app/rank/[memberId]/{page,MemberRankClient}.tsx`, `app/my-rank/page.tsx`

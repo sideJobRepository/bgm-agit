@@ -26,6 +26,7 @@ import com.bgmagitapi.origin.service.response.BizTalkTokenResponse;
 import com.bgmagitapi.origin.service.response.ReservationTalkContext;
 import com.bgmagitapi.origin.util.AlimtalkTemplate;
 import com.bgmagitapi.origin.util.AlimtalkUtils;
+import com.bgmagitapi.origin.util.SlotSchedule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -104,8 +105,12 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String ownerMessage;
         String template;
         if (reservationPaymentTalkLive) {
+            // 예약금은 템플릿 변수라 실제 청구액을 그대로 넣는다. 합쳐 예약이면 항목 수만큼 합산된 금액
+            String deposit = AlimtalkUtils.formatAmount(SlotSchedule.totalDepositAmount(
+                    list.stream().map(BgmAgitReservation::getBgmAgitImage).toList()
+            ));
             message = AlimtalkUtils.buildReservationPaymentMessage(
-                    member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, reservationRequest
+                    member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, deposit, reservationRequest
             );
             ownerMessage = message; // 결제 버전은 사용자/관리자 문구 동일
             template = AlimtalkTemplate.BGMAGIT_RES_PAYMENT;

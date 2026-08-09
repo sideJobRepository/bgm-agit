@@ -1,5 +1,6 @@
 package com.bgmagitapi.origin.util;
 
+import com.bgmagitapi.origin.entity.BgmAgitImage;
 import com.bgmagitapi.origin.entity.enumeration.BgmAgitImageCategory;
 import com.bgmagitapi.origin.entity.enumeration.Reservation;
 
@@ -7,7 +8,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 예약 항목별 슬롯/이용시간/선택제한 정책의 단일 출처.
@@ -100,13 +104,29 @@ public class SlotSchedule {
         return isMahjongRental(category) ? Reservation.DELEGATE_PLAY : Reservation.ROOM;
     }
 
-    // 예약 예약금(정액): 기본 1만원, M룸만 3만원
-    // M Room은 2026-08-03에 노출 종료(USE_STATUS='N')되어 현재 실제로는 전 항목 1만원.
-    // 화면/약관 문구도 1만원으로 통일했으니 M Room을 다시 열 땐 문구까지 되살릴 것.
+    // 예약 예약금(정액): 전 항목 1만원.
+    // M Room 3만원 예외가 있었으나 M Room이 M-1/M-2/M-3로 쪼개지면서 제거됨(항목 수만큼 합산되므로 3칸 = 3만원으로 동일).
+    // 향후 예약 인원수 기준으로 전환 예정이며, 그때는 category/label만으로 부족해 인원 인자가 추가되어야 한다.
     public static int resolveDepositAmount(BgmAgitImageCategory category, String label) {
-        if (category == BgmAgitImageCategory.ROOM && "M Room".equals(label)) {
-            return 30000;
-        }
         return 10000;
+    }
+
+    /**
+     * 한 예약(그룹)의 총 예약금. 이미지 id 기준으로 중복을 제거한 뒤 항목 수만큼 합산한다.
+     * 결제 주문 금액과 예약 대기 알림톡 안내 금액이 갈리지 않도록 두 곳 모두 이 메서드만 쓸 것.
+     */
+    public static int totalDepositAmount(Collection<BgmAgitImage> images) {
+        if (images == null || images.isEmpty()) {
+            return 0;
+        }
+        Set<Long> countedImageIds = new HashSet<>();
+        int total = 0;
+        for (BgmAgitImage image : images) {
+            if (image == null || !countedImageIds.add(image.getBgmAgitImageId())) {
+                continue;
+            }
+            total += resolveDepositAmount(image.getBgmAgitImageCategory(), image.getBgmAgitImageLabel());
+        }
+        return total;
     }
 }
