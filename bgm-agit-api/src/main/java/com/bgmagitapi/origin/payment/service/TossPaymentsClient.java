@@ -3,21 +3,37 @@ package com.bgmagitapi.origin.payment.service;
 import com.bgmagitapi.origin.payment.service.request.TossPaymentCancelRequest;
 import com.bgmagitapi.origin.payment.service.request.TossPaymentConfirmRequest;
 import com.bgmagitapi.origin.payment.service.response.TossPaymentResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
+import org.springframework.boot.http.client.ClientHttpRequestFactorySettings;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Base64;
 
 @Component
-@RequiredArgsConstructor
 public class TossPaymentsClient {
 
-    private final RestClient.Builder restClientBuilder;
+    
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
+    
+    private static final Duration READ_TIMEOUT = Duration.ofSeconds(30);
+
+    private final RestClient restClient;
+
+    public TossPaymentsClient(RestClient.Builder restClientBuilder) {
+        ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.defaults()
+                .withConnectTimeout(CONNECT_TIMEOUT)
+                .withReadTimeout(READ_TIMEOUT);
+
+        this.restClient = restClientBuilder
+                .requestFactory(ClientHttpRequestFactoryBuilder.detect().build(settings))
+                .build();
+    }
 
     @Value("${toss.secret-key}")
     private String secretKey;
@@ -29,7 +45,7 @@ public class TossPaymentsClient {
     private String cancelUrl;
 
     public TossPaymentResponse confirm(String paymentKey, String orderId, Integer amount) {
-        return restClientBuilder.build()
+        return restClient
                 .post()
                 .uri(confirmUrl)
                 .header(HttpHeaders.AUTHORIZATION, basicAuthorization())
@@ -40,7 +56,7 @@ public class TossPaymentsClient {
     }
 
     public TossPaymentResponse cancel(String paymentKey, String cancelReason) {
-        return restClientBuilder.build()
+        return restClient
                 .post()
                 .uri(cancelUrl + "/" + paymentKey + "/cancel")
                 .header(HttpHeaders.AUTHORIZATION, basicAuthorization())

@@ -70,6 +70,25 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
     }
     
     @Override
+    public List<BgmAgitReservation> findConfirmedReservations(List<Long> imageIds, LocalDate startDate, Long excludeReservationNo) {
+        if (imageIds == null || imageIds.isEmpty()) {
+            return List.of();
+        }
+        return queryFactory
+                .selectFrom(bgmAgitReservation)
+                .where(
+                        bgmAgitReservation.bgmAgitImage.bgmAgitImageId.in(imageIds),
+                        bgmAgitReservation.bgmAgitReservationStartDate.eq(startDate),
+                        bgmAgitReservation.bgmAgitReservationCancelStatus.eq("N"),
+                        bgmAgitReservation.bgmAgitReservationApprovalStatus.eq("Y"),
+                        excludeReservationNo == null
+                                ? null
+                                : bgmAgitReservation.bgmAgitReservationNo.ne(excludeReservationNo)
+                )
+                .fetch();
+    }
+
+    @Override
     public long updateCancelAndApprovalStatus(String cancelStatus, String approvalStatus, List<Long> idList) {
         em.flush();
         long execute = queryFactory

@@ -7,6 +7,7 @@ import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,17 @@ public class BgmAgitPaymentRepositoryImpl implements BgmAgitPaymentCustomReposit
                         .orderBy(bgmAgitPayment.bgmAgitPaymentId.desc())
                         .fetchFirst()
         );
+    }
+
+    @Override
+    public long deleteAbandonedOrders(LocalDateTime createdBefore) {
+        return queryFactory
+                .delete(bgmAgitPayment)
+                .where(
+                        bgmAgitPayment.bgmAgitPaymentStatus.eq(PaymentStatus.READY),
+                        bgmAgitPayment.registDate.lt(createdBefore)
+                )
+                .execute();
     }
 
     @Override

@@ -12,4 +12,7 @@ public interface PaymentService {
     PaymentConfirmResponse confirmPayment(String paymentKey, String orderId, Integer amount, Long memberId);
 
     void cancelDonePaymentByReservationNo(Long reservationNo, String cancelReason);
+
+    // 승인까지 가지 않고 버려진 주문(READY) 정리. 삭제 건수를 반환한다
+    long removeAbandonedOrders(int retentionDays);
 }
