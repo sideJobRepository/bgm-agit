@@ -11,6 +11,8 @@ import java.util.List;
 public class TossPaymentResponse {
     private String paymentKey;
     private String method;
+    // 토스 결제 상태. 승인 API가 200을 줘도 가상계좌는 WAITING_FOR_DEPOSIT 로 온다(입금 전).
+    private String status;
     private String approvedAt;
     private Receipt receipt;
     private List<Cancel> cancels;

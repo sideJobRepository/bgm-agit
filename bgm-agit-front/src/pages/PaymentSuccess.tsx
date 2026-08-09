@@ -57,8 +57,10 @@ export default function PaymentSuccess() {
       })
       .catch(error => {
         console.error(error);
-        toast.error('결제 승인 처리에 실패했습니다.');
-        setMessage('결제 승인 처리에 실패했습니다. 관리자에게 문의해주세요.');
+        // 슬롯 선점(409)·미지원 결제수단처럼 사유가 분명한 건 서버 메시지를 그대로 보여준다
+        const serverMessage = (error?.response?.data as { message?: string } | undefined)?.message;
+        toast.error(serverMessage ?? '결제 승인 처리에 실패했습니다.');
+        setMessage(serverMessage ?? '결제 승인 처리에 실패했습니다. 관리자에게 문의해주세요.');
       });
   }, [navigate, searchParams, paymentLive]);
 

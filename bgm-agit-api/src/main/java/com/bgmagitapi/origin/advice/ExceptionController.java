@@ -7,6 +7,7 @@ import com.bgmagitapi.origin.advice.response.ErrorMessageResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -61,14 +62,17 @@ public class ExceptionController {
         );
     }
     
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    /**
+     * 공통 예외. 상태코드는 예외가 스스로 정한 값을 따른다.
+     * (리프레시 토큰류는 401, 예약 충돌은 409. 전부 401로 내보내면 프론트 인터셉터가
+     * 토큰 갱신 후 요청을 재시도해서 결제 승인 같은 건 두 번 날아간다)
+     */
     @ExceptionHandler(CustomException.class)
-    public ErrorMessageResponse handleRefreshTokenExpiredExceptionException(CustomException e) {
+    public ResponseEntity<ErrorMessageResponse> handleRefreshTokenExpiredExceptionException(CustomException e) {
         log.info("공통 예외 ", e);
-        return new ErrorMessageResponse(
-                String.valueOf(HttpStatus.UNAUTHORIZED.value()),
-                e.getMessage()
-        );
+        HttpStatus status = e.getStatus() != null ? e.getStatus() : HttpStatus.UNAUTHORIZED;
+        return ResponseEntity.status(status)
+                .body(new ErrorMessageResponse(String.valueOf(status.value()), e.getMessage()));
     }
     
     @ResponseStatus(HttpStatus.NOT_FOUND)

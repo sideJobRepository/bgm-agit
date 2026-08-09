@@ -301,15 +301,11 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             throw new ReservationConflictException("이미 확정된 예약입니다.");
         }
 
-        // 금액 서버 계산(항목당 기본 1만, M룸 3만) — 합쳐 예약이면 항목 수만큼 합산
-        List<BgmAgitImage> images = group.stream()
-                .map(BgmAgitReservation::getBgmAgitImage)
-                .filter(distinctByImageId())
-                .toList();
-        int amount = images.stream()
-                .mapToInt(image -> SlotSchedule.resolveDepositAmount(
-                        image.getBgmAgitImageCategory(), image.getBgmAgitImageLabel()))
-                .sum();
+        // 금액 서버 계산(항목당 1만원). 합쳐 예약이면 항목 수만큼 합산.
+        // 예약 대기 알림톡의 예약금 안내도 같은 메서드를 쓰므로 여기서 갈라지지 않게 할 것
+        int amount = SlotSchedule.totalDepositAmount(
+                group.stream().map(BgmAgitReservation::getBgmAgitImage).toList()
+        );
         String orderName = "BGM아지트 예약 - " + first.getBgmAgitReservationStartDate();
 
         // 공통 결제 모듈에 주문 생성 위임
@@ -546,12 +542,6 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         
         // 전송 조건이 아닌 경우
         return new ApiResponse(200, true, "수정 되었습니다.");
-    }
-
-    /** 예약 그룹에서 이미지 중복 제거용 (같은 항목의 여러 시간 슬롯 행을 1개로) */
-    private Predicate<BgmAgitImage> distinctByImageId() {
-        Set<Long> seen = new HashSet<>();
-        return image -> seen.add(image.getBgmAgitImageId());
     }
 
     /** 기준 항목 + 합쳐 쓸 항목을 중복 없이 합친다(기준 항목이 항상 첫 번째). */

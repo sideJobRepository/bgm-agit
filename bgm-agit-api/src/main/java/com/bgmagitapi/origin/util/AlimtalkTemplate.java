@@ -3,7 +3,10 @@ package com.bgmagitapi.origin.util;
 public interface AlimtalkTemplate {
     
     String BGMAGIT_RES_ACCOUNT2 = "bgmagit-res-account2"; // 예약대기 카카오뱅크 계좌
-    String BGMAGIT_RES_PAYMENT = "bgmagit-res-payment"; // 예약대기 예약금 결제안내 (결제 라이브 후 스위칭)
+    // 예약대기 예약금 결제안내 (결제 라이브 후 스위칭)
+    // -1 버전은 예약금을 고정 문구에서 빼고 변수 #{예약금}으로 돌린 개정판.
+    // 금액 정책이 바뀌어도(인원수 기준 전환 등) 카카오 재심사 없이 소스만 고치면 된다.
+    String BGMAGIT_RES_PAYMENT = "bgmagit-res-payment-1";
     
     //kml 용
     
