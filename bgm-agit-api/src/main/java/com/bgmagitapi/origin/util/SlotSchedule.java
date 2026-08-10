@@ -85,6 +85,33 @@ public class SlotSchedule {
     public record Slot(LocalDateTime start, LocalDateTime end) {
     }
 
+    // ===== 예약 가능 기간(리드타임) =====
+
+    /**
+     * 예약 가능 기간 상한 — 현재일 기준 3개월.
+     *
+     * 토스페이먼츠 카드사 심사 요건("예약 가능 기간을 현재일 기준 최대 6개월 이내")을 만족시키기 위한 정책이며,
+     * 동시에 서비스제공기간이 6개월을 넘지 않는다는 근거가 된다.
+     * 값을 바꾸면 예약 조회 슬롯 생성 범위·등록 검증·프론트 캘린더 maxDate가 함께 따라오므로
+     * 반드시 이 상수만 고칠 것(프론트는 RESERVATION_WINDOW_MONTHS 를 별도로 들고 있다).
+     */
+    public static final int RESERVATION_WINDOW_MONTHS = 3;
+
+    /** 예약 가능한 첫 날짜. 당일 예약은 불가하므로 내일부터. */
+    public static LocalDate firstReservableDate(LocalDate today) {
+        return today.plusDays(1);
+    }
+
+    /** 예약 가능한 마지막 날짜. */
+    public static LocalDate lastReservableDate(LocalDate today) {
+        return today.plusMonths(RESERVATION_WINDOW_MONTHS);
+    }
+
+    /** 예약 가능 기간 안의 날짜인지. 과거·당일·상한 초과를 모두 거른다. */
+    public static boolean isWithinReservableWindow(LocalDate date, LocalDate today) {
+        return !date.isBefore(firstReservableDate(today)) && !date.isAfter(lastReservableDate(today));
+    }
+
     // ===== 정책 함수들 =====
     public static boolean isGroom(BgmAgitImageCategory category, String label) {
         return category == BgmAgitImageCategory.ROOM && "G Room".equals(label);

@@ -22,6 +22,13 @@ import LoginMoadl from '../LoginMoadl.tsx';
 
 type CombinableItem = { id: number; label: string };
 
+/**
+ * 예약 가능 기간 상한(개월). 서버 SlotSchedule.RESERVATION_WINDOW_MONTHS 와 같은 값을 유지할 것.
+ * 서버가 슬롯을 안 내려주는 것만으로도 예약은 막히지만, 캘린더를 몇 년 뒤로 넘길 수 있으면
+ * 예약 가능 기간이 무제한인 것처럼 보인다(토스 카드사 심사 지적 사항).
+ */
+const RESERVATION_WINDOW_MONTHS = 3;
+
 export default function ReservationCalendar({
   id,
   combinable = [],
@@ -39,6 +46,21 @@ export default function ReservationCalendar({
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const today = new Date();
+
+  // 예약 가능 기간: 내일 ~ 오늘 +3개월 (당일 예약 불가라 하한이 내일)
+  const { minDate, maxDate, initialDate } = useMemo(() => {
+    const from = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    const to = new Date(today.getFullYear(), today.getMonth() + RESERVATION_WINDOW_MONTHS, today.getDate());
+    // 기본 선택일은 최초 선택 가능한 날. 오늘은 당일 예약 불가라 못 고르고,
+    // 말일이면 minDate 가 다음 달이라 오늘 기준으로 열면 달 전체가 비활성으로 보인다.
+    const initial = new Date(from);
+    while (initial.getDay() === 3 /* 수요일 무인운영 */ && initial <= to) {
+      initial.setDate(initial.getDate() + 1);
+    }
+    return { minDate: from, maxDate: to, initialDate: initial };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [today.toDateString()]);
+
   //insert
   const { insert } = useInsertPost();
 
@@ -72,7 +94,7 @@ export default function ReservationCalendar({
   // 예약금은 서버가 선택 항목 기준으로 합산해서 내려준다 (예약 확인 모달에서 표시)
   const depositAmount = reservation.depositAmount;
 
-  const [value, setValue] = useState<Date>(today);
+  const [value, setValue] = useState<Date>(initialDate);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
 
   // 다른 항목으로 바꾸면 합치기·이용방식 선택 초기화
@@ -213,6 +235,13 @@ export default function ReservationCalendar({
           <p>
             <strong>※ 당일 예약은 불가합니다.</strong>
           </p>
+          {/* 서비스제공기간 고지 (카드사 심사 요건: 구매자가 제공기간을 인지할 수 있어야 함) */}
+          <p>
+            <strong>
+              ※ 예약은 오늘부터 {RESERVATION_WINDOW_MONTHS}개월 이내의 날짜만 가능하며, 서비스는 예약하신
+              날짜에 현장에서 제공됩니다.
+            </strong>
+          </p>
           {maxSelectableSlots === 1 && (
             <p>
               <strong>※ 예약하는 날짜에 한 팀당 한 개의 시간대만 선택이 가능합니다.</strong>
@@ -236,6 +265,8 @@ export default function ReservationCalendar({
 
       <StyledCalendar
         value={value}
+        minDate={minDate}
+        maxDate={maxDate}
         locale="ko-KR"
         calendarType="gregory"
         formatShortWeekday={(_, date) => ['일', '월', '화', '수', '목', '금', '토'][date.getDay()]}
