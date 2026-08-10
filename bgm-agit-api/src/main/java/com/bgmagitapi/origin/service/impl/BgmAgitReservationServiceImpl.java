@@ -53,7 +53,10 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class BgmAgitReservationServiceImpl implements BgmAgitReservationService {
-    
+
+    /** 영업 기준 시간대. 서버 JVM 타임존에 기대지 말고 날짜 판단은 항상 이걸로 한다. */
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     private final BgmAgitImageRepository bgmAgitImageRepository;
     
     private final BgmAgitMemberRepository bgmAgitMemberRepository;
@@ -79,8 +82,14 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         Long userId = (authentication instanceof JwtAuthenticationToken bearerAuth)
                 ? ((Jwt) bearerAuth.getPrincipal()).getClaim("id")
                 : null;
-        LocalDate today = date;
-        LocalDate endOfYear = today.plusMonths(3);
+        // 조회 범위는 예약 가능 기간(현재일 +RESERVATION_WINDOW_MONTHS) 안으로 잘라낸다.
+        // date 는 클라이언트가 보내는 값이라 그대로 쓰면 과거 날짜나 몇 년 뒤 슬롯까지 내려간다.
+        LocalDate now = LocalDate.now(KST);
+        LocalDate today = date.isBefore(now) ? now : date;
+        LocalDate windowEnd = SlotSchedule.lastReservableDate(now);
+        LocalDate endOfWindow = today.plusMonths(SlotSchedule.RESERVATION_WINDOW_MONTHS).isAfter(windowEnd)
+                ? windowEnd
+                : today.plusMonths(SlotSchedule.RESERVATION_WINDOW_MONTHS);
         // 1. 대상 항목 조회 (첫 번째가 기준 항목, 나머지는 합쳐 쓸 항목)
         List<BgmAgitImage> images = loadReservableImages(mergeImageIds(id, extraIds));
         BgmAgitImage bgmAgitImage = images.get(0);
@@ -106,7 +115,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         List<Map<LocalDate, List<TimeRange>>> reservedMaps = images.stream()
                 .map(image -> ReservedTimeDto.groupedReservation(
                         bgmAgitReservationRepository.findReservations(
-                                labelGb, link, image.getBgmAgitImageId(), today, endOfYear)))
+                                labelGb, link, image.getBgmAgitImageId(), today, endOfWindow)))
                 .toList();
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
@@ -114,8 +123,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         // 3. 날짜별 시간 슬롯 생성 (여러 항목이면 전부 비어 있는 시간만 = 교집합)
         List<BgmAgitReservationResponse.TimeSlotByDate> timeSlots = new ArrayList<>();
 
-        for (LocalDate d = today; !d.isAfter(endOfYear); d = d.plusDays(1)) {
-            if (d.isEqual(LocalDate.now())) {
+        for (LocalDate d = today; !d.isAfter(endOfWindow); d = d.plusDays(1)) {
+            if (d.isEqual(now)) {
                 timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(
                         d,
                         List.of(),
@@ -152,7 +161,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         Set<String> holidaySet = new HashSet<>();
         
         int startYear = today.getYear();
-        int endYear = endOfYear.getYear();
+        int endYear = endOfWindow.getYear();
         
         for (int y = startYear; y <= endYear; y++) {
             holidaySet.addAll(new LunarCalendar().getHolidaySet(String.valueOf(y)));
@@ -162,8 +171,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         
         List<BgmAgitReservationResponse.PriceByDate> prices = new ArrayList<>();
         
-        for (LocalDate d = today; !d.isAfter(endOfYear); d = d.plusDays(1)) {
-            if (d.isEqual(LocalDate.now())) {
+        for (LocalDate d = today; !d.isAfter(endOfWindow); d = d.plusDays(1)) {
+            if (d.isEqual(now)) {
                 continue;
             }
             String dateStr = d.format(formatterYY);
@@ -215,8 +224,16 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         // 날짜 보정
         LocalDate kstDate = ZonedDateTime
                 .parse(request.getBgmAgitReservationStartDate())
-                .withZoneSameInstant(ZoneId.of("Asia/Seoul"))
+                .withZoneSameInstant(KST)
                 .toLocalDate();
+
+        // 예약 가능 기간: 당일·과거 불가 + 현재일 기준 RESERVATION_WINDOW_MONTHS 개월 이내.
+        // 조회(getReservation)에서 슬롯을 안 내려주는 것만으로는 직접 POST 를 막지 못하므로 등록에서도 검증한다.
+        LocalDate kstToday = LocalDate.now(KST);
+        if (!SlotSchedule.isWithinReservableWindow(kstDate, kstToday)) {
+            throw new ReservationConflictException(
+                    "예약은 내일부터 " + SlotSchedule.RESERVATION_WINDOW_MONTHS + "개월 이내의 날짜만 가능합니다.");
+        }
 
         // 수요일은 무인운영으로 예약 불가
         if (kstDate.getDayOfWeek() == java.time.DayOfWeek.WEDNESDAY) {
@@ -637,7 +654,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             throw new ReservationConflictException("본인의 예약만 취소할 수 있습니다.");
         }
 
-        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        LocalDate today = LocalDate.now(KST);
         if (!first.getBgmAgitReservationStartDate().isAfter(today)) {
             throw new ReservationConflictException("예약 취소는 예약일 전날까지만 가능합니다.");
         }

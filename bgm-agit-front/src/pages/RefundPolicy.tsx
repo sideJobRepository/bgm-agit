@@ -25,7 +25,16 @@ export default function RefundPolicy() {
       </Section>
 
       <Section>
-        <SubTitle>3. 취소 가능 기한</SubTitle>
+        <SubTitle>3. 예약 가능 기간 및 서비스 제공</SubTitle>
+        <List>
+          <li>예약은 예약일 기준 당일 예약이 불가하며, 오늘부터 3개월 이내의 날짜만 가능합니다.</li>
+          <li>서비스는 예약하신 날짜와 시간에 매장 현장에서 제공됩니다.</li>
+          <li>수요일은 무인운영으로 예약이 불가합니다.</li>
+        </List>
+      </Section>
+
+      <Section>
+        <SubTitle>4. 취소 가능 기한</SubTitle>
         <Text>
           예약 취소는 예약일 전날까지 가능합니다. 예약일 당일 취소는 불가하며, 당일 취소 또는 노쇼 시 예약금은
           환불되지 않습니다.
@@ -33,7 +42,7 @@ export default function RefundPolicy() {
       </Section>
 
       <Section>
-        <SubTitle>4. 환불 처리</SubTitle>
+        <SubTitle>5. 환불 처리</SubTitle>
         <Text>
           환불이 가능한 예약금은 결제수단 승인 취소 또는 별도 안내된 방식으로 처리됩니다. 카드사 또는 결제수단
           정책에 따라 실제 환불 완료까지 영업일 기준 일정 기간이 소요될 수 있습니다.
@@ -41,7 +50,7 @@ export default function RefundPolicy() {
       </Section>
 
       <Section>
-        <SubTitle>5. 문의</SubTitle>
+        <SubTitle>6. 문의</SubTitle>
         <Text>
           확정 후 예약 변경, 취소 또는 환불 문의는 0507-1445-3503으로 연락해 주세요.
         </Text>
