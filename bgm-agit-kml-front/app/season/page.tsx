@@ -3,8 +3,10 @@
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { withBasePath } from '@/lib/path';
-import { useState } from 'react';
-import { Check, Plus, X } from 'phosphor-react';
+import { useEffect, useState } from 'react';
+import { CaretDown, Check, Plus, X } from 'phosphor-react';
+import { useFetchSeasons } from '@/services/season.service';
+import { useSeasonStore } from '@/store/season';
 
 type RankSetting = {
   id: number;
@@ -34,19 +36,6 @@ const INITIAL_RANK_SETTINGS: RankSetting[] = [
   { id: 6, gifUrl: '/rankGif/1.gif', minRating: 0, rankName: '입문', color: '#8E6FB5' },
 ];
 
-const INITIAL_SEASONS: SeasonSetting[] = [
-  {
-    id: 1,
-    seasonName: '2026 시즌',
-    startDate: '2026-01-01',
-    endDate: '2026-12-31',
-    baseRating: 1500,
-    minGames: 20,
-    resetType: 'SOFT',
-    carryRatio: 60,
-  },
-];
-
 const EMPTY_SEASON_FORM: Omit<SeasonSetting, 'id'> = {
   seasonName: '',
   startDate: '',
@@ -58,13 +47,20 @@ const EMPTY_SEASON_FORM: Omit<SeasonSetting, 'id'> = {
 };
 
 export default function SeasonPage() {
+  const fetchSeasons = useFetchSeasons();
+  const seasons = useSeasonStore((state) => state.seasons);
   const [pageIndex, setPageIndex] = useState<0 | 1>(0);
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [seasonName, setSeasonName] = useState('2026 시즌');
+  const [selectedSeasonId, setSelectedSeasonId] = useState('');
   const [rankSettings, setRankSettings] = useState(INITIAL_RANK_SETTINGS);
-  const [seasons, setSeasons] = useState(INITIAL_SEASONS);
   const [isAddingSeason, setIsAddingSeason] = useState(false);
   const [seasonForm, setSeasonForm] = useState(EMPTY_SEASON_FORM);
+
+  useEffect(() => {
+    fetchSeasons();
+  }, []);
+
+  const currentSeasonId = selectedSeasonId || (seasons[0] ? String(seasons[0].id) : '');
 
   const updateRank = <K extends keyof RankSetting>(id: number, key: K, value: RankSetting[K]) => {
     setRankSettings((prev) =>
@@ -80,7 +76,6 @@ export default function SeasonPage() {
   };
 
   const saveSeason = () => {
-    setSeasons((prev) => [...prev, { id: Date.now(), ...seasonForm }]);
     setSeasonForm(EMPTY_SEASON_FORM);
     setIsAddingSeason(false);
   };
@@ -140,13 +135,26 @@ export default function SeasonPage() {
                   <SeasonPanel>
                     <PanelHeader>
                       <div>
-                        <strong>시즌 설정</strong>
-                        <span>현재 시즌 이름을 정하고 화면에 표시합니다.</span>
+                        <strong>대상 시즌</strong>
+                        <span>랭크를 설정할 시즌을 선택하세요.</span>
                       </div>
                     </PanelHeader>
 
                     <SeasonField>
-                      <input value={seasonName} onChange={(e) => setSeasonName(e.target.value)} />
+                      <SelectShell>
+                        <select
+                          value={currentSeasonId}
+                          onChange={(e) => setSelectedSeasonId(e.target.value)}
+                        >
+                          {seasons.length === 0 && <option value="">등록된 시즌이 없습니다</option>}
+                          {seasons.map((season) => (
+                            <option key={season.id} value={season.id}>
+                              {season.name}
+                            </option>
+                          ))}
+                        </select>
+                        <CaretDown weight="bold" />
+                      </SelectShell>
                     </SeasonField>
                   </SeasonPanel>
 
@@ -217,19 +225,20 @@ export default function SeasonPage() {
                     {seasons.map((season) => (
                       <SeasonItem key={season.id}>
                         <div>
-                          <strong>{season.seasonName}</strong>
+                          <strong>{season.name}</strong>
                           <span>
                             {season.startDate} - {season.endDate}
                           </span>
                         </div>
                         <SeasonMeta>
                           <span>기준 {season.baseRating}</span>
-                          <span>최소 {season.minGames}판</span>
+                          <span>최소 -</span>
                           <span>{season.resetType}</span>
-                          <span>계승 {season.carryRatio}%</span>
+                          <span>계승 {season.carryRate}%</span>
                         </SeasonMeta>
                       </SeasonItem>
                     ))}
+                    {seasons.length === 0 && <EmptyText>등록된 시즌이 없습니다.</EmptyText>}
                   </SeasonList>
 
                   <AddSeasonRow>
@@ -422,13 +431,19 @@ const TabBar = styled.div`
 
 const TabButton = styled.button<{ $active: boolean }>`
   height: 36px;
-  border: none;
+  border: 1px solid ${({ $active }) => ($active ? 'rgba(255, 255, 255, 0.18)' : 'transparent')};
   border-radius: 4px;
   cursor: pointer;
-  background: ${({ $active }) => ($active ? 'rgba(255, 255, 255, 0.9)' : 'transparent')};
-  color: ${({ $active, theme }) => ($active ? theme.colors.inputColor : theme.colors.lineColor)};
+  background: ${({ $active }) => ($active ? 'rgba(255, 255, 255, 0.08)' : 'transparent')};
+  color: ${({ $active, theme }) => ($active ? theme.colors.whiteColor : theme.colors.lineColor)};
   font-size: ${({ theme }) => theme.desktop.sizes.md};
   font-weight: 800;
+  box-shadow: ${({ $active }) => ($active ? 'inset 0 1px 0 rgba(255, 255, 255, 0.12)' : 'none')};
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 `;
 
 const Content = styled.section`
@@ -460,34 +475,94 @@ const BasePanel = styled.section`
 
 const RankPanel = styled(BasePanel)`
   background:
-    linear-gradient(
-      135deg,
-      rgba(74, 144, 226, 0.12),
-      rgba(217, 98, 94, 0.08) 36%,
-      rgba(109, 174, 129, 0.1) 70%,
-      rgba(255, 255, 255, 0.96)
-    ),
-    ${({ theme }) => theme.colors.recordBgColor};
+    radial-gradient(circle at 12% 0%, rgba(74, 144, 226, 0.18), transparent 34%),
+    radial-gradient(circle at 88% 12%, rgba(141, 111, 181, 0.14), transparent 32%),
+    linear-gradient(145deg, #252a32, #191c22 58%, #14161b);
+  border-color: rgba(255, 255, 255, 0.1);
+
+  > div:first-child {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+
+    strong {
+      color: ${({ theme }) => theme.colors.whiteColor};
+    }
+
+    span {
+      color: rgba(255, 255, 255, 0.62);
+    }
+  }
 `;
 
-const SeasonPanel = styled(BasePanel)``;
+const SeasonPanel = styled(BasePanel)`
+  background:
+    radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.12), transparent 30%),
+    linear-gradient(
+      145deg,
+      rgba(45, 51, 61, 0.96),
+      rgba(28, 32, 39, 0.94) 58%,
+      rgba(22, 25, 31, 0.96)
+    );
+  border-color: rgba(255, 255, 255, 0.1);
 
-const SeasonManagePanel = styled(BasePanel)``;
+  > div:first-child {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+
+    strong {
+      color: ${({ theme }) => theme.colors.whiteColor};
+    }
+
+    span {
+      color: rgba(255, 255, 255, 0.62);
+    }
+  }
+`;
+
+const SeasonManagePanel = styled(SeasonPanel)``;
 
 const SeasonField = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
   max-width: 420px;
+`;
 
-  input {
-    height: 42px;
-    padding: 0 12px;
-    border: 1px solid ${({ theme }) => theme.colors.lineColor};
-    border-radius: 4px;
-    background: ${({ theme }) => theme.colors.whiteColor};
-    color: ${({ theme }) => theme.colors.inputColor};
+const SelectShell = styled.div`
+  position: relative;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08)),
+    rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  select {
+    width: 100%;
+    height: 100%;
+    padding: 0 42px 0 14px;
+    border: none;
+    outline: none;
+    appearance: none;
+    background: transparent;
+    color: ${({ theme }) => theme.colors.whiteColor};
     font-size: ${({ theme }) => theme.desktop.sizes.md};
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  option {
+    color: ${({ theme }) => theme.colors.inputColor};
+  }
+
+  svg {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    width: 14px;
+    height: 14px;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.72);
+    pointer-events: none;
   }
 `;
 
@@ -653,26 +728,36 @@ const SeasonList = styled.div`
   gap: 10px;
 `;
 
+const EmptyText = styled.div`
+  padding: 24px 16px;
+  border: 1px dashed rgba(29, 29, 31, 0.16);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.54);
+  text-align: center;
+  font-size: ${({ theme }) => theme.desktop.sizes.md};
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.grayColor};
+`;
+
 const SeasonItem = styled.article`
   display: flex;
   justify-content: space-between;
   gap: 16px;
   padding: 14px 16px;
-  border: 1px solid rgba(29, 29, 31, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
-  background:
-    radial-gradient(circle at 0% 0%, rgba(74, 144, 226, 0.14), transparent 36%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(248, 249, 250, 0.9));
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
 
   strong {
     display: block;
     font-size: ${({ theme }) => theme.desktop.sizes.lg};
-    color: ${({ theme }) => theme.colors.inputColor};
+    color: ${({ theme }) => theme.colors.whiteColor};
   }
 
   span {
     font-size: ${({ theme }) => theme.desktop.sizes.sm};
-    color: ${({ theme }) => theme.colors.grayColor};
+    color: rgba(255, 255, 255, 0.68);
   }
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -683,14 +768,16 @@ const SeasonItem = styled.article`
 const SeasonMeta = styled.div`
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
   gap: 8px;
 
   span {
-    padding: 5px 8px;
+    padding: 8px;
     border-radius: 4px;
-    background: rgba(29, 29, 31, 0.06);
+    background: rgba(255, 255, 255, 0.08);
     font-weight: 700;
+    color: rgba(255, 255, 255, 0.82);
   }
 `;
 
