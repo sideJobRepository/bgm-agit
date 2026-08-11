@@ -70,6 +70,8 @@ biztalk:
   id: ${BIZTALK_ID}
   password: ${BIZTALK_PASSWORD}
   sender-key: ${SENDER_KEY}
+  # 관리자 당일 예약 알림톡을 실제로 보내는 환경. 운영만 true(staging 과 동시 발송 방지).
+  admin-reservation-notify: true
 
 server:
   tomcat:
