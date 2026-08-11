@@ -268,6 +268,7 @@ kml:
 ### 관리자 당일 예약 알림 (`bgmagit-admin--reservation-rem`)
 매일 **09:00 KST** 관리자 2명(`BgmAgitBizTalkSandServiceImpl.PHONE1/PHONE2`)에게 발송.
 - 스케줄러 `BgmAgitAdminReservationNotifyScheduler`, 발송 `sendAdminDailyReservation(date)` — 현황판의 `findReservationsByDate` 재사용, 예약번호로 묶고 취소건 제외
+- **`biztalk.admin-reservation-notify`(기본 false)가 발송 환경 스위치** — 운영(`application-real.yml`)만 `true`, staging·로컬은 `false`. 없을 때는 staging 컨테이너와 운영 컨테이너가 각자 09:00에 보내서 관리자에게 하루 2번 나갔다
 - 변수 5개(예약일자/건수/총인원/첫예약시간/예약목록). **0건이어도 매일 발송** — 빈 문자열이면 치환이 실패하므로 `"없음"`으로 채움
 - 목록 **15줄 제한**(`ADMIN_LIST_MAX_LINES`, 본문 1,000자 한계). 넘치면 `외 N건`
 - 템플릿 코드의 **하이픈 2개(`admin--reservation`)는 카카오 등록값 그대로** — 오타로 보고 고치지 말 것
