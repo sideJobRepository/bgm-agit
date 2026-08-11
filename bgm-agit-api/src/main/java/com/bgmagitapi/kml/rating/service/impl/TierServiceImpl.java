@@ -52,6 +52,8 @@ public class TierServiceImpl implements TierService {
                 .map(item -> Tier.builder()
                         .season(season)
                         .name(item.getName())
+                        .image(item.getImageBase64())
+                        .color(item.getColor())
                         .minRating(item.getMinRating())
                         .build())
                 .toList();

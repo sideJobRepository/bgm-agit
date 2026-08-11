@@ -63,6 +63,8 @@ create table BGMAGIT.BGM_AGIT_TIER
     BGM_AGIT_SEASON_ID       bigint       not null comment 'BGM 아지트 시즌 ID',
     BGM_AGIT_TIER_NAME       varchar(500) not null comment 'BGM 아지트 등급 이름',
     BGM_AGIT_TIER_MIN_RATING int          null comment 'BGM 아지트 등급 최소 레이팅',
+    BGM_AGIT_TIER_IMAGE      MEDIUMTEXT   null comment 'BGM 아지트 등급 배지 이미지',
+    BGM_AGIT_TIER_COLOR      VARCHAR(500) null comment 'BGM 아지트 등급 색상',
     REGIST_DATE              datetime     null comment '생성 일시',
     MODIFY_DATE              datetime     null comment '수정 일시',
     constraint FK_BGM_AGIT_SEASON_TO_BGM_AGIT_TIER

@@ -29,6 +29,14 @@ public class Tier extends DateSuperClass {
     @Column(name = "BGM_AGIT_TIER_NAME")
     private String name;
 
+    // BGM 아지트 등급 배지 이미지 (data URI base64). 소수 고정 세트라 DB 인라인 저장 — S3/presigned 미사용
+    @Column(name = "BGM_AGIT_TIER_IMAGE", columnDefinition = "MEDIUMTEXT")
+    private String image;
+
+    // BGM 아지트 등급 색상 (HEX, 예: #ffffff)
+    @Column(name = "BGM_AGIT_TIER_COLOR")
+    private String color;
+
     // BGM 아지트 등급 최소 레이팅
     @Column(name = "BGM_AGIT_TIER_MIN_RATING")
     private Integer minRating;
