@@ -23,10 +23,10 @@ import {
   ChatsCircle,
   CaretUp,
   CaretDown,
-  ListChecks,
   Trophy,
 } from 'phosphor-react';
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import { useFetchMainMenu } from '@/services/menu.service';
@@ -39,6 +39,13 @@ import { alertDialog, confirmDialog } from '@/utils/alert';
 import { TAB_ID } from '@/lib/tabId';
 import { useMyPageStore } from '@/store/myPage';
 
+type SidebarSubMenuItem = {
+  id: string;
+  icon: string;
+  menuName: string;
+  menuLink: string;
+};
+
 export default function Sidebar() {
   //navigation
   const pathname = usePathname();
@@ -50,6 +57,11 @@ export default function Sidebar() {
 
   //subMenu
   const [openSubMenuId, setOpenSubMenuId] = useState<string | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{
+    top: number;
+    left: number;
+    minWidth: number;
+  } | null>(null);
 
   const user = useUserStore((state) => state.user);
 
@@ -134,12 +146,58 @@ export default function Sidebar() {
   }, [pathname]);
 
   useEffect(() => {
+    if (!openSubMenuId || isTablet) return;
+
+    const closeDropdown = () => setOpenSubMenuId(null);
+
+    window.addEventListener('resize', closeDropdown);
+    document.addEventListener('scroll', closeDropdown, true);
+
+    return () => {
+      window.removeEventListener('resize', closeDropdown);
+      document.removeEventListener('scroll', closeDropdown, true);
+    };
+  }, [openSubMenuId, isTablet]);
+
+  useEffect(() => {
     if (pathname === '/login' && user) {
       const rawRedirect = new URLSearchParams(window.location.search).get('redirect') || '/';
       const dest = rawRedirect.startsWith('/') ? rawRedirect : '/';
       router.replace(dest);
     }
   }, [pathname, user]);
+
+  const openedMenu = menuData?.find((menu) => menu.id === openSubMenuId);
+  const shouldUsePortalDropdown = mounted && !isTablet;
+
+  const renderSubMenuItems = (subMenus?: SidebarSubMenuItem[]) =>
+    subMenus?.map((sub) => {
+      const SubIcon = iconMap[sub.icon as keyof typeof iconMap];
+      if (sub.menuLink === '/my-page') {
+        return (
+          <MenuLi key={sub.id} $active={false}>
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                openMyPage();
+              }}
+            >
+              {SubIcon && <SubIcon weight="fill" />}
+              {sub.menuName}
+            </a>
+          </MenuLi>
+        );
+      }
+      return (
+        <MenuLi key={sub.id} $active={pathname === sub.menuLink}>
+          <Link href={sub.menuLink}>
+            {SubIcon && <SubIcon weight="fill" />}
+            {sub.menuName}
+          </Link>
+        </MenuLi>
+      );
+    });
 
   return (
     <>
@@ -240,7 +298,29 @@ export default function Sidebar() {
                           href="#"
                           onClick={(e) => {
                             e.preventDefault();
-                            setOpenSubMenuId(openSubMenuId === menu.id ? null : menu.id);
+                            if (openSubMenuId === menu.id) {
+                              setOpenSubMenuId(null);
+                              setDropdownPosition(null);
+                              return;
+                            }
+
+                            if (!isTablet) {
+                              const targetRect =
+                                e.currentTarget.parentElement?.getBoundingClientRect() ??
+                                e.currentTarget.getBoundingClientRect();
+                              const minWidth = Math.max(targetRect.width, 160);
+
+                              setDropdownPosition({
+                                top: targetRect.bottom + 8,
+                                left: Math.max(
+                                  12,
+                                  Math.min(targetRect.left, window.innerWidth - minWidth - 12)
+                                ),
+                                minWidth,
+                              });
+                            }
+
+                            setOpenSubMenuId(menu.id);
                           }}
                         >
                           {IconComponent && <IconComponent weight="fill" />}
@@ -252,7 +332,7 @@ export default function Sidebar() {
                           )}
                         </a>
                         <AnimatePresence initial={false}>
-                          {openSubMenuId === menu.id && (
+                          {!shouldUsePortalDropdown && openSubMenuId === menu.id && (
                             <SubUl
                               key="submenu"
                               initial={{ opacity: 0, height: 0 }}
@@ -260,33 +340,7 @@ export default function Sidebar() {
                               exit={{ opacity: 0, height: 0 }}
                               transition={{ duration: 0.25, ease: 'easeInOut' }}
                             >
-                              {menu.subMenus?.map((sub: any) => {
-                                const SubIcon = iconMap[sub.icon as keyof typeof iconMap];
-                                if (sub.menuLink === '/my-page') {
-                                  return (
-                                    <MenuLi key={sub.id} $active={false}>
-                                      <a
-                                        href="#"
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          openMyPage();
-                                        }}
-                                      >
-                                        {SubIcon && <SubIcon weight="fill" />}
-                                        {sub.menuName}
-                                      </a>
-                                    </MenuLi>
-                                  );
-                                }
-                                return (
-                                  <MenuLi key={sub.id} $active={pathname === sub.menuLink}>
-                                    <Link href={sub.menuLink}>
-                                      {SubIcon && <SubIcon weight="fill" />}
-                                      {sub.menuName}
-                                    </Link>
-                                  </MenuLi>
-                                );
-                              })}
+                              {renderSubMenuItems(menu.subMenus)}
                             </SubUl>
                           )}
                         </AnimatePresence>
@@ -375,6 +429,25 @@ export default function Sidebar() {
           </MainUl>
         </BottomSeciton>
       </SidebarWrapper>
+      {shouldUsePortalDropdown &&
+        openedMenu &&
+        dropdownPosition &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <PortalSubUl
+            key="desktop-submenu"
+            $top={dropdownPosition.top}
+            $left={dropdownPosition.left}
+            $minWidth={dropdownPosition.minWidth}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18, ease: 'easeInOut' }}
+          >
+            {renderSubMenuItems(openedMenu.subMenus)}
+          </PortalSubUl>,
+          document.body
+        )}
     </>
   );
 }
@@ -428,8 +501,8 @@ const SidebarWrapper = styled(motion.aside)`
   height: 100%;
   background: ${({ theme }) => theme.colors.whiteColor};
   overflow: visible;
-  border-bottom: 10px solid rgb(244 244 245);
   overflow-x: auto;
+  border-bottom: 10px solid rgb(244 244 245);
 
   @media ${({ theme }) => theme.device.tablet} {
     position: fixed;
@@ -441,8 +514,8 @@ const SidebarWrapper = styled(motion.aside)`
     z-index: 1;
     flex-direction: column;
     overflow-y: auto;
-    border: 20px solid rgb(244 244 245);
     overflow-x: unset;
+    border: 20px solid rgb(244 244 245);
   }
 `;
 
@@ -494,6 +567,14 @@ const SubUl = styled(motion.ul)`
     padding: 0 0 0 16px;
     min-width: unset;
   }
+`;
+
+const PortalSubUl = styled(SubUl)<{ $top: number; $left: number; $minWidth: number }>`
+  position: fixed;
+  top: ${({ $top }) => `${$top}px`};
+  left: ${({ $left }) => `${$left}px`};
+  min-width: ${({ $minWidth }) => `${$minWidth}px`};
+  z-index: 1000;
 `;
 
 const TopSeticon = styled.div`
