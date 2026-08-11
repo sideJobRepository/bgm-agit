@@ -135,8 +135,7 @@ export default function Sidebar() {
 
   useEffect(() => {
     if (pathname === '/login' && user) {
-      const rawRedirect =
-        new URLSearchParams(window.location.search).get('redirect') || '/';
+      const rawRedirect = new URLSearchParams(window.location.search).get('redirect') || '/';
       const dest = rawRedirect.startsWith('/') ? rawRedirect : '/';
       router.replace(dest);
     }
@@ -311,9 +310,7 @@ export default function Sidebar() {
                       'warning'
                     );
                     if (result.isConfirmed) {
-                      router.push(
-                        `/login?redirect=${encodeURIComponent('/write')}`
-                      );
+                      router.push(`/login?redirect=${encodeURIComponent('/write')}`);
                     }
                   } else {
                     if (pathname === '/write') {
@@ -432,6 +429,7 @@ const SidebarWrapper = styled(motion.aside)`
   background: ${({ theme }) => theme.colors.whiteColor};
   overflow: visible;
   border-bottom: 10px solid rgb(244 244 245);
+  overflow-x: auto;
 
   @media ${({ theme }) => theme.device.tablet} {
     position: fixed;
@@ -444,6 +442,7 @@ const SidebarWrapper = styled(motion.aside)`
     flex-direction: column;
     overflow-y: auto;
     border: 20px solid rgb(244 244 245);
+    overflow-x: unset;
   }
 `;
 
