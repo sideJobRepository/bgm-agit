@@ -1,6 +1,8 @@
 package com.bgmagitapi.kml.rank.service;
 
 
+import com.bgmagitapi.kml.rating.entity.Rating;
+import com.bgmagitapi.kml.rating.repository.RatingRepository;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.kml.rank.dto.response.MemberRecentGameResponse;
 import com.bgmagitapi.kml.rank.dto.response.MemberStatsResponse;
@@ -21,6 +23,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -29,6 +32,7 @@ public class RankServiceImpl {
 
     private final RankRepository rankRepository;
     private final RecordRepository recordRepository;
+    private final RatingRepository ratingRepository;
     private final BgmAgitMemberRepository memberRepository;
 
     public Page<RankGetResponse> findRanks(RankType type,
@@ -148,6 +152,13 @@ public class RankServiceImpl {
             byMatch.computeIfAbsent(r.getMatchs().getId(), k -> new ArrayList<>()).add(r);
         }
 
+        Map<Long, Rating> myRatingByMatch = ratingRepository.findByMemberIdAndMatchsIds(memberId, matchIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        r -> r.getMatchs().getId(),
+                        r -> r
+                ));
+
         List<MemberRecentGameResponse> content = new ArrayList<>();
         for (Long mid : matchIds) {
             List<Record> group = byMatch.get(mid);
@@ -172,6 +183,7 @@ public class RankServiceImpl {
                         .build());
             }
 
+            Rating rating = myRatingByMatch.get(mid);
             content.add(MemberRecentGameResponse.builder()
                     .matchsId(mid)
                     .registDate(me.getRegistDate())
@@ -180,6 +192,9 @@ public class RankServiceImpl {
                     .myRank(me.getRecordRank())
                     .myScore(me.getRecordScore())
                     .myPoint(me.getRecordPoint())
+                    .seasonId(rating == null ? null : rating.getSeason().getId())
+                    .seasonName(rating == null ? null : rating.getSeason().getName())
+                    .ratingValue(rating == null ? null : rating.getRatingValue().doubleValue())
                     .players(players)
                     .build());
         }

@@ -21,6 +21,9 @@ public class MemberRecentGameResponse {
     private Integer myRank;
     private Integer myScore;
     private Double myPoint;
+    private Long seasonId;
+    private String seasonName;
+    private Double ratingValue;
     private List<Player> players;
 
     @Data

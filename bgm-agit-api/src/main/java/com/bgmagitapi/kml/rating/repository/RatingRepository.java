@@ -12,4 +12,6 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
     @Query("select r from Rating r where r.member.bgmAgitMemberId = :memberId")
     List<Rating> findByMemberId(@Param("memberId") Long memberId);
 
+    @Query("select r from Rating r join fetch r.season s where r.member.bgmAgitMemberId = :memberId and r.matchs.id in :matchsIds")
+    List<Rating> findByMemberIdAndMatchsIds(@Param("memberId") Long memberId, @Param("matchsIds") List<Long> matchsIds);
 }
