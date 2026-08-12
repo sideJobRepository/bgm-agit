@@ -28,6 +28,10 @@ public class KmlRecordClient {
 
     private final ObjectMapper objectMapper;
 
+    
+    @Value("${kml.enabled}")
+    private boolean kmlEnabled;
+
     @Value("${kml.url}")
     private String kmlBaseUrl;
 
@@ -39,6 +43,9 @@ public class KmlRecordClient {
      * 성공 시 KML 측 record_id 를 반환한다. 실패해도 호출자에게 예외를 던지지 않는다.
      */
     public Optional<Long> submit(KmlRecordSubmitEvent event) {
+        if (!kmlEnabled) {
+            return Optional.empty();
+        }
         String url = kmlBaseUrl + "/api_record_submit.php";
 
         Map<String, Object> body = Map.of(
@@ -68,6 +75,9 @@ public class KmlRecordClient {
      * 실패해도 예외를 던지지 않는다 (DB 수정 트랜잭션과 분리).
      */
     public void modify(KmlRecordModifyEvent event) {
+        if (!kmlEnabled) {
+            return;
+        }
         String url = kmlBaseUrl + "/api_record_modify.php";
 
         Map<String, Object> body = Map.of(
@@ -96,6 +106,9 @@ public class KmlRecordClient {
      * 실패해도 예외를 던지지 않는다 (DB 삭제 트랜잭션과 분리).
      */
     public void delete(KmlRecordDeleteEvent event) {
+        if (!kmlEnabled) {
+            return;
+        }
         String url = kmlBaseUrl + "/api_record_del.php";
 
         Map<String, Object> body = Map.of(
@@ -121,6 +134,9 @@ public class KmlRecordClient {
      * 실패해도 예외를 던지지 않는다 (DB 복구 트랜잭션과 분리).
      */
     public void restore(KmlRecordRestoreEvent event) {
+        if (!kmlEnabled) {
+            return;
+        }
         String url = kmlBaseUrl + "/api_record_restore.php";
 
         Map<String, Object> body = Map.of(

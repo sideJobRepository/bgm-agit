@@ -73,7 +73,9 @@ server:
   tomcat:
     max-part-count: 2000
 
+
 kml:
+  enabled: ${KML_ENABLED:false}
   url: https://kml.or.kr/stat52
   api:
     key: ${KML_API_KEY}
