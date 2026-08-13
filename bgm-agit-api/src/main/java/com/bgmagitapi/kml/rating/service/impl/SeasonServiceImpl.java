@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -58,6 +59,11 @@ public class SeasonServiceImpl implements SeasonService {
     @Override
     public List<SeasonResponse> getSeasons() {
         return seasonRepository.findAllActive().stream()
+                .sorted(Comparator
+                        // 진행중인 시즌을 맨 앞으로
+                        .comparing((Season s) -> s.getProgressStatus() == SeasonProgressStatus.ONGOING ? 0 : 1)
+                        // 나머지는 시작일 기준 내림차순
+                        .thenComparing(Comparator.comparing(Season::getStartDate).reversed()))
                 .map(SeasonResponse::fromDomain)
                 .toList();
     }
