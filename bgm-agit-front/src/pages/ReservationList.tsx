@@ -58,6 +58,10 @@ export default function ReservationList() {
   const user = useRecoilValue(userState);
   // 결제 라이브 여부. false(심사 기간)면 결제해도 실제 출금/자동확정이 안 되므로 안내 배너 노출
   const paymentLive = PAYMENT_LIVE;
+  const isAdmin = !!user?.roles.includes('ROLE_ADMIN');
+  // 예약금 결제는 멘토 권한에게만 노출한다. 카드사/토스 심사용 계정에만 멘토를 부여해 두고,
+  // 일반 유저는 기존대로 계좌이체 안내(알림톡 bgmagit-res-account2)로 예약금을 낸다.
+  const canUsePayment = paymentLive && !isAdmin && !!user?.roles.includes('ROLE_MENTOR');
 
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
   // toISOString()은 UTC 변환이라 KST 자정 기준 Date가 하루 앞 날짜로 밀린다. 로컬 기준으로 포맷할 것.
@@ -176,7 +180,7 @@ export default function ReservationList() {
 
   const noticeLines = (
     <span>
-      {paymentLive && (
+      {canUsePayment && (
         <>
           ※ 예약 대기 상태에서 결제 버튼을 눌러 예약금을 결제하면 예약이 확정됩니다.
           <br />※ 현재 토스페이먼츠 심사 기간으로 실제 결제 및 출금은 발생하지 않습니다.
@@ -208,7 +212,7 @@ export default function ReservationList() {
         </SearchWrapper>
 
         <ListBox>
-          {!paymentLive && (
+          {!canUsePayment && (
             <ReviewBanner>
               예약 확정은 예약금 계좌이체 입금이 확인된 후 처리됩니다. 예약 후 안내되는 계좌로
               예약금을 입금해 주시기 바랍니다.
@@ -233,16 +237,14 @@ export default function ReservationList() {
           <CardGrid>
             {items?.content.map(item => {
               const status = resolveStatus(item);
-              const isAdmin = !!user?.roles.includes('ROLE_ADMIN');
               const upcoming = todayFunction(item.reservationDate);
               const timeText = mergeTimeSlots(item.timeSlots)
                 .map(slot => `${slot.startTime} ~ ${slot.endTime}`)
                 .join(', ');
 
               const canPay =
-                paymentLive &&
+                canUsePayment &&
                 upcoming &&
-                !isAdmin &&
                 item.approvalStatus !== 'Y' &&
                 item.cancelStatus !== 'Y';
               const canCancel =
