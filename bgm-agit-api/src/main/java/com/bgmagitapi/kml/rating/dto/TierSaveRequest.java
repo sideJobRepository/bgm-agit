@@ -64,9 +64,9 @@ public class TierSaveRequest {
         @NotBlank(message = "등급 이름은 필수입니다.")
         private String name;
 
-        // 배지 이미지 data URI(base64). 매 등급 조회에 딸려오므로 작은 아이콘만 허용 (원본 ~약 375KB 상한)
+        // 배지 이미지 data URI(base64). MySQL MEDIUMTEXT(최대 16,777,215 바이트)에 저장
         @NotNull
-        @Size(max = 500_000, message = "배지 이미지가 너무 큽니다. 더 작은 이미지를 사용해 주세요.")
+        @Size(max = 16_777_215, message = "배지 이미지가 너무 큽니다. 더 작은 이미지를 사용해 주세요.")
         private String imageBase64;
 
         @NotBlank(message = "색상은 필수입니다.")
