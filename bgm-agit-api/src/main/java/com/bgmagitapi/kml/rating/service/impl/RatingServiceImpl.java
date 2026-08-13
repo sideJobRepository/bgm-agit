@@ -12,7 +12,6 @@ import com.bgmagitapi.kml.rating.enums.SeasonProgressStatus;
 import com.bgmagitapi.kml.rating.exception.InvalidRecordRankException;
 import com.bgmagitapi.kml.rating.exception.MatchsNotFoundException;
 import com.bgmagitapi.kml.rating.exception.MultipleOngoingSeasonException;
-import com.bgmagitapi.kml.rating.exception.SeasonNotFoundException;
 import com.bgmagitapi.kml.rating.repository.RatingRepository;
 import com.bgmagitapi.kml.rating.repository.SeasonRepository;
 import com.bgmagitapi.kml.rating.repository.SeasonStandingRepository;
@@ -21,6 +20,7 @@ import com.bgmagitapi.kml.record.entity.Record;
 import com.bgmagitapi.kml.record.repository.RecordRepository;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -50,6 +51,10 @@ public class RatingServiceImpl implements RatingService {
                 .orElseThrow(() -> new MatchsNotFoundException("match 정보가 존재하지 않습니다. matchsId=" + matchsId));
 
         Season season = loadOngoingSeason();
+        if (season == null) {
+            log.info("진행중인 시즌이 없어 레이팅 계산을 건너뜁니다. matchsId= {}", matchsId);
+            return;
+        }
         Map<Integer, Record> recordByRank = recordRepository.findRecordsByMatchsId(matchsId)
                 .stream()
                 .collect(Collectors.toUnmodifiableMap(
@@ -106,7 +111,7 @@ public class RatingServiceImpl implements RatingService {
         return ongoingSeasons
                 .stream()
                 .findFirst()
-                .orElseThrow(() -> new SeasonNotFoundException("진행중인 시즌을 찾을 수 없습니다."));
+                .orElse(null);
     }
 
     private Map<Long, SeasonStanding> loadSeasonStandingOrDefault(Season season, List<BgmAgitMember> members) {
