@@ -20,29 +20,12 @@ export type TierSaveRequest = {
   }[];
 };
 
-export type SeasonSaveRequest = {
-  name: string;
-  startDate: string;
-  endDate: string;
-  baseRating: number;
-  firstScore: number;
-  secondScore: number;
-  thirdScore: number;
-  fourthScore: number;
-  eastMultiple: number;
-  southMultiple: number;
-  westMultiple: number;
-  northMultiple: number;
-  resetType: string | null;
-  carryRate: number | null;
-};
-
 export function useFetchSeasons() {
   const { request } = useRequest();
   const setSeasons = useSeasonStore((state) => state.setSeasons);
 
   const fetchSeasons = () => {
-    request(() => api.get('/bgm-agit/rating/seasons').then((res) => res.data), setSeasons, {
+    return request(() => api.get('/bgm-agit/rating/seasons').then((res) => res.data), setSeasons, {
       ignoreErrorRedirect: true,
     });
   };
@@ -50,37 +33,72 @@ export function useFetchSeasons() {
   return fetchSeasons;
 }
 
-export async function fetchSeasonTiers(seasonId: string) {
-  const res = await api.get<TierResponse[]>(`/bgm-agit/rating/seasons/${seasonId}/tiers`);
-  return res.data;
+export function useFetchSeasonTiers() {
+  const { request } = useRequest();
+
+  const fetchSeasonTiers = (seasonId: string, onSuccess?: (tiers: TierResponse[]) => void) => {
+    return request(
+      () =>
+        api
+          .get<TierResponse[]>(`/bgm-agit/rating/seasons/${seasonId}/tiers`)
+          .then((res) => res.data),
+      onSuccess,
+      { ignoreErrorRedirect: true }
+    );
+  };
+
+  return fetchSeasonTiers;
 }
 
-export async function saveSeasonTiers(seasonId: string, payload: TierSaveRequest) {
-  const res = await api.put<TierResponse[]>(`/bgm-agit/rating/seasons/${seasonId}/tiers`, payload);
-  return res.data;
+export function useSaveSeasonTiers() {
+  const { request } = useRequest();
+
+  const saveSeasonTiers = (
+    seasonId: string,
+    payload: TierSaveRequest,
+    onSuccess?: (tiers: TierResponse[]) => void
+  ) => {
+    return request(
+      () =>
+        api
+          .put<TierResponse[]>(`/bgm-agit/rating/seasons/${seasonId}/tiers`, payload)
+          .then((res) => res.data),
+      onSuccess,
+      { ignoreErrorRedirect: true }
+    );
+  };
+
+  return saveSeasonTiers;
 }
 
-export async function createSeason(payload: SeasonSaveRequest) {
-  const res = await api.post('/bgm-agit/rating/seasons', payload);
-  return res.data;
+export function useStartSeason() {
+  const { request } = useRequest();
+
+  const startSeason = (seasonId: number) => {
+    return request(
+      () => api.post(`/bgm-agit/rating/seasons/${seasonId}/start`).then((res) => res.data),
+      undefined,
+      {
+        ignoreErrorRedirect: true,
+      }
+    );
+  };
+
+  return startSeason;
 }
 
-export async function updateSeason(seasonId: number, payload: SeasonSaveRequest) {
-  const res = await api.put(`/bgm-agit/rating/seasons/${seasonId}`, payload);
-  return res.data;
-}
+export function useCloseSeason() {
+  const { request } = useRequest();
 
-export async function deleteSeasonById(seasonId: number) {
-  const res = await api.delete(`/bgm-agit/rating/seasons/${seasonId}`);
-  return res.data;
-}
+  const closeSeason = (seasonId: number) => {
+    return request(
+      () => api.post(`/bgm-agit/rating/seasons/${seasonId}/close`).then((res) => res.data),
+      undefined,
+      {
+        ignoreErrorRedirect: true,
+      }
+    );
+  };
 
-export async function startSeasonById(seasonId: number) {
-  const res = await api.post(`/bgm-agit/rating/seasons/${seasonId}/start`);
-  return res.data;
-}
-
-export async function closeSeasonById(seasonId: number) {
-  const res = await api.post(`/bgm-agit/rating/seasons/${seasonId}/close`);
-  return res.data;
+  return closeSeason;
 }

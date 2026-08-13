@@ -1,21 +1,20 @@
 'use client';
 
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { CaretDown, Check, ImageSquare, Play, Plus, Trash } from 'phosphor-react';
 import {
-  closeSeasonById,
-  createSeason,
-  deleteSeasonById,
-  fetchSeasonTiers,
-  saveSeasonTiers,
-  startSeasonById,
-  updateSeason,
+  useCloseSeason,
   useFetchSeasons,
+  useFetchSeasonTiers,
+  useSaveSeasonTiers,
+  useStartSeason,
 } from '@/services/season.service';
+import { useDeletePost, useInsertPost, useUpdatePost } from '@/services/main.service';
 import { useSeasonStore } from '@/store/season';
 import type { Season } from '@/store/season';
+import { useLoadingStore } from '@/store/loading';
 import { alertDialog, confirmDialog } from '@/utils/alert';
 import { useUserStore } from '@/store/user';
 import { useRouter } from 'next/navigation';
@@ -71,7 +70,15 @@ export default function SeasonPage() {
   const router = useRouter();
   const user = useUserStore((state) => state.user);
   const fetchSeasons = useFetchSeasons();
+  const fetchSeasonTiers = useFetchSeasonTiers();
+  const saveSeasonTiers = useSaveSeasonTiers();
+  const { insert } = useInsertPost();
+  const { update } = useUpdatePost();
+  const { remove } = useDeletePost();
+  const startSeasonById = useStartSeason();
+  const closeSeasonById = useCloseSeason();
   const seasons = useSeasonStore((state) => state.seasons);
+  const loading = useLoadingStore((state) => state.loading);
   const isAdmin = !!user?.roles?.includes('ROLE_ADMIN');
   const [pageIndex, setPageIndex] = useState<0 | 1>(0);
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -97,21 +104,19 @@ export default function SeasonPage() {
   useEffect(() => {
     if (!user || !isAdmin || !currentSeasonId) return;
 
-    fetchSeasonTiers(currentSeasonId)
-      .then((res) => {
-        setRankSettings(
-          res.map((tier) => ({
-            id: tier.id,
-            imageBase64: tier.image ?? '',
-            minRating: String(tier.minRating ?? ''),
-            rankName: tier.name ?? '',
-            color: tier.color ?? '#ffffff',
-          }))
-        );
-      })
-      .catch(() => {
-        setRankSettings([]);
-      });
+    fetchSeasonTiers(currentSeasonId, (res) => {
+      setRankSettings(
+        res.map((tier) => ({
+          id: tier.id,
+          imageBase64: tier.image ?? '',
+          minRating: String(tier.minRating ?? ''),
+          rankName: tier.name ?? '',
+          color: tier.color ?? '#ffffff',
+        }))
+      );
+    }).catch(() => {
+      setRankSettings([]);
+    });
   }, [user, isAdmin, currentSeasonId]);
 
   const updateRank = <K extends keyof RankSetting>(id: number, key: K, value: RankSetting[K]) => {
@@ -184,10 +189,10 @@ export default function SeasonPage() {
       return;
     }
 
-    await saveSeasonTiers(currentSeasonId, { tiers });
+    const savedTiers = await saveSeasonTiers(currentSeasonId, { tiers });
     await alertDialog('랭크 설정이 저장되었습니다.', 'success');
 
-    const res = await fetchSeasonTiers(currentSeasonId);
+    const res = savedTiers ?? [];
     setRankSettings(
       res.map((tier) => ({
         id: tier.id,
@@ -235,17 +240,32 @@ export default function SeasonPage() {
     };
 
     if (editingSeasonId) {
-      await updateSeason(editingSeasonId, payload);
-      await alertDialog('시즌이 저장되었습니다.', 'success');
+      update({
+        url: `/bgm-agit/rating/seasons/${editingSeasonId}`,
+        body: payload,
+        ignoreErrorRedirect: true,
+        onSuccess: async () => {
+          await alertDialog('시즌이 저장되었습니다.', 'success');
+          await fetchSeasons();
+          setSeasonForm(EMPTY_SEASON_FORM);
+          setIsAddingSeason(false);
+          setEditingSeasonId(null);
+        },
+      });
     } else {
-      await createSeason(payload);
-      await alertDialog('시즌이 추가되었습니다.', 'success');
+      insert({
+        url: '/bgm-agit/rating/seasons',
+        body: payload,
+        ignoreErrorRedirect: true,
+        onSuccess: async () => {
+          await alertDialog('시즌이 추가되었습니다.', 'success');
+          await fetchSeasons();
+          setSeasonForm(EMPTY_SEASON_FORM);
+          setIsAddingSeason(false);
+          setEditingSeasonId(null);
+        },
+      });
     }
-
-    await fetchSeasons();
-    setSeasonForm(EMPTY_SEASON_FORM);
-    setIsAddingSeason(false);
-    setEditingSeasonId(null);
   };
 
   const openAddSeasonForm = () => {
@@ -279,12 +299,17 @@ export default function SeasonPage() {
     const result = await confirmDialog(`${editingSeason.name} 시즌을 삭제할까요?`, 'warning');
     if (!result.isConfirmed) return;
 
-    await deleteSeasonById(editingSeason.id);
-    await alertDialog('시즌이 삭제되었습니다.', 'success');
-    await fetchSeasons();
-    setSeasonForm(EMPTY_SEASON_FORM);
-    setIsAddingSeason(false);
-    setEditingSeasonId(null);
+    remove({
+      url: `/bgm-agit/rating/seasons/${editingSeason.id}`,
+      ignoreErrorRedirect: true,
+      onSuccess: async () => {
+        await alertDialog('시즌이 삭제되었습니다.', 'success');
+        await fetchSeasons();
+        setSeasonForm(EMPTY_SEASON_FORM);
+        setIsAddingSeason(false);
+        setEditingSeasonId(null);
+      },
+    });
   };
 
   const startSeason = async () => {
@@ -396,71 +421,86 @@ export default function SeasonPage() {
                       </AddRankButton>
                     </PanelHeader>
 
-                    <RankGrid>
-                      {rankSettings.map((rank) => (
-                        <RankCard key={rank.id} $color={rank.color}>
-                          <RankImage>
-                            {rank.imageBase64 ? (
-                              <img src={rank.imageBase64} alt="" />
-                            ) : (
-                              <ImagePlaceholder>
-                                <ImageSquare weight="duotone" />
-                                <span>이미지 선택</span>
-                              </ImagePlaceholder>
-                            )}
-                            <input
-                              type="file"
-                              accept="image/gif,image/*"
-                              onChange={(e) =>
-                                uploadRankImage(rank.id, e.target.files?.[0] ?? null)
-                              }
-                            />
-                          </RankImage>
-
-                          <RankFields>
-                            <Field>
-                              <label>하한 레이팅</label>
+                    {loading ? (
+                      <RankSkeletonGrid>
+                        {Array.from({ length: 4 }).map((_, index) => (
+                          <RankSkeletonCard key={index}>
+                            <SkeletonBox $width="118px" $height="118px" />
+                            <SkeletonFields>
+                              <SkeletonBox />
+                              <SkeletonBox />
+                              <SkeletonBox $width="100%" />
+                            </SkeletonFields>
+                          </RankSkeletonCard>
+                        ))}
+                      </RankSkeletonGrid>
+                    ) : (
+                      <RankGrid>
+                        {rankSettings.map((rank) => (
+                          <RankCard key={rank.id} $color={rank.color}>
+                            <RankImage>
+                              {rank.imageBase64 ? (
+                                <img src={rank.imageBase64} alt="" />
+                              ) : (
+                                <ImagePlaceholder>
+                                  <ImageSquare weight="duotone" />
+                                  <span>이미지 선택</span>
+                                </ImagePlaceholder>
+                              )}
                               <input
-                                type="number"
-                                min="0"
-                                value={rank.minRating}
+                                type="file"
+                                accept="image/gif,image/*"
                                 onChange={(e) =>
-                                  updateRank(rank.id, 'minRating', e.target.value)
+                                  uploadRankImage(rank.id, e.target.files?.[0] ?? null)
                                 }
                               />
-                            </Field>
+                            </RankImage>
 
-                            <Field>
-                              <label>등급 이름</label>
-                              <input
-                                value={rank.rankName}
-                                onChange={(e) => updateRank(rank.id, 'rankName', e.target.value)}
-                              />
-                            </Field>
-
-                            <Field>
-                              <label>색상</label>
-                              <ColorPicker>
+                            <RankFields>
+                              <Field>
+                                <label>하한 레이팅</label>
                                 <input
-                                  type="color"
-                                  value={rank.color}
-                                  onChange={(e) => updateRank(rank.id, 'color', e.target.value)}
-                                  aria-label={`${rank.rankName} 색상 선택`}
+                                  type="number"
+                                  min="0"
+                                  value={rank.minRating}
+                                  onChange={(e) =>
+                                    updateRank(rank.id, 'minRating', e.target.value)
+                                  }
                                 />
-                                <ColorValue>{rank.color}</ColorValue>
-                                <RankDeleteButton
-                                  type="button"
-                                  onClick={() => removeRank(rank.id)}
-                                  aria-label={`${rank.rankName || '등급'} 삭제`}
-                                >
-                                  <Trash weight="bold" />
-                                </RankDeleteButton>
-                              </ColorPicker>
-                            </Field>
-                          </RankFields>
-                        </RankCard>
-                      ))}
-                    </RankGrid>
+                              </Field>
+
+                              <Field>
+                                <label>등급 이름</label>
+                                <input
+                                  value={rank.rankName}
+                                  onChange={(e) => updateRank(rank.id, 'rankName', e.target.value)}
+                                />
+                              </Field>
+
+                              <Field>
+                                <label>색상</label>
+                                <ColorPicker>
+                                  <input
+                                    type="color"
+                                    value={rank.color}
+                                    onChange={(e) => updateRank(rank.id, 'color', e.target.value)}
+                                    aria-label={`${rank.rankName} 색상 선택`}
+                                  />
+                                  <ColorValue>{rank.color}</ColorValue>
+                                  <RankDeleteButton
+                                    type="button"
+                                    onClick={() => removeRank(rank.id)}
+                                    aria-label={`${rank.rankName || '등급'} 삭제`}
+                                  >
+                                    <Trash weight="bold" />
+                                  </RankDeleteButton>
+                                </ColorPicker>
+                              </Field>
+                            </RankFields>
+                          </RankCard>
+                        ))}
+                      </RankGrid>
+                    )}
 
                     <RankActions>
                       <PrimaryButton type="button" onClick={saveRanks}>
@@ -480,28 +520,44 @@ export default function SeasonPage() {
                   </PanelHeader>
 
                   <SeasonList>
-                    {seasons.map((season) => (
-                      <SeasonItem
-                        key={season.id}
-                        type="button"
-                        $active={editingSeasonId === season.id}
-                        onClick={() => openSeasonForm(season)}
-                      >
-                        <div>
-                          <strong>{season.name}</strong>
-                          <span>
-                            {season.startDate} - {season.endDate}
-                          </span>
-                        </div>
-                        <SeasonMeta>
-                          <span>기준 {season.baseRating}</span>
-                          <StatusChip $status={season.progressStatus}>
-                            {PROGRESS_STATUS_LABEL[season.progressStatus] ?? season.progressStatus}
-                          </StatusChip>
-                        </SeasonMeta>
-                      </SeasonItem>
-                    ))}
-                    {seasons.length === 0 && <EmptyText>등록된 시즌이 없습니다.</EmptyText>}
+                    {loading
+                      ? Array.from({ length: 3 }).map((_, index) => (
+                          <SeasonSkeletonItem key={index}>
+                            <div>
+                              <SkeletonBox $width="140px" />
+                              <SkeletonBox $width="220px" $height="12px" />
+                            </div>
+                            <SeasonMeta>
+                              <SkeletonBox $width="72px" $height="30px" />
+                              <SkeletonBox $width="58px" $height="30px" />
+                            </SeasonMeta>
+                          </SeasonSkeletonItem>
+                        ))
+                      : seasons.map((season) => (
+                          <SeasonItem
+                            key={season.id}
+                            type="button"
+                            $active={editingSeasonId === season.id}
+                            onClick={() => openSeasonForm(season)}
+                          >
+                            <div>
+                              <strong>{season.name}</strong>
+                              <span>
+                                {season.startDate} - {season.endDate}
+                              </span>
+                            </div>
+                            <SeasonMeta>
+                              <span>기준 {season.baseRating}</span>
+                              <StatusChip $status={season.progressStatus}>
+                                {PROGRESS_STATUS_LABEL[season.progressStatus] ??
+                                  season.progressStatus}
+                              </StatusChip>
+                            </SeasonMeta>
+                          </SeasonItem>
+                        ))}
+                    {!loading && seasons.length === 0 && (
+                      <EmptyText>등록된 시즌이 없습니다.</EmptyText>
+                    )}
                   </SeasonList>
 
                   <AddSeasonRow>
@@ -994,6 +1050,8 @@ const RankGrid = styled.div`
   }
 `;
 
+const RankSkeletonGrid = styled(RankGrid)``;
+
 const RankActions = styled.div`
   display: flex;
   justify-content: flex-end;
@@ -1045,6 +1103,43 @@ const RankCard = styled.article<{ $color: string }>`
   @media ${({ theme }) => theme.device.mobile} {
     grid-template-columns: 1fr;
     justify-items: center;
+  }
+`;
+
+const RankSkeletonCard = styled.article`
+  display: grid;
+  grid-template-columns: 118px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 14% 0%, rgba(255, 255, 255, 0.1), transparent 32%),
+    linear-gradient(145deg, #2b2f36, #1d1f24 58%, #17191d);
+
+  @media ${({ theme }) => theme.device.mobile} {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+`;
+
+const SkeletonFields = styled.div`
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+
+  > div:last-child {
+    grid-column: 1 / -1;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    grid-template-columns: 1fr;
   }
 `;
 
@@ -1281,6 +1376,34 @@ const SeasonItem = styled.button<{ $active: boolean }>`
   }
 `;
 
+const SeasonSkeletonItem = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+
+  > div:first-child {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+
+    > div:first-child {
+      align-self: flex-start;
+    }
+  }
+`;
+
 const SeasonMeta = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -1299,6 +1422,26 @@ const SeasonMeta = styled.div`
   @media ${({ theme }) => theme.device.mobile} {
     align-self: flex-end;
   }
+`;
+
+const shimmer = keyframes`
+  0% { background-position: -100% 0; }
+  100% { background-position: 100% 0; }
+`;
+
+const SkeletonBox = styled.div<{ $width?: string; $height?: string }>`
+  width: ${({ $width }) => $width ?? '100%'};
+  max-width: 100%;
+  height: ${({ $height }) => $height ?? '16px'};
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.08) 25%,
+    rgba(255, 255, 255, 0.16) 50%,
+    rgba(255, 255, 255, 0.08) 75%
+  );
+  background-size: 200% 100%;
+  animation: ${shimmer} 1.5s infinite;
 `;
 
 const StatusChip = styled.span<{ $status: string }>`
