@@ -13,9 +13,11 @@ import {
   SeasonOption,
   SeasonStandingRank,
   SeasonStandingPage,
+  TierResponse,
   useFetchMySeasonStanding,
   useFetchSeasonOptions,
   useFetchSeasonStandings,
+  useFetchSeasonTiers,
 } from '@/services/season.service';
 
 const PAGE_SIZE = 20;
@@ -24,6 +26,7 @@ export default function SeasonRankClient() {
   const user = useUserStore((state) => state.user);
   const loading = useLoadingStore((state) => state.loading);
   const fetchSeasonOptions = useFetchSeasonOptions();
+  const fetchSeasonTiers = useFetchSeasonTiers();
   const fetchMySeasonStanding = useFetchMySeasonStanding();
   const fetchSeasonStandings = useFetchSeasonStandings();
 
@@ -31,6 +34,7 @@ export default function SeasonRankClient() {
   const [selectedSeasonId, setSelectedSeasonId] = useState('');
   const [myStanding, setMyStanding] = useState<MemberStanding | null>(null);
   const [standings, setStandings] = useState<SeasonStandingPage | null>(null);
+  const [tiers, setTiers] = useState<TierResponse[]>([]);
   const [page, setPage] = useState(0);
   const userId = user?.id;
 
@@ -51,6 +55,14 @@ export default function SeasonRankClient() {
   }, [selectedSeasonId, page]);
 
   useEffect(() => {
+    if (!selectedSeasonId) return;
+
+    fetchSeasonTiers(selectedSeasonId, setTiers).catch(() => {
+      setTiers([]);
+    });
+  }, [selectedSeasonId]);
+
+  useEffect(() => {
     if (!selectedSeasonId || !userId) return;
 
     fetchMySeasonStanding(selectedSeasonId, setMyStanding).catch(() => {
@@ -63,9 +75,14 @@ export default function SeasonRankClient() {
     setPage(0);
     setMyStanding(null);
     setStandings(null);
+    setTiers([]);
   };
 
   const selectedSeason = seasons.find((season) => String(season.id) === selectedSeasonId);
+  const tierMap = useMemo(
+    () => new Map(tiers.map((tier) => [tier.name ?? '', tier])),
+    [tiers]
+  );
 
   const columns = useMemo<BaseColumn<SeasonStandingRank>[]>(
     () => [
@@ -83,8 +100,8 @@ export default function SeasonRankClient() {
         header: '등급',
         align: 'center',
         nowrap: true,
-        width: '90px',
-        render: (row) => row.tierName ?? '-',
+        width: '112px',
+        render: (row) => <TierCell tier={row.tierName ? tierMap.get(row.tierName) : undefined} />,
       },
       {
         key: 'memberNickname',
@@ -93,9 +110,14 @@ export default function SeasonRankClient() {
         nowrap: true,
         sticky: true,
         width: '130px',
-        render: (row) => (
-          <NicknameLink href={`/rank/${row.memberId}`}>{row.memberNickname ?? '-'}</NicknameLink>
-        ),
+        render: (row) => {
+          const tier = row.tierName ? tierMap.get(row.tierName) : undefined;
+          return (
+            <NicknameLink href={`/rank/${row.memberId}`} $color={tier?.color ?? undefined}>
+              {row.memberNickname ?? '-'}
+            </NicknameLink>
+          );
+        },
       },
       {
         key: 'rating',
@@ -138,7 +160,7 @@ export default function SeasonRankClient() {
         render: (row) => row.avgRank,
       },
     ],
-    []
+    [tierMap]
   );
 
   const getRankRowClassName = (row: SeasonStandingRank) => {
@@ -176,7 +198,12 @@ export default function SeasonRankClient() {
       {loading && !myStanding ? (
         <MyRankSkeleton />
       ) : (
-        <MyRankCard standing={myStanding} loggedIn={!!user} seasonName={selectedSeason?.name} />
+        <MyRankCard
+          standing={myStanding}
+          loggedIn={!!user}
+          seasonName={selectedSeason?.name}
+          tier={myStanding?.tierName ? tierMap.get(myStanding.tierName) : undefined}
+        />
       )}
 
       <TablePanel>
@@ -210,10 +237,12 @@ function MyRankCard({
   standing,
   loggedIn,
   seasonName,
+  tier,
 }: {
   standing: MemberStanding | null;
   loggedIn: boolean;
   seasonName?: string;
+  tier?: TierResponse;
 }) {
   if (!loggedIn) {
     return (
@@ -251,7 +280,10 @@ function MyRankCard({
       </MyCardTitle>
       <MyRankGrid>
         <MyRankMain>
-          <TierBadge>{standing.tierName ?? '-'}</TierBadge>
+          <TierBadge $color={tier?.color ?? undefined}>
+            {tier?.image && <img src={tier.image} alt="" />}
+            <span>{standing.tierName ?? '-'}</span>
+          </TierBadge>
           <div>
             <b>{formatNumber(standing.rating)}</b>
             <span>현재 레이팅</span>
@@ -271,6 +303,15 @@ function MyRankCard({
         </MyRankMetric>
       </MyRankGrid>
     </MyCard>
+  );
+}
+
+function TierCell({ tier }: { tier?: TierResponse }) {
+  return (
+    <TierChip $color={tier?.color ?? undefined}>
+      {tier?.image && <img src={tier.image} alt="" />}
+      <span>{tier?.name ?? '-'}</span>
+    </TierChip>
   );
 }
 
@@ -499,17 +540,33 @@ const MyRankMain = styled.div`
   }
 `;
 
-const TierBadge = styled.div`
+const TierBadge = styled.div<{ $color?: string }>`
   display: inline-flex;
-  min-width: 54px;
-  height: 54px;
+  position: relative;
+  min-width: 118px;
+  min-height: 78px;
   align-items: center;
   justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  overflow: hidden;
   border-radius: 6px;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08));
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: ${({ $color }) => solidTierBackground($color)};
+  border: 1px solid ${({ $color }) => withAlpha($color, 0.52)};
+  color: ${({ $color }) => $color ?? 'rgba(255, 255, 255, 0.92)'};
   font-weight: 900;
-  font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
+  font-size: ${({ theme }) => theme.desktop.sizes.xl};
+
+  img {
+    width: 58px;
+    height: 58px;
+    object-fit: contain;
+  }
+
+  span {
+    position: relative;
+    z-index: 1;
+  }
 `;
 
 const MyRankMetric = styled.div`
@@ -625,15 +682,21 @@ const TablePanel = styled.section`
   }
 
   tbody tr.rank-gold {
-    background: rgba(240, 180, 41, 0.2) !important;
+    background:
+      linear-gradient(90deg, rgba(240, 180, 41, 0.28), rgba(240, 180, 41, 0.12)),
+      rgba(255, 255, 255, 0.04) !important;
   }
 
   tbody tr.rank-silver {
-    background: rgba(192, 192, 192, 0.16) !important;
+    background:
+      linear-gradient(90deg, rgba(192, 192, 192, 0.24), rgba(192, 192, 192, 0.1)),
+      rgba(255, 255, 255, 0.04) !important;
   }
 
   tbody tr.rank-bronze {
-    background: rgba(205, 127, 50, 0.18) !important;
+    background:
+      linear-gradient(90deg, rgba(205, 127, 50, 0.26), rgba(205, 127, 50, 0.11)),
+      rgba(255, 255, 255, 0.04) !important;
   }
 
   th[style],
@@ -649,13 +712,35 @@ const TablePanel = styled.section`
   }
 `;
 
-const NicknameLink = styled(Link)`
-  color: inherit;
+const NicknameLink = styled(Link)<{ $color?: string }>`
+  color: ${({ $color }) => $color ?? 'inherit'};
   font-weight: 800;
   text-decoration: none;
 
   &:hover {
     text-decoration: underline;
+  }
+`;
+
+const TierChip = styled.div<{ $color?: string }>`
+  display: inline-flex;
+  min-width: 104px;
+  min-height: 58px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 4px;
+  background: ${({ $color }) => solidTierBackground($color)};
+  border: 1px solid ${({ $color }) => withAlpha($color, 0.44)};
+  color: ${({ $color }) => $color ?? 'rgba(255, 255, 255, 0.88)'};
+  font-weight: 900;
+  line-height: 1.1;
+
+  img {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
   }
 `;
 
@@ -681,3 +766,27 @@ const SkeletonBox = styled.div<{ $width?: string; $height?: string }>`
     }
   }
 `;
+
+function withAlpha(color: string | undefined, alpha: number) {
+  if (!color || !/^#([0-9a-fA-F]{6})$/.test(color)) {
+    return `rgba(255, 255, 255, ${alpha})`;
+  }
+
+  const r = parseInt(color.slice(1, 3), 16);
+  const g = parseInt(color.slice(3, 5), 16);
+  const b = parseInt(color.slice(5, 7), 16);
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function solidTierBackground(color: string | undefined) {
+  if (!color || !/^#([0-9a-fA-F]{6})$/.test(color)) {
+    return '#252a32';
+  }
+
+  const r = parseInt(color.slice(1, 3), 16);
+  const g = parseInt(color.slice(3, 5), 16);
+  const b = parseInt(color.slice(5, 7), 16);
+
+  return `linear-gradient(145deg, rgb(${Math.round(r * 0.28)}, ${Math.round(g * 0.28)}, ${Math.round(b * 0.28)}), #17191d)`;
+}
