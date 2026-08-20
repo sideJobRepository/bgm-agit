@@ -25,6 +25,8 @@ export type SeasonOption = {
   name: string;
   progressStatus: 'SCHEDULED' | 'ONGOING' | 'CLOSED';
   progressStatusLabel: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
 };
 
 export type MemberStanding = {

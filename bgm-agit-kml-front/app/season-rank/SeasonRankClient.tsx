@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { CaretDown } from 'phosphor-react';
 import { BaseColumn, BaseTable } from '@/app/components/BaseTable';
 import BaseTableSkeleton from '@/app/components/BaseTableSkeleton';
+import type { Season } from '@/store/season';
 import { useLoadingStore } from '@/store/loading';
 import { useUserStore } from '@/store/user';
 import {
@@ -15,6 +16,7 @@ import {
   SeasonStandingPage,
   TierResponse,
   useFetchMySeasonStanding,
+  useFetchSeasons,
   useFetchSeasonOptions,
   useFetchSeasonStandings,
   useFetchSeasonTiers,
@@ -25,6 +27,7 @@ const PAGE_SIZE = 20;
 export default function SeasonRankClient() {
   const user = useUserStore((state) => state.user);
   const loading = useLoadingStore((state) => state.loading);
+  const fetchSeasons = useFetchSeasons();
   const fetchSeasonOptions = useFetchSeasonOptions();
   const fetchSeasonTiers = useFetchSeasonTiers();
   const fetchMySeasonStanding = useFetchMySeasonStanding();
@@ -32,6 +35,7 @@ export default function SeasonRankClient() {
 
   const [seasons, setSeasons] = useState<SeasonOption[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState('');
+  const [seasonDetails, setSeasonDetails] = useState<Season[]>([]);
   const [myStanding, setMyStanding] = useState<MemberStanding | null>(null);
   const [standings, setStandings] = useState<SeasonStandingPage | null>(null);
   const [tiers, setTiers] = useState<TierResponse[]>([]);
@@ -46,28 +50,71 @@ export default function SeasonRankClient() {
         setSelectedSeasonId(String(defaultSeason.id));
       }
     });
+    fetchSeasons()?.then((res) => {
+      if (!res) return;
+      setSeasonDetails(res);
+    });
   }, []);
 
   useEffect(() => {
     if (!selectedSeasonId) return;
 
-    fetchSeasonStandings(selectedSeasonId, page, PAGE_SIZE, setStandings);
+    let active = true;
+
+    fetchSeasonStandings(selectedSeasonId, page, PAGE_SIZE, (res) => {
+      if (!active) return;
+      console.log('[season-rank] standings response', { seasonId: selectedSeasonId, page, res });
+      setStandings(res);
+    });
+
+    return () => {
+      active = false;
+    };
   }, [selectedSeasonId, page]);
 
   useEffect(() => {
     if (!selectedSeasonId) return;
 
-    fetchSeasonTiers(selectedSeasonId, setTiers).catch(() => {
-      setTiers([]);
+    let active = true;
+
+    fetchSeasonTiers(selectedSeasonId, (res) => {
+      if (active) setTiers(res);
+    }).catch(() => {
+      if (active) setTiers([]);
     });
+
+    return () => {
+      active = false;
+    };
   }, [selectedSeasonId]);
 
   useEffect(() => {
     if (!selectedSeasonId || !userId) return;
 
-    fetchMySeasonStanding(selectedSeasonId, setMyStanding).catch(() => {
+    let active = true;
+
+    fetchMySeasonStanding(selectedSeasonId, (res) => {
+      if (!active) return;
+      console.log('[season-rank] my standing response', { seasonId: selectedSeasonId, res });
+      console.log('[season-rank] my standing fields', {
+        requestedSeasonId: selectedSeasonId,
+        responseSeasonId: res.seasonId,
+        seasonRank: res.seasonRank,
+        provisional: res.provisional,
+        gameCount: res.gameCount,
+        rating: res.rating,
+        tierName: res.tierName,
+      });
+      setMyStanding(res);
+    }).catch(() => {
+      if (!active) return;
+      console.log('[season-rank] my standing response failed', { seasonId: selectedSeasonId });
       setMyStanding(null);
     });
+
+    return () => {
+      active = false;
+    };
   }, [selectedSeasonId, userId]);
 
   const changeSeason = (seasonId: string) => {
@@ -78,11 +125,19 @@ export default function SeasonRankClient() {
     setTiers([]);
   };
 
-  const selectedSeason = seasons.find((season) => String(season.id) === selectedSeasonId);
-  const tierMap = useMemo(
-    () => new Map(tiers.map((tier) => [tier.name ?? '', tier])),
-    [tiers]
-  );
+  const selectedSeasonOption = seasons.find((season) => String(season.id) === selectedSeasonId);
+  const selectedSeasonDetail = seasonDetails.find((season) => String(season.id) === selectedSeasonId);
+  const selectedSeason = selectedSeasonOption
+    ? {
+        ...selectedSeasonOption,
+        startDate: selectedSeasonDetail?.startDate ?? selectedSeasonOption.startDate,
+        endDate: selectedSeasonDetail?.endDate ?? selectedSeasonOption.endDate,
+      }
+    : undefined;
+  const visibleMyStanding =
+    myStanding && String(myStanding.seasonId) === selectedSeasonId ? myStanding : null;
+  const myStandingRow = standings?.content.find((row) => String(row.memberId) === String(userId));
+  const tierMap = useMemo(() => new Map(tiers.map((tier) => [tier.name ?? '', tier])), [tiers]);
 
   const columns = useMemo<BaseColumn<SeasonStandingRank>[]>(
     () => [
@@ -93,7 +148,7 @@ export default function SeasonRankClient() {
         nowrap: true,
         sticky: true,
         width: '70px',
-        render: (row) => row.seasonRank,
+        render: (row, index) => row.seasonRank ?? page * PAGE_SIZE + index + 1,
       },
       {
         key: 'tierName',
@@ -160,13 +215,14 @@ export default function SeasonRankClient() {
         render: (row) => row.avgRank,
       },
     ],
-    [tierMap]
+    [page, tierMap]
   );
 
-  const getRankRowClassName = (row: SeasonStandingRank) => {
-    if (row.seasonRank === 1) return 'rank-gold';
-    if (row.seasonRank === 2) return 'rank-silver';
-    if (row.seasonRank === 3) return 'rank-bronze';
+  const getRankRowClassName = (row: SeasonStandingRank, index: number) => {
+    const rank = row.seasonRank ?? page * PAGE_SIZE + index + 1;
+    if (rank === 1) return 'rank-gold';
+    if (rank === 2) return 'rank-silver';
+    if (rank === 3) return 'rank-bronze';
     return undefined;
   };
 
@@ -180,7 +236,18 @@ export default function SeasonRankClient() {
       <ControlPanel>
         <div>
           <strong>대상 시즌</strong>
-          <span>{selectedSeason?.progressStatusLabel ?? '시즌을 선택하세요'}</span>
+          <SeasonInfoLine>
+            {selectedSeason ? (
+              <>
+                <StatusChip $status={selectedSeason.progressStatus}>
+                  {selectedSeason.progressStatusLabel ?? selectedSeason.progressStatus}
+                </StatusChip>
+                <SeasonPeriod>{formatSeasonPeriod(selectedSeason)}</SeasonPeriod>
+              </>
+            ) : (
+              <SeasonPeriod>시즌을 선택하세요</SeasonPeriod>
+            )}
+          </SeasonInfoLine>
         </div>
         <SelectShell>
           <select value={selectedSeasonId} onChange={(e) => changeSeason(e.target.value)}>
@@ -195,14 +262,20 @@ export default function SeasonRankClient() {
         </SelectShell>
       </ControlPanel>
 
-      {loading && !myStanding ? (
+      {loading && !visibleMyStanding ? (
         <MyRankSkeleton />
       ) : (
         <MyRankCard
-          standing={myStanding}
+          standing={visibleMyStanding}
           loggedIn={!!user}
           seasonName={selectedSeason?.name}
-          tier={myStanding?.tierName ? tierMap.get(myStanding.tierName) : undefined}
+          tier={visibleMyStanding?.tierName ? tierMap.get(visibleMyStanding.tierName) : undefined}
+          nextTier={
+            visibleMyStanding?.nextTierName
+              ? tierMap.get(visibleMyStanding.nextTierName)
+              : undefined
+          }
+          rankListName={myStandingRow?.memberNickname ?? undefined}
         />
       )}
 
@@ -238,11 +311,15 @@ function MyRankCard({
   loggedIn,
   seasonName,
   tier,
+  nextTier,
+  rankListName,
 }: {
   standing: MemberStanding | null;
   loggedIn: boolean;
   seasonName?: string;
   tier?: TierResponse;
+  nextTier?: TierResponse;
+  rankListName?: string;
 }) {
   if (!loggedIn) {
     return (
@@ -270,37 +347,65 @@ function MyRankCard({
 
   const nextText = standing.nextTierName
     ? `${standing.nextTierName}까지 ${formatNumber(standing.pointsToNextTier)}점`
-    : '최상위 등급입니다';
+    : '최고 등급에 도달했습니다. 현재 시즌 최상위 구간을 유지 중입니다.';
+  const rankText = standing.provisional ? '배치중' : `${standing.seasonRank ?? '-'}위`;
+  const progress = getTierProgress(standing);
+  const recentDeltas = standing.recentDeltas ?? [];
+  const displayName = rankListName ?? standing.memberName ?? '내 등급';
+  const hasSubName =
+    !!rankListName && !!standing.memberName && rankListName !== standing.memberName;
 
   return (
     <MyCard>
-      <MyCardTitle>
-        <span>{standing.seasonName}</span>
-        <strong>{standing.memberName ?? '내 등급'}</strong>
-      </MyCardTitle>
       <MyRankGrid>
-        <MyRankMain>
+        <MySummaryBlock>
           <TierBadge $color={tier?.color ?? undefined}>
             {tier?.image && <img src={tier.image} alt="" />}
             <span>{standing.tierName ?? '-'}</span>
           </TierBadge>
-          <div>
-            <b>{formatNumber(standing.rating)}</b>
-            <span>현재 레이팅</span>
-          </div>
-        </MyRankMain>
-        <MyRankMetric>
-          <span>시즌 순위</span>
-          <strong>{standing.provisional ? '배치중' : `${standing.seasonRank ?? '-'}위`}</strong>
-        </MyRankMetric>
-        <MyRankMetric>
-          <span>시즌 판수</span>
-          <strong>{standing.gameCount}</strong>
-        </MyRankMetric>
-        <MyRankMetric>
+          <MyProfileText>
+            <span>{standing.seasonName}</span>
+            <NameRow>
+              <NameText $color={tier?.color ?? undefined}>{displayName}</NameText>
+              {hasSubName && <SubName>{standing.memberName}</SubName>}
+            </NameRow>
+            <small>
+              시즌 {rankText} / {standing.gameCount}판
+            </small>
+            <MyScoreText>
+              <span>현재 점수</span>
+              <ScoreValue>
+                {formatNumber(standing.rating)}
+                <em>점</em>
+              </ScoreValue>
+              {recentDeltas.length > 0 && (
+                <RecentDeltaBlock>
+                  <span>최근 {recentDeltas.length}판</span>
+                  <RecentDeltaList>
+                    {recentDeltas.map((delta, index) => (
+                      <RecentDelta key={`${delta}-${index}`} $positive={Number(delta) >= 0}>
+                        {formatSignedNumber(delta)}
+                      </RecentDelta>
+                    ))}
+                  </RecentDeltaList>
+                </RecentDeltaBlock>
+              )}
+            </MyScoreText>
+          </MyProfileText>
+        </MySummaryBlock>
+        <NextTierBlock $color={nextTier?.color ?? tier?.color ?? undefined}>
           <span>다음 등급</span>
-          <strong>{nextText}</strong>
-        </MyRankMetric>
+          <strong>{standing.nextTierName ?? '최상위 등급'}</strong>
+          <small>{nextText}</small>
+          <ProgressTrack>
+            <ProgressFill $width={progress} $color={nextTier?.color ?? tier?.color ?? undefined} />
+          </ProgressTrack>
+          <ProgressMeta>
+            <span>{formatNumber(standing.tierMinRating)}점</span>
+            <b>{progress}%</b>
+            <span>{formatNumber(standing.nextTierMinRating)}점</span>
+          </ProgressMeta>
+        </NextTierBlock>
       </MyRankGrid>
     </MyCard>
   );
@@ -320,10 +425,8 @@ function MyRankSkeleton() {
     <MyCard>
       <SkeletonBox $width="120px" />
       <MyRankGrid>
-        <SkeletonBox $height="74px" />
-        <SkeletonBox $height="74px" />
-        <SkeletonBox $height="74px" />
-        <SkeletonBox $height="74px" />
+        <SkeletonBox $height="132px" />
+        <SkeletonBox $height="132px" />
       </MyRankGrid>
     </MyCard>
   );
@@ -334,6 +437,36 @@ function formatNumber(value: number | string | null | undefined) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return String(value);
   return parsed.toLocaleString(undefined, { maximumFractionDigits: 1 });
+}
+
+function formatSignedNumber(value: number | string | null | undefined) {
+  if (value === null || value === undefined || value === '') return '-';
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return String(value);
+  const formatted = parsed.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  return parsed > 0 ? `+${formatted}` : formatted;
+}
+
+function formatSeasonPeriod(season: SeasonOption) {
+  if (!season.startDate || !season.endDate) return '기간 정보 없음';
+  return `${season.startDate} - ${season.endDate}`;
+}
+
+function getTierProgress(standing: MemberStanding) {
+  if (!standing.nextTierName) return 100;
+
+  const rating = Number(standing.rating);
+  const currentMin = Number(standing.tierMinRating);
+  const nextMin = Number(standing.nextTierMinRating);
+
+  if (!Number.isFinite(rating) || !Number.isFinite(currentMin) || !Number.isFinite(nextMin)) {
+    return 0;
+  }
+
+  const range = nextMin - currentMin;
+  if (range <= 0) return 0;
+
+  return Math.max(0, Math.min(100, Math.round(((rating - currentMin) / range) * 100)));
 }
 
 const Wrapper = styled.div`
@@ -433,6 +566,47 @@ const ControlPanel = styled.section`
   }
 `;
 
+const SeasonInfoLine = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+`;
+
+const StatusChip = styled.div<{ $status: string }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 4px;
+  background: ${({ $status }) => {
+    if ($status === 'ONGOING') return 'rgba(109, 174, 129, 0.24)';
+    if ($status === 'CLOSED') return 'rgba(117, 117, 117, 0.28)';
+    return 'rgba(227, 139, 41, 0.24)';
+  }} !important;
+  color: ${({ $status }) => {
+    if ($status === 'ONGOING') return '#9EE3B1';
+    if ($status === 'CLOSED') return 'rgba(255, 255, 255, 0.62)';
+    return '#FFD08A';
+  }};
+  font-size: ${({ theme }) => theme.desktop.sizes.sm};
+  font-weight: 900;
+  line-height: 30px;
+`;
+
+const SeasonPeriod = styled.div`
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  margin-top: 0;
+  color: rgba(255, 255, 255, 0.64);
+  font-size: ${({ theme }) => theme.desktop.sizes.sm};
+  font-weight: 800;
+  line-height: 30px;
+`;
+
 const SelectShell = styled.div`
   position: relative;
   width: min(360px, 100%);
@@ -508,7 +682,8 @@ const MyCardTitle = styled.div`
 
 const MyRankGrid = styled.div`
   display: grid;
-  grid-template-columns: 1.4fr repeat(3, 1fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.9fr);
+  align-items: stretch;
   gap: 12px;
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -516,39 +691,148 @@ const MyRankGrid = styled.div`
   }
 `;
 
-const MyRankMain = styled.div`
+const MySummaryBlock = styled.div`
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px;
+  gap: 16px;
+  min-width: 0;
+  padding: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06)),
+    rgba(255, 255, 255, 0.05);
 
-  b {
-    display: block;
-    font-size: ${({ theme }) => theme.desktop.sizes.h3Size};
-    line-height: 1;
+  @media ${({ theme }) => theme.device.mobile} {
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
   }
+`;
+
+const MyProfileText = styled.div`
+  flex: 1;
+  min-width: 0;
 
   span {
-    display: block;
-    margin-top: 6px;
     color: rgba(255, 255, 255, 0.62);
     font-weight: 700;
     font-size: ${({ theme }) => theme.desktop.sizes.sm};
   }
+
+  small {
+    display: block;
+    margin-top: 12px;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: ${({ theme }) => theme.desktop.sizes.md};
+    font-weight: 800;
+  }
+`;
+
+const NameRow = styled.div`
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    justify-content: center;
+  }
+`;
+
+const NameText = styled.strong<{ $color?: string }>`
+  min-width: 0;
+  color: ${({ $color }) => $color ?? 'rgba(255, 255, 255, 0.94)'};
+  font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
+  font-weight: 900;
+  line-height: 1.08;
+  word-break: keep-all;
+`;
+
+const SubName = styled.span`
+  color: rgba(255, 255, 255, 0.56) !important;
+  font-size: ${({ theme }) => theme.desktop.sizes.sm} !important;
+  font-weight: 800 !important;
+`;
+
+const MyScoreText = styled.div`
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+  span {
+    color: rgba(255, 255, 255, 0.58);
+    font-size: ${({ theme }) => theme.desktop.sizes.sm};
+  }
+`;
+
+const ScoreValue = styled.strong`
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  margin-top: 6px;
+  color: ${({ theme }) => theme.colors.whiteColor};
+  font-size: ${({ theme }) => theme.desktop.sizes.h3Size};
+  font-weight: 900;
+  line-height: 1.1;
+
+  em {
+    color: rgba(255, 255, 255, 0.58);
+    font-size: ${({ theme }) => theme.desktop.sizes.md};
+    font-style: normal;
+    font-weight: 800;
+  }
+`;
+
+const RecentDeltaBlock = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+
+  > span {
+    color: rgba(255, 255, 255, 0.54);
+    font-size: ${({ theme }) => theme.desktop.sizes.xs};
+    font-weight: 800;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    justify-content: center;
+  }
+`;
+
+const RecentDeltaList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+`;
+
+const RecentDelta = styled.b<{ $positive: boolean }>`
+  min-width: 46px;
+  padding: 5px 7px;
+  border-radius: 4px;
+  background: ${({ $positive }) =>
+    $positive ? 'rgba(109, 174, 129, 0.18)' : 'rgba(217, 98, 94, 0.18)'};
+  border: 1px solid
+    ${({ $positive }) => ($positive ? 'rgba(109, 174, 129, 0.34)' : 'rgba(217, 98, 94, 0.34)')};
+  color: ${({ $positive }) => ($positive ? '#8ed9a4' : '#ff8f8b')};
+  font-size: ${({ theme }) => theme.desktop.sizes.xs};
+  font-weight: 900;
+  text-align: center;
 `;
 
 const TierBadge = styled.div<{ $color?: string }>`
   display: inline-flex;
   position: relative;
-  min-width: 118px;
-  min-height: 78px;
+  width: 150px;
+  min-height: 164px;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 10px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
   overflow: hidden;
   border-radius: 6px;
   background: ${({ $color }) => solidTierBackground($color)};
@@ -558,8 +842,8 @@ const TierBadge = styled.div<{ $color?: string }>`
   font-size: ${({ theme }) => theme.desktop.sizes.xl};
 
   img {
-    width: 58px;
-    height: 58px;
+    width: 112px;
+    height: 112px;
     object-fit: contain;
   }
 
@@ -569,11 +853,17 @@ const TierBadge = styled.div<{ $color?: string }>`
   }
 `;
 
-const MyRankMetric = styled.div`
-  padding: 14px;
+const NextTierBlock = styled.div<{ $color?: string }>`
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  min-width: 0;
+  padding: 18px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at 86% 12%, ${({ $color }) => withAlpha($color, 0.18)}, transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.05));
 
   span {
     display: block;
@@ -585,7 +875,64 @@ const MyRankMetric = styled.div`
   strong {
     display: block;
     margin-top: 8px;
-    font-size: ${({ theme }) => theme.desktop.sizes.xl};
+    color: ${({ theme }) => theme.colors.whiteColor};
+    font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
+    font-weight: 900;
+  }
+
+  small {
+    display: block;
+    margin-top: 12px;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: ${({ theme }) => theme.desktop.sizes.md};
+    font-weight: 800;
+  }
+`;
+
+const ProgressTrack = styled.div`
+  width: 100%;
+  height: 12px;
+  margin-top: 18px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.32);
+`;
+
+const ProgressFill = styled.div<{ $width: number; $color?: string }>`
+  width: ${({ $width }) => `${$width}%`};
+  height: 100%;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      90deg,
+      ${({ $color }) => withAlpha($color, 0.72)},
+      ${({ $color }) => $color ?? '#9fb7ff'}
+    ),
+    #9fb7ff;
+  box-shadow: 0 0 18px ${({ $color }) => withAlpha($color, 0.36)};
+`;
+
+const ProgressMeta = styled.div`
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+
+  span {
+    color: rgba(255, 255, 255, 0.56);
+    font-size: ${({ theme }) => theme.desktop.sizes.xs};
+    font-weight: 700;
+
+    &:last-child {
+      text-align: right;
+    }
+  }
+
+  b {
+    color: ${({ theme }) => theme.colors.whiteColor};
+    font-size: ${({ theme }) => theme.desktop.sizes.sm};
     font-weight: 900;
   }
 `;
