@@ -16,6 +16,7 @@ import com.bgmagitapi.kml.rating.repository.RatingRepository;
 import com.bgmagitapi.kml.rating.repository.SeasonRepository;
 import com.bgmagitapi.kml.rating.repository.SeasonStandingRepository;
 import com.bgmagitapi.kml.rating.service.RatingService;
+import com.bgmagitapi.kml.rating.service.SeasonService;
 import com.bgmagitapi.kml.record.entity.Record;
 import com.bgmagitapi.kml.record.repository.RecordRepository;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
@@ -28,6 +29,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -38,9 +40,11 @@ public class RatingServiceImpl implements RatingService {
 
     private final MatchsRepository matchsRepository;
     private final RecordRepository recordRepository;
-    private final SeasonRepository seasonRepository;
     private final SeasonStandingRepository seasonStandingRepository;
     private final RatingRepository ratingRepository;
+
+    private final SeasonService seasonService;
+
 
     // TODO
     //   - 운영 DB, staging DB 에 테이블 추가 및 season 정보 추가
@@ -50,11 +54,14 @@ public class RatingServiceImpl implements RatingService {
         Matchs matchs = matchsRepository.findById(matchsId)
                 .orElseThrow(() -> new MatchsNotFoundException("match 정보가 존재하지 않습니다. matchsId=" + matchsId));
 
-        Season season = loadOngoingSeason();
-        if (season == null) {
+        Optional<Season> optionalSeason = seasonService.getOngoingSeason();
+        if (optionalSeason.isEmpty()) {
             log.info("진행중인 시즌이 없어 레이팅 계산을 건너뜁니다. matchsId= {}", matchsId);
             return;
         }
+
+        Season season = optionalSeason.get();
+
         Map<Integer, Record> recordByRank = recordRepository.findRecordsByMatchsId(matchsId)
                 .stream()
                 .collect(Collectors.toUnmodifiableMap(
@@ -100,18 +107,6 @@ public class RatingServiceImpl implements RatingService {
         Record record = requireRank(recordByRank, matchsId, rank);
         SeasonStanding seasonStanding = seasonStandingMap.get(record.getMember().getBgmAgitMemberId());
         return new RatingEntry(record, seasonStanding.getRating());
-    }
-
-    private Season loadOngoingSeason() {
-        List<Season> ongoingSeasons = seasonRepository.findAllByProgressStatus(SeasonProgressStatus.ONGOING);
-
-        if(ongoingSeasons.size() > 1)
-            throw new MultipleOngoingSeasonException();
-
-        return ongoingSeasons
-                .stream()
-                .findFirst()
-                .orElse(null);
     }
 
     private Map<Long, SeasonStanding> loadSeasonStandingOrDefault(Season season, List<BgmAgitMember> members) {

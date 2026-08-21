@@ -13,11 +13,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.bgmagitapi.kml.matchs.entity.QMatchs.matchs;
 import static com.bgmagitapi.kml.rating.entity.QRating.rating;
+import com.bgmagitapi.kml.rating.entity.QSeasonStanding;
+
 import static com.bgmagitapi.kml.rating.entity.QSeasonStanding.seasonStanding;
 import static com.bgmagitapi.kml.record.entity.QRecord.record;
 import static com.bgmagitapi.origin.entity.QBgmAgitMember.bgmAgitMember;
@@ -87,6 +90,34 @@ public class SeasonStandingRepositoryImpl implements SeasonStandingQueryReposito
                 .where(seasonStanding.season.id.eq(seasonId));
 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    @Override
+    public int findRank(Long seasonId, Long memberId) {
+        QSeasonStanding me = new QSeasonStanding("me");
+
+        BigDecimal rating = queryFactory
+                .select(me.rating)
+                .from(me)
+                .where(me.season.id.eq(seasonId), me.member.bgmAgitMemberId.eq(memberId))
+                .fetchOne();
+
+        if (rating == null) {
+            return 0;
+        }
+
+        Long ahead = queryFactory
+                .select(seasonStanding.member.bgmAgitMemberId.count())
+                .from(seasonStanding)
+                .where(
+                        seasonStanding.season.id.eq(seasonId),
+                        seasonStanding.rating.gt(rating)
+                                .or(seasonStanding.rating.eq(rating)
+                                        .and(seasonStanding.member.bgmAgitMemberId.lt(memberId)))
+                )
+                .fetchOne();
+
+        return (int) (nz(ahead) + 1);
     }
 
     private static long nz(Long v) {

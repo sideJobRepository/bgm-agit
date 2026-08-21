@@ -1,23 +1,23 @@
 package com.bgmagitapi.kml.rating.service;
 
-import com.bgmagitapi.kml.rating.dto.MemberStandingRankResponse;
-import com.bgmagitapi.kml.rating.dto.MemberStandingResponse;
 import com.bgmagitapi.kml.rating.dto.SeasonCreateRequest;
 import com.bgmagitapi.kml.rating.dto.SeasonOptionResponse;
 import com.bgmagitapi.kml.rating.dto.SeasonResponse;
 import com.bgmagitapi.kml.rating.dto.SeasonUpdateRequest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.bgmagitapi.kml.rating.entity.Season;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface SeasonService {
 
+    Season getSeason(Long seasonId);
+
+    Optional<Season> getOngoingSeason();
+
+    Season getLastClosedSeason();
+
     List<SeasonOptionResponse> getSeasonOptions();
-
-    MemberStandingResponse getMemberStanding(Long seasonId, Long memberId);
-
-    Page<MemberStandingRankResponse> getStandings(Long seasonId, Pageable pageable);
 
     List<SeasonResponse> getSeasons();
 

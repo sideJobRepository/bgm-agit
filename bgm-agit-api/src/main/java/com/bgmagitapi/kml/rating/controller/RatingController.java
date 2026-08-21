@@ -5,6 +5,7 @@ import com.bgmagitapi.kml.rating.dto.MemberStandingRankResponse;
 import com.bgmagitapi.kml.rating.dto.MemberStandingResponse;
 import com.bgmagitapi.kml.rating.dto.SeasonOptionResponse;
 import com.bgmagitapi.kml.rating.service.SeasonService;
+import com.bgmagitapi.kml.rating.service.SeasonStandingService;
 import com.bgmagitapi.origin.page.PageResponse;
 import com.bgmagitapi.origin.util.JwtParserUtil;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ import java.util.List;
 public class RatingController {
 
     private final SeasonService seasonService;
+    private final SeasonStandingService seasonStandingService;
 
     @GetMapping("/rating/seasons/options")
     public List<SeasonOptionResponse> getSeasonOptions(){
@@ -32,7 +34,7 @@ public class RatingController {
     }
 
     /**
-     * 현재 시즌의 내 정보
+     * 특정 시즌의 내 정보
      */
     @GetMapping("/rating/seasons/{seasonId}/standings/me")
     public MemberStandingResponse getMyStanding(
@@ -40,7 +42,18 @@ public class RatingController {
             @AuthenticationPrincipal Jwt jwt
     ){
         Long memberId = JwtParserUtil.extractMemberId(jwt);
-        return seasonService.getMemberStanding(seasonId, memberId);
+        return seasonStandingService.getMemberStanding(seasonId, memberId);
+    }
+
+    /**
+     *  진행중 시즌의 내 정보 (진행중인 시즌이 없다면 가장 마지막 종료된 시즌)
+     */
+    @GetMapping("/rating/seasons/current/standings/me")
+    public MemberStandingResponse getMyCurrentStanding(
+            @AuthenticationPrincipal Jwt jwt
+    ){
+        Long memberId = JwtParserUtil.extractMemberId(jwt);
+        return seasonStandingService.getMemberCurrentStanding(memberId);
     }
 
     /**
@@ -52,7 +65,7 @@ public class RatingController {
             @PathVariable Long seasonId,
             @PageableDefault(size = 20) Pageable pageable
     ) {
-        return PageResponse.from(seasonService.getStandings(seasonId, pageable));
+        return PageResponse.from(seasonStandingService.getStandings(seasonId, pageable));
     }
 
 }

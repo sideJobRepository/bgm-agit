@@ -11,6 +11,7 @@ import com.bgmagitapi.kml.rating.dto.SeasonStandingRow;
 import com.bgmagitapi.kml.rating.dto.SeasonUpdateRequest;
 import com.bgmagitapi.kml.rating.entity.*;
 import com.bgmagitapi.kml.rating.enums.SeasonProgressStatus;
+import com.bgmagitapi.kml.rating.exception.MultipleOngoingSeasonException;
 import com.bgmagitapi.kml.rating.exception.OngoingSeasonExistsException;
 import com.bgmagitapi.kml.rating.exception.SeasonNotFoundException;
 import com.bgmagitapi.kml.rating.exception.SeasonStandingNotFoundException;
@@ -39,12 +40,32 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class SeasonServiceImpl implements SeasonService {
 
-    private final BgmAgitMemberRepository memberRepository;
-
     private final SeasonRepository seasonRepository;
-    private final TierRepository tierRepository;
-    private final SeasonStandingRepository seasonStandingRepository;
-    private final RatingRepository ratingRepository;
+
+    @Override
+    public Season getSeason(Long seasonId) {
+        return seasonRepository.findByIdActive(seasonId)
+                .orElseThrow(() -> new SeasonNotFoundException("시즌이 존재하지 않습니다. seasonId=" + seasonId));
+    }
+
+    @Override
+    public Optional<Season> getOngoingSeason() {
+        List<Season> ongoingSeasons = seasonRepository.findAllByProgressStatus(SeasonProgressStatus.ONGOING);
+
+        if(ongoingSeasons.size() > 1)
+            throw new MultipleOngoingSeasonException();
+
+        return ongoingSeasons
+                .stream()
+                .findFirst();
+    }
+
+    @Override
+    public Season getLastClosedSeason() {
+        return seasonRepository.findAllByProgressStatus(SeasonProgressStatus.CLOSED).stream()
+                .max(Comparator.comparing(Season::getEndDate))
+                .orElseThrow(() -> new SeasonNotFoundException("종료된 시즌이 존재하지 않습니다."));
+    }
 
     @Override
     public List<SeasonOptionResponse> getSeasonOptions() {
@@ -136,89 +157,7 @@ public class SeasonServiceImpl implements SeasonService {
         season.delete();
     }
 
-    @Override
-    public MemberStandingResponse getMemberStanding(Long seasonId, Long memberId) {
-        Season season = seasonRepository.findByIdActive(seasonId)
-                .orElseThrow(() -> new SeasonNotFoundException("시즌이 존재하지 않습니다. seasonId=" + seasonId));
 
-        Tiers tiers = new Tiers(tierRepository.findBySeasonIdOrderByMinRatingDesc(seasonId));
 
-        BgmAgitMember member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다. memberId=" + memberId));
 
-        SeasonStanding seasonStanding = seasonStandingRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new SeasonStandingNotFoundException("순위 정보를 찾을 수 없습니다."));
-
-        Tier tier = tiers.getTierBy(seasonStanding.getRating());
-        Optional<Tier> nextTier = tiers.getNextTier(tier);
-
-        Ratings ratings = new Ratings(ratingRepository.findByMemberId(memberId));
-        Optional<Rating> seasonHigh = ratings.getSeasonHigh();
-        Optional<Rating> seasonLow = ratings.getSeasonLow();
-        List<Rating> recentRatings = ratings.getRecent(5);
-
-        return MemberStandingResponse.builder()
-                .seasonId(seasonId)
-                .seasonName(season.getName())
-                .memberId(memberId)
-                .memberName(member.getBgmAgitMemberName())
-                .rating(seasonStanding.getRating())
-                .gameCount(ratings.size())
-                .tierName(tier.getName())
-                .tierMinRating(tier.getMinRating())
-                .nextTierName(nextTier.map(Tier::getName).orElse(null))
-                .nextTierMinRating(nextTier.map(Tier::getMinRating).orElse(null))
-                .pointsToNextTier(nextTier.map(value -> value.pointsToReach(seasonStanding.getRating())).orElse(null))
-                .seasonHigh(seasonHigh.map(Rating::getRatingResult).orElse(null))
-                .seasonHighDateTime(seasonHigh.map(Rating::getRegistDate).orElse(null))
-                .seasonLow(seasonLow.map(Rating::getRatingResult).orElse(null))
-                .seasonLowDateTime(seasonLow.map(Rating::getRegistDate).orElse(null))
-                .recentDeltas(recentRatings.stream().map(i -> i.getRatingValue()).toList())
-                .build();
-    }
-
-    @Override
-    public Page<MemberStandingRankResponse> getStandings(Long seasonId, Pageable pageable) {
-        seasonRepository.findByIdActive(seasonId)
-                .orElseThrow(() -> new SeasonNotFoundException("시즌이 존재하지 않습니다. seasonId=" + seasonId));
-
-        Tiers tiers = new Tiers(tierRepository.findBySeasonIdOrderByMinRatingDesc(seasonId));
-
-        Page<SeasonStandingRow> page = seasonStandingRepository.findStandings(seasonId, pageable);
-
-        int base = (int) pageable.getOffset();
-        List<MemberStandingRankResponse> content = new ArrayList<>();
-        int index = 0;
-        for (SeasonStandingRow row : page.getContent()) {
-            Tier tier = tiers.getTierBy(row.rating());
-            content.add(MemberStandingRankResponse.builder()
-                    .seasonRank(base + index + 1)
-                    .tierName(tier.getName())
-                    .memberId(row.memberId())
-                    .memberNickname(row.memberNickname())
-                    .rating(row.rating())
-                    .gameCount(row.gameCount())
-                    .firstRate(rate(row.firstCount(), row.gameCount()))
-                    .fourthRate(rate(row.fourthCount(), row.gameCount()))
-                    .avgRank(round(row.avgRank()))
-                    .build());
-            index++;
-        }
-
-        return new PageImpl<>(content, pageable, page.getTotalElements());
-    }
-
-    private static double rate(long count, long total) {
-        if (total <= 0) {
-            return 0.0;
-        }
-        return Math.round((count * 100.0 / total) * 10) / 10.0;
-    }
-
-    private static double round(Double value) {
-        if (value == null) {
-            return 0.0;
-        }
-        return Math.round(value * 100) / 100.0;
-    }
 }
