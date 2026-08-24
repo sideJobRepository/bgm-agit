@@ -65,6 +65,9 @@ export interface MemberRecentGame {
   myRank: number | null;
   myScore: number | null;
   myPoint: number | null;
+  seasonId: number | null;
+  seasonName: string | null;
+  ratingValue: number | null;
   players: RecentGamePlayer[];
 }
 
@@ -123,9 +126,13 @@ export function useFetchRankList() {
   const setRank = useRankListStore((state) => state.setRank);
 
   const fetchRank = (params: params) => {
-    request(() => api.get(`/bgm-agit/ranks?size=100`, { params }).then((res) => res.data), setRank, {
-      ignoreErrorRedirect: true,
-    });
+    request(
+      () => api.get(`/bgm-agit/ranks?size=100`, { params }).then((res) => res.data),
+      setRank,
+      {
+        ignoreErrorRedirect: true,
+      }
+    );
   };
 
   return fetchRank;
