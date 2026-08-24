@@ -613,8 +613,10 @@ const MenuLi = styled.li<{ $active: boolean }>`
   color: ${({ $active, theme }) => ($active ? '#ffffff' : theme.colors.blackColor)};
   border-radius: 99px;
 
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.1);
+  @media (min-width: 1281px) {
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.1);
+    }
   }
 
   a {
