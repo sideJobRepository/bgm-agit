@@ -15,6 +15,7 @@ import {
   Crown,
   Gear,
   GraduationCap,
+  HandPointing,
   IdentificationCard,
   Lightning,
   PencilSimple,
