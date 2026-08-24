@@ -1,21 +1,22 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import styled from 'styled-components';
 import { withBasePath } from '@/lib/path';
-import Link from 'next/link';
 import {
   ArrowRight,
   Bell,
   BookOpen,
   CalendarBlank,
+  CaretDown,
+  CaretUp,
   ChartLineUp,
   Crown,
   Gear,
   GraduationCap,
-  HandPointing,
   IdentificationCard,
+  Lightning,
   PencilSimple,
   SlidersHorizontal,
   Trophy,
@@ -108,6 +109,7 @@ export default function Home() {
   const openMyPage = useMyPageStore((state) => state.open);
 
   const [mounted, setMounted] = useState(false);
+  const [quickMenuOpen, setQuickMenuOpen] = useState(false);
 
   // 부모 메뉴(/sub 컨테이너)는 자체 link가 없고 subMenus만 갖고 있어서
   // top-level만 보면 안 잡힘. top-level + subMenus 모두 펴서 실제 link 있는 것만 노출
@@ -122,7 +124,12 @@ export default function Home() {
       }
       (m.subMenus ?? []).forEach((sub) => {
         if (isQuickable(sub.menuLink)) {
-          result.push({ id: sub.id, icon: sub.icon, menuName: sub.menuName, menuLink: sub.menuLink });
+          result.push({
+            id: sub.id,
+            icon: sub.icon,
+            menuName: sub.menuName,
+            menuLink: sub.menuLink,
+          });
         }
       });
     });
@@ -256,55 +263,78 @@ export default function Home() {
           여러분의 보드게임 이야기가 이곳에 쌓여갑니다.
         </h5>
       </Title>
-      <QuickMenu>
-        <QuickItem
-          $primary
-          onClick={handleQuickWrite}
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.96 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+      <QuickMenuSection>
+        <QuickMenuToggle
+          type="button"
+          $open={quickMenuOpen}
+          onClick={() => setQuickMenuOpen((v) => !v)}
         >
-          <PencilSimple weight="bold" />
-          <span>기록 입력</span>
-        </QuickItem>
-        {user && (
-          <QuickItem
-            onClick={() => router.push(`/rank/${user.id}`)}
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-          >
-            <UserCircle weight="bold" />
-            <span>내 기록</span>
-          </QuickItem>
-        )}
-        {user && (
-          <QuickItem
-            onClick={openMyPage}
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-          >
-            <IdentificationCard weight="bold" />
-            <span>내 정보</span>
-          </QuickItem>
-        )}
-        {quickMenus.map((m) => {
-          const Icon = ICON_MAP[m.icon as keyof typeof ICON_MAP];
-          return (
-            <QuickItem
-              key={m.id}
-              onClick={() => router.push(m.menuLink)}
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+          <QuickMenuToggleLabel>
+            <Lightning weight="fill" />
+            <span>{quickMenuOpen ? 'Close Quick Menu' : 'Open Quick Menu'}</span>
+          </QuickMenuToggleLabel>
+          <QuickMenuToggleIcon>
+            {quickMenuOpen ? <CaretUp weight="bold" /> : <CaretDown weight="bold" />}
+          </QuickMenuToggleIcon>
+        </QuickMenuToggle>
+        <AnimatePresence initial={false}>
+          {quickMenuOpen && (
+            <QuickMenu
+              initial={{ height: 0, opacity: 0, y: -4 }}
+              animate={{ height: 'auto', opacity: 1, y: 0 }}
+              exit={{ height: 0, opacity: 0, y: -4 }}
+              transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
             >
-              {Icon && <Icon weight="bold" />}
-              <span>{m.menuName}</span>
-            </QuickItem>
-          );
-        })}
-      </QuickMenu>
+              <QuickItem
+                onClick={handleQuickWrite}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+              >
+                <PencilSimple weight="bold" />
+                <span>기록 입력</span>
+              </QuickItem>
+              {user && (
+                <QuickItem
+                  onClick={() => router.push(`/rank/${user.id}`)}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                >
+                  <UserCircle weight="bold" />
+                  <span>내 기록</span>
+                </QuickItem>
+              )}
+              {user && (
+                <QuickItem
+                  onClick={openMyPage}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                >
+                  <IdentificationCard weight="bold" />
+                  <span>내 정보</span>
+                </QuickItem>
+              )}
+              {quickMenus.map((m) => {
+                const Icon = ICON_MAP[m.icon as keyof typeof ICON_MAP];
+                return (
+                  <QuickItem
+                    key={m.id}
+                    onClick={() => router.push(m.menuLink)}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                  >
+                    {Icon && <Icon weight="bold" />}
+                    <span>{m.menuName}</span>
+                  </QuickItem>
+                );
+              })}
+            </QuickMenu>
+          )}
+        </AnimatePresence>
+      </QuickMenuSection>
       <Slider>
         {cards.slice(0, 3).map((card, i) => (
           <Card
@@ -546,21 +576,108 @@ const Title = styled.div`
   }
 `;
 
-const QuickMenu = styled.div`
+const QuickMenuSection = styled.section`
   width: 96%;
   max-width: 800px;
   margin: 0 auto;
+`;
+
+const QuickMenuToggle = styled.button<{ $open: boolean }>`
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: ${({ $open }) => ($open ? '14px 14px 0 0' : '14px')};
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 255, 255, 0.22), transparent 34%),
+    linear-gradient(135deg, #4a90e2, #6dae81);
+  color: ${({ theme }) => theme.colors.whiteColor};
+  font-size: ${({ theme }) => theme.desktop.sizes.xl};
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow:
+    0 10px 24px rgba(74, 144, 226, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+
+  @media (min-width: 1281px) {
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.28);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(255, 255, 255, 0.28), transparent 34%),
+        linear-gradient(135deg, #5a9ceb, #79bb8b);
+      transform: translateY(-1px);
+    }
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    min-height: 46px;
+    padding: 0 14px;
+    border-radius: ${({ $open }) => ($open ? '12px 12px 0 0' : '12px')};
+    font-size: ${({ theme }) => theme.mobile.sizes.xl};
+  }
+`;
+
+const QuickMenuToggleLabel = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  svg {
+    width: 22px;
+    height: 22px;
+    color: ${({ theme }) => theme.colors.whiteColor};
+  }
+`;
+
+const QuickMenuToggleIcon = styled.span`
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: ${({ theme }) => theme.colors.whiteColor};
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
+const QuickMenu = styled(motion.div)`
+  margin-top: -1px;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 12px;
+  overflow: hidden;
+  padding: 14px;
+  border: 1px solid rgba(74, 144, 226, 0.18);
+  border-top-color: rgba(255, 255, 255, 0.12);
+  border-radius: 0 0 16px 16px;
+  background:
+    linear-gradient(135deg, rgba(74, 144, 226, 0.12), rgba(109, 174, 129, 0.1)),
+    rgba(255, 255, 255, 0.58);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
 
   @media ${({ theme }) => theme.device.mobile} {
     gap: 8px;
+    padding: 10px;
+    border-radius: 0 0 14px 14px;
   }
 `;
 
-const QuickItem = styled(motion.button)<{ $primary?: boolean }>`
+const QuickItem = styled(motion.button)`
   flex: 0 0 calc(25% - 9px);
   display: flex;
   flex-direction: column;
@@ -570,22 +687,30 @@ const QuickItem = styled(motion.button)<{ $primary?: boolean }>`
   padding: 20px 8px;
   min-height: 96px;
 
-  border: 1px solid
-    ${({ theme, $primary }) => ($primary ? 'transparent' : theme.colors.border)};
+  border: 1px solid rgba(31, 41, 55, 0.08);
   border-radius: 16px;
-  background: ${({ theme, $primary }) =>
-    $primary ? theme.colors.writeBgColor : theme.colors.softColor};
-  color: ${({ theme, $primary }) =>
-    $primary ? theme.colors.whiteColor : theme.colors.inputColor};
+  background: rgba(255, 255, 255, 0.84);
+  color: ${({ theme }) => theme.colors.inputColor};
   font-size: ${({ theme }) => theme.desktop.sizes.h5Size};
   font-weight: 700;
   cursor: pointer;
-  box-shadow: ${({ $primary }) =>
-    $primary ? '0 6px 16px rgba(74, 144, 226, 0.35)' : '0 2px 6px rgba(0,0,0,0.04)'};
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease;
 
   svg {
     width: 28px;
     height: 28px;
+    color: ${({ theme }) => theme.colors.greenColor};
+  }
+
+  @media (min-width: 1281px) {
+    &:hover {
+      border-color: rgba(74, 144, 226, 0.24);
+      background: rgba(255, 255, 255, 0.96);
+    }
   }
 
   @media ${({ theme }) => theme.device.mobile} {
