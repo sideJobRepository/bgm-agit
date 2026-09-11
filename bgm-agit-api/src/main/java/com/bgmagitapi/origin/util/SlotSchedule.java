@@ -4,6 +4,7 @@ import com.bgmagitapi.origin.entity.BgmAgitImage;
 import com.bgmagitapi.origin.entity.enumeration.BgmAgitImageCategory;
 import com.bgmagitapi.origin.entity.enumeration.Reservation;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -110,6 +111,30 @@ public class SlotSchedule {
     /** 예약 가능 기간 안의 날짜인지. 과거·당일·상한 초과를 모두 거른다. */
     public static boolean isWithinReservableWindow(LocalDate date, LocalDate today) {
         return !date.isBefore(firstReservableDate(today)) && !date.isAfter(lastReservableDate(today));
+    }
+
+    // ===== 휴무일 =====
+
+    /**
+     * 무인운영으로 예약을 받지 않는 요일.
+     * 예약 조회(방 목록 가용 현황)·등록 검증·프론트 캘린더가 모두 이 값을 보게 하고, 바꿀 때는 이 상수만 고칠 것.
+     */
+    public static final DayOfWeek CLOSED_DAY_OF_WEEK = DayOfWeek.WEDNESDAY;
+
+    /** 휴무일 안내 문구. 등록 시 예외 메시지와 조회 응답 message 가 같은 문구를 쓴다. */
+    public static final String CLOSED_DAY_MESSAGE = "수요일은 무인운영으로 예약이 불가능합니다.";
+
+    public static boolean isClosedDay(LocalDate date) {
+        return date.getDayOfWeek() == CLOSED_DAY_OF_WEEK;
+    }
+
+    /**
+     * 휴무 요일을 자바스크립트 Date.getDay() 규약(0=일 … 6=토)으로 변환한 값.
+     * 자바 DayOfWeek 는 1=월 … 7=일이라 그대로 내보내면 프론트에서 하루가 밀린다.
+     * % 7 을 태우면 월~토(1~6)는 그대로, 일요일만 7 → 0 이 되어 JS 규약과 정확히 일치한다.
+     */
+    public static int closedWeekdayForJs() {
+        return CLOSED_DAY_OF_WEEK.getValue() % 7;
     }
 
     // ===== 정책 함수들 =====

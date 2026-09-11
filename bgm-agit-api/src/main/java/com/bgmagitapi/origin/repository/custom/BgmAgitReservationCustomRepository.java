@@ -9,11 +9,18 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 public interface BgmAgitReservationCustomRepository{
     
     List<ReservedTimeDto> findReservations(Long labelGb, String link,Long id, LocalDate today,LocalDate endOfYear);
-    
+
+    /**
+     * 날짜 1개 × 항목 여러 개의 예약 슬롯. 방 목록의 "그 날 몇 개 시간대가 남았나" 배지용.
+     * findReservations 와 달리 기간이 아니라 단일 날짜이고, 항목마다 쿼리를 돌지 않도록 imageId 로 묶어서 돌려준다.
+     */
+    Map<Long, List<ReservedTimeDto>> findReservedTimesByImageIdsAndDate(List<Long> imageIds, LocalDate date);
+
     List<BgmAgitReservation> findExistingReservations(BgmAgitImage image, LocalDate startDate, String cancelStatus);
 
     /**

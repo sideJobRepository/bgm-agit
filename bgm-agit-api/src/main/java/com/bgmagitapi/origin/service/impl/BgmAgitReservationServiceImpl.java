@@ -7,6 +7,7 @@ import com.bgmagitapi.origin.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationModifyRequest;
 import com.bgmagitapi.origin.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AdminReservationBoardResponse;
+import com.bgmagitapi.origin.controller.response.reservation.AvailableRoomsResponse;
 import com.bgmagitapi.origin.controller.response.reservation.GroupedReservationResponse;
 import com.bgmagitapi.origin.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.origin.controller.response.reservation.TimeRange;
@@ -78,10 +79,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     @Override
     @Transactional(readOnly = true)
     public BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id, List<Long> extraIds, LocalDate date) {
-        Authentication authentication = SecurityContextHolder.getContextHolderStrategy().getContext().getAuthentication();
-        Long userId = (authentication instanceof JwtAuthenticationToken bearerAuth)
-                ? ((Jwt) bearerAuth.getPrincipal()).getClaim("id")
-                : null;
+        Long userId = currentUserIdOrNull();
         // 조회 범위는 예약 가능 기간(현재일 +RESERVATION_WINDOW_MONTHS) 안으로 잘라낸다.
         // date 는 클라이언트가 보내는 값이라 그대로 쓰면 과거 날짜나 몇 년 뒤 슬롯까지 내려간다.
         LocalDate now = LocalDate.now(KST);
@@ -209,7 +207,91 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         );
 
     }
-    
+
+    @Override
+    @Transactional(readOnly = true)
+    public AvailableRoomsResponse getAvailableRooms(Long labelGb, String link, LocalDate date) {
+        // 예약 캘린더(getReservation)와 같은 방식으로 로그인 사용자를 읽는다.
+        // 안 읽으면 "내 대기건"이 점유로 안 잡혀서, 방을 눌렀을 때 캘린더에 뜨는 시간 수와 배지 숫자가 어긋난다.
+        Long userId = currentUserIdOrNull();
+        LocalDate now = LocalDate.now(KST);
+
+        List<BgmAgitImage> images = bgmAgitImageRepository.findReservableImages(labelGb, link);
+
+        String blockedMessage = resolveDateBlockMessage(date, now);
+        if (blockedMessage != null) {
+            // 날짜 자체가 불가면 예약을 조회할 이유가 없다.
+            List<AvailableRoomsResponse.Room> blockedRooms = images.stream()
+                    .map(image -> toAvailableRoom(image, date, List.of(), blockedMessage))
+                    .toList();
+            return new AvailableRoomsResponse(date, true, blockedMessage,
+                    SlotSchedule.closedWeekdayForJs(), blockedRooms);
+        }
+
+        List<Long> imageIds = images.stream().map(BgmAgitImage::getBgmAgitImageId).toList();
+        Map<Long, List<ReservedTimeDto>> reservedByImage =
+                bgmAgitReservationRepository.findReservedTimesByImageIdsAndDate(imageIds, date);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        List<AvailableRoomsResponse.Room> rooms = new ArrayList<>();
+        for (BgmAgitImage image : images) {
+            Map<LocalDate, List<TimeRange>> reservedMap = ReservedTimeDto.groupedReservation(
+                    reservedByImage.getOrDefault(image.getBgmAgitImageId(), List.of()));
+            // 판정은 예약 캘린더와 같은 메서드를 탄다. 여기서 따로 구현하면 두 화면의 숫자가 갈린다.
+            DayAvailability availability = resolveDayAvailability(image, reservedMap, date, now, userId, formatter);
+            rooms.add(toAvailableRoom(image, date, availability.slots(), availability.message()));
+        }
+
+        return new AvailableRoomsResponse(date, false, null, SlotSchedule.closedWeekdayForJs(), rooms);
+    }
+
+    /**
+     * 그 날짜 전체가 예약 불가인 사유. 가능한 날짜면 null.
+     * 문구는 조회(getReservation)·등록(createReservation)에서 쓰던 것을 그대로 재사용한다.
+     */
+    private String resolveDateBlockMessage(LocalDate date, LocalDate now) {
+        if (date.isEqual(now)) {
+            return "당일 예약은 불가능합니다.";
+        }
+        if (!SlotSchedule.isWithinReservableWindow(date, now)) {
+            return "예약은 내일부터 " + SlotSchedule.RESERVATION_WINDOW_MONTHS + "개월 이내의 날짜만 가능합니다.";
+        }
+        if (SlotSchedule.isClosedDay(date)) {
+            return SlotSchedule.CLOSED_DAY_MESSAGE;
+        }
+        return null;
+    }
+
+    private AvailableRoomsResponse.Room toAvailableRoom(BgmAgitImage image,
+                                                        LocalDate date,
+                                                        List<String> availableSlots,
+                                                        String message) {
+        BgmAgitImageCategory category = image.getBgmAgitImageCategory();
+        String label = image.getBgmAgitImageLabel();
+        int totalSlotCount = SlotSchedule.of(category, label, date).slots().size();
+        return new AvailableRoomsResponse.Room(
+                image.getBgmAgitImageId(),
+                label,
+                image.getBgmAgitImageGroups(),
+                category == null ? null : category.name(),
+                image.getBgmAgitImageMinPeople(),
+                image.getBgmAgitImageMaxPeople(),
+                totalSlotCount,
+                availableSlots.size(),
+                !availableSlots.isEmpty(),
+                message
+        );
+    }
+
+    /** 로그인 상태면 회원 id, 비로그인이면 null. 예약 조회는 비로그인도 허용된다. */
+    private Long currentUserIdOrNull() {
+        Authentication authentication = SecurityContextHolder.getContextHolderStrategy().getContext().getAuthentication();
+        return (authentication instanceof JwtAuthenticationToken bearerAuth)
+                ? ((Jwt) bearerAuth.getPrincipal()).getClaim("id")
+                : null;
+    }
+
     @Override
     public ApiResponse createReservation(BgmAgitReservationCreateRequest request, Long userId) {
         // 합쳐 예약(예: M-1 + M-2)이면 항목이 여러 개. 첫 번째가 기준 항목
@@ -236,8 +318,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         }
 
         // 수요일은 무인운영으로 예약 불가
-        if (kstDate.getDayOfWeek() == java.time.DayOfWeek.WEDNESDAY) {
-            throw new ReservationConflictException("수요일은 무인운영으로 예약이 불가능합니다.");
+        if (SlotSchedule.isClosedDay(kstDate)) {
+            throw new ReservationConflictException(SlotSchedule.CLOSED_DAY_MESSAGE);
         }
 
         // 예약 기본 정보 조회

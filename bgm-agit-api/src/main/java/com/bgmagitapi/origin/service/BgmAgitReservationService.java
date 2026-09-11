@@ -5,6 +5,7 @@ import com.bgmagitapi.origin.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationModifyRequest;
 import com.bgmagitapi.origin.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AdminReservationBoardResponse;
+import com.bgmagitapi.origin.controller.response.reservation.AvailableRoomsResponse;
 import com.bgmagitapi.origin.controller.response.reservation.GroupedReservationResponse;
 import com.bgmagitapi.origin.payment.controller.response.PaymentOrderResponse;
 import org.springframework.data.domain.Page;
@@ -22,6 +23,12 @@ public interface BgmAgitReservationService {
      * 가능 시간대는 선택 항목 전체의 교집합, 최대인원은 합산으로 내려준다.
      */
     BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id, List<Long> extraIds, LocalDate date);
+
+    /**
+     * 특정 날짜에 항목별로 몇 개 시간대가 남았는지. 방을 고르기 전 단계에서 쓴다.
+     * 선택 가능한 실제 시간대는 getReservation 이 유일한 출처이며 여기서는 개수만 내려준다.
+     */
+    AvailableRoomsResponse getAvailableRooms(Long labelGb, String link, LocalDate date);
 
     ApiResponse createReservation(BgmAgitReservationCreateRequest request, Long jwt);
 

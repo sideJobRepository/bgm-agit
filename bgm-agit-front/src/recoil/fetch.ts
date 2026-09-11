@@ -10,7 +10,11 @@ import {
 import api from '../utils/axiosInstance';
 import { useRequest } from './useRequest.ts';
 import type { ReservationData } from '../types/reservation.ts';
-import { reservationListDataState, reservationState } from './state/reservationState.ts';
+import {
+  availableRoomsState,
+  reservationListDataState,
+  reservationState,
+} from './state/reservationState.ts';
 import { myPageState, userState } from './state/userState.ts';
 import { toast } from 'react-toastify';
 import { isAxiosError, type AxiosRequestHeaders } from 'axios';
@@ -42,8 +46,7 @@ export function useRefetchMainMenu() {
   const setMainMenu = useSetRecoilState(mainMenuState);
   const { request } = useRequest();
 
-  return () =>
-    request(() => api.get('/bgm-agit/main-menu').then(res => res.data), setMainMenu);
+  return () => request(() => api.get('/bgm-agit/main-menu').then(res => res.data), setMainMenu);
 }
 
 export function useFetchMainData(param?: {
@@ -122,6 +125,24 @@ export function useReservationFetch() {
   return fetchReservation;
 }
 
+/**
+ * 선택한 날짜에 어느 항목이 비었는지 조회 (방 카드 배지).
+ *
+ * useRequest 를 거치지 않는다. 그쪽은 실패 시 /error 로 보내거나(기본) 에러 토스트를 띄우고 예외를 다시 던지며,
+ * 매 호출마다 전역 로딩 오버레이를 켠다. 배지는 없어도 예약 자체는 되어야 하는 보조 정보이고
+ * 날짜를 바꿀 때마다 호출되므로, 실패는 조용히 삼키고 배지만 감춘다.
+ */
+export function useAvailableRoomsFetch() {
+  const setAvailableRooms = useSetRecoilState(availableRoomsState);
+
+  return (params: { date: string; labelGb: number; link: string }) => {
+    api
+      .get('/bgm-agit/reservation/available-rooms', { params })
+      .then(res => setAvailableRooms(res.data))
+      .catch(() => setAvailableRooms(null));
+  };
+}
+
 export function useReservationListFetch() {
   const { request } = useRequest();
   const setReservationList = useSetRecoilState(reservationListDataState);
@@ -190,10 +211,7 @@ export function useNoticeDetailFetch() {
   const setNoticeDetail = useSetRecoilState(noticeDetailState);
 
   const fetchNoticeDetail = (id: string | number) => {
-    request(
-      () => api.get(`/bgm-agit/notice/detail/${id}`).then(res => res.data),
-      setNoticeDetail
-    );
+    request(() => api.get(`/bgm-agit/notice/detail/${id}`).then(res => res.data), setNoticeDetail);
   };
 
   return fetchNoticeDetail;
