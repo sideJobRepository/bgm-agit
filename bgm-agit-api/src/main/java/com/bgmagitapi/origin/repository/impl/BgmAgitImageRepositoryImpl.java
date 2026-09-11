@@ -1,6 +1,7 @@
 package com.bgmagitapi.origin.repository.impl;
 
 import com.bgmagitapi.origin.controller.response.BgmAgitMainMenuImageResponse;
+import com.bgmagitapi.origin.entity.BgmAgitImage;
 import com.bgmagitapi.origin.entity.enumeration.BgmAgitImageCategory;
 import com.bgmagitapi.origin.repository.custom.BgmAgitImageCustomRepository;
 import com.querydsl.core.types.Projections;
@@ -85,6 +86,19 @@ public class BgmAgitImageRepositoryImpl implements BgmAgitImageCustomRepository 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
     
+    @Override
+    public List<BgmAgitImage> findReservableImages(Long labelGb, String link) {
+        // 필터는 getMainMenuImage 와 반드시 같아야 한다. 프론트 방 카드 목록이 그쪽에서 오므로,
+        // 조건이 갈리면 카드에는 있는데 가용 현황에는 없는(=배지가 안 뜨는) 방이 생긴다.
+        // 슬롯 계산에 카테고리·라벨·인원이 필요해 프로젝션 대신 엔티티를 가져온다.
+        return queryFactory
+                .selectFrom(bgmAgitImage)
+                .join(bgmAgitImage.bgmAgitMainMenu, bgmAgitMainMenu)
+                .where(mainMenuIdEq(labelGb), menuLinkEq(link), notHidden())
+                .orderBy(bgmAgitImage.bgmAgitImageId.asc())
+                .fetch();
+    }
+
     // 노출 여부. 컬럼이 null인 과거 행도 노출로 취급
     private BooleanExpression notHidden() {
         return bgmAgitImage.bgmAgitImageUseStatus.isNull()

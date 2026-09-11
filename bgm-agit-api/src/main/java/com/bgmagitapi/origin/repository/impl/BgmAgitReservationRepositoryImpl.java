@@ -5,6 +5,8 @@ import com.bgmagitapi.origin.entity.BgmAgitImage;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
 import com.bgmagitapi.origin.repository.custom.BgmAgitReservationCustomRepository;
 import com.bgmagitapi.origin.service.response.BizTalkCancel;
+import com.querydsl.core.group.GroupBy;
+import com.querydsl.core.types.ConstructorExpression;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -15,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -29,22 +32,32 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
     
     private final EntityManager em;
     
+    /**
+     * 예약 슬롯 프로젝션.
+     * ReservedTimeDto 는 @AllArgsConstructor + Projections.constructor 라 <b>인자 순서가 곧 필드 순서</b>다.
+     * memberId 와 minPeople/maxPeople 처럼 타입이 같은 인자가 섞여 있어 순서가 어긋나도 컴파일이 통과하므로,
+     * 프로젝션을 쓰는 쿼리가 갈리지 않도록 여기 한 곳에서만 만든다.
+     */
+    private ConstructorExpression<ReservedTimeDto> reservedTimeProjection() {
+        return Projections.constructor(
+                ReservedTimeDto.class,
+                bgmAgitReservation.bgmAgitReservationStartDate,
+                bgmAgitReservation.bgmAgitReservationStartTime,
+                bgmAgitReservation.bgmAgitReservationEndTime,
+                bgmAgitImage.bgmAgitImageLabel,
+                bgmAgitImage.bgmAgitImageGroups,
+                bgmAgitReservation.bgmAgitReservationApprovalStatus,
+                bgmAgitReservation.bgmAgitMember.bgmAgitMemberId,
+                bgmAgitReservation.bgmAgitReservationCancelStatus,
+                bgmAgitReservation.bgmAgitImage.bgmAgitImageMinPeople,
+                bgmAgitReservation.bgmAgitImage.bgmAgitImageMaxPeople
+        );
+    }
+
     @Override
     public List<ReservedTimeDto> findReservations(Long labelGb, String link, Long id, LocalDate today, LocalDate endOfYear) {
         return queryFactory
-                .select(Projections.constructor(
-                        ReservedTimeDto.class,
-                        bgmAgitReservation.bgmAgitReservationStartDate,
-                        bgmAgitReservation.bgmAgitReservationStartTime,
-                        bgmAgitReservation.bgmAgitReservationEndTime,
-                        bgmAgitImage.bgmAgitImageLabel,
-                        bgmAgitImage.bgmAgitImageGroups,
-                        bgmAgitReservation.bgmAgitReservationApprovalStatus,
-                        bgmAgitReservation.bgmAgitMember.bgmAgitMemberId,
-                        bgmAgitReservation.bgmAgitReservationCancelStatus,
-                        bgmAgitReservation.bgmAgitImage.bgmAgitImageMinPeople,
-                        bgmAgitReservation.bgmAgitImage.bgmAgitImageMaxPeople
-                ))
+                .select(reservedTimeProjection())
                 .from(bgmAgitReservation)
                 .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage)
                 .where(
@@ -55,7 +68,28 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
                 )
                 .fetch();
     }
-    
+
+    @Override
+    public Map<Long, List<ReservedTimeDto>> findReservedTimesByImageIdsAndDate(List<Long> imageIds, LocalDate date) {
+        if (imageIds == null || imageIds.isEmpty()) {
+            return Map.of();
+        }
+        // 항목 수만큼 findReservations 를 도는 대신 한 번에 조회한다(방 목록이 8~10개라 N+1 이 그대로 쿼리 수가 된다).
+        // labelGb/link 조건은 넣지 않는다 — imageIds 자체가 이미 그 필터로 뽑힌 값이라 중복 조건이다.
+        // 취소·승인 필터도 걸지 않는다. 점유 판정은 TimeRange.isOverlapping 이 하는 게 기존 규약이고,
+        // 여기서만 SQL 로 걸러내면 방 목록 배지와 예약 캘린더의 기준이 갈린다.
+        Map<Long, List<ReservedTimeDto>> grouped = queryFactory
+                .from(bgmAgitReservation)
+                .join(bgmAgitReservation.bgmAgitImage, bgmAgitImage)
+                .where(
+                        bgmAgitImage.bgmAgitImageId.in(imageIds),
+                        bgmAgitReservation.bgmAgitReservationStartDate.eq(date)
+                )
+                .transform(GroupBy.groupBy(bgmAgitImage.bgmAgitImageId)
+                        .as(GroupBy.list(reservedTimeProjection())));
+        return grouped == null ? Map.of() : grouped;
+    }
+
     @Override
     public List<BgmAgitReservation> findExistingReservations(BgmAgitImage image, LocalDate startDate, String cancelStatus) {
         return queryFactory

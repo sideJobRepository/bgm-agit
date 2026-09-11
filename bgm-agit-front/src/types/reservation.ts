@@ -7,6 +7,34 @@ export type ReservationData = {
   ids?: string;
 };
 
+// 특정 날짜에 항목별로 몇 개 시간대가 남았는지 (방을 고르기 전 카드 배지용).
+// 실제 선택 가능한 시간대의 출처는 여전히 GET /bgm-agit/reservation 하나다.
+export type AvailableRoom = {
+  imageId: number;
+  label: string;
+  group?: string | null;
+  category?: string | null;
+  minPeople?: number | null;
+  maxPeople?: number | null;
+  // 그 날짜의 후보 슬롯 총수 (일반 룸 13 / G Room 2 / 마작 대여 4)
+  totalSlotCount: number;
+  availableSlotCount: number;
+  available: boolean;
+  // 항목 단위 불가 사유(G룸 하루 1팀 등). 없으면 null
+  message?: string | null;
+};
+
+export type AvailableRooms = {
+  // 요청한 날짜 에코. 날짜를 빠르게 바꿀 때 늦게 도착한 응답을 버리는 데 쓴다
+  date: string;
+  // 그 날짜 전체가 불가(당일·예약가능기간 밖·휴무일)인지
+  closed: boolean;
+  message?: string | null;
+  // 휴무 요일. 자바스크립트 Date.getDay() 규약(0=일 … 3=수 … 6=토)이라 그대로 비교하면 된다
+  closedWeekday: number;
+  rooms: AvailableRoom[];
+};
+
 export type ReservedTimeDto = {
   date: string; // '2025-07-24'
   timeSlots: string[]; // ['13:00', '14:00']

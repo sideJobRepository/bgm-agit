@@ -6,6 +6,7 @@ import com.bgmagitapi.origin.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationModifyRequest;
 import com.bgmagitapi.origin.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AdminReservationBoardResponse;
+import com.bgmagitapi.origin.controller.response.reservation.AvailableRoomsResponse;
 import com.bgmagitapi.origin.controller.response.reservation.GroupedReservationResponse;
 import com.bgmagitapi.origin.page.PageResponse;
 import com.bgmagitapi.origin.service.BgmAgitReservationService;
@@ -41,7 +42,21 @@ public class BgmAgitReservationController {
         LocalDate date = LocalDate.parse(dateStr.substring(0, 10));
         return bgmAgitReservationService.getReservation(labelGb, link, id, ids, date);
     }
-    
+
+    /**
+     * 특정 날짜에 어느 항목이 비었는지. 방을 고르기 전 카드에 붙는 배지용이라 회원 정보는 내려가지 않는다.
+     * 비로그인도 조회 가능하고, 로그인 상태면 본인 대기건이 점유로 계산되어 예약 캘린더와 숫자가 일치한다.
+     */
+    @GetMapping("/reservation/available-rooms")
+    public AvailableRoomsResponse getAvailableRooms(
+            @RequestParam(name = "labelGb") Long labelGb,
+            @RequestParam(name = "link") String link,
+            @RequestParam(name = "date") String dateStr) {
+        LocalDate date = LocalDate.parse(dateStr.substring(0, 10));
+        return bgmAgitReservationService.getAvailableRooms(labelGb, link, date);
+    }
+
+
     @PostMapping("/reservation")
     public ApiResponse createReservation(@RequestBody BgmAgitReservationCreateRequest request, @AuthenticationPrincipal Jwt jwt) {
         Long userId = jwt.getClaim("id");

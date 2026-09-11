@@ -1,6 +1,4 @@
-import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { FaUsers } from 'react-icons/fa';
 import type { WithTheme } from '../../styles/styled-props';
@@ -12,28 +10,29 @@ import 'react-confirm-alert/src/react-confirm-alert.css';
 import { userState } from '../../recoil/state/userState.ts';
 import { showConfirmModal, showReservationConfirmModal } from '../confirmAlert.tsx';
 import { useInsertPost, useReservationFetch } from '../../recoil/fetch.ts';
-import {
-  getReservationComment,
-  getReservationUseModes,
-} from '../../config/reservationComments.ts';
+import { getReservationComment, getReservationUseModes } from '../../config/reservationComments.ts';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import LoginMoadl from '../LoginMoadl.tsx';
+import { RESERVATION_WINDOW_MONTHS } from './ReservationDatePicker.tsx';
+import { formatYmdWithWeekday } from '../../utils/date.ts';
 
 type CombinableItem = { id: number; label: string };
 
 /**
- * 예약 가능 기간 상한(개월). 서버 SlotSchedule.RESERVATION_WINDOW_MONTHS 와 같은 값을 유지할 것.
- * 서버가 슬롯을 안 내려주는 것만으로도 예약은 막히지만, 캘린더를 몇 년 뒤로 넘길 수 있으면
- * 예약 가능 기간이 무제한인 것처럼 보인다(토스 카드사 심사 지적 사항).
+ * 예약 플로우 3단계 — 시간 선택.
+ *
+ * 날짜는 이 컴포넌트가 만들지 않고 상위(ImageGrid)가 소유한다. 예전에는 여기서 "내일"을 기본 선택했는데,
+ * 그 때문에 손님이 날짜를 인지하지 못한 채 시간만 골라 엉뚱한 날짜로 예약되는 사고가 있었다.
  */
-const RESERVATION_WINDOW_MONTHS = 3;
-
-export default function ReservationCalendar({
+export default function ReservationTimePanel({
   id,
+  date,
   combinable = [],
 }: {
-  id?: number;
+  id: number;
+  /** 'YYYY-MM-DD'. 상위가 고른 날짜. */
+  date: string;
   combinable?: CombinableItem[];
 }) {
   const navigate = useNavigate();
@@ -45,34 +44,16 @@ export default function ReservationCalendar({
   //로그인 모달
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  const today = new Date();
-
-  // 예약 가능 기간: 내일 ~ 오늘 +3개월 (당일 예약 불가라 하한이 내일)
-  const { minDate, maxDate, initialDate } = useMemo(() => {
-    const from = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-    const to = new Date(today.getFullYear(), today.getMonth() + RESERVATION_WINDOW_MONTHS, today.getDate());
-    // 기본 선택일은 최초 선택 가능한 날. 오늘은 당일 예약 불가라 못 고르고,
-    // 말일이면 minDate 가 다음 달이라 오늘 기준으로 열면 달 전체가 비활성으로 보인다.
-    const initial = new Date(from);
-    while (initial.getDay() === 3 /* 수요일 무인운영 */ && initial <= to) {
-      initial.setDate(initial.getDate() + 1);
-    }
-    return { minDate: from, maxDate: to, initialDate: initial };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [today.toDateString()]);
-
   //insert
   const { insert } = useInsertPost();
 
   //user 정보
   const user = useRecoilValue(userState);
-  const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID;
-  const KAKAO_REDIRECT_URL = import.meta.env.VITE_KAKAO_REDIRECT_URL;
 
   // 시간대·이용시간·선택제한은 서버(SlotSchedule)가 내려준다. 프론트에서 imageId로 분기하지 말 것.
   const intervals = useMemo<[string, string][]>(
     () => (reservation.slotRanges ?? []).map(({ start, end }) => [start, end]),
-    [reservation.slotRanges],
+    [reservation.slotRanges]
   );
 
   const maxSelectableSlots = reservation.maxSelectableSlots ?? null;
@@ -94,15 +75,15 @@ export default function ReservationCalendar({
   // 예약금은 서버가 선택 항목 기준으로 합산해서 내려준다 (예약 확인 모달에서 표시)
   const depositAmount = reservation.depositAmount;
 
-  const [value, setValue] = useState<Date>(initialDate);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
 
-  // 다른 항목으로 바꾸면 합치기·이용방식 선택 초기화
+  // 항목이나 날짜가 바뀌면 합치기·이용방식·시간 선택 초기화.
+  // 상위가 key로 리마운트를 걸어두긴 했지만, key 규칙이 바뀌어도 선택이 남지 않도록 여기서도 막는다.
   useEffect(() => {
     setCombineIds([]);
     setUseMode('');
     setSelectedTimes([]);
-  }, [id]);
+  }, [id, date]);
 
   // 합칠 항목이 바뀌면 두 항목이 모두 비어 있는 시간대를 서버에서 다시 받는다
   const toggleCombine = (combineId: number) => {
@@ -118,10 +99,8 @@ export default function ReservationCalendar({
       });
     }
   };
-  const getLocalDateStr = (date: Date) => date.toLocaleDateString('sv-SE');
-  const dateStr = getLocalDateStr(value);
 
-  const matchedSlots = reservation.timeSlots?.find(d => d.date === dateStr);
+  const matchedSlots = reservation.timeSlots?.find(d => d.date === date);
 
   const handleTimeClick = (time: string) => {
     setSelectedTimes(prev => {
@@ -135,7 +114,7 @@ export default function ReservationCalendar({
         toast.error(
           maxSelectableSlots === 1
             ? '하나의 시간대만 예약이 가능합니다.'
-            : `최대 ${maxSelectableSlots}개의 시간대만 예약이 가능합니다.`,
+            : `최대 ${maxSelectableSlots}개의 시간대만 예약이 가능합니다.`
         );
         return prev; // 변경하지 않음
       }
@@ -161,6 +140,8 @@ export default function ReservationCalendar({
     }
 
     const summary = [
+      // 날짜를 맨 위에 둔다. 결제 전 마지막으로 날짜를 확인시키는 자리다.
+      `예약 날짜: ${formatYmdWithWeekday(date)}`,
       `예약 항목: ${reservation.label}`,
       ...(useModes.length ? [`이용 방식: ${selectedUseMode}`] : []),
     ];
@@ -186,7 +167,9 @@ export default function ReservationCalendar({
             bgmAgitImageIds: combineIds,
             // 실제 타입은 서버가 이미지 카테고리로 결정한다 (필수 필드라 응답값을 그대로 전달)
             bgmAgitReservationType: reservation.reservationType ?? 'ROOM',
-            bgmAgitReservationStartDate: value,
+            // 서버가 ZonedDateTime.parse 로 받는다(BgmAgitReservationServiceImpl).
+            // 순수 'YYYY-MM-DD' 는 파싱 실패하고, 오프셋을 명시하면 브라우저 타임존과 무관하게 KST 날짜가 보존된다.
+            bgmAgitReservationStartDate: `${date}T00:00:00+09:00`,
             startTimeEndTime: selectedTimes,
             bgmAgitReservationPeople: count,
             bgmAgitReservationRequest: mergedRequest,
@@ -238,8 +221,8 @@ export default function ReservationCalendar({
           {/* 서비스제공기간 고지 (카드사 심사 요건: 구매자가 제공기간을 인지할 수 있어야 함) */}
           <p>
             <strong>
-              ※ 예약은 오늘부터 {RESERVATION_WINDOW_MONTHS}개월 이내의 날짜만 가능하며, 서비스는 예약하신
-              날짜에 현장에서 제공됩니다.
+              ※ 예약은 오늘부터 {RESERVATION_WINDOW_MONTHS}개월 이내의 날짜만 가능하며, 서비스는
+              예약하신 날짜에 현장에서 제공됩니다.
             </strong>
           </p>
           {maxSelectableSlots === 1 && (
@@ -262,33 +245,6 @@ export default function ReservationCalendar({
           </p>
         </MessageBox>
       </TitleBox>
-
-      <StyledCalendar
-        value={value}
-        minDate={minDate}
-        maxDate={maxDate}
-        locale="ko-KR"
-        calendarType="gregory"
-        formatShortWeekday={(_, date) => ['일', '월', '화', '수', '목', '금', '토'][date.getDay()]}
-        showNeighboringMonth={false}
-        showFixedNumberOfWeeks={false}
-        className="custom-calender"
-        onChange={val => {
-          setValue(val as Date);
-          setSelectedTimes([]); // 날짜 변경 시 시간 초기화
-        }}
-        tileDisabled={({ date, view }) => view === 'month' && date.getDay() === 3 /* 수요일 무인운영 */}
-        tileClassName={({ date, view }) => {
-          if (view !== 'month') return '';
-
-          const tileDateStr = getLocalDateStr(date);
-          const classes = [];
-          if (tileDateStr === dateStr) classes.push('selected');
-          if (date.getDay() === 0) classes.push('sunday');
-          if (date.getDay() === 6) classes.push('saturday');
-          return classes.join(' ');
-        }}
-      />
 
       {useModes.length > 0 && (
         <OptionBox>
@@ -325,6 +281,9 @@ export default function ReservationCalendar({
           </ToggleGroup>
         </OptionBox>
       )}
+
+      {/* 시간 버튼을 누르는 바로 그 순간에 날짜가 같은 화면에 있어야 오예약을 막을 수 있다 */}
+      <TimeTitle>{formatYmdWithWeekday(date)} 시간 선택</TimeTitle>
 
       <TimeBox>
         {intervals.map(([start, end], idx) => {
@@ -366,14 +325,6 @@ const Wrapper = styled.div<WithTheme>`
   gap: 16px;
   flex-direction: column;
   align-items: center;
-
-  .custom-calender {
-    width: 50%;
-
-    @media ${({ theme }) => theme.device.mobile} {
-      width: 100%;
-    }
-  }
 `;
 
 const TitleBox = styled.div<WithTheme>`
@@ -442,105 +393,15 @@ const TitleBox = styled.div<WithTheme>`
   }
 `;
 
-const StyledCalendar = styled(Calendar)<WithTheme>`
-  border: 1px solid #ccc;
-  border-radius: 12px;
-  padding: 10px;
+const TimeTitle = styled.div<WithTheme>`
+  width: 50%;
+  font-size: ${({ theme }) => theme.sizes.medium};
+  font-weight: ${({ theme }) => theme.weight.bold};
+  color: ${({ theme }) => theme.colors.menuColor};
 
-  .react-calendar__tile--now {
-    //오늘날짜 표시 제거
-    background: transparent !important;
-    color: inherit !important;
-  }
-
-  .react-calendar__navigation {
-    background-color: transparent;
-  }
-
-  .react-calendar__navigation button {
-    color: ${({ theme }) => theme.colors.black} !important;
-    background: transparent !important;
-  }
-
-  .react-calendar__month-view__weekdays__weekday {
-    //요일
-    abbr {
-      text-decoration: unset;
-    }
-
-    &:first-child abbr {
-      color: ${({ theme }) => theme.colors.redColor};
-    }
-
-    &:last-child abbr {
-      color: ${({ theme }) => theme.colors.blueColor};
-    }
-  }
-
-  .react-calendar__tile.sunday,
-  .react-calendar__tile.sunday abbr {
-    color: ${({ theme }) => theme.colors.redColor};
-  }
-
-  .react-calendar__tile.saturday,
-  .react-calendar__tile.saturday abbr {
-    color: ${({ theme }) => theme.colors.blueColor};
-  }
-
-  .react-calendar__tile {
-    display: flex;
-    flex-direction: column;
-    align-items: center !important;
-    color: ${({ theme }) => theme.colors.black};
-    -webkit-tap-highlight-color: transparent;
-    abbr {
-      display: block;
-      margin: 0 auto;
-      text-align: center;
-      width: 100%;
-      padding: 10px 0;
-      @media ${({ theme }) => theme.device.mobile} {
-        padding: 10px 0;
-      }
-    }
-  }
-
-  .react-calendar__tile:hover {
-    background-color: transparent;
-    abbr {
-      background: ${({ theme }) => theme.colors.softColor};
-    }
-  }
-
-  .react-calendar__tile.selected {
-    abbr {
-      color: ${({ theme }) => theme.colors.white};
-      background: ${({ theme }) => theme.colors.blueColor};
-    }
-  }
-
-  .react-calendar__tile--active {
-    background-color: transparent;
-  }
-
-  .react-calendar__tile--active:enabled:hover,
-  .react-calendar__tile--active:enabled:focus {
-    background-color: transparent;
-  }
-
-  /* 비활성(수요일 등): 회색 배경 대신 글자만 흐리게 */
-  .react-calendar__tile:disabled {
-    background-color: transparent !important;
-    cursor: not-allowed;
-
-    abbr {
-      color: ${({ theme }) => theme.colors.lineColor};
-      text-decoration: line-through;
-    }
-  }
-
-  .react-calendar__tile:disabled:hover abbr {
-    background: transparent;
+  @media ${({ theme }) => theme.device.mobile} {
+    width: 100%;
+    font-size: ${({ theme }) => theme.sizes.small};
   }
 `;
 
@@ -549,7 +410,6 @@ const TimeBox = styled.div<WithTheme>`
   grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); // 너비 반응형
   gap: 10px;
   width: 50%;
-  margin-top: 10px;
 
   @media ${({ theme }) => theme.device.mobile} {
     grid-template-columns: repeat(2, 1fr); // 모바일에서는 2열 고정 (선택사항)
@@ -568,6 +428,11 @@ const TimeSlotButton = styled.button<WithTheme & { selected: boolean }>`
   cursor: pointer;
   transition: all 0.2s;
 
+  /* 일반 룸은 13슬롯이 모바일 2열 = 7행으로 붙는다. 터치 타겟이 작으면 인접 시간대 오탭이 곧 오예약이 된다. */
+  @media ${({ theme }) => theme.device.mobile} {
+    min-height: 44px;
+  }
+
   &:hover {
     background-color: ${({ selected, theme }) =>
       selected ? theme.colors.blueColor : theme.colors.softColor};
@@ -575,10 +440,10 @@ const TimeSlotButton = styled.button<WithTheme & { selected: boolean }>`
   }
 
   &:disabled {
-    // background-color: ${({ theme }) => theme.colors.subColor}; // 예약 불가한 회색 배경
-    // color: ${({ theme }) => theme.colors.lineColor}; // 글자색도 흐리게
     cursor: not-allowed;
-    opacity: 0.3;
+    /* 캘린더 비활성 타일과 같은 시각 언어. opacity 0.3 만으로는 "없는 시간"과 "찬 시간"이 구분되지 않았다. */
+    opacity: 0.45;
+    text-decoration: line-through;
   }
 `;
 

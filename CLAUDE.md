@@ -110,9 +110,26 @@
 ### 예약 정책은 서버가 유일한 출처 (프론트 magic id 금지)
 `SlotSchedule`(origin/util)에 전부 모임: `of()`(open/close/interval/durationHours), `slots()`, `maxSelectableSlots()`, `resolveReservationType()`, `resolveDepositAmount()`.
 - **G Room** = 6시간 간격·이용 5시간(13~18, 19~00) / **MAHJONG** = 3시간 / 그 외 = 1시간
-- `GET /bgm-agit/reservation` 응답에 `slotRanges[{start,end}]`, `maxSelectableSlots`(G룸 1, 그 외 null), `reservationType`(ROOM|DELEGATE_PLAY) 포함 → `ReservationCalendar.tsx`가 그대로 그림
+- `GET /bgm-agit/reservation` 응답에 `slotRanges[{start,end}]`, `maxSelectableSlots`(G룸 1, 그 외 null), `reservationType`(ROOM|DELEGATE_PLAY) 포함 → `ReservationTimePanel.tsx`가 그대로 그림
 - `createReservation`은 **클라이언트가 보낸 예약타입을 무시**하고 이미지 카테고리로 결정
-- 수요일은 무인운영이라 예약 불가
+- 수요일은 무인운영이라 예약 불가. 규칙은 `SlotSchedule.CLOSED_DAY_OF_WEEK`/`isClosedDay()`/`CLOSED_DAY_MESSAGE` 한 곳에 모임(등록 검증 + 방 목록 조회가 같은 값을 봄). 프론트는 `available-rooms` 응답의 `closedWeekday`(JS `getDay()` 규약)를 쓸 수 있다
+
+### 예약 진행 순서 = 날짜 → 방 → 시간
+원래는 방 → 날짜 → 시간이었고, **캘린더가 "내일"을 기본 선택**(`useState<Date>(initialDate)`)한 데다 첫 번째 방까지 자동 선택돼서, 손님이 날짜를 인지하지 못한 채 시간만 눌러 **엉뚱한 날짜로 예약되는 사고**가 반복됐다(사장님 보고).
+- 컴포넌트 3분할: `calendar/ReservationDatePicker.tsx`(월 캘린더) / `grid/RoomAvailabilityBadge.tsx`(카드 배지) / `calendar/ReservationTimePanel.tsx`(구 `ReservationCalendar`에서 캘린더를 뺀 것)
+- **날짜 state는 `ImageGrid.tsx`의 지역 `useState<string | null>`이고 기본값이 null.** 기본값을 넣으면 날짜만 바뀔 뿐 사고 형태는 그대로다. 날짜 미선택이면 방 카드를 아예 렌더하지 않아 시간 버튼 도달 경로가 없다
+- 오예약 방어 3중: ① 미선택이면 카드 없음 ② 시간 버튼 바로 위 `TimeTitle`에 날짜 재표시(sticky에 의존 안 하므로 이게 실질 1순위) ③ 확인 모달 `summary` 첫 줄
+- `<ReservationTimePanel key={`${imageId}-${date}`}>` — 방·날짜가 바뀌면 리마운트로 `selectedTimes`/`combineIds`/`useMode` 초기화
+- `/detail/room` ↔ `/detail/mahjongRental`은 `App.tsx`의 `path="detail/*"` 한 라우트라 **언마운트되지 않는다** → `location.pathname` 초기화 effect 필수
+- **`bgmAgitReservationStartDate`는 `` `${ymd}T00:00:00+09:00` `` 형식으로 보낼 것.** 서버가 `ZonedDateTime.parse`로 받아서(`BgmAgitReservationServiceImpl`) 순수 `'YYYY-MM-DD'`는 파싱 실패 → 500. 예전엔 `Date` 객체가 `toISOString()`으로 변환돼 **우연히** 맞던 구조라 KST 브라우저에서만 옳았다
+
+### 날짜별 방 가용 현황 `GET /bgm-agit/reservation/available-rooms`
+`?date=&labelGb=3&link=/detail/room` → `{ date, closed, message, closedWeekday, rooms[{imageId, label, group, category, minPeople, maxPeople, totalSlotCount, availableSlotCount, available, message}] }`
+- 판정은 **예약 캘린더와 같은 `resolveDayAvailability`를 탄다.** 별도 구현을 만들면 배지 숫자와 방을 눌렀을 때 캘린더에 뜨는 시간 수가 갈린다. 같은 이유로 이 API도 **JWT userId를 반드시 읽어야** 한다(내 대기건 점유 규칙)
+- **선택 가능한 실제 시간대는 내려주지 않는다** — 합쳐예약 교집합·`maxSelectableSlots`·가격이 `GET /reservation`에만 있어서, 두 소스를 섞으면 어긋난다
+- 쿼리는 `findReservedTimesByImageIdsAndDate(imageIds, date)` 1회(`transform(groupBy(imageId))`). **`ReservedTimeDto`에 필드를 추가하지 말 것** — `Projections.constructor` 위치 기반인데 `memberId`와 `imageId`가 둘 다 `Long`이라 순서가 어긋나도 컴파일이 통과하고, 어긋나면 남의 대기 예약이 내 것처럼 점유 처리된다. 프로젝션은 `reservedTimeProjection()` 한 곳에서만 만든다
+- 배지 조회는 `useRequest`를 쓰지 않는다(`useAvailableRoomsFetch`) — 실패 시 `/error` 리다이렉트·에러 토스트·전역 로딩 오버레이가 전부 부적절. 실패하면 **배지를 안 그린다**(없는 걸 '마감'으로 표시하면 예약 가능한 방을 가린다)
+- 회원정보가 안 나가는 공개 조회라 URL_RESOURCES 매핑 불필요. 단 `/bgm-agit/reservation/**` 와일드카드 행이 이미 있으면 비로그인 403이 되므로 배포 전 확인
 
 ### 합쳐 예약 (M-1 + M-2 …)
 행마다 이미지 FK가 따로 있어서, 테이블 변경 없이 "같은 예약번호에 이미지가 다른 행"으로 구현.
