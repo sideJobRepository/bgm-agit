@@ -70,6 +70,8 @@ biztalk:
   sender-key: ${SENDER_KEY}
   # staging 은 관리자 당일 예약 알림톡 미발송. 켜면 운영과 합쳐 하루 2번 나간다.
   admin-reservation-notify: false
+  # 예약 대기 알림톡을 예약금 결제안내(bgmagit-res-payment-1)로. 운영과 같은 문구를 확인하려고 켜 둔다.
+  reservation-payment-live: true
 
 server:
   tomcat:
@@ -80,6 +82,7 @@ kml:
   api:
     key: ${KML_API_KEY}
 
+# staging 은 테스트 키(test_gck_/test_gsk_) 유지 - 여기서 결제를 눌러도 실제 출금이 없어야 한다.
 toss:
   client-key: ${STAGING_TOSS_CLIENT_KEY}
   secret-key: ${STAGING_TOSS_SECRET_KEY}

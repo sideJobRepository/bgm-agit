@@ -16,7 +16,6 @@ import Pagination from '../components/Pagination.tsx';
 import api from '../utils/axiosInstance.ts';
 import PaymentCheckoutModal from '../components/payment/PaymentCheckoutModal.tsx';
 import type { PaymentOrderResponse } from '../types/tossPayments.ts';
-import { PAYMENT_LIVE } from '../config/payment.ts';
 import { todayYmd, toLocalYmd } from '../utils/date.ts';
 import { theme } from '../styles/theme.ts';
 
@@ -56,12 +55,9 @@ function resolveStatus(item: Reservation): { label: string; tone: StatusTone } {
 
 export default function ReservationList() {
   const user = useRecoilValue(userState);
-  // 결제 라이브 여부. false(심사 기간)면 결제해도 실제 출금/자동확정이 안 되므로 안내 배너 노출
-  const paymentLive = PAYMENT_LIVE;
   const isAdmin = !!user?.roles.includes('ROLE_ADMIN');
-  // 예약금 결제는 멘토 권한에게만 노출한다. 카드사/토스 심사용 계정에만 멘토를 부여해 두고,
-  // 일반 유저는 기존대로 계좌이체 안내(알림톡 bgmagit-res-account2)로 예약금을 낸다.
-  const canUsePayment = paymentLive && !isAdmin && !!user?.roles.includes('ROLE_MENTOR');
+  // 토스 가맹점 심사 통과로 전 회원에게 결제 노출. 관리자는 대리 결제할 일이 없어 계속 제외한다.
+  const canUsePayment = !isAdmin;
 
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
   // toISOString()은 UTC 변환이라 KST 자정 기준 Date가 하루 앞 날짜로 밀린다. 로컬 기준으로 포맷할 것.
@@ -183,7 +179,6 @@ export default function ReservationList() {
       {canUsePayment && (
         <>
           ※ 예약 대기 상태에서 결제 버튼을 눌러 예약금을 결제하면 예약이 확정됩니다.
-          <br />※ 현재 토스페이먼츠 심사 기간으로 실제 결제 및 출금은 발생하지 않습니다.
           <br />
         </>
       )}
@@ -212,13 +207,6 @@ export default function ReservationList() {
         </SearchWrapper>
 
         <ListBox>
-          {!canUsePayment && (
-            <ReviewBanner>
-              예약 확정은 예약금 계좌이체 입금이 확인된 후 처리됩니다. 예약 후 안내되는 계좌로
-              예약금을 입금해 주시기 바랍니다.
-            </ReviewBanner>
-          )}
-
           {/* 모바일은 접되 예약금·취소 고지 한 줄은 항상 노출한다 (토스페이먼츠 심사 대응 문구) */}
           {isMobile ? (
             <InfoBox>
@@ -335,7 +323,7 @@ export default function ReservationList() {
                         취소
                       </ActionButton>
                     )}
-                    {paymentLive && item.receiptUrl && (
+                    {item.receiptUrl && (
                       <ActionButton
                         type="button"
                         color="#988271"
@@ -736,22 +724,6 @@ const InfoToggle = styled.button<WithTheme>`
   font-size: ${({ theme }) => theme.sizes.xsmall};
   font-weight: ${({ theme }) => theme.weight.semiBold};
   cursor: pointer;
-`;
-
-const ReviewBanner = styled.div<WithTheme>`
-  margin-bottom: 12px;
-  padding: 12px 14px;
-  border: 1px solid #f0d9a8;
-  border-radius: 8px;
-  background: #fff7e6;
-  color: #7a5b16;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  line-height: 1.5;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.xxsmall};
-  }
 `;
 
 const TextBox = styled.div<WithTheme>`

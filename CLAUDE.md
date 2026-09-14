@@ -193,6 +193,7 @@
 - **향후 인원수 기준 전환 예정** — `bgmAgitReservationPeople`(예약 생성 시 이미 수집)로 인원 x 단가 계산. `resolveDepositAmount` 시그니처에 인원 인자 추가 + 약관·환불정책 문구 + 알림톡 템플릿(재심사) 동반 수정 필요. 토스페이먼츠 가맹점 재심사는 불필요(금액 산정 방식 변경은 심사 대상 아님)
 - 잔여 이용요금은 현장 결제
 - `payment.live`(yml) — `false`면 결제행만 처리하고 **예약 자동확정을 하지 않는다**(심사 기간 공짜 예약 방지). staging·real 모두 현재 `true`
+- **토스 가맹점 심사 통과 완료**(2026-09) — 운영은 라이브 키로 실제 과금된다. 프론트 심사용 게이팅(`src/config/payment.ts`의 `PAYMENT_LIVE`, 멘토 전용 노출)은 제거됨. 결제 버튼은 `canUsePayment = !isAdmin`
 
 ### 동시성·정합성 방어
 - **승인 직전 슬롯 재검증**(`PaymentServiceImpl.validateReservationSlotAvailable`) — 대기 예약은 서로의 자리를 막지 않아서, 같은 시간대를 여럿이 대기로 들고 있다가 각자 결제하면 전부 확정되는 이중 예약이 가능했다. 확정건과 겹치면 **토스 승인(=과금) 전에** 409로 차단. 쿼리 `findConfirmedReservations(imageIds, date, excludeReservationNo)`
@@ -216,6 +217,7 @@
 
 ### 키·심사 메모
 - 결제위젯이므로 **위젯용 키**(`test_gck_`/`test_gsk_`, `live_gck_`/`live_gsk_`). `test_ck_`/`test_sk_`(API 개별 연동 키)를 위젯에 쓰면 `INVALID_API_KEY`
+- **환경별 키 분리** — 운영(`application-real.yml`)은 `TOSS_CLIENT_KEY`/`TOSS_SECRET_KEY`(라이브), staging 은 `STAGING_TOSS_*`(테스트) 를 본다. 예전엔 운영도 `STAGING_TOSS_*` 를 봐서 시크릿 하나를 라이브로 바꾸면 **스테이징 결제 테스트가 실제 과금**이 되는 구조였다. 로컬 `.env` 의 `TOSS_*` 는 운영 시크릿과 이름만 같을 뿐 별개이므로 반드시 테스트 키를 넣을 것
 - yml `toss.client-key/secret-key/confirm-url/cancel-url`, 값은 `.env`/GitHub Secrets. clientKey는 주문 응답으로 내려주므로 프론트 env 불필요
 - 정책 페이지: `/terms`(`pages/Terms.tsx`), `/refund-policy`(`pages/RefundPolicy.tsx`), `/privacy`
 - 푸터(`Footer.tsx`) 사업자정보 — 보드게임카페BGM(비지엠)아지트 / 대표 박범후 / 896-17-02241 / 대전광역시 서구 문정로 62, 3층 일부호(탄방동, 프라임빌딩) / 0507-1445-3503
@@ -295,7 +297,9 @@ kml:
 구 템플릿 `bgmagit-res-payment`는 고정 문구에 "예약금은 M룸 30,000원, 그 외 10,000원이며 잔여 이용요금은 현장에서 결제합니다."가 박혀 있어 금액 정책이 바뀔 때마다 재심사가 필요했다. **`-1` 개정판에서 그 줄을 지우고 정보 블록에 `예약금: #{예약금}` 변수를 추가**해 금액이 바뀌어도 소스만 고치면 되게 했다.
 - 금액은 `SlotSchedule.totalDepositAmount(images)` 결과를 `AlimtalkUtils.formatAmount`로 포맷해 넣는다. **결제 주문 금액(`createPaymentOrder`)과 같은 메서드**라 합쳐 예약(M-1+M-2 = 20,000원)도 실제 청구액이 그대로 나간다. 두 곳이 갈리면 고지 금액과 청구 금액 불일치가 되므로 계산을 따로 만들지 말 것
 - **카카오 검수 통과 템플릿과 고정 문구는 여전히 글자 단위로 일치해야 한다.** 변수(`#{예약금}`, `#{룸}` 등) 값만 자유롭게 조립 가능
-- 검수 통과 **전에 배포하면 발송이 거부된다.** 다만 `biztalk.reservation-payment-live`(기본 false, yml·.env·워크플로우 어디에도 미설정)가 꺼져 있는 동안은 계좌안내 템플릿 `bgmagit-res-account2`가 나가므로 이 템플릿은 아예 쓰이지 않는다. 결제 안내로 전환할 때 이 값을 켜면 된다
+- **검수 통과 후 `biztalk.reservation-payment-live: true` 로 전환 완료**(real·staging). 로컬만 `false` 라 계좌안내 템플릿 `bgmagit-res-account2` 가 나간다. 되돌리려면 yml 한 줄만 `false`
+- 결제 버전은 **관리자에게도 사용자용 문구가 그대로 간다**(`ownerMessage = message`). 템플릿 고정 문구를 글자 단위로 맞춰야 해서 관리자 전용 문구를 따로 못 만든다
+- 마작강의 신청(`bgmagit-res-lecture*`)은 결제 연동이 없어 **계좌 입금 안내 그대로**다(`AlimtalkUtils.buildLectureMessage`, 프론트 `components/academy/BaseTable.tsx`)
 
 ### 알림톡 ON/OFF
 - `BGM_AGIT_MEMBER_ALIMTALK_STATUS`(Y/N). 신규 가입 시 두 생성자 모두 `"Y"`
