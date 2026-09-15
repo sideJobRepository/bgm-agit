@@ -202,14 +202,49 @@
 - **가상계좌 차단** — 승인 응답 `status`가 `DONE`이 아니면(가상계좌는 200 + `WAITING_FOR_DEPOSIT`) 발급을 즉시 취소하고 실패 처리. 입금 웹훅이 없어 나중에 확정을 걸 수단이 없기 때문. **근본 차단은 토스 상점관리자에서 가상계좌 수단 끄기**
 - **타임아웃**(`TossPaymentsClient`) — connect 5초 / read 30초. read를 짧게 잡으면 "토스는 승인했는데 우리는 실패 처리"라는 최악의 불일치가 늘어나므로 넉넉히 둠. 전역 `spring.http.client.*` 대신 이 클라이언트에만 적용(KML·비즈톡·소셜이 같은 빌더를 공유)
 
+### 결제 실패 기록
+실패 사유는 **반드시 `PaymentFailureRecorder`(`@Transactional(REQUIRES_NEW)`) 경유**로 남긴다. 승인 흐름 안에서 `markAborted()`를 직접 부르면 곧바로 던지는 예외에 롤백돼 아무것도 안 남는다(과거 "알려진 한계"였던 문제). 프록시가 걸려야 새 트랜잭션이 열리므로 **별도 빈 + orderNo 로 재조회** — 바깥 영속성 컨텍스트 엔티티를 넘기면 그게 롤백 대상이다.
+
+| 경로 | 언제 | 남는 값 |
+|---|---|---|
+| `POST /bgm-agit/payments/fail` | 손님이 결제창에서 실패/취소 (프론트 `/payment/fail`이 리포트) | `[토스코드] 사유` |
+| `confirmPayment` catch | 토스 승인 거절·타임아웃 | 토스 원문 `{code, message}` |
+| `validateAmount` / 가상계좌 차단 | 금액 불일치, `WAITING_FOR_DEPOSIT` | 사유 문자열 |
+
+- `/payments/fail`은 **승인 직렬화 락(`PaymentConfirmExecutor`)을 거치지 않는다** — 기록일 뿐이라 승인과 줄 설 이유가 없다. 소유자 불일치·주문 없음은 `log.warn` 후 무시하고 **항상 200**(바디 없음)
+- 상태가 `READY`/`ABORTED`일 때만 갱신. `DONE`/`CANCELED`는 결제 이력이라 덮어쓰지 않음. `FAIL_REASON`은 varchar(500)이라 500자로 자름
+- 토스 에러 바디 `{code, message}`는 `TossPaymentsClient`의 `.onStatus(...)`가 `TossErrorResponse`로 파싱해 **`TossPaymentApiException(code, message)`**(400 고정, 401 금지)로 던진다. 손님 문구는 `payment/util/TossErrorMessages.toUserMessage(code, fallback)` 매핑 — 없는 코드는 토스 message 그대로
+  - `NOT_FOUND_PAYMENT_SESSION`이 **인앱브라우저에서 카드앱 다녀온 뒤** 나는 대표 코드
+- 사용자에게 사유를 그대로 보여줄 결제 예외는 `PaymentException`(400). 예전엔 `RuntimeException`이라 generic 핸들러를 타서 전부 "잠시후 다시 시도해 주세요" 500이었다
+
+### 인앱브라우저 결제 경고 (프론트) — 차단이 아니다
+결제는 **사실상 전부 모바일**에서 일어난다. 손님이 네이버 플레이스·카카오 링크로 들어오면 그 앱의 인앱 웹뷰에서 결제창이 뜨는데, **카드사 앱으로 전환됐다 돌아올 때 웹뷰가 파기**되면 토스 결제창 세션이 사라진다(→ `NOT_FOUND_PAYMENT_SESSION`). 손님은 카드 인증까지 끝냈는데 미결제로 돌아온다.
+
+**그런데 인앱이라고 항상 실패하는 게 아니다.** 실패 여부는 카드사 앱의 복귀 방식에 달려 있다.
+
+| 카드앱 | 복귀 | 인앱에서 |
+|---|---|---|
+| 신한 등 | 자동 복귀(앱 스킴) | 정상 결제됨 (실측 확인) |
+| KB Pay·하나 등 | 수동 복귀("상단 ◀ 버튼을 눌러 결제를 완료해주세요") | 웹뷰 회수되면 세션 소실 |
+
+그래서 **막지 않고 경고만 한다.** 전부 차단하면 되는 조합까지 이탈시킨다.
+- 감지 `bgm-agit-front/src/utils/inAppBrowser.ts` — UA 매칭(네이버/카카오톡/인스타/페북/라인/다음/에브리타임) + 안드로이드 `; wv` 폴백. **웨일(`whale`)은 정상 브라우저라 먼저 제외**
+- `PaymentCheckoutModal`이 결제 위젯 **위에** `components/payment/InAppBrowserNotice.tsx` 배너를 얹는다. 결제 버튼은 그대로 활성. 안드로이드는 `intent://`(카카오톡은 `kakaotalk://web/openExternal`)로 기본 브라우저 탈출, **iOS 는 스킴 강제 이동이 막혀 있어 "주소 복사"만** 제공
+- **이 케이스는 서버에 아무 기록도 안 남는다** — 리다이렉트가 없으니 `/payments/fail`도 호출되지 않는다. 유일한 흔적이 `READY` 주문행이라 보존기간을 3일로 뒀다(아래 정리 스케줄러)
+
+### 필수 약관 게이팅 / 프론트 에러 문구
+- `renderAgreement` 반환 객체의 `agreementStatusChange` 를 구독해 미동의면 결제 버튼을 잠근다. **초기값은 `getAgreementStatus()`로 seed** — 이 이벤트는 '변경'될 때만 오므로 동의된 상태로 렌더되는 SDK 버전에선 콜백이 안 와 버튼이 영영 잠긴다. `.on` 이 없는 구버전 SDK 면 게이팅을 포기하고 기존 동작(항상 활성) 유지
+- SDK 에러코드 → 문구 매핑은 `src/config/paymentErrors.ts`. `USER_CANCEL`/`PAY_PROCESS_CANCELED` 는 토스트 없이 무시, 매핑 없는 코드는 SDK message 그대로(토스 문구가 이미 한국어라 뭉뚱그리는 것보다 낫다). **백엔드 `TossErrorMessages` 와는 별개 레이어** — 저쪽은 서버가 받은 승인 API 에러코드, 이쪽은 브라우저 SDK 거절 코드라 코드 집합이 다르다
+
 ### 정리 스케줄러
-`BgmAgitPaymentSchedule` — 매일 **01:00 KST**, `READY` + `REGIST_DATE < 지금-1일` 행 삭제(`deleteAbandonedOrders`). 결제 버튼을 누를 때마다 주문행이 생기는데 대부분 승인까지 안 가서 쌓인다.
-- **하루 여유가 핵심** — 진행 중인 주문을 지우면 confirm이 "존재하지 않는 주문"으로 실패해 토스엔 승인, 우리 DB엔 근거 없음이 된다
+`BgmAgitPaymentSchedule` — 매일 **01:00 KST**. `READY` + `REGIST_DATE < 지금-3일` 삭제(`deleteAbandonedOrders`) + `ABORTED` + `REGIST_DATE < 지금-30일` 삭제(`deleteOldAbortedOrders`). 결제 버튼을 누를 때마다 주문행이 생기는데 대부분 승인까지 안 가서 쌓인다.
+- **여유가 핵심** — 진행 중인 주문을 지우면 confirm이 "존재하지 않는 주문"으로 실패해 토스엔 승인, 우리 DB엔 근거 없음이 된다
+- `RETENTION_DAYS = 3`인 이유는 그것만이 아니다. **카드앱에서 복귀하지 못한 건은 `READY` 행이 유일한 흔적**이라(리다이렉트가 없어 실패 리포트도 안 온다) 손님 문의를 받고 확인할 시간이 필요하다. 하루로는 짧았다
+- `ABORTED`는 원인 추적용이라 보존기간이 길다(`ABORTED_RETENTION_DAYS = 30`). 두 정리는 **각각 try/catch** — 한쪽 실패가 다른 쪽을 막지 않게
 - `DONE`/`CANCELED`는 결제 이력이라 절대 삭제하지 않음
 - S3 임시파일 정리(`BgmAgitFileSchedule`)와 같은 시각이지만 **별도 컴포넌트** — 그쪽은 try/catch가 없어 한쪽 실패가 다른 쪽을 막지 않게
 
 ### 알려진 한계 (미해결)
-- **`ABORTED`가 DB에 안 쌓인다** — `markAborted()` 직후 예외를 다시 던져서 트랜잭션이 롤백된다. 결제 실패 이력이 `BGM_AGIT_PAYMENT_FAIL_REASON`에 전혀 안 남고 결제행은 `READY`로 남음. 고치려면 실패 기록만 `@Transactional(REQUIRES_NEW)`로 분리(그러면 `ABORTED`도 정리 대상에 추가해야 함. `markDone`이 failReason을 null로 미는 것도 같이 검토)
 - **외부 호출이 트랜잭션 안에 있음** — 토스 승인/취소 성공 후 뒤쪽에서 예외가 나면 롤백되어 "돈은 움직였는데 DB엔 없음". 반대로 토스가 4xx면(예: 상점관리자에서 직접 환불해 `ALREADY_CANCELED_PAYMENT`) 예약 취소 자체가 막힌다
 - **DONE 결제가 2건 이상이면 최신 1건만 환불**(`findLatestPaymentByReservationNoAndStatus`가 `fetchFirst`)
 - **노쇼/당일취소 위약금 없음** — 관리자가 취소하면 전액 환불. 약관의 "당일 취소·노쇼 환불 불가"는 사용자 취소가 전날까지만 가능해서 성립하는 것
@@ -403,7 +438,7 @@ kml:
 | 매시 30분 | `KmlMatchsRetryScheduler` | KML 기록 전송 실패분 재시도 |
 | 09:00 | `BgmAgitAdminReservationNotifyScheduler` | 관리자 당일 예약 알림톡 |
 | 01:00 | `BgmAgitFileSchedule` | S3 임시파일 정리 |
-| 01:00 | `origin/payment/schedule/BgmAgitPaymentSchedule` | 버려진 READY 주문 정리 |
+| 01:00 | `origin/payment/schedule/BgmAgitPaymentSchedule` | 버려진 READY 주문(3일) · 실패 이력 ABORTED(30일) 정리 |
 | 10시간 간격 | `BgmAgitBizTalkServiceImpl.scheduled` | 비즈톡 토큰 재발급 |
 
 ---
@@ -421,7 +456,7 @@ kml:
 - 닉네임 변경 시 KML synk 리셋
 - `AMBIGUOUS` 수동 해결 UI(마이페이지에서 KML ID 직접 선택)
 - `application-*.yml` 정리(`kakao.redirecturi2`, `naver.redirecturi2`, kml-front 소셜 OAuth env)
-- 결제: `ABORTED` 기록 남기기(`REQUIRES_NEW`), 외부 호출 트랜잭션 분리, 관리자 확정 슬롯 검증, 노쇼 위약금
+- 결제: 외부 호출 트랜잭션 분리, 관리자 확정 슬롯 검증, 노쇼 위약금
 - `BGM_AGIT_ROOM` 테이블 분리 / 예약 2테이블 정규화
 - 새 엔드포인트 권한 매핑 확인 — `/bgm-agit/ranks/{memberId}/stats`, `.../games`, `/my-rank`
 - 대국 기록 알림톡을 수정/삭제 흐름에도 적용(`eventPublisher.publishEvent(new MatchRecordRegisteredEvent(...))` 한 줄씩)

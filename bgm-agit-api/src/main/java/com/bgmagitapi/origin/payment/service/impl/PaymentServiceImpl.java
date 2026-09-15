@@ -1,6 +1,8 @@
 package com.bgmagitapi.origin.payment.service.impl;
 
+import com.bgmagitapi.origin.advice.exception.PaymentException;
 import com.bgmagitapi.origin.advice.exception.ReservationConflictException;
+import com.bgmagitapi.origin.advice.exception.TossPaymentApiException;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
 import com.bgmagitapi.origin.event.dto.ReservationTalkEvent;
@@ -10,9 +12,11 @@ import com.bgmagitapi.origin.payment.controller.response.PaymentOrderResponse;
 import com.bgmagitapi.origin.payment.entity.BgmAgitPayment;
 import com.bgmagitapi.origin.payment.entity.enumeration.PaymentStatus;
 import com.bgmagitapi.origin.payment.repository.BgmAgitPaymentRepository;
+import com.bgmagitapi.origin.payment.service.PaymentFailureRecorder;
 import com.bgmagitapi.origin.payment.service.PaymentService;
 import com.bgmagitapi.origin.payment.service.TossPaymentsClient;
 import com.bgmagitapi.origin.payment.service.response.TossPaymentResponse;
+import com.bgmagitapi.origin.payment.util.TossErrorMessages;
 import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.origin.service.response.BizTalkCancel;
@@ -45,6 +49,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final BgmAgitPaymentRepository bgmAgitPaymentRepository;
     private final BgmAgitReservationRepository bgmAgitReservationRepository;
     private final TossPaymentsClient tossPaymentsClient;
+    // 실패 기록은 별도 트랜잭션(REQUIRES_NEW)이어야 롤백에 쓸려가지 않는다
+    private final PaymentFailureRecorder paymentFailureRecorder;
     private final ApplicationEventPublisher eventPublisher;
 
     // 토스 clientKey는 공개키(프론트 전달용). secretKey는 STEP 2 승인부터 사용
@@ -58,7 +64,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public PaymentOrderResponse createOrder(Long memberId, Long reservationNo, int amount, String orderName) {
         BgmAgitMember member = bgmAgitMemberRepository.findById(memberId)
-                .orElseThrow(() -> new RuntimeException("존재 하지 않은 회원입니다."));
+                .orElseThrow(() -> new PaymentException("존재 하지 않은 회원입니다."));
         
         String orderNo = "bgmagit_" + reservationNo + "_" + System.currentTimeMillis();
 
@@ -71,7 +77,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public PaymentConfirmResponse confirmPayment(String paymentKey, String orderId, Integer amount, Long memberId) {
         BgmAgitPayment payment = bgmAgitPaymentRepository.findByBgmAgitOrderNo(orderId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 주문입니다."));
+                .orElseThrow(() -> new PaymentException("존재하지 않는 주문입니다."));
 
         validatePaymentOwner(payment, memberId);
         validateAmount(payment, amount);
@@ -88,8 +94,13 @@ public class PaymentServiceImpl implements PaymentService {
         TossPaymentResponse result;
         try {
             result = tossPaymentsClient.confirm(paymentKey, orderId, amount);
+        } catch (TossPaymentApiException e) {
+            // 토스가 준 원문(코드+사유)을 남기고, 손님에겐 코드별 한국어 안내로 바꿔 던진다
+            paymentFailureRecorder.recordAborted(orderId, e.getCode(), e.getMessage());
+            throw new TossPaymentApiException(e.getCode(), TossErrorMessages.toUserMessage(e.getCode(), e.getMessage()));
         } catch (RuntimeException e) {
-            payment.markAborted(e.getMessage());
+            // 타임아웃·네트워크 오류 등. 사유는 남기되 예외는 그대로 올린다
+            paymentFailureRecorder.recordAborted(orderId, null, e.getMessage());
             throw e;
         }
 
@@ -99,6 +110,7 @@ public class PaymentServiceImpl implements PaymentService {
         if (!TOSS_STATUS_DONE.equals(result.getStatus())) {
             log.warn("[payment] 지원하지 않는 결제상태로 승인됨. orderId={}, status={}", orderId, result.getStatus());
             cancelQuietly(result.getPaymentKey(), "지원하지 않는 결제수단");
+            paymentFailureRecorder.recordAborted(orderId, result.getStatus(), "지원하지 않는 결제수단(입금 대기)으로 승인되어 취소함");
             throw new ReservationConflictException(
                     "입금 확인이 필요한 결제수단(가상계좌 등)은 예약금 결제에 사용할 수 없습니다. 카드 또는 간편결제로 다시 시도해 주세요.");
         }
@@ -138,6 +150,38 @@ public class PaymentServiceImpl implements PaymentService {
                         : lastCancel.getCancelReason(),
                 parseDateTime(lastCancel == null ? null : lastCancel.getCanceledAt())
         );
+    }
+
+    @Override
+    public void recordClientFailure(String orderId, String code, String message, Long memberId) {
+        // 프론트 결제 실패 페이지가 알려주는 사유. 기록이 목적이라 어떤 경우에도 예외를 던지지 않는다
+        try {
+            BgmAgitPayment payment = bgmAgitPaymentRepository.findByBgmAgitOrderNo(orderId).orElse(null);
+            if (payment == null) {
+                log.warn("[payment] 실패 리포트 무시. 주문 없음 orderId={}", orderId);
+                return;
+            }
+            Long paymentMemberId = payment.getBgmAgitMember().getBgmAgitMemberId();
+            if (!Objects.equals(paymentMemberId, memberId)) {
+                log.warn("[payment] 실패 리포트 무시. 소유자 불일치 orderId={}, memberId={}", orderId, memberId);
+                return;
+            }
+            paymentFailureRecorder.recordAborted(orderId, code, message);
+        } catch (RuntimeException e) {
+            log.warn("[payment] 실패 리포트 처리 중 오류. orderId={}, code={}", orderId, code, e);
+        }
+    }
+
+    @Override
+    public long removeOldAbortedOrders(int retentionDays) {
+        // ABORTED 는 "왜 결제가 안 됐나"를 되짚는 진단용 이력이라 READY 보다 오래 남긴다.
+        // DONE/CANCELED 는 결제 이력이라 여전히 건드리지 않는다.
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(retentionDays);
+        long removed = bgmAgitPaymentRepository.deleteOldAbortedOrders(cutoff);
+        if (removed > 0) {
+            log.info("[payment] 결제 실패 이력 정리 completed. count={}, cutoff={}", removed, cutoff);
+        }
+        return removed;
     }
 
     @Override
@@ -209,21 +253,22 @@ public class PaymentServiceImpl implements PaymentService {
     private void validatePaymentOwner(BgmAgitPayment payment, Long memberId) {
         Long paymentMemberId = payment.getBgmAgitMember().getBgmAgitMemberId();
         if (!Objects.equals(paymentMemberId, memberId)) {
-            throw new RuntimeException("본인의 결제 주문이 아닙니다.");
+            throw new PaymentException("본인의 결제 주문이 아닙니다.");
         }
     }
 
     private void validateAmount(BgmAgitPayment payment, Integer amount) {
         if (!Objects.equals(payment.getBgmAgitPaymentAmount(), amount)) {
-            payment.markAborted("결제 금액이 일치하지 않습니다.");
-            throw new RuntimeException("결제 금액이 일치하지 않습니다.");
+            // 여기서 markAborted 를 직접 부르면 바로 뒤 예외로 롤백돼 사유가 안 남는다 → 별도 트랜잭션 경유
+            paymentFailureRecorder.recordAborted(payment.getBgmAgitOrderNo(), null, "결제 금액이 일치하지 않습니다.");
+            throw new PaymentException("결제 금액이 일치하지 않습니다.");
         }
     }
 
     private void approveReservation(Long reservationNo) {
         List<BgmAgitReservation> reservations = bgmAgitReservationRepository.findReservationList(reservationNo);
         if (reservations.isEmpty()) {
-            throw new RuntimeException("존재하지 않는 예약입니다.");
+            throw new PaymentException("존재하지 않는 예약입니다.");
         }
 
         List<Long> idList = reservations.stream()

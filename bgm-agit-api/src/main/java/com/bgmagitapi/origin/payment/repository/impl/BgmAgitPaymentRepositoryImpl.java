@@ -46,6 +46,17 @@ public class BgmAgitPaymentRepositoryImpl implements BgmAgitPaymentCustomReposit
     }
 
     @Override
+    public long deleteOldAbortedOrders(LocalDateTime createdBefore) {
+        return queryFactory
+                .delete(bgmAgitPayment)
+                .where(
+                        bgmAgitPayment.bgmAgitPaymentStatus.eq(PaymentStatus.ABORTED),
+                        bgmAgitPayment.registDate.lt(createdBefore)
+                )
+                .execute();
+    }
+
+    @Override
     public Map<Long, String> findDoneReceiptUrlsByReservationNos(List<Long> reservationNos) {
         Map<Long, String> result = new LinkedHashMap<>();
         if (reservationNos == null || reservationNos.isEmpty()) {

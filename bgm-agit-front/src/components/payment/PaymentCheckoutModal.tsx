@@ -1,12 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { toast } from 'react-toastify';
 import type { CustomUser } from '../../types/user.ts';
 import type {
   PaymentOrderResponse,
+  TossAgreementWidget,
   TossPaymentWidgets,
   TossPaymentWindow,
 } from '../../types/tossPayments.ts';
+import { detectInAppBrowser } from '../../utils/inAppBrowser.ts';
+import { getPaymentErrorCode, toPaymentErrorMessage } from '../../config/paymentErrors.ts';
+import { reportPaymentFailure } from '../../utils/paymentReport.ts';
+import InAppBrowserNotice from './InAppBrowserNotice.tsx';
 
 type PaymentCheckoutModalProps = {
   order: PaymentOrderResponse;
@@ -48,14 +53,27 @@ function getPaymentErrorMessage(error: unknown) {
   return '결제창을 불러오지 못했습니다.';
 }
 
+/** SDK 버전에 따라 renderAgreement 가 구독 객체를 안 주기도 한다. on()이 있을 때만 게이팅한다. */
+function toAgreementWidget(value: TossAgreementWidget | void): TossAgreementWidget | null {
+  if (typeof value !== 'object' || value === null) {
+    return null;
+  }
+  return typeof value.on === 'function' ? value : null;
+}
+
 export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCheckoutModalProps) {
   const [ready, setReady] = useState(false);
   const [paying, setPaying] = useState(false);
+  // 필수 약관 동의 여부. 구독이 불가능한 SDK 버전에서는 true 로 남아 기존 동작 그대로 간다.
+  const [agreed, setAgreed] = useState(true);
   const widgetsRef = useRef<TossPaymentWidgets | null>(null);
   const paymentRef = useRef<TossPaymentWindow | null>(null);
   const renderedOrderId = useRef<string | null>(null);
   const isWidgetKey = /^test_gck_|^live_gck_/.test(order.clientKey);
   const isPaymentKey = /^test_ck_|^live_ck_/.test(order.clientKey);
+  // 인앱 웹뷰는 카드사 앱 전환 중 파기돼 successUrl 리다이렉트가 안 올 수 있다.
+  // 다만 자동 복귀되는 카드사(신한 등)는 인앱에서도 정상 결제되므로 막지 않고 경고만 띄운다.
+  const inApp = useMemo(() => detectInAppBrowser(), []);
 
   useEffect(() => {
     let alive = true;
@@ -90,7 +108,29 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
 
         await widgets.setAmount({ currency: 'KRW', value: order.amount });
         await widgets.renderPaymentMethods({ selector: '#payment-methods', variantKey: 'DEFAULT' });
-        await widgets.renderAgreement({ selector: '#payment-agreement', variantKey: 'AGREEMENT' });
+        const agreement = await widgets.renderAgreement({
+          selector: '#payment-agreement',
+          variantKey: 'AGREEMENT',
+        });
+
+        // 필수 약관 미동의 상태로 결제하기를 누르면 SDK 가 거절한다. 버튼을 먼저 잠근다.
+        const subscribable = toAgreementWidget(agreement);
+        if (subscribable?.on) {
+          // 초기값은 반드시 SDK 에서 직접 읽는다. agreementStatusChange 는 '변경'될 때만 오므로,
+          // 동의된 상태로 렌더되는 SDK 버전에서는 콜백이 영영 안 와 버튼이 잠긴 채로 남는다
+          // (= 아무도 결제를 못 한다). 읽지 못하면 미동의로 보고 사용자가 체크하면 풀린다.
+          let initialAgreed = false;
+          try {
+            initialAgreed = !!subscribable.getAgreementStatus?.()?.agreedRequiredTerms;
+          } catch (statusError) {
+            console.error(statusError);
+          }
+          setAgreed(initialAgreed);
+          subscribable.on('agreementStatusChange', status => {
+            if (!alive) return;
+            setAgreed(!!status?.agreedRequiredTerms);
+          });
+        }
       } else {
         paymentRef.current = tossPayments.payment({ customerKey: `bgmagit_${user.id}` });
       }
@@ -105,6 +145,12 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
         return;
       }
       console.error(error);
+      // 위젯 초기화 실패도 서버에 남긴다(READY 로만 남은 주문의 원인 추적)
+      reportPaymentFailure(
+        order.orderId,
+        'WIDGET_INIT_FAILED',
+        error instanceof Error ? error.message : String(error),
+      );
       toast.error(getPaymentErrorMessage(error), { toastId: `payment-widget-${order.orderId}` });
       onClose();
     });
@@ -142,9 +188,10 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
     } catch (error) {
       console.error(error);
       // 사용자가 결제창을 닫거나 취소한 경우는 조용히 무시 (실패 토스트 X)
-      const code = (error as { code?: string })?.code;
-      if (code !== 'USER_CANCEL' && code !== 'PAY_PROCESS_CANCELED') {
-        toast.error('결제 요청이 취소되었거나 실패했습니다.');
+      const message = toPaymentErrorMessage(error);
+      if (message) {
+        toast.error(message);
+        reportPaymentFailure(order.orderId, getPaymentErrorCode(error), message);
       }
       setPaying(false);
     }
@@ -163,6 +210,7 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
           <strong>{order.orderName}</strong>
           <span>{order.amount.toLocaleString()}원</span>
         </Summary>
+        {inApp.isInApp && <InAppBrowserNotice info={inApp} />}
         <NoticeBox>
           이 결제는 예약 확정을 위한 예약금 결제입니다.
           <br />
@@ -176,8 +224,12 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
             <WidgetBox id="payment-agreement" />
           </>
         )}
-        <PayButton type="button" onClick={requestPayment} disabled={!ready || paying}>
-          {paying ? '결제 요청 중' : `${order.amount.toLocaleString()}원 결제하기`}
+        <PayButton type="button" onClick={requestPayment} disabled={!ready || paying || !agreed}>
+          {!agreed
+            ? '필수 약관에 동의해 주세요'
+            : paying
+              ? '결제 요청 중'
+              : `${order.amount.toLocaleString()}원 결제하기`}
         </PayButton>
       </Modal>
     </Overlay>
