@@ -13,6 +13,12 @@ public interface PaymentService {
 
     void cancelDonePaymentByReservationNo(Long reservationNo, String cancelReason);
 
+    // 프론트 결제 실패 콜백(/payments/fail) 기록. 어떤 경우에도 예외를 던지지 않는다
+    void recordClientFailure(String orderId, String code, String message, Long memberId);
+
     // 승인까지 가지 않고 버려진 주문(READY) 정리. 삭제 건수를 반환한다
     long removeAbandonedOrders(int retentionDays);
+
+    // 진단용으로 남긴 실패(ABORTED) 이력 정리. 삭제 건수를 반환한다
+    long removeOldAbortedOrders(int retentionDays);
 }
