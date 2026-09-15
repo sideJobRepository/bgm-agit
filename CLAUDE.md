@@ -185,7 +185,7 @@
 ### 흐름
 1. 예약 생성(대기 N/N) → 예약내역(`ReservationList.tsx`) 대기행의 **`예약금 결제`** 버튼
 2. `POST /bgm-agit/payments/order { reservationNo }` → `BgmAgitReservationService.createPaymentOrder`가 소유자·취소·확정 검증 + **금액 서버 계산** 후 공통 `createOrder` 위임 → `{ orderId, amount, orderName, clientKey }`
-3. 토스 위젯(`components/payment/PaymentCheckoutModal.tsx`) → 성공 시 `/payment/success`로 리다이렉트
+3. 토스 결제창(`components/payment/PaymentCheckoutModal.tsx`) → 성공 시 `/payment/success`로 리다이렉트
 4. `POST /bgm-agit/payments/confirm` → 금액 대조·멱등 → 토스 승인 → **예약 `approvalStatus='Y'` 자동 확정 + 확정 알림톡**
 5. 취소(`modifyReservation`, `cancelStatus='Y'`) → DONE 결제가 있으면 **토스 전액 취소로 자동 환불**
 
@@ -217,24 +217,16 @@
   - `NOT_FOUND_PAYMENT_SESSION`이 **인앱브라우저에서 카드앱 다녀온 뒤** 나는 대표 코드
 - 사용자에게 사유를 그대로 보여줄 결제 예외는 `PaymentException`(400). 예전엔 `RuntimeException`이라 generic 핸들러를 타서 전부 "잠시후 다시 시도해 주세요" 500이었다
 
-### 인앱브라우저 결제 경고 (프론트) — 차단이 아니다
-결제는 **사실상 전부 모바일**에서 일어난다. 손님이 네이버 플레이스·카카오 링크로 들어오면 그 앱의 인앱 웹뷰에서 결제창이 뜨는데, **카드사 앱으로 전환됐다 돌아올 때 웹뷰가 파기**되면 토스 결제창 세션이 사라진다(→ `NOT_FOUND_PAYMENT_SESSION`). 손님은 카드 인증까지 끝냈는데 미결제로 돌아온다.
+### 결제창(API 개별 연동) 방식 — 결제위젯 아님
+**결제위젯을 쓰다가 결제창으로 갈아탔다.** `PaymentCheckoutModal`은 예약금 안내와 결제하기 버튼만 그리고, 결제수단 선택·카드사·약관은 **토스 결제창이 직접 띄운다**.
+- `window.TossPayments(clientKey).payment({ customerKey })` → `requestPayment({ method: 'CARD', ... })`. `method: 'CARD'` 지만 결제창은 간편결제(카카오페이·SSG페이 등)까지 같이 보여준다
+- **`widgets()` 경로는 제거됨** — `renderPaymentMethods`/`renderAgreement`, 약관 동의 게이팅, `#payment-methods`/`#payment-agreement` DOM, `TossPaymentWidgets` 타입 전부 삭제. 되돌리려면 위젯 키와 함께 복구해야 한다
+- clientKey 형식 검증도 `ck_` 만 통과시킨다(`gck_` 를 넣으면 결제창 호출에서 `INVALID_API_KEY`)
 
-**그런데 인앱이라고 항상 실패하는 게 아니다.** 실패 여부는 카드사 앱의 복귀 방식에 달려 있다.
+> **모바일 인앱브라우저 이슈(과거)** — 네이버 플레이스·카카오 링크로 들어온 손님이 인앱 웹뷰에서 결제하면, 카드사 앱을 다녀오는 사이 웹뷰가 파기돼 `successUrl` 리다이렉트가 안 오는 사고가 있었다(KB Pay·하나처럼 **수동 복귀**를 요구하는 카드앱에서 발생. 신한처럼 자동 복귀하는 카드는 정상). 결제창 전환으로 브라우저가 알아서 처리하게 됐고, 인앱 감지·경고 코드(`utils/inAppBrowser.ts`, `InAppBrowserNotice.tsx`)는 제거했다. **이 부류는 서버에 기록이 안 남는다**(리다이렉트가 없어 `/payments/fail`도 호출 안 됨) — 유일한 흔적이 `READY` 주문행이라 보존기간을 3일로 뒀다(아래 정리 스케줄러).
 
-| 카드앱 | 복귀 | 인앱에서 |
-|---|---|---|
-| 신한 등 | 자동 복귀(앱 스킴) | 정상 결제됨 (실측 확인) |
-| KB Pay·하나 등 | 수동 복귀("상단 ◀ 버튼을 눌러 결제를 완료해주세요") | 웹뷰 회수되면 세션 소실 |
-
-그래서 **막지 않고 경고만 한다.** 전부 차단하면 되는 조합까지 이탈시킨다.
-- 감지 `bgm-agit-front/src/utils/inAppBrowser.ts` — UA 매칭(네이버/카카오톡/인스타/페북/라인/다음/에브리타임) + 안드로이드 `; wv` 폴백. **웨일(`whale`)은 정상 브라우저라 먼저 제외**
-- `PaymentCheckoutModal`이 결제 위젯 **위에** `components/payment/InAppBrowserNotice.tsx` 배너를 얹는다. 결제 버튼은 그대로 활성. 안드로이드는 `intent://`(카카오톡은 `kakaotalk://web/openExternal`)로 기본 브라우저 탈출, **iOS 는 스킴 강제 이동이 막혀 있어 "주소 복사"만** 제공
-- **이 케이스는 서버에 아무 기록도 안 남는다** — 리다이렉트가 없으니 `/payments/fail`도 호출되지 않는다. 유일한 흔적이 `READY` 주문행이라 보존기간을 3일로 뒀다(아래 정리 스케줄러)
-
-### 필수 약관 게이팅 / 프론트 에러 문구
-- `renderAgreement` 반환 객체의 `agreementStatusChange` 를 구독해 미동의면 결제 버튼을 잠근다. **초기값은 `getAgreementStatus()`로 seed** — 이 이벤트는 '변경'될 때만 오므로 동의된 상태로 렌더되는 SDK 버전에선 콜백이 안 와 버튼이 영영 잠긴다. `.on` 이 없는 구버전 SDK 면 게이팅을 포기하고 기존 동작(항상 활성) 유지
-- SDK 에러코드 → 문구 매핑은 `src/config/paymentErrors.ts`. `USER_CANCEL`/`PAY_PROCESS_CANCELED` 는 토스트 없이 무시, 매핑 없는 코드는 SDK message 그대로(토스 문구가 이미 한국어라 뭉뚱그리는 것보다 낫다). **백엔드 `TossErrorMessages` 와는 별개 레이어** — 저쪽은 서버가 받은 승인 API 에러코드, 이쪽은 브라우저 SDK 거절 코드라 코드 집합이 다르다
+### 프론트 에러 문구
+SDK 에러코드 → 문구 매핑은 `src/config/paymentErrors.ts`. `USER_CANCEL`/`PAY_PROCESS_CANCELED` 는 토스트 없이 무시, 매핑 없는 코드는 SDK message 그대로(토스 문구가 이미 한국어라 뭉뚱그리는 것보다 낫다). 결제수단·약관 거절은 결제창이 자체 처리하므로 매핑은 최소한만 둔다. **백엔드 `TossErrorMessages` 와는 별개 레이어** — 저쪽은 서버가 받은 승인 API 에러코드, 이쪽은 브라우저 SDK 거절 코드라 코드 집합이 다르다.
 
 ### 정리 스케줄러
 `BgmAgitPaymentSchedule` — 매일 **01:00 KST**. `READY` + `REGIST_DATE < 지금-3일` 삭제(`deleteAbandonedOrders`) + `ABORTED` + `REGIST_DATE < 지금-30일` 삭제(`deleteOldAbortedOrders`). 결제 버튼을 누를 때마다 주문행이 생기는데 대부분 승인까지 안 가서 쌓인다.
@@ -251,7 +243,7 @@
 - **관리자 수동 확정에는 슬롯 충돌 재검증이 없음**(`modifyReservation`의 `approvalStatus='Y'`)
 
 ### 키·심사 메모
-- 결제위젯이므로 **위젯용 키**(`test_gck_`/`test_gsk_`, `live_gck_`/`live_gsk_`). `test_ck_`/`test_sk_`(API 개별 연동 키)를 위젯에 쓰면 `INVALID_API_KEY`
+- 결제창 방식이므로 **API 개별 연동 키**(`test_ck_`/`test_sk_`, `live_ck_`/`live_sk_`). **clientKey 와 secretKey 는 반드시 같은 계열로 맞출 것** — clientKey 만 `ck_` 로 바꾸고 secretKey 를 위젯용 `gsk_` 로 두면 **결제창은 멀쩡히 뜨는데 승인(`confirm`)에서 `INVALID_API_KEY`** 가 난다(UI만 보고 판단하면 놓친다). 위젯용 키(`gck_`/`gsk_`)는 더 이상 쓰지 않는다
 - **환경별 키 분리** — 운영(`application-real.yml`)은 `TOSS_CLIENT_KEY`/`TOSS_SECRET_KEY`(라이브), staging 은 `STAGING_TOSS_*`(테스트) 를 본다. 예전엔 운영도 `STAGING_TOSS_*` 를 봐서 시크릿 하나를 라이브로 바꾸면 **스테이징 결제 테스트가 실제 과금**이 되는 구조였다. 로컬 `.env` 의 `TOSS_*` 는 운영 시크릿과 이름만 같을 뿐 별개이므로 반드시 테스트 키를 넣을 것
 - yml `toss.client-key/secret-key/confirm-url/cancel-url`, 값은 `.env`/GitHub Secrets. clientKey는 주문 응답으로 내려주므로 프론트 env 불필요
 - 정책 페이지: `/terms`(`pages/Terms.tsx`), `/refund-policy`(`pages/RefundPolicy.tsx`), `/privacy`
@@ -333,7 +325,7 @@ kml:
 - 금액은 `SlotSchedule.totalDepositAmount(images)` 결과를 `AlimtalkUtils.formatAmount`로 포맷해 넣는다. **결제 주문 금액(`createPaymentOrder`)과 같은 메서드**라 합쳐 예약(M-1+M-2 = 20,000원)도 실제 청구액이 그대로 나간다. 두 곳이 갈리면 고지 금액과 청구 금액 불일치가 되므로 계산을 따로 만들지 말 것
 - **카카오 검수 통과 템플릿과 고정 문구는 여전히 글자 단위로 일치해야 한다.** 변수(`#{예약금}`, `#{룸}` 등) 값만 자유롭게 조립 가능
 - **검수 통과 후 `biztalk.reservation-payment-live: true` 로 전환 완료**(real·staging). 로컬만 `false` 라 계좌안내 템플릿 `bgmagit-res-account2` 가 나간다. 되돌리려면 yml 한 줄만 `false`
-- 결제 버전은 **관리자에게도 사용자용 문구가 그대로 간다**(`ownerMessage = message`). 템플릿 고정 문구를 글자 단위로 맞춰야 해서 관리자 전용 문구를 따로 못 만든다
+- **예약 대기 알림톡은 예약자 본인에게만 간다**(`sandBizTalk`). 결제 전이라 확정이 아니고 관리자가 대응할 일도 없는 데다, 템플릿 고정 문구를 글자 단위로 맞춰야 해서 관리자 전용 문구를 못 만들어 "예약금을 결제해 주세요" 안내가 그대로 나갔다. 관리자 발송(`ownerMessage`/`AlimtalkUtils.buildOwnerReservationMessage`)은 제거됨
 - 마작강의 신청(`bgmagit-res-lecture*`)은 결제 연동이 없어 **계좌 입금 안내 그대로**다(`AlimtalkUtils.buildLectureMessage`, 프론트 `components/academy/BaseTable.tsx`)
 
 ### 알림톡 ON/OFF

@@ -102,7 +102,6 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         
         // 메시지 구성 (명시적으로 켠 경우에만 계좌안내 → 예약금 결제안내로 스위칭)
         String message;
-        String ownerMessage;
         String template;
         if (reservationPaymentTalkLive) {
             // 예약금은 템플릿 변수라 실제 청구액을 그대로 넣는다. 합쳐 예약이면 항목 수만큼 합산된 금액
@@ -112,13 +111,9 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
             message = AlimtalkUtils.buildReservationPaymentMessage(
                     member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, deposit, reservationRequest
             );
-            ownerMessage = message; // 결제 버전은 사용자/관리자 문구 동일
             template = AlimtalkTemplate.BGMAGIT_RES_PAYMENT;
         } else {
             message = AlimtalkUtils.buildReservationMessage(
-                    member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, reservationRequest
-            );
-            ownerMessage = AlimtalkUtils.buildOwnerReservationMessage(
                     member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, reservationRequest
             );
             template = AlimtalkTemplate.BGMAGIT_RES_ACCOUNT2;
@@ -129,13 +124,12 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         Long subjectId = bgmAgitReservation.getBgmAgitReservationNo();
         BgmAgitSubject subject = isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL;
         
-        // 사용자에게 발송
+        // 사용자에게만 발송.
+        // 예약 대기는 결제 전이라 확정이 아니고 관리자가 할 일도 없다. 게다가 결제 버전 템플릿은 고정 문구를
+        // 글자 단위로 맞춰야 해서 관리자 전용 문구를 못 만들고 "예약금을 결제해 주세요" 안내가 그대로 나갔다.
+        // 관리자 알림은 확정(sendCompleteBizTalk) / 사용자 취소(sendCancelBizTalk) / 당일 예약 요약만 남긴다.
         sendTalk(message, template, member.getBgmAgitMemberPhoneNo(), subjectId, subject, buttonName, "https://bgmagit.co.kr");
-        
-        // 관리자에게 발송
-        sendTalk(ownerMessage, template, PHONE1, subjectId, subject, buttonName, "https://bgmagit.co.kr");
-        sendTalk(ownerMessage, template, PHONE2, subjectId, subject, buttonName, "https://bgmagit.co.kr");
-        
+
     }
     
     @Override
