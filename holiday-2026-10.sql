@@ -68,3 +68,29 @@ SELECT u.BGM_AGIT_URL_RESOURCES_ID AS url_id,
 --    WHERE BGM_AGIT_URL_RESOURCES_PATH LIKE '/bgm-agit/holidays%');
 -- DELETE FROM BGM_AGIT_URL_RESOURCES WHERE BGM_AGIT_URL_RESOURCES_PATH LIKE '/bgm-agit/holidays%';
 -- DROP TABLE IF EXISTS BGM_AGIT_HOLIDAY;
+
+-- 메뉴 등록
+--
+-- getMainMenu 가 subMenu 없는 root 를 걸러내므로 반드시 기존 부모 메뉴의 하위로 넣는다.
+-- 관리자용 화면인 "권한 관리"·"예약 현황판" 과 같은 자리(마이페이지, id 14)에 둔다.
+-- 메뉴 자체에는 권한 개념이 없어 손님에게도 보인다 — 화면 진입 시 관리자 여부를 확인한다
+-- (권한 관리·예약 현황판도 같은 방식이다).
+
+START TRANSACTION;
+
+INSERT INTO BGM_AGIT_MAIN_MENU
+       (BGM_AGIT_SUB_MENU_ID, BGM_AGIT_AREA_ID, BGM_AGIT_MENU_NAME, BGM_AGIT_MENU_LINK, BGM_AGIT_USE_STATUS, REGIST_DATE)
+SELECT 14, 7, '공휴일 설정', '/holiday', 1, NOW()
+  FROM DUAL
+ WHERE NOT EXISTS (
+       SELECT 1 FROM BGM_AGIT_MAIN_MENU WHERE BGM_AGIT_MENU_LINK = '/holiday');
+
+COMMIT;
+
+SELECT BGM_AGIT_MAIN_MENU_ID AS id, BGM_AGIT_SUB_MENU_ID AS parent_id,
+       BGM_AGIT_MENU_NAME AS name, BGM_AGIT_MENU_LINK AS link,
+       BGM_AGIT_AREA_ID AS area, BGM_AGIT_USE_STATUS AS use_yn
+  FROM BGM_AGIT_MAIN_MENU
+ WHERE BGM_AGIT_SUB_MENU_ID = 14 ORDER BY BGM_AGIT_AREA_ID;
+
+-- 롤백: DELETE FROM BGM_AGIT_MAIN_MENU WHERE BGM_AGIT_MENU_LINK = '/holiday';
