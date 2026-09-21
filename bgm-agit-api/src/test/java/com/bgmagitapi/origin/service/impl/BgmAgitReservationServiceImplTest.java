@@ -44,7 +44,7 @@ class BgmAgitReservationServiceImplTest extends RepositoryAndServiceTestSupport 
     @Test
     void test2(){
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "bgmAgitReservationId"));
-        Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(6L, "ROLE_USER", null, null, pageable);
+        Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(6L, List.of("ROLE_USER"), null, null, pageable);
         System.out.println("reservationDetail = " + reservationDetail);
     }
     @DisplayName("")
@@ -73,7 +73,7 @@ class BgmAgitReservationServiceImplTest extends RepositoryAndServiceTestSupport 
     void test(){
         Long userId = 1L;
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "bgmAgitReservationId"));
-        Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(userId, "ROLE_ADMIN", "2025-07-30", "2025-08-30", pageable);
+        Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(userId, List.of("ROLE_ADMIN"), "2025-07-30", "2025-08-30", pageable);
         System.out.println("reservationDetail = " + reservationDetail);
     }
 }

@@ -155,6 +155,12 @@
 - 합쳐 예약이면 서버 label이 `"M-1, M-2"`로 오므로 프론트는 `label.split(',')[0]`(기준 라벨)로 조회
 
 ### 취소·인원변경 규칙
+- **`PUT /bgm-agit/reservation` 으로 손님이 할 수 있는 일은 "본인 예약 취소" 하나뿐이다.** `modifyReservation` 진입부에서 비관리자를 걸러낸다
+  - 예전에는 상태 검증이 취소 분기 안에만 있어서, 프론트가 버튼을 숨겼을 뿐 API 를 직접 치면 **결제 없이 확정**(`approvalStatus='Y'`), **환불받은 예약 되살리기**(`cancelStatus='N'`), **남의 예약번호 조작**이 전부 통과했다
+  - **관리자는 남의 예약도 확정·취소할 수 있다.** 전화·현장 예약 대응이라 의도된 동작이다
+  - 역할 판정은 `isAdmin(List<String> roles)` — JWT `roles` 전체를 본다. 단일 역할만 보던 `extractRole`/`isAdmin(String)` 은 제거했다(관리자에게 USER 권한이 같이 있으면 첫 값이 `ROLE_USER` 로 나오고, roles 가 비면 `"GUEST"` 가 나왔다). 알림톡 `ReservationTalkContext.role` 도 이 판정 결과를 넘긴다
+- **상태값은 `normalizeYn()` 으로 Y/N 정규화 후 저장한다.** 게이트는 `equalsIgnoreCase` 인데 DB 에는 요청 문자열이 그대로 들어가고 판독은 전부 `"Y".equals` 라, `cancelStatus="y"` 로 보내면 **환불은 집행되는데 예약은 살아있는** 상태가 만들어졌다
+- **`/reservation/detail` 의 조회 범위는 관리자일 때만 전체로 열린다**(`isUser = !isAdmin(roles)`). 예전엔 "USER 또는 MENTOR 면 본인 것만"이라는 블랙리스트였고, `isUserFilter` 는 false 면 where 절을 아예 안 걸어서 그 둘이 아닌 역할이면 이름·전화번호·영수증 URL 이 든 전 회원 예약이 내려갔다
 - 사용자: 본인 예약만 + **아직 시작하지 않은 예약**(`validateUserCancelableReservation`이 `SlotSchedule.useStartAt` 시각으로 판정). 날짜 비교가 아니다
 - **24시간 이내여도 취소는 된다. 환불만 0원**이다 — 자리를 비워주는 쪽이 매장에 이득이라 막지 않는다
 - 환불 비율은 `ReservationRefundPolicy.refundRate()` — 48h 전 100% / 48~24h 50% / 그 안쪽 0%. **관리자 취소도 같은 규칙**(노쇼는 당일이라 자동 0%). 매장 귀책으로 전액을 돌려줄 땐 토스 상점관리자에서 직접 환불한다
@@ -476,6 +482,7 @@ kml:
 3. **소셜·폼 닉네임 네임스페이스 분리** — `AndSocialType` 없는 조회는 버그
 4. **`bgmagit-bml-match` 카카오 검수 대기 중** — 통과 전엔 발송이 거부되고 catch에서 1회 재시도 후 종료. 통과 즉시 자동 발송. 첫 발송 때 URL 중복(`https://https://…`) 여부 확인할 것
 5. **URL_RESOURCES에 없는 경로는 기본 permit** — 새 관리자용 POST/PUT/DELETE는 매핑을 넣지 않으면 무방비. 매핑 INSERT 후 **앱 재시작** 필요
+   - URL 매핑만으로 못 막는 경우가 있다. 취소·확정이 **같은 `PUT /bgm-agit/reservation`** 이라 USER 역할을 열 수밖에 없고, 그러면 같은 엔드포인트의 관리자 전용 동작은 **서비스단에서 걸러야 한다**. 프론트 조건부 렌더링은 인가가 아니다
 6. **10월 개편은 코드만 들어가 있다** — 배포 전에 SQL 2개 실행·READY 주문 정리·대기 예약 정리가 필요하다. **10월 예약 정책 개편** 절의 체크리스트를 따를 것
 
 ## TODO 후보

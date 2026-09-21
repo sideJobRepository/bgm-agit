@@ -33,7 +33,7 @@ public interface BgmAgitReservationService {
 
     ApiResponse createReservation(BgmAgitReservationCreateRequest request, Long jwt);
 
-    Page<GroupedReservationResponse> getReservationDetail(Long memberId, String role, String startDate, String endDate, Pageable pageable);
+    Page<GroupedReservationResponse> getReservationDetail(Long memberId, List<String> roles, String startDate, String endDate, Pageable pageable);
 
     /**
      * 관리자 예약 현황판. 하루치 예약을 예약장소 × 시간축으로 묶어서 반환한다.
@@ -41,13 +41,13 @@ public interface BgmAgitReservationService {
      */
     AdminReservationBoardResponse getReservationBoard(LocalDate date, List<String> roles);
 
-    ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request, String role);
+    ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request, List<String> roles);
 
     /**
      * 예약 인원 축소. 확정건이면 줄어든 인원만큼의 차액을 환불 규정 비율대로 돌려준다.
      * 증원은 받지 않는다(현장 워크인 결제).
      */
-    ApiResponse modifyReservationPeople(Long userId, BgmAgitReservationPeopleRequest request, String role);
+    ApiResponse modifyReservationPeople(Long userId, BgmAgitReservationPeopleRequest request, List<String> roles);
 
     // 예약 결제 주문 생성: 예약 검증·금액계산 후 공통 PaymentService.createOrder 호출
     PaymentOrderResponse createPaymentOrder(Long reservationNo, Long userId);

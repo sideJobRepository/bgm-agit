@@ -435,12 +435,18 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     
     @Override
     @Transactional(readOnly = true)
-    public Page<GroupedReservationResponse> getReservationDetail(Long memberId, String role, String startDate, String endDate, Pageable pageable) {
+    public Page<GroupedReservationResponse> getReservationDetail(Long memberId, List<String> roles, String startDate, String endDate, Pageable pageable) {
         
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate start = StringUtils.hasText(startDate) ? LocalDate.parse(startDate, fmt) : null;
         LocalDate end   = StringUtils.hasText(endDate)   ? LocalDate.parse(endDate, fmt)   : null;
-        boolean isUser = "ROLE_USER".equals(role) || "ROLE_MENTOR".equals(role);
+        // 본인 예약만 볼지 전체를 볼지. **관리자일 때만** 전체를 연다.
+        //
+        // 예전에는 "ROLE_USER 이거나 ROLE_MENTOR 이면 본인 것만"이라는 블랙리스트였다.
+        // isUserFilter 는 false 면 where 절을 아예 안 걸기 때문에, 역할이 그 둘이 아니기만 하면
+        // (역할 추가, roles 클레임이 빈 토큰 → "GUEST") 전 회원 예약이 통째로 내려갔다.
+        // 이 응답에는 이름·전화번호·요청사항·영수증 URL·결제 잔액이 들어 있다.
+        boolean isUser = !isAdmin(roles);
         
         // 1) 페이지 키 조회 (예약번호)
         List<Long> pageNos = bgmAgitReservationRepository
@@ -613,19 +619,42 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     }
 
     @Override
-    public ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request, String role) {
-        
-        
+    public ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request, List<String> roles) {
+
+
         Long reservationNo = request.getReservationNo();
-        String cancelStatus = request.getCancelStatus();
-        String approvalStatus = request.getApprovalStatus();
-        
+        // 상태값은 Y/N 으로 정규화해서 받는다.
+        //
+        // 게이트는 equalsIgnoreCase 인데 DB 에는 요청 문자열이 그대로 들어가고 판독은 "Y".equals 라
+        // 대소문자가 갈렸다. cancelStatus="y" 로 보내면 환불은 집행되는데 DB 에는 'y' 가 남아
+        // 예약내역·현황판·결제 검증이 모두 "취소 아님"으로 봤다 — 환불받고 자리는 유지되는 상태.
+        String cancelStatus = normalizeYn(request.getCancelStatus());
+        String approvalStatus = normalizeYn(request.getApprovalStatus());
+
         List<BgmAgitReservation> reservations = bgmAgitReservationRepository.findReservationList(reservationNo);
         if (reservations.isEmpty()) {
             throw new ReservationConflictException("존재하지 않는 예약입니다.");
         }
 
+        boolean admin = isAdmin(roles);
         boolean canceling = "Y".equalsIgnoreCase(cancelStatus);
+
+        // 손님이 이 API 로 할 수 있는 일은 "본인 예약 취소" 하나뿐이다.
+        //
+        // 예전에는 상태 검증이 취소 분기에만 있어서, 프론트가 숨긴 동작을 API 직접 호출로 전부 할 수 있었다.
+        //  - approvalStatus='Y'  → 결제 없이 확정(예약금 1만원 시절과 달리 지금은 한 건에 수만 원이다)
+        //  - cancelStatus='N'    → 이미 환불받은 예약을 되살리기(돈은 돌려받고 자리는 그대로)
+        //  - 남의 예약번호       → 소유자 검증이 취소 분기 안에만 있어 그대로 통과
+        // 관리자가 남의 예약을 확정·취소하는 것은 전화·현장 예약 대응이라 의도된 동작이므로 그대로 둔다.
+        if (!admin) {
+            if ("Y".equalsIgnoreCase(approvalStatus)) {
+                throw new ReservationConflictException("예약 확정은 관리자만 할 수 있습니다. 결제를 완료하시면 자동으로 확정됩니다.");
+            }
+            if (!canceling) {
+                throw new ReservationConflictException("예약 상태를 변경할 수 없습니다. 매장으로 문의해 주세요.");
+            }
+            validateUserCancelableReservation(id, reservations);
+        }
 
         // 이미 취소된 예약은 여기서 끊는다. 재취소를 막지 않으면 잔액이 남아 있는 결제를 또 환불하게 된다
         // (전액취소 시절엔 토스가 ALREADY_CANCELED_PAYMENT 로 막아줘서 드러나지 않던 구멍이다)
@@ -634,9 +663,6 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             return new ApiResponse(200, true, "이미 취소된 예약입니다.");
         }
 
-        if (canceling && !isAdmin(role)) {
-            validateUserCancelableReservation(id, reservations);
-        }
 
         List<Long> idList = reservations.stream()
                 .map(BgmAgitReservation::getBgmAgitReservationId)
@@ -664,7 +690,11 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             return new ApiResponse(404, false, "전송 대상이 없습니다.");
         }
 
-        ReservationTalkContext ctx = ReservationTalkContext.of(role, reservations, bizTalkCancel);
+        // 알림톡 쪽은 role 문자열을 "ROLE_ADMIN" 인지만 비교하므로 판정 결과를 그대로 넘긴다.
+        // 예전엔 JWT roles 의 첫 값을 그대로 썼는데, 관리자에게 USER 권한이 같이 있으면
+        // 첫 값이 ROLE_USER 로 나와 관리자 취소가 사용자 취소 문구로 나갈 수 있었다.
+        ReservationTalkContext ctx = ReservationTalkContext.of(
+                admin ? "ROLE_ADMIN" : "ROLE_USER", reservations, bizTalkCancel);
 
         // 명확한 조건 변수로 가독성 ↑ (대/소문자 및 null 안전)
         boolean approvedNow = "Y".equalsIgnoreCase(approvalStatus);
@@ -688,7 +718,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     }
 
     @Override
-    public ApiResponse modifyReservationPeople(Long userId, BgmAgitReservationPeopleRequest request, String role) {
+    public ApiResponse modifyReservationPeople(Long userId, BgmAgitReservationPeopleRequest request, List<String> roles) {
         Long reservationNo = request.getReservationNo();
         Integer newPeople = request.getPeople();
 
@@ -698,7 +728,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         }
         BgmAgitReservation first = group.get(0);
 
-        if (!isAdmin(role)
+        if (!isAdmin(roles)
                 && !Objects.equals(first.getBgmAgitMember().getBgmAgitMemberId(), userId)) {
             throw new ReservationConflictException("본인의 예약만 변경할 수 있습니다.");
         }
@@ -912,8 +942,20 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         }
     }
 
-    private boolean isAdmin(String role) {
-        return "ROLE_ADMIN".equals(role);
+    /**
+     * Y/N 상태값 정규화. 그 외 값은 거절한다.
+     *
+     * 예전에는 요청 문자열이 검증 없이 컬럼에 그대로 들어가서, 대소문자가 다르거나 아예 엉뚱한 값도
+     * 저장됐다. 판독하는 쪽은 전부 `"Y".equals` 라 조용히 어긋난다.
+     */
+    private String normalizeYn(String value) {
+        if ("Y".equalsIgnoreCase(value)) {
+            return "Y";
+        }
+        if ("N".equalsIgnoreCase(value)) {
+            return "N";
+        }
+        throw new ReservationConflictException("잘못된 예약 상태값입니다.");
     }
 
     private boolean isAdmin(List<String> roles) {

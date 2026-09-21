@@ -63,7 +63,7 @@ public class BgmAgitReservationController {
 
 
     @PostMapping("/reservation")
-    public ApiResponse createReservation(@RequestBody BgmAgitReservationCreateRequest request, @AuthenticationPrincipal Jwt jwt) {
+    public ApiResponse createReservation(@Valid @RequestBody BgmAgitReservationCreateRequest request, @AuthenticationPrincipal Jwt jwt) {
         Long userId = jwt.getClaim("id");
         return bgmAgitReservationService.createReservation(request, userId);
     }
@@ -76,8 +76,8 @@ public class BgmAgitReservationController {
             @RequestParam(name = "endDate" , required = false) String endDate
             ) {
         Long memberId = extractMemberId(jwt);
-        String role = extractRole(jwt);
-        Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(memberId, role, startDate, endDate, pageable);
+        List<String> roles = extractRoles(jwt);
+        Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(memberId, roles, startDate, endDate, pageable);
         return PageResponse.from(reservationDetail);
     }
     /**
@@ -102,15 +102,15 @@ public class BgmAgitReservationController {
     @PutMapping("/reservation")
     public ApiResponse modifyReservation(@AuthenticationPrincipal Jwt jwt , @RequestBody BgmAgitReservationModifyRequest request) {
         Long id = jwt.getClaim("id");
-        String role = extractRole(jwt);
-        return reservationCancelExecutor.execute(() -> bgmAgitReservationService.modifyReservation(id, request, role));
+        List<String> roles = extractRoles(jwt);
+        return reservationCancelExecutor.execute(() -> bgmAgitReservationService.modifyReservation(id, request, roles));
     }
 
     @PutMapping("/reservation/admin")
     public ApiResponse modifyAdminReservation(@AuthenticationPrincipal Jwt jwt , @RequestBody BgmAgitReservationModifyRequest request) {
         Long id = jwt.getClaim("id");
-        String role = extractRole(jwt);
-        return reservationCancelExecutor.execute(() -> bgmAgitReservationService.modifyReservation(id, request, role));
+        List<String> roles = extractRoles(jwt);
+        return reservationCancelExecutor.execute(() -> bgmAgitReservationService.modifyReservation(id, request, roles));
     }
 
     /**
@@ -121,9 +121,9 @@ public class BgmAgitReservationController {
     public ApiResponse modifyReservationPeople(@AuthenticationPrincipal Jwt jwt,
                                                @Valid @RequestBody BgmAgitReservationPeopleRequest request) {
         Long id = jwt.getClaim("id");
-        String role = extractRole(jwt);
+        List<String> roles = extractRoles(jwt);
         return reservationCancelExecutor.execute(
-                () -> bgmAgitReservationService.modifyReservationPeople(id, request, role));
+                () -> bgmAgitReservationService.modifyReservationPeople(id, request, roles));
     }
     
     
@@ -133,11 +133,12 @@ public class BgmAgitReservationController {
         return jwt.getClaim("id");
     }
     
-    private String extractRole(Jwt jwt) {
-        List<String> roles = jwt.getClaim("roles");
-        return roles != null && !roles.isEmpty() ? roles.get(0) : "GUEST";
-    }
-
+    /**
+     * JWT 의 역할 전체. 역할 판정은 반드시 이걸 쓴다.
+     *
+     * 예전에 있던 extractRole 은 roles.get(0) 하나만 돌려줬는데, 관리자에게 USER 권한이 같이 있으면
+     * 첫 값이 ROLE_USER 로 나오고 roles 가 비면 "GUEST" 가 나와 역할 판정이 조용히 어긋났다.
+     */
     private List<String> extractRoles(Jwt jwt) {
         if (jwt == null) {
             return List.of();
