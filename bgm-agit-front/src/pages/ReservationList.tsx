@@ -4,12 +4,12 @@ import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { useCallback, useEffect, useState } from 'react';
 import { useMediaQuery } from 'react-responsive';
-import { CheckCircle, CreditCard, Receipt, Share, UsersThree, XCircle } from 'phosphor-react';
+import { CheckCircle, CreditCard, Receipt, Share, XCircle } from 'phosphor-react';
 import { useReservationListFetch, useUpdatePost } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { reservationListDataState } from '../recoil/state/reservationState.ts';
 import { userState } from '../recoil/state/userState.ts';
-import { showConfirmModal, showInputModal } from '../components/confirmAlert.tsx';
+import { showConfirmModal } from '../components/confirmAlert.tsx';
 import { toast } from 'react-toastify';
 import type { Reservation } from '../types/reservation.ts';
 import Pagination from '../components/Pagination.tsx';
@@ -166,57 +166,6 @@ export default function ReservationList() {
     });
   }
 
-  /**
-   * 예약 인원 축소.
-   *
-   * 증원 경로는 두지 않는다 — 공지대로 추가 인원은 현장 워크인 결제다.
-   * 확정된 예약이면 줄어든 인원만큼 환불 규정 비율로 차액이 돌아오고,
-   * 미결제 대기건이면 금액만 다시 계산된다(그래서 안내 문구가 갈린다).
-   */
-  function reducePeople(item: Reservation) {
-    const current = item.reservationPeople ?? 0;
-    const paid = (item.paidAmount ?? 0) > 0;
-
-    showInputModal({
-      message: (
-        <>
-          변경할 인원을 입력해 주세요. (현재 {current}명)
-          <br />
-          {paid
-            ? `줄어든 인원만큼 ${item.refundRate ?? 0}% 환불됩니다.`
-            : '아직 결제 전이라 결제 시 변경된 인원으로 금액이 계산됩니다.'}
-          <br />
-          인원을 늘리시려면 현장에서 워크인 요금으로 결제해 주세요.
-        </>
-      ),
-      label: '예약 인원',
-      initialValue: String(Math.max(current - 1, 1)),
-      placeholder: '숫자만 입력',
-      onConfirm: value => {
-        const next = Number(value);
-        if (!Number.isInteger(next) || next < 1) {
-          toast.error('인원은 1명 이상 숫자로 입력해 주세요.');
-          return;
-        }
-        if (next >= current) {
-          toast.error('인원은 줄일 수만 있습니다. 추가 인원은 현장에서 결제해 주세요.');
-          return;
-        }
-
-        update<{ reservationNo: number; people: number }, ApiMessageResponse>({
-          url: '/bgm-agit/reservation/people',
-          body: { reservationNo: item.reservationNo, people: next },
-          ignoreHttpError: true,
-          // 실제 환불 금액은 서버가 결제 시점 단가로 계산해 메시지에 담아 준다
-          onSuccess: res => {
-            toast.success(res?.message ?? '예약 인원이 변경되었습니다.');
-            fetchReservationList(page, { startDate: start, endDate: end }, pageSize);
-          },
-        });
-      },
-    });
-  }
-
   //공유하기
   function shareReservation(item: Reservation) {
     if (!window.Kakao || !window.Kakao.isInitialized()) {
@@ -276,7 +225,7 @@ export default function ReservationList() {
       결제합니다. (세트 이용을 원하시면 현장에서 3,000원만 추가 결제)
       <br />※ 환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후(당일·노쇼 포함)에는
       불가합니다.
-      <br />※ 인원을 줄이시는 경우에도 줄어든 인원만큼 같은 기준으로 환불됩니다. 인원이 늘어나는
+      <br />※ 인원 변경이 필요하시면 아래 번호로 문의해 주세요. 인원을 줄이시는 경우 줄어든 인원만큼 같은 기준으로 환불됩니다. 인원이 늘어나는
       경우 추가 인원은 현장에서 워크인 요금으로 결제해 주세요.
       <br />※ 마작 대탁 대여는 기존과 같이 예약금 10,000원 결제 후 잔여 요금을 현장에서
       결제합니다.
@@ -338,9 +287,6 @@ export default function ReservationList() {
                 isAdmin &&
                 item.approvalStatus !== 'Y' &&
                 item.cancelStatus !== 'Y';
-              // 증원은 현장 워크인 결제라 여기서 받지 않는다. 1명 아래로는 줄일 수 없다
-              const canReducePeople =
-                upcoming && item.cancelStatus !== 'Y' && (item.reservationPeople ?? 0) > 1;
 
               return (
                 <Card key={item.reservationNo} $tone={status.tone}>
@@ -399,12 +345,6 @@ export default function ReservationList() {
                           : isNarrow
                             ? '결제'
                             : '이용요금 결제'}
-                      </ActionButton>
-                    )}
-                    {canReducePeople && (
-                      <ActionButton type="button" color="#8A6D3B" onClick={() => reducePeople(item)}>
-                        <UsersThree weight="bold" />
-                        {isNarrow ? '인원' : '인원 축소'}
                       </ActionButton>
                     )}
                     {canApprove && (
