@@ -1,9 +1,10 @@
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import type { WithTheme } from '../../styles/styled-props';
 import { toLocalYmd } from '../../utils/date.ts';
+import api from '../../utils/axiosInstance.ts';
 
 /**
  * 예약 가능 기간 상한(개월). 서버 SlotSchedule.RESERVATION_WINDOW_MONTHS 와 같은 값을 유지할 것.
@@ -51,6 +52,32 @@ export default function ReservationDatePicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [today.toDateString()]);
 
+  /**
+   * 예약 가능 기간 안의 공휴일. 달력에 빨간색으로 표시하는 용도다.
+   *
+   * useRequest 를 쓰지 않는다 — 실패했을 때 /error 로 보내거나 토스트를 띄울 일이 아니다.
+   * 색이 안 칠해질 뿐 예약은 그대로 되고, 실제 요금은 서버가 계산한다(RoomAvailabilityBadge 와 같은 판단).
+   */
+  const [holidays, setHolidays] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let alive = true;
+    api
+      .get<{ date: string; holiday: boolean }[]>('/bgm-agit/holidays', {
+        params: { from: toLocalYmd(minDate), to: toLocalYmd(maxDate) },
+      })
+      .then(({ data }) => {
+        if (!alive) return;
+        setHolidays(new Set(data.filter(h => h.holiday).map(h => h.date)));
+      })
+      .catch(() => {
+        // 색 표시용이라 조용히 넘어간다
+      });
+    return () => {
+      alive = false;
+    };
+  }, [minDate, maxDate]);
+
   const selected = useMemo(() => {
     if (!value) return null;
     const [year, month, day] = value.split('-').map(Number);
@@ -81,9 +108,12 @@ export default function ReservationDatePicker({
         if (view !== 'month') return '';
 
         const classes = [];
-        if (value && toLocalYmd(date) === value) classes.push('selected');
+        const ymd = toLocalYmd(date);
+        if (value && ymd === value) classes.push('selected');
         if (date.getDay() === 0) classes.push('sunday');
         if (date.getDay() === 6) classes.push('saturday');
+        // 토·일이 아닌데 공휴일인 날(한글날·선거일 등). 주말과 같은 단가라 같은 색으로 보여준다
+        if (ymd && holidays.has(ymd)) classes.push('holiday');
         return classes.join(' ');
       }}
     />
@@ -125,8 +155,11 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
     }
   }
 
+  /* 공휴일도 일요일과 같은 빨강. 그날은 주말 단가라 색으로 미리 알아볼 수 있어야 한다 */
   .react-calendar__tile.sunday,
-  .react-calendar__tile.sunday abbr {
+  .react-calendar__tile.sunday abbr,
+  .react-calendar__tile.holiday,
+  .react-calendar__tile.holiday abbr {
     color: ${({ theme }) => theme.colors.redColor};
   }
 
