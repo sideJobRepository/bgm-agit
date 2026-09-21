@@ -14,11 +14,17 @@ interface ReservationConfirmProps {
   label: string;
   initialCount: number;
   minPeople: number;
-  maxPeople: number;
+  // 서버 이미지 컬럼이 비어 있을 수 있어 없을 때를 허용한다(예전엔 non-null 단언이라 NaN 이 새어나왔다)
+  maxPeople?: number;
   // 예약 요약에 함께 보여줄 부가 정보 (예: 이용 방식, 합쳐 예약한 항목)
   summary?: string[];
-  // 서버가 계산한 예약금 합계. 없으면 기본 10,000원 안내
-  depositAmount?: number;
+  /**
+   * 정액 결제(마작 대탁)의 확정 금액. 룸 일무제한은 인원에 따라 달라지므로 unitPrice 를 쓴다.
+   * 둘 다 없으면 금액을 아예 안내하지 않는다 — 임의 기본값을 쓰면 실제 청구액과 갈린다.
+   */
+  depositAmount?: number | null;
+  /** 룸 일무제한 1인 단가. 인원을 조절할 때마다 총액이 따라 움직인다 */
+  unitPrice?: number | null;
   onConfirm: (values: { count: number; reason: string }) => void;
   onCancel?: () => void;
 }
@@ -59,12 +65,17 @@ function ReservationConfirmContent({
   maxPeople,
   summary = [],
   depositAmount,
+  unitPrice,
   onClose,
   onConfirm,
   onCancel,
 }: ReservationConfirmProps & { onClose: () => void }) {
   const [count, setCount] = useState(initialCount);
   const [reason, setReason] = useState('');
+
+  // 인원 상한이 없으면(컬럼 미설정) 스테퍼를 막지 않는다. 서버가 최종 검증한다
+  const canIncrease = maxPeople == null || count < maxPeople;
+  const totalAmount = unitPrice != null ? unitPrice * count : (depositAmount ?? null);
 
   return (
     <AlertWrapper $wide>
@@ -77,7 +88,7 @@ function ReservationConfirmContent({
         <FieldTitle>
           <span>예약 인원</span>
           <small>
-            {minPeople}명 - {maxPeople}명
+            {minPeople}명{maxPeople != null ? ` - ${maxPeople}명` : ' 이상'}
           </small>
         </FieldTitle>
         <Stepper>
@@ -95,8 +106,8 @@ function ReservationConfirmContent({
           </CountValue>
           <IconButton
             type="button"
-            disabled={count >= maxPeople}
-            onClick={() => setCount(c => Math.min(maxPeople, c + 1))}
+            disabled={!canIncrease}
+            onClick={() => setCount(c => (maxPeople == null ? c + 1 : Math.min(maxPeople, c + 1)))}
             aria-label="인원 늘리기"
           >
             <MdAdd />
@@ -132,9 +143,24 @@ function ReservationConfirmContent({
       </FieldGroup>
 
       <NoticeMessage>
-        예약금은 {(depositAmount ?? 10000).toLocaleString()}원입니다.
-        <br />
-        예약내역에서 예약금을 결제하면 예약이 확정되며, 잔여 이용요금은 현장에서 결제합니다.
+        {unitPrice != null ? (
+          <>
+            이용요금 {unitPrice.toLocaleString()}원 × {count}명 ={' '}
+            <strong>{(totalAmount ?? 0).toLocaleString()}원</strong>
+            <br />
+            예약내역에서 전액 결제하시면 예약이 확정됩니다.
+            <br />
+            환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후에는 불가합니다.
+          </>
+        ) : totalAmount != null ? (
+          <>
+            예약금은 {totalAmount.toLocaleString()}원입니다.
+            <br />
+            예약내역에서 예약금을 결제하면 예약이 확정되며, 잔여 이용요금은 현장에서 결제합니다.
+          </>
+        ) : (
+          <>예약내역에서 결제하시면 예약이 확정됩니다.</>
+        )}
       </NoticeMessage>
       <ButtonGroup>
         <CancelButton

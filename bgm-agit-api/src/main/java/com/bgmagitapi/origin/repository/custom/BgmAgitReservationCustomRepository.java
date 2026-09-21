@@ -30,6 +30,9 @@ public interface BgmAgitReservationCustomRepository{
     List<BgmAgitReservation> findConfirmedReservations(List<Long> imageIds, LocalDate startDate, Long excludeReservationNo);
     
     long updateCancelAndApprovalStatus( String cancelStatus, String approvalStatus,List<Long> idList);
+
+    /** 예약 그룹(같은 예약번호)의 인원을 일괄 변경. 인원은 슬롯 행마다 중복 저장된다 */
+    long updateReservationPeople(Long reservationNo, Integer people);
     
     Long findMaxReservationNo();
     

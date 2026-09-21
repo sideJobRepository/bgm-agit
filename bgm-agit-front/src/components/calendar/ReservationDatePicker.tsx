@@ -18,12 +18,24 @@ export const RESERVATION_WINDOW_MONTHS = 3;
  * value 가 null 이면 아무 날짜도 선택되지 않은 상태다. 기본값을 넣지 않는 것이 핵심으로,
  * 예전에는 "내일"이 미리 선택돼 있어서 손님이 날짜를 안 고르고 시간만 눌러 엉뚱한 날짜로 예약되는 사고가 있었다.
  */
+/**
+ * 휴무 요일 기본값(수요일). JS Date.getDay() 규약(0=일 … 6=토).
+ *
+ * 서버가 available-rooms 응답의 closedWeekday 로 정답을 내려주지만, 날짜를 고르기 전에는
+ * 그 응답이 아직 없어서 첫 렌더에 쓸 값이 필요하다. 서버 SlotSchedule.CLOSED_DAY_OF_WEEK 와
+ * 같은 값을 유지할 것 — 휴무 요일을 바꾸면 여기도 같이 고쳐야 한다.
+ */
+export const DEFAULT_CLOSED_WEEKDAY = 3;
+
 export default function ReservationDatePicker({
   value,
   onChange,
+  closedWeekday = DEFAULT_CLOSED_WEEKDAY,
 }: {
   value: string | null;
   onChange: (ymd: string) => void;
+  /** 서버가 내려준 휴무 요일. 한 번이라도 조회했으면 그 값이 들어온다 */
+  closedWeekday?: number;
 }) {
   const today = new Date();
 
@@ -64,9 +76,7 @@ export default function ReservationDatePicker({
         const ymd = toLocalYmd(val as Date);
         if (ymd) onChange(ymd);
       }}
-      tileDisabled={
-        ({ date, view }) => view === 'month' && date.getDay() === 3 /* 수요일 무인운영 */
-      }
+      tileDisabled={({ date, view }) => view === 'month' && date.getDay() === closedWeekday}
       tileClassName={({ date, view }) => {
         if (view !== 'month') return '';
 

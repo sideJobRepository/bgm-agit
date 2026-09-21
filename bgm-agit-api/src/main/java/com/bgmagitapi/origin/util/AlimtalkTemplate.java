@@ -7,6 +7,14 @@ public interface AlimtalkTemplate {
     // -1 버전은 예약금을 고정 문구에서 빼고 변수 #{예약금}으로 돌린 개정판.
     // 금액 정책이 바뀌어도(인원수 기준 전환 등) 카카오 재심사 없이 소스만 고치면 된다.
     String BGMAGIT_RES_PAYMENT = "bgmagit-res-payment-1";
+    /**
+     * 10월 전액결제·3단계 환불 전환에 맞춘 개정판.
+     *
+     * -1 의 고정 문구("예약금 결제", "취소는 예약일 전날까지 가능하며 …")가 새 규정과 달라져
+     * 문구 자체를 바꿔야 했고, 고정 문구 변경은 카카오 재심사 대상이라 템플릿을 새로 판다.
+     * 검수 통과 전에는 biztalk.reservation-payment-v2=false 로 두어 -1 이 그대로 나간다.
+     */
+    String BGMAGIT_RES_PAYMENT_V2 = "bgmagit-res-payment-2";
     
     //kml 용
     

@@ -1,6 +1,7 @@
 package com.bgmagitapi.origin.util;
 
 import com.bgmagitapi.origin.entity.BgmAgitImage;
+import com.bgmagitapi.origin.entity.BgmAgitReservation;
 import com.bgmagitapi.origin.entity.enumeration.BgmAgitImageCategory;
 import com.bgmagitapi.origin.entity.enumeration.Reservation;
 
@@ -12,11 +13,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
- * 예약 항목별 슬롯/이용시간/선택제한 정책의 단일 출처.
- * 프론트에서 imageId 하드코딩으로 중복 구현하지 말고 예약 조회 응답(slotRanges/maxSelectableSlots)을 쓸 것.
+ * 예약 항목별 슬롯/이용시간/요금/선택제한 정책의 단일 출처.
+ * 프론트에서 imageId 하드코딩으로 중복 구현하지 말고 예약 조회 응답(slotRanges/maxSelectableSlots/prices)을 쓸 것.
  */
 public class SlotSchedule {
 
@@ -32,29 +34,84 @@ public class SlotSchedule {
         this.durationHours = durationHours;
     }
 
+    // ===== 하루 경계 =====
+
+    /**
+     * 영업 하루의 경계. 이 시각 이전(00:00~09:59)은 앞 날짜의 영업일에 속한다.
+     *
+     * 24시간 영업으로 바뀌면서 "당일 10시 ~ 익일 10시"가 일무제한 요금의 하루가 되었고
+     * 예약 슬롯도 같은 경계를 쓴다. 예전에는 이 경계가 세 곳에 다른 값으로 흩어져 있었다
+     * (슬롯 13:00 / 알림톡 정렬 13:00 / 현황판 06:00). 그러면 화면·알림톡·환불이
+     * 서로 다른 하루를 보게 되므로 전부 이 상수 하나만 보도록 모았다.
+     */
+    public static final LocalTime DAY_BOUNDARY = LocalTime.of(10, 0);
+
+    /**
+     * 슬롯 시각을 실제 일시로 환산한다. 경계(10시) 이전이면 익일이다.
+     *
+     * 예약 행은 익일 새벽 슬롯도 시작 날짜(startDate)를 당일로 들고 있어서
+     * LocalDateTime.of(startDate, startTime) 을 그대로 쓰면 24시간이 틀어진다.
+     * 환불 기한 판정·현황판 정렬·알림톡 종료시각이 모두 이 메서드를 거쳐야 한다.
+     */
+    public static LocalDateTime slotDateTime(LocalDate startDate, LocalTime time) {
+        if (startDate == null || time == null) {
+            return null;
+        }
+        return time.isBefore(DAY_BOUNDARY)
+                ? LocalDateTime.of(startDate.plusDays(1), time)
+                : LocalDateTime.of(startDate, time);
+    }
+
+    /**
+     * 현황판·알림톡 정렬용 분(minute) 값. 경계 이전은 +1440 되어 뒤로 밀린다.
+     * 프론트 현황판도 같은 규약을 쓴다.
+     */
+    public static int toSortableMinutes(LocalTime time) {
+        if (time == null) {
+            return 0;
+        }
+        int minutes = time.getHour() * 60 + time.getMinute();
+        return time.isBefore(DAY_BOUNDARY) ? minutes + 24 * 60 : minutes;
+    }
+
+    /**
+     * 예약 그룹(같은 예약번호의 슬롯 행들)의 이용 시작 절대시각.
+     *
+     * 환불 비율(48h/24h) 판정의 기준이다. 대표 행 하나를 집어 쓰면 안 된다 —
+     * 조회 쿼리에 정렬이 없어 첫 행이 임의이고, 시작시각의 min(LocalTime) 도
+     * 마작 23:00~02:00 같은 자정 넘김 때문에 틀린다. 반드시 절대시각의 최소값이어야 한다.
+     */
+    public static LocalDateTime useStartAt(Collection<BgmAgitReservation> group) {
+        if (group == null || group.isEmpty()) {
+            return null;
+        }
+        return group.stream()
+                .map(r -> slotDateTime(r.getBgmAgitReservationStartDate(), r.getBgmAgitReservationStartTime()))
+                .filter(Objects::nonNull)
+                .min(LocalDateTime::compareTo)
+                .orElse(null);
+    }
+
+    // ===== 슬롯 =====
+
     public static SlotSchedule of(BgmAgitImageCategory category, String label, LocalDate d) {
-        if (isGroom(category,label)) {
-            return new SlotSchedule(
-                    LocalDateTime.of(d, LocalTime.of(13, 0)),
-                    LocalDateTime.of(d.plusDays(1), LocalTime.of(0, 0)),
-                    6,
-                    5
-            );
-        } else if (isMahjongRental(category)) {
+        if (isMahjongRental(category)) {
+            // 마작 대탁 대여는 이번 개편 대상이 아니다. 3시간 단위 유지
             return new SlotSchedule(
                     LocalDateTime.of(d, LocalTime.of(14, 0)),
                     LocalDateTime.of(d.plusDays(1), LocalTime.of(2, 0)),
                     3,
                     3
             );
-        } else {
-            return new SlotSchedule(
-                    LocalDateTime.of(d, LocalTime.of(13, 0)),
-                    LocalDateTime.of(d.plusDays(1), LocalTime.of(2, 0)),
-                    1,
-                    1
-            );
         }
+        // 룸은 일무제한 — 24시간 영업이라 하루 경계부터 다음 경계까지 1시간 단위로 전부 연다.
+        // 요금은 시간 수와 무관(인원 × 단가)하고, 시간 선택은 룸 점유 구간을 잡는 의미만 갖는다.
+        return new SlotSchedule(
+                LocalDateTime.of(d, DAY_BOUNDARY),
+                LocalDateTime.of(d.plusDays(1), DAY_BOUNDARY),
+                1,
+                1
+        );
     }
 
     public LocalDateTime open() {
@@ -69,7 +126,7 @@ public class SlotSchedule {
         return intervalHours;
     }
 
-    /** 한 슬롯을 예약했을 때의 실제 이용 시간. G룸은 6시간 간격이지만 이용은 5시간(13~18, 19~00). */
+    /** 한 슬롯을 예약했을 때의 실제 이용 시간. */
     public int durationHours() {
         return durationHours;
     }
@@ -84,6 +141,34 @@ public class SlotSchedule {
     }
 
     public record Slot(LocalDateTime start, LocalDateTime end) {
+    }
+
+    /**
+     * 선택된 시작시각들이 슬롯 순서상 연속인지. 비어 있으면 false.
+     *
+     * 일무제한이라 시간 수가 금액을 바꾸지는 않지만, 13시와 20시를 띄엄띄엄 고르면
+     * 그 사이 시간에 룸이 비어 보이면서도 실제로는 쓸 수 없는 상태가 된다.
+     */
+    public boolean isContiguous(Collection<LocalTime> startTimes) {
+        if (startTimes == null || startTimes.isEmpty()) {
+            return false;
+        }
+        List<LocalTime> order = slots().stream().map(slot -> slot.start().toLocalTime()).toList();
+        List<Integer> picked = new ArrayList<>();
+        for (LocalTime startTime : new HashSet<>(startTimes)) {
+            int index = order.indexOf(startTime);
+            if (index < 0) {
+                return false;
+            }
+            picked.add(index);
+        }
+        picked.sort(Integer::compareTo);
+        for (int i = 1; i < picked.size(); i++) {
+            if (picked.get(i) - picked.get(i - 1) != 1) {
+                return false;
+            }
+        }
+        return true;
     }
 
     // ===== 예약 가능 기간(리드타임) =====
@@ -138,17 +223,19 @@ public class SlotSchedule {
     }
 
     // ===== 정책 함수들 =====
-    public static boolean isGroom(BgmAgitImageCategory category, String label) {
-        return category == BgmAgitImageCategory.ROOM && "G Room".equals(label);
-    }
 
     public static boolean isMahjongRental(BgmAgitImageCategory category) {
         return category == BgmAgitImageCategory.MAHJONG;
     }
 
-    /** 한 번에 선택 가능한 슬롯 수. G룸은 하루 1팀 1시간대만, 나머지는 제한 없음(null). */
+    /**
+     * 한 번에 선택 가능한 슬롯 수. 제한이 없으면 null.
+     *
+     * G룸의 "하루 1팀 1시간대" 제한은 모든 룸이 시간 자유 선택으로 바뀌면서 사라졌다.
+     * 응답 필드는 프론트 계약이라 남겨 두되 현재는 항상 null 이다.
+     */
     public static Integer maxSelectableSlots(BgmAgitImageCategory category, String label) {
-        return isGroom(category, label) ? 1 : null;
+        return null;
     }
 
     /** 예약 타입은 이미지 카테고리에서 서버가 결정한다(클라이언트 값 신뢰 금지). */
@@ -156,29 +243,78 @@ public class SlotSchedule {
         return isMahjongRental(category) ? Reservation.DELEGATE_PLAY : Reservation.ROOM;
     }
 
-    // 예약 예약금(정액): 전 항목 1만원.
-    // M Room 3만원 예외가 있었으나 M Room이 M-1/M-2/M-3로 쪼개지면서 제거됨(항목 수만큼 합산되므로 3칸 = 3만원으로 동일).
-    // 향후 예약 인원수 기준으로 전환 예정이며, 그때는 category/label만으로 부족해 인원 인자가 추가되어야 한다.
-    public static int resolveDepositAmount(BgmAgitImageCategory category, String label) {
-        return 10000;
+    // ===== 합쳐 예약 =====
+
+    /**
+     * 함께 예약할 수 있는 항목 라벨의 조합.
+     *
+     * 예전에는 maxSelectableSlots != null (=G룸) 인지로 합치기를 걸렀는데, 모든 룸의 슬롯 제한이
+     * 풀리면서 그 조건이 항상 false 가 되어 방어가 통째로 사라졌다. 화이트리스트로 바꿔
+     * 서버가 허용 조합을 직접 들고 있게 한다(프론트 RESERVATION_COMBINABLE_GROUPS 와 같은 값).
+     */
+    private static final List<Set<String>> COMBINABLE_LABEL_GROUPS = List.of(
+            Set.of("M-1", "M-2", "M-3")
+    );
+
+    /** 항목이 하나면 항상 true. 여럿이면 같은 조합 그룹 안에 전부 들어 있어야 한다. */
+    public static boolean isCombinable(Collection<String> labels) {
+        if (labels == null || labels.isEmpty()) {
+            return false;
+        }
+        if (labels.size() == 1) {
+            return true;
+        }
+        return COMBINABLE_LABEL_GROUPS.stream().anyMatch(group -> group.containsAll(labels));
+    }
+
+    // ===== 요금 =====
+
+    /** 마작 대탁 대여 예약금(정액). 룸과 달리 예약금 + 현장결제 방식이 유지된다. */
+    public static final int MAHJONG_DEPOSIT_AMOUNT = 10000;
+
+    private static final int WEEKDAY_UNIT_PRICE = 9000;
+    private static final int WEEKEND_UNIT_PRICE = 11000;
+
+    /**
+     * 주말 단가를 적용하는 날인지 — 토·일만.
+     * 공휴일은 평일 단가다(사장님 확인). 예전 시간당 요금표는 공휴일도 주말가로 쳤으나,
+     * 화면 배지와 청구 금액이 갈리지 않도록 판정을 이 한 곳으로 통일했다.
+     */
+    public static boolean isWeekendRate(LocalDate date) {
+        DayOfWeek dayOfWeek = date.getDayOfWeek();
+        return dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY;
+    }
+
+    /** 룸 일무제한 1인 단가. */
+    public static int unitPrice(LocalDate date) {
+        return isWeekendRate(date) ? WEEKEND_UNIT_PRICE : WEEKDAY_UNIT_PRICE;
     }
 
     /**
-     * 한 예약(그룹)의 총 예약금. 이미지 id 기준으로 중복을 제거한 뒤 항목 수만큼 합산한다.
+     * 한 예약(그룹)의 결제 총액.
+     *
+     * 룸은 인원 × 단가이며 항목 수를 곱하지 않는다 — 합쳐 예약(M-1+M-2)을 쓰는 이유가
+     * 인원이 많아서이고 그 인원만큼 이미 청구되므로, 항목 수까지 곱하면 이중과금이다.
+     * 마작 대탁만 예전 방식대로 항목당 정액을 합산한다.
+     *
      * 결제 주문 금액과 예약 대기 알림톡 안내 금액이 갈리지 않도록 두 곳 모두 이 메서드만 쓸 것.
      */
-    public static int totalDepositAmount(Collection<BgmAgitImage> images) {
+    public static int totalPaymentAmount(Collection<BgmAgitImage> images, int people, LocalDate date) {
         if (images == null || images.isEmpty()) {
             return 0;
         }
-        Set<Long> countedImageIds = new HashSet<>();
-        int total = 0;
-        for (BgmAgitImage image : images) {
-            if (image == null || !countedImageIds.add(image.getBgmAgitImageId())) {
-                continue;
+        BgmAgitImage first = images.iterator().next();
+        if (isMahjongRental(first.getBgmAgitImageCategory())) {
+            Set<Long> countedImageIds = new HashSet<>();
+            int total = 0;
+            for (BgmAgitImage image : images) {
+                if (image == null || !countedImageIds.add(image.getBgmAgitImageId())) {
+                    continue;
+                }
+                total += MAHJONG_DEPOSIT_AMOUNT;
             }
-            total += resolveDepositAmount(image.getBgmAgitImageCategory(), image.getBgmAgitImageLabel());
+            return total;
         }
-        return total;
+        return Math.max(people, 0) * unitPrice(date);
     }
 }

@@ -3,6 +3,7 @@ package com.bgmagitapi.origin.service;
 import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationModifyRequest;
+import com.bgmagitapi.origin.controller.request.BgmAgitReservationPeopleRequest;
 import com.bgmagitapi.origin.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AdminReservationBoardResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AvailableRoomsResponse;
@@ -41,6 +42,12 @@ public interface BgmAgitReservationService {
     AdminReservationBoardResponse getReservationBoard(LocalDate date, List<String> roles);
 
     ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request, String role);
+
+    /**
+     * 예약 인원 축소. 확정건이면 줄어든 인원만큼의 차액을 환불 규정 비율대로 돌려준다.
+     * 증원은 받지 않는다(현장 워크인 결제).
+     */
+    ApiResponse modifyReservationPeople(Long userId, BgmAgitReservationPeopleRequest request, String role);
 
     // 예약 결제 주문 생성: 예약 검증·금액계산 후 공통 PaymentService.createOrder 호출
     PaymentOrderResponse createPaymentOrder(Long reservationNo, Long userId);

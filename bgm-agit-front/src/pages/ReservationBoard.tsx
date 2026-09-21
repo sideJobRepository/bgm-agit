@@ -64,9 +64,12 @@ function roomGroupKey(room: ReservationBoardRoom) {
   return ROOM_GROUPS.find(group => group.letters.includes(initial))?.key ?? ETC_GROUP_KEY;
 }
 
-// 현황판 기본 세로축(13:00 ~ 24:00). 데이터가 이 범위를 넘으면 넘는 만큼 늘어난다.
-const DEFAULT_AXIS_START = 13 * 60;
-const DEFAULT_AXIS_END = 24 * 60;
+// 현황판 기본 세로축(10:00 ~ 익일 10:00). 데이터가 이 범위를 넘으면 넘는 만큼 늘어난다.
+//
+// 24시간 영업 전환으로 영업 하루가 오전 10시에 넘어간다. 서버가 startMinutes/endMinutes 를
+// 그 경계 기준(+1440)으로 내려주므로 축도 같은 기준이어야 익일 새벽 예약이 제자리에 그려진다.
+const DEFAULT_AXIS_START = 10 * 60;
+const DEFAULT_AXIS_END = 34 * 60;
 
 /**
  * 예약 장소(테이블)별 색상 팔레트.

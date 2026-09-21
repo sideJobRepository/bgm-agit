@@ -99,18 +99,24 @@
 
 ## 예약
 
+> 10월 개편(일무제한·전액결제·3단계 환불)이 **코드에는 반영됐다**. 배포 전에 해야 할 DB 작업과 알림톡 검수는 **10월 예약 정책 개편** 절에 모아 뒀다.
+
 ### 데이터 모델
 - 예약 대상(룸/대탁)은 **`BGM_AGIT_IMAGE` 행**이다. `category=ROOM|MAHJONG`, `link=/detail/room|/detail/mahjongRental`, `BGM_AGIT_MAIN_MENU_ID=3`(프론트 `labelGb 3`)
 - 한 예약 = 시간 슬롯 여러 행이 **`BGM_AGIT_RESERVATION_NO`(그룹키)** 로 묶임. 예약 PK가 아니라 그룹키라 **중복값**
 - 상태는 승인여부(`..._APPROVAL_STATUS` Y/N) + 취소여부(`..._CANCEL_STATUS` Y/N) 두 컬럼
 - **`BGM_AGIT_IMAGE_USE_STATUS`**(varchar(1), default 'Y') — 운영 종료 항목은 삭제(FK RESTRICT로 예약 이력에 물림) 대신 `'N'`으로 숨김. 필터는 `BgmAgitImageRepositoryImpl.notHidden()`(null도 노출 취급)이 `getMainMenuImage`/`getDetailImage`에 적용, 직접 호출 차단은 `getReservation`/`createReservation`의 `BgmAgitImage.isHidden()` 체크
   - 현재 숨김: 대탁 JP류(id 34·35, 실제로는 F Room 스왑 운영), **M Room(id 19)**
-  - **오픈 공간 M-1/M-2/M-3**(id 83·84·85, 5~7명)이 M Room 대체. `category=ROOM`이라 1시간 슬롯·예약금 1만원 자동 적용
+  - **오픈 공간 M-1/M-2/M-3**(id 83·84·85, 각 4~7명)이 M Room 대체. `category=ROOM`이라 룸 슬롯·인원 과금이 자동 적용
 
 ### 예약 정책은 서버가 유일한 출처 (프론트 magic id 금지)
-`SlotSchedule`(origin/util)에 전부 모임: `of()`(open/close/interval/durationHours), `slots()`, `maxSelectableSlots()`, `resolveReservationType()`, `resolveDepositAmount()`.
-- **G Room** = 6시간 간격·이용 5시간(13~18, 19~00) / **MAHJONG** = 3시간 / 그 외 = 1시간
-- `GET /bgm-agit/reservation` 응답에 `slotRanges[{start,end}]`, `maxSelectableSlots`(G룸 1, 그 외 null), `reservationType`(ROOM|DELEGATE_PLAY) 포함 → `ReservationTimePanel.tsx`가 그대로 그림
+`SlotSchedule`(origin/util)에 전부 모임: `of()`(open/close/interval/durationHours), `slots()`, `isContiguous()`, `maxSelectableSlots()`, `resolveReservationType()`, `isCombinable()`, `unitPrice()`, `totalPaymentAmount()`, 그리고 하루 경계(`DAY_BOUNDARY`/`slotDateTime`/`toSortableMinutes`/`useStartAt`).
+- **ROOM** = 하루 경계 10:00 ~ 익일 10:00, 1시간 간격 **24슬롯**(일무제한) / **MAHJONG** = 14:00~익일 02:00, 3시간 간격 4슬롯(개편 대상 아님)
+- **하루 경계는 오전 10시** — `DAY_BOUNDARY` 하나가 정본이고 현황판 정렬(`toBoardMinutes`)·알림톡 정렬(`AlimtalkUtils.BOUNDARY`)·환불 기한이 전부 여기에 위임한다. 예전엔 슬롯 13:00 / 알림톡 13:00 / 현황판 06:00 으로 **세 곳에 다른 값**이 흩어져 있었다
+- **`maxSelectableSlots`는 현재 전 항목 null.** G룸 "하루 1팀" 제한이 사라졌다. 응답 필드는 프론트 계약이라 남겨 뒀다
+- 시간은 **연속 구간만** 선택 가능(`isContiguous`). 띄엄띄엄 고르면 사이 시간이 비어 보이면서 실제로는 못 쓰는 룸이 된다. 프론트도 같은 규칙으로 즉시 막는다
+- 인원 범위(`minPeople`/`maxPeople`)는 **서버가 등록·결제주문·인원변경 세 곳에서 검증**한다. 인원이 곧 금액이라 프론트 스테퍼만 믿으면 `people=1` 로 7인 룸을 1인 요금에 잡을 수 있다
+- `GET /bgm-agit/reservation` 응답에 `slotRanges[{start,end}]`, `maxSelectableSlots`, `reservationType`(ROOM|DELEGATE_PLAY), `pricingMode`(PER_PERSON|FLAT), `prices[{date,price,colorGb}]` 포함 → `ReservationTimePanel.tsx`가 그대로 그림
 - `createReservation`은 **클라이언트가 보낸 예약타입을 무시**하고 이미지 카테고리로 결정
 - 수요일은 무인운영이라 예약 불가. 규칙은 `SlotSchedule.CLOSED_DAY_OF_WEEK`/`isClosedDay()`/`CLOSED_DAY_MESSAGE` 한 곳에 모임(등록 검증 + 방 목록 조회가 같은 값을 봄). 프론트는 `available-rooms` 응답의 `closedWeekday`(JS `getDay()` 규약)를 쓸 수 있다
 
@@ -135,32 +141,35 @@
 행마다 이미지 FK가 따로 있어서, 테이블 변경 없이 "같은 예약번호에 이미지가 다른 행"으로 구현.
 - 조회 `GET /bgm-agit/reservation?...&ids=84,85` — 시간대는 **전 항목 교집합**, `label`은 `"M-1, M-2"`, `minPeople`=최소값들 중 최대, `maxPeople`=합산
 - 등록 `POST /bgm-agit/reservation`에 `bgmAgitImageIds: [84,85]` — 항목별 충돌 검증 후 **같은 예약번호**로 행 생성
-- 조합 검증(`loadReservableImages`): 같은 카테고리 + 같은 메뉴링크 + `maxSelectableSlots == null`(하루 1팀 제한인 G룸은 불가). 숨김 항목 거부
-- **예약금은 항목 수만큼 합산** → M-1+M-2 = 2만원
+- 조합 검증(`loadReservableImages`): 같은 카테고리 + 같은 메뉴링크 + **`SlotSchedule.isCombinable()` 화이트리스트**(`[["M-1","M-2","M-3"]]`). 숨김 항목 거부
+  - 예전엔 `maxSelectableSlots != null`(=G룸)로 걸렀는데, 모든 룸의 슬롯 제한이 풀리면서 그 조건이 항상 false 가 되어 **방어가 통째로 사라졌다**. 그래서 라벨 화이트리스트로 바꿨다
+- **금액은 항목 수만큼 합산하지 않는다** — 룸은 인원 × 단가라 M-1+M-2 도 인원 기준 1회. 합쳐 예약을 쓰는 이유가 인원이 많아서이고 그 인원만큼 이미 청구되므로 항목 수까지 곱하면 이중과금이다. 항목당 합산은 마작 대탁에만 남았다
 - 프론트 `RESERVATION_COMBINABLE_GROUPS`(`[['M-1','M-2','M-3']]`) → `ImageGrid`가 `combinable` prop 전달, 캘린더 상단 토글
 
 > **함정: 예약번호 단건 조회는 항목 수만큼 행이 늘어난다.** `findBizTalkCancel`이 `fetchOne`이라 `NonUniqueResultException`으로 관리자 확정·결제 승인이 터진 적 있음 → `fetch()` 후 라벨만 합쳐 조립하도록 수정됨. 예약번호로 단건을 가정하는 코드를 새로 쓸 때 같은 함정 주의.
 
 ### 코멘트 / 이용 방식 (프론트 하드코딩 맵)
-`bgm-agit-front/src/config/reservationComments.ts` — **라벨을 키로** 쓰는 맵 3종. DB 컬럼·알림톡 템플릿 변경 없이 요청사항 문자열에 얹는 방식.
+`bgm-agit-front/src/config/reservationComments.ts` — **라벨을 키로** 쓰는 맵 2종. DB 컬럼·알림톡 템플릿 변경 없이 요청사항 문자열에 얹는 방식.
 - `RESERVATION_COMMENTS` — 예약 카드·캘린더 안내 문구 (F Room "대탁룸(JP-COLOR)으로 변경 가능", M-1~3 "룸이 아닌 오픈된 공간입니다.")
-- `RESERVATION_OPTIONS` — 예약 확인 모달 체크박스. 선택 시 요청사항 맨 앞에 `[요청 옵션] …`
 - `RESERVATION_USE_MODES` — 캘린더 시간대 **위** 토글(`'F Room': ['일반룸','대탁룸(JP-COLOR)']`, 첫 값 기본). 선택 시 `[이용 방식] …`
 - 합쳐 예약이면 서버 label이 `"M-1, M-2"`로 오므로 프론트는 `label.split(',')[0]`(기준 라벨)로 조회
 
-### 취소 규칙
-- 사용자: 본인 예약만 + **예약일 전날까지**(`validateUserCancelableReservation`)
-- 관리자: 제한 없음. 단 현황판은 **지난 예약 확정·취소 불가**(`canManage = date >= todayYmd()`)
-- 사용자·관리자 모두 `modifyReservation` 한 곳으로 모여서 `cancelStatus='Y'`면 결제 환불이 함께 돈다(아래 결제 참고)
+### 취소·인원변경 규칙
+- 사용자: 본인 예약만 + **아직 시작하지 않은 예약**(`validateUserCancelableReservation`이 `SlotSchedule.useStartAt` 시각으로 판정). 날짜 비교가 아니다
+- **24시간 이내여도 취소는 된다. 환불만 0원**이다 — 자리를 비워주는 쪽이 매장에 이득이라 막지 않는다
+- 환불 비율은 `ReservationRefundPolicy.refundRate()` — 48h 전 100% / 48~24h 50% / 그 안쪽 0%. **관리자 취소도 같은 규칙**(노쇼는 당일이라 자동 0%). 매장 귀책으로 전액을 돌려줄 땐 토스 상점관리자에서 직접 환불한다
+- **인원 축소** `PUT /bgm-agit/reservation/people` — 줄이기만 된다(증원은 현장 워크인 결제). 확정건은 줄어든 인원 × **결제 시점 단가** × 환불비율만큼 부분환불, 미결제 대기건은 인원만 바꾸고 READY 주문을 무효화
+- 사용자·관리자 모두 `modifyReservation` 한 곳으로 모이고, 취소·인원변경은 컨트롤러에서 **`ReservationCancelExecutor`** 를 거친다(아래 결제 참고)
+- 현황판은 **지난 예약 확정·취소 불가**(`canManage = date >= todayYmd()`)
 
 ### 관리자 예약 현황판 `/reservation-board`
 `bgm-agit-front/src/pages/ReservationBoard.tsx`. 예약내역(10건 페이징)으로는 "오늘 어느 방이 몇 시에 차 있나"가 안 보여서 신설.
-- **세로축 = 시간, 가로축 = 장소** — 초안은 가로축이 시간이었는데 영업시간이 13:00~익일 02:00라 모바일에서 항상 가로 스크롤이 생겨 전치함. 전치만으로는 룸이 8~10개일 때 여전해서 **룸 그룹 탭**을 같이 넣어야 해결됨
+- **세로축 = 시간, 가로축 = 장소** — 초안은 가로축이 시간이었는데 영업시간이 길어 모바일에서 항상 가로 스크롤이 생겨 전치함. 전치만으로는 룸이 8~10개일 때 여전해서 **룸 그룹 탭**을 같이 넣어야 해결됨
 - 탭 분류는 **카테고리 우선 → 라벨 첫 알파벳**: `MAHJONG` 카테고리(라벨이 한글이라 알파벳 규칙으로 안 갈림)→`마작탁`, `ROOM`→`ROOM_GROUPS`(C·D·E / B·F·G / M), 나머지→`기타`. 그날 예약 있는 그룹만 노출
 - 모바일 기본은 **목록(아젠다) 뷰** — 1시간 블록(48px)에 이름·시간·인원 3줄이 안 들어감. `viewMode`가 `null`이면 화면 크기에 맡기고(`isMobile ? 'list' : 'grid'`), 토글하면 그 선택을 따름
 - 색상: **바탕색 = 룸**, 상태는 채움으로 — 확정=꽉 참 / 대기=점선+옅은 배경 / 취소=회색+취소선. `ROOM_PALETTE`(10색)를 **필터·탭 적용 전** 순서로 배정해 필터를 바꿔도 색이 안 흔들림. `blockStyle()`이 inline style로 주입
 - 백엔드 `GET /bgm-agit/reservation/board?date=YYYY-MM-DD` → `getReservationBoard(date, roles)`. 쿼리 `findReservationsByDate`(페이징 없음, member/image fetch join), DTO `AdminReservationBoardResponse`, 영수증은 `findDoneReceiptUrlsByReservationNos` 배치
-- **시간축 분값 규약 — 06시 이전은 +1440.** G룸(19:00~00:00)·마작대여(23:00~02:00)처럼 마감이 익일로 넘어가는 슬롯 때문. 프론트도 이 규약 그대로 사용
+- **시간축 분값 규약 — 하루 경계(오전 10시) 이전은 +1440.** 24시간 영업이라 익일 새벽 슬롯이 같은 영업일에 속한다. 서버는 `SlotSchedule.toSortableMinutes` 하나만 쓰고(`toBoardMinutes`가 위임), 프론트 축(`DEFAULT_AXIS_START/END` = 10:00~34:00)도 같은 규약
 - **권한 2중** — `BgmAgitAuthorizationManager`는 URL_RESOURCES에 없는 경로를 **기본 permit**으로 통과시킨다. 이 API는 회원 연락처가 나가므로 서비스단 `isAdmin(roles)` 검사 + URL 레벨 ADMIN 매핑 둘 다 필요(**매핑 INSERT 후 앱 재시작** — 로딩이 `@PostConstruct` 1회)
 - 메뉴 등록은 `/menuManage`에서. `getMainMenu`가 **subMenu 없는 root를 걸러내므로** 반드시 기존 부모 메뉴의 하위로
 
@@ -173,25 +182,29 @@
 
 ---
 
-## 예약금 결제 (토스페이먼츠)
+## 예약 결제 (토스페이먼츠)
 
 ### 모듈·테이블
 - 패키지 `com.bgmagitapi.origin.payment` — entity / repository / service / controller / schedule
-- 테이블 `BGM_AGIT_PAYMENT`: `BGM_AGIT_MEMBER_ID`(FK, RESTRICT), `BGM_AGIT_RESERVATION_NO`, `BGM_AGIT_ORDER_NO`(토스 orderId, 서버 발급), `BGM_AGIT_PAYMENT_KEY`, `..._AMOUNT`, `..._STATUS`, `..._TYPE`(토스 method), 승인/취소일시, `..._CANCEL_AMOUNT`/`_REASON`, `..._RECEIPT_URL`, `..._FAIL_REASON`, `REGIST_DATE`/`MODIFY_DATE`. varchar 기본 500
+- 테이블 `BGM_AGIT_PAYMENT`: `BGM_AGIT_MEMBER_ID`(FK, RESTRICT), `BGM_AGIT_RESERVATION_NO`, `BGM_AGIT_ORDER_NO`(토스 orderId, 서버 발급), `BGM_AGIT_PAYMENT_KEY`, `..._AMOUNT`, `..._STATUS`, `..._TYPE`(토스 method), 승인/취소일시, `..._CANCEL_AMOUNT`/`_REASON`, `..._RECEIPT_URL`, `..._FAIL_REASON`, **`..._PEOPLE`/`..._UNIT_PRICE`(결제 시점 스냅샷)**, `REGIST_DATE`/`MODIFY_DATE`. varchar 기본 500
+- 테이블 **`BGM_AGIT_PAYMENT_CANCEL`** — 환불 시도 이력. PK 가 토스 `Idempotency-Key` 가 되고, 실패한 시도도 남아 관리자 수동 환불의 근거가 된다
 - **`BGM_AGIT_ORDER_NO`만 UNIQUE.** `BGM_AGIT_RESERVATION_NO`엔 **UNIQUE 걸지 말 것** — 재결제 시 같은 예약번호로 새 행이 들어가서 터진다. "그룹당 유효 결제 1건"은 서비스단 관리
 - 예약↔결제는 논리 연결(payment가 `RESERVATION_NO` 보관). 그룹키라 물리 FK 불가
-- `PaymentStatus`: `READY`(주문 생성) / `DONE`(승인) / `CANCELED`(환불) / `ABORTED`(실패)
+- `PaymentStatus`: `READY`(주문 생성) / `DONE`(승인) / **`PARTIAL_CANCELED`(잔액 남은 부분환불)** / `CANCELED`(전액 환불) / `ABORTED`(실패)
+  - **상태 목록을 직접 나열하지 말 것.** `PaymentStatus.isSettled()`(영수증·중복결제 판정) / `isRefundable()`(환불 대상)을 쓴다. 예전에 `DONE` 만 보던 쿼리 둘이 있었는데, 부분환불이 생기는 순간 영수증이 사라지고 잔액이 환불 대상에서 빠졌다
 
 ### 흐름
-1. 예약 생성(대기 N/N) → 예약내역(`ReservationList.tsx`) 대기행의 **`예약금 결제`** 버튼
-2. `POST /bgm-agit/payments/order { reservationNo }` → `BgmAgitReservationService.createPaymentOrder`가 소유자·취소·확정 검증 + **금액 서버 계산** 후 공통 `createOrder` 위임 → `{ orderId, amount, orderName, clientKey }`
+1. 예약 생성(대기 N/N) → 예약내역(`ReservationList.tsx`) 대기행의 **`이용요금 결제`** 버튼
+2. `POST /bgm-agit/payments/order { reservationNo }` → `BgmAgitReservationService.createPaymentOrder`가 소유자·취소·확정·**지난예약·인원범위** 검증 + **금액 서버 계산** 후 공통 `createOrder` 위임 → `{ orderId, amount, orderName, clientKey }`
 3. 토스 결제창(`components/payment/PaymentCheckoutModal.tsx`) → 성공 시 `/payment/success`로 리다이렉트
-4. `POST /bgm-agit/payments/confirm` → 금액 대조·멱등 → 토스 승인 → **예약 `approvalStatus='Y'` 자동 확정 + 확정 알림톡**
-5. 취소(`modifyReservation`, `cancelStatus='Y'`) → DONE 결제가 있으면 **토스 전액 취소로 자동 환불**
+4. `POST /bgm-agit/payments/confirm` → 금액 대조·멱등·**중복결제 차단·서버 재계산 재대조** → 토스 승인 → **예약 `approvalStatus='Y'` 자동 확정 + 확정 알림톡**
+5. 취소(`modifyReservation`, `cancelStatus='Y'`) → 환불 비율만큼 **부분/전액 환불**
 
-- **예약금**: `SlotSchedule.resolveDepositAmount(category, label)` — **전 항목 10,000원 정액**. 슬롯 수 무관, 합쳐 예약이면 항목 수만큼 합산(M-1+M-2+M-3 = 3만원). M Room 3만원 예외는 M-1/M-2/M-3 분리와 함께 제거됨. 약관(`Terms.tsx`)·환불정책(`RefundPolicy.tsx`) 문구도 1만원
-- **향후 인원수 기준 전환 예정** — `bgmAgitReservationPeople`(예약 생성 시 이미 수집)로 인원 x 단가 계산. `resolveDepositAmount` 시그니처에 인원 인자 추가 + 약관·환불정책 문구 + 알림톡 템플릿(재심사) 동반 수정 필요. 토스페이먼츠 가맹점 재심사는 불필요(금액 산정 방식 변경은 심사 대상 아님)
-- 잔여 이용요금은 현장 결제
+- **금액**: `SlotSchedule.totalPaymentAmount(images, people, date)` — 룸은 **인원 × 단가**(`unitPrice`: 평일 9,000 / 토·일 11,000, 공휴일은 평일가), 마작 대탁만 **항목당 10,000원 정액** 유지. 슬롯 수는 금액과 무관하다(일무제한)
+  - **호출부는 결제 주문과 예약 대기 알림톡 둘뿐이고 반드시 같은 메서드를 써야 한다.** 갈리면 고지액 ≠ 청구액이 된다
+  - 조회 시점에는 인원이 미정이라 총액을 못 만든다 → 응답은 `pricingMode` + `prices`(날짜별 1인 단가)를 내려주고 프론트가 미리보기를 조립한다. **청구는 서버 재계산이 유일 출처**
+- **결제 시점 인원·단가를 결제행에 스냅샷으로 박는다.** 환불을 "지금 인원"으로 재계산하면 결제액과 어긋나고, 개편 전 1만원 결제건에 새 단가를 적용하면 `NOT_CANCELABLE_AMOUNT` 가 난다. 스냅샷이 없는 결제(마작 정액·개편 전)는 인원 차액 환불을 하지 않는다
+- 마작 대탁만 잔여 이용요금 현장 결제. 룸은 전액 선결제(세트 원하면 현장에서 3,000원 추가)
 - `payment.live`(yml) — `false`면 결제행만 처리하고 **예약 자동확정을 하지 않는다**(심사 기간 공짜 예약 방지). staging·real 모두 현재 `true`
 - **토스 가맹점 심사 통과 완료**(2026-09) — 운영은 라이브 키로 실제 과금된다. 프론트 심사용 게이팅(`src/config/payment.ts`의 `PAYMENT_LIVE`, 멘토 전용 노출)은 제거됨. 결제 버튼은 `canUsePayment = !isAdmin`
 
@@ -199,6 +212,13 @@
 - **승인 직전 슬롯 재검증**(`PaymentServiceImpl.validateReservationSlotAvailable`) — 대기 예약은 서로의 자리를 막지 않아서, 같은 시간대를 여럿이 대기로 들고 있다가 각자 결제하면 전부 확정되는 이중 예약이 가능했다. 확정건과 겹치면 **토스 승인(=과금) 전에** 409로 차단. 쿼리 `findConfirmedReservations(imageIds, date, excludeReservationNo)`
 - **승인 직렬화**(`PaymentConfirmExecutor`) — 재검증만으론 동시 통과 창이 남아 `ReentrantLock`(fair)으로 승인 전체를 한 줄로 세움. **서버 인스턴스 1대 전제**(다중화하면 DB/분산 락 필요)
   - ⚠️ **`@Transactional` 메서드 안에 `synchronized`를 걸면 무의미** — 커밋은 프록시가 메서드 반환 후에 하므로 락이 먼저 풀리고, 뒤 스레드가 미커밋 확정건을 못 본다. 그래서 락을 트랜잭션 **바깥** 컴포넌트에 두고 컨트롤러가 그걸 거친다
+- **중복 결제 차단**(`existsSettledPaymentByReservationNo`) — 멱등성이 orderNo 단위라 결제창을 두 개 띄워 각각 승인하면 예약 하나에 두 번 과금됐다(환불은 최신 1건만 돌았다). 주문 생성·승인 진입부 양쪽에서 막는다
+- **승인 전 서버 재계산 재대조**(`validateAmountAgainstReservation`) — 저장 금액과 클라이언트 금액만 맞춰보면 "둘 다 옛 금액"인 경우가 통과한다. READY 주문이 3일간 살아 있어 며칠 전 열어둔 결제창이 그대로 승인될 수 있다. 토스에 넘기는 금액도 **저장된 주문 금액**이다
+- **환불 직렬화**(`ReservationCancelExecutor`) — 승인과 같은 구조의 공정 `ReentrantLock`, 트랜잭션 바깥. 결제행은 `PESSIMISTIC_WRITE` 로 잠그고 잔액을 다시 읽는다
+- **환불 멱등키** — 토스 호출 **전에** `BGM_AGIT_PAYMENT_CANCEL` 행을 `REQUIRES_NEW` 로 선커밋하고 그 PK 를 `Idempotency-Key` 로 보낸다. 전액취소는 토스가 `ALREADY_CANCELED_PAYMENT` 로 막아주지만 **부분취소는 잔액이 남아 있으면 재시도가 그대로 또 환불된다**
+- **재취소 차단** — `modifyReservation` 이 이미 `cancelStatus='Y'` 인 예약을 즉시 리턴시킨다. 전액취소 시절엔 1회차에 `CANCELED` 가 되어 조회가 비는 덕에 우연히 무사했다
+- **누적 취소액은 토스 원장을 따른다** — `totalAmount - balanceAmount`. `cancels[]` 를 더하거나 최근 1건을 보면(문자열 `canceledAt` 정렬) 재시도·부분취소에서 틀어진다
+- **환불 0원이면 토스를 부르지 않는다** — `cancelAmount=0` 은 400 이고, 트랜잭션 안이라 예약 취소까지 롤백된다
 - **가상계좌 차단** — 승인 응답 `status`가 `DONE`이 아니면(가상계좌는 200 + `WAITING_FOR_DEPOSIT`) 발급을 즉시 취소하고 실패 처리. 입금 웹훅이 없어 나중에 확정을 걸 수단이 없기 때문. **근본 차단은 토스 상점관리자에서 가상계좌 수단 끄기**
 - **타임아웃**(`TossPaymentsClient`) — connect 5초 / read 30초. read를 짧게 잡으면 "토스는 승인했는데 우리는 실패 처리"라는 최악의 불일치가 늘어나므로 넉넉히 둠. 전역 `spring.http.client.*` 대신 이 클라이언트에만 적용(KML·비즈톡·소셜이 같은 빌더를 공유)
 
@@ -236,11 +256,18 @@ SDK 에러코드 → 문구 매핑은 `src/config/paymentErrors.ts`. `USER_CANCE
 - `DONE`/`CANCELED`는 결제 이력이라 절대 삭제하지 않음
 - S3 임시파일 정리(`BgmAgitFileSchedule`)와 같은 시각이지만 **별도 컴포넌트** — 그쪽은 try/catch가 없어 한쪽 실패가 다른 쪽을 막지 않게
 
+### 환불 실패 처리
+토스 취소가 실패해도 **예약 취소는 그대로 진행한다.** 자리를 비워주는 쪽이 먼저고, 예전처럼 취소까지 막으면
+손님이 상점관리자에서 이미 환불된 건(`ALREADY_CANCELED_PAYMENT`)을 영영 취소하지 못한다.
+- `BGM_AGIT_PAYMENT_CANCEL` 행이 `FAILED` 로 남고 `log.error("[payment][환불실패] 관리자 확인 필요…")` 가 찍힌다
+- 취소 API 응답 메시지가 "예약이 취소되었습니다. 환불 처리 중 문제가 있어…" 로 바뀌어 손님에게도 노출된다
+- ⚠️ **관리자에게 자동으로 알려주는 수단은 아직 없다.** 알림톡 템플릿을 새로 파야 해서 이번엔 로그·DB 행까지만 했다
+
 ### 알려진 한계 (미해결)
-- **외부 호출이 트랜잭션 안에 있음** — 토스 승인/취소 성공 후 뒤쪽에서 예외가 나면 롤백되어 "돈은 움직였는데 DB엔 없음". 반대로 토스가 4xx면(예: 상점관리자에서 직접 환불해 `ALREADY_CANCELED_PAYMENT`) 예약 취소 자체가 막힌다
-- **DONE 결제가 2건 이상이면 최신 1건만 환불**(`findLatestPaymentByReservationNoAndStatus`가 `fetchFirst`)
-- **노쇼/당일취소 위약금 없음** — 관리자가 취소하면 전액 환불. 약관의 "당일 취소·노쇼 환불 불가"는 사용자 취소가 전날까지만 가능해서 성립하는 것
-- **관리자 수동 확정에는 슬롯 충돌 재검증이 없음**(`modifyReservation`의 `approvalStatus='Y'`)
+- **외부 호출이 트랜잭션 안에 있음** — 토스 승인 성공 후 뒤쪽에서 예외가 나면 롤백되어 "돈은 움직였는데 DB엔 없음". 환불 쪽은 시도 행 선커밋 + 멱등키로 완화했지만 승인 경로는 그대로다
+- **노쇼는 별도 액션이 아니다** — 관리자가 취소 버튼을 누르면 3단계 규정이 적용되고, 당일이라 자동으로 0% 가 된다. 매장 귀책으로 전액을 돌려주려면 토스 상점관리자에서 직접 환불해야 한다
+- **관리자 수동 확정에는 슬롯 충돌 재검증이 없음**(`modifyReservation`의 `approvalStatus='Y'`). 결제 없이 확정되는 경로라 환불 대상도 없다
+- **합쳐 예약에서 방만 빼는 축소는 없다** — 인원만 줄이면 M-2 슬롯이 남아 자리를 점유한다. 관리자 수동 대응
 
 ### 키·심사 메모
 - 결제창 방식이므로 **API 개별 연동 키**(`test_ck_`/`test_sk_`, `live_ck_`/`live_sk_`). **clientKey 와 secretKey 는 반드시 같은 계열로 맞출 것** — clientKey 만 `ck_` 로 바꾸고 secretKey 를 위젯용 `gsk_` 로 두면 **결제창은 멀쩡히 뜨는데 승인(`confirm`)에서 `INVALID_API_KEY`** 가 난다(UI만 보고 판단하면 놓친다). 위젯용 키(`gck_`/`gsk_`)는 더 이상 쓰지 않는다
@@ -322,9 +349,16 @@ kml:
 
 ### 예약 결제 안내 (`bgmagit-res-payment-1`)
 구 템플릿 `bgmagit-res-payment`는 고정 문구에 "예약금은 M룸 30,000원, 그 외 10,000원이며 잔여 이용요금은 현장에서 결제합니다."가 박혀 있어 금액 정책이 바뀔 때마다 재심사가 필요했다. **`-1` 개정판에서 그 줄을 지우고 정보 블록에 `예약금: #{예약금}` 변수를 추가**해 금액이 바뀌어도 소스만 고치면 되게 했다.
-- 금액은 `SlotSchedule.totalDepositAmount(images)` 결과를 `AlimtalkUtils.formatAmount`로 포맷해 넣는다. **결제 주문 금액(`createPaymentOrder`)과 같은 메서드**라 합쳐 예약(M-1+M-2 = 20,000원)도 실제 청구액이 그대로 나간다. 두 곳이 갈리면 고지 금액과 청구 금액 불일치가 되므로 계산을 따로 만들지 말 것
+- 금액은 `SlotSchedule.totalPaymentAmount(images, people, date)` 결과를 `AlimtalkUtils.formatAmount`로 포맷해 넣는다. **결제 주문 금액(`createPaymentOrder`)과 같은 메서드**라 실제 청구액이 그대로 나간다. 두 곳이 갈리면 고지 금액과 청구 금액 불일치가 되므로 계산을 따로 만들지 말 것
 - **카카오 검수 통과 템플릿과 고정 문구는 여전히 글자 단위로 일치해야 한다.** 변수(`#{예약금}`, `#{룸}` 등) 값만 자유롭게 조립 가능
 - **검수 통과 후 `biztalk.reservation-payment-live: true` 로 전환 완료**(real·staging). 로컬만 `false` 라 계좌안내 템플릿 `bgmagit-res-account2` 가 나간다. 되돌리려면 yml 한 줄만 `false`
+
+#### 전액결제 개정판 (`bgmagit-res-payment-2`) — **검수 대기 중**
+10월 전환으로 `-1` 의 **고정 문구 두 줄이 사실과 달라졌다**: "예약금 결제"라는 표현과 "취소는 예약일 전날까지 가능하며, 당일 취소나 노쇼 시 예약금은 환불되지 않습니다."
+금액은 변수라 상관없지만 고정 문구 변경은 재심사 대상이라 `-1` 을 고치지 않고 템플릿을 새로 팠다.
+- 빌더는 `AlimtalkUtils.buildReservationFullPaymentMessage`, 스위치는 **`biztalk.reservation-payment-v2`(기본 false)**
+- **통과 전에는 `-1` 이 그대로 나가므로 그 기간 동안 알림톡의 환불 안내가 실제 규정과 다르다.** 예약 화면·결제 모달·환불정책 페이지가 정확한 문구를 갖고 있어 그쪽으로 보완한다
+- 통과하면 real·staging yml 의 그 한 줄만 `true` 로 바꾸면 된다
 - **예약 대기 알림톡은 예약자 본인에게만 간다**(`sandBizTalk`). 결제 전이라 확정이 아니고 관리자가 대응할 일도 없는 데다, 템플릿 고정 문구를 글자 단위로 맞춰야 해서 관리자 전용 문구를 못 만들어 "예약금을 결제해 주세요" 안내가 그대로 나갔다. 관리자 발송(`ownerMessage`/`AlimtalkUtils.buildOwnerReservationMessage`)은 제거됨
 - 마작강의 신청(`bgmagit-res-lecture*`)은 결제 연동이 없어 **계좌 입금 안내 그대로**다(`AlimtalkUtils.buildLectureMessage`, 프론트 `components/academy/BaseTable.tsx`)
 
@@ -416,7 +450,7 @@ kml:
 ### 데이터베이스
 - 서버 도커 컨테이너 MySQL 8.0.43. `binlog_format=ROW`, `binlog_row_image=FULL`(플래시백 가능)
 - **실수 DELETE 났을 때 절대 하지 말 것**: 컨테이너 재시작, `RESET MASTER`, `PURGE BINARY LOGS`. 복구는 `mysqlbinlog --base64-output=DECODE-ROWS -v` 덤프 후 역변환
-- `ddl-auto: none` — 스키마 변경은 **수동 ALTER**(`create.sql`/`create2.sql` 참고)
+- `ddl-auto: none` — 스키마 변경은 **수동 ALTER**. 저장소에 현행 스키마 DDL 전체를 담은 파일은 **없다** — `create.sql`/`create2.sql`은 커밋 `c8862cdc`(2026-07-07)에서 지워졌고 `git show c8862cdc^:create.sql` 로만 열람된다. 그 뒤 추가된 컬럼(예: `BGM_AGIT_IMAGE_MIN/MAX_PEOPLE`, `BGM_AGIT_RESERVATION_PEOPLE`)은 **엔티티가 유일한 정본**이다
 - 인증 관련 핵심 테이블: `BGM_AGIT_MEMBER` / `BGM_AGIT_MEMBER_ROLE` / `BGM_AGIT_ROLE` / `BGM_AGIT_URL_RESOURCES`(+`_ROLE`, DB 기반 동적 인가 — `BgmAgitAuthorizationManager`)
 
 ### 스케줄러 목록
@@ -442,17 +476,57 @@ kml:
 3. **소셜·폼 닉네임 네임스페이스 분리** — `AndSocialType` 없는 조회는 버그
 4. **`bgmagit-bml-match` 카카오 검수 대기 중** — 통과 전엔 발송이 거부되고 catch에서 1회 재시도 후 종료. 통과 즉시 자동 발송. 첫 발송 때 URL 중복(`https://https://…`) 여부 확인할 것
 5. **URL_RESOURCES에 없는 경로는 기본 permit** — 새 관리자용 POST/PUT/DELETE는 매핑을 넣지 않으면 무방비. 매핑 INSERT 후 **앱 재시작** 필요
+6. **10월 개편은 코드만 들어가 있다** — 배포 전에 SQL 2개 실행·READY 주문 정리·대기 예약 정리가 필요하다. **10월 예약 정책 개편** 절의 체크리스트를 따를 것
 
 ## TODO 후보
 
 - 닉네임 변경 시 KML synk 리셋
 - `AMBIGUOUS` 수동 해결 UI(마이페이지에서 KML ID 직접 선택)
 - `application-*.yml` 정리(`kakao.redirecturi2`, `naver.redirecturi2`, kml-front 소셜 OAuth env)
-- 결제: 외부 호출 트랜잭션 분리, 관리자 확정 슬롯 검증, 노쇼 위약금
+- 결제: 승인 경로의 외부 호출 트랜잭션 분리, 관리자 확정 슬롯 검증, 환불 실패 시 관리자 자동 알림
 - `BGM_AGIT_ROOM` 테이블 분리 / 예약 2테이블 정규화
 - 새 엔드포인트 권한 매핑 확인 — `/bgm-agit/ranks/{memberId}/stats`, `.../games`, `/my-rank`
 - 대국 기록 알림톡을 수정/삭제 흐름에도 적용(`eventPublisher.publishEvent(new MatchRecordRegisteredEvent(...))` 한 줄씩)
 - 메인 퀵메뉴 추가(현재 "내 기록"만 들어감) / 개인기록 "더보기" 영역 / 사이드바 외부 클릭 닫기
+
+---
+
+## 10월 예약 정책 개편 — 코드 반영 완료, 배포 전 작업 남음
+
+사장님 공지로 예약의 **요금·시간·환불 모델이 한꺼번에** 바뀌었다. 셋이 서로 물려 있어 나눠서 배포할 수 없다.
+구현 내용은 위 **예약**·**예약 결제** 절에 녹였고, 여기에는 **배포 전에 해야 할 일과 결정 근거**만 남긴다.
+
+| | 개편 전 | 지금 |
+|---|---|---|
+| 결제 | 예약금 항목당 1만원 + 잔액 현장결제 | **인원 × 단가 전액결제**(평일 9,000 / 토·일 11,000) |
+| 시간 | 룸 1시간 / G룸 5시간·하루1팀 / 마작 3시간 | **일무제한** 10:00~익일 10:00 안에서 연속 구간 자유 선택(24슬롯) |
+| 영업 | 13:00~익일 02:00 | **24시간**(수요일 무인운영 휴무는 유지) |
+| 환불 | 전날까지 전액 / 당일·노쇼 불가 | **48h 100% / 24h 50% / 그 안쪽 0%**, 인원 축소 차액도 동일 |
+| 룸 인원 | B'4명' C/D/E'2~6' F'4~5명' G'6~12명' | B·F 4~6 / C·D·E 2~4(어린이 2~6) / G 7~12 / M-1~3 각 4~7 |
+
+**마작 대탁(MAHJONG)은 손대지 않았다** — 3시간 슬롯 + 예약금 1만원 + 현장결제 그대로다.
+이번 개편에서 유일하게 안 바뀐 경로라 회귀 확인 대상이다.
+
+### 배포 전 체크리스트
+1. **`room-people-2026-10.sql` 실행** (앱 배포보다 **먼저**). 서버에 인원 범위 검증이 들어갔기 때문에 옛 값(B Room 최대 4명)이 남아 있으면 공지대로 예약하려는 손님이 거절당한다
+2. **`payment-partial-cancel-2026-10.sql` 실행** (앱 배포보다 **먼저**). 결제 스냅샷 컬럼 + `BGM_AGIT_PAYMENT_CANCEL` 테이블 + `/bgm-agit/reservation/people` URL_RESOURCES 매핑. **매핑 INSERT 후 앱 재시작 필요**(`@PostConstruct` 1회 로딩)
+3. **살아있는 READY 주문 일괄 ABORTED** (배포 직전). 이미 열려 있는 결제창에서 승인이 들어오면 구 금액으로 통과할 수 있다. 코드에도 서버 재계산 대조가 있지만 이중으로 막는다. SQL 은 위 파일 4번 항목에 주석으로 있다
+4. **미결제 대기 예약 일괄 취소 후 재예약 안내.** "예약금 1만원" 알림톡이 이미 나간 건들이라 그냥 두면 고지액 ≠ 청구액이 된다
+5. **알림톡 `bgmagit-res-payment-2` 카카오 검수 신청.** 통과 전에는 구 템플릿이 나가고, 통과 후 yml `biztalk.reservation-payment-v2: true` 한 줄만 바꾼다
+6. 확정된 기존 예약(1만원 결제 완료)은 그대로 두고 현장 잔액 수납. 취소 시 환불은 **결제행 금액 1만원 기준**으로 3단계가 적용된다(새 인원 단가로 재계산하지 않는다)
+
+### 정책 결정 근거 (사장님 확인)
+- 주말 단가는 **토·일만**. 공휴일은 평일가 → `getReservation` 의 `LunarCalendar` 공휴일 집합 계산을 **삭제**했다(남겨두면 화면 배지는 주말가인데 청구는 평일가가 된다)
+- 24h 이내 사용자 취소는 **허용하되 환불 0원**. 자리를 비워주는 쪽이 매장에 이득이라 막지 않는다
+- **관리자 취소도 같은 3단계**(노쇼 = 당일 = 자동 0%). 매장 귀책 전액 환불은 토스 상점관리자에서 수동 처리
+- 환불 API 실패 시 **예약 취소는 진행 + 기록**. 개편 전에는 취소 자체가 롤백됐다
+- 월간패스 할인은 범위 밖
+
+### 남은 일
+- 환불 실패 시 **관리자 자동 알림**(알림톡 템플릿 신규 필요, 현재는 로그 + `BGM_AGIT_PAYMENT_CANCEL` FAILED 행만)
+- 프론트 `RESERVATION_COMBINABLE_GROUPS` 하드코딩 — 서버에 화이트리스트가 생겼으니 응답으로 내려 제거 가능
+- 프론트 `ReservationDatePicker.DEFAULT_CLOSED_WEEKDAY` — 날짜 선택 전에는 서버 `closedWeekday` 를 받을 수 없어 기본값이 남아 있다
+- 결제 경로 통합 테스트(현재 단위 테스트는 `SlotScheduleTest`/`ReservationRefundPolicyTest` 둘뿐)
 
 ---
 
@@ -487,7 +561,8 @@ kml:
 - 인증·시큐리티: `bgm-agit-api/.../origin/security/`
 - KML 연동: `bgm-agit-api/.../origin/security/service/kml/`
 - 결제: `bgm-agit-api/.../origin/payment/`, 프론트 `bgm-agit-front/src/components/payment/`, `src/pages/Payment{Success,Fail}.tsx`
-- 예약: `bgm-agit-api/.../origin/{controller/BgmAgitReservationController, service/impl/BgmAgitReservationServiceImpl, util/SlotSchedule}.java`, 프론트 `src/pages/{ReservationList,ReservationBoard}.tsx`, `src/components/ReservationCalendar.tsx`
+- 예약: `bgm-agit-api/.../origin/{controller/BgmAgitReservationController, service/impl/BgmAgitReservationServiceImpl, util/SlotSchedule, util/ReservationRefundPolicy}.java`, 프론트 `src/pages/{ReservationList,ReservationBoard}.tsx`, `src/components/calendar/{ReservationDatePicker,ReservationTimePanel}.tsx`, `src/components/grid/ImageGrid.tsx`
+- 스키마 변경 SQL: 리포지토리 루트의 `room-people-2026-10.sql`, `payment-partial-cancel-2026-10.sql`, `merge-duplicate-members.sql`
 - 알림톡: `bgm-agit-api/.../origin/{util/Alimtalk*, service/BgmAgitBizTalk*, service/impl/BgmAgitBizTalk*Impl, event/BizTalkEventListener, event/dto/*Event}.java`
 - 마이페이지: `bgm-agit-api/.../origin/service/{BgmAgitMyPageService,impl/BgmAgitMyPageServiceImpl}.java`, 프론트 `bgm-agit-front/src/components/MyPageModal.tsx`
 - 마작 도메인: `bgm-agit-api/.../kml/{lecture,notice,record,rank,tournament,...}/`

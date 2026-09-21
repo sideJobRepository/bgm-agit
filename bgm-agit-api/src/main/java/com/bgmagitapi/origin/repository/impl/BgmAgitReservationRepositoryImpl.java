@@ -135,6 +135,24 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
         return execute;
     }
     
+    /**
+     * 예약 그룹의 인원 일괄 변경. 인원은 슬롯 행마다 중복 저장되므로 전부 같이 바꾼다.
+     *
+     * flush → update → clear 순서는 updateCancelAndApprovalStatus 와 같은 이유다.
+     * 앞에서 손댄 엔티티(결제행 등)를 flush 없이 clear 하면 그 변경이 통째로 사라진다.
+     */
+    @Override
+    public long updateReservationPeople(Long reservationNo, Integer people) {
+        em.flush();
+        long execute = queryFactory
+                .update(bgmAgitReservation)
+                .set(bgmAgitReservation.bgmAgitReservationPeople, people)
+                .where(bgmAgitReservation.bgmAgitReservationNo.eq(reservationNo))
+                .execute();
+        em.clear();
+        return execute;
+    }
+
     @Override
     public Long findMaxReservationNo() {
         return queryFactory

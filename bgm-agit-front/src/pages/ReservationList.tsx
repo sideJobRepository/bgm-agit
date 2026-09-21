@@ -4,12 +4,12 @@ import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { useCallback, useEffect, useState } from 'react';
 import { useMediaQuery } from 'react-responsive';
-import { CheckCircle, CreditCard, Receipt, Share, XCircle } from 'phosphor-react';
+import { CheckCircle, CreditCard, Receipt, Share, UsersThree, XCircle } from 'phosphor-react';
 import { useReservationListFetch, useUpdatePost } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { reservationListDataState } from '../recoil/state/reservationState.ts';
 import { userState } from '../recoil/state/userState.ts';
-import { showConfirmModal } from '../components/confirmAlert.tsx';
+import { showConfirmModal, showInputModal } from '../components/confirmAlert.tsx';
 import { toast } from 'react-toastify';
 import type { Reservation } from '../types/reservation.ts';
 import Pagination from '../components/Pagination.tsx';
@@ -20,6 +20,12 @@ import { todayYmd, toLocalYmd } from '../utils/date.ts';
 import { theme } from '../styles/theme.ts';
 
 type StatusTone = 'waiting' | 'approved' | 'canceled';
+
+/**
+ * 서버 ApiResponse 중 안내 문구만 쓰는 형태.
+ * 취소·인원변경은 실제 환불 금액이 서버에서 결정되므로 그 문구를 그대로 띄운다.
+ */
+type ApiMessageResponse = { message?: string };
 
 // 상태는 진한 단색으로 칠해 헤더바 위 배지와 카드 테두리에 같이 쓴다
 const STATUS_COLORS: Record<StatusTone, string> = {
@@ -90,8 +96,29 @@ export default function ReservationList() {
     return date >= todayYmd();
   }
 
+  /**
+   * 손님 취소 가능 여부.
+   *
+   * 예전에는 "예약일 전날까지"였지만 환불이 48h/24h 3단계가 되면서 날짜 기준이 의미를 잃었다.
+   * 24시간 이내여도 취소는 되고 환불만 0원이므로(자리를 비워주는 쪽이 매장에 이득이다)
+   * 아직 시작하지 않은 예약이면 열어 둔다. 최종 판정은 서버가 이용 시작 시각으로 한다.
+   */
   function canCancelBeforeReservationDate(item: Reservation) {
-    return item.cancelStatus !== 'Y' && item.reservationDate > todayYmd();
+    return item.cancelStatus !== 'Y' && item.reservationDate >= todayYmd();
+  }
+
+  /** 환불 예상액 안내 문구. 서버가 계산해 내려준 비율·금액을 그대로 쓴다 */
+  function refundNotice(item: Reservation) {
+    const paid = item.paidAmount ?? 0;
+    if (paid <= 0) {
+      return '결제 전 예약이라 환불할 금액이 없습니다.';
+    }
+    const rate = item.refundRate ?? 0;
+    const amount = item.refundAmount ?? 0;
+    if (amount <= 0) {
+      return `이용일 24시간 이내라 환불이 불가합니다. (결제 ${paid.toLocaleString()}원)`;
+    }
+    return `환불 예상 금액 ${amount.toLocaleString()}원 (결제 ${paid.toLocaleString()}원의 ${rate}%)`;
   }
 
   // pageSize 를 deps 에 둔다. useMediaQuery 가 첫 렌더 직후 값이 바뀌는 경우 재조회가 필요하다
@@ -108,18 +135,81 @@ export default function ReservationList() {
     };
 
     const url = role ? `/bgm-agit/reservation/admin` : `/bgm-agit/reservation`;
-    const message =
-      approval === 'Y' ? '해당 예약을 확정하시겠습니까?' : '해당 예약을 취소하시겠습니까?';
-    const message2 = approval === 'Y' ? '예약이 확정되었습니다.' : '예약이 취소되었습니다.';
+    const canceling = approval !== 'Y';
+    const message = canceling ? (
+      <>
+        해당 예약을 취소하시겠습니까?
+        <br />
+        {refundNotice(item)}
+      </>
+    ) : (
+      '해당 예약을 확정하시겠습니까?'
+    );
     showConfirmModal({
       message: message,
       onConfirm: () => {
-        update({
+        update<typeof param, ApiMessageResponse>({
           url: url,
           body: param,
           ignoreHttpError: true,
-          onSuccess: () => {
-            toast.success(message2);
+          // 취소는 서버가 실제 환불 금액까지 계산해 메시지로 돌려준다.
+          // 목록을 열어둔 채 48시간 경계를 넘기면 위에 보여준 예상액과 갈리므로 응답 쪽을 쓴다.
+          onSuccess: res => {
+            toast.success(
+              (canceling ? res?.message : null) ??
+                (canceling ? '예약이 취소되었습니다.' : '예약이 확정되었습니다.')
+            );
+            fetchReservationList(page, { startDate: start, endDate: end }, pageSize);
+          },
+        });
+      },
+    });
+  }
+
+  /**
+   * 예약 인원 축소.
+   *
+   * 증원 경로는 두지 않는다 — 공지대로 추가 인원은 현장 워크인 결제다.
+   * 확정된 예약이면 줄어든 인원만큼 환불 규정 비율로 차액이 돌아오고,
+   * 미결제 대기건이면 금액만 다시 계산된다(그래서 안내 문구가 갈린다).
+   */
+  function reducePeople(item: Reservation) {
+    const current = item.reservationPeople ?? 0;
+    const paid = (item.paidAmount ?? 0) > 0;
+
+    showInputModal({
+      message: (
+        <>
+          변경할 인원을 입력해 주세요. (현재 {current}명)
+          <br />
+          {paid
+            ? `줄어든 인원만큼 ${item.refundRate ?? 0}% 환불됩니다.`
+            : '아직 결제 전이라 결제 시 변경된 인원으로 금액이 계산됩니다.'}
+          <br />
+          인원을 늘리시려면 현장에서 워크인 요금으로 결제해 주세요.
+        </>
+      ),
+      label: '예약 인원',
+      initialValue: String(Math.max(current - 1, 1)),
+      placeholder: '숫자만 입력',
+      onConfirm: value => {
+        const next = Number(value);
+        if (!Number.isInteger(next) || next < 1) {
+          toast.error('인원은 1명 이상 숫자로 입력해 주세요.');
+          return;
+        }
+        if (next >= current) {
+          toast.error('인원은 줄일 수만 있습니다. 추가 인원은 현장에서 결제해 주세요.');
+          return;
+        }
+
+        update<{ reservationNo: number; people: number }, ApiMessageResponse>({
+          url: '/bgm-agit/reservation/people',
+          body: { reservationNo: item.reservationNo, people: next },
+          ignoreHttpError: true,
+          // 실제 환불 금액은 서버가 결제 시점 단가로 계산해 메시지에 담아 준다
+          onSuccess: res => {
+            toast.success(res?.message ?? '예약 인원이 변경되었습니다.');
             fetchReservationList(page, { startDate: start, endDate: end }, pageSize);
           },
         });
@@ -178,14 +268,19 @@ export default function ReservationList() {
     <span>
       {canUsePayment && (
         <>
-          ※ 예약 대기 상태에서 결제 버튼을 눌러 예약금을 결제하면 예약이 확정됩니다.
+          ※ 예약 대기 상태에서 결제 버튼을 눌러 이용요금을 결제하면 예약이 확정됩니다.
           <br />
         </>
       )}
-      ※ 예약금은 예약 항목당 10,000원입니다. (여러 항목을 합쳐 예약한 경우 항목 수만큼 합산)
-      <br />※ 잔여 이용요금은 현장에서 결제합니다.
-      <br />※ 예약 취소는 예약일 전날까지만 가능합니다. 당일 취소는 불가합니다.
-      <br />※ 확정 후 취소 또는 환불 문의는 0507-1445-3503로 연락 부탁드립니다.
+      ※ 룸 이용요금은 1인 기준 평일 9,000원 / 주말 11,000원이며, 예약 시 인원수만큼 전액
+      결제합니다. (세트 이용을 원하시면 현장에서 3,000원만 추가 결제)
+      <br />※ 환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후(당일·노쇼 포함)에는
+      불가합니다.
+      <br />※ 인원을 줄이시는 경우에도 줄어든 인원만큼 같은 기준으로 환불됩니다. 인원이 늘어나는
+      경우 추가 인원은 현장에서 워크인 요금으로 결제해 주세요.
+      <br />※ 마작 대탁 대여는 기존과 같이 예약금 10,000원 결제 후 잔여 요금을 현장에서
+      결제합니다.
+      <br />※ 기타 문의는 0507-1445-3503로 연락 부탁드립니다.
     </span>
   );
 
@@ -243,6 +338,9 @@ export default function ReservationList() {
                 isAdmin &&
                 item.approvalStatus !== 'Y' &&
                 item.cancelStatus !== 'Y';
+              // 증원은 현장 워크인 결제라 여기서 받지 않는다. 1명 아래로는 줄일 수 없다
+              const canReducePeople =
+                upcoming && item.cancelStatus !== 'Y' && (item.reservationPeople ?? 0) > 1;
 
               return (
                 <Card key={item.reservationNo} $tone={status.tone}>
@@ -300,7 +398,13 @@ export default function ReservationList() {
                             : '결제 준비중'
                           : isNarrow
                             ? '결제'
-                            : '예약금 결제'}
+                            : '이용요금 결제'}
+                      </ActionButton>
+                    )}
+                    {canReducePeople && (
+                      <ActionButton type="button" color="#8A6D3B" onClick={() => reducePeople(item)}>
+                        <UsersThree weight="bold" />
+                        {isNarrow ? '인원' : '인원 축소'}
                       </ActionButton>
                     )}
                     {canApprove && (

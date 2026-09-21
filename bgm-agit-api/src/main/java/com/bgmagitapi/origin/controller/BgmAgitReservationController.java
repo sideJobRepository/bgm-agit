@@ -4,12 +4,15 @@ package com.bgmagitapi.origin.controller;
 import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationModifyRequest;
+import com.bgmagitapi.origin.controller.request.BgmAgitReservationPeopleRequest;
 import com.bgmagitapi.origin.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AdminReservationBoardResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AvailableRoomsResponse;
 import com.bgmagitapi.origin.controller.response.reservation.GroupedReservationResponse;
 import com.bgmagitapi.origin.page.PageResponse;
+import com.bgmagitapi.origin.payment.service.ReservationCancelExecutor;
 import com.bgmagitapi.origin.service.BgmAgitReservationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +33,8 @@ public class BgmAgitReservationController {
     
     
     private final BgmAgitReservationService bgmAgitReservationService;
+    // 취소·인원축소는 환불이 걸려 있어 한 줄로 세운다(트랜잭션 바깥 락)
+    private final ReservationCancelExecutor reservationCancelExecutor;
     
     @GetMapping("/reservation")
     public BgmAgitReservationResponse getReservation(
@@ -90,18 +95,35 @@ public class BgmAgitReservationController {
     }
 
 
+    /**
+     * 예약 확정·취소. 취소는 환불이 함께 돌기 때문에 직렬화 실행기를 거친다.
+     * 락을 트랜잭션 바깥에 두어야 뒤 스레드가 미커밋 상태를 보지 않는다(승인 경로와 같은 이유).
+     */
     @PutMapping("/reservation")
     public ApiResponse modifyReservation(@AuthenticationPrincipal Jwt jwt , @RequestBody BgmAgitReservationModifyRequest request) {
         Long id = jwt.getClaim("id");
         String role = extractRole(jwt);
-        return bgmAgitReservationService.modifyReservation(id,request,role);
+        return reservationCancelExecutor.execute(() -> bgmAgitReservationService.modifyReservation(id, request, role));
     }
-    
+
     @PutMapping("/reservation/admin")
     public ApiResponse modifyAdminReservation(@AuthenticationPrincipal Jwt jwt , @RequestBody BgmAgitReservationModifyRequest request) {
         Long id = jwt.getClaim("id");
         String role = extractRole(jwt);
-        return bgmAgitReservationService.modifyReservation(id,request,role);
+        return reservationCancelExecutor.execute(() -> bgmAgitReservationService.modifyReservation(id, request, role));
+    }
+
+    /**
+     * 예약 인원 축소. 확정건이면 차액이 환불되므로 취소와 같은 락으로 직렬화한다.
+     * URL_RESOURCES 매핑이 없으면 기본 permit 이므로 서비스단에서도 소유자를 확인한다.
+     */
+    @PutMapping("/reservation/people")
+    public ApiResponse modifyReservationPeople(@AuthenticationPrincipal Jwt jwt,
+                                               @Valid @RequestBody BgmAgitReservationPeopleRequest request) {
+        Long id = jwt.getClaim("id");
+        String role = extractRole(jwt);
+        return reservationCancelExecutor.execute(
+                () -> bgmAgitReservationService.modifyReservationPeople(id, request, role));
     }
     
     
