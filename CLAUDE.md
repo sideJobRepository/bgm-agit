@@ -224,6 +224,7 @@
 - **승인 전 서버 재계산 재대조**(`validateAmountAgainstReservation`) — 저장 금액과 클라이언트 금액만 맞춰보면 "둘 다 옛 금액"인 경우가 통과한다. READY 주문이 3일간 살아 있어 며칠 전 열어둔 결제창이 그대로 승인될 수 있다. 토스에 넘기는 금액도 **저장된 주문 금액**이다
 - **환불 직렬화**(`ReservationCancelExecutor`) — 승인과 같은 구조의 공정 `ReentrantLock`, 트랜잭션 바깥. 결제행은 `PESSIMISTIC_WRITE` 로 잠그고 잔액을 다시 읽는다
 - **환불 멱등키** — 토스 호출 **전에** `BGM_AGIT_PAYMENT_CANCEL` 행을 `REQUIRES_NEW` 로 선커밋하고 그 PK 를 `Idempotency-Key` 로 보낸다. 전액취소는 토스가 `ALREADY_CANCELED_PAYMENT` 로 막아주지만 **부분취소는 잔액이 남아 있으면 재시도가 그대로 또 환불된다**
+  - ⚠️ **`BGM_AGIT_PAYMENT_CANCEL.BGM_AGIT_PAYMENT_ID` 에 물리 FK 를 걸지 말 것.** 위 두 방어(비관적 락 + REQUIRES_NEW 선커밋)가 서로 물려 데드락이 난다 — 바깥 트랜잭션이 결제행에 X락을 쥔 채 별도 트랜잭션으로 INSERT 하는데, FK 가 있으면 그 INSERT 가 부모 행의 S락을 기다리고 바깥은 안쪽이 끝나길 기다린다. 증상은 `Lock wait timeout exceeded`(SQLState 40001) + 취소 500. 실제로 한 번 겪고 FK 를 떼어냈다
 - **재취소 차단** — `modifyReservation` 이 이미 `cancelStatus='Y'` 인 예약을 즉시 리턴시킨다. 전액취소 시절엔 1회차에 `CANCELED` 가 되어 조회가 비는 덕에 우연히 무사했다
 - **누적 취소액은 토스 원장을 따른다** — `totalAmount - balanceAmount`. `cancels[]` 를 더하거나 최근 1건을 보면(문자열 `canceledAt` 정렬) 재시도·부분취소에서 틀어진다
 - **환불 0원이면 토스를 부르지 않는다** — `cancelAmount=0` 은 400 이고, 트랜잭션 안이라 예약 취소까지 롤백된다

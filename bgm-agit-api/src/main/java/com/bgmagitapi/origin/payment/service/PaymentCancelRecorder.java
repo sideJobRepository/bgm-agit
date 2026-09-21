@@ -1,9 +1,9 @@
 package com.bgmagitapi.origin.payment.service;
 
-import com.bgmagitapi.origin.payment.entity.BgmAgitPayment;
+
 import com.bgmagitapi.origin.payment.entity.BgmAgitPaymentCancel;
 import com.bgmagitapi.origin.payment.repository.BgmAgitPaymentCancelRepository;
-import com.bgmagitapi.origin.payment.repository.BgmAgitPaymentRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -26,14 +26,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentCancelRecorder {
 
     private final BgmAgitPaymentCancelRepository bgmAgitPaymentCancelRepository;
-    private final BgmAgitPaymentRepository bgmAgitPaymentRepository;
 
-    /** 토스 호출 직전. 시도 행을 새 트랜잭션으로 커밋하고 그 행을 돌려준다(PK = 멱등키). */
+
+    /**
+     * 토스 호출 직전. 시도 행을 새 트랜잭션으로 커밋하고 그 행을 돌려준다(PK = 멱등키).
+     *
+     * 결제행을 엔티티로 참조하지 않고 id 만 넣는다. 바깥 트랜잭션이 결제행에 쓰기 잠금을
+     * 걸어 둔 상태라, 부모 행을 건드리는 순간(FK 검증 포함) 서로 기다리다 잠금 타임아웃이 난다.
+     */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public BgmAgitPaymentCancel begin(Long paymentId, Long reservationNo, int amount, int rate, String reason) {
-        BgmAgitPayment payment = bgmAgitPaymentRepository.getReferenceById(paymentId);
         BgmAgitPaymentCancel attempt =
-                new BgmAgitPaymentCancel(payment, reservationNo, amount, rate, reason);
+                new BgmAgitPaymentCancel(paymentId, reservationNo, amount, rate, reason);
         return bgmAgitPaymentCancelRepository.save(attempt);
     }
 

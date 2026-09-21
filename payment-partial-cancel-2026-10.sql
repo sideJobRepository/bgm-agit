@@ -28,9 +28,14 @@ ALTER TABLE BGM_AGIT_PAYMENT
 --      언제 왜 얼마를 돌려줬는지가 사라진다. 50% 환불과 인원 축소 차액이 섞이면 추적이 안 된다.
 --
 -- 토스 호출 **전에** REQUIRES_NEW 로 선커밋되는 행이라, 바깥 트랜잭션이 롤백돼도 흔적이 남는다.
+--
+-- **BGM_AGIT_PAYMENT_ID 에 물리 FK 를 걸지 말 것.** 걸었다가 데드락이 났다.
+-- 환불은 바깥 트랜잭션이 결제행에 PESSIMISTIC_WRITE 를 잡은 채 이 행을 별도 트랜잭션으로
+-- 선커밋하는데, FK 가 있으면 INSERT 가 부모(결제행)의 공유 잠금을 요구한다.
+-- 바깥은 안쪽이 끝나길 기다리고 안쪽은 바깥이 쥔 락을 기다려 Lock wait timeout 이 된다.
 CREATE TABLE IF NOT EXISTS BGM_AGIT_PAYMENT_CANCEL (
     BGM_AGIT_PAYMENT_CANCEL_ID     BIGINT       NOT NULL AUTO_INCREMENT,
-    BGM_AGIT_PAYMENT_ID            BIGINT       NOT NULL,
+    BGM_AGIT_PAYMENT_ID            BIGINT       NOT NULL COMMENT '대상 결제 id (논리 연결, 물리 FK 없음 — 아래 주석 참고)',
     BGM_AGIT_RESERVATION_NO        BIGINT       NULL COMMENT '예약 그룹키(논리 연결, 물리 FK 없음)',
     BGM_AGIT_CANCEL_AMOUNT         INT          NULL COMMENT '이번 시도에서 환불하려는 금액',
     BGM_AGIT_CANCEL_RATE           INT          NULL COMMENT '적용된 환불 비율 100/50/0',
@@ -41,9 +46,8 @@ CREATE TABLE IF NOT EXISTS BGM_AGIT_PAYMENT_CANCEL (
     REGIST_DATE                    DATETIME     NULL,
     MODIFY_DATE                    DATETIME     NULL,
     PRIMARY KEY (BGM_AGIT_PAYMENT_CANCEL_ID),
-    KEY IDX_PAYMENT_CANCEL_RESERVATION (BGM_AGIT_RESERVATION_NO),
-    CONSTRAINT FK_PAYMENT_CANCEL_PAYMENT
-        FOREIGN KEY (BGM_AGIT_PAYMENT_ID) REFERENCES BGM_AGIT_PAYMENT (BGM_AGIT_PAYMENT_ID)
+    KEY IDX_PAYMENT_CANCEL_PAYMENT (BGM_AGIT_PAYMENT_ID),
+    KEY IDX_PAYMENT_CANCEL_RESERVATION (BGM_AGIT_RESERVATION_NO)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 -- 3) 인원 변경 API 권한 매핑

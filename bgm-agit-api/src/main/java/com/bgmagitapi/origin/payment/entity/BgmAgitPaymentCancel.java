@@ -27,10 +27,16 @@ public class BgmAgitPaymentCancel extends DateSuperClass {
     @Column(name = "BGM_AGIT_PAYMENT_CANCEL_ID")
     private Long bgmAgitPaymentCancelId;
 
-    // 대상 결제 (물리 FK. 결제행은 이력이라 지우지 않는다)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "BGM_AGIT_PAYMENT_ID")
-    private BgmAgitPayment bgmAgitPayment;
+    /**
+     * 대상 결제 id. **물리 FK 를 걸지 않는다.**
+     *
+     * 걸었다가 데드락이 났다. 환불은 바깥 트랜잭션이 결제행에 PESSIMISTIC_WRITE 를 잡은 채
+     * 이 행을 REQUIRES_NEW 로 선커밋하는데, FK 가 있으면 INSERT 가 부모(결제행)의 공유 잠금을
+     * 요구한다. 바깥은 안쪽이 끝나길 기다리고 안쪽은 바깥이 쥔 락을 기다려 Lock wait timeout 이 된다.
+     * 예약↔결제가 이미 논리 연결인 것과 같은 방식으로 id 만 들고 간다.
+     */
+    @Column(name = "BGM_AGIT_PAYMENT_ID")
+    private Long bgmAgitPaymentId;
 
     // 예약 그룹키 (결제행을 거치지 않고 예약 단위로 이력을 훑을 때 쓴다)
     @Column(name = "BGM_AGIT_RESERVATION_NO")
@@ -61,9 +67,9 @@ public class BgmAgitPaymentCancel extends DateSuperClass {
 
     private static final int FAIL_REASON_MAX_LENGTH = 500;
 
-    public BgmAgitPaymentCancel(BgmAgitPayment payment, Long reservationNo, Integer amount,
+    public BgmAgitPaymentCancel(Long paymentId, Long reservationNo, Integer amount,
                                 Integer rate, String reason) {
-        this.bgmAgitPayment = payment;
+        this.bgmAgitPaymentId = paymentId;
         this.bgmAgitReservationNo = reservationNo;
         this.bgmAgitCancelAmount = amount;
         this.bgmAgitCancelRate = rate;
