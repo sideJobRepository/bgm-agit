@@ -9,12 +9,21 @@
 --
 -- BGM_AGIT_IMAGE_GROUPS 는 카드·캘린더에 그대로 찍히는 안내 문자열이라 같이 고친다.
 
--- 실행 전 현재 값 확인
--- SELECT BGM_AGIT_IMAGE_ID, BGM_AGIT_IMAGE_LABEL, BGM_AGIT_IMAGE_GROUPS,
---        BGM_AGIT_IMAGE_MIN_PEOPLE, BGM_AGIT_IMAGE_MAX_PEOPLE, BGM_AGIT_IMAGE_USE_STATUS
---   FROM BGM_AGIT_IMAGE
---  WHERE BGM_AGIT_IMAGE_CATEGORY = 'ROOM'
---  ORDER BY BGM_AGIT_IMAGE_LABEL;
+-- UPDATE 라 여러 번 돌려도 결과가 같다.
+--
+-- 다만 라벨로 매칭하므로 **운영 DB 의 실제 라벨이 다르면 0건 갱신되고 조용히 지나간다.**
+-- 그래서 실행 전후 상태를 같이 출력한다. 아래 "실행 전"과 "실행 후"를 눈으로 대조할 것.
+
+SELECT '=== 실행 전 ===' AS step;
+SELECT BGM_AGIT_IMAGE_ID   AS id,
+       BGM_AGIT_IMAGE_LABEL AS label,
+       BGM_AGIT_IMAGE_GROUPS AS groups_text,
+       BGM_AGIT_IMAGE_MIN_PEOPLE AS min_p,
+       BGM_AGIT_IMAGE_MAX_PEOPLE AS max_p,
+       BGM_AGIT_IMAGE_USE_STATUS AS use_yn
+  FROM BGM_AGIT_IMAGE
+ WHERE BGM_AGIT_IMAGE_CATEGORY = 'ROOM'
+ ORDER BY BGM_AGIT_IMAGE_LABEL;
 
 START TRANSACTION;
 
@@ -53,12 +62,21 @@ UPDATE BGM_AGIT_IMAGE
  WHERE BGM_AGIT_IMAGE_CATEGORY = 'ROOM'
    AND BGM_AGIT_IMAGE_LABEL IN ('M-1', 'M-2', 'M-3');
 
--- 결과 확인 후 COMMIT / 이상하면 ROLLBACK
--- SELECT BGM_AGIT_IMAGE_LABEL, BGM_AGIT_IMAGE_GROUPS,
---        BGM_AGIT_IMAGE_MIN_PEOPLE, BGM_AGIT_IMAGE_MAX_PEOPLE
---   FROM BGM_AGIT_IMAGE WHERE BGM_AGIT_IMAGE_CATEGORY = 'ROOM' ORDER BY BGM_AGIT_IMAGE_LABEL;
-
 COMMIT;
+
+SELECT '=== 실행 후 ===' AS step;
+SELECT BGM_AGIT_IMAGE_ID   AS id,
+       BGM_AGIT_IMAGE_LABEL AS label,
+       BGM_AGIT_IMAGE_GROUPS AS groups_text,
+       BGM_AGIT_IMAGE_MIN_PEOPLE AS min_p,
+       BGM_AGIT_IMAGE_MAX_PEOPLE AS max_p,
+       BGM_AGIT_IMAGE_USE_STATUS AS use_yn
+  FROM BGM_AGIT_IMAGE
+ WHERE BGM_AGIT_IMAGE_CATEGORY = 'ROOM'
+ ORDER BY BGM_AGIT_IMAGE_LABEL;
+
+-- 기대값: B/F 4~6, C/D/E 2~6('2~4인 (어린이 동반 2~6인)'), G 7~12, M-1~3 4~7.
+-- min_p/max_p 가 NULL 로 남은 ROOM 이 있으면 라벨이 안 맞은 것이니 그 행은 수동으로 맞출 것.
 
 -- 참고: 마작 대탁(BGM_AGIT_IMAGE_CATEGORY = 'MAHJONG')은 이번 개편 대상이 아니라 건드리지 않는다.
 -- 숨김 항목(M Room id 19, 대탁 JP류 34·35)도 USE_STATUS='N' 이라 그대로 둔다.
