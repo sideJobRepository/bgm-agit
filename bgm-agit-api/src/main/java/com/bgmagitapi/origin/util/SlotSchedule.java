@@ -276,18 +276,14 @@ public class SlotSchedule {
     private static final int WEEKEND_UNIT_PRICE = 11000;
 
     /**
-     * 주말 단가를 적용하는 날인지 — 토·일만.
-     * 공휴일은 평일 단가다(사장님 확인). 예전 시간당 요금표는 공휴일도 주말가로 쳤으나,
-     * 화면 배지와 청구 금액이 갈리지 않도록 판정을 이 한 곳으로 통일했다.
+     * 룸 일무제한 1인 단가.
+     *
+     * 주말 단가 여부는 날짜만으로 정할 수 없어서 인자로 받는다 — 토·일뿐 아니라 공휴일도
+     * 주말 단가이고, 공휴일은 법정공휴일 계산(LunarCalendar)에 관리자 수동 예외를 얹어야
+     * 알 수 있다(선거일·임시공휴일은 계산으로 안 나온다). 판정은 BgmAgitHolidayService 가 한다.
      */
-    public static boolean isWeekendRate(LocalDate date) {
-        DayOfWeek dayOfWeek = date.getDayOfWeek();
-        return dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY;
-    }
-
-    /** 룸 일무제한 1인 단가. */
-    public static int unitPrice(LocalDate date) {
-        return isWeekendRate(date) ? WEEKEND_UNIT_PRICE : WEEKDAY_UNIT_PRICE;
+    public static int unitPrice(boolean weekendRate) {
+        return weekendRate ? WEEKEND_UNIT_PRICE : WEEKDAY_UNIT_PRICE;
     }
 
     /**
@@ -299,7 +295,7 @@ public class SlotSchedule {
      *
      * 결제 주문 금액과 예약 대기 알림톡 안내 금액이 갈리지 않도록 두 곳 모두 이 메서드만 쓸 것.
      */
-    public static int totalPaymentAmount(Collection<BgmAgitImage> images, int people, LocalDate date) {
+    public static int totalPaymentAmount(Collection<BgmAgitImage> images, int people, boolean weekendRate) {
         if (images == null || images.isEmpty()) {
             return 0;
         }
@@ -315,6 +311,6 @@ public class SlotSchedule {
             }
             return total;
         }
-        return Math.max(people, 0) * unitPrice(date);
+        return Math.max(people, 0) * unitPrice(weekendRate);
     }
 }

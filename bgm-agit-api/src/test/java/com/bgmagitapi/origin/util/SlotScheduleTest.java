@@ -18,8 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SlotScheduleTest {
 
     private static final LocalDate MON = LocalDate.of(2026, 10, 5);  // 월요일
-    private static final LocalDate SAT = LocalDate.of(2026, 10, 3);  // 토요일
-    private static final LocalDate SUN = LocalDate.of(2026, 10, 4);  // 일요일
 
     @Test
     @DisplayName("룸 슬롯은 10시부터 24개이고 마지막이 09:00~10:00 이다")
@@ -72,14 +70,10 @@ class SlotScheduleTest {
     }
 
     @Test
-    @DisplayName("주말 단가는 토·일만 11,000원이고 공휴일은 평일가다")
-    void weekendRateIsSaturdayAndSundayOnly() {
-        assertThat(SlotSchedule.unitPrice(MON)).isEqualTo(9000);
-        assertThat(SlotSchedule.unitPrice(SAT)).isEqualTo(11000);
-        assertThat(SlotSchedule.unitPrice(SUN)).isEqualTo(11000);
-
-        // 2026-10-09 한글날(금) — 공휴일이지만 평일 단가
-        assertThat(SlotSchedule.unitPrice(LocalDate.of(2026, 10, 9))).isEqualTo(9000);
+    @DisplayName("주말 단가 여부는 인자로 받는다 — 토·일인지 공휴일인지는 SlotSchedule 이 모른다")
+    void unitPriceTakesWeekendFlag() {
+        assertThat(SlotSchedule.unitPrice(false)).isEqualTo(9000);
+        assertThat(SlotSchedule.unitPrice(true)).isEqualTo(11000);
     }
 
     @Test

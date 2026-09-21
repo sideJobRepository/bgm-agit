@@ -26,6 +26,7 @@ import com.bgmagitapi.origin.payment.service.response.PaymentRefundResult;
 import com.bgmagitapi.origin.repository.BgmAgitImageRepository;
 import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
+import com.bgmagitapi.origin.service.BgmAgitHolidayService;
 import com.bgmagitapi.origin.service.BgmAgitReservationService;
 import com.bgmagitapi.origin.service.response.BizTalkCancel;
 import com.bgmagitapi.origin.service.response.ReservationTalkContext;
@@ -74,6 +75,9 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     private final PaymentService paymentService;
 
     private final BgmAgitPaymentRepository bgmAgitPaymentRepository;
+
+    // 요금의 주말/평일 판정. 토·일 + 공휴일(법정 계산 + 관리자 수동 예외)
+    private final BgmAgitHolidayService bgmAgitHolidayService;
     
     @Override
     @Transactional(readOnly = true)
@@ -168,11 +172,12 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             if (d.isEqual(now)) {
                 continue;
             }
-            boolean isWeekend = SlotSchedule.isWeekendRate(d);
+            // 토·일 + 공휴일(법정 계산 + 관리자 수동 예외)이 주말 단가다
+            boolean isWeekend = bgmAgitHolidayService.isWeekendRate(d);
             // 마작 대탁은 개편 대상이 아니라 예전 그대로 3시간 대여료를 그대로 내려준다(1인 단가가 아니다)
             int price = SlotSchedule.isMahjongRental(category)
                     ? MAHJONG_RENTAL_PRICE
-                    : SlotSchedule.unitPrice(d);
+                    : SlotSchedule.unitPrice(isWeekend);
             prices.add(new BgmAgitReservationResponse.PriceByDate(d, price, isWeekend));
         }
 
@@ -189,7 +194,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         // 마작 대탁만 예전처럼 항목당 정액을 합산해 확정 금액을 내려준다.
         boolean flatPricing = SlotSchedule.isMahjongRental(category);
         Integer depositAmount = flatPricing
-                ? SlotSchedule.totalPaymentAmount(images, 0, today)
+                ? SlotSchedule.totalPaymentAmount(images, 0, false)
                 : null;
 
         return new BgmAgitReservationResponse(
@@ -420,14 +425,15 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         validateReservationPeople(images, people);
 
         LocalDate reservationDate = first.getBgmAgitReservationStartDate();
-        int amount = SlotSchedule.totalPaymentAmount(images, people, reservationDate);
+        boolean weekendRate = bgmAgitHolidayService.isWeekendRate(reservationDate);
+        int amount = SlotSchedule.totalPaymentAmount(images, people, weekendRate);
         String orderName = "BGM아지트 예약 - " + reservationDate;
 
         // 인원·단가를 결제행에 박아 둔다. 환불은 결제 시점 기준으로 계산해야 하는데
         // 예약의 인원은 뒤에 바뀔 수 있어서 그때 가서는 복원할 수 없다
         Integer unitPrice = SlotSchedule.isMahjongRental(first.getBgmAgitImage().getBgmAgitImageCategory())
                 ? null
-                : SlotSchedule.unitPrice(reservationDate);
+                : SlotSchedule.unitPrice(weekendRate);
 
         // 공통 결제 모듈에 주문 생성 위임
         return paymentService.createOrder(userId, reservationNo, amount, orderName, people, unitPrice);

@@ -22,6 +22,7 @@ import com.bgmagitapi.origin.payment.service.response.TossPaymentResponse;
 import com.bgmagitapi.origin.payment.util.TossErrorMessages;
 import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
+import com.bgmagitapi.origin.service.BgmAgitHolidayService;
 import com.bgmagitapi.origin.service.response.BizTalkCancel;
 import com.bgmagitapi.origin.service.response.ReservationTalkContext;
 import com.bgmagitapi.origin.util.ReservationRefundPolicy;
@@ -58,6 +59,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentFailureRecorder paymentFailureRecorder;
     // 환불 시도 이력도 같은 이유로 별도 트랜잭션. 토스 호출 전에 선커밋해 멱등키를 확보한다
     private final PaymentCancelRecorder paymentCancelRecorder;
+    // 주말/공휴일 단가 판정. 주문 생성 때와 같은 기준으로 재계산해야 금액이 갈리지 않는다
+    private final BgmAgitHolidayService bgmAgitHolidayService;
     private final ApplicationEventPublisher eventPublisher;
 
     // 토스 clientKey는 공개키(프론트 전달용). secretKey는 STEP 2 승인부터 사용
@@ -418,7 +421,7 @@ public class PaymentServiceImpl implements PaymentService {
         int expected = SlotSchedule.totalPaymentAmount(
                 group.stream().map(BgmAgitReservation::getBgmAgitImage).toList(),
                 people == null ? 0 : people,
-                first.getBgmAgitReservationStartDate());
+                bgmAgitHolidayService.isWeekendRate(first.getBgmAgitReservationStartDate()));
 
         if (!Objects.equals(payment.getBgmAgitPaymentAmount(), expected)) {
             paymentFailureRecorder.recordAborted(payment.getBgmAgitOrderNo(), null,

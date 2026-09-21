@@ -20,6 +20,7 @@ import com.bgmagitapi.origin.repository.BgmAgitBiztalkSendHistoryRepository;
 import com.bgmagitapi.origin.repository.BgmAgitImageRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.origin.service.BgmAgitBizTalkSandService;
+import com.bgmagitapi.origin.service.BgmAgitHolidayService;
 import com.bgmagitapi.origin.service.BgmAgitBizTalkService;
 import com.bgmagitapi.origin.service.response.Attach;
 import com.bgmagitapi.origin.service.response.BizTalkTokenResponse;
@@ -63,6 +64,9 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     private final RecordRepository recordRepository;
 
     private final BgmAgitReservationRepository bgmAgitReservationRepository;
+
+    // 알림톡 고지 금액도 결제와 같은 주말/공휴일 판정을 써야 청구액과 갈리지 않는다
+    private final BgmAgitHolidayService bgmAgitHolidayService;
 
     private static final String PHONE1 = "010-5059-3499";
     private static final String PHONE2 = "010-5592-8832";
@@ -117,7 +121,8 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
                     bgmAgitReservation.getBgmAgitReservationPeople() == null
                             ? 0
                             : bgmAgitReservation.getBgmAgitReservationPeople(),
-                    bgmAgitReservation.getBgmAgitReservationStartDate()
+                    bgmAgitHolidayService.isWeekendRate(bgmAgitReservation.getBgmAgitReservationStartDate())
+
             ));
             // 전액결제 개정판(-2)은 카카오 검수를 따로 받아야 해서 스위치로 가른다.
             // 통과 전에는 구 템플릿이 나가고, 그 기간에는 환불 안내 문구가 실제 규정과 다르다

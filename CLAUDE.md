@@ -120,6 +120,14 @@
 - `createReservation`은 **클라이언트가 보낸 예약타입을 무시**하고 이미지 카테고리로 결정
 - 수요일은 무인운영이라 예약 불가. 규칙은 `SlotSchedule.CLOSED_DAY_OF_WEEK`/`isClosedDay()`/`CLOSED_DAY_MESSAGE` 한 곳에 모임(등록 검증 + 방 목록 조회가 같은 값을 봄). 프론트는 `available-rooms` 응답의 `closedWeekday`(JS `getDay()` 규약)를 쓸 수 있다
 
+### 공휴일 — 법정 자동 계산 + 관리자 수동 예외
+공휴일은 **주말 단가(1인 11,000원)** 를 받는다. 판정 출처는 `BgmAgitHolidayService.isWeekendRate()` 하나다(토·일 또는 공휴일).
+- **법정공휴일은 `LunarCalendar` 가 계산한다** — 고정 양력 + 음력 변환(설·추석·석가탄신일) + 대체공휴일. 외부 API 가 아니라 하드코딩 계산기라 **매년 손댈 필요가 없다**
+- 계산으로 알 수 없는 것이 선거일·임시공휴일이다. 그래서 `BGM_AGIT_HOLIDAY` 에 **예외만** 저장한다 — `ADD`(이 날도 공휴일) / `EXCLUDE`(계산은 공휴일이나 정상 영업). 날짜 UNIQUE, 수동 지정이 계산보다 우선
+- 관리자 화면 `/holiday`(`pages/HolidayManage.tsx`). 목록은 자동 계산분과 수동분을 합쳐 내려주고 `holidayId == null` 이면 자동분이라 삭제 버튼을 감춘다
+- 연도별 계산 결과는 서비스에서 캐시한다(ICU 음력 변환이 돌고 예약 조회는 3개월치를 훑는다). **수동 예외는 캐시하지 않는다** — 관리자가 바꾸면 즉시 반영돼야 한다
+- `SlotSchedule.unitPrice()`/`totalPaymentAmount()` 는 날짜가 아니라 **`weekendRate` 불리언을 받는다.** 공휴일 판정에 DB 가 필요해 정적 유틸이 스스로 정할 수 없기 때문이다. 호출부(예약 조회·결제 주문·승인 재대조·알림톡) 넷 모두 같은 서비스로 판정해야 금액이 갈리지 않는다
+
 ### 예약 진행 순서 = 날짜 → 방 → 시간
 원래는 방 → 날짜 → 시간이었고, **캘린더가 "내일"을 기본 선택**(`useState<Date>(initialDate)`)한 데다 첫 번째 방까지 자동 선택돼서, 손님이 날짜를 인지하지 못한 채 시간만 눌러 **엉뚱한 날짜로 예약되는 사고**가 반복됐다(사장님 보고).
 - 컴포넌트 3분할: `calendar/ReservationDatePicker.tsx`(월 캘린더) / `grid/RoomAvailabilityBadge.tsx`(카드 배지) / `calendar/ReservationTimePanel.tsx`(구 `ReservationCalendar`에서 캘린더를 뺀 것)
@@ -525,14 +533,14 @@ kml:
 > `Incorrect string value` 로 거절된다(커밋 전에 중단되므로 데이터가 깨지지는 않는다).
 
 1. **`room-people-2026-10.sql` 실행** (앱 배포보다 **먼저**). 서버에 인원 범위 검증이 들어갔기 때문에 옛 값(B Room 최대 5명)이 남아 있으면 공지대로 예약하려는 손님이 거절당한다
-2. **`payment-partial-cancel-2026-10.sql` 실행** (앱 배포보다 **먼저**). 결제 스냅샷 컬럼 + `BGM_AGIT_PAYMENT_CANCEL` 테이블 + `/bgm-agit/reservation/people` URL_RESOURCES 매핑. **매핑 INSERT 후 앱 재시작 필요**(`@PostConstruct` 1회 로딩)
+2. **`payment-partial-cancel-2026-10.sql` · `holiday-2026-10.sql` 실행** (앱 배포보다 **먼저**). 결제 스냅샷 컬럼 + `BGM_AGIT_PAYMENT_CANCEL` 테이블 + `/bgm-agit/reservation/people` URL_RESOURCES 매핑. **매핑 INSERT 후 앱 재시작 필요**(`@PostConstruct` 1회 로딩)
 3. **살아있는 READY 주문 일괄 ABORTED** (배포 직전). 이미 열려 있는 결제창에서 승인이 들어오면 구 금액으로 통과할 수 있다. 코드에도 서버 재계산 대조가 있지만 이중으로 막는다. SQL 은 위 파일 4번 항목에 주석으로 있다
 4. **미결제 대기 예약 일괄 취소 후 재예약 안내.** "예약금 1만원" 알림톡이 이미 나간 건들이라 그냥 두면 고지액 ≠ 청구액이 된다
 5. **알림톡 `bgmagit-res-payment-2` 카카오 검수 신청.** 통과 전에는 구 템플릿이 나가고, 통과 후 yml `biztalk.reservation-payment-v2: true` 한 줄만 바꾼다
 6. 확정된 기존 예약(1만원 결제 완료)은 그대로 두고 현장 잔액 수납. 취소 시 환불은 **결제행 금액 1만원 기준**으로 3단계가 적용된다(새 인원 단가로 재계산하지 않는다)
 
 ### 정책 결정 근거 (사장님 확인)
-- 주말 단가는 **토·일만**. 공휴일은 평일가 → `getReservation` 의 `LunarCalendar` 공휴일 집합 계산을 **삭제**했다(남겨두면 화면 배지는 주말가인데 청구는 평일가가 된다)
+- 주말 단가는 **토·일 + 공휴일**. 처음엔 "토·일만"으로 정해 공휴일 판정을 지웠다가, 사장님이 공휴일 지정 기능을 요청하면서 되돌렸다(아래 "공휴일" 절)
 - 24h 이내 사용자 취소는 **허용하되 환불 0원**. 자리를 비워주는 쪽이 매장에 이득이라 막지 않는다
 - **관리자 취소도 같은 3단계**(노쇼 = 당일 = 자동 0%). 매장 귀책 전액 환불은 토스 상점관리자에서 수동 처리
 - 환불 API 실패 시 **예약 취소는 진행 + 기록**. 개편 전에는 취소 자체가 롤백됐다
