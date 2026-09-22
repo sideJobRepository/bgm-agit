@@ -99,6 +99,27 @@
 
 ## 예약
 
+> **지금 staging 브랜치는 10월 개편 이전 정책이다.** 개편(일무제한·전액결제·3단계 환불·공휴일 설정)은
+> 2026-09-21 에 한 번 올라갔다가 `7a0ac3f7` 로 일괄 revert 했다 — 사장님 공지가 나가는 동안 개발이
+> 끝나지 않아서다. 코드는 **로컬 `feature/reservation-2026-10` 브랜치**에 그대로 있고, 룸 이용 시간
+> 8시간 상한도 그 브랜치에 얹혀 있다. 다시 살릴 때 그 브랜치를 merge 하는 것만으로는 안 되고
+> **`7a0ac3f7` 을 revert 해야** 내용이 돌아온다.
+>
+> 스테이징 DB 에는 개편 SQL(룸 인원범위·결제 스냅샷 컬럼·`BGM_AGIT_PAYMENT_CANCEL`)이 적용된 채 남아 있다.
+> 컬럼 추가는 구 코드에 무해하고, 바뀐 룸 인원범위는 구 코드가 검증하지 않는다.
+
+### 개편 오픈 전까지 10월 이후 예약 차단
+`SlotSchedule.RESERVATION_BLOCKED_FROM = 2026-10-01` — **그 날짜 이후 전 기간**이다(10월만이 아니다).
+지금 화면으로 받으면 예약금 1만원·전날까지 전액환불로 안내해 놓고 오픈 후에는 전액결제·3단계 환불이
+적용되어 고지한 내용과 실제가 갈린다.
+- 차단 방식은 `lastReservableDate` 를 그 전날까지로 줄이는 것이다. 그 값 하나를 조회 슬롯 생성 범위와
+  `isWithinReservableWindow` 가 같이 보고 있어서 호출부를 따로 고칠 필요가 없다. 다만 기간 초과와는
+  사유가 달라 문구(`RESERVATION_BLOCKED_MESSAGE`)는 따로 준다
+- 프론트 `ReservationDatePicker.RESERVATION_BLOCKED_FROM` 도 같은 날짜로 `maxDate` 를 자른다.
+  서버가 슬롯을 안 내려줘도 달력이 열려 있으면 날짜를 골랐을 때 방이 하나도 안 뜨는 화면이 된다
+- **오픈할 때는 서버·프론트 상수를 null 로** 바꾸면 3개월 창이 그대로 돌아온다
+- 신규 등록만 막는다. **이미 들어와 있는 10월 예약건 정리는 별도 작업**이다
+
 ### 데이터 모델
 - 예약 대상(룸/대탁)은 **`BGM_AGIT_IMAGE` 행**이다. `category=ROOM|MAHJONG`, `link=/detail/room|/detail/mahjongRental`, `BGM_AGIT_MAIN_MENU_ID=3`(프론트 `labelGb 3`)
 - 한 예약 = 시간 슬롯 여러 행이 **`BGM_AGIT_RESERVATION_NO`(그룹키)** 로 묶임. 예약 PK가 아니라 그룹키라 **중복값**
