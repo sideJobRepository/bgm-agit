@@ -407,8 +407,6 @@ export default function ImageGrid({ pageData }: Props) {
             <DateSection>
               <ReservationDatePicker
                 value={selectedDate}
-                // 서버가 내려준 휴무 요일을 쓴다. 첫 조회 전에는 컴포넌트 기본값으로 그린다
-                closedWeekday={availableRooms?.closedWeekday}
                 onChange={ymd => {
                   setSelectedDate(ymd);
                   // 모바일은 캘린더가 약 330px를 먹어 방 카드가 한 개밖에 안 보인다. 고르면 접어서 회수한다.

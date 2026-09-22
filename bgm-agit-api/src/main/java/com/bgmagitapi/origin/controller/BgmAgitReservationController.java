@@ -4,15 +4,12 @@ package com.bgmagitapi.origin.controller;
 import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationModifyRequest;
-import com.bgmagitapi.origin.controller.request.BgmAgitReservationPeopleRequest;
 import com.bgmagitapi.origin.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AdminReservationBoardResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AvailableRoomsResponse;
 import com.bgmagitapi.origin.controller.response.reservation.GroupedReservationResponse;
 import com.bgmagitapi.origin.page.PageResponse;
-import com.bgmagitapi.origin.payment.service.ReservationCancelExecutor;
 import com.bgmagitapi.origin.service.BgmAgitReservationService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,8 +30,6 @@ public class BgmAgitReservationController {
     
     
     private final BgmAgitReservationService bgmAgitReservationService;
-    // 취소·인원축소는 환불이 걸려 있어 한 줄로 세운다(트랜잭션 바깥 락)
-    private final ReservationCancelExecutor reservationCancelExecutor;
     
     @GetMapping("/reservation")
     public BgmAgitReservationResponse getReservation(
@@ -63,7 +58,7 @@ public class BgmAgitReservationController {
 
 
     @PostMapping("/reservation")
-    public ApiResponse createReservation(@Valid @RequestBody BgmAgitReservationCreateRequest request, @AuthenticationPrincipal Jwt jwt) {
+    public ApiResponse createReservation(@RequestBody BgmAgitReservationCreateRequest request, @AuthenticationPrincipal Jwt jwt) {
         Long userId = jwt.getClaim("id");
         return bgmAgitReservationService.createReservation(request, userId);
     }
@@ -76,8 +71,8 @@ public class BgmAgitReservationController {
             @RequestParam(name = "endDate" , required = false) String endDate
             ) {
         Long memberId = extractMemberId(jwt);
-        List<String> roles = extractRoles(jwt);
-        Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(memberId, roles, startDate, endDate, pageable);
+        String role = extractRole(jwt);
+        Page<GroupedReservationResponse> reservationDetail = bgmAgitReservationService.getReservationDetail(memberId, role, startDate, endDate, pageable);
         return PageResponse.from(reservationDetail);
     }
     /**
@@ -95,35 +90,18 @@ public class BgmAgitReservationController {
     }
 
 
-    /**
-     * 예약 확정·취소. 취소는 환불이 함께 돌기 때문에 직렬화 실행기를 거친다.
-     * 락을 트랜잭션 바깥에 두어야 뒤 스레드가 미커밋 상태를 보지 않는다(승인 경로와 같은 이유).
-     */
     @PutMapping("/reservation")
     public ApiResponse modifyReservation(@AuthenticationPrincipal Jwt jwt , @RequestBody BgmAgitReservationModifyRequest request) {
         Long id = jwt.getClaim("id");
-        List<String> roles = extractRoles(jwt);
-        return reservationCancelExecutor.execute(() -> bgmAgitReservationService.modifyReservation(id, request, roles));
+        String role = extractRole(jwt);
+        return bgmAgitReservationService.modifyReservation(id,request,role);
     }
-
+    
     @PutMapping("/reservation/admin")
     public ApiResponse modifyAdminReservation(@AuthenticationPrincipal Jwt jwt , @RequestBody BgmAgitReservationModifyRequest request) {
         Long id = jwt.getClaim("id");
-        List<String> roles = extractRoles(jwt);
-        return reservationCancelExecutor.execute(() -> bgmAgitReservationService.modifyReservation(id, request, roles));
-    }
-
-    /**
-     * 예약 인원 축소. 확정건이면 차액이 환불되므로 취소와 같은 락으로 직렬화한다.
-     * URL_RESOURCES 매핑이 없으면 기본 permit 이므로 서비스단에서도 소유자를 확인한다.
-     */
-    @PutMapping("/reservation/people")
-    public ApiResponse modifyReservationPeople(@AuthenticationPrincipal Jwt jwt,
-                                               @Valid @RequestBody BgmAgitReservationPeopleRequest request) {
-        Long id = jwt.getClaim("id");
-        List<String> roles = extractRoles(jwt);
-        return reservationCancelExecutor.execute(
-                () -> bgmAgitReservationService.modifyReservationPeople(id, request, roles));
+        String role = extractRole(jwt);
+        return bgmAgitReservationService.modifyReservation(id,request,role);
     }
     
     
@@ -133,12 +111,11 @@ public class BgmAgitReservationController {
         return jwt.getClaim("id");
     }
     
-    /**
-     * JWT 의 역할 전체. 역할 판정은 반드시 이걸 쓴다.
-     *
-     * 예전에 있던 extractRole 은 roles.get(0) 하나만 돌려줬는데, 관리자에게 USER 권한이 같이 있으면
-     * 첫 값이 ROLE_USER 로 나오고 roles 가 비면 "GUEST" 가 나와 역할 판정이 조용히 어긋났다.
-     */
+    private String extractRole(Jwt jwt) {
+        List<String> roles = jwt.getClaim("roles");
+        return roles != null && !roles.isEmpty() ? roles.get(0) : "GUEST";
+    }
+
     private List<String> extractRoles(Jwt jwt) {
         if (jwt == null) {
             return List.of();

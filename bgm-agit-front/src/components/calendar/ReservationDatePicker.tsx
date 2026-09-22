@@ -1,10 +1,9 @@
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import styled from 'styled-components';
 import type { WithTheme } from '../../styles/styled-props';
 import { toLocalYmd } from '../../utils/date.ts';
-import api from '../../utils/axiosInstance.ts';
 
 /**
  * 예약 가능 기간 상한(개월). 서버 SlotSchedule.RESERVATION_WINDOW_MONTHS 와 같은 값을 유지할 것.
@@ -19,24 +18,12 @@ export const RESERVATION_WINDOW_MONTHS = 3;
  * value 가 null 이면 아무 날짜도 선택되지 않은 상태다. 기본값을 넣지 않는 것이 핵심으로,
  * 예전에는 "내일"이 미리 선택돼 있어서 손님이 날짜를 안 고르고 시간만 눌러 엉뚱한 날짜로 예약되는 사고가 있었다.
  */
-/**
- * 휴무 요일 기본값(수요일). JS Date.getDay() 규약(0=일 … 6=토).
- *
- * 서버가 available-rooms 응답의 closedWeekday 로 정답을 내려주지만, 날짜를 고르기 전에는
- * 그 응답이 아직 없어서 첫 렌더에 쓸 값이 필요하다. 서버 SlotSchedule.CLOSED_DAY_OF_WEEK 와
- * 같은 값을 유지할 것 — 휴무 요일을 바꾸면 여기도 같이 고쳐야 한다.
- */
-export const DEFAULT_CLOSED_WEEKDAY = 3;
-
 export default function ReservationDatePicker({
   value,
   onChange,
-  closedWeekday = DEFAULT_CLOSED_WEEKDAY,
 }: {
   value: string | null;
   onChange: (ymd: string) => void;
-  /** 서버가 내려준 휴무 요일. 한 번이라도 조회했으면 그 값이 들어온다 */
-  closedWeekday?: number;
 }) {
   const today = new Date();
 
@@ -51,32 +38,6 @@ export default function ReservationDatePicker({
     return { minDate: from, maxDate: to };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [today.toDateString()]);
-
-  /**
-   * 예약 가능 기간 안의 공휴일. 달력에 빨간색으로 표시하는 용도다.
-   *
-   * useRequest 를 쓰지 않는다 — 실패했을 때 /error 로 보내거나 토스트를 띄울 일이 아니다.
-   * 색이 안 칠해질 뿐 예약은 그대로 되고, 실제 요금은 서버가 계산한다(RoomAvailabilityBadge 와 같은 판단).
-   */
-  const [holidays, setHolidays] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    let alive = true;
-    api
-      .get<{ date: string; holiday: boolean }[]>('/bgm-agit/holidays', {
-        params: { from: toLocalYmd(minDate), to: toLocalYmd(maxDate) },
-      })
-      .then(({ data }) => {
-        if (!alive) return;
-        setHolidays(new Set(data.filter(h => h.holiday).map(h => h.date)));
-      })
-      .catch(() => {
-        // 색 표시용이라 조용히 넘어간다
-      });
-    return () => {
-      alive = false;
-    };
-  }, [minDate, maxDate]);
 
   const selected = useMemo(() => {
     if (!value) return null;
@@ -103,17 +64,16 @@ export default function ReservationDatePicker({
         const ymd = toLocalYmd(val as Date);
         if (ymd) onChange(ymd);
       }}
-      tileDisabled={({ date, view }) => view === 'month' && date.getDay() === closedWeekday}
+      tileDisabled={
+        ({ date, view }) => view === 'month' && date.getDay() === 3 /* 수요일 무인운영 */
+      }
       tileClassName={({ date, view }) => {
         if (view !== 'month') return '';
 
         const classes = [];
-        const ymd = toLocalYmd(date);
-        if (value && ymd === value) classes.push('selected');
+        if (value && toLocalYmd(date) === value) classes.push('selected');
         if (date.getDay() === 0) classes.push('sunday');
         if (date.getDay() === 6) classes.push('saturday');
-        // 토·일이 아닌데 공휴일인 날(한글날·선거일 등). 주말과 같은 단가라 같은 색으로 보여준다
-        if (ymd && holidays.has(ymd)) classes.push('holiday');
         return classes.join(' ');
       }}
     />
@@ -155,11 +115,8 @@ const StyledCalendar = styled(Calendar)<WithTheme>`
     }
   }
 
-  /* 공휴일도 일요일과 같은 빨강. 그날은 주말 단가라 색으로 미리 알아볼 수 있어야 한다 */
   .react-calendar__tile.sunday,
-  .react-calendar__tile.sunday abbr,
-  .react-calendar__tile.holiday,
-  .react-calendar__tile.holiday abbr {
+  .react-calendar__tile.sunday abbr {
     color: ${({ theme }) => theme.colors.redColor};
   }
 

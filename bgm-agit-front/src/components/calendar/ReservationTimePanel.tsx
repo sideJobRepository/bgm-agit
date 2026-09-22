@@ -72,15 +72,8 @@ export default function ReservationTimePanel({
   // 함께 예약할 항목(테이블 합치기)
   const [combineIds, setCombineIds] = useState<number[]>([]);
 
-  // 요금 방식도 서버가 정한다.
-  // PER_PERSON(룸 일무제한)은 인원이 정해져야 총액이 나오므로 그날 단가만 내려오고,
-  // FLAT(마작 대탁)은 예전처럼 확정된 예약금이 내려온다.
-  const isPerPerson = reservation.pricingMode !== 'FLAT';
+  // 예약금은 서버가 선택 항목 기준으로 합산해서 내려준다 (예약 확인 모달에서 표시)
   const depositAmount = reservation.depositAmount;
-  const unitPrice = useMemo(
-    () => reservation.prices?.find(p => p.date === date)?.price ?? null,
-    [reservation.prices, date]
-  );
 
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
 
@@ -109,48 +102,11 @@ export default function ReservationTimePanel({
 
   const matchedSlots = reservation.timeSlots?.find(d => d.date === date);
 
-  // 영업 하루는 오전 10시에 넘어간다(서버 SlotSchedule.DAY_BOUNDARY 와 같은 값).
-  // 00~09시 버튼은 다음 날이라 표시를 붙여주지 않으면 하루 앞선 날로 착각한다.
-  const DAY_BOUNDARY_HOUR = 10;
-  const isNextDaySlot = (start: string) => Number(start.split(':')[0]) < DAY_BOUNDARY_HOUR;
-
-  // 고른 구간을 한 줄로 되짚어 준다. 버튼이 24개라 무엇을 골랐는지 한눈에 안 들어온다
-  const selectedRange = useMemo(() => {
-    if (!selectedTimes.length) {
-      return '';
-    }
-    const order = intervals.map(([start]) => start);
-    const sorted = [...selectedTimes].sort((a, b) => order.indexOf(a) - order.indexOf(b));
-    const first = sorted[0];
-    const lastStart = sorted[sorted.length - 1];
-    const lastEnd = intervals.find(([start]) => start === lastStart)?.[1] ?? lastStart;
-    const head = `${isNextDaySlot(first) ? '익일 ' : ''}${first}`;
-    // 종료가 24:00(자정)이면 익일 표기가 중복되지 않게 그대로 둔다
-    const tail = lastEnd === '00:00' ? '24:00' : `${isNextDaySlot(lastEnd) ? '익일 ' : ''}${lastEnd}`;
-    return `${head} ~ ${tail}`;
-  }, [selectedTimes, intervals]);
-
-  // 슬롯 순서상 연속인지. 서버(SlotSchedule.isContiguous)와 같은 규칙이고,
-  // 여기서는 누르는 즉시 알려주려고 둔다. 자정을 넘는 선택도 순서상 이어져 있으면 연속이다.
-  const isContiguousSelection = (times: string[]) => {
-    if (times.length <= 1) {
-      return true;
-    }
-    const order = intervals.map(([start]) => start);
-    const indexes = times.map(t => order.indexOf(t)).sort((a, b) => a - b);
-    return indexes.every((v, i) => i === 0 || v - indexes[i - 1] === 1);
-  };
-
   const handleTimeClick = (time: string) => {
     setSelectedTimes(prev => {
-      // 이미 선택된 시간 해제하는 경우 — 가운데를 빼면 구간이 끊어지므로 막는다
+      // 이미 선택된 시간 해제하는 경우
       if (prev.includes(time)) {
-        const next = prev.filter(t => t !== time);
-        if (!isContiguousSelection(next)) {
-          toast.error('시간은 이어지도록 선택해 주세요. 양 끝부터 해제할 수 있습니다.');
-          return prev;
-        }
-        return next;
+        return prev.filter(t => t !== time);
       }
 
       // 새로 선택하는 경우 제한 체크 (서버가 내려준 선택 가능 개수)
@@ -163,13 +119,7 @@ export default function ReservationTimePanel({
         return prev; // 변경하지 않음
       }
 
-      const next = [...prev, time];
-      if (!isContiguousSelection(next)) {
-        toast.error('이용 시간은 연속된 시간대로 선택해 주세요.');
-        return prev;
-      }
-
-      return next;
+      return [...prev, time];
     });
   };
 
@@ -193,19 +143,17 @@ export default function ReservationTimePanel({
       // 날짜를 맨 위에 둔다. 결제 전 마지막으로 날짜를 확인시키는 자리다.
       `예약 날짜: ${formatYmdWithWeekday(date)}`,
       `예약 항목: ${reservation.label}`,
-      ...(selectedRange ? [`이용 시간: ${selectedRange}`] : []),
       ...(useModes.length ? [`이용 방식: ${selectedUseMode}`] : []),
     ];
 
     // 로그인: 인원수·요청사항 입력 포함 확정 모달
     showReservationConfirmModal({
       label: reservation.label!,
-      initialCount: reservation.minPeople ?? 1,
-      minPeople: reservation.minPeople ?? 1,
-      maxPeople: reservation.maxPeople ?? undefined,
+      initialCount: reservation.minPeople!,
+      minPeople: reservation.minPeople!,
+      maxPeople: reservation.maxPeople!,
       summary,
       depositAmount,
-      unitPrice: isPerPerson ? unitPrice : null,
       onConfirm: ({ count, reason }) => {
         // 이용 방식은 요청사항 맨 위에 기록 → 예약내역·알림톡에서 바로 확인 가능
         const modeText = useModes.length ? `[이용 방식] ${selectedUseMode}` : '';
@@ -234,12 +182,12 @@ export default function ReservationTimePanel({
                 <>
                   예약이 등록되었습니다.
                   <br />
-                  예약내역에서 이용요금을 결제하면 예약이 확정됩니다.
+                  예약내역에서 예약금을 결제하면 예약이 확정됩니다.
                   <br />
                   예약내역으로 이동하시겠습니까?
                 </>
               ),
-                onConfirm: () => {
+              onConfirm: () => {
                 navigate('/reservationList');
               },
             });
@@ -283,41 +231,15 @@ export default function ReservationTimePanel({
             </p>
           )}
           {reservation.reservationType === 'DELEGATE_PLAY' && (
-            <>
-              <p>
-                <strong>
-                  ※ 대탁 예약시 3시간 4만원, 5시간에 6만원, 1시간 추가시 만원의 금액이 발생합니다.
-                </strong>
-              </p>
-              <p>
-                <strong>※ 잔여 이용요금은 현장에서 결제합니다.</strong>
-              </p>
-            </>
+            <p>
+              <strong>
+                ※ 대탁 예약시 3시간 4만원, 5시간에 6만원, 1시간 추가시 만원의 금액이 발생합니다.
+              </strong>
+            </p>
           )}
-          {isPerPerson && (
-            <>
-              {/* 일무제한이라 시간 수는 요금과 무관하다. 시간 선택은 룸 점유 구간을 잡는 의미다 */}
-              <p>
-                <strong>
-                  ※ 일무제한 요금제입니다. 입장 시각만 고르시면 당일 오전 10시부터 익일 오전 10시까지
-                  이용하실 수 있습니다.
-                </strong>
-              </p>
-              {unitPrice !== null && (
-                <p>
-                  <strong>
-                    ※ 이용요금은 1인 {unitPrice.toLocaleString()}원이며, 예약 시 인원수만큼 전액
-                    결제합니다. (세트 이용을 원하시면 현장에서 3,000원만 추가 결제)
-                  </strong>
-                </p>
-              )}
-              <p>
-                <strong>
-                  ※ 환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후에는 불가합니다.
-                </strong>
-              </p>
-            </>
-          )}
+          <p>
+            <strong>※ 잔여 이용요금은 현장에서 결제합니다.</strong>
+          </p>
           <p>
             <strong>※ 수요일은 무인운영으로 예약이 불가합니다.</strong>
           </p>
@@ -380,18 +302,11 @@ export default function ReservationTimePanel({
               onClick={() => isAvailable && handleTimeClick(start)}
               disabled={!isAvailable}
             >
-              {isNextDaySlot(start) && <NextDayTag>익일</NextDayTag>}
               {label}
             </TimeSlotButton>
           );
         })}
       </TimeBox>
-
-      {selectedRange && (
-        <SelectedRange>
-          선택한 이용 시간 <strong>{selectedRange}</strong>
-        </SelectedRange>
-      )}
 
       <Button
         disabled={!matchedSlots?.timeSlots.length || !selectedTimes.length}
@@ -500,37 +415,6 @@ const TimeBox = styled.div<WithTheme>`
     grid-template-columns: repeat(2, 1fr); // 모바일에서는 2열 고정 (선택사항)
     width: 100%;
   }
-`;
-
-/* 고른 구간 되짚기. 버튼이 24개라 무엇을 골랐는지 버튼만 봐서는 안 들어온다 */
-const SelectedRange = styled.div<WithTheme>`
-  width: 50%;
-  margin-top: 12px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background-color: ${({ theme }) => theme.colors.softColor};
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.subColor};
-
-  strong {
-    font-weight: ${({ theme }) => theme.weight.bold};
-  }
-
-  @media ${({ theme }) => theme.device.mobile} {
-    width: 100%;
-  }
-`;
-
-/* 00~09시 버튼은 다음 날이다. 표시가 없으면 하루 앞선 날로 착각한다 */
-const NextDayTag = styled.span<WithTheme>`
-  display: inline-block;
-  margin-right: 4px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background-color: ${({ theme }) => theme.colors.menuColor};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: 10px;
-  vertical-align: middle;
 `;
 
 const TimeSlotButton = styled.button<WithTheme & { selected: boolean }>`

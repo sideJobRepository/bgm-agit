@@ -24,13 +24,7 @@ public final class TossErrorMessages {
             Map.entry("PROVIDER_ERROR", "결제 대행사에서 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."),
             // 키 설정 사고는 손님이 할 수 있는 게 없다. 문의로 유도
             Map.entry("UNAUTHORIZED_KEY", "결제 설정 오류입니다. 관리자에게 문의해 주세요."),
-            Map.entry("FORBIDDEN_REQUEST", "결제 설정 오류입니다. 관리자에게 문의해 주세요."),
-            // ↓ 취소(환불) 계열. 예약 취소 자체는 진행되고 이 문구는 환불 실패 안내로만 쓰인다
-            Map.entry("ALREADY_CANCELED_PAYMENT", "이미 취소된 결제입니다. 환불 내역을 확인해 주세요."),
-            Map.entry("NOT_CANCELABLE_PAYMENT", "취소할 수 없는 결제입니다. 관리자에게 문의해 주세요."),
-            Map.entry("NOT_CANCELABLE_AMOUNT", "환불 가능 금액을 초과했습니다. 관리자에게 문의해 주세요."),
-            Map.entry("EXCEED_CANCEL_AMOUNT_DISCOUNT_AMOUNT", "할인 금액 때문에 부분 환불이 불가능합니다. 관리자에게 문의해 주세요."),
-            Map.entry("NOT_ALLOWED_PARTIAL_CANCEL", "이 결제수단은 부분 환불을 지원하지 않습니다. 관리자에게 문의해 주세요.")
+            Map.entry("FORBIDDEN_REQUEST", "결제 설정 오류입니다. 관리자에게 문의해 주세요.")
     );
 
     private TossErrorMessages() {

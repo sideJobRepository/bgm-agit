@@ -72,8 +72,6 @@ biztalk:
   admin-reservation-notify: false
   # 예약 대기 알림톡을 예약금 결제안내(bgmagit-res-payment-1)로. 운영과 같은 문구를 확인하려고 켜 둔다.
   reservation-payment-live: true
-  # 전액결제 개정 템플릿(bgmagit-res-payment-2). 카카오 검수 통과 후 true 로 전환
-  reservation-payment-v2: false
 
 server:
   tomcat:

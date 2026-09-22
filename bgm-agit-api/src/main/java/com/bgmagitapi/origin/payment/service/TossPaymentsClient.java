@@ -72,21 +72,13 @@ public class TossPaymentsClient {
                 .body(TossPaymentResponse.class);
     }
 
-    /**
-     * 결제 취소. cancelAmount 가 null 이면 전액취소다.
-     *
-     * idempotencyKey 는 반드시 넘긴다. 전액취소는 토스가 ALREADY_CANCELED_PAYMENT 로 재시도를 막아주지만
-     * 부분취소는 잔액이 남아 있으면 같은 요청이 그대로 또 환불된다. read timeout 30초에
-     * 프론트 자동 재시도까지 있는 환경이라 중복 환불이 실제로 일어날 수 있다.
-     */
-    public TossPaymentResponse cancel(String paymentKey, String cancelReason, Integer cancelAmount, String idempotencyKey) {
+    public TossPaymentResponse cancel(String paymentKey, String cancelReason) {
         return restClient
                 .post()
                 .uri(cancelUrl + "/" + paymentKey + "/cancel")
                 .header(HttpHeaders.AUTHORIZATION, basicAuthorization())
-                .header("Idempotency-Key", idempotencyKey)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new TossPaymentCancelRequest(cancelReason, cancelAmount))
+                .body(new TossPaymentCancelRequest(cancelReason))
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, (request, response) -> {
                     throw toApiException(response);

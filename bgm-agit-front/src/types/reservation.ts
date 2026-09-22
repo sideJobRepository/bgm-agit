@@ -16,11 +16,11 @@ export type AvailableRoom = {
   category?: string | null;
   minPeople?: number | null;
   maxPeople?: number | null;
-  // 그 날짜의 후보 슬롯 총수 (룸 24 / 마작 대여 4)
+  // 그 날짜의 후보 슬롯 총수 (일반 룸 13 / G Room 2 / 마작 대여 4)
   totalSlotCount: number;
   availableSlotCount: number;
   available: boolean;
-  // 항목 단위 불가 사유. 없으면 null
+  // 항목 단위 불가 사유(G룸 하루 1팀 등). 없으면 null
   message?: string | null;
 };
 
@@ -66,13 +66,8 @@ export type ReservationDatas = {
   slotRanges?: SlotRange[];
   maxSelectableSlots?: number | null;
   reservationType?: string;
-  /**
-   * 요금 방식. 'PER_PERSON'(룸 일무제한) 이면 prices 의 그날 값이 1인 단가이고,
-   * 'FLAT'(마작 대탁) 이면 depositAmount 가 확정 금액이다. 프론트에서 라벨로 분기하지 말 것.
-   */
-  pricingMode?: 'PER_PERSON' | 'FLAT';
-  // FLAT 일 때의 결제 금액. PER_PERSON 이면 인원이 정해지기 전이라 null
-  depositAmount?: number | null;
+  // 선택한 항목들의 예약금 합계 (서버 계산)
+  depositAmount?: number;
 };
 
 // 예약 내역
@@ -89,11 +84,6 @@ export type Reservation = {
   approvalStatus: 'Y' | 'N';
   cancelStatus: 'Y' | 'N';
   receiptUrl?: string | null;
-  // 아직 환불되지 않고 남아 있는 결제 금액. 미결제건은 0
-  paidAmount?: number | null;
-  // 지금 취소하면 적용될 환불 비율(%)과 금액. 최종 금액은 취소 응답 메시지가 알려준다
-  refundRate?: number | null;
-  refundAmount?: number | null;
   timeSlots: {
     startTime: string;
     endTime: string;
@@ -113,7 +103,7 @@ export type ReservationBoardItem = {
   registDate: string;
   startTime: string;
   endTime: string;
-  // 자정 기준 분값. 하루 경계(오전 10시) 이전 슬롯은 +1440 되어 있음 (24시간 영업 대응)
+  // 자정 기준 분값. 06시 이전 슬롯은 +1440 되어 있음 (익일 새벽 마감 대응)
   startMinutes: number;
   endMinutes: number;
 };

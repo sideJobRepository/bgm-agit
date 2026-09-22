@@ -21,12 +21,6 @@ import { theme } from '../styles/theme.ts';
 
 type StatusTone = 'waiting' | 'approved' | 'canceled';
 
-/**
- * 서버 ApiResponse 중 안내 문구만 쓰는 형태.
- * 취소·인원변경은 실제 환불 금액이 서버에서 결정되므로 그 문구를 그대로 띄운다.
- */
-type ApiMessageResponse = { message?: string };
-
 // 상태는 진한 단색으로 칠해 헤더바 위 배지와 카드 테두리에 같이 쓴다
 const STATUS_COLORS: Record<StatusTone, string> = {
   waiting: '#E08700',
@@ -96,29 +90,8 @@ export default function ReservationList() {
     return date >= todayYmd();
   }
 
-  /**
-   * 손님 취소 가능 여부.
-   *
-   * 예전에는 "예약일 전날까지"였지만 환불이 48h/24h 3단계가 되면서 날짜 기준이 의미를 잃었다.
-   * 24시간 이내여도 취소는 되고 환불만 0원이므로(자리를 비워주는 쪽이 매장에 이득이다)
-   * 아직 시작하지 않은 예약이면 열어 둔다. 최종 판정은 서버가 이용 시작 시각으로 한다.
-   */
   function canCancelBeforeReservationDate(item: Reservation) {
-    return item.cancelStatus !== 'Y' && item.reservationDate >= todayYmd();
-  }
-
-  /** 환불 예상액 안내 문구. 서버가 계산해 내려준 비율·금액을 그대로 쓴다 */
-  function refundNotice(item: Reservation) {
-    const paid = item.paidAmount ?? 0;
-    if (paid <= 0) {
-      return '결제 전 예약이라 환불할 금액이 없습니다.';
-    }
-    const rate = item.refundRate ?? 0;
-    const amount = item.refundAmount ?? 0;
-    if (amount <= 0) {
-      return `이용일 24시간 이내라 환불이 불가합니다. (결제 ${paid.toLocaleString()}원)`;
-    }
-    return `환불 예상 금액 ${amount.toLocaleString()}원 (결제 ${paid.toLocaleString()}원의 ${rate}%)`;
+    return item.cancelStatus !== 'Y' && item.reservationDate > todayYmd();
   }
 
   // pageSize 를 deps 에 둔다. useMediaQuery 가 첫 렌더 직후 값이 바뀌는 경우 재조회가 필요하다
@@ -135,30 +108,18 @@ export default function ReservationList() {
     };
 
     const url = role ? `/bgm-agit/reservation/admin` : `/bgm-agit/reservation`;
-    const canceling = approval !== 'Y';
-    const message = canceling ? (
-      <>
-        해당 예약을 취소하시겠습니까?
-        <br />
-        {refundNotice(item)}
-      </>
-    ) : (
-      '해당 예약을 확정하시겠습니까?'
-    );
+    const message =
+      approval === 'Y' ? '해당 예약을 확정하시겠습니까?' : '해당 예약을 취소하시겠습니까?';
+    const message2 = approval === 'Y' ? '예약이 확정되었습니다.' : '예약이 취소되었습니다.';
     showConfirmModal({
       message: message,
       onConfirm: () => {
-        update<typeof param, ApiMessageResponse>({
+        update({
           url: url,
           body: param,
           ignoreHttpError: true,
-          // 취소는 서버가 실제 환불 금액까지 계산해 메시지로 돌려준다.
-          // 목록을 열어둔 채 48시간 경계를 넘기면 위에 보여준 예상액과 갈리므로 응답 쪽을 쓴다.
-          onSuccess: res => {
-            toast.success(
-              (canceling ? res?.message : null) ??
-                (canceling ? '예약이 취소되었습니다.' : '예약이 확정되었습니다.')
-            );
+          onSuccess: () => {
+            toast.success(message2);
             fetchReservationList(page, { startDate: start, endDate: end }, pageSize);
           },
         });
@@ -217,19 +178,14 @@ export default function ReservationList() {
     <span>
       {canUsePayment && (
         <>
-          ※ 예약 대기 상태에서 결제 버튼을 눌러 이용요금을 결제하면 예약이 확정됩니다.
+          ※ 예약 대기 상태에서 결제 버튼을 눌러 예약금을 결제하면 예약이 확정됩니다.
           <br />
         </>
       )}
-      ※ 룸 이용요금은 1인 기준 평일 9,000원 / 주말 11,000원이며, 예약 시 인원수만큼 전액
-      결제합니다. (세트 이용을 원하시면 현장에서 3,000원만 추가 결제)
-      <br />※ 환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후(당일·노쇼 포함)에는
-      불가합니다.
-      <br />※ 인원 변경이 필요하시면 아래 번호로 문의해 주세요. 인원을 줄이시는 경우 줄어든 인원만큼 같은 기준으로 환불됩니다. 인원이 늘어나는
-      경우 추가 인원은 현장에서 워크인 요금으로 결제해 주세요.
-      <br />※ 마작 대탁 대여는 기존과 같이 예약금 10,000원 결제 후 잔여 요금을 현장에서
-      결제합니다.
-      <br />※ 기타 문의는 0507-1445-3503로 연락 부탁드립니다.
+      ※ 예약금은 예약 항목당 10,000원입니다. (여러 항목을 합쳐 예약한 경우 항목 수만큼 합산)
+      <br />※ 잔여 이용요금은 현장에서 결제합니다.
+      <br />※ 예약 취소는 예약일 전날까지만 가능합니다. 당일 취소는 불가합니다.
+      <br />※ 확정 후 취소 또는 환불 문의는 0507-1445-3503로 연락 부탁드립니다.
     </span>
   );
 
@@ -344,7 +300,7 @@ export default function ReservationList() {
                             : '결제 준비중'
                           : isNarrow
                             ? '결제'
-                            : '이용요금 결제'}
+                            : '예약금 결제'}
                       </ActionButton>
                     )}
                     {canApprove && (

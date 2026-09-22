@@ -30,7 +30,6 @@ import Review from './pages/Review.tsx';
 import ReviewDetail from './pages/ReviewDetail.tsx';
 import MyPage from './pages/MyPage.tsx';
 import MenuManage from './pages/MenuManage.tsx';
-import HolidayManage from './pages/HolidayManage.tsx';
 import MurderGames from './pages/MurderGames.tsx';
 import MurderGameDetail from './pages/MurderGameDetail.tsx';
 import PlayRecords from './pages/PlayRecords.tsx';
@@ -81,7 +80,6 @@ function App() {
               <Route path="review" element={<Review />} />
               <Route path="review/:id" element={<ReviewDetail />} />
               <Route path="menuManage" element={<MenuManage />} />
-              <Route path="holiday" element={<HolidayManage />} />
               <Route path="murder-games" element={<MurderGames />} />
               <Route path="/murderGameDetail" element={<MurderGameDetail />} />
               <Route path="play-records" element={<PlayRecords />} />

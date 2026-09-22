@@ -10,23 +10,17 @@ import com.bgmagitapi.origin.event.dto.TalkAction;
 import com.bgmagitapi.origin.payment.controller.response.PaymentConfirmResponse;
 import com.bgmagitapi.origin.payment.controller.response.PaymentOrderResponse;
 import com.bgmagitapi.origin.payment.entity.BgmAgitPayment;
-import com.bgmagitapi.origin.payment.entity.BgmAgitPaymentCancel;
 import com.bgmagitapi.origin.payment.entity.enumeration.PaymentStatus;
 import com.bgmagitapi.origin.payment.repository.BgmAgitPaymentRepository;
-import com.bgmagitapi.origin.payment.service.PaymentCancelRecorder;
 import com.bgmagitapi.origin.payment.service.PaymentFailureRecorder;
 import com.bgmagitapi.origin.payment.service.PaymentService;
 import com.bgmagitapi.origin.payment.service.TossPaymentsClient;
-import com.bgmagitapi.origin.payment.service.response.PaymentRefundResult;
 import com.bgmagitapi.origin.payment.service.response.TossPaymentResponse;
 import com.bgmagitapi.origin.payment.util.TossErrorMessages;
 import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
-import com.bgmagitapi.origin.service.BgmAgitHolidayService;
 import com.bgmagitapi.origin.service.response.BizTalkCancel;
 import com.bgmagitapi.origin.service.response.ReservationTalkContext;
-import com.bgmagitapi.origin.util.ReservationRefundPolicy;
-import com.bgmagitapi.origin.util.SlotSchedule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -57,10 +51,6 @@ public class PaymentServiceImpl implements PaymentService {
     private final TossPaymentsClient tossPaymentsClient;
     // 실패 기록은 별도 트랜잭션(REQUIRES_NEW)이어야 롤백에 쓸려가지 않는다
     private final PaymentFailureRecorder paymentFailureRecorder;
-    // 환불 시도 이력도 같은 이유로 별도 트랜잭션. 토스 호출 전에 선커밋해 멱등키를 확보한다
-    private final PaymentCancelRecorder paymentCancelRecorder;
-    // 주말/공휴일 단가 판정. 주문 생성 때와 같은 기준으로 재계산해야 금액이 갈리지 않는다
-    private final BgmAgitHolidayService bgmAgitHolidayService;
     private final ApplicationEventPublisher eventPublisher;
 
     // 토스 clientKey는 공개키(프론트 전달용). secretKey는 STEP 2 승인부터 사용
@@ -72,19 +62,13 @@ public class PaymentServiceImpl implements PaymentService {
     private boolean paymentLive;
 
     @Override
-    public PaymentOrderResponse createOrder(Long memberId, Long reservationNo, int amount, String orderName,
-                                            Integer people, Integer unitPrice) {
+    public PaymentOrderResponse createOrder(Long memberId, Long reservationNo, int amount, String orderName) {
         BgmAgitMember member = bgmAgitMemberRepository.findById(memberId)
                 .orElseThrow(() -> new PaymentException("존재 하지 않은 회원입니다."));
-
-        // 이미 결제된 예약에 주문을 또 만들지 않는다. 결제창을 두 개 띄우면 둘 다 승인되어 이중 과금이 됐다
-        if (bgmAgitPaymentRepository.existsSettledPaymentByReservationNo(reservationNo)) {
-            throw new PaymentException("이미 결제가 완료된 예약입니다.");
-        }
-
+        
         String orderNo = "bgmagit_" + reservationNo + "_" + System.currentTimeMillis();
 
-        BgmAgitPayment payment = new BgmAgitPayment(member, reservationNo, orderNo, amount, people, unitPrice);
+        BgmAgitPayment payment = new BgmAgitPayment(member, reservationNo, orderNo, amount);
         bgmAgitPaymentRepository.save(payment);
 
         return new PaymentOrderResponse(orderNo, amount, orderName, tossClientKey);
@@ -102,17 +86,6 @@ public class PaymentServiceImpl implements PaymentService {
             return toConfirmResponse(payment);
         }
 
-        // 같은 예약에 이미 정산된 결제가 있으면 여기서 끊는다. 멱등성이 orderNo 단위라
-        // 결제창을 두 개 띄워 각각 승인하면 예약 하나에 두 번 과금됐다(환불은 최신 1건만 돌았다).
-        if (bgmAgitPaymentRepository.existsSettledPaymentByReservationNo(payment.getBgmAgitReservationNo())) {
-            paymentFailureRecorder.recordAborted(orderId, null, "이미 결제가 완료된 예약");
-            throw new ReservationConflictException("이미 결제가 완료된 예약입니다. 예약내역에서 확인해 주세요.");
-        }
-
-        // 주문을 만든 뒤 인원이 바뀌었으면 저장 금액이 옛 금액이다. READY 주문은 3일간 살아 있어서
-        // 며칠 전 열어둔 결제창이 그대로 승인될 수 있다. 승인 전에 서버 재계산값과 다시 맞춰본다.
-        validateAmountAgainstReservation(payment);
-
         // 승인(=과금) 전에 슬롯을 다시 본다. 대기 예약은 서로의 자리를 막지 않기 때문에
         // 여기까지 오는 사이에 같은 시간대가 다른 사람 결제로 확정됐을 수 있다.
         // 돈이 빠져나간 뒤에 알면 환불로 풀어야 하므로 반드시 confirm 앞에서 걸러낸다.
@@ -120,8 +93,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         TossPaymentResponse result;
         try {
-            // 토스에 넘기는 금액은 클라이언트가 보낸 값이 아니라 저장된 주문 금액이다(위에서 대조를 마쳤다)
-            result = tossPaymentsClient.confirm(paymentKey, orderId, payment.getBgmAgitPaymentAmount());
+            result = tossPaymentsClient.confirm(paymentKey, orderId, amount);
         } catch (TossPaymentApiException e) {
             // 토스가 준 원문(코드+사유)을 남기고, 손님에겐 코드별 한국어 안내로 바꿔 던진다
             paymentFailureRecorder.recordAborted(orderId, e.getCode(), e.getMessage());
@@ -159,129 +131,20 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public PaymentRefundResult refundReservation(Long reservationNo, int refundRate, String cancelReason) {
-        return doRefund(reservationNo, bgmAgitPaymentRepository.findRefundablePaymentsForUpdate(reservationNo),
-                null, refundRate, cancelReason);
-    }
-
-    @Override
-    public PaymentRefundResult refundPeopleReduction(Long reservationNo, int reducedPeople, int refundRate, String cancelReason) {
-        List<BgmAgitPayment> payments = bgmAgitPaymentRepository.findRefundablePaymentsForUpdate(reservationNo);
-        if (reducedPeople <= 0 || payments.isEmpty()) {
-            return PaymentRefundResult.nothingToRefund(refundRate);
-        }
-
-        // 단가는 결제 시점 스냅샷을 쓴다. 지금 시세로 계산하면 옛 요금제 결제건에서 결제액을 넘는다.
-        // 스냅샷이 없는 결제(마작 정액, 개편 전 예약금 1만원)는 인원 차액이라는 개념이 없어 환불하지 않는다.
-        Integer unitPrice = payments.stream()
-                .map(BgmAgitPayment::getBgmAgitPaymentUnitPrice)
-                .filter(Objects::nonNull)
-                .findFirst()
+    public void cancelDonePaymentByReservationNo(Long reservationNo, String cancelReason) {
+        BgmAgitPayment payment = bgmAgitPaymentRepository
+                .findLatestPaymentByReservationNoAndStatus(reservationNo, PaymentStatus.DONE)
                 .orElse(null);
-        if (unitPrice == null) {
-            log.info("[payment] 인원 축소 환불 스킵. 단가 스냅샷 없음 reservationNo={}", reservationNo);
-            return PaymentRefundResult.nothingToRefund(refundRate);
+        if (payment == null) {
+            return;
         }
 
-        return doRefund(reservationNo, payments, reducedPeople * unitPrice, refundRate, cancelReason);
-    }
-
-    @Override
-    public long abortReadyOrders(Long reservationNo, String reason) {
-        return bgmAgitPaymentRepository.abortReadyOrders(reservationNo, reason);
-    }
-
-    /**
-     * 환불 실행.
-     *
-     * baseAmount 가 null 이면 남은 결제 잔액 전체가 기준이고(예약 취소), 값이 있으면 그 금액이 기준이다(인원 축소 차액).
-     * 실제 환불액은 언제나 잔액으로 클램프한다 — 정책 계산만 믿으면 결제액을 넘는 취소 요청이 나간다.
-     *
-     * 재결제로 정산 결제가 여러 건일 수 있어 오래된 순으로 훑으며 목표액을 채운다.
-     * 예전에는 최신 1건만 취소해서 나머지가 영영 환불되지 않았다.
-     */
-    private PaymentRefundResult doRefund(Long reservationNo, List<BgmAgitPayment> payments,
-                                         Integer baseAmount, int refundRate, String cancelReason) {
-        if (payments.isEmpty()) {
-            return PaymentRefundResult.nothingToRefund(refundRate);
-        }
-
-        int totalRemaining = payments.stream().mapToInt(BgmAgitPayment::remainingAmount).sum();
-        int base = baseAmount == null ? totalRemaining : Math.min(baseAmount, totalRemaining);
-        int target = ReservationRefundPolicy.refundAmount(base, refundRate);
-        if (target <= 0) {
-            // 24시간 이내 취소는 환불이 0원이다. 토스에 0원을 보내면 400 이라 아예 부르지 않는다
-            log.info("[payment] 환불 대상 금액 없음. reservationNo={}, rate={}", reservationNo, refundRate);
-            return PaymentRefundResult.nothingToRefund(refundRate);
-        }
-
-        int refunded = 0;
-        for (BgmAgitPayment payment : payments) {
-            int left = target - refunded;
-            if (left <= 0) {
-                break;
-            }
-            int portion = Math.min(payment.remainingAmount(), left);
-            if (portion <= 0) {
-                continue;
-            }
-
-            // 토스 호출 전에 시도 행을 커밋해 멱등키를 확보한다(별도 트랜잭션)
-            BgmAgitPaymentCancel attempt = paymentCancelRecorder.begin(
-                    payment.getBgmAgitPaymentId(), reservationNo, portion, refundRate, cancelReason);
-
-            // 손대지 않은 결제를 통째로 돌려주는 경우는 전액취소(cancelAmount 생략)로 보낸다.
-            // 가장 잘 지원되는 경로이고 기존 동작과도 같다.
-            boolean fullCancel = payment.getBgmAgitCancelAmount() == null
-                    && portion == payment.remainingAmount();
-
-            try {
-                TossPaymentResponse result = tossPaymentsClient.cancel(
-                        payment.getBgmAgitPaymentKey(),
-                        cancelReason,
-                        fullCancel ? null : portion,
-                        attempt.idempotencyKey());
-
-                applyCancelResult(payment, result, portion, cancelReason);
-                TossPaymentResponse.Cancel lastCancel = result == null ? null : result.getLatestCancel();
-                paymentCancelRecorder.succeed(
-                        attempt.getBgmAgitPaymentCancelId(),
-                        lastCancel == null ? null : lastCancel.getTransactionKey());
-                refunded += portion;
-            } catch (TossPaymentApiException e) {
-                String message = TossErrorMessages.toUserMessage(e.getCode(), e.getMessage());
-                paymentCancelRecorder.fail(attempt.getBgmAgitPaymentCancelId(),
-                        "[" + e.getCode() + "] " + e.getMessage());
-                // 예약 취소는 계속 진행한다(자리를 비우는 쪽이 먼저다). 관리자가 실패 행을 보고 수동 환불한다
-                log.error("[payment][환불실패] 관리자 확인 필요. reservationNo={}, paymentId={}, amount={}, code={}",
-                        reservationNo, payment.getBgmAgitPaymentId(), portion, e.getCode(), e);
-                return PaymentRefundResult.failed(refundRate, target, refunded, message);
-            } catch (RuntimeException e) {
-                paymentCancelRecorder.fail(attempt.getBgmAgitPaymentCancelId(), e.getMessage());
-                log.error("[payment][환불실패] 관리자 확인 필요(통신 오류). reservationNo={}, paymentId={}, amount={}",
-                        reservationNo, payment.getBgmAgitPaymentId(), portion, e);
-                return PaymentRefundResult.failed(refundRate, target, refunded,
-                        "환불 요청 중 오류가 발생했습니다. 확인 후 안내드리겠습니다.");
-            }
-        }
-
-        return PaymentRefundResult.succeeded(refundRate, target, refunded);
-    }
-
-    /**
-     * 취소 결과를 결제행에 반영.
-     * 누적 취소액은 토스 원장(totalAmount - balanceAmount)을 그대로 쓴다. 응답에 그 값이 없을 때만
-     * 로컬 누적으로 폴백한다 — cancels 배열을 더하거나 최근 1건을 보면 재시도·부분취소에서 틀어진다.
-     */
-    private void applyCancelResult(BgmAgitPayment payment, TossPaymentResponse result, int portion, String cancelReason) {
+        TossPaymentResponse result = tossPaymentsClient.cancel(payment.getBgmAgitPaymentKey(), cancelReason);
         TossPaymentResponse.Cancel lastCancel = result == null ? null : result.getLatestCancel();
-        Integer accumulated = result == null ? null : result.getCanceledAmount();
-        if (accumulated == null) {
-            int before = payment.getBgmAgitCancelAmount() == null ? 0 : payment.getBgmAgitCancelAmount();
-            accumulated = before + portion;
-        }
         payment.markCanceled(
-                accumulated,
+                lastCancel == null || lastCancel.getCancelAmount() == null
+                        ? payment.getBgmAgitPaymentAmount()
+                        : lastCancel.getCancelAmount(),
                 lastCancel == null || lastCancel.getCancelReason() == null
                         ? cancelReason
                         : lastCancel.getCancelReason(),
@@ -375,15 +238,13 @@ public class PaymentServiceImpl implements PaymentService {
                 + "-" + reservation.getBgmAgitReservationEndTime();
     }
 
-    /** 실패해도 원래 예외/흐름을 덮지 않도록 삼키는 전액 취소 */
+    /** 실패해도 원래 예외/흐름을 덮지 않도록 삼키는 취소 */
     private void cancelQuietly(String paymentKey, String cancelReason) {
         if (paymentKey == null) {
             return;
         }
         try {
-            // 가상계좌 즉시 취소 경로. 결제행이 아직 DONE 이 아니라 시도 이력을 만들지 않고
-            // paymentKey 자체를 멱등키로 쓴다(같은 결제를 두 번 취소해도 토스가 같은 요청으로 본다)
-            tossPaymentsClient.cancel(paymentKey, cancelReason, null, "bgmagit_abort_" + paymentKey);
+            tossPaymentsClient.cancel(paymentKey, cancelReason);
         } catch (RuntimeException e) {
             log.warn("[payment] 결제 취소 실패. paymentKey={}, reason={}", paymentKey, cancelReason, e);
         }
@@ -401,32 +262,6 @@ public class PaymentServiceImpl implements PaymentService {
             // 여기서 markAborted 를 직접 부르면 바로 뒤 예외로 롤백돼 사유가 안 남는다 → 별도 트랜잭션 경유
             paymentFailureRecorder.recordAborted(payment.getBgmAgitOrderNo(), null, "결제 금액이 일치하지 않습니다.");
             throw new PaymentException("결제 금액이 일치하지 않습니다.");
-        }
-    }
-
-    /**
-     * 저장된 주문 금액이 지금의 예약 내용으로 다시 계산해도 같은지.
-     *
-     * 클라이언트 금액과 저장 금액만 맞춰보던 예전 검증은 "둘 다 옛 금액"인 경우를 통과시켰다.
-     * 인원이 바뀌면 금액이 바뀌므로 반드시 서버 재계산값과도 대조한다.
-     */
-    private void validateAmountAgainstReservation(BgmAgitPayment payment) {
-        List<BgmAgitReservation> group =
-                bgmAgitReservationRepository.findReservationList(payment.getBgmAgitReservationNo());
-        if (group.isEmpty()) {
-            return;
-        }
-        BgmAgitReservation first = group.get(0);
-        Integer people = first.getBgmAgitReservationPeople();
-        int expected = SlotSchedule.totalPaymentAmount(
-                group.stream().map(BgmAgitReservation::getBgmAgitImage).toList(),
-                people == null ? 0 : people,
-                bgmAgitHolidayService.isWeekendRate(first.getBgmAgitReservationStartDate()));
-
-        if (!Objects.equals(payment.getBgmAgitPaymentAmount(), expected)) {
-            paymentFailureRecorder.recordAborted(payment.getBgmAgitOrderNo(), null,
-                    "예약 내용 변경으로 주문 금액 불일치(주문 " + payment.getBgmAgitPaymentAmount() + " / 현재 " + expected + ")");
-            throw new PaymentException("예약 인원이 변경되어 결제 금액이 달라졌습니다. 예약내역에서 다시 결제해 주세요.");
         }
     }
 

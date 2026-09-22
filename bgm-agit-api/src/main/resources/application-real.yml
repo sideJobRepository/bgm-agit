@@ -75,8 +75,6 @@ biztalk:
   # 예약 대기 알림톡을 계좌안내(bgmagit-res-account2) 대신 예약금 결제안내(bgmagit-res-payment-1)로 발송.
   # 토스 가맹점 심사 통과 + 카카오 템플릿 검수 통과로 켰다. 되돌리려면 false 로만 바꾸면 된다.
   reservation-payment-live: true
-  # 전액결제 개정 템플릿(bgmagit-res-payment-2). 카카오 검수 통과 후 true 로 전환
-  reservation-payment-v2: false
 
 server:
   tomcat:

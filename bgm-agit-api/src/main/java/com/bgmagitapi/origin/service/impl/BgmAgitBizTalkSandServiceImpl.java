@@ -20,7 +20,6 @@ import com.bgmagitapi.origin.repository.BgmAgitBiztalkSendHistoryRepository;
 import com.bgmagitapi.origin.repository.BgmAgitImageRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.origin.service.BgmAgitBizTalkSandService;
-import com.bgmagitapi.origin.service.BgmAgitHolidayService;
 import com.bgmagitapi.origin.service.BgmAgitBizTalkService;
 import com.bgmagitapi.origin.service.response.Attach;
 import com.bgmagitapi.origin.service.response.BizTalkTokenResponse;
@@ -65,9 +64,6 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
 
     private final BgmAgitReservationRepository bgmAgitReservationRepository;
 
-    // 알림톡 고지 금액도 결제와 같은 주말/공휴일 판정을 써야 청구액과 갈리지 않는다
-    private final BgmAgitHolidayService bgmAgitHolidayService;
-
     private static final String PHONE1 = "010-5059-3499";
     private static final String PHONE2 = "010-5592-8832";
 
@@ -75,13 +71,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     // payment.live 는 결제 승인 후 예약 자동확정에 쓰이므로 알림톡 문구 전환과 분리한다.
     @Value("${biztalk.reservation-payment-live:false}")
     private boolean reservationPaymentTalkLive;
-
-    // 전액결제 개정 템플릿(-2) 전환 스위치. 카카오 검수 리드타임 때문에 코드 배포와 분리한다.
-    // 통과 후 yml 한 줄만 true 로 바꾸면 된다.
-    @Value("${biztalk.reservation-payment-v2:false}")
-    private boolean reservationFullPaymentTalkLive;
-
-
+    
     @Value("${biztalk.sender-key}")
     private String senderKey;
     
@@ -114,30 +104,14 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String message;
         String template;
         if (reservationPaymentTalkLive) {
-            // 금액은 템플릿 변수라 실제 청구액을 그대로 넣는다.
-            // 결제 주문(createPaymentOrder)과 반드시 같은 메서드로 계산할 것 — 갈리면 고지액과 청구액이 달라진다
-            String deposit = AlimtalkUtils.formatAmount(SlotSchedule.totalPaymentAmount(
-                    list.stream().map(BgmAgitReservation::getBgmAgitImage).toList(),
-                    bgmAgitReservation.getBgmAgitReservationPeople() == null
-                            ? 0
-                            : bgmAgitReservation.getBgmAgitReservationPeople(),
-                    bgmAgitHolidayService.isWeekendRate(bgmAgitReservation.getBgmAgitReservationStartDate())
-
+            // 예약금은 템플릿 변수라 실제 청구액을 그대로 넣는다. 합쳐 예약이면 항목 수만큼 합산된 금액
+            String deposit = AlimtalkUtils.formatAmount(SlotSchedule.totalDepositAmount(
+                    list.stream().map(BgmAgitReservation::getBgmAgitImage).toList()
             ));
-            // 전액결제 개정판(-2)은 카카오 검수를 따로 받아야 해서 스위치로 가른다.
-            // 통과 전에는 구 템플릿이 나가고, 그 기간에는 환불 안내 문구가 실제 규정과 다르다
-            // (예약 화면·결제 모달·환불정책 페이지가 정확한 문구를 갖고 있어 그쪽으로 보완한다).
-            if (reservationFullPaymentTalkLive) {
-                message = AlimtalkUtils.buildReservationFullPaymentMessage(
-                        member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, deposit, reservationRequest
-                );
-                template = AlimtalkTemplate.BGMAGIT_RES_PAYMENT_V2;
-            } else {
-                message = AlimtalkUtils.buildReservationPaymentMessage(
-                        member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, deposit, reservationRequest
-                );
-                template = AlimtalkTemplate.BGMAGIT_RES_PAYMENT;
-            }
+            message = AlimtalkUtils.buildReservationPaymentMessage(
+                    member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, deposit, reservationRequest
+            );
+            template = AlimtalkTemplate.BGMAGIT_RES_PAYMENT;
         } else {
             message = AlimtalkUtils.buildReservationMessage(
                     member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, reservationRequest
