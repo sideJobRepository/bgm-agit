@@ -254,6 +254,10 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         if (date.isEqual(now)) {
             return "당일 예약은 불가능합니다.";
         }
+        // 아직 열지 않은 기간(10월 개편 오픈 전)은 기간 초과와 사유가 달라 먼저 걸러 문구를 따로 준다.
+        if (SlotSchedule.isBlockedDate(date)) {
+            return SlotSchedule.RESERVATION_BLOCKED_MESSAGE;
+        }
         if (!SlotSchedule.isWithinReservableWindow(date, now)) {
             return "예약은 내일부터 " + SlotSchedule.RESERVATION_WINDOW_MONTHS + "개월 이내의 날짜만 가능합니다.";
         }
@@ -312,6 +316,10 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         // 예약 가능 기간: 당일·과거 불가 + 현재일 기준 RESERVATION_WINDOW_MONTHS 개월 이내.
         // 조회(getReservation)에서 슬롯을 안 내려주는 것만으로는 직접 POST 를 막지 못하므로 등록에서도 검증한다.
         LocalDate kstToday = LocalDate.now(KST);
+        // 아직 열지 않은 기간(10월 개편 오픈 전)은 기간 초과와 사유가 달라 먼저 걸러 문구를 따로 준다.
+        if (SlotSchedule.isBlockedDate(kstDate)) {
+            throw new ReservationConflictException(SlotSchedule.RESERVATION_BLOCKED_MESSAGE);
+        }
         if (!SlotSchedule.isWithinReservableWindow(kstDate, kstToday)) {
             throw new ReservationConflictException(
                     "예약은 내일부터 " + SlotSchedule.RESERVATION_WINDOW_MONTHS + "개월 이내의 날짜만 가능합니다.");
