@@ -103,9 +103,37 @@ public class SlotSchedule {
         return today.plusDays(1);
     }
 
-    /** 예약 가능한 마지막 날짜. */
+    /**
+     * 이 날짜부터는 예약을 받지 않는다. 막을 필요가 없어지면 null 로 둔다.
+     *
+     * 10월 예약 정책 개편(일무제한·전액결제·3단계 환불)이 아직 오픈 전이다. 지금 화면으로 10월 예약을
+     * 받으면 예약금 1만원·전날까지 전액환불로 안내해 놓고 오픈 후에는 전액결제·3단계 환불이 적용되어
+     * 고지한 내용과 실제가 갈린다. 개편을 여는 시점에 이 상수만 null 로 바꾸면 3개월 창이 그대로 돌아온다.
+     */
+    public static final LocalDate RESERVATION_BLOCKED_FROM = LocalDate.of(2026, 10, 1);
+
+    /** 차단 기간 안내 문구. 조회 응답 message 와 등록 예외가 같은 문구를 쓴다. */
+    public static final String RESERVATION_BLOCKED_MESSAGE =
+            "10월 예약은 준비 중입니다. 공지 후 오픈되면 이용해 주세요.";
+
+    /** 아직 열지 않은 기간의 날짜인지. */
+    public static boolean isBlockedDate(LocalDate date) {
+        return RESERVATION_BLOCKED_FROM != null && !date.isBefore(RESERVATION_BLOCKED_FROM);
+    }
+
+    /**
+     * 예약 가능한 마지막 날짜.
+     *
+     * 차단 시작일이 걸려 있으면 그 전날까지로 줄인다. 이 값 하나가 조회 슬롯 생성 범위와
+     * isWithinReservableWindow 를 동시에 좁히므로, 차단하려고 호출부를 따로 고칠 필요가 없다.
+     */
     public static LocalDate lastReservableDate(LocalDate today) {
-        return today.plusMonths(RESERVATION_WINDOW_MONTHS);
+        LocalDate windowEnd = today.plusMonths(RESERVATION_WINDOW_MONTHS);
+        if (RESERVATION_BLOCKED_FROM == null) {
+            return windowEnd;
+        }
+        LocalDate beforeBlocked = RESERVATION_BLOCKED_FROM.minusDays(1);
+        return windowEnd.isAfter(beforeBlocked) ? beforeBlocked : windowEnd;
     }
 
     /** 예약 가능 기간 안의 날짜인지. 과거·당일·상한 초과를 모두 거른다. */
