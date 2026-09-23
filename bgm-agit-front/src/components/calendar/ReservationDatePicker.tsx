@@ -1,6 +1,6 @@
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import styled from 'styled-components';
 import type { WithTheme } from '../../styles/styled-props';
 import { toLocalYmd } from '../../utils/date.ts';
@@ -60,12 +60,18 @@ export default function ReservationDatePicker({
     return new Date(year, month - 1, day);
   }, [value]);
 
+  // 모바일에서는 날짜를 고르면 캘린더를 접었다가 다시 펴는데,
+  // 명시하지 않으면 리마운트될 때 이번 달로 돌아가 고른 날짜가 화면에서 사라진다.
+  // 초기값만 잡고 이후는 state 로 따라가야 한다 — 값을 고정해서 넘기면 ‹ › 로 달을 못 넘긴다.
+  const [activeStartDate, setActiveStartDate] = useState<Date>(() => selected ?? minDate);
+
   return (
     <StyledCalendar
       value={selected}
-      // 모바일에서는 날짜를 고르면 캘린더를 접었다가 다시 펴는데,
-      // 명시하지 않으면 리마운트될 때 이번 달로 돌아가 고른 날짜가 화면에서 사라진다.
-      activeStartDate={selected ?? minDate}
+      activeStartDate={activeStartDate}
+      onActiveStartDateChange={({ activeStartDate: next }) => {
+        if (next) setActiveStartDate(next);
+      }}
       minDate={minDate}
       maxDate={maxDate}
       locale="ko-KR"
