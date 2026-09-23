@@ -1,6 +1,6 @@
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import styled from 'styled-components';
 import type { WithTheme } from '../../styles/styled-props';
 import { toLocalYmd } from '../../utils/date.ts';
@@ -15,11 +15,12 @@ export const RESERVATION_WINDOW_MONTHS = 3;
 /**
  * 이 날짜부터는 달력에서 고를 수 없다. 서버 SlotSchedule.RESERVATION_BLOCKED_FROM 과 같은 값을 유지할 것.
  *
- * 10월 예약 정책 개편이 아직 오픈 전이라 지금 화면으로 10월 예약을 받으면 안내한 예약금·환불 규정이
- * 오픈 후 실제와 갈린다. 서버가 이미 그 기간의 슬롯을 안 내려주지만, 달력만 열려 있으면 날짜를 골라도
+ * 예약 정책 개편이 아직 오픈 전이라 10월까지만 현행 정책으로 받는다. 지금 화면으로 11월 이후 예약을 받으면
+ * 안내한 예약금·환불 규정이 오픈 후 실제와 갈린다.
+ * 서버가 이미 그 기간의 슬롯을 안 내려주지만, 달력만 열려 있으면 날짜를 골라도
  * 방이 하나도 안 뜨는 화면이 되므로 여기서도 같이 잘라낸다. 오픈하면 양쪽 다 null 로.
  */
-export const RESERVATION_BLOCKED_FROM: string | null = '2026-10-01';
+export const RESERVATION_BLOCKED_FROM: string | null = '2026-11-01';
 
 /**
  * 예약 플로우 1단계 — 날짜 선택.
@@ -59,12 +60,18 @@ export default function ReservationDatePicker({
     return new Date(year, month - 1, day);
   }, [value]);
 
+  // 모바일에서는 날짜를 고르면 캘린더를 접었다가 다시 펴는데,
+  // 명시하지 않으면 리마운트될 때 이번 달로 돌아가 고른 날짜가 화면에서 사라진다.
+  // 초기값만 잡고 이후는 state 로 따라가야 한다 — 값을 고정해서 넘기면 ‹ › 로 달을 못 넘긴다.
+  const [activeStartDate, setActiveStartDate] = useState<Date>(() => selected ?? minDate);
+
   return (
     <StyledCalendar
       value={selected}
-      // 모바일에서는 날짜를 고르면 캘린더를 접었다가 다시 펴는데,
-      // 명시하지 않으면 리마운트될 때 이번 달로 돌아가 고른 날짜가 화면에서 사라진다.
-      activeStartDate={selected ?? minDate}
+      activeStartDate={activeStartDate}
+      onActiveStartDateChange={({ activeStartDate: next }) => {
+        if (next) setActiveStartDate(next);
+      }}
       minDate={minDate}
       maxDate={maxDate}
       locale="ko-KR"

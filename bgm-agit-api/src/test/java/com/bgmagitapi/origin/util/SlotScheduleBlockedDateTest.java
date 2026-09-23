@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 개편 오픈 전까지 10월 예약을 막아 두는 장치.
+ * 개편 오픈 전까지 11월 이후 예약을 막아 두는 장치.
  *
  * 차단은 lastReservableDate 를 줄이는 방식이라, 조회 슬롯 생성 범위와 등록 검증이 한꺼번에 좁혀진다.
  * 이 연결이 끊기면 달력에는 안 보이는데 직접 POST 는 통과하는 상태가 되므로 값을 못 박아 둔다.
