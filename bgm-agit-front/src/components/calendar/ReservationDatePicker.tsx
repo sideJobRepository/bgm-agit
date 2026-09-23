@@ -15,11 +15,12 @@ export const RESERVATION_WINDOW_MONTHS = 3;
 /**
  * 이 날짜부터는 달력에서 고를 수 없다. 서버 SlotSchedule.RESERVATION_BLOCKED_FROM 과 같은 값을 유지할 것.
  *
- * 10월 예약 정책 개편이 아직 오픈 전이라 지금 화면으로 10월 예약을 받으면 안내한 예약금·환불 규정이
- * 오픈 후 실제와 갈린다. 서버가 이미 그 기간의 슬롯을 안 내려주지만, 달력만 열려 있으면 날짜를 골라도
+ * 예약 정책 개편이 아직 오픈 전이라 10월까지만 현행 정책으로 받는다. 지금 화면으로 11월 이후 예약을 받으면
+ * 안내한 예약금·환불 규정이 오픈 후 실제와 갈린다.
+ * 서버가 이미 그 기간의 슬롯을 안 내려주지만, 달력만 열려 있으면 날짜를 골라도
  * 방이 하나도 안 뜨는 화면이 되므로 여기서도 같이 잘라낸다. 오픈하면 양쪽 다 null 로.
  */
-export const RESERVATION_BLOCKED_FROM: string | null = '2026-10-01';
+export const RESERVATION_BLOCKED_FROM: string | null = '2026-11-01';
 
 /**
  * 예약 플로우 1단계 — 날짜 선택.
