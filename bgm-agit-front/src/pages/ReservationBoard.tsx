@@ -10,6 +10,7 @@ import { userState } from '../recoil/state/userState.ts';
 import { useUpdatePost } from '../recoil/fetch.ts';
 import { useRequest } from '../recoil/useRequest.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
+import Modal from '../components/Modal.tsx';
 import api from '../utils/axiosInstance.ts';
 import { addDaysYmd, formatYmdWithWeekday, todayYmd } from '../utils/date.ts';
 import type {
@@ -400,7 +401,9 @@ export default function ReservationBoard() {
             <LegendSwatch style={blockStyle('CANCELED', '#5A6570', false)} />
             취소
           </LegendItem>
-          <LegendNote>색상은 예약 장소별로 구분됩니다.</LegendNote>
+          <LegendNote>
+            색상은 예약 장소별로 구분됩니다. 블록을 누르면 상세 정보를 볼 수 있습니다.
+          </LegendNote>
         </Legend>
         )}
 
@@ -547,8 +550,10 @@ export default function ReservationBoard() {
           </BoardScroll>
         )}
 
-        {/* 목록 뷰의 카드는 상세·버튼을 자체적으로 갖고 있어 패널이 필요 없다 */}
+        {/* 목록 뷰의 카드는 상세·버튼을 자체적으로 갖고 있어 패널이 필요 없다.
+            그리드가 세로로 길어 아래에 붙이면 화면 밖에 그려지므로 모달로 띄운다 */}
         {view === 'grid' && selected && (
+          <Modal onClose={() => setSelected(null)}>
           <DetailPanel>
             <DetailHead>
               <DetailTitle>
@@ -636,6 +641,7 @@ export default function ReservationBoard() {
               )}
             </DetailActions>
           </DetailPanel>
+          </Modal>
         )}
       </BoardBox>
     </Wrapper>
@@ -1136,9 +1142,8 @@ const BlockTime = styled.div<WithTheme>`
 `;
 
 const DetailPanel = styled.div<WithTheme>`
-  margin-top: 20px;
-  padding: 18px;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
+  width: min(560px, calc(100vw - 40px));
+  padding: 20px;
   border-radius: 8px;
   background: ${({ theme }) => theme.colors.softColor};
 `;
