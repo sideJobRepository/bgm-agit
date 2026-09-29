@@ -16,7 +16,7 @@ export interface LectureResponse {
 
 interface LectureStore {
   lecture: LectureResponse | null;
-  setLecture: (lecture: LectureResponse) => void;
+   setLecture: (lecture: LectureResponse) => void;
 }
 
 export const useLectureStore = create<LectureStore>((set) => ({
