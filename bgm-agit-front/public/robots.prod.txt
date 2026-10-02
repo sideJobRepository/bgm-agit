@@ -1,5 +1,5 @@
+# /bgm-agit/(API) 는 막지 않는다. 구글이 화면을 그릴 때 API 를 못 불러 앱이 /error 로 넘어가 전 페이지가 soft 404 가 됐다
 User-agent: *
-Disallow: /bgm-agit/
 Disallow: /api/
 Disallow: /admin/
 Disallow: /private/
@@ -17,7 +17,6 @@ Disallow: /record/setting
 Disallow: /record/write
 
 User-agent: Yeti
-Disallow: /bgm-agit/
 Disallow: /api/
 Disallow: /admin/
 Disallow: /private/

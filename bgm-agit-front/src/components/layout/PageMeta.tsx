@@ -16,6 +16,9 @@ export default function PageMeta() {
   const { pathname, search } = useLocation();
 
   useEffect(() => {
+    // API 실패로 /error 에 온 것이므로 들어온 페이지의 값을 그대로 둔다.
+    // 바꾸면 canonical 이 /error 가 되어 구글이 그 페이지를 soft 404 로 처리한다
+    if (pathname === '/error') return;
     const path = pathname.length > 1 ? pathname.replace(/\/$/, '') : pathname;
     // 목록에 없는 상세 화면(/noticeDetail?id= 등)은 메인 제목을 쓰고 canonical 만 자기 주소로
     const page = PAGES[path] ?? PAGES['/'];
