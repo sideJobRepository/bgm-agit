@@ -424,6 +424,21 @@ kml:
 
 ---
 
+## SEO (메인 프론트)
+
+메인 프론트는 CSR 이라 예전엔 어느 주소든 같은 빈 `index.html`(canonical 이 메인)이 나갔다. 구글은 하위 페이지를 메인의 복사본으로 봤고, 없는 주소(`/zgcmp`)도 200 이라 색인됐다.
+- **페이지 목록은 `src/seo/pages.json` 한 곳** — 제목·설명·h1. 빌드 뒤 `scripts/prerender.mjs`(`npm run build` 에 붙어 있음, 운영 빌드만)가 페이지마다 `dist/<경로>/index.html` 을 만들고 `#root` 에 게임·룸·메뉴·공지 목록을 미리 넣는다. 화면 안 이동 때는 `components/layout/PageMeta.tsx` 가 같은 json 으로 제목·canonical 을 바꾼다
+- 사이트맵(`public/sitemap.prod.xml`)에 페이지를 추가하면 `pages.json` 에도 추가할 것
+- API 를 못 받으면 그 목록만 빠지고 빌드는 계속된다
+- 페이지 컴포넌트는 `App.tsx` 에서 `lazy` 로 받는다(메인·RedirectPage 제외). 첫 JS 2.5MB → 735KB
+
+### 운영 nginx (`/etc/nginx/conf.d/default.conf`, 2026-10-02 수정)
+- **맨 위 `map $uri $bgm_spa_route` 가 메인 프론트 라우트 목록이다. 여기 없는 주소는 404**(본문은 index.html 이라 화면은 앱이 그림). `App.tsx` 에 라우트를 추가하면 여기도 추가할 것 — 빠뜨리면 화면은 멀쩡한데 상태코드가 404 라 색인이 안 된다
+- `try_files $uri $uri/index.html @spa` — prerender 가 만든 페이지별 html 을 찾는다
+- `/assets/` 는 1년 immutable 캐시 + 없으면 404, 나머지는 `no-cache`. gzip 켬(예전엔 꺼져 있어 JS 2.5MB 가 그대로 나갔다)
+- 머더 프록시는 `= /murder` + `/murder/` — `location /murder` 로 두면 메인의 `/murder-games` 까지 3002 로 가서 502 가 났다
+- 이전 설정 백업 `default.conf.bak-20261002-052436`
+
 ## 인프라
 
 ### 환경변수
