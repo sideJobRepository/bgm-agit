@@ -11,30 +11,10 @@ import {
   subscribeInstallPrompt,
 } from '../../utils/pwa.ts';
 
-// 닫으면 한동안 다시 띄우지 않는다. 매번 뜨면 화면 아래를 계속 가린다
-const DISMISS_KEY = 'bgm-pwa-banner-dismissed';
-const DISMISS_DAYS = 30;
-
-function isDismissed() {
-  try {
-    const at = Number(localStorage.getItem(DISMISS_KEY));
-    return at > 0 && Date.now() - at < DISMISS_DAYS * 24 * 60 * 60 * 1000;
-  } catch {
-    return false;
-  }
-}
-
-function markDismissed() {
-  try {
-    localStorage.setItem(DISMISS_KEY, String(Date.now()));
-  } catch {
-    // 저장이 막혀 있으면 이번 화면에서만 닫힌다
-  }
-}
-
 export default function InstallBanner() {
   const [canPrompt, setCanPrompt] = useState(canPromptInstall);
-  const [closed, setClosed] = useState(isDismissed);
+  // 닫기는 지금 화면에서만. 설치를 안 했으면 다음 방문(새로고침)에 다시 띄운다
+  const [closed, setClosed] = useState(false);
 
   useEffect(() => subscribeInstallPrompt(() => setCanPrompt(canPromptInstall())), []);
 
@@ -45,14 +25,12 @@ export default function InstallBanner() {
   const iosGuide = isIos && !isInAppBrowser;
   if (!canPrompt && !iosGuide) return null;
 
-  const close = () => {
-    markDismissed();
-    setClosed(true);
-  };
+  const close = () => setClosed(true);
 
+  // 설치하면 브라우저가 더는 설치 가능 신호를 보내지 않아 다음 방문부터 저절로 안 뜬다.
+  // 설치 창에서 취소했으면 이번 화면에서만 거둔다
   const install = async () => {
     await promptInstall();
-    // 설치했든 설치 창에서 취소했든 배너는 거둔다. 취소한 사람에게 바로 다시 띄우지 않는다
     close();
   };
 

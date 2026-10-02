@@ -12,35 +12,16 @@ import {
   subscribeInstallPrompt,
 } from '@/lib/pwa';
 
-// 닫으면 한동안 다시 띄우지 않는다. 매번 뜨면 화면 아래를 계속 가린다
-const DISMISS_KEY = 'bml-pwa-banner-dismissed';
-const DISMISS_DAYS = 30;
-
-function isDismissed() {
-  try {
-    const at = Number(localStorage.getItem(DISMISS_KEY));
-    return at > 0 && Date.now() - at < DISMISS_DAYS * 24 * 60 * 60 * 1000;
-  } catch {
-    return false;
-  }
-}
-
-function markDismissed() {
-  try {
-    localStorage.setItem(DISMISS_KEY, String(Date.now()));
-  } catch {
-    // 저장이 막혀 있으면 이번 화면에서만 닫힌다
-  }
-}
-
 type Mode = 'hidden' | 'prompt' | 'ios';
 
 export default function InstallBanner() {
-  // 서버 렌더와 첫 화면을 맞추려고 처음엔 숨겨 두고 마운트 뒤에 판정한다
+  // 서버 렌더와 첫 화면을 맞추려고 처음엔 숨겨 두고 마운트 뒤에 판정한다.
+  // 닫기는 지금 화면에서만 — 설치를 안 했으면 다음 방문(새로고침)에 다시 띄운다
   const [mode, setMode] = useState<Mode>('hidden');
+  const [closed, setClosed] = useState(false);
 
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'production' || !isMobile() || isStandalone() || isDismissed()) return;
+    if (process.env.NODE_ENV !== 'production' || !isMobile() || isStandalone()) return;
     // 안드로이드는 브라우저가 설치 가능하다고 알려 온 뒤에만 띄운다(HTTPS·manifest 조건을 브라우저가 판정).
     // 아이폰은 설치 창을 띄우는 방법이 없어 메뉴 안내만 한다
     const fallback: Mode = isIos() && !isInAppBrowser() ? 'ios' : 'hidden';
@@ -49,16 +30,14 @@ export default function InstallBanner() {
     return subscribeInstallPrompt(update);
   }, []);
 
-  if (mode === 'hidden') return null;
+  if (mode === 'hidden' || closed) return null;
 
-  const close = () => {
-    markDismissed();
-    setMode('hidden');
-  };
+  const close = () => setClosed(true);
 
+  // 설치하면 브라우저가 더는 설치 가능 신호를 보내지 않아 다음 방문부터 저절로 안 뜬다.
+  // 설치 창에서 취소했으면 이번 화면에서만 거둔다
   const install = async () => {
     await promptInstall();
-    // 설치했든 설치 창에서 취소했든 배너는 거둔다. 취소한 사람에게 바로 다시 띄우지 않는다
     close();
   };
 
