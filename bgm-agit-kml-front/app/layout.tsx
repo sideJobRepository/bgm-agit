@@ -3,6 +3,7 @@ import './globals.css';
 import ClientLayout from '@/app/ClientLayout';
 import StyledComponentsRegistry from '@/app/registry';
 import KakaoProvider from '@/app/components/KakaoProvider';
+import PwaSetup from '@/app/components/PwaSetup';
 
 declare global {
   interface Window {
@@ -108,6 +109,9 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
+        <link rel="apple-touch-icon" href="/record/pwa/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-title" content="BML" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -118,6 +122,7 @@ export default function RootLayout({
           <ClientLayout>{children}</ClientLayout>
         </StyledComponentsRegistry>
         <KakaoProvider />
+        <PwaSetup />
       </body>
     </html>
   );

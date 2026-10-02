@@ -7,6 +7,7 @@ import Sidebar from './components/Sidebar';
 import AuthListener from '@/app/AuthListener';
 import RouteAuthGuard from '@/app/RouteAuthGuard';
 import MyPageModal from '@/app/components/MyPageModal';
+import InstallBanner from '@/app/components/InstallBanner';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   console.log('ClientLayout styled ===', styled);
@@ -23,6 +24,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           <MainArea>{children}</MainArea>
         </Inner>
       </Wrapper>
+      <InstallBanner />
     </ClientProviders>
   );
 }
