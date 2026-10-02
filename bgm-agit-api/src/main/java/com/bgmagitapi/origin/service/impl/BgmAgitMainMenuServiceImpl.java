@@ -125,7 +125,37 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
                     return copy;
                 })
                 .toList();
-        
+
+    }
+
+    // 미사용으로 꺼 둔 메뉴의 주소. 메뉴에서만 빠지고 주소를 치면 그대로 들어가져서 프론트가 이 목록으로 막는다.
+    // getMainMenu 는 권한으로도 거르기 때문에 '꺼 둔 메뉴'와 '권한이 없는 메뉴'를 프론트가 구분할 수 없다.
+    // 보통은 상위 메뉴(머더미스터리 등)만 미사용으로 꺼서 하위 메뉴는 사용 상태로 남아 있다. 상위까지 올라가며 본다.
+    // 사용 중인 메뉴와 같은 주소는 빼서 켜져 있는 화면이 막히지 않게 한다
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getClosedMenuLinks() {
+        List<BgmAgitMainMenu> menus = bgmAgitMainMenuRepository.findAll();
+        Map<Long, BgmAgitMainMenu> byId = menus.stream()
+                .collect(Collectors.toMap(BgmAgitMainMenu::getBgmAgitMainMenuId, menu -> menu));
+        Map<Boolean, Set<String>> linksByOpen = menus.stream()
+                .filter(menu -> menu.getBgmAgitMenuLink() != null && menu.getBgmAgitMenuLink().startsWith("/"))
+                .collect(Collectors.partitioningBy(
+                        menu -> isOpen(menu, byId),
+                        Collectors.mapping(BgmAgitMainMenu::getBgmAgitMenuLink, Collectors.toSet())));
+        Set<String> closed = new TreeSet<>(linksByOpen.get(false));
+        closed.removeAll(linksByOpen.get(true));
+        return List.copyOf(closed);
+    }
+
+    private boolean isOpen(BgmAgitMainMenu menu, Map<Long, BgmAgitMainMenu> byId) {
+        BgmAgitMainMenu current = menu;
+        // 상위가 잘못 이어져 순환하더라도 멈추게 메뉴 수만큼만 올라간다
+        for (int depth = 0; current != null && depth <= byId.size(); depth++) {
+            if (!Boolean.TRUE.equals(current.getBgmAgitUseStatus())) return false;
+            current = current.getParentMenuId() == null ? null : byId.get(current.getParentMenuId());
+        }
+        return true;
     }
     
     @Override

@@ -38,55 +38,5 @@
     "title": "식사 메뉴 | BGM 아지트",
     "description": "보드게임 하면서 즐기는 BGM 아지트 식사 메뉴입니다.",
     "h1": "식사 메뉴"
-  },
-  "/free": {
-    "title": "자유게시판 | BGM 아지트",
-    "description": "BGM 아지트 손님들이 자유롭게 이야기를 나누는 게시판입니다.",
-    "h1": "자유게시판"
-  },
-  "/review": {
-    "title": "방문 후기 | BGM 아지트",
-    "description": "BGM 아지트를 다녀간 손님들의 보드게임·머더미스터리 후기입니다.",
-    "h1": "방문 후기"
-  },
-  "/guide": {
-    "title": "이용 안내 | BGM 아지트",
-    "description": "BGM 아지트 이용 방법과 요금, 예약 안내입니다.",
-    "h1": "이용 안내"
-  },
-  "/matches": {
-    "title": "대회·매치 | BGM 아지트",
-    "description": "BGM 아지트에서 열리는 보드게임·마작 대회와 매치 소식입니다.",
-    "h1": "대회·매치"
-  },
-  "/murder-games": {
-    "title": "머더미스터리 게임 | BGM 아지트",
-    "description": "대전 최대규모 크라임씬(머더미스터리) 게임 목록. 인원과 플레이 시간을 확인하세요.",
-    "h1": "머더미스터리 게임"
-  },
-  "/play-records": {
-    "title": "머더미스터리 플레이 기록 | BGM 아지트",
-    "description": "BGM 아지트에서 진행된 머더미스터리 플레이 기록입니다.",
-    "h1": "머더미스터리 플레이 기록"
-  },
-  "/play-stats": {
-    "title": "머더미스터리 통계 | BGM 아지트",
-    "description": "BGM 아지트 머더미스터리 플레이 통계입니다.",
-    "h1": "머더미스터리 통계"
-  },
-  "/clocktower-games": {
-    "title": "시계탑(Blood on the Clocktower) 게임 | BGM 아지트",
-    "description": "BGM 아지트에서 즐길 수 있는 피흘리는 시계탑(Blood on the Clocktower) 스크립트 목록입니다.",
-    "h1": "시계탑 게임"
-  },
-  "/clocktower-records": {
-    "title": "시계탑 플레이 기록 | BGM 아지트",
-    "description": "BGM 아지트에서 진행된 피흘리는 시계탑 플레이 기록입니다.",
-    "h1": "시계탑 플레이 기록"
-  },
-  "/clocktower-stats": {
-    "title": "시계탑 통계 | BGM 아지트",
-    "description": "BGM 아지트 피흘리는 시계탑 플레이 통계입니다.",
-    "h1": "시계탑 통계"
   }
 }

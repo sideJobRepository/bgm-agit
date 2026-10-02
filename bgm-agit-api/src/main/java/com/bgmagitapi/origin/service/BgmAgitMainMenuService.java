@@ -14,6 +14,8 @@ public interface BgmAgitMainMenuService {
 
     List<BgmAgitMainMenuResponse> getMainMenu();
 
+    List<String> getClosedMenuLinks();
+
     Map<Long, List<BgmAgitMainMenuImageResponse>> getMainMenuImage(Long labelGb , String link);
 
     Map<String, Object> getImagePage(Long labelGb , String link, Pageable pageable, String category , String name);
