@@ -430,6 +430,7 @@ kml:
 - **페이지 목록은 `src/seo/pages.json` 한 곳** — 제목·설명·h1. 빌드 뒤 `scripts/prerender.mjs`(`npm run build` 에 붙어 있음, 운영 빌드만)가 페이지마다 `dist/<경로>/index.html` 을 만들고 `#root` 에 게임·룸·메뉴·공지 목록을 미리 넣는다. 화면 안 이동 때는 `components/layout/PageMeta.tsx` 가 같은 json 으로 제목·canonical 을 바꾼다
 - 사이트맵(`public/sitemap.prod.xml`)에 페이지를 추가하면 `pages.json` 에도 추가할 것
 - API 를 못 받으면 그 목록만 빠지고 빌드는 계속된다
+- **`robots.prod.txt` 에서 `/bgm-agit/` 를 막지 말 것.** 구글은 JS 를 실행해 화면을 그리는데, API 가 막히면 `useRequest` 가 `/error` 로 보내서 전 페이지가 soft 404 가 된다(2026-10-02 서치콘솔에서 `/detail/game` 의 표준 URL 이 `/error` 로 잡혔다). `PageMeta` 도 `/error` 에서는 canonical 을 바꾸지 않는다
 - 페이지 컴포넌트는 `App.tsx` 에서 `lazy` 로 받는다(메인·RedirectPage 제외). 첫 JS 2.5MB → 735KB
 
 ### 운영 nginx (`/etc/nginx/conf.d/default.conf`, 2026-10-02 수정)
