@@ -74,12 +74,7 @@
           "url": "https://bgmagit.co.kr/",
           "name": "BGM 아지트",
           "alternateName": ["보드게임카페 BGM 아지트", "비지엠 아지트", "BGM아지트"],
-          "inLanguage": "ko-KR",
-          "potentialAction": {
-            "@type": "SearchAction",
-            "target": "https://bgmagit.co.kr/search?q={search_term_string}",
-            "query-input": "required name=search_term_string"
-          }
+          "inLanguage": "ko-KR"
         },
         {
           "@type": "Organization",
@@ -95,7 +90,7 @@
           "description": "대전 보드게임 매니아들의 성지, 최대규모의 크라임씬(머더미스터리) 게임 보유"
         },
         {
-          "@type": "LocalBusiness",
+          "@type": ["LocalBusiness", "EntertainmentBusiness"],
           "@id": "https://bgmagit.co.kr/#localbusiness",
           "name": "BGM 아지트",
           "alternateName": "보드게임카페 BGM 아지트",
@@ -105,17 +100,18 @@
           "description": "대전 보드게임 매니아들의 성지, 최대규모의 크라임씬(머더미스터리) 게임 보유",
           "address": {
             "@type": "PostalAddress",
-            "addressLocality": "대전광역시",
-            "addressCountry": "KR",
-            "streetAddress": "TODO: 정확한 도로명 주소 입력"
+            "streetAddress": "문정로 62 프라임빌딩 3층",
+            "addressLocality": "서구",
+            "addressRegion": "대전광역시",
+            "addressCountry": "KR"
           },
-          "telephone": "TODO: +82-XX-XXXX-XXXX",
+          "telephone": "+82-507-1445-3503",
           "openingHoursSpecification": [
             {
               "@type": "OpeningHoursSpecification",
               "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
-              "opens": "TODO: 13:00",
-              "closes": "TODO: 02:00"
+              "opens": "00:00",
+              "closes": "23:59"
             }
           ],
           "priceRange": "₩₩"
@@ -156,7 +152,8 @@
       ]
     }
     </script>
-    <script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
+    <!-- defer: 화면 그리기를 막지 않게. 모듈 스크립트보다 앞에 있어 main.tsx 의 Kakao.init 전에 실행된다 -->
+    <script defer src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
 </head>
 <body>
   <div id="root"></div>

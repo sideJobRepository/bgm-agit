@@ -7,7 +7,7 @@ import Nav from './Nav.tsx';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { loadingState } from '../../recoil';
 import Loading from '../Loading.tsx';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { userState } from '../../recoil/state/userState.ts';
 import { restoreAuthSession } from '../../utils/axiosInstance';
 
@@ -51,7 +51,10 @@ export default function Layout() {
         </NavArea>
         <MainArea>
           {isLoading && <Loading />}
-          <Outlet />
+          {/* 화면 조각을 받는 동안 머리·메뉴·푸터는 그대로 둔다 */}
+          <Suspense fallback={<Loading />}>
+            <Outlet />
+          </Suspense>
         </MainArea>
         <FooterBox>
           <Footer />

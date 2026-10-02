@@ -1,0 +1,92 @@
+{
+  "/": {
+    "title": "BGM 아지트 | 대전 보드게임카페 · 머더미스터리",
+    "description": "대전 보드게임 매니아들의 성지, 최대규모의 크라임씬(머더미스터리) 게임 보유, BGM 아지트",
+    "h1": "BGM 아지트 - 대전 보드게임카페 · 머더미스터리"
+  },
+  "/about": {
+    "title": "BGM 아지트 소개 | BGM 아지트",
+    "description": "대전 서구 탄방역 4번 출구 3분, 24시간 연중무휴 보드게임카페 BGM 아지트를 소개합니다.",
+    "h1": "BGM 아지트 소개"
+  },
+  "/notice": {
+    "title": "공지사항 | BGM 아지트",
+    "description": "BGM 아지트 영업·예약·이벤트 공지사항을 확인하세요.",
+    "h1": "공지사항"
+  },
+  "/detail/game": {
+    "title": "보유게임 | BGM 아지트",
+    "description": "BGM 아지트에서 즐길 수 있는 파티·전략·머더미스터리 보드게임 목록입니다.",
+    "h1": "보유게임"
+  },
+  "/detail/room": {
+    "title": "룸 예약 | BGM 아지트",
+    "description": "인원에 맞는 보드게임 룸을 골라 예약하세요. 대전 탄방역 BGM 아지트.",
+    "h1": "룸 예약"
+  },
+  "/detail/mahjongRental": {
+    "title": "마작 대탁 예약 | BGM 아지트",
+    "description": "전동 마작 테이블(대탁)을 예약하고 마작을 즐겨보세요. 대전 탄방역 BGM 아지트.",
+    "h1": "마작 대탁 예약"
+  },
+  "/detail/drink": {
+    "title": "음료 메뉴 | BGM 아지트",
+    "description": "BGM 아지트에서 주문할 수 있는 음료 메뉴입니다.",
+    "h1": "음료 메뉴"
+  },
+  "/detail/food": {
+    "title": "식사 메뉴 | BGM 아지트",
+    "description": "보드게임 하면서 즐기는 BGM 아지트 식사 메뉴입니다.",
+    "h1": "식사 메뉴"
+  },
+  "/free": {
+    "title": "자유게시판 | BGM 아지트",
+    "description": "BGM 아지트 손님들이 자유롭게 이야기를 나누는 게시판입니다.",
+    "h1": "자유게시판"
+  },
+  "/review": {
+    "title": "방문 후기 | BGM 아지트",
+    "description": "BGM 아지트를 다녀간 손님들의 보드게임·머더미스터리 후기입니다.",
+    "h1": "방문 후기"
+  },
+  "/guide": {
+    "title": "이용 안내 | BGM 아지트",
+    "description": "BGM 아지트 이용 방법과 요금, 예약 안내입니다.",
+    "h1": "이용 안내"
+  },
+  "/matches": {
+    "title": "대회·매치 | BGM 아지트",
+    "description": "BGM 아지트에서 열리는 보드게임·마작 대회와 매치 소식입니다.",
+    "h1": "대회·매치"
+  },
+  "/murder-games": {
+    "title": "머더미스터리 게임 | BGM 아지트",
+    "description": "대전 최대규모 크라임씬(머더미스터리) 게임 목록. 인원과 플레이 시간을 확인하세요.",
+    "h1": "머더미스터리 게임"
+  },
+  "/play-records": {
+    "title": "머더미스터리 플레이 기록 | BGM 아지트",
+    "description": "BGM 아지트에서 진행된 머더미스터리 플레이 기록입니다.",
+    "h1": "머더미스터리 플레이 기록"
+  },
+  "/play-stats": {
+    "title": "머더미스터리 통계 | BGM 아지트",
+    "description": "BGM 아지트 머더미스터리 플레이 통계입니다.",
+    "h1": "머더미스터리 통계"
+  },
+  "/clocktower-games": {
+    "title": "시계탑(Blood on the Clocktower) 게임 | BGM 아지트",
+    "description": "BGM 아지트에서 즐길 수 있는 피흘리는 시계탑(Blood on the Clocktower) 스크립트 목록입니다.",
+    "h1": "시계탑 게임"
+  },
+  "/clocktower-records": {
+    "title": "시계탑 플레이 기록 | BGM 아지트",
+    "description": "BGM 아지트에서 진행된 피흘리는 시계탑 플레이 기록입니다.",
+    "h1": "시계탑 플레이 기록"
+  },
+  "/clocktower-stats": {
+    "title": "시계탑 통계 | BGM 아지트",
+    "description": "BGM 아지트 피흘리는 시계탑 플레이 통계입니다.",
+    "h1": "시계탑 통계"
+  }
+}

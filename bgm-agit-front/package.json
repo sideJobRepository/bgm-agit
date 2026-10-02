@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --mode dev",
-    "build": "vite build --mode real",
+    "build": "vite build --mode real && node scripts/prerender.mjs",
     "staging": "vite build --mode staging",
     "lint": "eslint .",
     "preview": "vite preview"
