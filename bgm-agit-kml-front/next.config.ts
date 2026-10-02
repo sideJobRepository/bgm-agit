@@ -12,6 +12,20 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
+  // 서비스워커 범위를 '/record'(끝 슬래시 없음)까지 넓힌다. 파일 위치 기준 기본 범위 '/record/' 로는
+  // 앱 첫 화면이 빠진다. source 는 basePath 기준이라 실제 주소는 /record/sw.js
+  async headers() {
+    return [
+      {
+        source: '/sw.js',
+        headers: [
+          { key: 'Service-Worker-Allowed', value: '/record' },
+          { key: 'Cache-Control', value: 'no-cache' },
+        ],
+      },
+    ];
+  },
+
   async rewrites() {
     return [
       {

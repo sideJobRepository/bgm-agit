@@ -4,6 +4,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import type { WithTheme } from '../../styles/styled-props.ts';
 import Footer from './Footer.tsx';
 import Nav from './Nav.tsx';
+import InstallBanner from './InstallBanner.tsx';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { loadingState } from '../../recoil';
 import Loading from '../Loading.tsx';
@@ -60,6 +61,7 @@ export default function Layout() {
           <Footer />
         </FooterBox>
       </Inner>
+      <InstallBanner />
     </Wrapper>
   );
 }
