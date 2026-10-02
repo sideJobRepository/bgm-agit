@@ -31,14 +31,10 @@ async function get(path) {
 }
 
 const list = items => (items.length ? `<ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>` : '');
-const players = g =>
-  g.minPlayers === g.maxPlayers ? `${g.minPlayers}명` : `${g.minPlayers}~${g.maxPlayers}명`;
 
 // main-image 는 labelGb 별로 모든 게임·룸·메뉴를 한 번에 준다
 const images = Object.values((await get('/main-image')) ?? {}).flat();
 const byLink = link => images.filter(i => i.link === link);
-const murder = (await get('/murder-games/simple')) ?? [];
-const clocktower = (await get('/clocktower-games/simple')) ?? [];
 const notices = (await get('/notice?page=0'))?.content ?? [];
 
 const CATEGORY = { PARTY: '파티 게임', STRATEGY: '전략 게임', MURDER: '머더미스터리' };
@@ -63,13 +59,6 @@ const body = {
     ),
   '/detail/drink': () => list(byLink('/detail/drink').map(m => esc(m.label))),
   '/detail/food': () => list(byLink('/detail/food').map(m => esc(m.label))),
-  '/murder-games': () =>
-    list(
-      murder.map(
-        g => `${esc(g.name)} · ${players(g)}${g.playMinutes ? ` · ${g.playMinutes}분` : ''}`
-      )
-    ),
-  '/clocktower-games': () => list(clocktower.map(g => `${esc(g.name)} · ${players(g)}`)),
   '/notice': () => list(notices.map(n => esc(n.bgmAgitNoticeTitle))),
 };
 

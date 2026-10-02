@@ -6,6 +6,7 @@ import { RecoilRoot } from 'recoil';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import PageMeta from './components/layout/PageMeta.tsx';
+import ClosedMenuGuard from './components/layout/ClosedMenuGuard.tsx';
 import Layout from './components/layout/Layout.tsx';
 import MainPage from './pages/MainPage.tsx';
 import ScrollToTop from './components/layout/ScrollToTop.tsx';
@@ -58,49 +59,51 @@ function App() {
         <BrowserRouter>
           <ScrollToTop />
           <PageMeta />
-          <Suspense fallback={null}>
-            <Routes>
-              <Route path="/oauth/:provider/callback" element={<RedirectPage />} />
-              <Route path="/error" element={<Error />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/refund-policy" element={<RefundPolicy />} />
-              <Route path="/" element={<Layout />}>
-                <Route index element={<MainPage />} />
-                <Route path="about" element={<About />} />
-                <Route path="detail/*" element={<Detail />} />
-                <Route path="notice" element={<Notice mainGb={true} />} />
-                <Route path="/noticeDetail" element={<NoticeDetail />} />
-                <Route path="reservationList" element={<ReservationList />} />
-                <Route path="reservation-board" element={<ReservationBoard />} />
-                <Route path="payment/success" element={<PaymentSuccess />} />
-                <Route path="payment/fail" element={<PaymentFail />} />
-                <Route path="role" element={<Role />} />
-                <Route path="free" element={<Free />} />
-                <Route path="/freeDetail" element={<FreeDetail />} />
-                <Route path="inquiry" element={<Inquiry />} />
-                <Route path="/inquiryDetail" element={<InquiryDetail />} />
-                <Route path="guide" element={<Guide />} />
-                <Route path="matches" element={<Matches />} />
-                <Route path="my-academy" element={<MyPage />} />
-                <Route path="review" element={<Review />} />
-                <Route path="review/:id" element={<ReviewDetail />} />
-                <Route path="menuManage" element={<MenuManage />} />
-                <Route path="murder-games" element={<MurderGames />} />
-                <Route path="/murderGameDetail" element={<MurderGameDetail />} />
-                <Route path="play-records" element={<PlayRecords />} />
-                <Route path="/playRecordDetail" element={<PlayRecordDetail />} />
-                <Route path="play-history" element={<PlayHistory />} />
-                <Route path="play-stats" element={<PlayStats />} />
-                <Route path="clocktower-games" element={<ClockTowerGames />} />
-                <Route path="/clockTowerGameDetail" element={<ClockTowerGameDetail />} />
-                <Route path="clocktower-records" element={<ClockTowerRecords />} />
-                <Route path="/clockTowerRecordDetail" element={<ClockTowerRecordDetail />} />
-                <Route path="clocktower-history" element={<ClockTowerHistory />} />
-                <Route path="clocktower-stats" element={<ClockTowerStats />} />
-              </Route>
-            </Routes>
-          </Suspense>
+          <ClosedMenuGuard>
+            <Suspense fallback={null}>
+              <Routes>
+                <Route path="/oauth/:provider/callback" element={<RedirectPage />} />
+                <Route path="/error" element={<Error />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/refund-policy" element={<RefundPolicy />} />
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<MainPage />} />
+                  <Route path="about" element={<About />} />
+                  <Route path="detail/*" element={<Detail />} />
+                  <Route path="notice" element={<Notice mainGb={true} />} />
+                  <Route path="/noticeDetail" element={<NoticeDetail />} />
+                  <Route path="reservationList" element={<ReservationList />} />
+                  <Route path="reservation-board" element={<ReservationBoard />} />
+                  <Route path="payment/success" element={<PaymentSuccess />} />
+                  <Route path="payment/fail" element={<PaymentFail />} />
+                  <Route path="role" element={<Role />} />
+                  <Route path="free" element={<Free />} />
+                  <Route path="/freeDetail" element={<FreeDetail />} />
+                  <Route path="inquiry" element={<Inquiry />} />
+                  <Route path="/inquiryDetail" element={<InquiryDetail />} />
+                  <Route path="guide" element={<Guide />} />
+                  <Route path="matches" element={<Matches />} />
+                  <Route path="my-academy" element={<MyPage />} />
+                  <Route path="review" element={<Review />} />
+                  <Route path="review/:id" element={<ReviewDetail />} />
+                  <Route path="menuManage" element={<MenuManage />} />
+                  <Route path="murder-games" element={<MurderGames />} />
+                  <Route path="/murderGameDetail" element={<MurderGameDetail />} />
+                  <Route path="play-records" element={<PlayRecords />} />
+                  <Route path="/playRecordDetail" element={<PlayRecordDetail />} />
+                  <Route path="play-history" element={<PlayHistory />} />
+                  <Route path="play-stats" element={<PlayStats />} />
+                  <Route path="clocktower-games" element={<ClockTowerGames />} />
+                  <Route path="/clockTowerGameDetail" element={<ClockTowerGameDetail />} />
+                  <Route path="clocktower-records" element={<ClockTowerRecords />} />
+                  <Route path="/clockTowerRecordDetail" element={<ClockTowerRecordDetail />} />
+                  <Route path="clocktower-history" element={<ClockTowerHistory />} />
+                  <Route path="clocktower-stats" element={<ClockTowerStats />} />
+                </Route>
+              </Routes>
+            </Suspense>
+          </ClosedMenuGuard>
         </BrowserRouter>
       </RecoilRoot>
     </ThemeProvider>

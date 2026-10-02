@@ -432,6 +432,17 @@ kml:
 - API 를 못 받으면 그 목록만 빠지고 빌드는 계속된다
 - **`robots.prod.txt` 에서 `/bgm-agit/` 를 막지 말 것.** 구글은 JS 를 실행해 화면을 그리는데, API 가 막히면 `useRequest` 가 `/error` 로 보내서 전 페이지가 soft 404 가 된다(2026-10-02 서치콘솔에서 `/detail/game` 의 표준 URL 이 `/error` 로 잡혔다). `PageMeta` 도 `/error` 에서는 canonical 을 바꾸지 않는다
 - 페이지 컴포넌트는 `App.tsx` 에서 `lazy` 로 받는다(메인·RedirectPage 제외). 첫 JS 2.5MB → 735KB
+- **`pages.json`·사이트맵에는 공개 메뉴만 넣는다.** 미사용 메뉴(머더미스터리·시계탑·마작 아카데미 하위)를 넣으면 사이트맵과 사전 생성 페이지 하단 링크로 노출된다
+
+### 미사용 메뉴 주소 차단
+메뉴 관리에서 미사용으로 꺼도 메뉴에서만 빠지고 주소를 치면 들어가졌다.
+- `GET /bgm-agit/main-menu/closed-links`(공개) — 닫힌 메뉴 주소 목록. **보통 상위 메뉴만 끄고 하위는 사용 상태로 두므로 상위까지 올라가며 판정**한다(`BgmAgitMainMenuServiceImpl.getClosedMenuLinks`). 사용 중인 메뉴와 같은 주소는 뺀다
+- `/main-menu` 는 권한으로도 걸러서 프론트가 '꺼 둔 메뉴'와 '권한이 없는 메뉴'를 구분할 수 없어 따로 뒀다
+- 프론트 `components/layout/ClosedMenuGuard.tsx` 가 해당하면 관리자 포함 모두 메인으로 보낸다(관리자 예외 없음으로 결정). 상세 화면은 `PARENT_LINK` 로 속한 메뉴를 따른다 — **메뉴 하위 상세 라우트를 추가하면 여기도 추가**
+- 목록 조회가 실패하면 막지 않는다
+
+### 메뉴 관리 API 관리자 검사
+`/main-menu/options`, `POST/PUT/DELETE /main-menu` 는 URL_RESOURCES 매핑이 없어 **로그인 없이도 메뉴를 만들고 지울 수 있었다**(2026-10-02 발견). 컨트롤러 `requireAdmin` 으로 막고 비관리자는 `ForbiddenException`(403)
 
 ### 운영 nginx (`/etc/nginx/conf.d/default.conf`, 2026-10-02 수정)
 - **맨 위 `map $uri $bgm_spa_route` 가 메인 프론트 라우트 목록이다. 여기 없는 주소는 404**(본문은 index.html 이라 화면은 앱이 그림). `App.tsx` 에 라우트를 추가하면 여기도 추가할 것 — 빠뜨리면 화면은 멀쩡한데 상태코드가 404 라 색인이 안 된다

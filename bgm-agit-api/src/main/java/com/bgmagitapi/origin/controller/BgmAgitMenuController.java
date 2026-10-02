@@ -1,6 +1,7 @@
 package com.bgmagitapi.origin.controller;
 
 
+import com.bgmagitapi.origin.advice.exception.ForbiddenException;
 import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.origin.controller.request.BgmAgitMainMenuPostRequest;
 import com.bgmagitapi.origin.controller.response.BgmAgitMainMenuCreateOptionsResponse;
@@ -10,6 +11,8 @@ import com.bgmagitapi.origin.service.BgmAgitMainMenuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -38,6 +41,11 @@ public class BgmAgitMenuController {
     public List<BgmAgitMainMenuResponse> getMenu() {
          return bgmAgitMainMenuService.getMainMenu();
     }
+
+    @GetMapping(value = "/main-menu/closed-links")
+    public List<String> getClosedMenuLinks() {
+        return bgmAgitMainMenuService.getClosedMenuLinks();
+    }
     
     @GetMapping(value = "/main-image")
     public Map<Long, List<BgmAgitMainMenuImageResponse>> getMenuImage(
@@ -60,25 +68,39 @@ public class BgmAgitMenuController {
     }
 
     // =========================== 관리자 메뉴 관리 ===========================
+    // URL_RESOURCES 에 매핑이 없으면 기본 통과라 로그인 없이도 메뉴를 만들고 지울 수 있었다. 여기서 직접 막는다
+
+    private void requireAdmin(Jwt jwt) {
+        List<String> roles = jwt == null ? null : jwt.getClaim("roles");
+        if (roles == null || !(roles.contains("ROLE_ADMIN") || roles.contains("ADMIN"))) {
+            throw new ForbiddenException("관리자만 사용할 수 있습니다.");
+        }
+    }
 
     @GetMapping("/main-menu/options")
-    public BgmAgitMainMenuCreateOptionsResponse menuCreateOptions() {
+    public BgmAgitMainMenuCreateOptionsResponse menuCreateOptions(@AuthenticationPrincipal Jwt jwt) {
+        requireAdmin(jwt);
         return bgmAgitMainMenuService.getMenuCreateOptions();
     }
 
     @PostMapping("/main-menu")
-    public ApiResponse createMenu(@Validated @RequestBody BgmAgitMainMenuPostRequest request) {
+    public ApiResponse createMenu(@AuthenticationPrincipal Jwt jwt,
+                                  @Validated @RequestBody BgmAgitMainMenuPostRequest request) {
+        requireAdmin(jwt);
         return bgmAgitMainMenuService.createMenu(request);
     }
 
     @PutMapping("/main-menu/{menuId}")
-    public ApiResponse updateMenu(@PathVariable Long menuId,
+    public ApiResponse updateMenu(@AuthenticationPrincipal Jwt jwt,
+                                  @PathVariable Long menuId,
                                   @Validated @RequestBody BgmAgitMainMenuPostRequest request) {
+        requireAdmin(jwt);
         return bgmAgitMainMenuService.updateMenu(menuId, request);
     }
 
     @DeleteMapping("/main-menu/{menuId}")
-    public ApiResponse deleteMenu(@PathVariable Long menuId) {
+    public ApiResponse deleteMenu(@AuthenticationPrincipal Jwt jwt, @PathVariable Long menuId) {
+        requireAdmin(jwt);
         return bgmAgitMainMenuService.deleteMenu(menuId);
     }
 }
