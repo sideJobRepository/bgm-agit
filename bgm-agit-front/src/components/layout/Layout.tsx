@@ -10,7 +10,8 @@ import { loadingState } from '../../recoil';
 import Loading from '../Loading.tsx';
 import { useEffect, Suspense } from 'react';
 import { userState } from '../../recoil/state/userState.ts';
-import { restoreAuthSession } from '../../utils/axiosInstance';
+import { getRefreshedUser, restoreAuthSession } from '../../utils/axiosInstance';
+import type { CustomUser } from '../../types/user.ts';
 
 export default function Layout() {
   const location = useLocation();
@@ -38,8 +39,12 @@ export default function Layout() {
   }, [setUser]);
 
   useEffect(() => {
-    void restoreAuthSession();
-  }, []);
+    // 이미 다른 요청이 재발급을 끝냈으면 이벤트를 놓쳤을 수 있으니 결과를 직접 반영한다
+    void restoreAuthSession().then(() => {
+      const user = getRefreshedUser();
+      if (user) setUser(prev => prev ?? (user as CustomUser));
+    });
+  }, [setUser]);
 
   return (
     <Wrapper>

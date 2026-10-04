@@ -18,6 +18,7 @@ const PARENT_LINK: Record<string, string> = {
   '/freeDetail': '/free',
   '/noticeDetail': '/notice',
   '/inquiryDetail': '/inquiry',
+  '/serviceRequestDetail': '/service-request',
 };
 
 function menuLinkOf(pathname: string) {

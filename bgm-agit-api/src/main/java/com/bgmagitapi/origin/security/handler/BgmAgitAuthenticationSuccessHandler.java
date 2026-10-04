@@ -32,6 +32,16 @@ public class BgmAgitAuthenticationSuccessHandler implements AuthenticationSucces
     public static final String COOKIE_NAME_MAIN = "refreshToken_main";
     public static final String COOKIE_NAME_RECORD = "refreshToken_record";
 
+    /**
+     * 리프레시 토큰 DB 행의 기기 키. 메인과 /record 는 같은 도메인이라 localStorage deviceId 가 같아서,
+     * 그대로 쓰면 한쪽에서 토큰을 갱신할 때 다른 쪽 쿠키의 토큰이 무효가 돼 새로고침하면 로그아웃됐다.
+     * 메인은 기존 행을 살리려고 deviceId 그대로 두고 /record 만 접미사를 붙인다.
+     */
+    public static String platformIdOf(String deviceId, boolean record) {
+        if (deviceId == null || deviceId.isBlank()) return deviceId;
+        return record ? deviceId + ":record" : deviceId;
+    }
+
     private final ObjectMapper objectMapper;
     private final RsaSecuritySigner rsaSecuritySigner;
     private final BgmAgitRefreshTokenService bgmAgitRefreshTokenService;
@@ -60,7 +70,8 @@ public class BgmAgitAuthenticationSuccessHandler implements AuthenticationSucces
 
         try {
             TokenPair tokenPair = rsaSecuritySigner.getToken(member, jwk, authorities);
-            bgmAgitRefreshTokenService.refreshTokenSaveOrUpdate(member, tokenPair.getRefreshToken(), expiresAt, deviceId);
+            boolean record = "/bgm-agit/next/login".equals(request.getRequestURI());
+            bgmAgitRefreshTokenService.refreshTokenSaveOrUpdate(member, tokenPair.getRefreshToken(), expiresAt, platformIdOf(deviceId, record));
             
             BgmAgitMemberResponseDto bgmAgitMemberResponseDto = BgmAgitMemberResponseDto.create(member, authorities);
             // Access Token은 응답 JSON에 포함
@@ -70,7 +81,7 @@ public class BgmAgitAuthenticationSuccessHandler implements AuthenticationSucces
             );
             
             // Refresh Token은 HttpOnly 쿠키로 설정 (로그인 경로에 따라 쿠키 이름 분리)
-            String cookieName = "/bgm-agit/next/login".equals(request.getRequestURI())
+            String cookieName = record
                     ? COOKIE_NAME_RECORD
                     : COOKIE_NAME_MAIN;
 

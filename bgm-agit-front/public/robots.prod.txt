@@ -5,6 +5,8 @@ Disallow: /admin/
 Disallow: /private/
 Disallow: /role
 Disallow: /menuManage
+Disallow: /service-request
+Disallow: /serviceRequestDetail
 Disallow: /my-academy
 Disallow: /play-history
 Disallow: /clocktower-history
@@ -22,6 +24,8 @@ Disallow: /admin/
 Disallow: /private/
 Disallow: /role
 Disallow: /menuManage
+Disallow: /service-request
+Disallow: /serviceRequestDetail
 Disallow: /my-academy
 Disallow: /play-history
 Disallow: /clocktower-history

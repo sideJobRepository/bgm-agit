@@ -29,6 +29,8 @@ const Free = lazy(() => import('./pages/Free.tsx'));
 const FreeDetail = lazy(() => import('./pages/FreeDetail.tsx'));
 const Inquiry = lazy(() => import('./pages/Inquiry.tsx'));
 const InquiryDetail = lazy(() => import('./pages/InquiryDetail.tsx'));
+const ServiceRequest = lazy(() => import('./pages/ServiceRequest.tsx'));
+const ServiceRequestDetail = lazy(() => import('./pages/ServiceRequestDetail.tsx'));
 const Guide = lazy(() => import('./pages/Guide.tsx'));
 const Matches = lazy(() => import('./pages/Matches.tsx'));
 const Review = lazy(() => import('./pages/Review.tsx'));
@@ -82,6 +84,8 @@ function App() {
                   <Route path="/freeDetail" element={<FreeDetail />} />
                   <Route path="inquiry" element={<Inquiry />} />
                   <Route path="/inquiryDetail" element={<InquiryDetail />} />
+                  <Route path="service-request" element={<ServiceRequest />} />
+                  <Route path="/serviceRequestDetail" element={<ServiceRequestDetail />} />
                   <Route path="guide" element={<Guide />} />
                   <Route path="matches" element={<Matches />} />
                   <Route path="my-academy" element={<MyPage />} />

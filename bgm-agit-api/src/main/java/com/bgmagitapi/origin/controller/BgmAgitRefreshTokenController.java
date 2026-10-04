@@ -35,7 +35,7 @@ public class BgmAgitRefreshTokenController {
         String cookieName = resolveCookieName(source);
         String refreshToken = readCookie(request, cookieName);
 
-        TokenAndUser tokenPair = refreshTokenService.reissueTokenWithUser(refreshToken, deviceId);
+        TokenAndUser tokenPair = refreshTokenService.reissueTokenWithUser(refreshToken, platformIdOf(source, deviceId));
 
         ResponseCookie.ResponseCookieBuilder cookieBuilder =
                 ResponseCookie.from(cookieName, tokenPair.token().getRefreshToken())
@@ -67,7 +67,7 @@ public class BgmAgitRefreshTokenController {
         String cookieName = resolveCookieName(source);
         String refreshToken = readCookie(request, cookieName);
 
-        ApiResponse apiResponse = refreshTokenService.deleteRefresh(refreshToken, deviceId);
+        ApiResponse apiResponse = refreshTokenService.deleteRefresh(refreshToken, platformIdOf(source, deviceId));
 
         ResponseCookie deleteCookie = ResponseCookie.from(cookieName, "")
                 .httpOnly(true)
@@ -78,6 +78,10 @@ public class BgmAgitRefreshTokenController {
                 .build();
         response.addHeader("Set-Cookie", deleteCookie.toString());
         return apiResponse;
+    }
+
+    private String platformIdOf(String source, String deviceId) {
+        return BgmAgitAuthenticationSuccessHandler.platformIdOf(deviceId, "record".equalsIgnoreCase(source));
     }
 
     private String resolveCookieName(String source) {

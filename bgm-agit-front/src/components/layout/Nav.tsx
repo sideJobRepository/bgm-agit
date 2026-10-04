@@ -12,7 +12,9 @@ export default function Nav() {
   const menus = useRecoilValue(mainMenuState);
   const pathname = location.pathname;
 
-  const { mainMenu, subMenu } = findMenuByPath(pathname, menus);
+  // 메뉴에 없는 상세 화면은 속한 메뉴 경로로 찾는다
+  const menuPath = pathname === '/serviceRequestDetail' ? '/service-request' : pathname;
+  const { mainMenu, subMenu } = findMenuByPath(menuPath, menus);
   const isReviewDetailPath = pathname.startsWith('/review/');
 
   function findMenuByPath(path: string, menus: MainMenu[]) {

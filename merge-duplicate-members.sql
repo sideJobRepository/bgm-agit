@@ -121,6 +121,7 @@ BEGIN
     --   ※ BGM_AGIT_MEMBER_ROLE 은 위 (a)에서 dup 행을 삭제했으므로 이관하지 않음
     CALL _reassign_member('BGM_AGIT_RESERVATION',             p_keep, p_dup);
     CALL _reassign_member('BGM_AGIT_INQUIRY',                 p_keep, p_dup);
+    CALL _reassign_member('BGM_AGIT_SERVICE_REQUEST',         p_keep, p_dup);
     CALL _reassign_member('BGM_AGIT_FREE',                    p_keep, p_dup);
     CALL _reassign_member('BGM_AGIT_COMMON_COMMENT',          p_keep, p_dup);
     CALL _reassign_member('BGM_AGIT_REVIEW',                  p_keep, p_dup);

@@ -1,3 +1,5 @@
+// 코드 분할 이후 이 CSS 를 쓰는 화면이 따로 import 하면 그 화면을 거치지 않은 경우 확인창이 오버레이 없이 깨진다
+import 'react-confirm-alert/src/react-confirm-alert.css';
 import { confirmAlert } from 'react-confirm-alert';
 import styled from 'styled-components';
 import { useState } from 'react';
