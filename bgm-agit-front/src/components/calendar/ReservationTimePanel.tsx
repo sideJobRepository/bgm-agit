@@ -6,7 +6,6 @@ import { useRecoilValue } from 'recoil';
 import { reservationDataState, reservationState } from '../../recoil/state/reservationState.ts';
 import type { ReservationDatas } from '../../types/reservation.ts';
 
-import 'react-confirm-alert/src/react-confirm-alert.css';
 import { userState } from '../../recoil/state/userState.ts';
 import { showConfirmModal, showReservationConfirmModal } from '../confirmAlert.tsx';
 import { useInsertPost, useReservationFetch } from '../../recoil/fetch.ts';

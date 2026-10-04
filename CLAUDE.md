@@ -37,6 +37,7 @@
 - 상수: `BgmAgitAuthenticationSuccessHandler.COOKIE_NAME_MAIN/_RECORD`
 - 프론트는 자기 source를 박아 호출 — `bgm-agit-front/src/utils/axiosInstance.ts`→`main`, `bgm-agit-kml-front/lib/axiosInstance.ts`→`record`. 로그아웃 DELETE도 동일(`Sidebar.tsx`, `TopHeader.tsx`)
 - 결과: 카카오로 메인 로그인해도 `/record`는 자동 로그인 안 됨(반대도 마찬가지). 구 단일 `refreshToken` 쿠키는 미사용
+- **DB 행도 source 별로 나뉜다** — `BGM_AGIT_REFRESH_TOKEN`은 (회원, platformId)당 1행인데 메인과 `/record`는 같은 도메인이라 localStorage `deviceId`가 같다. 쿠키만 나누고 행을 공유하면 한쪽 토큰 회전이 다른 쪽 쿠키를 무효화해 **새로고침 시 로그아웃**됐다. 그래서 platformId 를 `BgmAgitAuthenticationSuccessHandler.platformIdOf(deviceId, record)` 로 만든다(메인=deviceId 그대로, record=`deviceId:record`). 로그인·재발급·삭제 세 곳 모두 이 함수를 거칠 것
 
 ### 소셜타입 = 인증수단 축
 `BgmAgitSocialType`: `KAKAO / NAVER / GOOGLE / MAHJONG`
@@ -215,7 +216,7 @@
 5. 취소(`modifyReservation`, `cancelStatus='Y'`) → DONE 결제가 있으면 **토스 전액 취소로 자동 환불**
 
 - **예약금**: `SlotSchedule.resolveDepositAmount(category, label)` — **전 항목 10,000원 정액**. 슬롯 수 무관, 합쳐 예약이면 항목 수만큼 합산(M-1+M-2+M-3 = 3만원). M Room 3만원 예외는 M-1/M-2/M-3 분리와 함께 제거됨. 약관(`Terms.tsx`)·환불정책(`RefundPolicy.tsx`) 문구도 1만원
-- **향후 인원수 기준 전환 예정** — `bgmAgitReservationPeople`(예약 생성 시 이미 수집)로 인원 x 단가 계산. `resolveDepositAmount` 시그니처에 인원 인자 추가 + 약관·환불정책 문구 + 알림톡 템플릿(재심사) 동반 수정 필요. 토스페이먼츠 가맹점 재심사는 불필요(금액 산정 방식 변경은 심사 대상 아님)
+- **향후 인원수 기준 전환 예정** — `bgmAgitReservationPeople`(예약 생성 시 이미 수집)로 인원 x 단가 계산. `resolveDepositAmount` 시그니처에 인원 인자 추가 + 약관·환불정책 문구 + 알림톡 템플릿(재심사) 동반 수정 필요. 토스페이먼츠 가맹점 재심사는 불필요(금액 산정 방식 변경은 심사 대상 아님) **2026-10 개편으로 실제 확정 → `2026-10 요금·예약 정책 개편` 섹션 참고.**
 - 잔여 이용요금은 현장 결제
 - `payment.live`(yml) — `false`면 결제행만 처리하고 **예약 자동확정을 하지 않는다**(심사 기간 공짜 예약 방지). staging·real 모두 현재 `true`
 - **토스 가맹점 심사 통과 완료**(2026-09) — 운영은 라이브 키로 실제 과금된다. 프론트 심사용 게이팅(`src/config/payment.ts`의 `PAYMENT_LIVE`, 멘토 전용 노출)은 제거됨. 결제 버튼은 `canUsePayment = !isAdmin`
@@ -273,6 +274,79 @@ SDK 에러코드 → 문구 매핑은 `src/config/paymentErrors.ts`. `USER_CANCE
 - yml `toss.client-key/secret-key/confirm-url/cancel-url`, 값은 `.env`/GitHub Secrets. clientKey는 주문 응답으로 내려주므로 프론트 env 불필요
 - 정책 페이지: `/terms`(`pages/Terms.tsx`), `/refund-policy`(`pages/RefundPolicy.tsx`), `/privacy`
 - 푸터(`Footer.tsx`) 사업자정보 — 보드게임카페BGM(비지엠)아지트 / 대표 박범후 / 896-17-02241 / 대전광역시 서구 문정로 62, 3층 일부호(탄방동, 프라임빌딩) / 0507-1445-3503
+
+---
+
+## 2026-10 요금·예약 정책 개편 — 계획만, 코드 없음
+
+사장님 공지(2026-09-16 전달, **10월 1일 시행**)로 예약 과금 모델이 "예약금 1만원 정액 + 현장 잔액 결제" → **"인원 × 단가 전액 선결제"** 로 바뀐다. 배경은 머더미스터리 동호회의 알박기·인원 부풀리기·노쇼. 현재 구조가 그 행동을 구조적으로 유도하고 있었다 — 인원을 부풀려도 비용이 0원(정액 1만원)이고 전날까지 전액 환불이라 자리를 선점하는 비용이 사실상 없다. `bgmAgitReservationPeople`은 수집·표시만 되고 금액에도 검증에도 안 쓰인다.
+
+### 공지된 확정 사항
+- **요금**: 예약은 일무제한만 선택 가능. 평일 9,000 / 주말 11,000(1인). 워크인 평일 10,000 / 주말 12,000, 시간당 평일 4,000·주말 5,000. 세트는 현장 +3,000
+- **환불 계단**: 이용일 48h 전 100% / 48~24h 50% / 24h 이내·당일·노쇼 0%. **인원 축소도 차액에 같은 계단 적용**
+- **방 권장/제한 인원 최신화**: B·F 4~6 / C·D·E 2~4(어린이 2~6) / G 7~12 / M-1·M-2·M-3 각 4~7(묶으면 10~20)
+- 월간패스 12만원(9만 할인가 폐지). **예약 시에는 패스 보유자도 전액 결제하고, 현장 확인 후 그 인원분을 환불**(2026-09-16 결정 — 아래 `월간패스` 항목 참고)
+- 30분 이상 지각(일행 전원 미도착) 시 룸 배정 해제 → 좌석 이용 전환, 환불 불가
+
+### 과금 공식 (합의된 설계)
+```
+과금 인원 = max(예약 인원, 그 방의 minPeople)
+예약금    = 과금 인원 × 단가(평일/주말)
+```
+- 방 크기 차등은 **단가가 아니라 하한**으로 표현한다. `BGM_AGIT_IMAGE_MIN_PEOPLE`이 이미 방 크기에 비례하므로 컬럼 추가 없이 차등이 생긴다. 다만 이 값은 지금까지 **안내용**이라 과금 하한으로 승격하려면 방별 재점검 필요
+- **합쳐 예약의 하한은 합산** — `getReservation`이 내려주는 minPeople은 "최소값들 중 최대"(입장 안내용)라 과금에 그대로 쓰면 안 된다. M-1+M-2는 각 방 하한의 합
+- 평일/주말·공휴일 판정은 `BgmAgitReservationServiceImpl`의 `PriceByDate` 루프에 이미 있다(`new LunarCalendar().getHolidaySet`). **공휴일 요금은 공지에 없음 — 미결**
+
+### 손대야 하는 곳
+`resolveDepositAmount` 호출부 4곳. 인원은 2곳에서 이미 손에 있다.
+
+| 위치 | 인원 출처 |
+|---|---|
+| `SlotSchedule:162,170` (`resolveDepositAmount`/`totalDepositAmount`) | 시그니처에 인원 인자 추가 |
+| `BgmAgitReservationServiceImpl:197` (캘린더 응답 `depositAmount`) | **인원 선택 전이라 서버가 모름** → 단가를 내려주고 확정 모달(`ReservationTimePanel.tsx:152`)이 실시간 계산 |
+| `BgmAgitReservationServiceImpl:405` (결제 주문 금액) | `getBgmAgitReservationPeople()` |
+| `BgmAgitBizTalkSandServiceImpl:108` (알림톡 예약금) | `people` 변수 |
+
+단가를 계산식으로만 두면 **단가 변경이 아직 결제 안 한 대기 예약의 청구액까지 바꾼다.** 예약행에 금액 스냅샷을 박아두는 편이 안전.
+
+### 미구현 — 공지대로 돌리려면 필요한 것
+- **부분환불 — 10/1 작업 1순위**: `TossPaymentCancelRequest`에 `cancelReason`만 있어 **전액 취소만 가능**. 토스 API 자체는 `cancelAmount`로 부분취소를 지원하므로 DTO·클라이언트에 필드 추가가 필요. **환불 계단 50% + 인원 축소 차액 + 월간패스 현장 환불 3가지가 전부 여기 걸린다.** 관리자 예약 상세에서 금액/인원을 지정해 부분취소하는 화면이 같이 있어야 현장 운영이 된다
+- **취소 기한**: `validateUserCancelableReservation`이 "예약일 전날까지". 48h/24h 계단과 다르다(토요일 예약을 금요일 23시에 취소하면 전날이지만 48h 이내)
+- **인원 변경 기능 자체가 없음**. 축소 환불(공지 5-2)의 전제
+- **일무제한 시간 모델**: 현재는 룸×시간슬롯(`SlotSchedule` 1h/3h/G룸 6h, 영업 13:00~익일 02:00). 공지는 "시간 자유 설정 + 당일 10시~영업종료". **모델 변경급이라 10/1에 불가** — 시작 시간만 고르는 형태로 운영하고 나머지는 현장 규칙으로 가는 게 현실적
+- **월간패스**: 자동 할인은 만들지 않기로 결정(2026-09-16). 예약은 전원 정가 결제 → **현장에서 패스 확인 후 해당 인원분만 부분환불**. 성명 입력안의 동명이인·오기입·도용 문제가 사라지고 현장 확인이 가장 확실한 검증이 된다. **환불은 현금이 아니라 토스 부분취소로** — 현금으로 주면 매출은 전액으로 잡히고 나간 돈은 기록이 없어 정산·분쟁 근거가 둘 다 사라진다. 패스를 회원 속성으로 넣어 자동화하는 것은 나중 과제(말일 기준이라 월말에 다음 달 예약을 걸면 이용일엔 만료된 상태인 점도 그때 같이 처리)
+
+> **리드타임 있는 유일한 항목 = 알림톡 재심사.** `AlimtalkUtils.buildReservationPaymentMessage`에 `"취소는 예약일 전날까지 가능하며, 당일 취소나 노쇼 시 예약금은 환불되지 않습니다."` 가 **고정 문구**로 박혀 있어 새 환불 규정과 정면 충돌한다. 금액은 `#{예약금}` 변수라 자유롭지만 이 문장은 검수 통과 문구라 글자 단위로 못 바꾼다. 전액 선결제로 가면 `예약금:` 항목명 자체도 안 맞는다(법적으로도 예약금 ≠ 전액 선결제). `RefundPolicy.tsx`("예약금은 10,000원입니다", "전날까지")·`Terms.tsx` 동반 개정.
+
+### 분할 결제(참가자 개별 결제)
+공지는 부담 주체(벙주 1인 전액)를 그대로 둔 채 금액만 10배로 올린다(G룸 12명 = 108,000원). 동호회 불만의 핵심이 금액이 아니라 "벙주 혼자 낸다"였으므로 **반발이 최대가 되는 조합**. 개별 결제를 같이 주면 가게 수입과 알박기 차단 효과는 동일하면서 체감만 달라진다. 돈 안 낸 자리가 자동으로 풀리므로 **알박기 차단은 오히려 더 강해지고** 인원 축소 환불 분쟁도 줄어든다.
+
+- **토스페이먼츠에 "한 결제를 여럿이 나눠 내는" 기능은 없다.** 필요하지도 않다 — 참가자별로 **독립된 주문(orderId) N건**을 만들면 토스 입장에선 별개 결제 N건일 뿐이다. `BGM_AGIT_PAYMENT`는 `ORDER_NO`만 UNIQUE고 `RESERVATION_NO`엔 UNIQUE가 없어 **스키마는 이미 열려 있다**
+- 막고 있는 것 3가지:
+  1. `createPaymentOrder` — `approvalStatus='Y'`면 재결제 거부. 2번째 참가자가 막힌다
+  2. confirm 성공 시 **예약 자동 확정** — 1명만 내도 확정된다. "N명분이 다 모이면 확정"으로 바뀌어야 함
+  3. `findLatestPaymentByReservationNoAndStatus`가 `fetchFirst` — **DONE 결제 여러 건 중 최신 1건만 환불**(기존 알려진 한계). 이대로 분할결제를 켜면 환불 사고
+
+### 미결 (사장님 확인 필요)
+1. 참가자 개별 결제 도입 시점 — 최소한 공지에 "예정" 한 줄이라도 넣을지
+2. 예약이 보장하는 것이 **종일 점유인지 시작 시간 룸 배정인지** — 공지 2-2)("외출 시 룸 반납")와 6번("예약 인원 기준 룸 유지")이 충돌하게 읽힌다. 1순위 문의 예상 지점
+3. 월간패스 할인액(공지 미기재. 이용요금 포함 요금제니 전액이 자연스러움). **방식은 현장 부분환불로 결정됨** — 남은 것은 금액과 월말 만료 케이스
+4. **이미 받아둔 10월 예약(구 정책 1만원)의 소급/유예** — 공지에 없다. 10/1에 바로 터지는 항목
+5. 예약 할인폭 1,000원 유지 여부 — 평일 2시간이면 워크인 8,000 < 예약 9,000 이라 **짧게 쓸 손님은 예약이 손해**. 그 손님은 워크인으로 가는데 공지 4-4)에서 워크인은 룸 배정 보장이 없어 현장 마찰이 된다
+6. 공휴일 요금(평일/주말 2단만 공지됨). 코드엔 공휴일 판정이 이미 있다
+
+> **공지문 수정 필요** — ① 3-3)이 "성명을 입력하시면 함께 할인이 적용됩니다"인데 실제 운영은 현장 부분환불이다. 이대로 나가면 손님이 예약 화면에서 성명 입력란을 찾고, 전액 결제에 컴플레인이 온다. "예약 시에는 전액 결제하고 현장 확인 후 결제 카드로 환불"로 고쳐야 한다. ② 5번 항목에 3)이 없다(2) 다음이 4)).
+
+---
+
+## 서비스 요청 게시판 `/service-request` (관리자 전용)
+
+사장님 유지보수 요청을 카톡 대신 받는 게시판. 1:1 문의 구조 복제(원글 + 같은 테이블 `HIERARCHY_ID` 답변행, 처리상태 Y/N, 첨부 `BGM_AGIT_COMMON_FILE` type `SERVICE_REQUEST`, S3 폴더 `service-request`).
+- 백엔드 `BgmAgitServiceRequest{Controller,Service(Impl),Repository(Impl)}`, 프론트 `pages/ServiceRequest(Detail).tsx`, `recoil/serviceRequestFetch.ts`
+- **전 엔드포인트 컨트롤러 `requireAdmin`**(403) + URL_RESOURCES ADMIN 매핑. 1:1 문의는 상세·수정·삭제에 권한 검사가 없으니 그쪽을 다시 복제하지 말 것
+- 관리자끼리 쓰는 글이라 목록 전체 공개·누구나 수정/삭제, 답변자명은 실제 이름. 답변만 지우면 원글이 다시 처리대기. 알림톡 없음
+- DB는 `service-request.sql`(테이블·URL 매핑·메뉴) → `service-request-menu.sql`(마이페이지 하위에서 **최상위 메뉴 "서비스 요청"(관리자만)** 으로 분리) 순서. 둘 다 2026-10-04 작성
+- 운영 nginx `$bgm_spa_route` 에 `/service-request`, `/serviceRequestDetail` 추가 필요
 
 ---
 
@@ -516,6 +590,7 @@ kml:
 - `AMBIGUOUS` 수동 해결 UI(마이페이지에서 KML ID 직접 선택)
 - `application-*.yml` 정리(`kakao.redirecturi2`, `naver.redirecturi2`, kml-front 소셜 OAuth env)
 - 결제: 외부 호출 트랜잭션 분리, 관리자 확정 슬롯 검증, 노쇼 위약금
+- 결제 부분환불(`TossPaymentCancelRequest` 에 `cancelAmount` 없음 — 전액 취소만 가능) / 참가자 개별 결제 — `2026-10 요금·예약 정책 개편` 섹션 참고
 - `BGM_AGIT_ROOM` 테이블 분리 / 예약 2테이블 정규화
 - 새 엔드포인트 권한 매핑 확인 — `/bgm-agit/ranks/{memberId}/stats`, `.../games`, `/my-rank`
 - 대국 기록 알림톡을 수정/삭제 흐름에도 적용(`eventPublisher.publishEvent(new MatchRecordRegisteredEvent(...))` 한 줄씩)

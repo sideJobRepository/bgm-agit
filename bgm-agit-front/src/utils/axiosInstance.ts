@@ -14,6 +14,15 @@ const api = axios.create({
 
 let refreshing: Promise<string | null> | null = null;
 
+// 마지막 재발급으로 받은 사용자. auth:refreshed 이벤트는 그 순간 듣고 있는 쪽만 받는데,
+// 새로고침 직후 Layout 보다 먼저 뜨는 ClosedMenuGuard 의 요청이 재발급을 일으키면 이벤트가 유실돼
+// 토큰은 있는데 화면은 비로그인으로 보였다. Layout 이 붙을 때 이 값을 직접 읽는다
+let refreshedUser: unknown = null;
+
+export function getRefreshedUser() {
+  return tokenStore.get() ? refreshedUser : null;
+}
+
 function isAuthEndpoint(url?: string) {
    return !!url && (
     url.includes('/bgm-agit/refresh') ||
@@ -45,6 +54,7 @@ async function refreshToken(): Promise<string | null> {
     }
 
     tokenStore.set(newToken);
+    refreshedUser = data?.user ?? null;
     window.dispatchEvent(new CustomEvent('auth:refreshed', { detail: { user: data?.user } }));
     return newToken;
   } catch (e) {
