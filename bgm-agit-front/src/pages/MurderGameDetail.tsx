@@ -4,7 +4,7 @@ import type { WithTheme } from '../styles/styled-props.ts';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 import { murderGameDetailState } from '../recoil/state/murderState.ts';
 import { useMurderGameDetailFetch } from '../recoil/murderFetch.ts';
 import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts';

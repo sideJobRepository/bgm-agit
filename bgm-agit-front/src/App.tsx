@@ -11,7 +11,6 @@ import Layout from './components/layout/Layout.tsx';
 import MainPage from './pages/MainPage.tsx';
 import ScrollToTop from './components/layout/ScrollToTop.tsx';
 import RedirectPage from './pages/RedirectPage.tsx';
-import { ToastContainer } from 'react-toastify';
 
 // 메인 외 화면은 들어갈 때 받는다. 전부 한 번에 묶으면 첫 JS 가 2.5MB(에디터·표 라이브러리 포함)였다
 const About = lazy(() => import('./pages/About.tsx'));
@@ -51,13 +50,13 @@ const ClockTowerHistory = lazy(() => import('./pages/ClockTowerHistory.tsx'));
 const ClockTowerStats = lazy(() => import('./pages/ClockTowerStats.tsx'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess.tsx'));
 const PaymentFail = lazy(() => import('./pages/PaymentFail.tsx'));
+const NotFound = lazy(() => import('./pages/NotFound.tsx'));
 
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyle />
       <RecoilRoot>
-        <ToastContainer position="top-center" autoClose={3000} />
         <BrowserRouter>
           <ScrollToTop />
           <PageMeta />
@@ -104,6 +103,7 @@ function App() {
                   <Route path="/clockTowerRecordDetail" element={<ClockTowerRecordDetail />} />
                   <Route path="clocktower-history" element={<ClockTowerHistory />} />
                   <Route path="clocktower-stats" element={<ClockTowerStats />} />
+                  <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>
             </Suspense>

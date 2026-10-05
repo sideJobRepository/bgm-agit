@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 import api from '../utils/axiosInstance.ts';
 
 export default function PaymentSuccess() {

@@ -10,7 +10,7 @@ import { useRecoilValue } from 'recoil';
 import { reservationListDataState } from '../recoil/state/reservationState.ts';
 import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 import type { Reservation } from '../types/reservation.ts';
 import Pagination from '../components/Pagination.tsx';
 import api from '../utils/axiosInstance.ts';

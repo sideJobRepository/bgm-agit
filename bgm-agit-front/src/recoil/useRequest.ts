@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useSetRecoilState } from 'recoil';
 import { errorState, loadingState } from './state/mainState';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 
 interface RequestOptions {
   ignoreHttpError?: boolean;

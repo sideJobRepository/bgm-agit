@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useRecoilValue } from 'recoil';
 import { useMediaQuery } from 'react-responsive';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 import { userState } from '../recoil/state/userState.ts';
 import { useUpdatePost } from '../recoil/fetch.ts';
 import { useRequest } from '../recoil/useRequest.ts';

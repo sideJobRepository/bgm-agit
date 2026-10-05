@@ -9,7 +9,7 @@ import { useLocation } from 'react-router-dom';
 import type { MyPageItem } from '../../types/myPage.ts';
 import { useMyPageFetch } from '../../recoil/myPageFetch.ts';
 import { showConfirmModal } from '../confirmAlert.tsx';
-import { toast } from 'react-toastify';
+import { toast } from '../../utils/toast';
 
 export interface BaseColumn<T> {
   key: string;

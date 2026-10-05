@@ -15,7 +15,7 @@ import {
 } from '../recoil/fetch.ts';
 import { showConfirmModal } from './confirmAlert.tsx';
 import { formatPhoneNo } from '../utils/phone.ts';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 
 type Props = {
   onClose: () => void;
@@ -50,12 +50,7 @@ export default function MyPageModal({ onClose }: Props) {
       toast.error('닉네임을 입력해주세요.');
       return;
     } else if (!PHONE_REGEX.test(phoneNumber)) {
-      toast.error(
-        <>
-          휴대폰 번호 형식이 올바르지 않습니다. <br />
-          (예: 010-1234-5678)
-        </>
-      );
+      toast.error('휴대폰 번호 형식이 올바르지 않습니다.\n(예: 010-1234-5678)');
       return;
     }
 

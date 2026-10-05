@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { toast } from 'react-toastify';
+import { toast } from '../../utils/toast';
 import type { CustomUser } from '../../types/user.ts';
 import type { PaymentOrderResponse, TossPaymentWindow } from '../../types/tossPayments.ts';
 import { getPaymentErrorCode, toPaymentErrorMessage } from '../../config/paymentErrors.ts';

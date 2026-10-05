@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { useEffect, useMemo, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 import api from '../utils/axiosInstance';
 import { useRequest } from '../recoil/useRequest.ts';
 import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts';
