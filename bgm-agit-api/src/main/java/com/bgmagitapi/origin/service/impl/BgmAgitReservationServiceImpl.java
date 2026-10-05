@@ -525,8 +525,24 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     .max(Comparator.comparingInt(r -> toBoardMinutes(r.getBgmAgitReservationEndTime())))
                     .orElse(head);
 
+            // 합쳐 예약은 같은 예약번호에 이미지가 다른 행이라, head 하나만 보면 첫 장소만 잡힌다.
+            Map<String, String> roomsOfReservation = new LinkedHashMap<>();
+            slots.stream()
+                    .map(BgmAgitReservation::getBgmAgitImage)
+                    .filter(Objects::nonNull)
+                    .forEach(image -> {
+                        String label = StringUtils.hasText(image.getBgmAgitImageLabel()) ? image.getBgmAgitImageLabel() : "기타";
+                        roomsOfReservation.putIfAbsent(label,
+                                image.getBgmAgitImageCategory() != null ? image.getBgmAgitImageCategory().name() : null);
+                    });
+            if (roomsOfReservation.isEmpty()) {
+                roomsOfReservation.put("기타", null);
+            }
+            List<String> roomNames = roomsOfReservation.keySet().stream().sorted().toList();
+
             AdminReservationBoardResponse.Item item = new AdminReservationBoardResponse.Item(
                     entry.getKey(),
+                    roomNames,
                     head.getBgmAgitMember() != null ? head.getBgmAgitMember().getBgmAgitMemberName() : null,
                     extractPhoneNo(head),
                     head.getBgmAgitReservationPeople(),
@@ -541,13 +557,12 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     toBoardMinutes(last.getBgmAgitReservationEndTime())
             );
 
-            String roomName = head.getBgmAgitImage() != null ? head.getBgmAgitImage().getBgmAgitImageLabel() : null;
-            String roomKey = StringUtils.hasText(roomName) ? roomName : "기타";
-            byRoom.computeIfAbsent(roomKey, key -> new ArrayList<>()).add(item);
-
-            if (head.getBgmAgitImage() != null && head.getBgmAgitImage().getBgmAgitImageCategory() != null) {
-                roomCategories.putIfAbsent(roomKey, head.getBgmAgitImage().getBgmAgitImageCategory().name());
-            }
+            roomsOfReservation.forEach((roomKey, category) -> {
+                byRoom.computeIfAbsent(roomKey, key -> new ArrayList<>()).add(item);
+                if (category != null) {
+                    roomCategories.putIfAbsent(roomKey, category);
+                }
+            });
         }
 
         List<AdminReservationBoardResponse.Room> roomList = byRoom.entrySet().stream()

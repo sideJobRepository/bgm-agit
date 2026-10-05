@@ -225,13 +225,12 @@ export default function ReservationBoard() {
       .filter(room => room.reservations.length > 0);
   }, [board, filter, groupTab]);
 
-  const selectedRoomName = useMemo(() => {
-    if (!selected || !board) return null;
-    return (
-      board.rooms.find(room =>
-        room.reservations.some(item => item.reservationNo === selected.reservationNo)
-      )?.roomName ?? null
-    );
+  const selectedRoomNames = useMemo(() => {
+    if (!selected || !board) return [];
+    if (selected.roomNames?.length) return selected.roomNames;
+    return board.rooms
+      .filter(room => room.reservations.some(item => item.reservationNo === selected.reservationNo))
+      .map(room => room.roomName);
   }, [selected, board]);
 
   // 표시 대상 전체를 감싸는 시간축 범위(정시 단위)
@@ -251,17 +250,22 @@ export default function ReservationBoard() {
 
   const minutesToY = (minutes: number) => ((minutes - axisStart) / 60) * hourHeight;
 
-  // 목록 뷰: 룸 구분 없이 시작 시간순으로 늘어놓는다
-  const listItems = useMemo(
-    () =>
-      rooms
-        .flatMap(room => room.reservations.map(item => ({ item, roomName: room.roomName })))
-        .sort(
-          (a, b) =>
-            a.item.startMinutes - b.item.startMinutes || a.roomName.localeCompare(b.roomName)
-        ),
-    [rooms]
-  );
+  // 목록 뷰: 룸 구분 없이 시작 시간순으로 늘어놓는다.
+  // 합쳐 예약은 장소 열마다 같은 항목이 들어 있으므로 예약번호당 한 장만 남긴다.
+  const listItems = useMemo(() => {
+    const seen = new Set<number>();
+    return rooms
+      .flatMap(room => room.reservations.map(item => ({ item, roomName: room.roomName })))
+      .filter(({ item }) => {
+        if (seen.has(item.reservationNo)) return false;
+        seen.add(item.reservationNo);
+        return true;
+      })
+      .sort(
+        (a, b) =>
+          a.item.startMinutes - b.item.startMinutes || a.roomName.localeCompare(b.roomName)
+      );
+  }, [rooms]);
 
   // 지난 예약은 확정/취소 불가 (ReservationList 의 admin 규칙과 동일하게 date >= 오늘)
   const canManage = date >= todayYmd();
@@ -435,7 +439,9 @@ export default function ReservationBoard() {
                     <StatusTag style={blockStyle(status, roomColor, false)}>
                       {STATUS_LABEL[status]}
                     </StatusTag>
-                    <RoomTag>{roomName}</RoomTag>
+                    {(item.roomNames?.length ? item.roomNames : [roomName]).map(name => (
+                      <RoomTag key={name}>{name}</RoomTag>
+                    ))}
                   </CardTop>
 
                   <CardName $canceled={status === 'CANCELED'}>
@@ -540,6 +546,9 @@ export default function ReservationBoard() {
                             {item.startTime}~{item.endTime}
                           </BlockTime>
                           <BlockTime>{item.people ?? 0}명</BlockTime>
+                          {item.roomNames?.length > 1 && (
+                            <BlockTime>합쳐 예약 · {item.roomNames.join(', ')}</BlockTime>
+                          )}
                         </Block>
                       ))}
                     </ColumnTrack>
@@ -561,13 +570,15 @@ export default function ReservationBoard() {
                 <StatusTag
                   style={blockStyle(
                     statusOf(selected),
-                    roomColors.get(selectedRoomName ?? '') ?? ROOM_PALETTE[0],
+                    roomColors.get(selectedRoomNames[0] ?? '') ?? ROOM_PALETTE[0],
                     false
                   )}
                 >
                   {STATUS_LABEL[statusOf(selected)]}
                 </StatusTag>
-                {selectedRoomName && <RoomTag>{selectedRoomName}</RoomTag>}
+                {selectedRoomNames.map(name => (
+                  <RoomTag key={name}>{name}</RoomTag>
+                ))}
               </DetailTitle>
               <CloseButton type="button" onClick={() => setSelected(null)}>
                 닫기

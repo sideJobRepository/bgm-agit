@@ -186,6 +186,7 @@
 - 모바일 기본은 **목록(아젠다) 뷰** — 1시간 블록(48px)에 이름·시간·인원 3줄이 안 들어감. `viewMode`가 `null`이면 화면 크기에 맡기고(`isMobile ? 'list' : 'grid'`), 토글하면 그 선택을 따름
 - 색상: **바탕색 = 룸**, 상태는 채움으로 — 확정=꽉 참 / 대기=점선+옅은 배경 / 취소=회색+취소선. `ROOM_PALETTE`(10색)를 **필터·탭 적용 전** 순서로 배정해 필터를 바꿔도 색이 안 흔들림. `blockStyle()`이 inline style로 주입
 - 백엔드 `GET /bgm-agit/reservation/board?date=YYYY-MM-DD` → `getReservationBoard(date, roles)`. 쿼리 `findReservationsByDate`(페이징 없음, member/image fetch join), DTO `AdminReservationBoardResponse`, 영수증은 `findDoneReceiptUrlsByReservationNos` 배치
+- **합쳐 예약은 장소 열마다 같은 항목을 넣는다** — `Item.roomNames`가 예약번호의 모든 이미지 라벨. 예전엔 head 행 라벨만 써서 M-1+M-2+M-3이 M-1 열에만 떴다. 목록 뷰는 예약번호로 중복 제거. 관리자 09시 알림톡 목록도 같은 방식으로 라벨을 합친다
 - **시간축 분값 규약 — 06시 이전은 +1440.** G룸(19:00~00:00)·마작대여(23:00~02:00)처럼 마감이 익일로 넘어가는 슬롯 때문. 프론트도 이 규약 그대로 사용
 - **권한 2중** — `BgmAgitAuthorizationManager`는 URL_RESOURCES에 없는 경로를 **기본 permit**으로 통과시킨다. 이 API는 회원 연락처가 나가므로 서비스단 `isAdmin(roles)` 검사 + URL 레벨 ADMIN 매핑 둘 다 필요(**매핑 INSERT 후 앱 재시작** — 로딩이 `@PostConstruct` 1회)
 - 메뉴 등록은 `/menuManage`에서. `getMainMenu`가 **subMenu 없는 root를 걸러내므로** 반드시 기존 부모 메뉴의 하위로
