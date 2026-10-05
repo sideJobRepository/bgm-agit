@@ -3,7 +3,7 @@
 // 메뉴를 다시 켜면 목록에서 빠지므로 여기는 고칠 필요가 없다
 import { useEffect, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { toast } from '../../utils/toast';
 import api from '../../utils/axiosInstance';
 import pages from '../../seo/pages.json';
 

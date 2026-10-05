@@ -4,7 +4,7 @@ import type { WithTheme } from '../styles/styled-props.ts';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 import api from '../utils/axiosInstance';
 import { playRecordDetailState } from '../recoil/state/murderState.ts';
 import { usePlayRecordDetailFetch } from '../recoil/murderFetch.ts';

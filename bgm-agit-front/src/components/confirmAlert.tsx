@@ -4,7 +4,7 @@ import { confirmAlert } from 'react-confirm-alert';
 import styled from 'styled-components';
 import { useState } from 'react';
 import { MdAdd, MdRemove } from 'react-icons/md';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 
 interface Props {
   message: React.ReactNode;

@@ -6,7 +6,7 @@ import modalLogo from '/favicon.ico';
 import naver from '/naver.png';
 import kakao from '/kakao.png';
 import { MdClose } from 'react-icons/md';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { useFormLoginPost, useSignupPost, useRefetchMainMenu } from '../recoil/fetch.ts';
 import { formatPhoneNo } from '../utils/phone.ts';

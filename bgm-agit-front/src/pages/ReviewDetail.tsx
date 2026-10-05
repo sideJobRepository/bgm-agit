@@ -17,7 +17,7 @@ import {
   DownloadSimple,
   PencilSimpleLine,
 } from 'phosphor-react';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts';
 import { useDetailReviewFetch } from '../recoil/reviewFetch.ts';
 import { detailReviewState } from '../recoil/state/reviewState.ts';

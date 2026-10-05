@@ -11,7 +11,7 @@ import { showConfirmModal, showReservationConfirmModal } from '../confirmAlert.t
 import { useInsertPost, useReservationFetch } from '../../recoil/fetch.ts';
 import { getReservationComment, getReservationUseModes } from '../../config/reservationComments.ts';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { toast } from '../../utils/toast';
 import LoginMoadl from '../LoginMoadl.tsx';
 import { RESERVATION_WINDOW_MONTHS } from './ReservationDatePicker.tsx';
 import { formatYmdWithWeekday } from '../../utils/date.ts';

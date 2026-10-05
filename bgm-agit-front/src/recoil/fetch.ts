@@ -16,7 +16,7 @@ import {
   reservationState,
 } from './state/reservationState.ts';
 import { myPageState, userState } from './state/userState.ts';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 import { isAxiosError, type AxiosRequestHeaders } from 'axios';
 import { loadingState } from './state/mainState.ts';
 import { noticeDetailState, noticePopupState, noticeState } from './state/noticeState.ts';

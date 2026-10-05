@@ -8,7 +8,7 @@ import { useRecoilValue } from 'recoil';
 import { roleState } from '../recoil/state/roleState.ts';
 import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal, showInputModal } from '../components/confirmAlert.tsx';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 import { MdEdit } from 'react-icons/md';
 import Pagination from '../components/Pagination.tsx';
 

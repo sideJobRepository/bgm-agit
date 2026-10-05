@@ -4,7 +4,7 @@ import type { WithTheme } from '../styles/styled-props.ts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 import { MdClose } from 'react-icons/md';
 import api from '../utils/axiosInstance';
 import { clockTowerRecordDetailState } from '../recoil/state/clocktowerState.ts';

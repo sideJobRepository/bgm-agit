@@ -12,7 +12,7 @@ import type { Editor } from '@ckeditor/ckeditor5-core';
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 import { useSearchParams } from 'react-router-dom';
 import { FaCommentDots, FaTrash } from 'react-icons/fa';
 import { userState } from '../recoil/state/userState.ts';

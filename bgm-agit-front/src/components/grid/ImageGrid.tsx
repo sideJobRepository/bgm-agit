@@ -20,7 +20,7 @@ import { availableRoomsState, reservationDataState } from '../../recoil/state/re
 import { userState } from '../../recoil/state/userState.ts';
 import { FiPlus, FiEdit } from 'react-icons/fi';
 import Modal from '../Modal.tsx';
-import { toast } from 'react-toastify';
+import { toast } from '../../utils/toast';
 import { showConfirmModal } from '../confirmAlert.tsx';
 import type { MainMenu } from '../../types/menu.ts';
 import { imageUploadState, mainMenuState, searchState } from '../../recoil';
