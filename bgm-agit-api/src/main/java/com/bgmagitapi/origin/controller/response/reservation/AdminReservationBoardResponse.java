@@ -46,6 +46,8 @@ public class AdminReservationBoardResponse {
     @AllArgsConstructor
     public static class Item {
         private Long reservationNo;
+        // 이 예약이 잡은 장소 전부. 합쳐 예약(M-1 + M-2 …)이면 여러 개이고, 각 장소 열에 같은 항목이 들어간다.
+        private List<String> roomNames;
         private String memberName;
         private String phoneNo;
         private Integer people;

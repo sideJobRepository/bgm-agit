@@ -375,8 +375,15 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         List<String> lines = heads.stream()
                 .map(head -> {
                     LocalTime end = lastEndTime(grouped.get(head.getBgmAgitReservationNo()));
-                    String roomName = head.getBgmAgitImage() != null
-                            ? Objects.toString(head.getBgmAgitImage().getBgmAgitImageLabel(), "") : "";
+                    // 합쳐 예약은 같은 예약번호에 이미지가 다른 행이라 장소를 전부 모은다
+                    String roomName = grouped.get(head.getBgmAgitReservationNo()).stream()
+                            .map(BgmAgitReservation::getBgmAgitImage)
+                            .filter(Objects::nonNull)
+                            .map(image -> Objects.toString(image.getBgmAgitImageLabel(), ""))
+                            .filter(label -> !label.isEmpty())
+                            .distinct()
+                            .sorted()
+                            .collect(Collectors.joining(", "));
                     String memberName = head.getBgmAgitMember() != null
                             ? Objects.toString(head.getBgmAgitMember().getBgmAgitMemberName(), "") : "";
                     String state = "Y".equalsIgnoreCase(head.getBgmAgitReservationApprovalStatus()) ? "확정" : "대기";

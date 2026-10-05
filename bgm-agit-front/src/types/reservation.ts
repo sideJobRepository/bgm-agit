@@ -93,6 +93,8 @@ export type Reservation = {
 // 관리자 예약 현황판
 export type ReservationBoardItem = {
   reservationNo: number;
+  // 이 예약이 잡은 장소 전부. 합쳐 예약이면 여러 개이고 각 장소 열에 같은 항목이 들어간다
+  roomNames: string[];
   memberName: string | null;
   phoneNo: string | null;
   people: number | null;
