@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'ko_KR',
-    siteName: 'BGM 아지트 BML',
+    siteName: 'BGM 아지트',
     title: 'BGM 아지트 BML | 마작 기록 시스템',
     description:
       'BGM 아지트 BML — 대전 BGM 아지트의 마작 기록 시스템',
@@ -75,22 +75,11 @@ export const metadata: Metadata = {
     },
   },
 };
+// 구글 사이트 이름은 도메인 단위다. /record 가 WebSite·og:site_name 을 따로 주면 메인과 충돌해
+// 이름을 못 정하고 도메인(bgmagit.co.kr)으로 표시한다. WebSite 는 메인 index.html 에만 둔다
 const jsonLd = {
   '@context': 'https://schema.org',
   '@graph': [
-    {
-      '@type': 'WebSite',
-      '@id': 'https://bgmagit.co.kr/record/#website',
-      url: 'https://bgmagit.co.kr/record',
-      name: 'BGM 아지트 BML',
-      alternateName: ['BGM 아지트 마작 기록', 'BML', 'BGM 아지트 BML'],
-      inLanguage: 'ko-KR',
-      description:
-        'BGM 아지트 BML — 대전 BGM 아지트의 마작 기록 시스템',
-      publisher: {
-        '@id': 'https://bgmagit.co.kr/#organization',
-      },
-    },
     {
       '@type': 'Organization',
       '@id': 'https://bgmagit.co.kr/#organization',
