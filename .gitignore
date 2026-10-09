@@ -82,3 +82,4 @@
 /bgm-agit-front/*.sw?
 
 bgm-agit.iml
+.mcp.json
