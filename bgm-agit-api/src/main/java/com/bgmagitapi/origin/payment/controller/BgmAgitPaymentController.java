@@ -29,12 +29,12 @@ public class BgmAgitPaymentController {
     // 실패 기록은 승인 직렬화 락을 거칠 이유가 없다(기록일 뿐이라 서비스를 바로 부른다)
     private final PaymentService paymentService;
 
-    // 결제 주문 생성: 예약번호를 받아 결제행을 READY로 만들고 프론트 위젯용 주문정보를 반환
+    // 결제 주문 생성: 예약 ID를 받아 결제행을 READY로 만들고 프론트 위젯용 주문정보를 반환
     @PostMapping("/payments/order")
     public PaymentOrderResponse createPaymentOrder(@RequestBody @Valid PaymentOrderCreateRequest request,
                                                    @AuthenticationPrincipal Jwt jwt) {
         Long userId = jwt.getClaim("id");
-        return bgmAgitReservationService.createPaymentOrder(request.getReservationNo(), userId);
+        return bgmAgitReservationService.createPaymentOrder(request.getReservationId(), userId);
     }
 
     @PostMapping("/payments/confirm")

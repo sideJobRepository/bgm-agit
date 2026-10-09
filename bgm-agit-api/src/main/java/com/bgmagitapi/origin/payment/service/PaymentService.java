@@ -7,11 +7,11 @@ import com.bgmagitapi.origin.payment.controller.response.PaymentConfirmResponse;
 public interface PaymentService {
 
     // 주문 생성: 결제행을 READY로 저장하고 프론트 결제위젯용 주문정보를 반환
-    PaymentOrderResponse createOrder(Long memberId, Long reservationNo, int amount, String orderName);
+    PaymentOrderResponse createOrder(Long memberId, Long reservationId, int amount, String orderName);
 
     PaymentConfirmResponse confirmPayment(String paymentKey, String orderId, Integer amount, Long memberId);
 
-    void cancelDonePaymentByReservationNo(Long reservationNo, String cancelReason);
+    void cancelDonePaymentByReservationId(Long reservationId, String cancelReason);
 
     // 프론트 결제 실패 콜백(/payments/fail) 기록. 어떤 경우에도 예외를 던지지 않는다
     void recordClientFailure(String orderId, String code, String message, Long memberId);

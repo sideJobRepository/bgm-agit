@@ -32,7 +32,6 @@ class BgmAgitImageServiceImplTest extends RepositoryAndServiceTestSupport {
         Long mainMenuId = 2L;
         BgmAgitImageCategory category = BgmAgitImageCategory.MURDER; // 예시 enum 값
         String label = "게임9";
-        String groups = null;
         String menuLink = "/detail/game";
         
         // 파일 읽기 (test resource 내 파일)
@@ -46,7 +45,6 @@ class BgmAgitImageServiceImplTest extends RepositoryAndServiceTestSupport {
         request.setBgmAgitMainMenuId(mainMenuId);
         request.setBgmAgitImageCategory(category);
         request.setBgmAgitImageLabel(label);
-        request.setBgmAgitImageGroups(groups);
         request.setBgmAgitMenuLink(menuLink);
         request.setBgmAgitImage(multipartFile);
         

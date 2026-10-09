@@ -49,7 +49,7 @@ export default function ReservationTimePanel({
   //user 정보
   const user = useRecoilValue(userState);
 
-  // 시간대·이용시간·선택제한은 서버(SlotSchedule)가 내려준다. 프론트에서 imageId로 분기하지 말 것.
+  // 시간대·이용시간·선택제한은 서버(SlotSchedule)가 내려준다. 프론트에서 방 id로 분기하지 말 것.
   const intervals = useMemo<[string, string][]>(
     () => (reservation.slotRanges ?? []).map(({ start, end }) => [start, end]),
     [reservation.slotRanges]
@@ -101,25 +101,58 @@ export default function ReservationTimePanel({
 
   const matchedSlots = reservation.timeSlots?.find(d => d.date === date);
 
+  // 슬롯 순서상 위치. intervals 는 서버가 영업일 순서(13시 → 익일 02시)로 내려준다
+  const slotIndexOf = (time: string) => intervals.findIndex(([start]) => start === time);
+
+  // 두 슬롯이 맞닿아 있는지: 앞 슬롯의 끝 = 뒤 슬롯의 시작. 자정을 넘어도('00:00') 문자열이 같으면 이어진 것이다.
+  // 서버(SlotSchedule.isContiguous)와 같은 규칙. 서버 검증이 1순위이고 여기는 누르는 즉시 알려주는 안내용이다.
+  const isAdjacent = (beforeIdx: number, afterIdx: number) =>
+    afterIdx === beforeIdx + 1 && intervals[beforeIdx]?.[1] === intervals[afterIdx]?.[0];
+
+  // 예약 1건 = 이어진 시간 한 구간. 선택 구간에 붙은 칸만 늘릴 수 있고, 떨어진 칸을 누르면 그 칸부터 새로 고른다.
   const handleTimeClick = (time: string) => {
-    setSelectedTimes(prev => {
-      // 이미 선택된 시간 해제하는 경우
-      if (prev.includes(time)) {
-        return prev.filter(t => t !== time);
-      }
+    const clickedIdx = slotIndexOf(time);
+    if (clickedIdx < 0) return;
 
-      // 새로 선택하는 경우 제한 체크 (서버가 내려준 선택 가능 개수)
-      if (maxSelectableSlots !== null && prev.length >= maxSelectableSlots) {
-        toast.error(
-          maxSelectableSlots === 1
-            ? '하나의 시간대만 예약이 가능합니다.'
-            : `최대 ${maxSelectableSlots}개의 시간대만 예약이 가능합니다.`
-        );
-        return prev; // 변경하지 않음
-      }
+    const selectedIdx = selectedTimes
+      .map(slotIndexOf)
+      .filter(i => i >= 0)
+      .sort((a, b) => a - b);
+    const first = selectedIdx[0];
+    const last = selectedIdx[selectedIdx.length - 1];
 
-      return [...prev, time];
-    });
+    // 이미 선택된 칸: 양 끝이면 그 칸만 빼고, 가운데면 구간이 끊기지 않게 그 칸부터 뒤를 모두 뺀다
+    if (selectedTimes.includes(time)) {
+      if (clickedIdx === first || clickedIdx === last) {
+        setSelectedTimes(prev => prev.filter(t => t !== time));
+      } else {
+        setSelectedTimes(selectedIdx.filter(i => i < clickedIdx).map(i => intervals[i][0]));
+      }
+      return;
+    }
+
+    // 처음 고르거나, 선택 구간과 떨어진 칸이면 그 칸부터 새로 선택
+    const extendsRange =
+      selectedIdx.length > 0 && (isAdjacent(clickedIdx, first) || isAdjacent(last, clickedIdx));
+    if (!extendsRange) {
+      if (selectedIdx.length > 0) {
+        toast.info('예약 시간은 연속된 시간대로 선택해 주세요. 선택한 시간부터 다시 고릅니다.');
+      }
+      setSelectedTimes([time]);
+      return;
+    }
+
+    // 늘리는 경우 제한 체크 (서버가 내려준 선택 가능 개수)
+    if (maxSelectableSlots !== null && selectedTimes.length >= maxSelectableSlots) {
+      toast.error(
+        maxSelectableSlots === 1
+          ? '하나의 시간대만 예약이 가능합니다.'
+          : `최대 ${maxSelectableSlots}개의 시간대만 예약이 가능합니다.`
+      );
+      return;
+    }
+
+    setSelectedTimes([...selectedTimes, time]);
   };
 
   function reservationSave() {
@@ -161,10 +194,10 @@ export default function ReservationTimePanel({
         insert({
           url: '/bgm-agit/reservation',
           body: {
-            bgmAgitImageId: id,
-            // 함께 예약할 항목(테이블 합치기). 서버가 기준 항목과 합쳐 같은 예약번호로 저장
-            bgmAgitImageIds: combineIds,
-            // 실제 타입은 서버가 이미지 카테고리로 결정한다 (필수 필드라 응답값을 그대로 전달)
+            roomId: id,
+            // 함께 예약할 방(테이블 합치기). 서버가 기준 방과 합쳐 예약 1건으로 저장한다
+            roomIds: combineIds,
+            // 실제 타입은 서버가 방(마작 대탁 여부)으로 결정한다 (필수 필드라 응답값을 그대로 전달)
             bgmAgitReservationType: reservation.reservationType ?? 'ROOM',
             // 서버가 ZonedDateTime.parse 로 받는다(BgmAgitReservationServiceImpl).
             // 순수 'YYYY-MM-DD' 는 파싱 실패하고, 오프셋을 명시하면 브라우저 타임존과 무관하게 KST 날짜가 보존된다.

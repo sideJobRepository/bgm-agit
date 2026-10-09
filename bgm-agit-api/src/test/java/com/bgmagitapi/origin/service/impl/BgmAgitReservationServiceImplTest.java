@@ -51,7 +51,7 @@ class BgmAgitReservationServiceImplTest extends RepositoryAndServiceTestSupport 
     @Test
     void test3(){
         Long userId = 1L;
-        Long imageId = 14L;
+        Long roomId = 14L;
         String dateString = "2025-07-30T15:00:00.000Z";
         //List<String> times = List.of("13:00", "14:00", "15:00","16:00");
         List<String> times = List.of("15:00","16:00");
@@ -60,7 +60,8 @@ class BgmAgitReservationServiceImplTest extends RepositoryAndServiceTestSupport 
         request.setBgmAgitReservationStartDate(dateString);
         request.setStartTimeEndTime(times);
         request.setBgmAgitReservationType("ROOM");
-        request.setBgmAgitImageId(imageId);
+        request.setRoomId(roomId);
+        request.setBgmAgitReservationPeople(2);
         
         bgmAgitReservationService.createReservation(
                 request,

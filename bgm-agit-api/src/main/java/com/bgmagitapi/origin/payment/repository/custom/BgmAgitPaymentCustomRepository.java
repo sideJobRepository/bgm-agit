@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface BgmAgitPaymentCustomRepository {
 
-    Optional<BgmAgitPayment> findLatestPaymentByReservationNoAndStatus(Long reservationNo, PaymentStatus status);
+    Optional<BgmAgitPayment> findLatestPaymentByReservationIdAndStatus(Long reservationId, PaymentStatus status);
 
     /**
      * 결제까지 가지 않고 버려진 주문(READY) 정리.
@@ -25,6 +25,6 @@ public interface BgmAgitPaymentCustomRepository {
      */
     long deleteOldAbortedOrders(LocalDateTime createdBefore);
 
-    // 예약번호별 최신 DONE 결제의 영수증 URL 배치 조회 (예약내역 리스트에 임베드, N+1 방지)
-    Map<Long, String> findDoneReceiptUrlsByReservationNos(List<Long> reservationNos);
+    // 예약별 최신 DONE 결제의 영수증 URL 배치 조회 (예약내역 리스트에 임베드, N+1 방지)
+    Map<Long, String> findDoneReceiptUrlsByReservationIds(List<Long> reservationIds);
 }

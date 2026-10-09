@@ -1,6 +1,6 @@
 package com.bgmagitapi.origin.service;
 
-import com.bgmagitapi.origin.entity.BgmAgitImage;
+import com.bgmagitapi.origin.entity.BgmAgitRoom;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
 import com.bgmagitapi.origin.event.dto.InquiryEvent;
@@ -14,7 +14,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface BgmAgitBizTalkSandService {
-    void sandBizTalk(BgmAgitMember member, BgmAgitImage image, List<BgmAgitReservation> list);
+    void sandBizTalk(BgmAgitMember member, BgmAgitReservation reservation, List<BgmAgitRoom> rooms);
     void sendCancelBizTalk(ReservationTalkContext ctx);
     void sendCompleteBizTalk(ReservationTalkContext ctx);
     void sendJoinMemberBizTalk(BgmAgitMember member);

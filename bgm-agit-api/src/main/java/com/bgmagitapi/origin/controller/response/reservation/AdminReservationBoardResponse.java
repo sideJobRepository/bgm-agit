@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * 관리자 예약 현황판(하루치) 응답.
- * 예약번호(BGM_AGIT_RESERVATION_NO) 단위로 슬롯 행을 묶고, 예약 장소별로 다시 묶어서 내려준다.
+ * 예약(BGM_AGIT_RESERVATION) 1건을 예약 장소별로 묶어 내려준다. 합쳐 예약은 각 장소 열에 같은 항목이 들어간다.
  */
 @Getter
 @AllArgsConstructor
@@ -36,7 +36,7 @@ public class AdminReservationBoardResponse {
     @AllArgsConstructor
     public static class Room {
         private String roomName;
-        // BgmAgitImageCategory 이름(ROOM / MAHJONG ...). 프론트 탭 분류에 쓴다.
+        // ROOM / MAHJONG (방 링크로 판정). 프론트 탭 분류에 쓴다.
         // 마작탁은 라벨이 한글(대탁·렉스탁)이라 라벨 첫 글자로는 룸과 구분되지 않음.
         private String category;
         private List<Item> reservations;
@@ -45,7 +45,7 @@ public class AdminReservationBoardResponse {
     @Getter
     @AllArgsConstructor
     public static class Item {
-        private Long reservationNo;
+        private Long reservationId;
         // 이 예약이 잡은 장소 전부. 합쳐 예약(M-1 + M-2 …)이면 여러 개이고, 각 장소 열에 같은 항목이 들어간다.
         private List<String> roomNames;
         private String memberName;

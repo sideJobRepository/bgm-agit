@@ -3,9 +3,11 @@ import ImageGrid from '../components/grid/ImageGrid.tsx';
 import { useMediaQuery } from 'react-responsive';
 import { Wrapper } from '../styles';
 import { useLocation } from 'react-router-dom';
-import { useFetchDetailData, useFetchMainData } from '../recoil/fetch.ts';
+import { useFetchDetailData, useRoomsFetch } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
-import { detailDataState, mainDataState } from '../recoil';
+import { detailDataState } from '../recoil';
+import { userState } from '../recoil/state/userState.ts';
+import type { GridItem, PageItem } from '../types/main.ts';
 import { useEffect, useState } from 'react';
 
 export default function Detail() {
@@ -75,24 +77,54 @@ export default function Detail() {
 
   const param = { labelGb: selectedData.labelGb, link: '/detail/' + key };
 
-  useFetchMainData(param);
-  useFetchDetailData(param);
+  // 방·마작 대탁(labelGb 3)은 BGM_AGIT_ROOM(/bgm-agit/rooms)에서 받는다. 이미지 API 에는 더 이상 방이 없다.
+  const isRoomPage = selectedData.labelGb === 3;
+  const user = useRecoilValue(userState);
+  const isAdmin = !!user?.roles.includes('ROLE_ADMIN');
 
-  const mainItems = useRecoilValue(mainDataState);
+  useFetchDetailData(param, isRoomPage);
+  // 관리자는 숨김 방까지 받아 흐리게 보여준다(서버가 관리자일 때만 includeHidden 을 받아준다)
+  const rooms = useRoomsFetch(isRoomPage ? [param.link] : null, { includeHidden: isAdmin });
+
   const detailItems = useRecoilValue(detailDataState);
-  const items = selectedData.labelGb === 3 ? mainItems : detailItems;
 
-  const [fullPageData, setFullPageData] = useState(null);
+  const [fullPageData, setFullPageData] = useState<
+    (typeof selectedData & { items: GridItem[]; pages: PageItem }) | null
+  >(null);
 
   useEffect(() => {
-    if (!items) return;
+    if (isRoomPage) {
+      if (!rooms) return;
+      setFullPageData({
+        ...selectedData,
+        items: rooms.map(room => ({
+          image: room.imageUrl ?? '',
+          category: '',
+          imageId: room.roomId,
+          labelGb: 3,
+          label: room.name,
+          group: room.guide,
+          link: room.link,
+          room,
+        })),
+        pages: {
+          last: true,
+          number: 0,
+          size: rooms.length,
+          totalElements: rooms.length,
+          totalPages: 1,
+        },
+      });
+      return;
+    }
+    if (!detailItems) return;
 
     setFullPageData({
       ...selectedData,
-      items: items[selectedData.labelGb],
-      pages: items.page,
+      items: detailItems[selectedData.labelGb],
+      pages: detailItems.page,
     });
-  }, [items]);
+  }, [detailItems, rooms, isRoomPage]);
 
   return (
     <Wrapper>

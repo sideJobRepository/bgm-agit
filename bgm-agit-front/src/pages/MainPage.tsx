@@ -8,15 +8,36 @@ import { useMediaQuery } from 'react-responsive';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import { mainDataState } from '../recoil';
-import { useFetchMainData, useNoticePopupFetch } from '../recoil/fetch.ts';
+import { useFetchMainData, useNoticePopupFetch, useRoomsFetch } from '../recoil/fetch.ts';
 import { noticePopupState } from '../recoil/state/noticeState.ts';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { NoticeContent } from '../types/notice.ts';
 import NoticePopupDetail from './NoticePopupDetail.tsx';
+
+// 모듈 상수로 둬야 렌더마다 새 배열이 되어 재조회가 도는 일이 없다
+const ROOM_SLIDER_LINKS = ['/detail/room', '/detail/mahjongRental'];
 
 export default function MainPage() {
   useFetchMainData();
   const items = useRecoilValue(mainDataState);
+
+  // 실시간 예약 슬라이더. 방·마작 대탁은 이미지 API(main-image)가 아니라 BGM_AGIT_ROOM 에서 받는다.
+  // 메인의 보조 영역이라 실패해도 /error 로 보내지 않는다(silent)
+  const rooms = useRoomsFetch(ROOM_SLIDER_LINKS, { silent: true });
+  const roomItems = useMemo(
+    () =>
+      rooms?.length
+        ? rooms.map(room => ({
+            image: room.imageUrl ?? '',
+            imageId: room.roomId,
+            labelGb: 3,
+            label: room.name,
+            group: room.guide,
+            link: room.link,
+          }))
+        : undefined,
+    [rooms]
+  );
 
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
 
@@ -159,7 +180,8 @@ export default function MainPage() {
             <p>내가 원하는 날짜, 시간에 간편하게 예약하세요!</p>
           </TitleBox>
           <SliderBox>
-            <ImageGridSlider visibleCount={visibleCountReserve} labelGb={3} items={items[3]} />
+            {/* 방이 없으면 undefined 로 넘겨 슬라이더의 "사진을 준비중입니다." 를 그대로 쓴다 */}
+            <ImageGridSlider visibleCount={visibleCountReserve} labelGb={3} items={roomItems!} />
           </SliderBox>
         </ReservationSection>
         <NoticeSection>
