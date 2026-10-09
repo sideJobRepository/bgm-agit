@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -28,6 +29,9 @@ import java.util.stream.Collectors;
  */
 @Entity
 @Table(name = "BGM_AGIT_RESERVATION")
+// 상태·인원 변경은 더티체킹이다. 바뀐 컬럼만 써야 동시에 돈 결제 승인과 취소·인원변경이
+// 처음 읽은 스냅샷으로 상대 쪽 컬럼을 덮어쓰지 않는다.
+@DynamicUpdate
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BgmAgitReservation extends DateSuperClass {
@@ -98,10 +102,9 @@ public class BgmAgitReservation extends DateSuperClass {
 
     // ===== 상태 =====
 
-    /** 결제 승인으로 확정. 취소된 예약을 되살리지는 않는다(취소 여부는 그대로 'N' 이어야 승인까지 온다). */
+    /** 결제 승인 → 확정. 취소 여부는 건드리지 않는다 — 동시에 들어온 취소를 승인이 되살리면 안 된다. */
     public void approve() {
         this.bgmAgitReservationApprovalStatus = "Y";
-        this.bgmAgitReservationCancelStatus = "N";
     }
 
     public void cancel() {

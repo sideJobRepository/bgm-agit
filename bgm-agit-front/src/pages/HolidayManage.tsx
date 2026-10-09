@@ -4,7 +4,7 @@ import type { WithTheme } from '../styles/styled-props.ts';
 import { useCallback, useEffect, useState } from 'react';
 import { useRecoilValue } from 'recoil';
 import { userState } from '../recoil/state/userState.ts';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 import api from '../utils/axiosInstance.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import { todayYmd } from '../utils/date.ts';

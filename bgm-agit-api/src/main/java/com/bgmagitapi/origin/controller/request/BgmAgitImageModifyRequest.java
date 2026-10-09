@@ -27,5 +27,4 @@ public class BgmAgitImageModifyRequest {
     
     private String bgmAgitMenuLink;
     
-    private String bgmAgitImageGroups;
 }

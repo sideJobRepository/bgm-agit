@@ -62,7 +62,7 @@ public class BgmAgitHolidayServiceImpl implements BgmAgitHolidayService {
             return false;
         }
         // 수동 예외가 있으면 그게 최종이다. 계산 결과보다 관리자 지정이 우선한다
-        Optional<BgmAgitHoliday> manual = bgmAgitHolidayRepository.findByBgmAgitHolidayDate(date);
+        Optional<BgmAgitHoliday> manual = bgmAgitHolidayRepository.findHolidayByDate(date);
         if (manual.isPresent()) {
             return manual.get().getBgmAgitHolidayType() == HolidayType.ADD;
         }
@@ -78,7 +78,7 @@ public class BgmAgitHolidayServiceImpl implements BgmAgitHolidayService {
 
         Map<LocalDate, BgmAgitHoliday> manualByDate = new java.util.HashMap<>();
         bgmAgitHolidayRepository
-                .findByBgmAgitHolidayDateBetweenOrderByBgmAgitHolidayDateAsc(from, to)
+                .findHolidaysBetween(from, to)
                 .forEach(h -> manualByDate.put(h.getBgmAgitHolidayDate(), h));
 
         List<BgmAgitHolidayResponse> result = new ArrayList<>();
@@ -111,7 +111,7 @@ public class BgmAgitHolidayServiceImpl implements BgmAgitHolidayService {
                 : (type == HolidayType.ADD ? "임시공휴일" : "정상 영업");
 
         // 날짜 기준 upsert. 같은 날에 ADD 와 EXCLUDE 가 동시에 존재할 수 없다
-        bgmAgitHolidayRepository.findByBgmAgitHolidayDate(request.getDate())
+        bgmAgitHolidayRepository.findHolidayByDate(request.getDate())
                 .ifPresentOrElse(
                         existing -> existing.modify(name, type),
                         () -> bgmAgitHolidayRepository.save(

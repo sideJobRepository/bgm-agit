@@ -75,7 +75,7 @@ export default function ReservationList() {
   const items = useRecoilValue(reservationListDataState);
   const [page, setPage] = useState(0);
   const [paymentOrder, setPaymentOrder] = useState<PaymentOrderResponse | null>(null);
-  const [payingReservationNo, setPayingReservationNo] = useState<number | null>(null);
+  const [payingReservationId, setPayingReservationId] = useState<number | null>(null);
   const closePaymentModal = useCallback(() => setPaymentOrder(null), []);
 
   const isMobile = useMediaQuery({ query: theme.device.mobile });
@@ -129,7 +129,7 @@ export default function ReservationList() {
   //업데이트
   async function updateData(item: Reservation, role: boolean, cancel: string, approval: string) {
     const param = {
-      reservationNo: item.reservationNo,
+      reservationId: item.reservationId,
       cancelStatus: cancel,
       approvalStatus: approval,
     };
@@ -199,17 +199,17 @@ export default function ReservationList() {
       return;
     }
 
-    setPayingReservationNo(item.reservationNo);
+    setPayingReservationId(item.reservationId);
     try {
       const { data } = await api.post<PaymentOrderResponse>('/bgm-agit/payments/order', {
-        reservationNo: item.reservationNo,
+        reservationId: item.reservationId,
       });
       setPaymentOrder(data);
     } catch (error) {
       console.error(error);
       toast.error('결제 주문을 생성하지 못했습니다.');
     } finally {
-      setPayingReservationNo(null);
+      setPayingReservationId(null);
     }
   }
 
@@ -289,7 +289,7 @@ export default function ReservationList() {
                 item.cancelStatus !== 'Y';
 
               return (
-                <Card key={item.reservationNo} $tone={status.tone}>
+                <Card key={item.reservationId} $tone={status.tone}>
                   <CardTable>
                     <Header $canceled={status.tone === 'canceled'}>
                       <HeaderLeft>
@@ -334,11 +334,11 @@ export default function ReservationList() {
                       <ActionButton
                         type="button"
                         color="#1A7D55"
-                        disabled={payingReservationNo === item.reservationNo}
+                        disabled={payingReservationId === item.reservationId}
                         onClick={() => openPayment(item)}
                       >
                         <CreditCard weight="bold" />
-                        {payingReservationNo === item.reservationNo
+                        {payingReservationId === item.reservationId
                           ? isNarrow
                             ? '준비중'
                             : '결제 준비중'

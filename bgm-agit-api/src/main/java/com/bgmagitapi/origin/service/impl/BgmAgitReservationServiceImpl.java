@@ -109,7 +109,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .map(BgmAgitRoom::getBgmAgitRoomName)
                 .collect(Collectors.joining(", "));
         String group = primary.getBgmAgitRoomGuide();
-        // 합쳐 쓸 때 최소인원은 가장 큰 최소값, 최대인원은 합산. 등록 검증도 같은 규칙을 쓴다
+        // 합쳐 쓸 때 최소·최대 인원 모두 방별 값의 합산. 등록·결제 검증도 같은 규칙을 쓴다
         Integer minPeople = effectiveMinPeople(rooms);
         Integer maxPeople = effectiveMaxPeople(rooms);
 
@@ -212,7 +212,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         LocalDate now = LocalDate.now(KST);
 
         // 방 카드 목록(GET /rooms)과 같은 필터여야 배지가 빠지는 카드가 안 생긴다
-        List<BgmAgitRoom> rooms = bgmAgitRoomRepository.findVisibleByLink(link);
+        List<BgmAgitRoom> rooms = bgmAgitRoomRepository.findReservableRooms(link);
 
         String blockedMessage = resolveDateBlockMessage(date, now);
         if (blockedMessage != null) {
@@ -424,8 +424,16 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         // 금액 서버 계산 — 저장된 인원과 예약일로 다시 구한다(클라이언트 금액 불신).
         // 예약 대기 알림톡의 금액 안내도 같은 메서드를 쓰므로 여기서 갈라지지 않게 할 것
         List<BgmAgitRoom> rooms = reservation.getRoomList();
+        // 운영 종료로 숨긴 방의 대기 예약은 결제(=자동 확정)하지 못하게 한다. 이미 확정된 건은 이력 보존을 위해 그대로 둔다
+        if (rooms.stream().anyMatch(BgmAgitRoom::isHidden)) {
+            throw new ReservationConflictException("예약이 종료된 항목입니다. 매장으로 문의해 주세요.");
+        }
+        // 인원 범위는 등록·인원 변경 때 이미 검증했다. 여기서 지금의 방 인원 범위로 다시 보면
+        // 관리자가 최소 인원을 올린 뒤 그 전에 들어온 대기 예약이 영영 결제하지 못하게 된다
         Integer people = reservation.getBgmAgitReservationPeople();
-        validateReservationPeople(rooms, people);
+        if (people == null || people < 1) {
+            throw new ReservationConflictException("예약 인원 정보가 없어 결제할 수 없습니다. 매장으로 문의해 주세요.");
+        }
 
         LocalDate reservationDate = reservation.getBgmAgitReservationStartDate();
         boolean weekendRate = bgmAgitHolidayService.isWeekendRate(reservationDate);
@@ -713,6 +721,14 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             int rate = ReservationRefundPolicy.refundRate(useStartAt, LocalDateTime.now(KST));
             refund = paymentService.refundPeopleReduction(
                     reservationId, currentPeople - newPeople, rate, "예약 인원 축소");
+            // 토스가 환불을 거절했고 한 푼도 안 나갔으면 인원 변경도 되돌린다(예외 → 롤백).
+            // 인원만 줄고 환불이 없으면 다음 축소는 줄어든 인원을 기준으로 계산해 그 차액이 영영 청구되지 않는다.
+            // 실패 시도 이력(PaymentCancel)은 별도 트랜잭션이라 남는다.
+            // 타임아웃처럼 토스 처리 여부를 모르는 실패는 되돌리지 않는다 — 재시도가 새 멱등키로 나가 이중 환불이 될 수 있어서다.
+            if (refund.failed() && refund.rejected() && refund.refundedAmount() == 0) {
+                throw new ReservationConflictException(
+                        "환불이 처리되지 않아 인원을 변경하지 않았습니다. 매장으로 문의해 주세요. (" + refund.failMessage() + ")");
+            }
         } else {
             // 미결제 대기건은 환불할 게 없다. 다만 옛 인원으로 만들어 둔 주문은 못 쓰게 막아야 한다
             paymentService.abortReadyOrders(reservationId, "예약 인원 변경");
@@ -832,15 +848,19 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     }
 
     /**
-     * 합쳐 예약의 최소 인원 — 각 방 최소값 중 가장 큰 값.
-     * 조회 응답(minPeople)과 등록 검증이 같은 규칙을 봐야 화면에서 고를 수 있는 값이 서버에서 거절되지 않는다.
+     * 합쳐 예약의 최소 인원 — 방별 최소값 <b>합산</b>(최대 인원 합산과 같은 규칙). 값이 하나도 없으면 null.
+     *
+     * 룸은 인원 × 단가가 곧 결제액이라 최소 인원이 과금 하한이다(CLAUDE.md 개편 설계: 합쳐 예약의 하한은 합산).
+     * 예전처럼 "최소값 중 최대"를 쓰면 M-1+M-2+M-3(각 4~7명)을 4명 36,000원에 잡을 수 있었고,
+     * 인원 축소로 이미 결제한 합쳐 예약도 4명까지 줄여 차액을 돌려받을 수 있었다.
+     * 조회 응답(minPeople)·등록·결제 주문·인원 변경 검증이 모두 이 값을 봐야 화면과 서버가 갈리지 않는다.
      */
     private Integer effectiveMinPeople(List<BgmAgitRoom> rooms) {
-        return rooms.stream()
+        List<Integer> minima = rooms.stream()
                 .map(BgmAgitRoom::getBgmAgitRoomMinPeople)
                 .filter(Objects::nonNull)
-                .max(Integer::compareTo)
-                .orElse(null);
+                .toList();
+        return minima.isEmpty() ? null : minima.stream().reduce(0, Integer::sum);
     }
 
     /** 합쳐 예약의 최대 인원 — 방별 최대값 합산. 값이 하나도 없으면 null(=제한 없음). */

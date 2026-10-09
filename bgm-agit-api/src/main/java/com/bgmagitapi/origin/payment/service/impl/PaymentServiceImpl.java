@@ -252,7 +252,7 @@ public class PaymentServiceImpl implements PaymentService {
                 // 예약 취소는 계속 진행한다(자리를 비우는 쪽이 먼저다). 관리자가 실패 행을 보고 수동 환불한다
                 log.error("[payment][환불실패] 관리자 확인 필요. reservationId={}, paymentId={}, amount={}, code={}",
                         reservationId, payment.getBgmAgitPaymentId(), portion, e.getCode(), e);
-                return PaymentRefundResult.failed(refundRate, target, refunded, message);
+                return PaymentRefundResult.rejected(refundRate, target, refunded, message);
             } catch (RuntimeException e) {
                 paymentCancelRecorder.fail(attempt.getBgmAgitPaymentCancelId(), e.getMessage());
                 log.error("[payment][환불실패] 관리자 확인 필요(통신 오류). reservationId={}, paymentId={}, amount={}",
@@ -341,6 +341,10 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new ReservationConflictException("존재하지 않는 예약입니다."));
         if (reservation.isCanceled()) {
             throw new ReservationConflictException("취소된 예약입니다.");
+        }
+        // 주문을 만든 뒤 방이 숨김(운영 종료) 처리됐으면 승인하지 않는다. 주문 생성에서도 막지만 READY 주문은 3일간 살아 있다
+        if (reservation.getRoomList().stream().anyMatch(room -> room != null && room.isHidden())) {
+            throw new ReservationConflictException("예약이 종료된 항목입니다. 결제는 진행되지 않았으니 매장으로 문의해 주세요.");
         }
 
         // 같은 방·같은 영업일의 확정건과 이용 구간이 조금이라도 겹치면 막는다(방별 구간 겹침).
