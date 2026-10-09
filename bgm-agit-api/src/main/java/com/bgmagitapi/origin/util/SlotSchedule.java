@@ -1,7 +1,6 @@
 package com.bgmagitapi.origin.util;
 
-import com.bgmagitapi.origin.entity.BgmAgitImage;
-import com.bgmagitapi.origin.entity.enumeration.BgmAgitImageCategory;
+import com.bgmagitapi.origin.entity.BgmAgitRoom;
 import com.bgmagitapi.origin.entity.enumeration.Reservation;
 
 import java.time.DayOfWeek;
@@ -10,13 +9,17 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
  * 예약 항목별 슬롯/이용시간/선택제한 정책의 단일 출처.
- * 프론트에서 imageId 하드코딩으로 중복 구현하지 말고 예약 조회 응답(slotRanges/maxSelectableSlots)을 쓸 것.
+ * 프론트에서 roomId 하드코딩으로 중복 구현하지 말고 예약 조회 응답(slotRanges/maxSelectableSlots)을 쓸 것.
+ *
+ * 룸/마작 구분은 방 링크({@link BgmAgitRoom#isMahjong()}), G룸 판정은 방 이름("G Room")으로 한다.
  */
 public class SlotSchedule {
 
@@ -32,15 +35,15 @@ public class SlotSchedule {
         this.durationHours = durationHours;
     }
 
-    public static SlotSchedule of(BgmAgitImageCategory category, String label, LocalDate d) {
-        if (isGroom(category,label)) {
+    public static SlotSchedule of(BgmAgitRoom room, LocalDate d) {
+        if (isGroom(room)) {
             return new SlotSchedule(
                     LocalDateTime.of(d, LocalTime.of(13, 0)),
                     LocalDateTime.of(d.plusDays(1), LocalTime.of(0, 0)),
                     6,
                     5
             );
-        } else if (isMahjongRental(category)) {
+        } else if (isMahjongRental(room)) {
             return new SlotSchedule(
                     LocalDateTime.of(d, LocalTime.of(14, 0)),
                     LocalDateTime.of(d.plusDays(1), LocalTime.of(2, 0)),
@@ -84,6 +87,95 @@ public class SlotSchedule {
     }
 
     public record Slot(LocalDateTime start, LocalDateTime end) {
+    }
+
+    /**
+     * 손님이 고른 시작 시각들을 이 날의 슬롯으로 바꾼다(시작 순 정렬, 중복 제거).
+     * 후보 슬롯에 없는 시각이 하나라도 있으면 빈 목록 — 직접 POST 로 임의 시각을 넣는 것을 막는다.
+     */
+    public List<Slot> resolveSlots(Collection<LocalTime> startTimes) {
+        if (startTimes == null || startTimes.isEmpty()) {
+            return List.of();
+        }
+        List<Slot> candidates = slots();
+        List<Slot> picked = new ArrayList<>();
+        for (LocalTime startTime : new LinkedHashSet<>(startTimes)) {
+            Slot found = candidates.stream()
+                    .filter(slot -> slot.start().toLocalTime().equals(startTime))
+                    .findFirst()
+                    .orElse(null);
+            if (found == null) {
+                return List.of();
+            }
+            picked.add(found);
+        }
+        picked.sort(Comparator.comparing(Slot::start));
+        return picked;
+    }
+
+    // ===== 연속 구간 / 구간 겹침 =====
+
+    /** 떨어진 시간대를 골랐을 때 등록 거부 문구. */
+    public static final String NOT_CONTIGUOUS_MESSAGE = "예약 시간은 연속된 시간대로 선택해 주세요.";
+
+    /**
+     * 고른 슬롯들이 빈틈 없이 이어지는지. 예약 1건 = 이어진 시간 한 구간이라 떨어진 시간대는 담을 수 없다.
+     * 시작 순으로 정렬한 뒤 앞 슬롯의 종료와 다음 슬롯의 시작이 같은지 본다.
+     * 슬롯은 절대시각(LocalDateTime)이라 23:00~02:00 처럼 자정을 넘겨도 그대로 비교된다.
+     * G룸(13~18, 19~00)은 두 슬롯 사이에 1시간이 비어 있어 두 개를 고르면 여기서 걸린다.
+     */
+    public static boolean isContiguous(List<Slot> slots) {
+        if (slots == null || slots.isEmpty()) {
+            return false;
+        }
+        List<Slot> sorted = new ArrayList<>(slots);
+        sorted.sort(Comparator.comparing(Slot::start));
+        for (int i = 1; i < sorted.size(); i++) {
+            if (!sorted.get(i - 1).end().equals(sorted.get(i).start())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 영업일 경계. 이 시각 이전은 그 영업일의 익일 새벽이다(마감이 00:00·02:00 로 넘어가는 G룸·마작대여).
+     * 현황판 분값(+1440)·알림톡 정렬·예약 구간 해석이 모두 이 값을 쓴다.
+     */
+    public static final LocalTime DAY_BOUNDARY = LocalTime.of(6, 0);
+
+    /** 영업일 기준 정렬용 분값. 경계 이전은 +1440 해서 뒤로 보낸다. 프론트 현황판도 같은 규약이다. */
+    public static int toSortableMinutes(LocalTime time) {
+        if (time == null) {
+            return 0;
+        }
+        int minutes = time.getHour() * 60 + time.getMinute();
+        return time.isBefore(DAY_BOUNDARY) ? minutes + 24 * 60 : minutes;
+    }
+
+    /**
+     * 예약 한 건(영업일 + 시작·종료 시각)을 절대시각 구간으로 바꾼다.
+     * 시작이 경계(06시) 이전이면 익일 새벽 시작이고, 종료가 시작보다 이르거나 같으면 다음 날로 넘어간 것이다.
+     */
+    public static Slot toPeriod(LocalDate businessDate, LocalTime startTime, LocalTime endTime) {
+        if (businessDate == null || startTime == null || endTime == null) {
+            return null;
+        }
+        LocalDate startDate = startTime.isBefore(DAY_BOUNDARY) ? businessDate.plusDays(1) : businessDate;
+        LocalDateTime start = LocalDateTime.of(startDate, startTime);
+        LocalDateTime end = LocalDateTime.of(startDate, endTime);
+        if (!end.isAfter(start)) {
+            end = end.plusDays(1);
+        }
+        return new Slot(start, end);
+    }
+
+    /** 두 구간이 겹치는지. 끝과 시작이 맞닿는 것(14:00 종료 / 14:00 시작)은 겹침이 아니다. */
+    public static boolean overlaps(Slot a, Slot b) {
+        if (a == null || b == null) {
+            return false;
+        }
+        return a.start().isBefore(b.end()) && b.start().isBefore(a.end());
     }
 
     // ===== 예약 가능 기간(리드타임) =====
@@ -167,46 +259,46 @@ public class SlotSchedule {
     }
 
     // ===== 정책 함수들 =====
-    public static boolean isGroom(BgmAgitImageCategory category, String label) {
-        return category == BgmAgitImageCategory.ROOM && "G Room".equals(label);
+    public static boolean isGroom(BgmAgitRoom room) {
+        return room != null && !room.isMahjong() && "G Room".equals(room.getBgmAgitRoomName());
     }
 
-    public static boolean isMahjongRental(BgmAgitImageCategory category) {
-        return category == BgmAgitImageCategory.MAHJONG;
+    public static boolean isMahjongRental(BgmAgitRoom room) {
+        return room != null && room.isMahjong();
     }
 
     /** 한 번에 선택 가능한 슬롯 수. G룸은 하루 1팀 1시간대만, 나머지는 제한 없음(null). */
-    public static Integer maxSelectableSlots(BgmAgitImageCategory category, String label) {
-        return isGroom(category, label) ? 1 : null;
+    public static Integer maxSelectableSlots(BgmAgitRoom room) {
+        return isGroom(room) ? 1 : null;
     }
 
-    /** 예약 타입은 이미지 카테고리에서 서버가 결정한다(클라이언트 값 신뢰 금지). */
-    public static Reservation resolveReservationType(BgmAgitImageCategory category) {
-        return isMahjongRental(category) ? Reservation.DELEGATE_PLAY : Reservation.ROOM;
+    /** 예약 타입은 방 링크(룸/마작)로 서버가 결정한다(클라이언트 값 신뢰 금지). */
+    public static Reservation resolveReservationType(BgmAgitRoom room) {
+        return isMahjongRental(room) ? Reservation.DELEGATE_PLAY : Reservation.ROOM;
     }
 
     // 예약 예약금(정액): 전 항목 1만원.
     // M Room 3만원 예외가 있었으나 M Room이 M-1/M-2/M-3로 쪼개지면서 제거됨(항목 수만큼 합산되므로 3칸 = 3만원으로 동일).
-    // 향후 예약 인원수 기준으로 전환 예정이며, 그때는 category/label만으로 부족해 인원 인자가 추가되어야 한다.
-    public static int resolveDepositAmount(BgmAgitImageCategory category, String label) {
+    // 향후 예약 인원수 기준으로 전환 예정이며, 그때는 방만으로 부족해 인원 인자가 추가되어야 한다.
+    public static int resolveDepositAmount(BgmAgitRoom room) {
         return 10000;
     }
 
     /**
-     * 한 예약(그룹)의 총 예약금. 이미지 id 기준으로 중복을 제거한 뒤 항목 수만큼 합산한다.
+     * 한 예약의 총 예약금. 방 id 기준으로 중복을 제거한 뒤 방 수만큼 합산한다.
      * 결제 주문 금액과 예약 대기 알림톡 안내 금액이 갈리지 않도록 두 곳 모두 이 메서드만 쓸 것.
      */
-    public static int totalDepositAmount(Collection<BgmAgitImage> images) {
-        if (images == null || images.isEmpty()) {
+    public static int totalDepositAmount(Collection<BgmAgitRoom> rooms) {
+        if (rooms == null || rooms.isEmpty()) {
             return 0;
         }
-        Set<Long> countedImageIds = new HashSet<>();
+        Set<Long> countedRoomIds = new HashSet<>();
         int total = 0;
-        for (BgmAgitImage image : images) {
-            if (image == null || !countedImageIds.add(image.getBgmAgitImageId())) {
+        for (BgmAgitRoom room : rooms) {
+            if (room == null || !countedRoomIds.add(room.getBgmAgitRoomId())) {
                 continue;
             }
-            total += resolveDepositAmount(image.getBgmAgitImageCategory(), image.getBgmAgitImageLabel());
+            total += resolveDepositAmount(room);
         }
         return total;
     }

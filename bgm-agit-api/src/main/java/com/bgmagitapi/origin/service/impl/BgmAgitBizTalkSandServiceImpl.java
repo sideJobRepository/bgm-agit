@@ -1,10 +1,9 @@
 package com.bgmagitapi.origin.service.impl;
 
 import com.bgmagitapi.origin.entity.BgmAgitBiztalkSendHistory;
-import com.bgmagitapi.origin.entity.BgmAgitImage;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
-import com.bgmagitapi.origin.entity.enumeration.BgmAgitImageCategory;
+import com.bgmagitapi.origin.entity.BgmAgitRoom;
 import com.bgmagitapi.origin.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.origin.entity.enumeration.BgmAgitSubject;
 import com.bgmagitapi.origin.event.dto.InquiryEvent;
@@ -17,7 +16,6 @@ import com.bgmagitapi.kml.record.enums.Wind;
 import com.bgmagitapi.kml.record.repository.RecordRepository;
 import com.bgmagitapi.kml.review.dto.events.ReviewPostEvents;
 import com.bgmagitapi.origin.repository.BgmAgitBiztalkSendHistoryRepository;
-import com.bgmagitapi.origin.repository.BgmAgitImageRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.origin.service.BgmAgitBizTalkSandService;
 import com.bgmagitapi.origin.service.BgmAgitBizTalkService;
@@ -58,8 +56,6 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
 
     private final BgmAgitBiztalkSendHistoryRepository bgmAgitBiztalkSendHistoryRepository;
 
-    private final BgmAgitImageRepository bgmAgitImageRepository;
-
     private final RecordRepository recordRepository;
 
     private final BgmAgitReservationRepository bgmAgitReservationRepository;
@@ -78,36 +74,31 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     private final String bizTalkUrl = "https://www.biztalk-api.com";
     
     @Override
-    public void sandBizTalk(BgmAgitMember member, BgmAgitImage image, List<BgmAgitReservation> list) {
-        
-        BgmAgitReservation bgmAgitReservation = list.get(0);
-        String formattedTimes = AlimtalkUtils.formatTimes(list);
-        String formattedDate = AlimtalkUtils.formatDate(bgmAgitReservation.getBgmAgitReservationStartDate());
-        String people = String.valueOf(bgmAgitReservation.getBgmAgitReservationPeople());
-        String reservationRequest = bgmAgitReservation.getBgmAgitReservationRequest();
-        
-        // 이미지 검증 및 룸/마작 구분
-        BgmAgitImage agitImage = bgmAgitImageRepository.findById(image.getBgmAgitImageId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 룸입니다."));
-        boolean isRoom = agitImage.getBgmAgitImageCategory() == BgmAgitImageCategory.ROOM;
-        // 항목을 합쳐 예약한 경우 "M-1, M-2" 처럼 예약된 항목 전체를 노출 (템플릿 변수라 검수 영향 없음)
-        String roomName = list.stream()
-                .map(r -> r.getBgmAgitImage().getBgmAgitImageLabel())
-                .filter(Objects::nonNull)
+    public void sandBizTalk(BgmAgitMember member, BgmAgitReservation reservation, List<BgmAgitRoom> rooms) {
+
+        String formattedTimes = AlimtalkUtils.formatTimes(reservation);
+        String formattedDate = AlimtalkUtils.formatDate(reservation.getBgmAgitReservationStartDate());
+        String people = String.valueOf(reservation.getBgmAgitReservationPeople());
+        String reservationRequest = reservation.getBgmAgitReservationRequest();
+
+        // 룸/마작 구분은 기준 방(첫 번째) 링크로. rooms 는 서비스가 로딩해 넘긴 엔티티라 지연 로딩이 없다
+        if (rooms == null || rooms.isEmpty()) {
+            throw new IllegalArgumentException("존재하지 않는 룸입니다.");
+        }
+        boolean isRoom = !rooms.get(0).isMahjong();
+        // 합쳐 예약한 경우 "M-1, M-2" 처럼 예약된 방 전체를 노출 (템플릿 변수라 검수 영향 없음)
+        String roomName = rooms.stream()
+                .map(BgmAgitRoom::getBgmAgitRoomName)
+                .filter(StringUtils::hasText)
                 .distinct()
                 .collect(Collectors.joining(", "));
-        if (!StringUtils.hasText(roomName)) {
-            roomName = agitImage.getBgmAgitImageLabel();
-        }
-        
+
         // 메시지 구성 (명시적으로 켠 경우에만 계좌안내 → 예약금 결제안내로 스위칭)
         String message;
         String template;
         if (reservationPaymentTalkLive) {
-            // 예약금은 템플릿 변수라 실제 청구액을 그대로 넣는다. 합쳐 예약이면 항목 수만큼 합산된 금액
-            String deposit = AlimtalkUtils.formatAmount(SlotSchedule.totalDepositAmount(
-                    list.stream().map(BgmAgitReservation::getBgmAgitImage).toList()
-            ));
+            // 예약금은 템플릿 변수라 실제 청구액을 그대로 넣는다. 합쳐 예약이면 방 수만큼 합산된 금액
+            String deposit = AlimtalkUtils.formatAmount(SlotSchedule.totalDepositAmount(rooms));
             message = AlimtalkUtils.buildReservationPaymentMessage(
                     member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, deposit, reservationRequest
             );
@@ -121,9 +112,9 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
 
         // 버튼명 정의
         String buttonName = "예약 내역 확인 하기";
-        Long subjectId = bgmAgitReservation.getBgmAgitReservationNo();
+        Long subjectId = reservation.getBgmAgitReservationId();
         BgmAgitSubject subject = isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL;
-        
+
         // 사용자에게만 발송.
         // 예약 대기는 결제 전이라 확정이 아니고 관리자가 할 일도 없다. 게다가 결제 버전 템플릿은 고정 문구를
         // 글자 단위로 맞춰야 해서 관리자 전용 문구를 못 만들고 "예약금을 결제해 주세요" 안내가 그대로 나갔다.
@@ -131,53 +122,50 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         sendTalk(message, template, member.getBgmAgitMemberPhoneNo(), subjectId, subject, buttonName, "https://bgmagit.co.kr");
 
     }
-    
+
     @Override
     public void sendCancelBizTalk(ReservationTalkContext ctx) {
-        List<BgmAgitReservation> list = ctx.getReservations();
-        BgmAgitImage bgmAgitImage = ctx.getReservations().get(0).getBgmAgitImage();
-        boolean isRoom = bgmAgitImage.getBgmAgitImageCategory() == BgmAgitImageCategory.ROOM;
-        String times = AlimtalkUtils.formatTimes(list);
-        String date = AlimtalkUtils.formatDate(list.get(0).getBgmAgitReservationStartDate());
-        String bgmAgitReservationPeople = String.valueOf(list.get(0).getBgmAgitReservationPeople());
-        String bgmAgitReservationRequest = list.get(0).getBgmAgitReservationRequest();
+        BgmAgitReservation reservation = ctx.getReservation();
+        boolean isRoom = !ctx.isMahjong();
+        String times = AlimtalkUtils.formatTimes(reservation);
+        String date = AlimtalkUtils.formatDate(reservation.getBgmAgitReservationStartDate());
+        String bgmAgitReservationPeople = String.valueOf(reservation.getBgmAgitReservationPeople());
+        String bgmAgitReservationRequest = reservation.getBgmAgitReservationRequest();
         boolean isAdmin = "ROLE_ADMIN".equalsIgnoreCase(ctx.getRole());
         String message = isAdmin
                 ? AlimtalkUtils.reservationCancelMessage2(ctx.getMemberName(), date, times, ctx.getLabel())
                 : AlimtalkUtils.reservationCancelMessage1(ctx.getMemberName(), date, times, ctx.getLabel(), bgmAgitReservationPeople, bgmAgitReservationRequest);
         String template = isAdmin ? "bgmagit-reservation-cancel-2" : "bgmagit-res-cancel";
-        Long subjectId = list.get(0).getBgmAgitReservationNo();
-        
+        Long subjectId = reservation.getBgmAgitReservationId();
+
         sendTalk(message, template, ctx.getPhone(), subjectId, isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기", "https://bgmagit.co.kr");
-        
+
         if ("bgmagit-res-cancel".equals(template)) {
             String cancelMessage3 = AlimtalkUtils.reservationCancelMessage3(ctx.getMemberName(), date, times, ctx.getLabel(), bgmAgitReservationPeople, bgmAgitReservationRequest);
             sendTalk(cancelMessage3, "bgmagit-res-cancel", PHONE1, subjectId, isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기", "https://bgmagit.co.kr");
             sendTalk(cancelMessage3, "bgmagit-res-cancel", PHONE2, subjectId, isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기", "https://bgmagit.co.kr");
         }
-        
+
     }
-    
+
     @Override
     public void sendCompleteBizTalk(ReservationTalkContext ctx) {
-        List<BgmAgitReservation> list = ctx.getReservations();
-        BgmAgitImage bgmAgitImage = ctx.getReservations().get(0).getBgmAgitImage();
-        boolean isRoom = bgmAgitImage.getBgmAgitImageCategory() == BgmAgitImageCategory.ROOM;
-        String times = AlimtalkUtils.formatTimes(list);
-        String date = AlimtalkUtils.formatDate(list.get(0).getBgmAgitReservationStartDate());
-        BgmAgitReservation bgmAgitReservation = list.get(0);
-        String people = String.valueOf(bgmAgitReservation.getBgmAgitReservationPeople());
-        String request = bgmAgitReservation.getBgmAgitReservationRequest();
+        BgmAgitReservation reservation = ctx.getReservation();
+        boolean isRoom = !ctx.isMahjong();
+        String times = AlimtalkUtils.formatTimes(reservation);
+        String date = AlimtalkUtils.formatDate(reservation.getBgmAgitReservationStartDate());
+        String people = String.valueOf(reservation.getBgmAgitReservationPeople());
+        String request = reservation.getBgmAgitReservationRequest();
         String message1 = AlimtalkUtils.buildReservationCompleteMessage(ctx.getMemberName(), date, times, ctx.getLabel(), people, request);
         String message2 = AlimtalkUtils.buildReservationCompleteMessage2(ctx.getMemberName(), date, times, ctx.getLabel(), people, request);
         String template = "bgmagit-res-complete";
-        Long subjectId = list.get(0).getBgmAgitReservationNo();
-        
+        Long subjectId = reservation.getBgmAgitReservationId();
+
         sendTalk(message1, template, ctx.getPhone(), subjectId, isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기", "https://bgmagit.co.kr");
         sendTalk(message2, template, PHONE1, subjectId, isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기", "https://bgmagit.co.kr");
         sendTalk(message2, template, PHONE2, subjectId, isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL, "예약 내역 확인 하기", "https://bgmagit.co.kr");
     }
-    
+
     @Override
     public void sendJoinMemberBizTalk(BgmAgitMember member) {
         String template = "bgmagit-member";
@@ -353,43 +341,33 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     @Override
     public void sendAdminDailyReservation(LocalDate date) {
 
-        // 한 예약 = 1시간 슬롯 여러 행. 예약번호로 묶고 취소건은 뺀다.
-        Map<Long, List<BgmAgitReservation>> grouped =
-                bgmAgitReservationRepository.findReservationsByDate(date).stream()
-                        .filter(row -> row.getBgmAgitReservationNo() != null)
-                        .filter(row -> row.getBgmAgitReservationStartTime() != null)
-                        .filter(row -> !"Y".equalsIgnoreCase(row.getBgmAgitReservationCancelStatus()))
-                        .collect(Collectors.groupingBy(BgmAgitReservation::getBgmAgitReservationNo,
-                                LinkedHashMap::new, Collectors.toList()));
-
-        // 예약 묶음별 대표 행(가장 이른 슬롯)을 영업일 순서로 정렬
-        List<BgmAgitReservation> heads = grouped.values().stream()
-                .map(slots -> slots.stream().min(AlimtalkUtils.businessTimeOrder()).orElseThrow())
+        // 예약 1건 = 1행(이어진 한 구간). 취소건은 빼고 영업일 시작시각 순으로 정렬한다.
+        // 방은 fetch join 으로 같이 읽어 둔다(합쳐 예약이면 "M-1, M-2")
+        List<BgmAgitReservation> reservations = bgmAgitReservationRepository.findReservationsByDate(date).stream()
+                .filter(r -> r.getBgmAgitReservationStartTime() != null)
+                .filter(r -> !r.isCanceled())
                 .sorted(AlimtalkUtils.businessTimeOrder())
                 .toList();
 
-        int totalPeople = heads.stream()
-                .mapToInt(head -> head.getBgmAgitReservationPeople() == null ? 0 : head.getBgmAgitReservationPeople())
+        int totalPeople = reservations.stream()
+                .mapToInt(r -> r.getBgmAgitReservationPeople() == null ? 0 : r.getBgmAgitReservationPeople())
                 .sum();
 
-        List<String> lines = heads.stream()
-                .map(head -> {
-                    LocalTime end = lastEndTime(grouped.get(head.getBgmAgitReservationNo()));
-                    // 합쳐 예약은 같은 예약번호에 이미지가 다른 행이라 장소를 전부 모은다
-                    String roomName = grouped.get(head.getBgmAgitReservationNo()).stream()
-                            .map(BgmAgitReservation::getBgmAgitImage)
-                            .filter(Objects::nonNull)
-                            .map(image -> Objects.toString(image.getBgmAgitImageLabel(), ""))
+        List<String> lines = reservations.stream()
+                .map(r -> {
+                    LocalTime end = r.getBgmAgitReservationEndTime();
+                    String roomName = r.getRooms().stream()
+                            .map(room -> Objects.toString(room.getBgmAgitRoomName(), ""))
                             .filter(label -> !label.isEmpty())
                             .distinct()
                             .sorted()
                             .collect(Collectors.joining(", "));
-                    String memberName = head.getBgmAgitMember() != null
-                            ? Objects.toString(head.getBgmAgitMember().getBgmAgitMemberName(), "") : "";
-                    String state = "Y".equalsIgnoreCase(head.getBgmAgitReservationApprovalStatus()) ? "확정" : "대기";
-                    int people = head.getBgmAgitReservationPeople() == null ? 0 : head.getBgmAgitReservationPeople();
+                    String memberName = r.getBgmAgitMember() != null
+                            ? Objects.toString(r.getBgmAgitMember().getBgmAgitMemberName(), "") : "";
+                    String state = r.isApproved() ? "확정" : "대기";
+                    int people = r.getBgmAgitReservationPeople() == null ? 0 : r.getBgmAgitReservationPeople();
 
-                    return AlimtalkUtils.TIME_FMT.format(head.getBgmAgitReservationStartTime())
+                    return AlimtalkUtils.TIME_FMT.format(r.getBgmAgitReservationStartTime())
                             + " ~ " + (end == null ? "" : AlimtalkUtils.TIME_FMT.format(end))
                             + " " + roomName
                             + " " + memberName
@@ -400,29 +378,15 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
 
         String message = AlimtalkUtils.buildAdminDailyReservationMessage(
                 AlimtalkUtils.formatDate(date),
-                String.valueOf(heads.size()),
+                String.valueOf(reservations.size()),
                 String.valueOf(totalPeople),
-                heads.isEmpty() ? "없음" : AlimtalkUtils.TIME_FMT.format(heads.get(0).getBgmAgitReservationStartTime()),
+                reservations.isEmpty() ? "없음" : AlimtalkUtils.TIME_FMT.format(reservations.get(0).getBgmAgitReservationStartTime()),
                 AlimtalkUtils.formatAdminReservationList(lines)
         );
 
         String template = AlimtalkTemplate.BGMAGIT_ADMIN_RESERVATION_REMIND;
         sendTalk(message, template, PHONE1, null, BgmAgitSubject.ADMIN_RESERVATION_NOTICE, "사이트 바로가기", "https://bgmagit.co.kr");
         sendTalk(message, template, PHONE2, null, BgmAgitSubject.ADMIN_RESERVATION_NOTICE, "사이트 바로가기", "https://bgmagit.co.kr");
-    }
-
-    /**
-     * 예약 묶음의 마지막 종료 시각.
-     * 마감이 00:00·02:00 로 넘어가는 슬롯(G룸·대탁)이 있어 단순 max 로는 23:00 이 뒤로 잡히므로,
-     * 06시 이전은 익일로 보고 비교한다.
-     */
-    private LocalTime lastEndTime(List<BgmAgitReservation> slots) {
-        if (slots == null || slots.isEmpty()) return null;
-        return slots.stream()
-                .map(BgmAgitReservation::getBgmAgitReservationEndTime)
-                .filter(Objects::nonNull)
-                .max(Comparator.comparingInt(t -> t.getHour() < 6 ? t.toSecondOfDay() + 86400 : t.toSecondOfDay()))
-                .orElse(null);
     }
 
     private String nicknameOf(Record record) {

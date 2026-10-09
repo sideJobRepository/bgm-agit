@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import {
   detailDataState,
@@ -9,7 +9,7 @@ import {
 } from './state/mainState.ts';
 import api from '../utils/axiosInstance';
 import { useRequest } from './useRequest.ts';
-import type { ReservationData } from '../types/reservation.ts';
+import type { ReservationData, Room } from '../types/reservation.ts';
 import {
   availableRoomsState,
   reservationListDataState,
@@ -73,18 +73,23 @@ export function useFetchMainData(param?: {
 }
 
 //디테일
-export function useFetchDetailData(param?: {
-  labelGb?: number;
-  link?: string;
-  name?: string | null;
-  category?: string | null;
-}) {
+export function useFetchDetailData(
+  param?: {
+    labelGb?: number;
+    link?: string;
+    name?: string | null;
+    category?: string | null;
+  },
+  skip = false
+) {
   const setMain = useSetRecoilState(detailDataState);
   const { request } = useRequest();
   const trigger = useRecoilValue(imageUploadState);
   const pageData = useRecoilValue(searchState);
 
   useEffect(() => {
+    // 방 페이지는 이미지 API 가 아니라 /bgm-agit/rooms 를 쓴다
+    if (skip) return;
     let paramLink;
 
     if (param?.link) paramLink = param?.link.split('/').filter(Boolean).pop();
@@ -108,7 +113,61 @@ export function useFetchDetailData(param?: {
           .then(res => res.data),
       setMain
     );
-  }, [param?.link, param?.labelGb, trigger, pageData]);
+  }, [param?.link, param?.labelGb, trigger, pageData, skip]);
+}
+
+/**
+ * 예약 대상 방 목록 (GET /bgm-agit/rooms?link=). 방은 BGM_AGIT_IMAGE 가 아니라 BGM_AGIT_ROOM 에 있다.
+ *
+ * - links 가 null/빈 배열이면 조회하지 않는다(방 페이지가 아닐 때).
+ * - includeHidden 은 관리자 화면용. 서버가 관리자일 때만 숨김(useStatus='N') 방까지 내려준다.
+ * - silent: 메인 슬라이더처럼 보조 영역은 실패해도 /error 로 보내지 않고 조용히 빈 목록으로 둔다.
+ * - 관리자 등록/수정/삭제 뒤 imageUploadState 트리거로 다시 받는다.
+ */
+export function useRoomsFetch(
+  links: string[] | null,
+  options?: { includeHidden?: boolean; silent?: boolean }
+) {
+  const [rooms, setRooms] = useState<Room[] | null>(null);
+  const { request } = useRequest();
+  const trigger = useRecoilValue(imageUploadState);
+  const includeHidden = !!options?.includeHidden;
+  const silent = !!options?.silent;
+  const linksKey = links?.join('|') ?? '';
+
+  useEffect(() => {
+    if (!linksKey) {
+      setRooms(null);
+      return;
+    }
+    let canceled = false;
+    const load = () =>
+      Promise.all(
+        linksKey.split('|').map(link =>
+          api
+            .get<Room[]>('/bgm-agit/rooms', {
+              params: { link, ...(includeHidden ? { includeHidden: true } : {}) },
+            })
+            .then(res => res.data ?? [])
+        )
+      ).then(lists => lists.flat());
+    const apply = (data: Room[]) => {
+      if (!canceled) setRooms(data);
+    };
+
+    if (silent) {
+      load()
+        .then(apply)
+        .catch(() => apply([]));
+    } else {
+      request(load, apply).catch(() => {});
+    }
+    return () => {
+      canceled = true;
+    };
+  }, [linksKey, includeHidden, silent, trigger]);
+
+  return rooms;
 }
 
 export function useReservationFetch() {

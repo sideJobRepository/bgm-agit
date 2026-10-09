@@ -27,9 +27,9 @@ public class BgmAgitPayment extends DateSuperClass {
     @JoinColumn(name = "BGM_AGIT_MEMBER_ID")
     private BgmAgitMember bgmAgitMember;
 
-    // BGM 아지트 예약 번호 (예약 그룹키. 논리 연결이라 물리 FK 없음)
-    @Column(name = "BGM_AGIT_RESERVATION_NO")
-    private Long bgmAgitReservationNo;
+    // BGM 아지트 예약 ID (FK, RESTRICT). UNIQUE 아님 — 재결제면 같은 예약에 결제행이 여러 개다
+    @Column(name = "BGM_AGIT_RESERVATION_ID")
+    private Long bgmAgitReservationId;
 
     // BGM 아지트 주문 번호 (토스 orderId, 서버 발급, UNIQUE)
     @Column(name = "BGM_AGIT_ORDER_NO")
@@ -77,9 +77,9 @@ public class BgmAgitPayment extends DateSuperClass {
     private String bgmAgitPaymentFailReason;
 
     // 주문 생성용 생성자 (READY 상태로 저장)
-    public BgmAgitPayment(BgmAgitMember member, Long reservationNo, String orderNo, Integer amount) {
+    public BgmAgitPayment(BgmAgitMember member, Long reservationId, String orderNo, Integer amount) {
         this.bgmAgitMember = member;
-        this.bgmAgitReservationNo = reservationNo;
+        this.bgmAgitReservationId = reservationId;
         this.bgmAgitOrderNo = orderNo;
         this.bgmAgitPaymentAmount = amount;
         this.bgmAgitPaymentStatus = PaymentStatus.READY;

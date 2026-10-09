@@ -20,7 +20,6 @@ public class BgmAgitImageCreateRequest {
     
     private String bgmAgitMenuLink;
     
-    private String bgmAgitImageGroups;
     @NotNull(message = "카테고리를 넣어주세요")
     private BgmAgitImageCategory  bgmAgitImageCategory;
     @NotNull(message = "이미지를 넣어주세요")

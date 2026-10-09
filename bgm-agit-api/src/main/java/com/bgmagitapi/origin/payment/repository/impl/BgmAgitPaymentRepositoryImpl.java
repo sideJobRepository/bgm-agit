@@ -21,12 +21,12 @@ public class BgmAgitPaymentRepositoryImpl implements BgmAgitPaymentCustomReposit
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Optional<BgmAgitPayment> findLatestPaymentByReservationNoAndStatus(Long reservationNo, PaymentStatus status) {
+    public Optional<BgmAgitPayment> findLatestPaymentByReservationIdAndStatus(Long reservationId, PaymentStatus status) {
         return Optional.ofNullable(
                 queryFactory
                         .selectFrom(bgmAgitPayment)
                         .where(
-                                bgmAgitPayment.bgmAgitReservationNo.eq(reservationNo),
+                                bgmAgitPayment.bgmAgitReservationId.eq(reservationId),
                                 bgmAgitPayment.bgmAgitPaymentStatus.eq(status)
                         )
                         .orderBy(bgmAgitPayment.bgmAgitPaymentId.desc())
@@ -57,30 +57,30 @@ public class BgmAgitPaymentRepositoryImpl implements BgmAgitPaymentCustomReposit
     }
 
     @Override
-    public Map<Long, String> findDoneReceiptUrlsByReservationNos(List<Long> reservationNos) {
+    public Map<Long, String> findDoneReceiptUrlsByReservationIds(List<Long> reservationIds) {
         Map<Long, String> result = new LinkedHashMap<>();
-        if (reservationNos == null || reservationNos.isEmpty()) {
+        if (reservationIds == null || reservationIds.isEmpty()) {
             return result;
         }
 
         List<Tuple> rows = queryFactory
-                .select(bgmAgitPayment.bgmAgitReservationNo, bgmAgitPayment.bgmAgitPaymentReceiptUrl)
+                .select(bgmAgitPayment.bgmAgitReservationId, bgmAgitPayment.bgmAgitPaymentReceiptUrl)
                 .from(bgmAgitPayment)
                 .where(
                         bgmAgitPayment.bgmAgitPaymentStatus.eq(PaymentStatus.DONE),
-                        bgmAgitPayment.bgmAgitReservationNo.in(reservationNos)
+                        bgmAgitPayment.bgmAgitReservationId.in(reservationIds)
                 )
                 .orderBy(bgmAgitPayment.bgmAgitPaymentId.desc())
                 .fetch();
 
-        // id 내림차순이라 예약번호별 첫 값이 최신 결제 (재결제로 여러 건일 때 최신 우선)
+        // id 내림차순이라 예약별 첫 값이 최신 결제 (재결제로 여러 건일 때 최신 우선)
         for (Tuple row : rows) {
-            Long reservationNo = row.get(bgmAgitPayment.bgmAgitReservationNo);
+            Long reservationId = row.get(bgmAgitPayment.bgmAgitReservationId);
             String receiptUrl = row.get(bgmAgitPayment.bgmAgitPaymentReceiptUrl);
-            if (reservationNo == null || receiptUrl == null) {
+            if (reservationId == null || receiptUrl == null) {
                 continue;
             }
-            result.putIfAbsent(reservationNo, receiptUrl);
+            result.putIfAbsent(reservationId, receiptUrl);
         }
         return result;
     }

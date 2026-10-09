@@ -7,7 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class PaymentConfirmResponse {
     private String orderId;
-    private Long reservationNo;
+    private Long reservationId;
     private Integer amount;
     private String status;
     private String method;

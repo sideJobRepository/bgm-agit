@@ -25,21 +25,13 @@ import { showConfirmModal } from '../confirmAlert.tsx';
 import type { MainMenu } from '../../types/menu.ts';
 import { imageUploadState, mainMenuState, searchState } from '../../recoil';
 import { useLocation } from 'react-router-dom';
-import type { PageItem } from '../../types/main.ts';
+import type { GridItem, PageItem } from '../../types/main.ts';
+import type { Room } from '../../types/reservation.ts';
+import RoomEditModal from './RoomEditModal.tsx';
 import Pagination from '../Pagination.tsx';
 import { getCombinableLabels, getReservationComment } from '../../config/reservationComments.ts';
 import { useMediaQuery } from 'react-responsive';
 import { formatYmdWithWeekday } from '../../utils/date.ts';
-
-interface GridItem {
-  image: string;
-  category: string;
-  imageId: number;
-  labelGb: number;
-  label: string;
-  group: null | string;
-  link: null | string;
-}
 
 interface Props {
   pageData: {
@@ -72,7 +64,7 @@ export default function ImageGrid({ pageData }: Props) {
   //현재 경로 찾기
   const location = useLocation();
   const menus = useRecoilValue(mainMenuState);
-  const { mainMenu, subMenu } = findMenuByPath(location.pathname, menus);
+  const { subMenu } = findMenuByPath(location.pathname, menus);
 
   function findMenuByPath(path: string, menus: MainMenu[]) {
     for (const main of menus) {
@@ -103,8 +95,11 @@ export default function ImageGrid({ pageData }: Props) {
   const [writeModalOpen, setWriteModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [text, setText] = useState('');
-  const [group, setGroup] = useState<string | null>('');
   const [editCategory, setEditCategory] = useState('');
+
+  // 관리자 방 등록·수정 (labelGb 3). 방은 BGM_AGIT_ROOM 이라 이미지 폼과 따로 둔다.
+  // undefined = 닫힘, null = 신규 등록, Room = 수정
+  const [roomEditTarget, setRoomEditTarget] = useState<Room | null | undefined>(undefined);
 
   //수정
   const [isEditMode, setIsEditMode] = useState(false);
@@ -181,22 +176,31 @@ export default function ImageGrid({ pageData }: Props) {
 
   // 같은 묶음(예: M-1/M-2/M-3)에서 함께 예약할 수 있는 항목들
   function combinableItems(item: GridItem) {
+    // 숨김 방(관리자 화면에만 보임)은 합칠 수 없다
     return getCombinableLabels(item.label)
       .map(label => filteredItems?.find(candidate => candidate.label === label))
-      .filter((candidate): candidate is GridItem => !!candidate)
+      .filter(
+        (candidate): candidate is GridItem => !!candidate && candidate.room?.useStatus !== 'N'
+      )
       .map(candidate => ({ id: candidate.imageId, label: candidate.label }));
   }
 
   // 선택한 날짜 기준 이 항목의 가용 현황. 응답이 늦게 도착한 이전 날짜 결과는 버린다.
-  function roomStatusOf(imageId: number) {
+  // 예약 카드의 imageId 에는 Detail 이 roomId 를 넣어 둔다
+  function roomStatusOf(roomId: number) {
     if (labelGb !== 3 || availableRooms?.date !== selectedDate) return undefined;
-    return availableRooms.rooms.find(room => room.imageId === imageId);
+    return availableRooms.rooms.find(room => room.roomId === roomId);
   }
 
   function reservationClickEvent(item: GridItem) {
     // 날짜 없이 방부터 고르면 예전 사고가 그대로 재현된다. 날짜가 먼저다.
     if (!selectedDate) {
       toast.error('날짜를 먼저 선택해주세요.');
+      return;
+    }
+    // 관리자 화면에서만 보이는 숨김 방. 서버도 막지만 시간 화면까지 열 이유가 없다
+    if (item.room?.useStatus === 'N') {
+      toast.error('숨김 처리된 방입니다. 수정에서 사용으로 바꾸면 예약할 수 있습니다.');
       return;
     }
     // 가용 현황을 못 받았으면(미배포·조회 실패) 막지 않는다. 예약 가능한 방을 가리는 쪽이 더 나쁘다.
@@ -221,16 +225,10 @@ export default function ImageGrid({ pageData }: Props) {
     formData.append('bgmAgitImageLabel', text);
     formData.append('bgmAgitMenuLink', subMenu!.link);
 
+    // 방(labelGb 3)은 이 폼을 쓰지 않는다 — RoomEditModal(/bgm-agit/rooms)
     let category;
 
-    if (labelGb === 3) {
-      category = 'ROOM';
-      if (!group) {
-        toast.error('그룹을 입력해주세요.');
-        return;
-      }
-      formData.append('bgmAgitImageGroups', group);
-    } else if (subMenu!.bgmAgitMainMenuId === 10) {
+    if (subMenu!.bgmAgitMainMenuId === 10) {
       category = 'DRINK';
     } else if (subMenu!.bgmAgitMainMenuId === 11) {
       category = 'FOOD';
@@ -381,10 +379,13 @@ export default function ImageGrid({ pageData }: Props) {
           />
         </SearchBox>
       </SearchWrapper>
-      {user?.roles.includes('ROLE_ADMIN') && labelGb !== 3 && (
+      {user?.roles.includes('ROLE_ADMIN') && (
         <ButtonBox>
-          <Button color={searchColor} onClick={() => setWriteModalOpen(true)}>
-            작성
+          <Button
+            color={searchColor}
+            onClick={() => (labelGb === 3 ? setRoomEditTarget(null) : setWriteModalOpen(true))}
+          >
+            {labelGb === 3 ? '방 등록' : '작성'}
           </Button>
         </ButtonBox>
       )}
@@ -425,12 +426,14 @@ export default function ImageGrid({ pageData }: Props) {
             filteredItems.map((item, idx) => {
               const roomStatus = roomStatusOf(item.imageId);
               const soldOut = roomStatus ? !roomStatus.available : false;
+              // 숨김 방은 관리자에게만 내려온다(includeHidden). 흐리게 + 표시
+              const hidden = labelGb === 3 && item.room?.useStatus === 'N';
               return (
                 <GridItemBox key={idx}>
                   <ImageWrapper
                     radius={labelGb === 4}
                     ratio={labelGb === 3}
-                    $dimmed={soldOut}
+                    $dimmed={soldOut || hidden}
                     onClick={() => {
                       if (labelGb !== 3) {
                         handleImageClick(idx);
@@ -446,6 +449,7 @@ export default function ImageGrid({ pageData }: Props) {
                         <FaUsers /> <span>{item.group}</span>
                       </TopLabel>
                     )}
+                    {hidden && <HiddenTag>숨김</HiddenTag>}
                     {labelGb === 3 && getReservationComment(item.label) && (
                       <CommentLabel>{getReservationComment(item.label)}</CommentLabel>
                     )}
@@ -453,12 +457,15 @@ export default function ImageGrid({ pageData }: Props) {
                       <DeleteBox
                         onClick={e => {
                           e.stopPropagation();
+                          if (labelGb === 3) {
+                            if (item.room) setRoomEditTarget(item.room);
+                            return;
+                          }
                           setWriteModalOpen(true);
                           setIsEditMode(true);
                           setText(item.label); // 라벨 바인딩
                           setSelectedImage(item.image); // 이미지 프리뷰
                           setEditCategory(item.category); // 카테고리 게임일 경우
-                          setGroup(item.group); //예약일 경우
                           setEditTarget({ imageId: item.imageId, image: item.image }); // 수정 대상 ID
                         }}
                       >
@@ -542,18 +549,11 @@ export default function ImageGrid({ pageData }: Props) {
                 ))}
               </SelectBox>
             )}
-            {labelGb === 3 && (
-              <TextArea
-                placeholder="그룹을 입력하세요."
-                value={group ?? ''}
-                onChange={e => setGroup(e.target.value)}
-              />
-            )}
             <ButtonBox2>
               <Button color="#1A7D55" onClick={() => insertData()}>
                 저장
               </Button>
-              {labelGb !== 3 && (
+              {isEditMode && (
                 <Button onClick={deleteData} color="#FF5E57">
                   삭제
                 </Button>
@@ -565,6 +565,14 @@ export default function ImageGrid({ pageData }: Props) {
             </ButtonBox2>
           </ImageModalWraaper>
         </Modal>
+      )}
+      {roomEditTarget !== undefined && (
+        <RoomEditModal
+          room={roomEditTarget}
+          defaultLink={location.pathname}
+          onClose={() => setRoomEditTarget(undefined)}
+          onSaved={() => setImageUploadTrigger(Date.now())}
+        />
       )}
     </Wrapper>
   );
@@ -742,6 +750,17 @@ const TopLabel = styled.div<WithTheme>`
       font-size: ${({ theme }) => theme.sizes.xxsmall};
     }
   }
+`;
+
+const HiddenTag = styled.div<WithTheme>`
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background-color: ${({ theme }) => theme.colors.redColor};
+  border-radius: 8px;
+  padding: 4px 10px;
+  color: ${({ theme }) => theme.colors.white};
+  font-size: ${({ theme }) => theme.sizes.small};
 `;
 
 const CommentLabel = styled.div<WithTheme>`

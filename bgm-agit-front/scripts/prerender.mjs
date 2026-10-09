@@ -32,9 +32,15 @@ async function get(path) {
 
 const list = items => (items.length ? `<ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>` : '');
 
-// main-image 는 labelGb 별로 모든 게임·룸·메뉴를 한 번에 준다
+// main-image 는 labelGb 별로 모든 게임·메뉴를 한 번에 준다
 const images = Object.values((await get('/main-image')) ?? {}).flat();
 const byLink = link => images.filter(i => i.link === link);
+// 방·마작 대탁은 이미지가 아니라 BGM_AGIT_ROOM 에 있다 (숨김 방은 공개 조회에서 빠진다)
+const roomsOf = async link => (await get(`/rooms?link=${encodeURIComponent(link)}`)) ?? [];
+const roomList = rooms =>
+  list(rooms.map(r => `${esc(r.name)}${r.guide ? ` (${esc(r.guide)})` : ''}`));
+const rooms = await roomsOf('/detail/room');
+const mahjongRooms = await roomsOf('/detail/mahjongRental');
 const notices = (await get('/notice?page=0'))?.content ?? [];
 
 const CATEGORY = { PARTY: '파티 게임', STRATEGY: '전략 게임', MURDER: '머더미스터리' };
@@ -49,14 +55,8 @@ const body = {
       })
       .join('');
   },
-  '/detail/room': () =>
-    list(byLink('/detail/room').map(r => `${esc(r.label)}${r.group ? ` (${esc(r.group)})` : ''}`)),
-  '/detail/mahjongRental': () =>
-    list(
-      byLink('/detail/mahjongRental').map(
-        r => `${esc(r.label)}${r.group ? ` (${esc(r.group)})` : ''}`
-      )
-    ),
+  '/detail/room': () => roomList(rooms),
+  '/detail/mahjongRental': () => roomList(mahjongRooms),
   '/detail/drink': () => list(byLink('/detail/drink').map(m => esc(m.label))),
   '/detail/food': () => list(byLink('/detail/food').map(m => esc(m.label))),
   '/notice': () => list(notices.map(n => esc(n.bgmAgitNoticeTitle))),

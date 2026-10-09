@@ -13,7 +13,6 @@ public class BgmAgitMainMenuImageResponse {
     private Long labelGb;
     private String image;
     private String label;
-    private String group;
     private String link;
     private String category;
     

@@ -43,5 +43,5 @@ public interface BgmAgitReservationService {
     ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request, String role);
 
     // 예약 결제 주문 생성: 예약 검증·금액계산 후 공통 PaymentService.createOrder 호출
-    PaymentOrderResponse createPaymentOrder(Long reservationNo, Long userId);
+    PaymentOrderResponse createPaymentOrder(Long reservationId, Long userId);
 }

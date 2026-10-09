@@ -229,7 +229,7 @@ export default function ReservationBoard() {
     if (!selected || !board) return [];
     if (selected.roomNames?.length) return selected.roomNames;
     return board.rooms
-      .filter(room => room.reservations.some(item => item.reservationNo === selected.reservationNo))
+      .filter(room => room.reservations.some(item => item.reservationId === selected.reservationId))
       .map(room => room.roomName);
   }, [selected, board]);
 
@@ -257,8 +257,8 @@ export default function ReservationBoard() {
     return rooms
       .flatMap(room => room.reservations.map(item => ({ item, roomName: room.roomName })))
       .filter(({ item }) => {
-        if (seen.has(item.reservationNo)) return false;
-        seen.add(item.reservationNo);
+        if (seen.has(item.reservationId)) return false;
+        seen.add(item.reservationId);
         return true;
       })
       .sort(
@@ -279,7 +279,7 @@ export default function ReservationBoard() {
         update({
           url: '/bgm-agit/reservation/admin',
           body: {
-            reservationNo: item.reservationNo,
+            reservationId: item.reservationId,
             cancelStatus: cancel,
             approvalStatus: approval,
           },
@@ -431,7 +431,7 @@ export default function ReservationBoard() {
               const roomColor = roomColors.get(roomName) ?? ROOM_PALETTE[0];
 
               return (
-                <Card key={item.reservationNo} style={{ borderLeft: `6px solid ${roomColor}` }}>
+                <Card key={item.reservationId} style={{ borderLeft: `6px solid ${roomColor}` }}>
                   <CardTop>
                     <CardTime $canceled={status === 'CANCELED'}>
                       {item.startTime} ~ {item.endTime}
@@ -450,7 +450,7 @@ export default function ReservationBoard() {
 
                   <CardMeta>
                     {item.phoneNo ? <a href={`tel:${item.phoneNo}`}>{item.phoneNo}</a> : '연락처 없음'}
-                    <span>예약 #{item.reservationNo}</span>
+                    <span>예약 #{item.reservationId}</span>
                   </CardMeta>
 
                   {item.request && <CardRequest>요청: {item.request}</CardRequest>}
@@ -522,7 +522,7 @@ export default function ReservationBoard() {
 
                       {placed.map(({ item, lane }) => (
                         <Block
-                          key={item.reservationNo}
+                          key={item.reservationId}
                           type="button"
                           $canceled={statusOf(item) === 'CANCELED'}
                           style={{
@@ -536,7 +536,7 @@ export default function ReservationBoard() {
                             ...blockStyle(
                               statusOf(item),
                               roomColor,
-                              selected?.reservationNo === item.reservationNo
+                              selected?.reservationId === item.reservationId
                             ),
                           }}
                           onClick={() => setSelected(item)}
@@ -566,7 +566,7 @@ export default function ReservationBoard() {
           <DetailPanel>
             <DetailHead>
               <DetailTitle>
-                예약 #{selected.reservationNo}
+                예약 #{selected.reservationId}
                 <StatusTag
                   style={blockStyle(
                     statusOf(selected),

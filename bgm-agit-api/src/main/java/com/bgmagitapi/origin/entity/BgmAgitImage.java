@@ -37,10 +37,6 @@ public class BgmAgitImage extends DateSuperClass {
     @Column(name = "BGM_AGIT_MENU_LINK")
     private String bgmAgitMenuLink;
     
-    // BGM 아지트 이미지 그룹
-    @Column(name = "BGM_AGIT_IMAGE_GROUPS")
-    private String bgmAgitImageGroups;
-    
     // BGM 아지트 이미지 카테고리
     @Column(name = "BGM_AGIT_IMAGE_CATEGORY")
     @Enumerated(EnumType.STRING)
@@ -50,29 +46,13 @@ public class BgmAgitImage extends DateSuperClass {
     @Column(name = "BGM_AGIT_IMAGE_URL")
     private String bgmAgitImageUrl;
     
-    @Column(name = "BGM_AGIT_IMAGE_MIN_PEOPLE")
-    private Integer bgmAgitImageMinPeople;
-    
-    @Column(name = "BGM_AGIT_IMAGE_MAX_PEOPLE")
-    private Integer bgmAgitImageMaxPeople;
-
-    // BGM 아지트 이미지 노출 여부 (Y: 노출 / N: 숨김 — 운영 종료된 예약 항목은 이력 보존 위해 삭제하지 않고 숨김)
-    @Column(name = "BGM_AGIT_IMAGE_USE_STATUS")
-    private String bgmAgitImageUseStatus;
-
 
     public BgmAgitImage(BgmAgitMainMenu bgmAgitMainMenu, BgmAgitImageCreateRequest request, UploadResult image) {
         this.bgmAgitMainMenu = bgmAgitMainMenu;
         this.bgmAgitImageLabel = request.getBgmAgitImageLabel();
-        this.bgmAgitImageGroups = request.getBgmAgitImageGroups();
         this.bgmAgitImageCategory = request.getBgmAgitImageCategory();
         this.bgmAgitMenuLink = request.getBgmAgitMenuLink();
         this.bgmAgitImageUrl = image.getUrl();
-        this.bgmAgitImageUseStatus = "Y";
-    }
-
-    public boolean isHidden() {
-        return "N".equals(this.bgmAgitImageUseStatus);
     }
     
     public void modifyBgmAgitImage(BgmAgitImageModifyRequest request, UploadResult image) {
@@ -81,9 +61,6 @@ public class BgmAgitImage extends DateSuperClass {
         }
         if (StringUtils.hasText(request.getBgmAgitMenuLink())) {
             this.bgmAgitMenuLink = request.getBgmAgitMenuLink();
-        }
-        if (StringUtils.hasText(request.getBgmAgitImageGroups())) {
-            this.bgmAgitImageGroups = request.getBgmAgitImageGroups();
         }
         if (image != null && StringUtils.hasText(image.getUrl())) {
             this.bgmAgitImageUrl = image.getUrl();

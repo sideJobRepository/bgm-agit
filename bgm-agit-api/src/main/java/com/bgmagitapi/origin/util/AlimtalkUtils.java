@@ -16,7 +16,6 @@ public class AlimtalkUtils {
     // 재사용 포맷터
     public static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
     public static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final LocalTime BOUNDARY = LocalTime.of(13, 0); // 영업 시작(정렬 기준)
     /** 한국 전화번호 포맷 (+82 → 0, 하이픈 삽입) */
     public static String formatRecipientKr(String raw) {
         if (raw == null || raw.isBlank()) return "";
@@ -25,21 +24,15 @@ public class AlimtalkUtils {
         return n.replaceFirst("^(0\\d{2})(\\d{3,4})(\\d{4})$", "$1-$2-$3");
     }
     
-    /** 예약 시간들을 "HH:mm, HH:mm, ..."로 정렬·중복제거하여 조합 */
-    public static String formatTimes(List<BgmAgitReservation> list) {
-        if (list == null || list.isEmpty()) return "";
-        
-        return list.stream()
-                .filter(r -> r.getBgmAgitReservationStartTime() != null && r.getBgmAgitReservationEndTime() != null)
-                // 1) 13:00 이상 먼저, 2) 같은 그룹 내에서는 시작시간 오름차순
-                .sorted(
-                        Comparator
-                                .comparing((BgmAgitReservation r) -> r.getBgmAgitReservationStartTime().isBefore(BOUNDARY)) // false(>=13:00) 먼저
-                                .thenComparing(BgmAgitReservation::getBgmAgitReservationStartTime)
-                )
-                .map(r -> TIME_FMT.format(r.getBgmAgitReservationStartTime()) + " ~ " + TIME_FMT.format(r.getBgmAgitReservationEndTime()))
-                .distinct()
-                .collect(Collectors.joining(" , "));
+    /** 예약 1건의 이용 시간 "HH:mm ~ HH:mm". 예약은 이어진 한 구간이라 항상 하나다. */
+    public static String formatTimes(BgmAgitReservation reservation) {
+        if (reservation == null
+                || reservation.getBgmAgitReservationStartTime() == null
+                || reservation.getBgmAgitReservationEndTime() == null) {
+            return "";
+        }
+        return TIME_FMT.format(reservation.getBgmAgitReservationStartTime())
+                + " ~ " + TIME_FMT.format(reservation.getBgmAgitReservationEndTime());
     }
     
     public static String formatDate(LocalDate date) {
@@ -458,13 +451,11 @@ public class AlimtalkUtils {
     }
 
     /**
-     * 영업일 기준 정렬 비교자. 13:00 이상을 먼저 두고, 자정 넘어간 시간을 뒤로 보낸다.
-     * (formatTimes 와 같은 규칙)
+     * 영업일 기준 시작시각 정렬 비교자. 06시 이전(익일 새벽)을 뒤로 보낸다(SlotSchedule.toSortableMinutes).
      */
     public static Comparator<BgmAgitReservation> businessTimeOrder() {
-        return Comparator
-                .comparing((BgmAgitReservation r) -> r.getBgmAgitReservationStartTime().isBefore(BOUNDARY))
-                .thenComparing(BgmAgitReservation::getBgmAgitReservationStartTime);
+        return Comparator.comparingInt(
+                (BgmAgitReservation r) -> SlotSchedule.toSortableMinutes(r.getBgmAgitReservationStartTime()));
     }
 
     public static Attach defaultAttach(String message,String url) {

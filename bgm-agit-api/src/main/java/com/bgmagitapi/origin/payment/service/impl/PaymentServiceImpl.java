@@ -5,6 +5,7 @@ import com.bgmagitapi.origin.advice.exception.ReservationConflictException;
 import com.bgmagitapi.origin.advice.exception.TossPaymentApiException;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
+import com.bgmagitapi.origin.entity.BgmAgitReservationRoom;
 import com.bgmagitapi.origin.event.dto.ReservationTalkEvent;
 import com.bgmagitapi.origin.event.dto.TalkAction;
 import com.bgmagitapi.origin.payment.controller.response.PaymentConfirmResponse;
@@ -21,6 +22,7 @@ import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.origin.service.response.BizTalkCancel;
 import com.bgmagitapi.origin.service.response.ReservationTalkContext;
+import com.bgmagitapi.origin.util.SlotSchedule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -28,13 +30,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @Service
 @Slf4j
@@ -62,13 +61,14 @@ public class PaymentServiceImpl implements PaymentService {
     private boolean paymentLive;
 
     @Override
-    public PaymentOrderResponse createOrder(Long memberId, Long reservationNo, int amount, String orderName) {
+    public PaymentOrderResponse createOrder(Long memberId, Long reservationId, int amount, String orderName) {
         BgmAgitMember member = bgmAgitMemberRepository.findById(memberId)
                 .orElseThrow(() -> new PaymentException("존재 하지 않은 회원입니다."));
         
-        String orderNo = "bgmagit_" + reservationNo + "_" + System.currentTimeMillis();
+        // 형식 유지: 이관 전 주문도 bgmagit_{예약번호}_... 였고 예약 ID = 예약번호라 값이 그대로 이어진다
+        String orderNo = "bgmagit_" + reservationId + "_" + System.currentTimeMillis();
 
-        BgmAgitPayment payment = new BgmAgitPayment(member, reservationNo, orderNo, amount);
+        BgmAgitPayment payment = new BgmAgitPayment(member, reservationId, orderNo, amount);
         bgmAgitPaymentRepository.save(payment);
 
         return new PaymentOrderResponse(orderNo, amount, orderName, tossClientKey);
@@ -89,7 +89,7 @@ public class PaymentServiceImpl implements PaymentService {
         // 승인(=과금) 전에 슬롯을 다시 본다. 대기 예약은 서로의 자리를 막지 않기 때문에
         // 여기까지 오는 사이에 같은 시간대가 다른 사람 결제로 확정됐을 수 있다.
         // 돈이 빠져나간 뒤에 알면 환불로 풀어야 하므로 반드시 confirm 앞에서 걸러낸다.
-        validateReservationSlotAvailable(payment.getBgmAgitReservationNo());
+        validateReservationSlotAvailable(payment.getBgmAgitReservationId());
 
         TossPaymentResponse result;
         try {
@@ -125,15 +125,15 @@ public class PaymentServiceImpl implements PaymentService {
         // 심사 기간(payment.live=false)엔 결제행만 DONE 처리하고 예약 자동확정은 하지 않는다.
         // (테스트키라 실입금이 없는데 자동확정되면 공짜 예약이 되므로. 카드사 심사는 결제창 작동만 확인)
         if (paymentLive) {
-            approveReservation(payment.getBgmAgitReservationNo());
+            approveReservation(payment.getBgmAgitReservationId());
         }
         return toConfirmResponse(payment);
     }
 
     @Override
-    public void cancelDonePaymentByReservationNo(Long reservationNo, String cancelReason) {
+    public void cancelDonePaymentByReservationId(Long reservationId, String cancelReason) {
         BgmAgitPayment payment = bgmAgitPaymentRepository
-                .findLatestPaymentByReservationNoAndStatus(reservationNo, PaymentStatus.DONE)
+                .findLatestPaymentByReservationIdAndStatus(reservationId, PaymentStatus.DONE)
                 .orElse(null);
         if (payment == null) {
             return;
@@ -202,40 +202,23 @@ public class PaymentServiceImpl implements PaymentService {
      * 대기(approval='N') 예약은 서로의 자리를 막지 않으므로, 같은 시간대를 여러 명이 대기로 들고 있다가
      * 각자 결제해 전부 확정되는 이중 예약이 가능하다. 승인 직전에 확정건과 겹치는지 다시 확인한다.
      */
-    private void validateReservationSlotAvailable(Long reservationNo) {
-        List<BgmAgitReservation> group = bgmAgitReservationRepository.findReservationList(reservationNo);
-        if (group.isEmpty()) {
-            throw new ReservationConflictException("존재하지 않는 예약입니다.");
-        }
-        if (group.stream().anyMatch(r -> "Y".equals(r.getBgmAgitReservationCancelStatus()))) {
+    private void validateReservationSlotAvailable(Long reservationId) {
+        BgmAgitReservation reservation = bgmAgitReservationRepository.findReservationWithRooms(reservationId)
+                .orElseThrow(() -> new ReservationConflictException("존재하지 않는 예약입니다."));
+        if (reservation.isCanceled()) {
             throw new ReservationConflictException("취소된 예약입니다.");
         }
 
-        LocalDate date = group.get(0).getBgmAgitReservationStartDate();
-        List<Long> imageIds = group.stream()
-                .map(r -> r.getBgmAgitImage().getBgmAgitImageId())
-                .distinct()
-                .toList();
-
-        Set<String> takenSlots = new HashSet<>();
-        for (BgmAgitReservation confirmed : bgmAgitReservationRepository
-                .findConfirmedReservations(imageIds, date, reservationNo)) {
-            takenSlots.add(slotKey(confirmed));
+        // 방별 구간 겹침. 합쳐 예약이면 방 하나라도 확정건과 겹치면 막는다
+        SlotSchedule.Slot mine = reservation.getPeriod();
+        List<BgmAgitReservationRoom> confirmed = bgmAgitReservationRepository.findConfirmedReservationRooms(
+                reservation.getRoomIds(), reservation.getBgmAgitReservationStartDate(), reservationId);
+        boolean taken = confirmed.stream()
+                .anyMatch(rr -> SlotSchedule.overlaps(mine, rr.getBgmAgitReservation().getPeriod()));
+        if (taken) {
+            throw new ReservationConflictException(
+                    "이미 다른 예약이 확정된 시간대입니다. 결제는 진행되지 않았으니 다른 시간대로 예약해 주세요.");
         }
-
-        for (BgmAgitReservation mine : group) {
-            if (takenSlots.contains(slotKey(mine))) {
-                throw new ReservationConflictException(
-                        "이미 다른 예약이 확정된 시간대입니다. 결제는 진행되지 않았으니 다른 시간대로 예약해 주세요.");
-            }
-        }
-    }
-
-    /** 항목 + 시간대 단위 슬롯 식별자 */
-    private String slotKey(BgmAgitReservation reservation) {
-        return reservation.getBgmAgitImage().getBgmAgitImageId()
-                + "|" + reservation.getBgmAgitReservationStartTime()
-                + "-" + reservation.getBgmAgitReservationEndTime();
     }
 
     /** 실패해도 원래 예외/흐름을 덮지 않도록 삼키는 취소 */
@@ -265,28 +248,22 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
-    private void approveReservation(Long reservationNo) {
-        List<BgmAgitReservation> reservations = bgmAgitReservationRepository.findReservationList(reservationNo);
-        if (reservations.isEmpty()) {
-            throw new PaymentException("존재하지 않는 예약입니다.");
-        }
+    private void approveReservation(Long reservationId) {
+        BgmAgitReservation reservation = bgmAgitReservationRepository.findReservationWithRooms(reservationId)
+                .orElseThrow(() -> new PaymentException("존재하지 않는 예약입니다."));
 
-        List<Long> idList = reservations.stream()
-                .map(BgmAgitReservation::getBgmAgitReservationId)
-                .toList();
-        bgmAgitReservationRepository.updateCancelAndApprovalStatus("N", "Y", idList);
+        // 알림톡 값(수신자·방 이름)은 연관을 타므로 리스너(@Async, 트랜잭션 밖)로 넘기기 전에 채운다
+        BizTalkCancel bizTalkCancel = BizTalkCancel.from(reservation);
+        reservation.approve();
 
-        BizTalkCancel bizTalkCancel = bgmAgitReservationRepository.findBizTalkCancel(reservationNo);
-        if (bizTalkCancel != null) {
-            ReservationTalkContext ctx = ReservationTalkContext.of("ROLE_ADMIN", reservations, bizTalkCancel);
-            eventPublisher.publishEvent(new ReservationTalkEvent(TalkAction.COMPLETE, ctx));
-        }
+        ReservationTalkContext ctx = ReservationTalkContext.of("ROLE_ADMIN", reservation, bizTalkCancel);
+        eventPublisher.publishEvent(new ReservationTalkEvent(TalkAction.COMPLETE, ctx));
     }
 
     private PaymentConfirmResponse toConfirmResponse(BgmAgitPayment payment) {
         return new PaymentConfirmResponse(
                 payment.getBgmAgitOrderNo(),
-                payment.getBgmAgitReservationNo(),
+                payment.getBgmAgitReservationId(),
                 payment.getBgmAgitPaymentAmount(),
                 payment.getBgmAgitPaymentStatus().name(),
                 payment.getBgmAgitPaymentType(),
