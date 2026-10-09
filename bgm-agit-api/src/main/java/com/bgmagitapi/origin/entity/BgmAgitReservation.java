@@ -2,92 +2,172 @@ package com.bgmagitapi.origin.entity;
 
 import com.bgmagitapi.origin.entity.enumeration.Reservation;
 import com.bgmagitapi.origin.entity.mapperd.DateSuperClass;
+import com.bgmagitapi.origin.util.SlotSchedule;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
+/**
+ * 예약 1건 = 1행. 시간은 이어진 한 구간(시작~종료)이다.
+ *
+ * 예전에는 슬롯마다 한 행씩 쌓고 중복값인 RESERVATION_NO 로 묶었다. 그래서 단건 조회가 터지고
+ * 페이징을 2단계로 해야 했고, 상태 변경도 행 id 목록 벌크 업데이트였다.
+ * 이관 시 RESERVATION_ID = 구 RESERVATION_NO 로 옮겨서 결제·토스 orderId·알림톡 이력의 값이 그대로 이어진다.
+ *
+ * 종료가 시작보다 이르거나 같으면 익일이다(23:00~02:00, 10:00~10:00 하루 전체). 실제 일시는
+ * {@link SlotSchedule#useRange} 로만 계산할 것.
+ */
 @Entity
 @Table(name = "BGM_AGIT_RESERVATION")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BgmAgitReservation extends DateSuperClass {
-    // BGM 아지트 예약 ID
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "BGM_AGIT_RESERVATION_ID")
     private Long bgmAgitReservationId;
-    
-    // BGM 아지트 회원 ID
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "BGM_AGIT_MEMBER_ID")
     private BgmAgitMember bgmAgitMember;
-    
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "BGM_AGIT_IMAGE_ID")
-    private BgmAgitImage bgmAgitImage;
-    
-    // BGM 아지트 예약 타입
+
     @Column(name = "BGM_AGIT_RESERVATION_TYPE")
     @Enumerated(EnumType.STRING)
     private Reservation reservation;
-    
-    // BGM 아지트 예약 시작 일시
+
+    // 영업일. 하루 경계(SlotSchedule.DAY_BOUNDARY) 이전 시각은 이 날짜의 익일 새벽이다
     @Column(name = "BGM_AGIT_RESERVATION_START_DATE")
     private LocalDate bgmAgitReservationStartDate;
-    
-    // BGM 아지트 예약 시작 시간
+
     @Column(name = "BGM_AGIT_RESERVATION_START_TIME")
     private LocalTime bgmAgitReservationStartTime;
-    
-    // BGM 아지트 예약 종료 시간
+
     @Column(name = "BGM_AGIT_RESERVATION_END_TIME")
     private LocalTime bgmAgitReservationEndTime;
-    
-    // BGM 아지트 예약 인원
+
     @Column(name = "BGM_AGIT_RESERVATION_PEOPLE")
     private Integer bgmAgitReservationPeople;
-    // BGM 아지트 예약 요청사항
+
     @Column(name = "BGM_AGIT_RESERVATION_REQUEST")
     private String bgmAgitReservationRequest;
-    
-    // BGM 아지트 예약 승인 여부 'N'
+
+    // 'Y' 확정 / 'N' 대기
     @Column(name = "BGM_AGIT_RESERVATION_APPROVAL_STATUS")
     private String bgmAgitReservationApprovalStatus;
-    
-    // BGM 아지트 예약 취소 여부 'N'
+
+    // 'Y' 취소 / 'N'
     @Column(name = "BGM_AGIT_RESERVATION_CANCEL_STATUS")
     private String bgmAgitReservationCancelStatus;
-    
-    // BGM 아지트 예약 번호
-    @Column(name = "BGM_AGIT_RESERVATION_NO")
-    private Long bgmAgitReservationNo;
-    
+
+    // 예약한 방들. 합쳐 예약이면 여러 개
+    @OneToMany(mappedBy = "bgmAgitReservation", cascade = CascadeType.PERSIST)
+    @OrderBy("bgmAgitReservationRoomId ASC")
+    private List<BgmAgitReservationRoom> rooms = new ArrayList<>();
+
     public BgmAgitReservation(BgmAgitMember member,
-                              BgmAgitImage image,
-                              String reservationType,         // request 대신 필요한 값만 받자
+                              Reservation reservationType,
+                              LocalDate startDate,
                               LocalTime startTime,
                               LocalTime endTime,
-                              LocalDate reservationDate,
-                              Long maxReservationNo,
-                              Integer reservationPeople,
-                              String reservationRequest
-    
-    ) {
-        
+                              Integer people,
+                              String request) {
         this.bgmAgitMember = member;
-        this.bgmAgitImage = image;
-        this.reservation = Reservation.valueOf(reservationType);
-        this.bgmAgitReservationStartDate = reservationDate;
+        this.reservation = reservationType;
+        this.bgmAgitReservationStartDate = startDate;
         this.bgmAgitReservationStartTime = startTime;
         this.bgmAgitReservationEndTime = endTime;
+        this.bgmAgitReservationPeople = people;
+        this.bgmAgitReservationRequest = request;
         this.bgmAgitReservationApprovalStatus = "N";
         this.bgmAgitReservationCancelStatus = "N";
-        this.bgmAgitReservationNo = maxReservationNo;
-        this.bgmAgitReservationPeople = reservationPeople;
-        this.bgmAgitReservationRequest = reservationRequest;
+    }
+
+    public void addRoom(BgmAgitRoom room) {
+        this.rooms.add(new BgmAgitReservationRoom(this, room));
+    }
+
+    // ===== 상태 =====
+
+    /** 결제 승인으로 확정. 취소된 예약을 되살리지는 않는다(취소 여부는 그대로 'N' 이어야 승인까지 온다). */
+    public void approve() {
+        this.bgmAgitReservationApprovalStatus = "Y";
+        this.bgmAgitReservationCancelStatus = "N";
+    }
+
+    public void cancel() {
+        this.bgmAgitReservationCancelStatus = "Y";
+    }
+
+    /** 관리자/사용자 상태 변경(PUT /reservation). 값은 호출 전에 Y/N 으로 정규화되어 있어야 한다. */
+    public void changeStatus(String cancelStatus, String approvalStatus) {
+        this.bgmAgitReservationCancelStatus = cancelStatus;
+        this.bgmAgitReservationApprovalStatus = approvalStatus;
+    }
+
+    public void changePeople(Integer people) {
+        this.bgmAgitReservationPeople = people;
+    }
+
+    public boolean isCanceled() {
+        return "Y".equalsIgnoreCase(this.bgmAgitReservationCancelStatus);
+    }
+
+    public boolean isApproved() {
+        return "Y".equalsIgnoreCase(this.bgmAgitReservationApprovalStatus);
+    }
+
+    public Long getMemberId() {
+        return this.bgmAgitMember == null ? null : this.bgmAgitMember.getBgmAgitMemberId();
+    }
+
+    // ===== 방 =====
+
+    public List<BgmAgitRoom> getRoomList() {
+        return this.rooms.stream()
+                .map(BgmAgitReservationRoom::getBgmAgitRoom)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    public List<Long> getRoomIds() {
+        return getRoomList().stream().map(BgmAgitRoom::getBgmAgitRoomId).distinct().toList();
+    }
+
+    /** 방 이름 목록(등록 순). 합쳐 예약이면 "M-1, M-2". */
+    public String getRoomNames() {
+        return getRoomList().stream()
+                .map(BgmAgitRoom::getBgmAgitRoomName)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.joining(", "));
+    }
+
+    /** 마작 대탁 대여 예약인지. 합쳐 예약은 같은 링크끼리만 묶이므로 첫 방으로 판정한다. */
+    public boolean isMahjong() {
+        List<BgmAgitRoom> list = getRoomList();
+        return !list.isEmpty() && list.get(0).isMahjong();
+    }
+
+    // ===== 시간 =====
+
+    /** 실제 이용 구간 [start, end). */
+    public SlotSchedule.Slot getUseRange() {
+        return SlotSchedule.useRange(bgmAgitReservationStartDate, bgmAgitReservationStartTime, bgmAgitReservationEndTime);
+    }
+
+    /** 이용 시작 절대시각. 환불 비율(48h/24h)·결제/취소 가능 여부의 기준. */
+    public LocalDateTime getUseStartAt() {
+        SlotSchedule.Slot range = getUseRange();
+        return range == null ? null : range.start();
     }
 }

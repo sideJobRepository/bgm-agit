@@ -1,6 +1,5 @@
 package com.bgmagitapi.origin.service;
 
-import com.bgmagitapi.origin.entity.BgmAgitImage;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
 import com.bgmagitapi.origin.event.dto.InquiryEvent;
@@ -11,10 +10,9 @@ import com.bgmagitapi.kml.review.dto.events.ReviewPostEvents;
 import com.bgmagitapi.origin.service.response.ReservationTalkContext;
 
 import java.time.LocalDate;
-import java.util.List;
 
 public interface BgmAgitBizTalkSandService {
-    void sandBizTalk(BgmAgitMember member, BgmAgitImage image, List<BgmAgitReservation> list);
+    void sandBizTalk(BgmAgitMember member, BgmAgitReservation reservation);
     void sendCancelBizTalk(ReservationTalkContext ctx);
     void sendCompleteBizTalk(ReservationTalkContext ctx);
     void sendJoinMemberBizTalk(BgmAgitMember member);

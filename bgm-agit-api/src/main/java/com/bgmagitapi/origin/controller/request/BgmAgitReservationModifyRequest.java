@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 public class BgmAgitReservationModifyRequest {
     
     
-    private Long reservationNo;
+    private Long reservationId;
     
     private String cancelStatus;
     

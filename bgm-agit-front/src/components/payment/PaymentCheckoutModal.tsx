@@ -142,7 +142,7 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
     <Overlay>
       <Modal>
         <Header>
-          <Title>예약금 결제</Title>
+          <Title>예약 결제</Title>
           <CloseButton type="button" onClick={onClose}>
             닫기
           </CloseButton>
@@ -152,11 +152,13 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
           <span>{order.amount.toLocaleString()}원</span>
         </Summary>
         <NoticeBox>
-          이 결제는 예약 확정을 위한 예약금 결제입니다.
+          이 결제는 예약 확정을 위한 결제입니다.
           <br />
-          예약금은 {order.amount.toLocaleString()}원이며 잔여 이용요금은 현장에서 결제합니다.
+          결제 금액은 {order.amount.toLocaleString()}원입니다. 금액은 서버가 예약 인원과 날짜로
+          계산합니다.
           <br />
-          예약일 당일 취소 및 노쇼 시 예약금은 환불되지 않습니다.
+          환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후(당일·노쇼 포함)에는
+          불가합니다.
         </NoticeBox>
         <PayButton type="button" onClick={requestPayment} disabled={!ready || paying}>
           {paying ? '결제 요청 중' : `${order.amount.toLocaleString()}원 결제하기`}

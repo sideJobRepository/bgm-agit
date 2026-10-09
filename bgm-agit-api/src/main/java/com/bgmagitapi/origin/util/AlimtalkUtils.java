@@ -16,7 +16,6 @@ public class AlimtalkUtils {
     // 재사용 포맷터
     public static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
     public static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final LocalTime BOUNDARY = LocalTime.of(13, 0); // 영업 시작(정렬 기준)
     /** 한국 전화번호 포맷 (+82 → 0, 하이픈 삽입) */
     public static String formatRecipientKr(String raw) {
         if (raw == null || raw.isBlank()) return "";
@@ -25,21 +24,18 @@ public class AlimtalkUtils {
         return n.replaceFirst("^(0\\d{2})(\\d{3,4})(\\d{4})$", "$1-$2-$3");
     }
     
-    /** 예약 시간들을 "HH:mm, HH:mm, ..."로 정렬·중복제거하여 조합 */
-    public static String formatTimes(List<BgmAgitReservation> list) {
-        if (list == null || list.isEmpty()) return "";
-        
-        return list.stream()
-                .filter(r -> r.getBgmAgitReservationStartTime() != null && r.getBgmAgitReservationEndTime() != null)
-                // 1) 13:00 이상 먼저, 2) 같은 그룹 내에서는 시작시간 오름차순
-                .sorted(
-                        Comparator
-                                .comparing((BgmAgitReservation r) -> r.getBgmAgitReservationStartTime().isBefore(BOUNDARY)) // false(>=13:00) 먼저
-                                .thenComparing(BgmAgitReservation::getBgmAgitReservationStartTime)
-                )
-                .map(r -> TIME_FMT.format(r.getBgmAgitReservationStartTime()) + " ~ " + TIME_FMT.format(r.getBgmAgitReservationEndTime()))
-                .distinct()
-                .collect(Collectors.joining(" , "));
+    /**
+     * 예약 시간 "HH:mm ~ HH:mm". 예약 1건이 이어진 한 구간이라 시작·종료 하나씩이다.
+     * (예전에는 슬롯 행마다 "13:00 ~ 14:00 , 14:00 ~ 15:00 …" 로 이어 붙였다)
+     */
+    public static String formatTimes(BgmAgitReservation reservation) {
+        if (reservation == null
+                || reservation.getBgmAgitReservationStartTime() == null
+                || reservation.getBgmAgitReservationEndTime() == null) {
+            return "";
+        }
+        return TIME_FMT.format(reservation.getBgmAgitReservationStartTime())
+                + " ~ " + TIME_FMT.format(reservation.getBgmAgitReservationEndTime());
     }
     
     public static String formatDate(LocalDate date) {
@@ -94,6 +90,34 @@ public class AlimtalkUtils {
                 .append("예약은 예약금 결제가 완료되는 시점에 최종 확정됩니다.\n")
                 .append("BGM 아지트 홈페이지 로그인 후 마이페이지 > 예약내역에서 [예약금 결제] 버튼을 눌러 결제해 주세요.\n\n")
                 .append("취소는 예약일 전날까지 가능하며, 당일 취소나 노쇼 시 예약금은 환불되지 않습니다.\n\n")
+                .append("자세한 예약내역은 BGM 아지트 홈페이지 로그인 후 마이페이지 > 예약내역에서 확인하실 수 있습니다.")
+                .toString();
+    }
+
+    /**
+     * 예약 대기 안내 메시지 (전액결제 버전, 템플릿 bgmagit-res-payment-2)
+     *
+     * -1 과 갈라지는 부분은 고정 문구 두 줄이다. 전액결제로 바뀌면서 "예약금"이라는 표현이
+     * 사실과 달라졌고, 취소 기한도 "전날까지"가 아니라 48/24시간 기준이 됐다.
+     * 고정 문구를 고치는 것은 카카오 재심사 대상이라 -1 을 수정하지 않고 템플릿을 새로 팠다.
+     * 여기 문구도 검수 통과한 내용과 글자 단위로 일치해야 하므로 임의로 바꾸지 말 것.
+     * 금액(#{결제금액})은 변수라 값은 자유롭게 넣어도 된다.
+     */
+    public static String buildReservationFullPaymentMessage(String userName, String date, String times, String roomName, String people, String amount, String request) {
+        return new StringBuilder()
+                .append("안녕하세요. ").append(userName).append("님\n")
+                .append("BGM 아지트 예약 내역을 안내드립니다.\n\n")
+                .append("예약자: ").append(userName).append("\n")
+                .append("예약 일자: ").append(date).append("\n")
+                .append("예약 시간: ").append(times).append("\n")
+                .append("예약 상태: 예약 대기\n")
+                .append("예약 룸: ").append(roomName).append("\n")
+                .append("예약 인원: ").append(people).append("\n")
+                .append("결제 금액: ").append(amount).append("\n")
+                .append("요청 사항: ").append(request).append("\n\n")
+                .append("예약은 결제가 완료되는 시점에 최종 확정됩니다.\n")
+                .append("BGM 아지트 홈페이지 로그인 후 마이페이지 > 예약내역에서 [결제] 버튼을 눌러 결제해 주세요.\n\n")
+                .append("환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%이며, 이용일 24시간 이내와 당일 취소·노쇼는 환불되지 않습니다.\n\n")
                 .append("자세한 예약내역은 BGM 아지트 홈페이지 로그인 후 마이페이지 > 예약내역에서 확인하실 수 있습니다.")
                 .toString();
     }
@@ -458,13 +482,13 @@ public class AlimtalkUtils {
     }
 
     /**
-     * 영업일 기준 정렬 비교자. 13:00 이상을 먼저 두고, 자정 넘어간 시간을 뒤로 보낸다.
-     * (formatTimes 와 같은 규칙)
+     * 영업일 기준 정렬 비교자. 하루 경계(SlotSchedule.DAY_BOUNDARY) 이전 새벽 시각을 뒤로 보낸다.
+     * 현황판·환불 기한과 같은 경계를 쓰도록 SlotSchedule 에 위임한다.
      */
     public static Comparator<BgmAgitReservation> businessTimeOrder() {
         return Comparator
-                .comparing((BgmAgitReservation r) -> r.getBgmAgitReservationStartTime().isBefore(BOUNDARY))
-                .thenComparing(BgmAgitReservation::getBgmAgitReservationStartTime);
+                .comparingInt((BgmAgitReservation r) -> SlotSchedule.toSortableMinutes(r.getBgmAgitReservationStartTime()))
+                .thenComparing(BgmAgitReservation::getBgmAgitReservationId, Comparator.nullsLast(Comparator.naturalOrder()));
     }
 
     public static Attach defaultAttach(String message,String url) {

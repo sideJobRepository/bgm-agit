@@ -37,11 +37,11 @@ public class AvailableRoomsResponse {
     @Getter
     @AllArgsConstructor
     public static class Room {
-        private Long imageId;
+        private Long roomId;
         private String label;
-        /** 인원 안내 문구(BGM_AGIT_IMAGE_GROUPS). 카드에 그대로 표시된다. */
+        /** 인원 안내 문구(BGM_AGIT_ROOM_GUIDE). 카드에 그대로 표시된다. */
         private String group;
-        /** BgmAgitImageCategory 이름(ROOM / MAHJONG ...). */
+        /** ROOM / MAHJONG. 방의 메뉴 링크로 판정한다. */
         private String category;
         private Integer minPeople;
         private Integer maxPeople;

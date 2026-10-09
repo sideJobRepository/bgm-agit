@@ -1,7 +1,6 @@
 package com.bgmagitapi.origin.event;
 
 
-import com.bgmagitapi.origin.entity.BgmAgitImage;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
 import com.bgmagitapi.origin.event.dto.InquiryEvent;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -51,13 +49,12 @@ public class BizTalkEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void ReservationWaitingEvent(ReservationWaitingEvent reservationWaiting) {
         BgmAgitMember bgmAgitMember = reservationWaiting.getBgmAgitMember();
-        BgmAgitImage bgmAgitImage = reservationWaiting.getBgmAgitImage();
-        List<BgmAgitReservation> list = reservationWaiting.getList();
-        if (bgmAgitMember == null) return;
+        BgmAgitReservation reservation = reservationWaiting.getReservation();
+        if (bgmAgitMember == null || reservation == null) return;
         try {
-            bgmAgitBizTalkSandService.sandBizTalk(bgmAgitMember, bgmAgitImage, list);
+            bgmAgitBizTalkSandService.sandBizTalk(bgmAgitMember, reservation);
         } catch (Exception e) {
-            bgmAgitBizTalkSandService.sandBizTalk(bgmAgitMember, bgmAgitImage, list);
+            bgmAgitBizTalkSandService.sandBizTalk(bgmAgitMember, reservation);
         }
     }
     

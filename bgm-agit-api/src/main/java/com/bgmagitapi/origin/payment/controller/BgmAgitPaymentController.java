@@ -34,7 +34,7 @@ public class BgmAgitPaymentController {
     public PaymentOrderResponse createPaymentOrder(@RequestBody @Valid PaymentOrderCreateRequest request,
                                                    @AuthenticationPrincipal Jwt jwt) {
         Long userId = jwt.getClaim("id");
-        return bgmAgitReservationService.createPaymentOrder(request.getReservationNo(), userId);
+        return bgmAgitReservationService.createPaymentOrder(request.getReservationId(), userId);
     }
 
     @PostMapping("/payments/confirm")

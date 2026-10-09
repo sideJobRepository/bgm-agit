@@ -13,6 +13,6 @@ public interface BgmAgitPaymentRepository extends JpaRepository<BgmAgitPayment, 
     Optional<BgmAgitPayment> findByBgmAgitOrderNo(String bgmAgitOrderNo);
 
     // 예약 그룹의 결제 이력 조회 (재결제/환불 처리용)
-    List<BgmAgitPayment> findByBgmAgitReservationNo(Long bgmAgitReservationNo);
+    List<BgmAgitPayment> findByBgmAgitReservationId(Long bgmAgitReservationId);
 
 }

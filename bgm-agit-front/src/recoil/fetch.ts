@@ -23,11 +23,18 @@ import { noticeDetailState, noticePopupState, noticeState } from './state/notice
 import type { params } from '../types/notice.ts';
 import { roleState } from './state/roleState.ts';
 import { tokenStore } from '../utils/tokenStore';
-interface InsertOptions<T> {
+/**
+ * 요청 본문과 응답 타입을 따로 받는다.
+ *
+ * 예전에는 제네릭 하나로 둘 다 썼는데, 서버가 본문과 다른 모양을 돌려주는 경우
+ * (예: 예약 취소가 ApiResponse 의 message 로 실제 환불 금액을 알려준다) 응답을 읽을 수 없었다.
+ * TResponse 기본값이 TBody 라 기존 호출부는 그대로 둔다.
+ */
+interface InsertOptions<TBody, TResponse = TBody> {
   url: string;
   headers?: AxiosRequestHeaders;
-  body: T;
-  onSuccess?: (data: T) => void;
+  body: TBody;
+  onSuccess?: (data: TResponse) => void;
   ignoreHttpError?: boolean;
 }
 
@@ -446,9 +453,15 @@ export function useInsertPost() {
 export function useUpdatePost() {
   const { request } = useRequest();
 
-  const update = <T>({ url, body, onSuccess, ignoreHttpError, headers }: InsertOptions<T>) => {
+  const update = <TBody, TResponse = TBody>({
+    url,
+    body,
+    onSuccess,
+    ignoreHttpError,
+    headers,
+  }: InsertOptions<TBody, TResponse>) => {
     request(
-      () => api.put<T>(url, body, { headers }).then(res => res.data),
+      () => api.put<TResponse>(url, body, { headers }).then(res => res.data),
       data => onSuccess?.(data),
       { ignoreHttpError }
     );

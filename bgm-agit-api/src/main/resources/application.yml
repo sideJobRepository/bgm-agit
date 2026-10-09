@@ -67,6 +67,8 @@ biztalk:
   admin-reservation-notify: false
   # 로컬은 계좌안내 템플릿 유지. 결제안내 문구를 확인하려면 true.
   reservation-payment-live: false
+  # 전액결제 개정 템플릿(bgmagit-res-payment-2). 카카오 검수 통과 후 true 로 전환
+  reservation-payment-v2: false
 
 server:
   tomcat:
