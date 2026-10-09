@@ -101,6 +101,12 @@
 ## 예약
 
 > 10월 개편(일무제한·전액결제·3단계 환불)이 **코드에는 반영됐다**. 배포 전에 해야 할 DB 작업과 알림톡 검수는 **10월 예약 정책 개편** 절에 모아 뒀다.
+>
+> 방·예약 테이블 분리(2026-10-09)는 staging 에서 먼저 운영까지 반영됐고 이 브랜치에 머지돼 있다. 개편 SQL
+> (`room-people-2026-10.sql`·`payment-partial-cancel-2026-10.sql`)은 ROOM·RESERVATION_ID 기준으로 개정돼 있다.
+>
+> 룸 8시간 상한은 사장님이 요청(2026-09-22)했다가 **철회**(2026-10-09)했다. 다시 넣지 말 것.
+> 마작 대탁의 3시간×4타임 시간 모델은 개편에서도 **바꾸지 않는다**.
 
 ### 개편 오픈 전까지 11월 이후 예약 차단
 `SlotSchedule.RESERVATION_BLOCKED_FROM = 2026-11-01` — **그 날짜 이후 전 기간**이다(11월만이 아니다). 10월은 현행 정책(예약금 1만원·전날까지 전액환불)으로 받는다(2026-09-23 10/1→11/1 로 연기).
@@ -114,13 +120,17 @@
 - **오픈할 때는 서버·프론트 상수를 null 로** 바꾸면 3개월 창이 그대로 돌아온다
 - 신규 등록만 막는다. **이미 들어와 있는 11월 이후 예약건 정리는 별도 작업**이다
 
-### 데이터 모델
-- 예약 대상(룸/대탁)은 **`BGM_AGIT_IMAGE` 행**이다. `category=ROOM|MAHJONG`, `link=/detail/room|/detail/mahjongRental`, `BGM_AGIT_MAIN_MENU_ID=3`(프론트 `labelGb 3`)
-- 한 예약 = 시간 슬롯 여러 행이 **`BGM_AGIT_RESERVATION_NO`(그룹키)** 로 묶임. 예약 PK가 아니라 그룹키라 **중복값**
-- 상태는 승인여부(`..._APPROVAL_STATUS` Y/N) + 취소여부(`..._CANCEL_STATUS` Y/N) 두 컬럼
-- **`BGM_AGIT_IMAGE_USE_STATUS`**(varchar(1), default 'Y') — 운영 종료 항목은 삭제(FK RESTRICT로 예약 이력에 물림) 대신 `'N'`으로 숨김. 필터는 `BgmAgitImageRepositoryImpl.notHidden()`(null도 노출 취급)이 `getMainMenuImage`/`getDetailImage`에 적용, 직접 호출 차단은 `getReservation`/`createReservation`의 `BgmAgitImage.isHidden()` 체크
-  - 현재 숨김: 대탁 JP류(id 34·35, 실제로는 F Room 스왑 운영), **M Room(id 19)**
-  - **오픈 공간 M-1/M-2/M-3**(id 83·84·85, 각 4~7명)이 M Room 대체. `category=ROOM`이라 룸 슬롯·인원 과금이 자동 적용
+### 데이터 모델 (2026-10-09 방·예약 테이블 분리)
+예전엔 방이 `BGM_AGIT_IMAGE` 행이었고, 예약은 슬롯마다 1행을 쌓아 중복값 `RESERVATION_NO` 로 묶었다. 이관 SQL `room-reservation-split.sql`(스테이징·운영 적용 완료 2026-10-09).
+- **`BGM_AGIT_ROOM`** — 예약 대상(룸·마작 대탁). 이름·링크·최소/최대 인원·`GUIDE`(카드 인원 문구)·이미지·`USE_STATUS`. **`ROOM_ID` = 이관 전 IMAGE_ID** 값 그대로. 카테고리 컬럼은 없고 **`ROOM_LINK = /detail/mahjongRental` 이면 마작**(`BgmAgitRoom.isMahjong()`)
+  - 관리: `GET /bgm-agit/rooms?link=[&includeHidden=true]`(공개, 숨김 제외·관리자만 포함) / `POST·PUT /bgm-agit/rooms`(multipart) / `DELETE /bgm-agit/rooms/{id}` — 관리자 전용(컨트롤러 `requireAdmin` + URL_RESOURCES). 예약 이력이 있으면 삭제 대신 `USE_STATUS='N'` 숨김(FK RESTRICT). 프론트 `grid/RoomEditModal.tsx`
+  - 현재 숨김: 대탁 JP류(id 34·35, 실제로는 F Room 스왑 운영), **M Room(id 19)**. **오픈 공간 M-1/M-2/M-3**(스테이징 id 83·84·85 / 운영 id 129·130·131)이 M Room 대체
+- **`BGM_AGIT_RESERVATION`** — **예약 1건 = 1행**, 시간은 **이어진 한 구간**(`START_TIME`~`END_TIME`, 종료가 시작 이하이면 익일). **PK = 이관 전 RESERVATION_NO** 라 결제·토스 orderId(`bgmagit_{id}_…`)·알림톡 이력 `SUBJECT_ID` 가 값 변경 없이 이어진다. 상태는 승인(`APPROVAL_STATUS`)·취소(`CANCEL_STATUS`) Y/N 두 컬럼, 변경은 더티체킹(`@DynamicUpdate`)
+- **`BGM_AGIT_RESERVATION_ROOM`** — 예약↔방. 합쳐 예약(M-1+M-2)이면 2행. `UNIQUE(RESERVATION_ID, ROOM_ID)`
+- **떨어진 시간대 예약 금지** — 서버 `SlotSchedule.isContiguous` 400("예약 시간은 연속된 시간대로 선택해 주세요."), 프론트 `ReservationTimePanel` 도 붙은 칸만 선택. 예약 1건 = 한 구간이라는 저장 구조의 전제다
+- 충돌 판정은 **방별 구간 겹침**(확정건 + 내 대기건). 슬롯 문자열 일치가 아니라서 일부만 겹쳐도 막힌다
+- `BGM_AGIT_IMAGE` 에서 `MIN_PEOPLE`/`MAX_PEOPLE`/`USE_STATUS`/`GROUPS` 컬럼과 방·대탁 행은 삭제됐다. 이미지는 게임·음료·메인 등만 남는다
+- 백업 테이블 `BGM_AGIT_RESERVATION_OLD`(스테이징·운영) — 며칠 운영 후 DROP
 
 ### 예약 정책은 서버가 유일한 출처 (프론트 magic id 금지)
 `SlotSchedule`(origin/util)에 전부 모임: `of()`(open/close/interval/durationHours), `slots()`, `isContiguous()`, `maxSelectableSlots()`, `resolveReservationType()`, `isCombinable()`, `unitPrice()`, `totalPaymentAmount()`, 그리고 하루 경계(`DAY_BOUNDARY`/`slotDateTime`/`toSortableMinutes`/`useStartAt`).
@@ -130,7 +140,7 @@
 - 시간은 **연속 구간만** 선택 가능(`isContiguous`). 띄엄띄엄 고르면 사이 시간이 비어 보이면서 실제로는 못 쓰는 룸이 된다. 프론트도 같은 규칙으로 즉시 막는다
 - 인원 범위(`minPeople`/`maxPeople`)는 **서버가 등록·결제주문·인원변경 세 곳에서 검증**한다. 인원이 곧 금액이라 프론트 스테퍼만 믿으면 `people=1` 로 7인 룸을 1인 요금에 잡을 수 있다
 - `GET /bgm-agit/reservation` 응답에 `slotRanges[{start,end}]`, `maxSelectableSlots`, `reservationType`(ROOM|DELEGATE_PLAY), `pricingMode`(PER_PERSON|FLAT), `prices[{date,price,colorGb}]` 포함 → `ReservationTimePanel.tsx`가 그대로 그림
-- `createReservation`은 **클라이언트가 보낸 예약타입을 무시**하고 이미지 카테고리로 결정
+- `createReservation`은 **클라이언트가 보낸 예약타입을 무시**하고 방(링크)으로 결정
 - 수요일은 무인운영이라 예약 불가. 규칙은 `SlotSchedule.CLOSED_DAY_OF_WEEK`/`isClosedDay()`/`CLOSED_DAY_MESSAGE` 한 곳에 모임(등록 검증 + 방 목록 조회가 같은 값을 봄). 프론트는 `available-rooms` 응답의 `closedWeekday`(JS `getDay()` 규약)를 쓸 수 있다
 
 ### 공휴일 — 법정 자동 계산 + 관리자 수동 예외
@@ -146,28 +156,29 @@
 - 컴포넌트 3분할: `calendar/ReservationDatePicker.tsx`(월 캘린더) / `grid/RoomAvailabilityBadge.tsx`(카드 배지) / `calendar/ReservationTimePanel.tsx`(구 `ReservationCalendar`에서 캘린더를 뺀 것)
 - **날짜 state는 `ImageGrid.tsx`의 지역 `useState<string | null>`이고 기본값이 null.** 기본값을 넣으면 날짜만 바뀔 뿐 사고 형태는 그대로다. 날짜 미선택이면 방 카드를 아예 렌더하지 않아 시간 버튼 도달 경로가 없다
 - 오예약 방어 3중: ① 미선택이면 카드 없음 ② 시간 버튼 바로 위 `TimeTitle`에 날짜 재표시(sticky에 의존 안 하므로 이게 실질 1순위) ③ 확인 모달 `summary` 첫 줄
-- `<ReservationTimePanel key={`${imageId}-${date}`}>` — 방·날짜가 바뀌면 리마운트로 `selectedTimes`/`combineIds`/`useMode` 초기화
+- `<ReservationTimePanel key={`${roomId}-${date}`}>` — 방·날짜가 바뀌면 리마운트로 `selectedTimes`/`combineIds`/`useMode` 초기화
 - `/detail/room` ↔ `/detail/mahjongRental`은 `App.tsx`의 `path="detail/*"` 한 라우트라 **언마운트되지 않는다** → `location.pathname` 초기화 effect 필수
 - **`bgmAgitReservationStartDate`는 `` `${ymd}T00:00:00+09:00` `` 형식으로 보낼 것.** 서버가 `ZonedDateTime.parse`로 받아서(`BgmAgitReservationServiceImpl`) 순수 `'YYYY-MM-DD'`는 파싱 실패 → 500. 예전엔 `Date` 객체가 `toISOString()`으로 변환돼 **우연히** 맞던 구조라 KST 브라우저에서만 옳았다
 
 ### 날짜별 방 가용 현황 `GET /bgm-agit/reservation/available-rooms`
-`?date=&labelGb=3&link=/detail/room` → `{ date, closed, message, closedWeekday, rooms[{imageId, label, group, category, minPeople, maxPeople, totalSlotCount, availableSlotCount, available, message}] }`
+`?date=&labelGb=3&link=/detail/room` → `{ date, closed, message, closedWeekday, rooms[{roomId, label, group, category, minPeople, maxPeople, totalSlotCount, availableSlotCount, available, message}] }`
 - 판정은 **예약 캘린더와 같은 `resolveDayAvailability`를 탄다.** 별도 구현을 만들면 배지 숫자와 방을 눌렀을 때 캘린더에 뜨는 시간 수가 갈린다. 같은 이유로 이 API도 **JWT userId를 반드시 읽어야** 한다(내 대기건 점유 규칙)
 - **선택 가능한 실제 시간대는 내려주지 않는다** — 합쳐예약 교집합·`maxSelectableSlots`·가격이 `GET /reservation`에만 있어서, 두 소스를 섞으면 어긋난다
-- 쿼리는 `findReservedTimesByImageIdsAndDate(imageIds, date)` 1회(`transform(groupBy(imageId))`). **`ReservedTimeDto`에 필드를 추가하지 말 것** — `Projections.constructor` 위치 기반인데 `memberId`와 `imageId`가 둘 다 `Long`이라 순서가 어긋나도 컴파일이 통과하고, 어긋나면 남의 대기 예약이 내 것처럼 점유 처리된다. 프로젝션은 `reservedTimeProjection()` 한 곳에서만 만든다
+- 쿼리는 방 목록을 한 번에 조회해 roomId 로 묶는다. **`ReservedTimeDto`에 필드를 추가하지 말 것** — `Projections.constructor` 위치 기반인데 `memberId`와 `roomId`가 둘 다 `Long`이라 순서가 어긋나도 컴파일이 통과하고, 어긋나면 남의 대기 예약이 내 것처럼 점유 처리된다. 프로젝션은 `reservedTimeProjection()` 한 곳에서만 만든다
 - 배지 조회는 `useRequest`를 쓰지 않는다(`useAvailableRoomsFetch`) — 실패 시 `/error` 리다이렉트·에러 토스트·전역 로딩 오버레이가 전부 부적절. 실패하면 **배지를 안 그린다**(없는 걸 '마감'으로 표시하면 예약 가능한 방을 가린다)
 - 회원정보가 안 나가는 공개 조회라 URL_RESOURCES 매핑 불필요. 단 `/bgm-agit/reservation/**` 와일드카드 행이 이미 있으면 비로그인 403이 되므로 배포 전 확인
 
 ### 합쳐 예약 (M-1 + M-2 …)
-행마다 이미지 FK가 따로 있어서, 테이블 변경 없이 "같은 예약번호에 이미지가 다른 행"으로 구현.
+예약 1건에 `BGM_AGIT_RESERVATION_ROOM` 행이 방 수만큼 붙는다.
 - 조회 `GET /bgm-agit/reservation?...&ids=84,85` — 시간대는 **전 항목 교집합**, `label`은 `"M-1, M-2"`, `minPeople`=최소값들 중 최대, `maxPeople`=합산
-- 등록 `POST /bgm-agit/reservation`에 `bgmAgitImageIds: [84,85]` — 항목별 충돌 검증 후 **같은 예약번호**로 행 생성
-- 조합 검증(`loadReservableImages`): 같은 카테고리 + 같은 메뉴링크 + **`SlotSchedule.isCombinable()` 화이트리스트**(`[["M-1","M-2","M-3"]]`). 숨김 항목 거부
+- 등록 `POST /bgm-agit/reservation`에 `roomId` + `roomIds: [84,85]` — 방별 충돌 검증 후 예약 1건 + 예약방(`BGM_AGIT_RESERVATION_ROOM`) 행 생성
+- 조합 검증(`loadReservableRooms`): 같은 메뉴링크 + **`SlotSchedule.isCombinable()` 화이트리스트**(`[["M-1","M-2","M-3"]]`). 숨김 항목 거부
   - 예전엔 `maxSelectableSlots != null`(=G룸)로 걸렀는데, 모든 룸의 슬롯 제한이 풀리면서 그 조건이 항상 false 가 되어 **방어가 통째로 사라졌다**. 그래서 라벨 화이트리스트로 바꿨다
 - **금액은 항목 수만큼 합산하지 않는다** — 룸은 인원 × 단가라 M-1+M-2 도 인원 기준 1회. 합쳐 예약을 쓰는 이유가 인원이 많아서이고 그 인원만큼 이미 청구되므로 항목 수까지 곱하면 이중과금이다. 항목당 합산은 마작 대탁에만 남았다
+- **합쳐 예약의 인원 범위는 방별 최소·최대의 합**(`effectiveMinPeople`) — 과금 하한도 이 합이다. 최소값 중 최대를 쓰던 시절엔 M-1+M-2+M-3 을 4명(3만6천원)으로 잡을 수 있었다. 공지의 "묶으면 10~20명"과 합산값(12~21)이 달라 **사장님 확인 필요**
 - 프론트 `RESERVATION_COMBINABLE_GROUPS`(`[['M-1','M-2','M-3']]`) → `ImageGrid`가 `combinable` prop 전달, 캘린더 상단 토글
 
-> **함정: 예약번호 단건 조회는 항목 수만큼 행이 늘어난다.** `findBizTalkCancel`이 `fetchOne`이라 `NonUniqueResultException`으로 관리자 확정·결제 승인이 터진 적 있음 → `fetch()` 후 라벨만 합쳐 조립하도록 수정됨. 예약번호로 단건을 가정하는 코드를 새로 쓸 때 같은 함정 주의.
+> 예전 구조(슬롯 행 + 예약번호)에서는 예약번호 단건 조회가 항목 수만큼 행이 늘어 `NonUniqueResultException` 사고가 있었다. 지금은 예약 1건 = 1행이라 그 함정은 사라졌다 — **방 목록이 필요하면 `RESERVATION_ROOM` 을 따로 fetch 할 것**(예약 행에 방 컬럼이 없다).
 
 ### 코멘트 / 이용 방식 (프론트 하드코딩 맵)
 `bgm-agit-front/src/config/reservationComments.ts` — **라벨을 키로** 쓰는 맵 2종. DB 컬럼·알림톡 템플릿 변경 없이 요청사항 문자열에 얹는 방식.
@@ -197,7 +208,8 @@
 - 탭 분류는 **카테고리 우선 → 라벨 첫 알파벳**: `MAHJONG` 카테고리(라벨이 한글이라 알파벳 규칙으로 안 갈림)→`마작탁`, `ROOM`→`ROOM_GROUPS`(C·D·E / B·F·G / M), 나머지→`기타`. 그날 예약 있는 그룹만 노출
 - 모바일 기본은 **목록(아젠다) 뷰** — 1시간 블록(48px)에 이름·시간·인원 3줄이 안 들어감. `viewMode`가 `null`이면 화면 크기에 맡기고(`isMobile ? 'list' : 'grid'`), 토글하면 그 선택을 따름
 - 색상: **바탕색 = 룸**, 상태는 채움으로 — 확정=꽉 참 / 대기=점선+옅은 배경 / 취소=회색+취소선. `ROOM_PALETTE`(10색)를 **필터·탭 적용 전** 순서로 배정해 필터를 바꿔도 색이 안 흔들림. `blockStyle()`이 inline style로 주입
-- 백엔드 `GET /bgm-agit/reservation/board?date=YYYY-MM-DD` → `getReservationBoard(date, roles)`. 쿼리 `findReservationsByDate`(페이징 없음, member/image fetch join), DTO `AdminReservationBoardResponse`, 영수증은 `findDoneReceiptUrlsByReservationNos` 배치
+- 백엔드 `GET /bgm-agit/reservation/board?date=YYYY-MM-DD` → `getReservationBoard(date, roles)`. 쿼리 `findReservationsByDate`(페이징 없음, member + 예약방 fetch), DTO `AdminReservationBoardResponse`, 영수증은 `findDoneReceiptUrlsByReservationIds` 배치
+- **합쳐 예약은 장소 열마다 같은 항목을 넣는다** — `Item.roomNames`가 그 예약의 모든 방 이름. 예전엔 head 행 라벨만 써서 M-1+M-2+M-3이 M-1 열에만 떴다. 목록 뷰는 `reservationId`로 중복 제거. 관리자 09시 알림톡 목록도 같은 방식으로 라벨을 합친다
 - **시간축 분값 규약 — 하루 경계(오전 10시) 이전은 +1440.** 24시간 영업이라 익일 새벽 슬롯이 같은 영업일에 속한다. 서버는 `SlotSchedule.toSortableMinutes` 하나만 쓰고(`toBoardMinutes`가 위임), 프론트 축(`DEFAULT_AXIS_START/END` = 10:00~34:00)도 같은 규약
 - **권한 2중** — `BgmAgitAuthorizationManager`는 URL_RESOURCES에 없는 경로를 **기본 permit**으로 통과시킨다. 이 API는 회원 연락처가 나가므로 서비스단 `isAdmin(roles)` 검사 + URL 레벨 ADMIN 매핑 둘 다 필요(**매핑 INSERT 후 앱 재시작** — 로딩이 `@PostConstruct` 1회)
 - 메뉴 등록은 `/menuManage`에서. `getMainMenu`가 **subMenu 없는 root를 걸러내므로** 반드시 기존 부모 메뉴의 하위로
@@ -205,9 +217,8 @@
 ### 함정: `toISOString()` 날짜 밀림
 `Date.toISOString()`은 UTC 변환이라 **KST 자정 Date가 하루 앞으로 밀린다**(`ReservationList` 검색이 실제로 이 버그였음). 서버로 보내는 날짜는 항상 `src/utils/date.ts`의 `toLocalYmd()`(`toLocaleDateString('sv-SE')` 기반) 사용. 같은 파일에 `todayYmd`/`addDaysYmd`/`formatYmdWithWeekday`.
 
-### TODO: `BGM_AGIT_ROOM` 테이블 분리
-예약 대상 메타(라벨/인원/슬롯정책/예약금/코멘트/옵션/노출여부)를 이미지 테이블에 얹은 게 근본 원인. 떼내면 프론트 하드코딩 맵과 라벨 문자열 비교(`"G Room".equals(...)`)도 같이 사라진다.
-**예약 2테이블 정규화**(부모=예약묶음 + 자식=슬롯행)도 정석이지만, 운영 데이터 이관 + 생성/조회/취소/알림톡 대수술이라 보류.
+### 남은 것: 방 메타의 하드코딩
+방 테이블은 분리됐지만 슬롯정책(`"G Room".equals(...)`)·예약금·코멘트/옵션 맵(`reservationComments.ts`)·합쳐 예약 조합은 아직 이름 기준 코드에 있다. 필요해지면 `BGM_AGIT_ROOM` 컬럼으로 옮길 것.
 
 ---
 
@@ -215,16 +226,16 @@
 
 ### 모듈·테이블
 - 패키지 `com.bgmagitapi.origin.payment` — entity / repository / service / controller / schedule
-- 테이블 `BGM_AGIT_PAYMENT`: `BGM_AGIT_MEMBER_ID`(FK, RESTRICT), `BGM_AGIT_RESERVATION_NO`, `BGM_AGIT_ORDER_NO`(토스 orderId, 서버 발급), `BGM_AGIT_PAYMENT_KEY`, `..._AMOUNT`, `..._STATUS`, `..._TYPE`(토스 method), 승인/취소일시, `..._CANCEL_AMOUNT`/`_REASON`, `..._RECEIPT_URL`, `..._FAIL_REASON`, **`..._PEOPLE`/`..._UNIT_PRICE`(결제 시점 스냅샷)**, `REGIST_DATE`/`MODIFY_DATE`. varchar 기본 500
+- 테이블 `BGM_AGIT_PAYMENT`: `BGM_AGIT_MEMBER_ID`(FK, RESTRICT), `BGM_AGIT_RESERVATION_ID`(FK → 예약, RESTRICT. 이관 전 이름 `RESERVATION_NO`), `BGM_AGIT_ORDER_NO`(토스 orderId, 서버 발급), `BGM_AGIT_PAYMENT_KEY`, `..._AMOUNT`, `..._STATUS`, `..._TYPE`(토스 method), 승인/취소일시, `..._CANCEL_AMOUNT`/`_REASON`, `..._RECEIPT_URL`, `..._FAIL_REASON`, `REGIST_DATE`/`MODIFY_DATE`. varchar 기본 500
 - 테이블 **`BGM_AGIT_PAYMENT_CANCEL`** — 환불 시도 이력. PK 가 토스 `Idempotency-Key` 가 되고, 실패한 시도도 남아 관리자 수동 환불의 근거가 된다
-- **`BGM_AGIT_ORDER_NO`만 UNIQUE.** `BGM_AGIT_RESERVATION_NO`엔 **UNIQUE 걸지 말 것** — 재결제 시 같은 예약번호로 새 행이 들어가서 터진다. "그룹당 유효 결제 1건"은 서비스단 관리
-- 예약↔결제는 논리 연결(payment가 `RESERVATION_NO` 보관). 그룹키라 물리 FK 불가
+  - 개편 테이블의 예약 참조 컬럼도 `BGM_AGIT_RESERVATION_ID`(물리 FK 없음 — 데드락 주석 참고)
+- **`BGM_AGIT_ORDER_NO`만 UNIQUE.** `BGM_AGIT_RESERVATION_ID`엔 **UNIQUE 걸지 말 것** — 재결제 시 같은 예약으로 새 행이 들어가서 터진다. "예약당 유효 결제 1건"은 서비스단 관리
 - `PaymentStatus`: `READY`(주문 생성) / `DONE`(승인) / **`PARTIAL_CANCELED`(잔액 남은 부분환불)** / `CANCELED`(전액 환불) / `ABORTED`(실패)
   - **상태 목록을 직접 나열하지 말 것.** `PaymentStatus.isSettled()`(영수증·중복결제 판정) / `isRefundable()`(환불 대상)을 쓴다. 예전에 `DONE` 만 보던 쿼리 둘이 있었는데, 부분환불이 생기는 순간 영수증이 사라지고 잔액이 환불 대상에서 빠졌다
 
 ### 흐름
 1. 예약 생성(대기 N/N) → 예약내역(`ReservationList.tsx`) 대기행의 **`이용요금 결제`** 버튼
-2. `POST /bgm-agit/payments/order { reservationNo }` → `BgmAgitReservationService.createPaymentOrder`가 소유자·취소·확정·**지난예약·인원범위** 검증 + **금액 서버 계산** 후 공통 `createOrder` 위임 → `{ orderId, amount, orderName, clientKey }`
+2. `POST /bgm-agit/payments/order { reservationId }` → `BgmAgitReservationService.createPaymentOrder`가 소유자·취소·확정·**지난예약·인원범위** 검증 + **금액 서버 계산** 후 공통 `createOrder` 위임 → `{ orderId, amount, orderName, clientKey }`
 3. 토스 결제창(`components/payment/PaymentCheckoutModal.tsx`) → 성공 시 `/payment/success`로 리다이렉트
 4. `POST /bgm-agit/payments/confirm` → 금액 대조·멱등·**중복결제 차단·서버 재계산 재대조** → 토스 승인 → **예약 `approvalStatus='Y'` 자동 확정 + 확정 알림톡**
 5. 취소(`modifyReservation`, `cancelStatus='Y'`) → 환불 비율만큼 **부분/전액 환불**
@@ -632,7 +643,6 @@ kml:
 - `AMBIGUOUS` 수동 해결 UI(마이페이지에서 KML ID 직접 선택)
 - `application-*.yml` 정리(`kakao.redirecturi2`, `naver.redirecturi2`, kml-front 소셜 OAuth env)
 - 결제: 승인 경로의 외부 호출 트랜잭션 분리, 관리자 확정 슬롯 검증, 환불 실패 시 관리자 자동 알림
-- `BGM_AGIT_ROOM` 테이블 분리 / 예약 2테이블 정규화
 - 새 엔드포인트 권한 매핑 확인 — `/bgm-agit/ranks/{memberId}/stats`, `.../games`, `/my-rank`
 - 대국 기록 알림톡을 수정/삭제 흐름에도 적용(`eventPublisher.publishEvent(new MatchRecordRegisteredEvent(...))` 한 줄씩)
 - 메인 퀵메뉴 추가(현재 "내 기록"만 들어감) / 개인기록 "더보기" 영역 / 사이드바 외부 클릭 닫기
