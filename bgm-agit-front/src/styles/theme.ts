@@ -1,9 +1,15 @@
 // 색은 palette 한 곳에서 정한다. 포인트 색을 바꾸려면 primary 계열만 고치면 된다.
 const palette = {
-  primary: '#2F5BEA',
-  primaryHover: '#2449C4',
-  primarySoft: '#EEF2FE',
+  // BGM 로고 보라
+  primary: '#482768',
+  primaryHover: '#3A1F55',
+  primarySoft: '#F3EEF8',
   onPrimary: '#FFFFFF',
+
+  // 보조 포인트(골드). 배지·강조처럼 작은 곳에만 쓴다
+  accent: '#E0B341',
+  accentSoft: '#FBF1D3',
+  accentText: '#8A6410',
 
   bg: '#FFFFFF',
   surface: '#FFFFFF',
