@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { FiX } from 'react-icons/fi';
 import {
   canPromptInstall,
   isInAppBrowser,
@@ -46,7 +47,7 @@ export default function InstallBanner() {
       </Text>
       {canPrompt && <InstallButton onClick={install}>설치</InstallButton>}
       <CloseButton onClick={close} aria-label="닫기">
-        ✕
+        <FiX size={18} aria-hidden="true" />
       </CloseButton>
     </Banner>
   );

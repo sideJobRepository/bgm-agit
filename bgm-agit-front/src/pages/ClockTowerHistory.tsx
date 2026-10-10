@@ -57,7 +57,7 @@ export default function ClockTowerHistory() {
           {(history?.games ?? []).map(g => (
             <Card key={g.gameId} onClick={() => navigate(`/clockTowerGameDetail?id=${g.gameId}`)}>
               <Thumb>
-                {g.gameImageUrl ? <img src={g.gameImageUrl} alt={g.gameName} /> : <NoImage>🕯️</NoImage>}
+                {g.gameImageUrl ? <img src={g.gameImageUrl} alt={g.gameName} /> : <NoImage>NO IMAGE</NoImage>}
               </Thumb>
               <CardBody>
                 <CardTitle>{g.gameName}</CardTitle>

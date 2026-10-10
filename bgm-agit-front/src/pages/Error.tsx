@@ -7,7 +7,7 @@ export default function Error() {
   return (
     <ErrorWrapper>
       <ErrorBox>
-        <Title>⚠️ Error</Title>
+        <Title>Error</Title>
         <Message>
           페이지를 불러오는 중 문제가 발생했습니다.
           <br />

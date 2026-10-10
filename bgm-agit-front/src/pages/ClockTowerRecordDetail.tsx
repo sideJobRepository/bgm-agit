@@ -490,11 +490,11 @@ export default function ClockTowerRecordDetail() {
 
           <DetailHead>
             <Thumb>
-              {detail?.gameImageUrl ? <img src={detail.gameImageUrl} alt={detail.gameName} /> : <NoImage>🕯️</NoImage>}
+              {detail?.gameImageUrl ? <img src={detail.gameImageUrl} alt={detail.gameName} /> : <NoImage>NO IMAGE</NoImage>}
             </Thumb>
             <div>
               <DetailTitle>{detail?.gameName}</DetailTitle>
-              <DetailMeta>📅 {detail?.playDate}</DetailMeta>
+              <DetailMeta>{detail?.playDate}</DetailMeta>
               <DetailMeta>기록 {detail?.writerNickname}</DetailMeta>
               {detail?.draft ? (
                 <DraftBadge>임시저장</DraftBadge>

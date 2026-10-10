@@ -84,7 +84,9 @@ export const NoImage = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 34px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   color: ${c.textSubtle};
 `;
 
