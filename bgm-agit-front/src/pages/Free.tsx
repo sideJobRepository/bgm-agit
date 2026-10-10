@@ -35,7 +35,7 @@ export default function Free() {
 
   const items = useRecoilValue(communityState);
 
-  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+  const isMobile = useMediaQuery({ query: theme.device.mobile });
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);

@@ -54,7 +54,7 @@ export const Table = styled.table<WithTheme>`
   }
 
   /* 데스크탑에서는 3번째가 날짜 */
-  @media (min-width: 769px) {
+  @media (min-width: 845px) {
     td:nth-child(3) {
       color: ${c.textMuted};
       font-size: 14px;

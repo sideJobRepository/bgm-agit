@@ -43,7 +43,7 @@ import {
 export default function About() {
   const navigate = useNavigate();
 
-  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+  const isMobile = useMediaQuery({ query: theme.device.mobile });
   const visibleCountMain = isMobile ? 1 : 2;
   const visibleCountReserve = isMobile ? 1 : 3;
 

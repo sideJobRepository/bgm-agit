@@ -8,6 +8,7 @@ import type { StylesConfig } from 'react-select';
 import { useSetRecoilState } from 'recoil';
 import { searchState } from '../recoil';
 import { Wrapper, SearchGroup, FieldsWrapper, Field, GameField, SearchButton, SearchIcon, DateRange, DateCenter, SortSelect } from './SearchBar.styles.ts';
+import { theme } from '../styles/theme.ts';
 
 interface SearchBarProps<T> {
   color: string;
@@ -22,7 +23,7 @@ type OptionType = {
 };
 
 export default function SearchBar<T = string>({ color, label, onSearch }: SearchBarProps<T>) {
-  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+  const isMobile = useMediaQuery({ query: theme.device.mobile });
   const location = useLocation();
   const key = location.pathname.split('/').filter(Boolean).pop()!;
 

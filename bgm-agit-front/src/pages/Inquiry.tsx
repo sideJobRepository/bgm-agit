@@ -22,7 +22,7 @@ export default function Inquiry() {
   console.log('items', user);
   console.log('items', items);
 
-  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+  const isMobile = useMediaQuery({ query: theme.device.mobile });
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);

@@ -12,7 +12,7 @@ import { GridBox } from './Detail.styles.ts';
 import { theme } from '../styles/theme.ts';
 
 export default function Detail() {
-  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+  const isMobile = useMediaQuery({ query: theme.device.mobile });
 
   const location = useLocation();
 
