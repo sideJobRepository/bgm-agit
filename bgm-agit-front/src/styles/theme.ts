@@ -13,8 +13,9 @@ const palette = {
 
   bg: '#FFFFFF',
   surface: '#FFFFFF',
-  surfaceAlt: '#F4F2F6',
-  surfaceSunken: '#F8F7FA',
+  // 페이지 바탕은 연한 보라 회색. 순백만 쓰면 눈이 부셔서, 흰 카드가 바탕 위에 떠 보이게 한다
+  surfaceAlt: '#ECE8F1',
+  surfaceSunken: '#F2EFF6',
   footer: '#16181D',
 
   textStrong: '#16181D',
@@ -22,8 +23,8 @@ const palette = {
   textMuted: '#5B6270',
   textSubtle: '#8A919E',
 
-  border: '#E6E1EB',
-  borderStrong: '#D3CCDB',
+  border: '#E1DBE8',
+  borderStrong: '#CFC7D9',
 
   success: '#1A7D55',
   danger: '#FF5E57',
