@@ -8,6 +8,7 @@ import type { WithTheme } from '../styles/styled-props.ts';
 import { FaDownload } from 'react-icons/fa';
 import Modal from '../components/Modal.tsx';
 import type { NoticeContent } from '../types/notice.ts';
+import { theme } from '../styles/theme.ts';
 
 export default function NoticePopupDetail({
   item,
@@ -220,7 +221,7 @@ const TitleBox = styled.div<WithTheme>`
     color: ${({ theme }) => theme.colors.subColor};
     font-size: ${({ theme }) => theme.sizes.xlarge};
     font-weight: ${({ theme }) => theme.weight.bold};
-    font-family: 'Jua', sans-serif;
+    font-family: ${theme.fonts.display};
 
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.sizes.menu};

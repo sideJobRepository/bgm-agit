@@ -9,6 +9,7 @@ import { usePlayRecordListFetch } from '../recoil/murderFetch.ts';
 import { userState } from '../recoil/state/userState.ts';
 import Pagination from '../components/Pagination.tsx';
 import type { PlayRecordListItem } from '../types/murder.ts';
+import { theme } from '../styles/theme.ts';
 
 export default function PlayRecords() {
   const navigate = useNavigate();
@@ -97,7 +98,7 @@ const Header = styled.div.withConfig({ shouldForwardProp: p => p !== 'bgColor' }
 
 const TitleBox = styled.div<WithTheme>`
   h2 {
-    font-family: 'Bungee', sans-serif;
+    font-family: ${theme.fonts.display};
     font-size: ${({ theme }) => theme.sizes.xxlarge};
   }
   p {

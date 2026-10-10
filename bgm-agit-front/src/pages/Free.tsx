@@ -11,6 +11,7 @@ import { communityState } from '../recoil/state/communitySate.ts';
 import { FaCommentDots } from 'react-icons/fa';
 import { userState } from '../recoil/state/userState.ts';
 import Pagination from '../components/Pagination.tsx';
+import { theme } from '../styles/theme.ts';
 
 export default function Free() {
   const user = useRecoilValue(userState);
@@ -37,20 +38,20 @@ export default function Free() {
   return (
     <Wrapper>
       <NoticeBox>
-        <SearchWrapper bgColor="#988271">
+        <SearchWrapper bgColor={theme.colors.primary}>
           <TitleBox textColor="#ffffff">
             <h2>Community Board</h2>
             <p>소소한 일상부터 궁금한 이야기까지, 자유롭게 나눠보세요.</p>
           </TitleBox>
           <SearchBox>
-            <SearchBar<string> color="#988271" label="제목 및 내용" onSearch={setSearchKeyword} />
+            <SearchBar<string> color={theme.colors.primary} label="제목 및 내용" onSearch={setSearchKeyword} />
           </SearchBox>
         </SearchWrapper>
         <TableBox>
           {user && (
             <ButtonBox>
               <Button
-                color="#988271"
+                color={theme.colors.primary}
                 onClick={() => {
                   navigate(`/freeDetail`);
                 }}
@@ -195,7 +196,7 @@ const TitleBox = styled.div.withConfig({
   color: ${({ textColor }) => textColor};
 
   h2 {
-    font-family: 'Bungee', sans-serif;
+    font-family: ${theme.fonts.display};
     font-weight: ${({ theme }) => theme.weight.bold};
     font-size: ${({ theme }) => theme.sizes.xxlarge};
   }
@@ -260,7 +261,7 @@ const NoSearchBox = styled.div<WithTheme>`
     width: 100%;
   font-size: ${({ theme }) => theme.sizes.menu};
   font-weight: ${({ theme }) => theme.weight.semiBold};
-  font-family: 'Jua', sans-serif;\
+  font-family: ${theme.fonts.display};\
     margin-top: 20px;
 
   @media ${({ theme }) => theme.device.mobile} {

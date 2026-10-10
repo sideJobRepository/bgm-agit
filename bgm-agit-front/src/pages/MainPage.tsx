@@ -13,6 +13,7 @@ import { noticePopupState } from '../recoil/state/noticeState.ts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { NoticeContent } from '../types/notice.ts';
 import NoticePopupDetail from './NoticePopupDetail.tsx';
+import { theme } from '../styles/theme.ts';
 
 // 모듈 상수로 둬야 렌더마다 새 배열이 되어 재조회가 도는 일이 없다
 const ROOM_SLIDER_LINKS = ['/detail/room', '/detail/mahjongRental'];
@@ -252,7 +253,7 @@ const ContentBox = styled.div<WithTheme>`
     line-height: 1;
     align-items: center;
     p {
-      font-family: 'Jua', sans-serif;
+      font-family: ${theme.fonts.display};
       color: ${({ theme }) => theme.colors.blueColor};
       font-size: ${({ theme }) => theme.sizes.bigLarge};
     }
@@ -268,7 +269,7 @@ const ContentBox = styled.div<WithTheme>`
   }
 
   h2 {
-    //font-family: 'Jua', sans-serif;
+    //font-family: ${theme.fonts.display};
     margin: auto 0;
     font-size: ${({ theme }) => theme.sizes.xxlarge};
     text-shadow: 4px 4px 2px rgba(0, 0, 0, 0.2);
@@ -427,7 +428,7 @@ const TitleBox = styled.div<WithTheme>`
   align-items: center;
   line-height: 1;
   h2 {
-    font-family: 'Jua', sans-serif;
+    font-family: ${theme.fonts.display};
     font-size: ${({ theme }) => theme.sizes.xlarge};
   }
 

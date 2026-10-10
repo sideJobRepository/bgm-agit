@@ -24,6 +24,7 @@ import {
 } from '../recoil/serviceRequestFetch.ts';
 import { detailServiceRequestState } from '../recoil/state/serviceRequestState.ts';
 import type { SupportFile } from '../types/support.ts';
+import { theme } from '../styles/theme.ts';
 
 type NewSupportState = {
   id: string;
@@ -413,7 +414,7 @@ export default function ServiceRequestDetail() {
               onClick={() => {
                 navigate(`/service-request`);
               }}
-              color="#988271"
+              color={theme.colors.primary}
             >
               목록
             </Button>
@@ -543,7 +544,7 @@ export default function ServiceRequestDetail() {
                         navigate('/service-request');
                       }
                     }}
-                    color="#988271"
+                    color={theme.colors.primary}
                   >
                     취소
                   </Button>
@@ -654,7 +655,7 @@ export default function ServiceRequestDetail() {
                   navigate('/service-request');
                 }
               }}
-              color="#988271"
+              color={theme.colors.primary}
             >
               취소
             </Button>
@@ -863,7 +864,7 @@ const TitleBox = styled.div<WithTheme>`
     color: ${({ theme }) => theme.colors.subColor};
     font-size: ${({ theme }) => theme.sizes.xlarge};
     font-weight: ${({ theme }) => theme.weight.bold};
-    font-family: 'Jua', sans-serif;
+    font-family: ${theme.fonts.display};
 
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.sizes.menu};
@@ -906,7 +907,7 @@ const ReplyBox = styled.div<WithTheme>`
     justify-content: space-between;
     padding-bottom: 16px;
     border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-    font-family: 'Jua', sans-serif;
+    font-family: ${theme.fonts.display};
 
     h3 {
       display: flex;
@@ -922,7 +923,7 @@ const ReplyBox = styled.div<WithTheme>`
 
     button {
       color: ${({ theme }) => theme.colors.bronzeColor};
-      font-family: 'Jua', sans-serif;
+      font-family: ${theme.fonts.display};
     }
   }
 `;

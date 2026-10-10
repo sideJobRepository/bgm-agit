@@ -11,6 +11,7 @@ import { userState } from '../recoil/state/userState.ts';
 
 import { useNavigate } from 'react-router-dom';
 import Pagination from '../components/Pagination.tsx';
+import { theme } from '../styles/theme.ts';
 
 interface NoticeProps {
   mainGb: boolean;
@@ -42,14 +43,14 @@ export default function Notice({ mainGb }: NoticeProps) {
       {mainGb ? (
         <Wrapper>
           <NoticeBox>
-            <SearchWrapper bgColor="#988271">
+            <SearchWrapper bgColor={theme.colors.primary}>
               <TitleBox textColor="#ffffff">
                 <h2>News & Updates</h2>
                 <p>공지사항 및 이벤트를 빠르게 확인해보세요.</p>
               </TitleBox>
               <SearchBox>
                 <SearchBar<string>
-                  color="#988271"
+                  color={theme.colors.primary}
                   label="제목 및 내용"
                   onSearch={setSearchKeyword}
                 />
@@ -59,7 +60,7 @@ export default function Notice({ mainGb }: NoticeProps) {
               {user?.roles.includes('ROLE_ADMIN') && (
                 <ButtonBox>
                   <Button
-                    color="#988271"
+                    color={theme.colors.primary}
                     onClick={() => {
                       navigate(`/noticeDetail`);
                     }}
@@ -211,7 +212,7 @@ const TitleBox = styled.div.withConfig({
   color: ${({ textColor }) => textColor};
 
   h2 {
-    font-family: 'Bungee', sans-serif;
+    font-family: ${theme.fonts.display};
     font-weight: ${({ theme }) => theme.weight.bold};
     font-size: ${({ theme }) => theme.sizes.xxlarge};
   }
@@ -276,7 +277,7 @@ const NoSearchBox = styled.div<WithTheme>`
     width: 100%;
   font-size: ${({ theme }) => theme.sizes.menu};
   font-weight: ${({ theme }) => theme.weight.semiBold};
-  font-family: 'Jua', sans-serif;\
+  font-family: ${theme.fonts.display};\
     margin-top: 20px;
 
   @media ${({ theme }) => theme.device.mobile} {

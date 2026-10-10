@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
+import { theme } from '../styles/theme.ts';
 
 export default function Guide() {
   return (
@@ -184,7 +185,7 @@ const TextBox = styled.div<WithTheme & { $align: string; $bg: string }>`
   width: 50%;
   background-color: ${({ $bg }) => $bg};
   border-radius: 4px;
-  font-family: 'Jua', sans-serif;
+  font-family: ${theme.fonts.display};
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.mobile.sizes.h4Size};

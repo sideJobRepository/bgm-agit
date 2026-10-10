@@ -18,6 +18,7 @@ import type {
   ReservationBoardItem,
   ReservationBoardRoom,
 } from '../types/reservation.ts';
+import { theme } from '../styles/theme.ts';
 
 type StatusFilter = 'ALL' | 'CONFIRMED' | 'WAITING' | 'CANCELED';
 type Status = Exclude<StatusFilter, 'ALL'>;
@@ -477,7 +478,7 @@ export default function ReservationBoard() {
                     {item.receiptUrl && (
                       <ActionButton
                         type="button"
-                        color="#988271"
+                        color={theme.colors.primary}
                         onClick={() =>
                           window.open(item.receiptUrl as string, '_blank', 'noopener,noreferrer')
                         }
@@ -642,7 +643,7 @@ export default function ReservationBoard() {
               {selected.receiptUrl && (
                 <ActionButton
                   type="button"
-                  color="#988271"
+                  color={theme.colors.primary}
                   onClick={() =>
                     window.open(selected.receiptUrl as string, '_blank', 'noopener,noreferrer')
                   }
@@ -667,7 +668,7 @@ const BoardBox = styled.div`
 const HeaderWrapper = styled.div<WithTheme>`
   display: flex;
   width: 100%;
-  background-color: #988271;
+  background-color: ${theme.colors.primary};
   padding: 20px;
   align-items: center;
   gap: 12px;
@@ -685,7 +686,7 @@ const TitleBox = styled.div<WithTheme>`
   color: #ffffff;
 
   h2 {
-    font-family: 'Bungee', sans-serif;
+    font-family: ${theme.fonts.display};
     font-weight: ${({ theme }) => theme.weight.bold};
     font-size: ${({ theme }) => theme.sizes.xxlarge};
   }
@@ -804,9 +805,9 @@ const TabButton = styled.button<WithTheme & { $active: boolean }>`
   padding: 9px 18px;
   margin-bottom: -2px;
   border: none;
-  border-bottom: 2px solid ${({ $active }) => ($active ? '#988271' : 'transparent')};
+  border-bottom: 2px solid ${({ $active }) => ($active ? theme.colors.primary : 'transparent')};
   background: transparent;
-  color: ${({ $active, theme }) => ($active ? '#988271' : theme.colors.navColor)};
+  color: ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.navColor)};
   font-size: ${({ theme }) => theme.sizes.medium};
   font-weight: ${({ theme }) => theme.weight.bold};
   cursor: pointer;
@@ -952,8 +953,8 @@ const CardActions = styled.div`
 const FilterButton = styled.button<WithTheme & { $active: boolean }>`
   padding: 7px 16px;
   border-radius: 999px;
-  border: 1px solid ${({ $active }) => ($active ? '#988271' : '#D9D9D9')};
-  background: ${({ $active }) => ($active ? '#988271' : '#ffffff')};
+  border: 1px solid ${({ $active }) => ($active ? theme.colors.primary : '#D9D9D9')};
+  background: ${({ $active }) => ($active ? theme.colors.primary : '#ffffff')};
   color: ${({ $active, theme }) => ($active ? '#ffffff' : theme.colors.subColor)};
   font-size: ${({ theme }) => theme.sizes.small};
   font-weight: ${({ theme }) => theme.weight.semiBold};
@@ -1276,7 +1277,7 @@ const EmptyBox = styled.div<WithTheme>`
   width: 100%;
   margin-top: 30px;
   padding: 40px 0;
-  font-family: 'Jua', sans-serif;
+  font-family: ${theme.fonts.display};
   font-size: ${({ theme }) => theme.sizes.menu};
   font-weight: ${({ theme }) => theme.weight.semiBold};
   color: ${({ theme }) => theme.colors.subColor};
@@ -1290,7 +1291,7 @@ const RetryButton = styled.button<WithTheme>`
   padding: 8px 18px;
   border: none;
   border-radius: 6px;
-  background: #988271;
+  background: ${theme.colors.primary};
   color: #ffffff;
   font-family: inherit;
   font-size: ${({ theme }) => theme.sizes.small};

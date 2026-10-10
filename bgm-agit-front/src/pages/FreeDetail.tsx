@@ -21,6 +21,7 @@ import { useCommunityDownloadFetch, useDetailCommunityFetch } from '../recoil/co
 import { detailCommunityState } from '../recoil/state/communitySate.ts';
 import type { CommunityFile } from '../types/community.ts';
 import LoginMoadl from '../components/LoginMoadl.tsx';
+import { theme } from '../styles/theme.ts';
 
 type NewCommunityState = {
   id: number | null;
@@ -348,7 +349,7 @@ export default function FreeDetail() {
               onClick={() => {
                 navigate(`/free`);
               }}
-              color="#988271"
+              color={theme.colors.primary}
             >
               목록
             </Button>
@@ -617,7 +618,7 @@ export default function FreeDetail() {
                   navigate('/free');
                 }
               }}
-              color="#988271"
+              color={theme.colors.primary}
             >
               취소
             </Button>
@@ -824,7 +825,7 @@ const TitleBox = styled.div<WithTheme>`
     color: ${({ theme }) => theme.colors.subColor};
     font-size: ${({ theme }) => theme.sizes.xlarge};
     font-weight: ${({ theme }) => theme.weight.bold};
-    font-family: 'Jua', sans-serif;
+    font-family: ${theme.fonts.display};
 
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.sizes.menu};
@@ -882,7 +883,7 @@ const ReplyBox = styled.div<WithTheme>`
     gap: 4px;
 
     button {
-      font-family: 'Jua', sans-serif;
+      font-family: ${theme.fonts.display};
       font-size: ${({ theme }) => theme.sizes.xsmall};
       padding: 4px 6px;
     }
@@ -893,7 +894,7 @@ const ReplyBox = styled.div<WithTheme>`
     justify-content: space-between;
     padding-bottom: 16px;
     border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-    font-family: 'Jua', sans-serif;
+    font-family: ${theme.fonts.display};
 
     h3 {
       display: flex;
@@ -909,7 +910,7 @@ const ReplyBox = styled.div<WithTheme>`
 
     button {
       color: ${({ theme }) => theme.colors.bronzeColor};
-      font-family: 'Jua', sans-serif;
+      font-family: ${theme.fonts.display};
     }
   }
 
@@ -932,7 +933,7 @@ const ReplyBox = styled.div<WithTheme>`
     margin-bottom: 12px;
 
     strong {
-      font-family: 'Jua', sans-serif;
+      font-family: ${theme.fonts.display};
       color: ${({ theme }) => theme.colors.text};
       font-size: ${({ theme }) => theme.sizes.medium};
       margin-right: 8px;

@@ -32,6 +32,7 @@ import Pagination from '../Pagination.tsx';
 import { getCombinableLabels, getReservationComment } from '../../config/reservationComments.ts';
 import { useMediaQuery } from 'react-responsive';
 import { formatYmdWithWeekday } from '../../utils/date.ts';
+import { theme } from '../../styles/theme.ts';
 
 interface Props {
   pageData: {
@@ -559,7 +560,7 @@ export default function ImageGrid({ pageData }: Props) {
                 </Button>
               )}
 
-              <Button color="#988271" onClick={() => setWriteModalOpen(false)}>
+              <Button color={theme.colors.primary} onClick={() => setWriteModalOpen(false)}>
                 닫기
               </Button>
             </ButtonBox2>
@@ -611,7 +612,7 @@ const TitleBox = styled.div.withConfig({
   color: ${({ textColor }) => textColor};
 
   h2 {
-    font-family: 'Bungee', sans-serif;
+    font-family: ${theme.fonts.display};
     font-weight: ${({ theme }) => theme.weight.bold};
     font-size: ${({ theme }) => theme.sizes.xxlarge};
   }
@@ -785,7 +786,7 @@ const FoodLabel = styled.div.withConfig({
 })<WithTheme & { textColor: string }>`
   margin-top: 18px;
   text-align: center;
-  font-family: 'Jua', sans-serif;
+  font-family: ${theme.fonts.display};
   font-size: ${({ theme }) => theme.sizes.bigLarge};
   color: ${({ theme }) => theme.colors.black};
 
@@ -801,7 +802,7 @@ const NoSearchBox = styled.div<WithTheme>`
   width: 100%;
   font-size: ${({ theme }) => theme.sizes.menu};
   font-weight: ${({ theme }) => theme.weight.semiBold};
-  font-family: 'Jua', sans-serif;
+  font-family: ${theme.fonts.display};
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.sizes.small};

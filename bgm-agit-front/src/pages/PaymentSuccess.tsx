@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { toast } from '../utils/toast';
 import api from '../utils/axiosInstance.ts';
+import { theme } from '../styles/theme.ts';
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
@@ -103,7 +104,7 @@ const ButtonRow = styled.div`
     display: inline-flex;
     align-items: center;
     border-radius: 6px;
-    background: #988271;
+    background: ${theme.colors.primary};
     color: #fff;
     cursor: pointer;
     padding: 10px 18px;

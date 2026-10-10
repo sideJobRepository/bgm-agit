@@ -19,6 +19,7 @@ import { useFetchMainData } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { mainDataState } from '../recoil';
 import { useNavigate } from 'react-router-dom';
+import { theme } from '../styles/theme.ts';
 
 interface SectionProps {
   bgColor?: string;
@@ -253,7 +254,7 @@ const Left = styled.div<WithTheme>`
 const LogoTextBox = styled.div<WithTheme>`
   display: flex;
   padding: 12px;
-  font-family: 'Jua', sans-serif;
+  font-family: ${theme.fonts.display};
   font-weight: ${({ theme }) => theme.weight.bold};
   background-color: ${({ theme }) => theme.colors.purpleColor};
   font-size: ${({ theme }) => theme.sizes.small};
@@ -336,7 +337,7 @@ const ContentBox = styled.div<WithTheme>`
 `;
 
 const Line1 = styled.p<WithTheme>`
-  font-family: 'Jua', sans-serif;
+  font-family: ${theme.fonts.display};
   font-size: ${({ theme }) => theme.sizes.xlarge};
   font-weight: ${({ theme }) => theme.weight.bold};
   color: ${({ theme }) => theme.colors.blueColor};
@@ -351,7 +352,7 @@ const Line2 = styled.div<WithTheme>`
   margin-left: 10%;
 
   h2 {
-    //font-family: 'Jua', sans-serif;
+    //font-family: ${theme.fonts.display};
     font-size: ${({ theme }) => theme.sizes.extra};
     font-weight: ${({ theme }) => theme.weight.bold};
     line-height: 1.4;
@@ -373,7 +374,7 @@ const Line3 = styled.div<WithTheme>`
   font-size: ${({ theme }) => theme.sizes.bigLarge};
   color: ${({ theme }) => theme.colors.subColor};
   line-height: 1.6;
-  font-family: 'Jua', sans-serif;
+  font-family: ${theme.fonts.display};
 
   @media ${({ theme }) => theme.device.tablet} {
     margin-left: 0;
@@ -490,7 +491,7 @@ const TextBox = styled.div.withConfig({
   padding-right: 10px;
 
   h2 {
-    font-family: 'Jua', sans-serif;
+    font-family: ${theme.fonts.display};
     font-size: ${({ theme }) => theme.sizes.xxlarge};
     font-weight: ${({ theme }) => theme.weight.bold};
     color: ${({ headerColor }) => headerColor};
@@ -538,7 +539,7 @@ const ReservationTextBox = styled.div<WithTheme>`
   align-items: center;
 
   h2 {
-    font-family: 'Jua', sans-serif;
+    font-family: ${theme.fonts.display};
     font-size: ${({ theme }) => theme.sizes.xxlarge};
     font-weight: ${({ theme }) => theme.weight.bold};
     color: ${({ theme }) => theme.colors.white};

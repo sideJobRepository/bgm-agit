@@ -26,6 +26,7 @@ import { loadingState } from '../recoil/state/mainState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import type { ReviewComment, ReviewFile } from '../types/review.ts';
 import type { WithTheme } from '../styles/styled-props.ts';
+import { theme } from '../styles/theme.ts';
 
 type NewReviewState = {
   id: number | null;
@@ -928,7 +929,7 @@ const ReplyBox = styled.div<WithTheme>`
     justify-content: space-between;
     padding-bottom: 16px;
     border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-    font-family: 'Jua', sans-serif;
+    font-family: ${theme.fonts.display};
 
     h4 {
       display: flex;
@@ -969,7 +970,7 @@ const ReplyBox = styled.div<WithTheme>`
     }
 
     strong {
-      font-family: 'Jua', sans-serif;
+      font-family: ${theme.fonts.display};
       color: ${({ theme }) => theme.colors.text};
       font-size: ${({ theme }) => theme.desktop.sizes.xl};
       margin-right: 8px;

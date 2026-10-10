@@ -7,6 +7,7 @@ import { useRecoilValue } from 'recoil';
 import { playHistoryState } from '../recoil/state/murderState.ts';
 import { usePlayHistoryFetch } from '../recoil/murderFetch.ts';
 import { userState } from '../recoil/state/userState.ts';
+import { theme } from '../styles/theme.ts';
 
 export default function PlayHistory() {
   const navigate = useNavigate();
@@ -113,7 +114,7 @@ const Header = styled.div.withConfig({ shouldForwardProp: p => p !== 'bgColor' }
 
 const TitleBox = styled.div<WithTheme>`
   h2 {
-    font-family: 'Bungee', sans-serif;
+    font-family: ${theme.fonts.display};
     font-size: ${({ theme }) => theme.sizes.xxlarge};
   }
   p {

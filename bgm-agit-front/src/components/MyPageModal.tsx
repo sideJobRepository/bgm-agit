@@ -16,6 +16,7 @@ import {
 import { showConfirmModal } from './confirmAlert.tsx';
 import { formatPhoneNo } from '../utils/phone.ts';
 import { toast } from '../utils/toast';
+import { theme } from '../styles/theme.ts';
 
 type Props = {
   onClose: () => void;
@@ -316,7 +317,7 @@ const CenterModalBox = styled.div<WithTheme>`
   }
 
   h2 {
-    font-family: 'Jua', sans-serif;
+    font-family: ${theme.fonts.display};
     font-size: ${({ theme }) => theme.sizes.bigLarge};
     color: ${({ theme }) => theme.colors.purpleColor};
     font-weight: 600;
@@ -340,7 +341,7 @@ const BottomModalBox = styled.div<WithTheme>`
     color: #ffffff;
     border: 1px solid rgba(225, 225, 225, 1);
     border-radius: 80px;
-    font-family: 'Jua', sans-serif;
+    font-family: ${theme.fonts.display};
     font-size: ${({ theme }) => theme.sizes.medium};
     font-weight: 500;
     cursor: pointer;
@@ -387,7 +388,7 @@ const PasswordBox = styled.div<WithTheme>`
   border-top: 1px solid ${({ theme }) => theme.colors.lineColor};
 
   h3 {
-    font-family: 'Jua', sans-serif;
+    font-family: ${theme.fonts.display};
     font-size: ${({ theme }) => theme.sizes.medium};
     color: ${({ theme }) => theme.colors.purpleColor};
     font-weight: 600;

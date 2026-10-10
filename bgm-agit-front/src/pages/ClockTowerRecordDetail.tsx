@@ -22,6 +22,7 @@ import type {
   ClockTowerResultType,
   MemberOption,
 } from '../types/clocktower.ts';
+import { theme } from '../styles/theme.ts';
 
 function todayStr() {
   const d = new Date();
@@ -486,7 +487,7 @@ export default function ClockTowerRecordDetail() {
                 <Button color="#FF5E57" onClick={onDelete}>삭제</Button>
               </>
             )}
-            <Button color="#988271" onClick={() => navigate('/clocktower-records')}>목록</Button>
+            <Button color={theme.colors.primary} onClick={() => navigate('/clocktower-records')}>목록</Button>
           </ButtonRow>
 
           <DetailHead>
@@ -666,7 +667,7 @@ export default function ClockTowerRecordDetail() {
         <ButtonRow>
           <Button color="#1A7D55" onClick={() => onSubmit()}>저장</Button>
           <Button color="#B5651D" onClick={() => onSubmit({ draft: true })}>임시저장</Button>
-          <Button color="#988271" onClick={() => (id ? setEditMode(false) : navigate('/clocktower-records'))}>취소</Button>
+          <Button color={theme.colors.primary} onClick={() => (id ? setEditMode(false) : navigate('/clocktower-records'))}>취소</Button>
         </ButtonRow>
       </Box>
     </Wrapper>

@@ -11,6 +11,7 @@ import { showConfirmModal, showInputModal } from '../components/confirmAlert.tsx
 import { toast } from '../utils/toast';
 import { MdEdit } from 'react-icons/md';
 import Pagination from '../components/Pagination.tsx';
+import { theme } from '../styles/theme.ts';
 
 type Tab = 'social' | 'mahjong';
 
@@ -175,14 +176,14 @@ export default function Role() {
   return (
     <Wrapper>
       <NoticeBox>
-        <SearchWrapper bgColor="#988271">
+        <SearchWrapper bgColor={theme.colors.primary}>
           <TitleBox textColor="#ffffff">
             <h2>Grant Permission</h2>
             <p>사용자 권한을 부여하세요.</p>
           </TitleBox>
           <SearchBox>
             <SearchBar<string>
-              color="#988271"
+              color={theme.colors.primary}
               label="아이디,이름,연락처"
               onSearch={keyword => {
                 setPage(0);
@@ -202,7 +203,7 @@ export default function Role() {
         <TableBox>
           <TableWrapper>
             <ButtonBox>
-              <Button color="#988271" onClick={() => updateData()}>
+              <Button color={theme.colors.primary} onClick={() => updateData()}>
                 저장
               </Button>
             </ButtonBox>
@@ -385,7 +386,7 @@ const IconButton = styled.button`
   padding: 2px;
   border: none;
   background: transparent;
-  color: #988271;
+  color: ${theme.colors.primary};
   cursor: pointer;
 
   svg {
@@ -396,10 +397,10 @@ const IconButton = styled.button`
 
 const ActionButton = styled.button<WithTheme>`
   padding: 4px 12px;
-  border: 1px solid #988271;
+  border: 1px solid ${theme.colors.primary};
   border-radius: 4px;
   background: transparent;
-  color: #988271;
+  color: ${theme.colors.primary};
   font-size: ${({ theme }) => theme.sizes.xsmall};
   font-weight: ${({ theme }) => theme.weight.semiBold};
   cursor: pointer;
@@ -428,13 +429,13 @@ const TabButton = styled.button.withConfig({
   shouldForwardProp: prop => prop !== '$active',
 })<{ $active: boolean } & WithTheme>`
   padding: 8px 20px;
-  border: 1px solid #988271;
+  border: 1px solid ${theme.colors.primary};
   border-radius: 6px;
   cursor: pointer;
   font-weight: ${({ theme }) => theme.weight.semiBold};
   font-size: ${({ theme }) => theme.sizes.small};
-  background-color: ${({ $active }) => ($active ? '#988271' : '#ffffff')};
-  color: ${({ $active }) => ($active ? '#ffffff' : '#988271')};
+  background-color: ${({ $active }) => ($active ? theme.colors.primary : '#ffffff')};
+  color: ${({ $active }) => ($active ? '#ffffff' : theme.colors.primary)};
 
   @media ${({ theme }) => theme.device.mobile} {
     flex: 1;
@@ -546,7 +547,7 @@ const TitleBox = styled.div.withConfig({
   color: ${({ textColor }) => textColor};
 
   h2 {
-    font-family: 'Bungee', sans-serif;
+    font-family: ${theme.fonts.display};
     font-weight: ${({ theme }) => theme.weight.bold};
     font-size: ${({ theme }) => theme.sizes.xxlarge};
   }
@@ -591,7 +592,7 @@ const NoSearchBox = styled.div<WithTheme>`
     width: 100%;
   font-size: ${({ theme }) => theme.sizes.menu};
   font-weight: ${({ theme }) => theme.weight.semiBold};
-  font-family: 'Jua', sans-serif;\
+  font-family: ${theme.fonts.display};\
     margin-top: 20px;
 
   @media ${({ theme }) => theme.device.mobile} {

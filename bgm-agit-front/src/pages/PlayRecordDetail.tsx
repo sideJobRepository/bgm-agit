@@ -14,6 +14,7 @@ import { showConfirmModal } from '../components/confirmAlert.tsx';
 import MemberMultiSelect from '../components/MemberMultiSelect.tsx';
 import GameSelect from '../components/GameSelect.tsx';
 import type { ExperiencedMember, MemberOption, MurderGame } from '../types/murder.ts';
+import { theme } from '../styles/theme.ts';
 
 function todayStr() {
   const d = new Date();
@@ -161,7 +162,7 @@ export default function PlayRecordDetail() {
                 <Button color="#FF5E57" onClick={onDelete}>삭제</Button>
               </>
             )}
-            <Button color="#988271" onClick={() => navigate('/play-records')}>목록</Button>
+            <Button color={theme.colors.primary} onClick={() => navigate('/play-records')}>목록</Button>
           </ButtonRow>
 
           <DetailHead>
@@ -240,7 +241,7 @@ export default function PlayRecordDetail() {
 
         <ButtonRow>
           <Button color="#1A7D55" onClick={onSubmit}>저장</Button>
-          <Button color="#988271" onClick={() => (id ? setEditMode(false) : navigate('/play-records'))}>취소</Button>
+          <Button color={theme.colors.primary} onClick={() => (id ? setEditMode(false) : navigate('/play-records'))}>취소</Button>
         </ButtonRow>
       </Box>
     </Wrapper>

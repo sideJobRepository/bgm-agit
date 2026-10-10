@@ -192,14 +192,14 @@ export default function ReservationList() {
   return (
     <Wrapper>
       <NoticeBox>
-        <SearchWrapper bgColor="#988271">
+        <SearchWrapper bgColor={theme.colors.primary}>
           <TitleBox textColor="#ffffff">
             <h2>Reservation History</h2>
             <p>예약내역을 확인해보세요.</p>
           </TitleBox>
           <SearchBox>
             <SearchBar<[Date | null, Date | null]>
-              color="#988271"
+              color={theme.colors.primary}
               label="예약일자"
               onSearch={setDateRange}
             />
@@ -326,7 +326,7 @@ export default function ReservationList() {
                     {item.receiptUrl && (
                       <ActionButton
                         type="button"
-                        color="#988271"
+                        color={theme.colors.primary}
                         onClick={() =>
                           window.open(item.receiptUrl as string, '_blank', 'noopener,noreferrer')
                         }
@@ -646,7 +646,7 @@ const TitleBox = styled.div.withConfig({
   color: ${({ textColor }) => textColor};
 
   h2 {
-    font-family: 'Bungee', sans-serif;
+    font-family: ${theme.fonts.display};
     font-weight: ${({ theme }) => theme.weight.bold};
     font-size: ${({ theme }) => theme.sizes.xxlarge};
   }
@@ -692,7 +692,7 @@ const NoSearchBox = styled.div<WithTheme>`
   width: 100%;
   font-size: ${({ theme }) => theme.sizes.menu};
   font-weight: ${({ theme }) => theme.weight.semiBold};
-  font-family: 'Jua', sans-serif;
+  font-family: ${theme.fonts.display};
   margin-top: 20px;
 
   @media ${({ theme }) => theme.device.mobile} {

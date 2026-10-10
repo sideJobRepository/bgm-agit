@@ -11,6 +11,7 @@ import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts'
 import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import { playersLabel } from './MurderGames.tsx';
+import { theme } from '../styles/theme.ts';
 
 export default function MurderGameDetail() {
   const navigate = useNavigate();
@@ -131,7 +132,7 @@ export default function MurderGameDetail() {
                 <Button color="#FF5E57" onClick={onDelete}>삭제</Button>
               </>
             )}
-            <Button color="#988271" onClick={() => navigate('/murder-games')}>목록</Button>
+            <Button color={theme.colors.primary} onClick={() => navigate('/murder-games')}>목록</Button>
           </ButtonRow>
 
           <Cover>
@@ -217,7 +218,7 @@ export default function MurderGameDetail() {
         <ButtonRow>
           <Button color="#1A7D55" onClick={onSubmit}>저장</Button>
           <Button
-            color="#988271"
+            color={theme.colors.primary}
             onClick={() => (id ? setEditMode(false) : navigate('/murder-games'))}
           >
             취소

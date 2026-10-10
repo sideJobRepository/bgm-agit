@@ -12,6 +12,7 @@ import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import { ctPlayersLabel } from './ClockTowerGames.tsx';
 import type { ClockTowerCharacterType } from '../types/clocktower.ts';
+import { theme } from '../styles/theme.ts';
 
 const TYPE_OPTIONS: { value: ClockTowerCharacterType; label: string }[] = [
   { value: 'TOWNSFOLK', label: '마을주민' },
@@ -169,7 +170,7 @@ export default function ClockTowerGameDetail() {
                 <Button color="#FF5E57" onClick={onDelete}>삭제</Button>
               </>
             )}
-            <Button color="#988271" onClick={() => navigate('/clocktower-games')}>목록</Button>
+            <Button color={theme.colors.primary} onClick={() => navigate('/clocktower-games')}>목록</Button>
           </ButtonRow>
 
           <Cover>
@@ -305,7 +306,7 @@ export default function ClockTowerGameDetail() {
 
         <ButtonRow>
           <Button color="#1A7D55" onClick={onSubmit}>저장</Button>
-          <Button color="#988271" onClick={() => (id ? setEditMode(false) : navigate('/clocktower-games'))}>취소</Button>
+          <Button color={theme.colors.primary} onClick={() => (id ? setEditMode(false) : navigate('/clocktower-games'))}>취소</Button>
         </ButtonRow>
       </Box>
     </Wrapper>

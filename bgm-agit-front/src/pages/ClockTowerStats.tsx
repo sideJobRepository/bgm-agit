@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import { clockTowerStatsState } from '../recoil/state/clocktowerState.ts';
 import { useClockTowerStatsFetch } from '../recoil/clocktowerFetch.ts';
+import { theme } from '../styles/theme.ts';
 
 export default function ClockTowerStats() {
   const navigate = useNavigate();
@@ -97,7 +98,7 @@ const Header = styled.div.withConfig({ shouldForwardProp: p => p !== 'bgColor' }
 
 const TitleBox = styled.div<WithTheme>`
   h2 {
-    font-family: 'Bungee', sans-serif;
+    font-family: ${theme.fonts.display};
     font-size: ${({ theme }) => theme.sizes.xxlarge};
   }
   p {

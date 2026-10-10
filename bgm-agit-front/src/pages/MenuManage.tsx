@@ -10,6 +10,7 @@ import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts'
 import { mainMenuState } from '../recoil/state/mainState.ts';
 import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
+import { theme } from '../styles/theme.ts';
 
 interface MenuOption {
   menuId: number;
@@ -446,7 +447,7 @@ const Header = styled.div.withConfig({ shouldForwardProp: p => p !== 'bgColor' }
   color: #fff;
   padding: 20px;
   h2 {
-    font-family: 'Bungee', sans-serif;
+    font-family: ${theme.fonts.display};
     font-size: ${({ theme }) => theme.sizes.xxlarge};
   }
   p {
@@ -740,5 +741,5 @@ const RowButton = styled.button<{ $danger?: boolean } & WithTheme>`
   color: #fff;
   font-size: ${({ theme }) => theme.sizes.xsmall};
   white-space: nowrap;
-  background: ${({ $danger }) => ($danger ? '#FF5E57' : '#988271')};
+  background: ${({ $danger }) => ($danger ? '#FF5E57' : theme.colors.primary)};
 `;

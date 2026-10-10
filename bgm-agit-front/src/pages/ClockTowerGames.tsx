@@ -9,6 +9,7 @@ import { useClockTowerGameListFetch } from '../recoil/clocktowerFetch.ts';
 import { userState } from '../recoil/state/userState.ts';
 import Pagination from '../components/Pagination.tsx';
 import type { ClockTowerGame } from '../types/clocktower.ts';
+import { theme } from '../styles/theme.ts';
 
 export function ctPlayersLabel(min?: number | null, max?: number | null) {
   if (!min && !max) return '인원 미정';
@@ -114,7 +115,7 @@ const Header = styled.div.withConfig({ shouldForwardProp: p => p !== 'bgColor' }
 
 const TitleBox = styled.div<WithTheme>`
   h2 {
-    font-family: 'Bungee', sans-serif;
+    font-family: ${theme.fonts.display};
     font-size: ${({ theme }) => theme.sizes.xxlarge};
   }
   p {

@@ -24,6 +24,7 @@ import { useSearchParams } from 'react-router-dom';
 import { FaTrash } from 'react-icons/fa';
 import { userState } from '../recoil/state/userState.ts';
 import { FaDownload } from 'react-icons/fa';
+import { theme } from '../styles/theme.ts';
 
 type NewNoticeState = {
   id: number | null;
@@ -255,7 +256,7 @@ export default function NoticeDetail() {
               onClick={() => {
                 navigate(`/notice`);
               }}
-              color="#988271"
+              color={theme.colors.primary}
             >
               목록
             </Button>
@@ -318,7 +319,7 @@ export default function NoticeDetail() {
                   navigate('/notice');
                 }
               }}
-              color="#988271"
+              color={theme.colors.primary}
             >
               취소
             </Button>
@@ -589,7 +590,7 @@ const TitleBox = styled.div<WithTheme>`
     color: ${({ theme }) => theme.colors.subColor};
     font-size: ${({ theme }) => theme.sizes.xlarge};
     font-weight: ${({ theme }) => theme.weight.bold};
-    font-family: 'Jua', sans-serif;
+    font-family: ${theme.fonts.display};
 
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.sizes.menu};

@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import type { WithTheme } from '../styles/styled-props.ts';
+import { theme } from '../styles/theme.ts';
 
 export default function Error() {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ const ErrorBox = styled.div<WithTheme>`
 `;
 
 const Title = styled.h1<WithTheme>`
-  font-family: 'Bungee', sans-serif;
+  font-family: ${theme.fonts.display};
   font-size: ${({ theme }) => theme.sizes.xxlarge};
   color: red;
   margin-bottom: 16px;
@@ -51,7 +52,7 @@ const Title = styled.h1<WithTheme>`
 `;
 
 const Message = styled.p<WithTheme>`
-  font-family: 'Jua', sans-serif;
+  font-family: ${theme.fonts.display};
   font-size: ${({ theme }) => theme.sizes.bigLarge};
   color: ${({ theme }) => theme.colors.menuColor};
   line-height: 1.5;
@@ -63,7 +64,7 @@ const Message = styled.p<WithTheme>`
 `;
 
 const RetryButton = styled.button<WithTheme>`
-  font-family: 'Jua', sans-serif;
+  font-family: ${theme.fonts.display};
   background-color: ${({ theme }) => theme.colors.greenColor};
   color: ${({ theme }) => theme.colors.white};
   padding: 10px 24px 8px 24px;

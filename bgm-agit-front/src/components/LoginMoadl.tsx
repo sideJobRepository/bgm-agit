@@ -10,6 +10,7 @@ import { toast } from '../utils/toast';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { useFormLoginPost, useSignupPost, useRefetchMainMenu } from '../recoil/fetch.ts';
 import { formatPhoneNo } from '../utils/phone.ts';
+import { theme } from '../styles/theme.ts';
 
 type Props = {
   onClose: () => void;
@@ -264,7 +265,7 @@ const CenterModalBox = styled.div<WithTheme>`
   }
 
   h2 {
-    font-family: 'Jua', sans-serif;
+    font-family: ${theme.fonts.display};
     font-size: ${({ theme }) => theme.sizes.bigLarge};
     color: ${({ theme }) => theme.colors.purpleColor};
     font-weight: 600;
@@ -306,7 +307,7 @@ const SubmitButton = styled.button<WithTheme>`
   border-radius: 80px;
   background-color: ${({ theme }) => theme.colors.purpleColor};
   color: ${({ theme }) => theme.colors.white};
-  font-family: 'Jua', sans-serif;
+  font-family: ${theme.fonts.display};
   font-size: ${({ theme }) => theme.sizes.medium};
   font-weight: 600;
   cursor: pointer;
@@ -370,7 +371,7 @@ const BottomModalBox = styled.div<WithTheme>`
     color: ${({ theme }) => theme.colors.menuColor};
     border: 1px solid rgba(225, 225, 225, 1);
     border-radius: 80px;
-    font-family: 'Jua', sans-serif;
+    font-family: ${theme.fonts.display};
     font-size: ${({ theme }) => theme.sizes.medium};
     font-weight: 500;
     cursor: pointer;

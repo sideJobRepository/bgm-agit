@@ -5,6 +5,7 @@ import { FaUsers } from 'react-icons/fa';
 import { useSwipeable } from 'react-swipeable';
 import ImageLightbox from '../ImageLightbox.tsx';
 import { useNavigate } from 'react-router-dom';
+import { theme } from '../../styles/theme.ts';
 
 interface GridItem {
   image: string;
@@ -192,7 +193,7 @@ const NoSearchBox = styled.div<WithTheme>`
   width: 100%;
   font-size: ${({ theme }) => theme.sizes.menu};
   font-weight: ${({ theme }) => theme.weight.semiBold};
-  font-family: 'Jua', sans-serif;
+  font-family: ${theme.fonts.display};
   color: ${({ theme }) => theme.colors.menuColor};
 
   @media ${({ theme }) => theme.device.mobile} {

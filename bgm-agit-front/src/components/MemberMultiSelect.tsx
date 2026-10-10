@@ -4,6 +4,7 @@ import { MdClose } from 'react-icons/md';
 import api from '../utils/axiosInstance';
 import type { WithTheme } from '../styles/styled-props.ts';
 import type { MemberOption } from '../types/murder.ts';
+import { theme } from '../styles/theme.ts';
 
 interface Props {
   value: number[];
@@ -197,7 +198,7 @@ const Chip = styled.span<{ $me: boolean } & WithTheme>`
   border-radius: 16px;
   font-size: ${({ theme }) => theme.sizes.small};
   color: #fff;
-  background: ${({ $me }) => ($me ? '#093A6E' : '#988271')};
+  background: ${({ $me }) => ($me ? '#093A6E' : theme.colors.primary)};
 
   svg {
     cursor: pointer;

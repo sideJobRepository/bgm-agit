@@ -10,6 +10,7 @@ import { userState } from '../recoil/state/userState.ts';
 import Pagination from '../components/Pagination.tsx';
 import { useServiceRequestFetch } from '../recoil/serviceRequestFetch.ts';
 import { serviceRequestState } from '../recoil/state/serviceRequestState.ts';
+import { theme } from '../styles/theme.ts';
 
 export default function ServiceRequest() {
   const user = useRecoilValue(userState);
@@ -47,20 +48,20 @@ export default function ServiceRequest() {
   return (
     <Wrapper>
       <NoticeBox>
-        <SearchWrapper bgColor="#988271">
+        <SearchWrapper bgColor={theme.colors.primary}>
           <TitleBox textColor="#ffffff">
             <h2>Service Request</h2>
             <p>유지보수·기능 요청을 남겨주시면 확인 후 처리 결과를 답변으로 남깁니다.</p>
           </TitleBox>
           <SearchBox>
-            <SearchBar<string> color="#988271" label="제목 및 내용" onSearch={setSearchKeyword} />
+            <SearchBar<string> color={theme.colors.primary} label="제목 및 내용" onSearch={setSearchKeyword} />
           </SearchBox>
         </SearchWrapper>
         <TableBox>
           {isAdmin && (
             <ButtonBox>
               <Button
-                color="#988271"
+                color={theme.colors.primary}
                 onClick={() => {
                   navigate(`/serviceRequestDetail`);
                 }}
@@ -174,7 +175,7 @@ const StatusLabel = styled.label<WithTheme & { $gb: string }>`
   margin-right: 8px;
   color: #ffffff;
   font-size: ${({ theme }) => theme.sizes.xsmall};
-  background-color: ${({ $gb }) => ($gb === 'Y' ? '#1A7D55' : '#988271')};
+  background-color: ${({ $gb }) => ($gb === 'Y' ? '#1A7D55' : theme.colors.primary)};
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: ${({ theme }) => theme.sizes.xxsmall};
@@ -206,7 +207,7 @@ const TitleBox = styled.div.withConfig({
   color: ${({ textColor }) => textColor};
 
   h2 {
-    font-family: 'Bungee', sans-serif;
+    font-family: ${theme.fonts.display};
     font-weight: ${({ theme }) => theme.weight.bold};
     font-size: ${({ theme }) => theme.sizes.xxlarge};
   }
@@ -271,7 +272,7 @@ const NoSearchBox = styled.div<WithTheme>`
     width: 100%;
   font-size: ${({ theme }) => theme.sizes.menu};
   font-weight: ${({ theme }) => theme.weight.semiBold};
-  font-family: 'Jua', sans-serif;\
+  font-family: ${theme.fonts.display};\
     margin-top: 20px;
 
   @media ${({ theme }) => theme.device.mobile} {
