@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import type { WithTheme } from '../../styles/styled-props.ts';
 
 // 상단 고정 헤더 높이. TopHeader.styles.ts 의 HEADER_HEIGHT 와 같은 값이어야 한다
-const HEADER_HEIGHT = '72px';
+const HEADER_HEIGHT = '80px';
 
 export const Wrapper = styled.div<WithTheme>`
   display: flex;

@@ -5,7 +5,7 @@ import { GiHamburgerMenu } from 'react-icons/gi';
 import { buttonStyle, cardStyle } from '../../styles/mixins.ts';
 
 // 상단 고정 헤더 높이. Layout.styles.ts 의 HEADER_HEIGHT 와 같은 값이어야 한다
-const HEADER_HEIGHT = '72px';
+const HEADER_HEIGHT = '80px';
 
 // 대메뉴 칸 너비. 서브메뉴 열(SubLi)도 같은 너비라 위아래 칸이 맞는다
 const MENU_COLUMN_WIDTH = '160px';
@@ -43,16 +43,22 @@ export const Left = styled.div<WithTheme>`
   justify-content: flex-start;
   flex-shrink: 0;
 
+  /* 헤더 밖으로 나간 로고 투명 여백이 아래 브레드크럼 클릭을 가로채지 않게 자른다 */
+  overflow: hidden;
+
+  /* 로고 png 는 위아래 투명 여백이 커서(글자가 위쪽 40% 지점에 있다) 헤더보다 크게 그리고
+     margin-top 으로 글자를 헤더 세로 가운데에 맞춘다. 높이를 바꾸면 margin-top 도 같은 비율로 */
   img {
-    margin-top: 8px;
-    height: 64px;
+    margin-top: 24px;
+    margin-left: -16px;
+    height: 104px;
     width: auto;
     object-fit: contain;
     cursor: pointer;
 
     @media ${({ theme }) => theme.device.tablet} {
-      margin-left: -8px;
-      height: 56px;
+      margin-top: 20px;
+      height: 88px;
     }
   }
 `;
