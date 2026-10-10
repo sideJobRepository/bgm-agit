@@ -97,8 +97,8 @@ function GameCard({ item, onClick }: { item: MurderGame; onClick: () => void }) 
       <CardBody>
         <CardTitle>{item.name}</CardTitle>
         <Meta>
-          <span>👥 {playersLabel(item.minPlayers, item.maxPlayers)}</span>
-          {item.playMinutes ? <span>⏱ 약 {item.playMinutes}분</span> : null}
+          <span>{playersLabel(item.minPlayers, item.maxPlayers)}</span>
+          {item.playMinutes ? <span>약 {item.playMinutes}분</span> : null}
         </Meta>
       </CardBody>
     </Card>

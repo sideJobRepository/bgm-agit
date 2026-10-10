@@ -176,7 +176,7 @@ export default function Role() {
     <Wrapper>
       <NoticeBox>
         <SearchWrapper bgColor={theme.colors.primary}>
-          <TitleBox textColor="#ffffff">
+          <TitleBox textColor={theme.colors.white}>
             <h2>Grant Permission</h2>
             <p>사용자 권한을 부여하세요.</p>
           </TitleBox>

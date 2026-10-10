@@ -58,13 +58,13 @@ function RecordCard({ item, onClick }: { item: PlayRecordListItem; onClick: () =
   return (
     <Card onClick={onClick}>
       <Thumb>
-        {item.gameImageUrl ? <img src={item.gameImageUrl} alt={item.gameName} /> : <NoImage>🎭</NoImage>}
+        {item.gameImageUrl ? <img src={item.gameImageUrl} alt={item.gameName} /> : <NoImage>NO IMAGE</NoImage>}
       </Thumb>
       <CardBody>
         <CardTitle>{item.gameName}</CardTitle>
         <Meta>
-          <span>📅 {item.playDate}</span>
-          <span>👥 {item.participantCount}명</span>
+          <span>{item.playDate}</span>
+          <span>{item.participantCount}명</span>
         </Meta>
         <Participants>{item.participantNicknames.join(', ')}</Participants>
         <Writer>기록 {item.writerNickname}</Writer>

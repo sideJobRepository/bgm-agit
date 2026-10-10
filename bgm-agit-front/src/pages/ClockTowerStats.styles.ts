@@ -1,104 +1,143 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { theme } from '../styles/theme.ts';
+import { cardStyle, inputStyle, sectionTitleStyle, tableStyle } from '../styles/mixins.ts';
+
+const c = theme.colors;
 
 export const Box = styled.div`
-  padding: 10px;
+  padding: ${theme.space.xl} 0 ${theme.space.xxl};
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.lg} 0 ${theme.space.xl};
+  }
 `;
 
+// 예전엔 bgColor 색 띠였다. 흰 바탕 제목 영역이 되면서 bgColor 는 받기만 하고 쓰지 않는다
 export const Header = styled.div.withConfig({ shouldForwardProp: p => p !== 'bgColor' })<{ bgColor: string } & WithTheme>`
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  background-color: ${({ bgColor }) => bgColor};
-  color: #fff;
-  padding: 20px;
+  gap: ${theme.space.xl};
+  padding-bottom: ${theme.space.xl};
+  border-bottom: 1px solid ${c.border};
 
-  @media ${({ theme }) => theme.device.mobile} {
+  @media ${theme.device.mobile} {
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 12px;
-    padding: 14px;
+    align-items: stretch;
+    gap: ${theme.space.lg};
+    padding-bottom: ${theme.space.lg};
   }
 `;
 
 export const TitleBox = styled.div<WithTheme>`
+  ${sectionTitleStyle};
+  min-width: 0;
+
   h2 {
-    font-family: ${theme.fonts.display};
-    font-size: ${({ theme }) => theme.sizes.xxlarge};
+    font-size: 30px;
   }
-  p {
-    margin-top: 6px;
-    font-weight: ${({ theme }) => theme.weight.semiBold};
-    font-size: ${({ theme }) => theme.sizes.small};
+
+  @media ${theme.device.mobile} {
+    h2 {
+      font-size: 24px;
+    }
   }
 `;
 
 export const PickerRow = styled.div<WithTheme>`
   display: flex;
-  gap: 8px;
-  margin: 18px 0;
+  gap: ${theme.space.sm};
+  margin: ${theme.space.xl} 0 ${theme.space.lg};
 
   select {
-    height: 42px;
-    padding: 0 12px;
-    border: 1px solid ${({ theme }) => theme.colors.lineColor};
-    border-radius: 6px;
-    font-size: 16px;
+    ${inputStyle};
+    width: auto;
+    min-width: 120px;
+    cursor: pointer;
+  }
+
+  @media ${theme.device.mobile} {
+    margin: ${theme.space.lg} 0 ${theme.space.md};
+
+    select {
+      flex: 1;
+      min-width: 0;
+    }
   }
 `;
 
+// 표는 카드 안에서 가로 스크롤
 export const TableScroll = styled.div`
+  ${cardStyle};
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 `;
 
 export const Table = styled.table<WithTheme>`
-  width: 100%;
+  ${tableStyle};
   min-width: 360px;
-  border-collapse: collapse;
-  font-size: ${({ theme }) => theme.sizes.medium};
+  font-size: 15px;
 
   th,
   td {
-    padding: 12px;
-    text-align: center;
-    border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
+    padding: 14px 12px;
   }
+
+  td:nth-child(2) {
+    color: ${c.textStrong};
+    font-weight: 600;
+  }
+
+  strong {
+    color: ${c.textStrong};
+    font-weight: 800;
+  }
+
   tbody tr {
     cursor: pointer;
-    &:hover {
-      background: #f7f4ef;
+    transition: background 0.15s ease;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  @media ${theme.device.mobile} {
+    font-size: 14px;
+
+    th,
+    td {
+      padding: 14px 8px;
     }
   }
 `;
 
 export const Th = styled.th<WithTheme>`
-  background: #f1efe9;
-  color: ${({ theme }) => theme.colors.subColor};
-  font-weight: ${({ theme }) => theme.weight.bold};
+  font-size: 13px;
+  white-space: nowrap;
 `;
 
-export const Td = styled.td<WithTheme>`
-  color: ${({ theme }) => theme.colors.subColor};
-`;
+export const Td = styled.td<WithTheme>``;
 
+// 상위 3위는 포인트 색 원, 나머지는 숫자만
 export const Rank = styled.span<{ $top: boolean } & WithTheme>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ $top }) => ($top ? '#fff' : '#424548')};
-  background: ${({ $top }) => ($top ? '#4A2C82' : 'transparent')};
+  width: 30px;
+  height: 30px;
+  border-radius: ${theme.radius.pill};
+  font-weight: 800;
+  color: ${({ $top }) => ($top ? c.onPrimary : c.textMuted)};
+  background: ${({ $top }) => ($top ? c.primary : 'transparent')};
 `;
 
 export const Empty = styled.div<WithTheme>`
+  padding: 48px 0;
+  color: ${c.textMuted};
+  font-size: 15px;
+  font-weight: 600;
   text-align: center;
-  padding: 40px 0;
-  color: ${({ theme }) => theme.colors.navColor};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
 `;

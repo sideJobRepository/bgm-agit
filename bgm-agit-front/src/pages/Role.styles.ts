@@ -1,23 +1,41 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { theme } from '../styles/theme.ts';
+import {
+  badgeStyle,
+  buttonStyle,
+  focusRing,
+  sectionTitleStyle,
+  tableStyle,
+} from '../styles/mixins.ts';
+
+const c = theme.colors;
 
 export const NoticeBox = styled.div`
-  padding: 10px;
+  padding: ${theme.space.xl} 10px ${theme.space.xxl};
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.lg} 0 ${theme.space.xl};
+  }
 `;
 
+// 연동 = success, 미연동 = neutral. 관리자에게는 버튼으로 렌더된다
 export const LinkBadge = styled.span.withConfig({
   shouldForwardProp: prop => prop !== '$linked' && prop !== '$clickable',
 })<{ $linked: boolean; $clickable?: boolean } & WithTheme>`
-  display: inline-block;
-  padding: 2px 10px;
+  ${({ $linked }) => badgeStyle($linked ? 'success' : 'neutral')};
   border: none;
-  border-radius: 999px;
-  font-size: ${({ theme }) => theme.sizes.xsmall};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  color: ${({ $linked }) => ($linked ? '#1a7d55' : '#999999')};
-  background-color: ${({ $linked }) => ($linked ? 'rgba(26,125,85,0.12)' : '#f0f0f0')};
+  font-family: inherit;
   cursor: ${({ $clickable }) => ($clickable ? 'pointer' : 'default')};
+  ${focusRing};
+
+  &:hover {
+    ${({ $clickable }) => ($clickable ? `box-shadow: inset 0 0 0 1px currentColor;` : '')}
+  }
+
+  @media ${theme.device.mobile} {
+    ${({ $clickable }) => ($clickable ? `min-height: 36px; padding: 0 12px;` : '')}
+  }
 `;
 
 export const NicknameCell = styled.div`
@@ -31,125 +49,141 @@ export const IconButton = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 2px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   border: none;
+  border-radius: ${theme.radius.sm};
   background: transparent;
-  color: ${theme.colors.primary};
+  color: ${c.primary};
   cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: ${c.primarySoft};
+  }
+
+  ${focusRing};
 
   svg {
     width: 16px;
     height: 16px;
   }
+
+  @media ${theme.device.mobile} {
+    width: 44px;
+    height: 44px;
+  }
 `;
 
 export const ActionButton = styled.button<WithTheme>`
-  padding: 4px 12px;
-  border: 1px solid ${theme.colors.primary};
-  border-radius: 4px;
-  background: transparent;
-  color: ${theme.colors.primary};
-  font-size: ${({ theme }) => theme.sizes.xsmall};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  cursor: pointer;
-  white-space: nowrap;
+  ${buttonStyle('secondary', 'sm')};
+
+  @media ${theme.device.mobile} {
+    height: 44px;
+  }
 `;
 
 export const DeleteButton = styled.button<WithTheme>`
-  padding: 4px 12px;
-  border: 1px solid #ff5e57;
-  border-radius: 4px;
-  background: transparent;
-  color: #ff5e57;
-  font-size: ${({ theme }) => theme.sizes.xsmall};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  cursor: pointer;
-  white-space: nowrap;
+  ${buttonStyle('danger', 'sm')};
+
+  @media ${theme.device.mobile} {
+    height: 44px;
+  }
 `;
 
+// 알약형 탭. 활성 = 보라 채움
 export const TabBar = styled.div`
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
+  display: inline-flex;
+  gap: 4px;
+  margin-top: ${theme.space.xl};
+  padding: 4px;
+  border: 1px solid ${c.border};
+  border-radius: ${theme.radius.pill};
+  background: ${c.surfaceAlt};
+
+  @media ${theme.device.mobile} {
+    display: flex;
+    width: 100%;
+    margin-top: ${theme.space.lg};
+  }
 `;
 
 export const TabButton = styled.button.withConfig({
   shouldForwardProp: prop => prop !== '$active',
 })<{ $active: boolean } & WithTheme>`
-  padding: 8px 20px;
-  border: 1px solid ${theme.colors.primary};
-  border-radius: 6px;
+  min-height: 36px;
+  padding: 0 20px;
+  border: none;
+  border-radius: ${theme.radius.pill};
+  background-color: ${({ $active }) => ($active ? c.primary : 'transparent')};
+  color: ${({ $active }) => ($active ? c.onPrimary : c.textMuted)};
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  font-size: ${({ theme }) => theme.sizes.small};
-  background-color: ${({ $active }) => ($active ? theme.colors.primary : '#ffffff')};
-  color: ${({ $active }) => ($active ? '#ffffff' : theme.colors.primary)};
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 
-  @media ${({ theme }) => theme.device.mobile} {
+  &:hover {
+    color: ${({ $active }) => ($active ? c.onPrimary : c.textStrong)};
+  }
+
+  ${focusRing};
+
+  @media ${theme.device.mobile} {
     flex: 1;
-    font-size: ${({ theme }) => theme.sizes.xsmall};
+    min-height: 44px;
+    padding: 0 12px;
   }
 `;
 
 export const TableBox = styled.div`
-  padding: 40px 0;
-  overflow-x: auto;
+  padding: ${theme.space.xl} 0;
   width: 100%;
+`;
+
+// 넓은 표는 페이지가 아니라 이 상자 안에서 가로 스크롤
+export const TableWrapper = styled.div<WithTheme>`
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   white-space: nowrap;
 `;
 
-export const TableWrapper = styled.div<WithTheme>`
-  display: inline-block;
-  width: 100%;
-  @media ${({ theme }) => theme.device.mobile} {
-    width: unset;
-    min-width: 100%;
-  }
-`;
-
 export const Table = styled.table<WithTheme>`
-  width: 100%;
-  border-collapse: collapse;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  color: ${({ theme }) => theme.colors.subColor};
+  ${tableStyle};
+  border-top: 1px solid ${c.border};
 
-  /* 모바일: 컬럼이 많아 가로 스크롤(TableBox overflow-x) 되도록 최소 너비 보장 */
-  @media ${({ theme }) => theme.device.mobile} {
+  /* 모바일: 컬럼이 많아 가로 스크롤(TableWrapper overflow-x) 되도록 최소 너비 보장 */
+  @media ${theme.device.mobile} {
     min-width: 760px;
-    font-size: ${({ theme }) => theme.sizes.xsmall};
-  }
+    font-size: 13px;
 
-  th,
-  td {
-    padding: 14px;
-    text-align: center;
-
-    @media ${({ theme }) => theme.device.mobile} {
+    th,
+    td {
       padding: 10px 8px;
     }
   }
 
   tbody tr {
     cursor: pointer;
-
-    @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.sizes.xxsmall};
-    }
-  }
-
-  td {
-    border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
   }
 `;
 
 export const Th = styled.th<WithTheme>`
-  background-color: ${({ theme }) => theme.colors.basicColor};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
+  && {
+    font-size: 13px;
+    white-space: nowrap;
+  }
 `;
 
 export const Td = styled.td<WithTheme>`
   input[type='checkbox'] {
-    accent-color: ${({ theme }) => theme.colors.noticeColor};
+    width: 18px;
+    height: 18px;
+    accent-color: ${c.primary};
     cursor: pointer;
   }
 
@@ -157,114 +191,113 @@ export const Td = styled.td<WithTheme>`
     display: flex;
     align-items: center;
     justify-content: center;
+
     label {
-      display: flex;
+      display: inline-flex;
+      align-items: center;
       gap: 4px;
+      min-height: 32px;
+      color: ${c.textBody};
+      cursor: pointer;
 
       input {
-        margin-right: 6px;
-        accent-color: ${({ theme }) => theme.colors.noticeColor};
+        margin-right: 4px;
+        accent-color: ${c.primary};
         cursor: pointer;
+      }
+
+      &:has(input:checked) {
+        color: ${c.primary};
+        font-weight: 700;
+      }
+
+      @media ${theme.device.mobile} {
+        min-height: 44px;
       }
     }
   }
 `;
 
+// 예전엔 bgColor 색 띠였다. 지금은 흰 바탕 제목 영역이라 bgColor 는 아래 구분선에만 쓴다
 export const SearchWrapper = styled.div.withConfig({
   shouldForwardProp: prop => prop !== 'bgColor',
 })<{ bgColor: string } & WithTheme>`
   display: flex;
   width: 100%;
-  background-color: ${({ bgColor }) => bgColor};
-  padding: 20px;
-  align-items: center;
+  gap: ${theme.space.xl};
+  padding: 0 0 ${theme.space.xl};
+  align-items: flex-end;
+  border-bottom: 2px solid ${({ bgColor }) => bgColor};
 
-  @media ${({ theme }) => theme.device.mobile} {
+  @media ${theme.device.mobile} {
     flex-direction: column;
-    padding: 10px;
+    align-items: stretch;
+    gap: ${theme.space.lg};
+    padding-bottom: ${theme.space.lg};
   }
 `;
 
+// textColor 는 색 띠 위 흰 글씨용이었다. 흰 바탕이 됐으므로 글자색은 토큰으로 고정한다
 export const TitleBox = styled.div.withConfig({
   shouldForwardProp: prop => prop !== 'textColor',
 })<{ textColor: string } & WithTheme>`
+  ${sectionTitleStyle};
   display: flex;
   flex-direction: column;
   width: 60%;
-  height: 60px;
-  color: ${({ textColor }) => textColor};
+  min-width: 0;
 
   h2 {
-    font-family: ${theme.fonts.display};
-    font-weight: ${({ theme }) => theme.weight.bold};
-    font-size: ${({ theme }) => theme.sizes.xxlarge};
-  }
-  p {
-    margin-top: auto;
-    font-weight: ${({ theme }) => theme.weight.semiBold};
-    font-size: ${({ theme }) => theme.sizes.medium};
+    font-size: 30px;
   }
 
-  @media ${({ theme }) => theme.device.mobile} {
+  @media ${theme.device.mobile} {
     width: 100%;
-    height: 40px;
-    text-align: center;
-    margin-bottom: 10px;
 
     h2 {
-      font-size: ${({ theme }) => theme.sizes.large};
-    }
-    p {
-      font-size: ${({ theme }) => theme.sizes.xsmall};
+      font-size: 24px;
     }
   }
 `;
 
 export const SearchBox = styled.div<WithTheme>`
   width: 40%;
+  min-width: 0;
 
-  @media ${({ theme }) => theme.device.mobile} {
+  @media ${theme.device.mobile} {
     width: 100%;
   }
 `;
 
 export const PaginationWrapper = styled.div`
   text-align: center;
-  margin-top: 20px;
+  margin-top: ${theme.space.xl};
+  white-space: normal;
 `;
 
 export const NoSearchBox = styled.div<WithTheme>`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-  font-size: ${({ theme }) => theme.sizes.menu};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  font-family: ${theme.fonts.display};\
-    margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 120px;
+  margin-top: ${theme.space.lg};
+  color: ${c.textMuted};
+  font-size: 16px;
+  font-weight: 600;
 
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
+  @media ${theme.device.mobile} {
+    font-size: 14px;
   }
 `;
 
 export const ButtonBox = styled.div`
   display: flex;
   width: 100%;
-  justify-content: right;
-  margin-bottom: 10px;
+  justify-content: flex-end;
+  margin-bottom: ${theme.space.lg};
 `;
 
 export const Button = styled.button<WithTheme & { color: string }>`
-  padding: 6px 16px;
-  background-color: ${({ color }) => color};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.medium};
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
-  }
+  ${buttonStyle('primary', 'md')};
 `;

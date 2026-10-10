@@ -82,8 +82,8 @@ function GameCard({ item, onClick }: { item: ClockTowerGame; onClick: () => void
       <CardBody>
         <CardTitle>{item.name}</CardTitle>
         <Meta>
-          <span>👥 {ctPlayersLabel(item.minPlayers, item.maxPlayers)}</span>
-          {item.playMinutes ? <span>⏱ 약 {item.playMinutes}분</span> : null}
+          <span>{ctPlayersLabel(item.minPlayers, item.maxPlayers)}</span>
+          {item.playMinutes ? <span>약 {item.playMinutes}분</span> : null}
         </Meta>
       </CardBody>
     </Card>

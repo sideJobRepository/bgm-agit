@@ -9,11 +9,12 @@ import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts'
 import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import { playersLabel } from './MurderGames.tsx';
-import { theme } from '../styles/theme.ts';
 import {
   Box,
   ButtonRow,
   Button,
+  DetailCard,
+  DetailInfo,
   Cover,
   NoImage,
   DetailTitle,
@@ -143,21 +144,25 @@ export default function MurderGameDetail() {
           <ButtonRow>
             {user?.roles.includes('ROLE_ADMIN') && (
               <>
-                <Button color="#093A6E" onClick={() => setEditMode(true)}>수정</Button>
-                <Button color="#FF5E57" onClick={onDelete}>삭제</Button>
+                <Button $variant="primary" onClick={() => setEditMode(true)}>수정</Button>
+                <Button $variant="danger" onClick={onDelete}>삭제</Button>
               </>
             )}
-            <Button color={theme.colors.primary} onClick={() => navigate('/murder-games')}>목록</Button>
+            <Button $variant="secondary" onClick={() => navigate('/murder-games')}>목록</Button>
           </ButtonRow>
 
-          <Cover>
-            {detail?.imageUrl ? <img src={detail.imageUrl} alt={detail.name} /> : <NoImage>NO IMAGE</NoImage>}
-          </Cover>
-          <DetailTitle>{detail?.name}</DetailTitle>
-          <DetailMeta>
-            <span>👥 {playersLabel(detail?.minPlayers, detail?.maxPlayers)}</span>
-            {detail?.playMinutes ? <span>⏱ 약 {detail.playMinutes}분</span> : null}
-          </DetailMeta>
+          <DetailCard>
+            <Cover>
+              {detail?.imageUrl ? <img src={detail.imageUrl} alt={detail.name} /> : <NoImage>NO IMAGE</NoImage>}
+            </Cover>
+            <DetailInfo>
+              <DetailTitle>{detail?.name}</DetailTitle>
+              <DetailMeta>
+                <span>{playersLabel(detail?.minPlayers, detail?.maxPlayers)}</span>
+                {detail?.playMinutes ? <span>약 {detail.playMinutes}분</span> : null}
+              </DetailMeta>
+            </DetailInfo>
+          </DetailCard>
         </Box>
       </Wrapper>
     );
@@ -231,9 +236,9 @@ export default function MurderGameDetail() {
         </Field>
 
         <ButtonRow>
-          <Button color="#1A7D55" onClick={onSubmit}>저장</Button>
+          <Button $variant="primary" onClick={onSubmit}>저장</Button>
           <Button
-            color={theme.colors.primary}
+            $variant="secondary"
             onClick={() => (id ? setEditMode(false) : navigate('/murder-games'))}
           >
             취소

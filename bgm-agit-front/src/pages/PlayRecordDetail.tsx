@@ -13,7 +13,6 @@ import { showConfirmModal } from '../components/confirmAlert.tsx';
 import MemberMultiSelect from '../components/MemberMultiSelect.tsx';
 import GameSelect from '../components/GameSelect.tsx';
 import type { ExperiencedMember, MemberOption, MurderGame } from '../types/murder.ts';
-import { theme } from '../styles/theme.ts';
 
 function todayStr() {
   const d = new Date();
@@ -157,20 +156,20 @@ export default function PlayRecordDetail() {
           <ButtonRow>
             {detail?.canManage && (
               <>
-                <Button color="#093A6E" onClick={() => setEditMode(true)}>수정</Button>
-                <Button color="#FF5E57" onClick={onDelete}>삭제</Button>
+                <Button $variant="primary" onClick={() => setEditMode(true)}>수정</Button>
+                <Button $variant="danger" onClick={onDelete}>삭제</Button>
               </>
             )}
-            <Button color={theme.colors.primary} onClick={() => navigate('/play-records')}>목록</Button>
+            <Button $variant="secondary" onClick={() => navigate('/play-records')}>목록</Button>
           </ButtonRow>
 
           <DetailHead>
             <Thumb>
-              {detail?.gameImageUrl ? <img src={detail.gameImageUrl} alt={detail.gameName} /> : <NoImage>🎭</NoImage>}
+              {detail?.gameImageUrl ? <img src={detail.gameImageUrl} alt={detail.gameName} /> : <NoImage>NO IMAGE</NoImage>}
             </Thumb>
             <div>
               <DetailTitle>{detail?.gameName}</DetailTitle>
-              <DetailMeta>📅 {detail?.playDate}</DetailMeta>
+              <DetailMeta>{detail?.playDate}</DetailMeta>
               <DetailMeta>기록 {detail?.writerNickname}</DetailMeta>
             </div>
           </DetailHead>
@@ -239,8 +238,8 @@ export default function PlayRecordDetail() {
         </Field>
 
         <ButtonRow>
-          <Button color="#1A7D55" onClick={onSubmit}>저장</Button>
-          <Button color={theme.colors.primary} onClick={() => (id ? setEditMode(false) : navigate('/play-records'))}>취소</Button>
+          <Button $variant="primary" onClick={onSubmit}>저장</Button>
+          <Button $variant="secondary" onClick={() => (id ? setEditMode(false) : navigate('/play-records'))}>취소</Button>
         </ButtonRow>
       </Box>
     </Wrapper>

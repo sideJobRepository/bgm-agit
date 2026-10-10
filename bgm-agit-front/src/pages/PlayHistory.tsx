@@ -57,7 +57,7 @@ export default function PlayHistory() {
           {(history?.games ?? []).map(g => (
             <Card key={g.gameId} onClick={() => navigate(`/murderGameDetail?id=${g.gameId}`)}>
               <Thumb>
-                {g.gameImageUrl ? <img src={g.gameImageUrl} alt={g.gameName} /> : <NoImage>🎭</NoImage>}
+                {g.gameImageUrl ? <img src={g.gameImageUrl} alt={g.gameName} /> : <NoImage>NO IMAGE</NoImage>}
               </Thumb>
               <CardBody>
                 <CardTitle>{g.gameName}</CardTitle>
@@ -87,4 +87,4 @@ export default function PlayHistory() {
       </Box>
     </Wrapper>
   );
-}
+}

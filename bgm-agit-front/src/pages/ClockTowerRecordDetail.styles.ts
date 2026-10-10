@@ -1,48 +1,80 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
+import { theme } from '../styles/theme.ts';
+import {
+  badgeStyle,
+  buttonStyle,
+  cardStyle,
+  focusRing,
+  inputStyle,
+  type ButtonVariant,
+} from '../styles/mixins.ts';
+
+const c = theme.colors;
+
+// 선인승/악마승 진영색. 의미를 담은 색이라 토큰으로 바꾸지 않는다
+const GOOD_COLOR = '#1565C0';
+const EVIL_COLOR = '#6A1B9A';
 
 export const Box = styled.div`
-  padding: 16px;
   max-width: 720px;
   margin: 0 auto;
+  padding: ${theme.space.xl} 0 ${theme.space.xxl};
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.lg} 0 ${theme.space.xl};
+  }
 `;
 
 export const ButtonRow = styled.div`
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-`;
+  flex-wrap: wrap;
+  gap: ${theme.space.sm};
+  margin-bottom: ${theme.space.xl};
 
-export const Button = styled.button.withConfig({ shouldForwardProp: p => p !== 'color' })<{ color: string } & WithTheme>`
-  padding: 8px 16px;
-  background: ${({ color }) => color};
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  &:hover {
-    opacity: 0.9;
+  @media ${theme.device.mobile} {
+    > button {
+      flex: 1;
+    }
   }
 `;
 
+export const Button = styled.button.withConfig({ shouldForwardProp: p => p !== '$variant' })<
+  { $variant?: ButtonVariant } & WithTheme
+>`
+  ${({ $variant }) => buttonStyle($variant ?? 'primary', 'md')};
+`;
+
 export const DetailHead = styled.div`
+  ${cardStyle};
   display: flex;
-  gap: 14px;
+  gap: ${theme.space.lg};
   align-items: center;
+  padding: ${theme.space.lg};
+
+  > div:last-child {
+    min-width: 0;
+  }
 `;
 
 export const Thumb = styled.div`
   flex: 0 0 96px;
   width: 96px;
   height: 96px;
-  border-radius: 10px;
+  border-radius: ${theme.radius.md};
   overflow: hidden;
-  background: #f1efe9;
+  background: ${c.surfaceAlt};
+
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  @media ${theme.device.mobile} {
+    flex-basis: 80px;
+    width: 80px;
+    height: 80px;
   }
 `;
 
@@ -53,61 +85,75 @@ export const NoImage = styled.div`
   align-items: center;
   justify-content: center;
   font-size: 34px;
+  color: ${c.textSubtle};
 `;
 
 export const DetailTitle = styled.h2<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.xlarge};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
+  margin: 0 0 ${theme.space.xs};
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: ${c.textStrong};
+  word-break: keep-all;
+
+  @media ${theme.device.mobile} {
+    font-size: 20px;
+  }
 `;
 
 export const DetailMeta = styled.div<WithTheme>`
-  margin-top: 4px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.navColor};
+  margin-top: 2px;
+  font-size: 14px;
+  color: ${c.textMuted};
 `;
 
+// 진영색 배지(흰 글씨)
 export const BigResult = styled.span<{ $evil: boolean }>`
-  display: inline-block;
-  margin-top: 8px;
-  padding: 4px 14px;
-  border-radius: 14px;
-  font-weight: 700;
-  color: #fff;
-  background: ${({ $evil }) => ($evil ? '#6A1B9A' : '#1565C0')};
+  ${badgeStyle('primary')};
+  margin-top: ${theme.space.sm};
+  padding: 4px 12px;
+  font-size: 13px;
+  color: ${c.onPrimary};
+  background: ${({ $evil }) => ($evil ? EVIL_COLOR : GOOD_COLOR)};
 `;
 
 export const DraftBadge = styled.span`
-  display: inline-block;
-  margin-top: 8px;
-  padding: 4px 14px;
-  border-radius: 14px;
-  font-weight: 700;
-  color: #fff;
-  background: #B5651D;
+  ${badgeStyle('accent')};
+  margin-top: ${theme.space.sm};
+  padding: 4px 12px;
+  font-size: 13px;
 `;
 
 export const SectionTitle = styled.h3<WithTheme>`
-  margin: 22px 0 10px;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
+  margin: ${theme.space.xxl} 0 ${theme.space.md};
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: ${c.textStrong};
+
+  @media ${theme.device.mobile} {
+    margin-top: ${theme.space.xl};
+    font-size: 17px;
+  }
 `;
 
 export const PartViewList = styled.div`
+  ${cardStyle};
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  overflow: hidden;
 `;
 
 export const PartViewItem = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 8px;
-  padding: 10px 12px;
+  gap: ${theme.space.md};
+  padding: ${theme.space.md} ${theme.space.lg};
+
+  & + & {
+    border-top: 1px solid ${c.border};
+  }
 `;
 
 export const PartLeft = styled.div`
@@ -118,163 +164,184 @@ export const PartLeft = styled.div`
 `;
 
 export const PartNick = styled.span<WithTheme>`
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
+  font-size: 15px;
+  font-weight: 700;
+  color: ${c.textStrong};
 `;
 
 export const PartChar = styled.span<WithTheme>`
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.navColor};
+  font-size: 14px;
+  color: ${c.textMuted};
 `;
 
+// 캐릭터 타입색(마을주민·외부인·하수인·악마). 의미를 담은 색이라 tsx 값 그대로
 export const TypeTag = styled.span.withConfig({ shouldForwardProp: p => p !== 'color' })<{ color: string }>`
+  ${badgeStyle('primary')};
   padding: 1px 8px;
-  border-radius: 10px;
   font-size: 11px;
-  color: #fff;
+  color: ${c.onPrimary};
   background: ${({ color }) => color};
 `;
 
+// 승 = success, 패 = neutral
 export const WinTag = styled.span<{ $win: boolean }>`
+  ${({ $win }) => badgeStyle($win ? 'success' : 'neutral')};
   flex: 0 0 auto;
-  padding: 3px 12px;
-  border-radius: 12px;
+  padding: 4px 12px;
   font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-  background: ${({ $win }) => ($win ? '#2E7D32' : '#9E9E9E')};
 `;
 
 export const Memo = styled.div<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.medium};
-  color: ${({ theme }) => theme.colors.subColor};
+  ${cardStyle};
+  padding: ${theme.space.lg};
+  font-size: 15px;
+  color: ${c.textBody};
   line-height: 1.6;
   white-space: pre-line;
+  word-break: break-word;
 `;
 
 export const FormTitle = styled.h2<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.xlarge};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
-  margin-bottom: 18px;
+  margin: 0 0 ${theme.space.xl};
+  padding-bottom: ${theme.space.lg};
+  border-bottom: 1px solid ${c.border};
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: ${c.textStrong};
+
+  @media ${theme.device.mobile} {
+    font-size: 24px;
+  }
 `;
 
 export const ResultToggle = styled.div`
   display: flex;
-  gap: 8px;
+  gap: ${theme.space.sm};
 `;
 
+// 진영색 토글. $color 는 진영색이라 그대로 쓴다
 export const ToggleBtn = styled.button.withConfig({
   shouldForwardProp: p => p !== '$active' && p !== '$color',
 })<{ $active: boolean; $color: string }>`
   flex: 1;
   height: 44px;
-  border-radius: 8px;
+  border-radius: ${theme.radius.md};
   cursor: pointer;
+  font-family: inherit;
   font-size: 15px;
   font-weight: 700;
   border: 1px solid ${({ $color }) => $color};
-  color: ${({ $active, $color }) => ($active ? '#fff' : $color)};
-  background: ${({ $active, $color }) => ($active ? $color : '#fff')};
+  color: ${({ $active, $color }) => ($active ? c.onPrimary : $color)};
+  background: ${({ $active, $color }) => ($active ? $color : c.surface)};
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+  ${focusRing};
 `;
 
 export const SearchBox = styled.div<WithTheme>`
   position: relative;
-  margin-bottom: 10px;
+  margin-bottom: ${theme.space.md};
 
   input {
-    width: 100%;
-    height: 42px;
-    padding: 0 10px;
-    border: 1px solid #c4c4c4;
-    border-radius: 6px;
-    font-size: 16px;
-    box-sizing: border-box;
-    &:focus {
-      outline: none;
-      border-color: #4a2c82;
-    }
+    ${inputStyle};
   }
 `;
 
 export const Dropdown = styled.div<WithTheme>`
   position: absolute;
   z-index: 20;
-  top: 46px;
+  top: calc(100% + 4px);
   left: 0;
   right: 0;
   max-height: 240px;
   overflow-y: auto;
-  background: #fff;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 6px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+  background: ${c.surface};
+  border: 1px solid ${c.border};
+  border-radius: ${theme.radius.md};
+  box-shadow: ${theme.shadow.md};
 `;
 
 export const Option = styled.button<WithTheme>`
   display: flex;
+  align-items: center;
   width: 100%;
-  padding: 11px 12px;
-  background: #fff;
+  min-height: 44px;
+  padding: 0 14px;
+  background: ${c.surface};
   border: none;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid ${c.border};
   text-align: left;
   cursor: pointer;
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.subColor};
+  font-family: inherit;
+  font-size: 15px;
+  color: ${c.textStrong};
+
+  &:last-child {
+    border-bottom: none;
+  }
+
   &:hover {
-    background: #f1efe9;
+    background: ${c.primarySoft};
+  }
+
+  ${focusRing};
+  &:focus-visible {
+    outline-offset: -2px;
   }
 `;
 
 export const EmptyOption = styled.div<WithTheme>`
-  padding: 12px;
+  padding: ${theme.space.md};
   text-align: center;
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.navColor};
+  font-size: 14px;
+  color: ${c.textMuted};
 `;
 
 export const PartEditList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: ${theme.space.sm};
 `;
 
 export const PartEditRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: ${theme.space.sm};
 
   select {
+    ${inputStyle};
     flex: 1;
     min-width: 0;
-    height: 42px;
-    padding: 0 8px;
-    border: 1px solid #c4c4c4;
-    border-radius: 6px;
-    font-size: 16px;
+    width: auto;
   }
 `;
 
+// 참가자 닉네임 칩
 export const PartNickEdit = styled.span<WithTheme>`
+  ${badgeStyle('primary')};
   flex: 0 0 110px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.subColor};
+  justify-content: flex-start;
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+
+  @media ${theme.device.mobile} {
+    flex-basis: 96px;
+  }
 `;
 
 export const MeTag = styled.span`
   font-size: 11px;
-  color: #4a2c82;
+  font-weight: 700;
+  color: ${c.accentText};
 `;
 
 export const RemovePart = styled.button`
@@ -282,73 +349,100 @@ export const RemovePart = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border: none;
-  border-radius: 6px;
-  background: #f1efe9;
-  color: #888;
+  width: 44px;
+  height: 44px;
+  border: 1px solid ${c.border};
+  border-radius: ${theme.radius.md};
+  background: ${c.surface};
+  color: ${c.textMuted};
   cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
   svg {
     font-size: 18px;
   }
+
+  &:hover {
+    background: ${c.surfaceAlt};
+    color: ${c.danger};
+  }
+
+  ${focusRing};
 `;
 
 export const Hint = styled.div<WithTheme>`
   margin-top: 6px;
-  font-size: ${({ theme }) => theme.sizes.xsmall};
-  color: ${({ theme }) => theme.colors.navColor};
+  font-size: 13px;
+  color: ${c.textMuted};
 `;
 
 export const LabelRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: ${theme.space.sm};
+
+  > label {
+    font-size: 14px;
+    font-weight: 700;
+    color: ${c.textStrong};
+  }
 `;
 
 export const LoadButton = styled.button`
-  padding: 5px 12px;
-  background: #fff;
-  color: #4a2c82;
-  border: 1px solid #4a2c82;
-  border-radius: 14px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  &:hover {
-    background: #f3eefc;
+  ${buttonStyle('secondary', 'sm')};
+  border-radius: ${theme.radius.pill};
+  font-size: 13px;
+
+  @media ${theme.device.mobile} {
+    height: 44px;
   }
 `;
 
 export const LoadPanel = styled.div<WithTheme>`
-  margin-bottom: 10px;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 8px;
+  ${cardStyle};
+  margin-bottom: ${theme.space.md};
   overflow: hidden;
-  background: #fff;
 `;
 
 export const LoadPanelHead = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
-  background: #f7f4ef;
-  font-size: ${({ theme }) => theme.sizes.small};
+  padding: ${theme.space.sm} ${theme.space.sm} ${theme.space.sm} ${theme.space.lg};
+  background: ${c.surfaceAlt};
+  font-size: 14px;
   font-weight: 700;
-  color: ${({ theme }) => theme.colors.subColor};
+  color: ${c.textStrong};
 `;
 
 export const LoadClose = styled.button`
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
   border: none;
+  border-radius: ${theme.radius.md};
   background: transparent;
   cursor: pointer;
-  color: #888;
+  color: ${c.textMuted};
+
   svg {
     font-size: 18px;
+  }
+
+  &:hover {
+    background: ${c.surface};
+  }
+
+  ${focusRing};
+
+  @media ${theme.device.mobile} {
+    width: 44px;
+    height: 44px;
   }
 `;
 
@@ -357,14 +451,22 @@ export const LoadItem = styled.button<WithTheme>`
   flex-direction: column;
   gap: 3px;
   width: 100%;
-  padding: 10px 12px;
-  background: #fff;
+  min-height: 44px;
+  padding: ${theme.space.md} ${theme.space.lg};
+  background: ${c.surface};
   border: none;
-  border-top: 1px solid #f3f3f3;
+  border-top: 1px solid ${c.border};
+  font-family: inherit;
   text-align: left;
   cursor: pointer;
+
   &:hover {
-    background: #f7f4ef;
+    background: ${c.primarySoft};
+  }
+
+  ${focusRing};
+  &:focus-visible {
+    outline-offset: -2px;
   }
 `;
 
@@ -372,32 +474,36 @@ export const LoadItemTop = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: ${theme.space.sm};
+  width: 100%;
+
   strong {
-    font-size: ${({ theme }) => theme.sizes.small};
+    font-size: 14px;
     font-weight: 700;
-    color: ${({ theme }) => theme.colors.subColor};
+    color: ${c.textStrong};
   }
+
   span {
-    font-size: ${({ theme }) => theme.sizes.xsmall};
-    color: ${({ theme }) => theme.colors.navColor};
+    font-size: 12px;
+    color: ${c.textMuted};
     white-space: nowrap;
   }
 `;
 
 export const LoadItemNicks = styled.div<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.xsmall};
-  color: ${({ theme }) => theme.colors.navColor};
+  width: 100%;
+  font-size: 12px;
+  color: ${c.textMuted};
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 `;
 
 export const LoadEmpty = styled.div<WithTheme>`
-  padding: 16px 12px;
+  padding: ${theme.space.lg};
   text-align: center;
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.navColor};
+  font-size: 14px;
+  color: ${c.textMuted};
 `;
 
 export const PickerWrap = styled.div`
@@ -409,50 +515,60 @@ export const PickerWrap = styled.div`
 export const PickerControl = styled.button.withConfig({ shouldForwardProp: p => p !== '$placeholder' })<{
   $placeholder: boolean;
 } & WithTheme>`
-  width: 100%;
-  height: 42px;
-  padding: 0 12px;
+  ${inputStyle};
+  display: block;
   text-align: left;
-  background: #fff;
-  border: 1px solid #c4c4c4;
-  border-radius: 6px;
-  font-size: 16px;
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: ${({ $placeholder }) => ($placeholder ? '#9b9b9b' : '#333')};
+  color: ${({ $placeholder }) => ($placeholder ? c.textMuted : c.textStrong)};
+  ${focusRing};
 
   &:disabled {
-    background: #f3f3f3;
+    background: ${c.surfaceAlt};
+    border-color: ${c.border};
+    color: ${c.textMuted};
     cursor: not-allowed;
-    color: #b5b5b5;
   }
 `;
 
 export const PickerDropdown = styled.div<WithTheme>`
   position: absolute;
   z-index: 30;
-  top: 46px;
+  top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: #fff;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 6px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  background: ${c.surface};
+  border: 1px solid ${c.border};
+  border-radius: ${theme.radius.md};
+  box-shadow: ${theme.shadow.md};
   overflow: hidden;
 `;
 
 export const PickerSearch = styled.input`
   width: 100%;
-  height: 40px;
-  padding: 0 12px;
+  height: 44px;
+  padding: 0 14px;
   border: none;
-  border-bottom: 1px solid #eee;
-  font-size: 16px;
+  border-bottom: 1px solid ${c.border};
+  background: ${c.surface};
+  color: ${c.textStrong};
+  font-family: inherit;
+  font-size: 15px;
   box-sizing: border-box;
+
+  &::placeholder {
+    color: ${c.textSubtle};
+  }
+
   &:focus {
     outline: none;
+    background: ${c.surfaceSunken};
+  }
+
+  @media ${theme.device.mobile} {
+    font-size: 16px;
   }
 `;
 
@@ -460,18 +576,28 @@ export const FilterRow = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding: 8px 10px;
-  border-bottom: 1px solid #f3f3f3;
+  padding: ${theme.space.sm} 10px;
+  border-bottom: 1px solid ${c.border};
 `;
 
 export const FilterChip = styled.button<{ $active: boolean } & WithTheme>`
-  padding: 4px 10px;
-  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: ${theme.radius.pill};
+  font-family: inherit;
   font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
-  border: 1px solid ${({ $active }) => ($active ? '#4a2c82' : '#d8d8d8')};
-  color: ${({ $active }) => ($active ? '#fff' : '#666')};
-  background: ${({ $active }) => ($active ? '#4a2c82' : '#fff')};
+  border: 1px solid ${({ $active }) => ($active ? c.primary : c.borderStrong)};
+  color: ${({ $active }) => ($active ? c.onPrimary : c.textMuted)};
+  background: ${({ $active }) => ($active ? c.primary : c.surface)};
+  ${focusRing};
+
+  @media ${theme.device.mobile} {
+    height: 36px;
+  }
 `;
 
 export const PickerList = styled.div`
@@ -482,63 +608,70 @@ export const PickerList = styled.div`
 export const PickerOption = styled.button<WithTheme>`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: ${theme.space.sm};
   width: 100%;
-  padding: 10px 12px;
-  background: #fff;
+  min-height: 44px;
+  padding: 0 14px;
+  background: ${c.surface};
   border: none;
-  border-bottom: 1px solid #f3f3f3;
+  border-bottom: 1px solid ${c.border};
+  font-family: inherit;
+  font-size: 14px;
+  color: ${c.textStrong};
   text-align: left;
   cursor: pointer;
 
   strong {
-    font-size: ${({ theme }) => theme.sizes.small};
-    color: ${({ theme }) => theme.colors.subColor};
+    font-size: 14px;
+    color: ${c.textStrong};
     font-weight: 600;
   }
+
   span {
-    font-size: ${({ theme }) => theme.sizes.xsmall};
-    color: ${({ theme }) => theme.colors.navColor};
+    font-size: 12px;
+    color: ${c.textMuted};
   }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
   &:hover {
-    background: #f1efe9;
+    background: ${c.primarySoft};
+  }
+
+  ${focusRing};
+  &:focus-visible {
+    outline-offset: -2px;
   }
 `;
 
 export const PickerEmpty = styled.div<WithTheme>`
-  padding: 12px;
+  padding: ${theme.space.md};
   text-align: center;
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.navColor};
+  font-size: 14px;
+  color: ${c.textMuted};
 `;
 
 export const Field = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 18px;
+  gap: ${theme.space.sm};
+  margin-bottom: ${theme.space.xl};
 
   > label {
-    font-size: ${({ theme }) => theme.sizes.small};
-    font-weight: 600;
-    color: ${({ theme }) => theme.colors.subColor};
+    font-size: 14px;
+    font-weight: 700;
+    color: ${c.textStrong};
   }
+
   input[type='date'],
   textarea {
-    padding: 10px;
-    border: 1px solid #c4c4c4;
-    border-radius: 6px;
-    font-size: 16px;
-    &:focus {
-      outline: none;
-      border-color: #4a2c82;
-    }
+    ${inputStyle};
   }
-  input[type='date'] {
-    height: 42px;
-  }
+
   textarea {
     resize: vertical;
-    font-family: inherit;
+    line-height: 1.5;
   }
 `;

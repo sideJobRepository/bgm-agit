@@ -6,7 +6,6 @@ import { toast } from '../../utils/toast';
 import { showConfirmModal } from '../confirmAlert.tsx';
 import { useDeletePost, useInsertPost, useUpdatePost } from '../../recoil/fetch.ts';
 import { ROOM_LINKS, type Room } from '../../types/reservation.ts';
-import { theme } from '../../styles/theme.ts';
 
 // 서버 ApiResponse. 권한 거부(403)도 HTTP 200 으로 오므로 success 를 직접 봐야 한다
 type ApiResult = { code?: number; success?: boolean; message?: string } | null | undefined;
@@ -211,19 +210,19 @@ export default function RoomEditModal({
         </Field>
 
         <ButtonBox>
-          <Button color="#1A7D55" onClick={save}>
+          <Button $variant="primary" onClick={save}>
             저장
           </Button>
           {isEdit && (
-            <Button color="#FF5E57" onClick={deleteRoom}>
+            <Button $variant="danger" onClick={deleteRoom}>
               삭제
             </Button>
           )}
-          <Button color={theme.colors.primary} onClick={onClose}>
+          <Button $variant="secondary" onClick={onClose}>
             닫기
           </Button>
         </ButtonBox>
       </ModalWrapper>
     </Modal>
   );
-}
+}

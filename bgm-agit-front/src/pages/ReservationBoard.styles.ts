@@ -1,23 +1,39 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { theme } from '../styles/theme.ts';
+import {
+  badgeStyle,
+  buttonStyle,
+  cardStyle,
+  focusRing,
+  sectionTitleStyle,
+  type ButtonVariant,
+} from '../styles/mixins.ts';
+
+const c = theme.colors;
 
 export const BoardBox = styled.div`
   width: 100%;
-  padding: 10px 10px 40px;
+  padding: ${theme.space.xl} 0 40px;
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.lg} 0 ${theme.space.xxl};
+  }
 `;
 
+// 제목 + 날짜 이동. 흰 바탕 위에 제목, 오른쪽에 세그먼트형 날짜 이동
 export const HeaderWrapper = styled.div<WithTheme>`
   display: flex;
   width: 100%;
-  background-color: ${theme.colors.primary};
-  padding: 20px;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-end;
+  gap: ${theme.space.lg};
+  padding-bottom: ${theme.space.lg};
+  border-bottom: 1px solid ${c.border};
 
   @media ${({ theme }) => theme.device.mobile} {
     flex-direction: column;
-    padding: 12px;
+    align-items: stretch;
+    gap: ${theme.space.md};
   }
 `;
 
@@ -25,138 +41,175 @@ export const TitleBox = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
   flex: 1;
-  color: #ffffff;
-
-  h2 {
-    font-family: ${theme.fonts.display};
-    font-weight: ${({ theme }) => theme.weight.bold};
-    font-size: ${({ theme }) => theme.sizes.xxlarge};
-  }
-  p {
-    margin-top: 8px;
-    font-weight: ${({ theme }) => theme.weight.semiBold};
-    font-size: ${({ theme }) => theme.sizes.medium};
-  }
-
-  @media ${({ theme }) => theme.device.mobile} {
-    width: 100%;
-    text-align: center;
-
-    h2 {
-      font-size: ${({ theme }) => theme.sizes.large};
-    }
-    p {
-      margin-top: 4px;
-      font-size: ${({ theme }) => theme.sizes.xsmall};
-    }
-  }
+  min-width: 0;
+  ${sectionTitleStyle}
 `;
 
+// 이전 · 날짜 · 다음 · 오늘 을 한 덩어리 pill 로 묶는다
 export const DateNav = styled.div`
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid ${c.border};
+  border-radius: ${theme.radius.pill};
+  background: ${c.surfaceAlt};
+
+  @media ${theme.device.mobile} {
+    width: 100%;
+  }
 `;
 
 export const NavButton = styled.button<WithTheme>`
-  padding: 8px 12px;
+  flex: 0 0 auto;
+  min-width: 40px;
+  height: 38px;
+  padding: 0 12px;
   border: none;
-  border-radius: 6px;
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.subColor};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
+  border-radius: ${theme.radius.pill};
+  background: transparent;
+  color: ${c.textBody};
+  font-family: inherit;
+  font-size: ${theme.sizes.small};
+  font-weight: 700;
   cursor: pointer;
+  transition: background 0.15s ease;
+  ${focusRing}
+
+  &:hover {
+    background: ${c.surface};
+  }
+
+  @media ${theme.device.mobile} {
+    min-width: 44px;
+    height: 44px;
+  }
 `;
 
 export const TodayButton = styled(NavButton)`
-  background: #3d2d1e;
-  color: #ffffff;
+  background: ${c.primarySoft};
+  color: ${c.primary};
+
+  &:hover {
+    background: ${c.primarySoft};
+    color: ${c.primaryHover};
+  }
 `;
 
 export const DateInput = styled.input<WithTheme>`
-  padding: 7px 10px;
-  border: none;
-  border-radius: 6px;
-  color: ${({ theme }) => theme.colors.subColor};
-  font-size: ${({ theme }) => theme.sizes.medium};
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid ${c.border};
+  border-radius: ${theme.radius.pill};
+  background: ${c.surface};
+  color: ${c.textStrong};
+  font-family: inherit;
+  font-size: ${theme.sizes.small};
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  ${focusRing}
+
+  &:focus {
+    outline: none;
+    border-color: ${c.primary};
+    box-shadow: 0 0 0 3px ${c.primarySoft};
+  }
 
   /* iOS Safari 자동 줌 방지 */
   @media ${({ theme }) => theme.device.mobile} {
+    flex: 1;
+    min-width: 0;
+    height: 44px;
     font-size: 16px;
   }
 `;
 
 export const DateLabel = styled.div<WithTheme>`
-  margin-top: 18px;
-  font-size: ${({ theme }) => theme.sizes.menu};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
+  margin-top: ${theme.space.lg};
+  color: ${c.textStrong};
+  font-size: ${theme.sizes.menu};
+  font-weight: 800;
+  letter-spacing: -0.02em;
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.medium};
+    font-size: ${theme.sizes.medium};
   }
 `;
 
 export const SummaryRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
+  gap: ${theme.space.sm};
+  margin-top: ${theme.space.md};
 `;
 
+// 요약 칩 톤. 배지 톤과 같은 토큰을 쓴다
 export const CHIP_TONES = {
-  total: { bg: '#F2EDEA', color: '#424548' },
-  confirmed: { bg: '#E4F3EC', color: '#1A7D55' },
-  waiting: { bg: '#FBF1DC', color: '#9A6B12' },
-  canceled: { bg: '#F1F1F1', color: '#757575' },
-  people: { bg: '#E8EEF6', color: '#093A6E' },
+  total: { bg: c.surfaceAlt, color: c.textBody },
+  confirmed: { bg: `${c.success}1A`, color: c.success },
+  waiting: { bg: c.accentSoft, color: c.accentText },
+  canceled: { bg: c.surfaceAlt, color: c.textMuted },
+  people: { bg: c.primarySoft, color: c.primary },
 } as const;
 
 export const SummaryChip = styled.span<WithTheme & { $tone: keyof typeof CHIP_TONES }>`
-  padding: 8px 14px;
-  border-radius: 999px;
+  ${badgeStyle('neutral')}
+  gap: 6px;
+  padding: 6px 14px;
   background: ${({ $tone }) => CHIP_TONES[$tone].bg};
   color: ${({ $tone }) => CHIP_TONES[$tone].color};
-  font-size: ${({ theme }) => theme.sizes.small};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
+  font-size: ${theme.sizes.small};
+  font-weight: 600;
 
   strong {
-    font-weight: ${({ theme }) => theme.weight.bold};
-    font-size: ${({ theme }) => theme.sizes.medium};
+    font-size: ${theme.sizes.medium};
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
   }
 
   @media ${({ theme }) => theme.device.mobile} {
-    padding: 6px 10px;
-    font-size: ${({ theme }) => theme.sizes.xsmall};
+    padding: 5px 10px;
+    font-size: ${theme.sizes.xsmall};
 
     strong {
-      font-size: ${({ theme }) => theme.sizes.small};
+      font-size: ${theme.sizes.small};
     }
   }
 `;
 
+// 그룹 탭: 활성 = 보라 글씨 + 2px 보라 밑줄
 export const TabRow = styled.div<WithTheme>`
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 16px;
-  border-bottom: 2px solid ${({ theme }) => theme.colors.lineColor};
+  gap: 4px;
+  margin-top: ${theme.space.lg};
+  border-bottom: 1px solid ${c.border};
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 `;
 
 export const TabButton = styled.button<WithTheme & { $active: boolean }>`
-  padding: 9px 18px;
-  margin-bottom: -2px;
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 18px;
+  margin-bottom: -1px;
   border: none;
-  border-bottom: 2px solid ${({ $active }) => ($active ? theme.colors.primary : 'transparent')};
+  border-bottom: 2px solid ${({ $active }) => ($active ? c.primary : 'transparent')};
   background: transparent;
-  color: ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.navColor)};
-  font-size: ${({ theme }) => theme.sizes.medium};
-  font-weight: ${({ theme }) => theme.weight.bold};
+  color: ${({ $active }) => ($active ? c.primary : c.textMuted)};
+  font-family: inherit;
+  font-size: ${theme.sizes.medium};
+  font-weight: ${({ $active }) => ($active ? 800 : 600)};
   cursor: pointer;
+  transition: color 0.15s ease;
+  ${focusRing}
+
+  &:hover {
+    color: ${c.primary};
+  }
 
   @media ${({ theme }) => theme.device.mobile} {
-    padding: 8px 12px;
-    font-size: ${({ theme }) => theme.sizes.small};
+    padding: 0 12px;
+    font-size: ${theme.sizes.small};
   }
 `;
 
@@ -165,89 +218,113 @@ export const ControlRow = styled.div`
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 14px;
+  gap: ${theme.space.md};
+  margin-top: ${theme.space.lg};
 `;
 
+// 상태 필터 · 보기 전환 = 세그먼트형 pill. 활성은 primarySoft
 export const FilterRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid ${c.border};
+  border-radius: ${theme.radius.pill};
+  background: ${c.surfaceAlt};
 `;
 
 export const ViewToggle = styled.div<WithTheme>`
   display: flex;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 999px;
-  overflow: hidden;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid ${c.border};
+  border-radius: ${theme.radius.pill};
+  background: ${c.surfaceAlt};
 `;
 
 export const ViewButton = styled.button<WithTheme & { $active: boolean }>`
-  padding: 7px 16px;
+  height: 36px;
+  padding: 0 16px;
   border: none;
-  background: ${({ $active }) => ($active ? '#3D2D1E' : '#ffffff')};
-  color: ${({ $active, theme }) => ($active ? '#ffffff' : theme.colors.navColor)};
-  font-size: ${({ theme }) => theme.sizes.small};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
+  border-radius: ${theme.radius.pill};
+  background: ${({ $active }) => ($active ? c.primarySoft : 'transparent')};
+  color: ${({ $active }) => ($active ? c.primary : c.textMuted)};
+  box-shadow: ${({ $active }) => ($active ? `inset 0 0 0 1px ${c.borderStrong}` : 'none')};
+  font-family: inherit;
+  font-size: ${theme.sizes.small};
+  font-weight: ${({ $active }) => ($active ? 800 : 600)};
   cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+  ${focusRing}
+
+  &:hover {
+    color: ${c.primary};
+  }
 
   @media ${({ theme }) => theme.device.mobile} {
-    padding: 6px 14px;
-    font-size: ${({ theme }) => theme.sizes.xsmall};
+    height: 44px;
+    padding: 0 14px;
   }
 `;
 
 export const PastNotice = styled.div<WithTheme>`
-  margin-top: 12px;
-  padding: 10px 12px;
-  border-radius: 6px;
-  background: ${({ theme }) => theme.colors.softColor};
-  color: ${({ theme }) => theme.colors.navColor};
-  font-size: ${({ theme }) => theme.sizes.small};
+  margin-top: ${theme.space.md};
+  padding: 10px ${theme.space.md};
+  border: 1px solid ${c.border};
+  border-radius: ${theme.radius.md};
+  background: ${c.surfaceSunken};
+  color: ${c.textMuted};
+  font-size: ${theme.sizes.small};
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.xsmall};
+    font-size: ${theme.sizes.xsmall};
   }
 `;
 
 export const CardList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 16px;
+  gap: ${theme.space.md};
+  margin-top: ${theme.space.lg};
 `;
 
+/* 왼쪽 굵은 테두리 색은 tsx 가 룸 색(데이터 색)으로 inline 주입한다 */
 export const Card = styled.div<WithTheme>`
-  padding: 14px 16px;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 8px;
-  background: ${({ theme }) => theme.colors.white};
+  ${cardStyle}
+  padding: ${theme.space.lg};
+
+  @media ${theme.device.mobile} {
+    padding: 14px;
+  }
 `;
 
 export const CardTop = styled.div`
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: ${theme.space.sm};
 `;
 
 export const CardTime = styled.span<WithTheme & { $canceled: boolean }>`
-  font-size: ${({ theme }) => theme.sizes.large};
-  font-weight: ${({ theme }) => theme.weight.bold};
+  color: ${({ $canceled }) => ($canceled ? c.textMuted : c.textStrong)};
+  font-size: ${theme.sizes.large};
+  font-weight: 800;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
-  color: ${({ theme }) => theme.colors.subColor};
   text-decoration: ${({ $canceled }) => ($canceled ? 'line-through' : 'none')};
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.medium};
+    font-size: ${theme.sizes.medium};
   }
 `;
 
 export const CardName = styled.div<WithTheme & { $canceled: boolean }>`
-  margin-top: 8px;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  color: ${({ theme }) => theme.colors.subColor};
+  margin-top: 10px;
+  color: ${({ $canceled }) => ($canceled ? c.textMuted : c.textStrong)};
+  font-size: ${theme.sizes.medium};
+  font-weight: 700;
   text-decoration: ${({ $canceled }) => ($canceled ? 'line-through' : 'none')};
 `;
 
@@ -257,35 +334,49 @@ export const CardMeta = styled.div<WithTheme>`
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 4px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.navColor};
+  color: ${c.textMuted};
+  font-size: ${theme.sizes.small};
+  font-variant-numeric: tabular-nums;
 
   a {
-    color: ${({ theme }) => theme.colors.blueColor};
+    color: ${c.primary};
+    font-weight: 600;
     text-decoration: underline;
+    text-underline-offset: 2px;
+    ${focusRing}
   }
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.xsmall};
+    font-size: ${theme.sizes.small};
+
+    a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+    }
   }
 `;
 
 export const CardRequest = styled.div<WithTheme>`
-  margin-top: 6px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.subColor};
+  margin-top: ${theme.space.sm};
+  padding: ${theme.space.sm} ${theme.space.md};
+  border-radius: ${theme.radius.md};
+  background: ${c.surfaceSunken};
+  color: ${c.textBody};
+  font-size: ${theme.sizes.small};
+  line-height: 1.6;
   word-break: break-all;
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.xsmall};
+    font-size: ${theme.sizes.xsmall};
   }
 `;
 
 export const CardActions = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
+  gap: ${theme.space.sm};
+  margin-top: ${theme.space.md};
 
   &:empty {
     display: none;
@@ -293,18 +384,29 @@ export const CardActions = styled.div`
 `;
 
 export const FilterButton = styled.button<WithTheme & { $active: boolean }>`
-  padding: 7px 16px;
-  border-radius: 999px;
-  border: 1px solid ${({ $active }) => ($active ? theme.colors.primary : '#D9D9D9')};
-  background: ${({ $active }) => ($active ? theme.colors.primary : '#ffffff')};
-  color: ${({ $active, theme }) => ($active ? '#ffffff' : theme.colors.subColor)};
-  font-size: ${({ theme }) => theme.sizes.small};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
+  height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: ${theme.radius.pill};
+  background: ${({ $active }) => ($active ? c.primarySoft : 'transparent')};
+  color: ${({ $active }) => ($active ? c.primary : c.textMuted)};
+  box-shadow: ${({ $active }) => ($active ? `inset 0 0 0 1px ${c.borderStrong}` : 'none')};
+  font-family: inherit;
+  font-size: ${theme.sizes.small};
+  font-weight: ${({ $active }) => ($active ? 800 : 600)};
   cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+  ${focusRing}
+
+  &:hover {
+    color: ${c.primary};
+  }
 
   @media ${({ theme }) => theme.device.mobile} {
-    padding: 6px 12px;
-    font-size: ${({ theme }) => theme.sizes.xsmall};
+    height: 44px;
+    padding: 0 14px;
   }
 `;
 
@@ -313,15 +415,16 @@ export const Legend = styled.div<WithTheme>`
   align-items: center;
   flex-wrap: wrap;
   gap: 14px;
-  margin-top: 14px;
-  font-size: ${({ theme }) => theme.sizes.xsmall};
-  color: ${({ theme }) => theme.colors.navColor};
+  margin-top: ${theme.space.md};
+  color: ${c.textMuted};
+  font-size: ${theme.sizes.xsmall};
 `;
 
 export const LegendItem = styled.span`
   display: flex;
   align-items: center;
   gap: 6px;
+  font-weight: 600;
 `;
 
 export const LegendSwatch = styled.span`
@@ -333,16 +436,17 @@ export const LegendSwatch = styled.span`
 `;
 
 export const LegendNote = styled.span<WithTheme>`
-  color: ${({ theme }) => theme.colors.navColor};
+  color: ${c.textMuted};
 `;
 
+// 넓은 그리드는 페이지가 아니라 이 상자 안에서 가로 스크롤
 export const BoardScroll = styled.div<WithTheme>`
   display: flex;
-  margin-top: 16px;
+  margin-top: ${theme.space.lg};
   width: 100%;
   overflow-x: auto;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 8px;
+  -webkit-overflow-scrolling: touch;
+  ${cardStyle}
 `;
 
 /* 열이 적으면 화면을 채우고, 많으면 가로 스크롤로 넘어간다 */
@@ -361,8 +465,8 @@ export const TimeColumn = styled.div<WithTheme>`
   z-index: 2;
   flex: 0 0 ${TIME_COLUMN_WIDTH}px;
   width: ${TIME_COLUMN_WIDTH}px;
-  background: ${({ theme }) => theme.colors.white};
-  border-right: 1px solid ${({ theme }) => theme.colors.lineColor};
+  background: ${c.surface};
+  border-right: 1px solid ${c.border};
 
   @media ${({ theme }) => theme.device.mobile} {
     flex: 0 0 46px;
@@ -372,8 +476,8 @@ export const TimeColumn = styled.div<WithTheme>`
 
 export const TimeHeadCell = styled.div<WithTheme>`
   height: ${HEAD_HEIGHT}px;
-  background: ${({ theme }) => theme.colors.basicColor};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
+  background: ${c.surfaceAlt};
+  border-bottom: 1px solid ${c.border};
 `;
 
 export const TimeCell = styled.div<WithTheme>`
@@ -382,24 +486,25 @@ export const TimeCell = styled.div<WithTheme>`
   justify-content: flex-end;
   padding: 2px 6px 0 0;
   /* 눈금선과 라벨을 맞추기 위해 위쪽 정렬 */
-  font-size: ${({ theme }) => theme.sizes.xsmall};
+  color: ${c.textMuted};
+  font-size: ${theme.sizes.xsmall};
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: ${({ theme }) => theme.colors.navColor};
-  border-top: 1px solid ${({ theme }) => theme.colors.lineColor};
+  border-top: 1px solid ${c.border};
 
   &:first-of-type {
     border-top: none;
   }
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.xxsmall};
+    font-size: 11px;
   }
 `;
 
 export const RoomColumn = styled.div<WithTheme>`
   flex: 1 1 0;
   min-width: 96px;
-  border-right: 1px solid ${({ theme }) => theme.colors.lineColor};
+  border-right: 1px solid ${c.border};
 
   &:last-child {
     border-right: none;
@@ -414,17 +519,17 @@ export const RoomHeadCell = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
   height: ${HEAD_HEIGHT}px;
   padding: 0 6px;
-  background: ${({ theme }) => theme.colors.basicColor};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
-  font-size: ${({ theme }) => theme.sizes.small};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  color: ${({ theme }) => theme.colors.subColor};
+  background: ${c.surfaceAlt};
+  border-bottom: 1px solid ${c.border};
+  color: ${c.textStrong};
+  font-size: ${theme.sizes.small};
+  font-weight: 700;
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.xxsmall};
+    font-size: 11px;
   }
 `;
 
@@ -451,20 +556,26 @@ export const GridLine = styled.div<WithTheme>`
   left: 0;
   right: 0;
   height: 1px;
-  background: ${({ theme }) => theme.colors.lineColor};
-  opacity: 0.6;
+  background: ${c.border};
 `;
 
 /* 색상(배경·테두리·글자)은 룸/상태에 따라 inline style 로 주입한다. blockStyle() 참고 */
 export const Block = styled.button<WithTheme & { $canceled: boolean }>`
   position: absolute;
-  padding: 3px 5px;
+  padding: 3px 6px;
   overflow: hidden;
   text-align: left;
-  border-radius: 6px;
+  font-family: inherit;
+  border-radius: ${theme.radius.sm};
   border-width: 2px;
   cursor: pointer;
   text-decoration: ${({ $canceled }) => ($canceled ? 'line-through' : 'none')};
+  transition: filter 0.15s ease;
+  ${focusRing}
+
+  &:focus-visible {
+    z-index: 1;
+  }
 
   &:hover {
     filter: brightness(1.05);
@@ -472,91 +583,100 @@ export const Block = styled.button<WithTheme & { $canceled: boolean }>`
 `;
 
 export const BlockName = styled.div<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.small};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
+  font-size: ${theme.sizes.small};
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.xxsmall};
+    font-size: 11px;
   }
 `;
 
 export const BlockTime = styled.div<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.xsmall};
+  font-size: ${theme.sizes.xsmall};
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.xxsmall};
+    font-size: ${theme.sizes.xxsmall};
   }
 `;
 
+// 상세 모달: 흰 카드
 export const DetailPanel = styled.div<WithTheme>`
-  width: min(560px, calc(100vw - 40px));
-  padding: 20px;
-  border-radius: 8px;
-  background: ${({ theme }) => theme.colors.softColor};
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: ${theme.space.xl};
+  border: 1px solid ${c.border};
+  border-radius: ${theme.radius.lg};
+  background: ${c.surface};
+  box-shadow: ${theme.shadow.lg};
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.lg};
+  }
 `;
 
 export const DetailHead = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: ${theme.space.md};
+  padding-bottom: ${theme.space.lg};
+  border-bottom: 1px solid ${c.border};
 `;
 
 export const DetailTitle = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  font-size: ${({ theme }) => theme.sizes.large};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
+  gap: ${theme.space.sm};
+  color: ${c.textStrong};
+  font-size: ${theme.sizes.large};
+  font-weight: 800;
+  letter-spacing: -0.02em;
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.medium};
+    font-size: ${theme.sizes.medium};
   }
 `;
 
+/* 상태 칩. 색은 룸·상태에 따라 blockStyle() 로 inline 주입한다 */
 export const StatusTag = styled.span<WithTheme>`
-  padding: 3px 10px;
-  border-radius: 999px;
+  ${badgeStyle('neutral')}
+  padding: 2px 10px;
   border: 2px solid transparent;
-  font-size: ${({ theme }) => theme.sizes.xsmall};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
+  letter-spacing: 0;
 `;
 
 export const RoomTag = styled.span<WithTheme>`
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: ${({ theme }) => theme.colors.basicColor};
-  color: ${({ theme }) => theme.colors.subColor};
-  font-size: ${({ theme }) => theme.sizes.xsmall};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
+  ${badgeStyle('neutral')}
+  padding: 4px 10px;
+  color: ${c.textBody};
+  letter-spacing: 0;
 `;
 
 export const CloseButton = styled.button<WithTheme>`
-  padding: 6px 14px;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 6px;
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.subColor};
-  font-size: ${({ theme }) => theme.sizes.small};
-  cursor: pointer;
+  ${buttonStyle('secondary', 'sm')}
+  flex-shrink: 0;
+
+  @media ${theme.device.mobile} {
+    height: 44px;
+  }
 `;
 
 export const DetailGrid = styled.dl`
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 16px;
+  gap: ${theme.space.lg} ${theme.space.md};
+  margin-top: ${theme.space.lg};
 
-  @media (max-width: 844px) {
+  @media ${theme.device.mobile} {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 `;
@@ -565,25 +685,30 @@ export const DetailField = styled.div<WithTheme & { $wide?: boolean }>`
   grid-column: ${({ $wide }) => ($wide ? '1 / -1' : 'auto')};
 
   dt {
-    font-size: ${({ theme }) => theme.sizes.xsmall};
-    color: ${({ theme }) => theme.colors.navColor};
     margin-bottom: 4px;
+    color: ${c.textMuted};
+    font-size: ${theme.sizes.xsmall};
+    font-weight: 600;
   }
 
   dd {
-    font-size: ${({ theme }) => theme.sizes.medium};
-    color: ${({ theme }) => theme.colors.subColor};
+    color: ${c.textStrong};
+    font-size: ${theme.sizes.medium};
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
     word-break: break-all;
 
     a {
-      color: ${({ theme }) => theme.colors.blueColor};
+      color: ${c.primary};
       text-decoration: underline;
+      text-underline-offset: 2px;
+      ${focusRing}
     }
   }
 
   @media ${({ theme }) => theme.device.mobile} {
     dd {
-      font-size: ${({ theme }) => theme.sizes.small};
+      font-size: ${theme.sizes.small};
     }
   }
 `;
@@ -591,22 +716,23 @@ export const DetailField = styled.div<WithTheme & { $wide?: boolean }>`
 export const DetailActions = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 18px;
+  gap: ${theme.space.sm};
+  margin-top: ${theme.space.xl};
+
+  &:empty {
+    display: none;
+  }
 `;
 
-export const ActionButton = styled.button<WithTheme & { color: string }>`
-  padding: 8px 20px;
-  border: none;
-  border-radius: 4px;
-  background: ${({ color }) => color};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.medium};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  cursor: pointer;
+// 확정 = primary, 취소 = danger, 영수증 = secondary
+export const ActionButton = styled.button<WithTheme & { $variant: ButtonVariant }>`
+  ${({ $variant }) => buttonStyle($variant, 'sm')}
+  min-width: 88px;
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
+    flex: 1 1 0;
+    min-width: 0;
+    height: 44px;
   }
 `;
 
@@ -615,27 +741,27 @@ export const EmptyBox = styled.div<WithTheme>`
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: ${theme.space.md};
   width: 100%;
-  margin-top: 30px;
-  padding: 40px 0;
+  margin-top: ${theme.space.xl};
+  padding: 40px ${theme.space.lg};
+  border: 1px dashed ${c.borderStrong};
+  border-radius: ${theme.radius.lg};
+  color: ${c.textMuted};
   font-family: ${theme.fonts.display};
-  font-size: ${({ theme }) => theme.sizes.menu};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  color: ${({ theme }) => theme.colors.subColor};
+  font-size: ${theme.sizes.medium};
+  font-weight: 600;
+  text-align: center;
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
+    font-size: ${theme.sizes.small};
   }
 `;
 
 export const RetryButton = styled.button<WithTheme>`
-  padding: 8px 18px;
-  border: none;
-  border-radius: 6px;
-  background: ${theme.colors.primary};
-  color: #ffffff;
-  font-family: inherit;
-  font-size: ${({ theme }) => theme.sizes.small};
-  cursor: pointer;
+  ${buttonStyle('primary', 'sm')}
+
+  @media ${theme.device.mobile} {
+    height: 44px;
+  }
 `;

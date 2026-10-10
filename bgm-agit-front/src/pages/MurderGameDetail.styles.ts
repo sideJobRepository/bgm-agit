@@ -1,45 +1,78 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
+import { theme } from '../styles/theme.ts';
+import { badgeStyle, buttonStyle, cardStyle, focusRing, inputStyle, type ButtonVariant } from '../styles/mixins.ts';
+
+const c = theme.colors;
 
 export const Box = styled.div`
-  padding: 16px;
   max-width: 760px;
   margin: 0 auto;
+  padding: ${theme.space.xl} ${theme.space.lg} ${theme.space.xxl};
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.lg} ${theme.space.lg} ${theme.space.xl};
+  }
 `;
 
 export const ButtonRow = styled.div`
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: ${theme.space.sm};
+  margin-bottom: ${theme.space.lg};
+
+  @media ${theme.device.mobile} {
+    > button {
+      flex: 1;
+    }
+  }
 `;
 
-export const Button = styled.button.withConfig({ shouldForwardProp: p => p !== 'color' })<{ color: string } & WithTheme>`
-  padding: 8px 16px;
-  background: ${({ color }) => color};
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  &:hover {
-    opacity: 0.9;
+export const Button = styled.button<{ $variant?: ButtonVariant } & WithTheme>`
+  ${({ $variant }) => buttonStyle($variant ?? 'primary', 'md')};
+`;
+
+// 상세: 포스터 + 정보 카드
+export const DetailCard = styled.div`
+  ${cardStyle};
+  display: flex;
+  gap: ${theme.space.xl};
+  padding: ${theme.space.xl};
+
+  @media ${theme.device.mobile} {
+    flex-direction: column;
+    align-items: center;
+    gap: ${theme.space.lg};
+    padding: ${theme.space.lg};
+  }
+`;
+
+export const DetailInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+
+  @media ${theme.device.mobile} {
+    width: 100%;
   }
 `;
 
 export const Cover = styled.div`
+  flex: 0 0 auto;
   width: 100%;
   max-width: 280px;
   aspect-ratio: 3 / 4;
-  background: #f1efe9;
-  border-radius: 10px;
+  border-radius: ${theme.radius.md};
   overflow: hidden;
+  background: ${c.surfaceAlt};
+
   img {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: contain;
   }
 
-  @media (max-width: 844px) {
+  @media ${theme.device.mobile} {
     max-width: 220px;
   }
 `;
@@ -50,35 +83,64 @@ export const NoImage = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: ${({ theme }) => theme.colors.navColor};
+  color: ${c.textSubtle};
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 `;
 
 export const DetailTitle = styled.h2<WithTheme>`
-  margin-top: 16px;
-  font-size: ${({ theme }) => theme.sizes.xlarge};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
+  margin: 0;
+  color: ${c.textStrong};
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  word-break: keep-all;
+
+  @media ${theme.device.mobile} {
+    font-size: 22px;
+  }
 `;
 
 export const DetailMeta = styled.div<WithTheme>`
   display: flex;
-  gap: 14px;
-  margin-top: 10px;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  color: ${({ theme }) => theme.colors.navColor};
+  flex-wrap: wrap;
+  gap: ${theme.space.sm};
+  margin-top: ${theme.space.lg};
+
+  span {
+    ${badgeStyle('neutral')};
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+
+  span:first-child {
+    ${badgeStyle('primary')};
+    padding: 6px 12px;
+    font-size: 14px;
+  }
 `;
 
 export const FormTitle = styled.h2<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.xlarge};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
-  margin-bottom: 18px;
+  margin: 0 0 ${theme.space.xl};
+  padding-bottom: ${theme.space.lg};
+  border-bottom: 2px solid ${c.primary};
+  color: ${c.textStrong};
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+
+  @media ${theme.device.mobile} {
+    font-size: 22px;
+  }
 `;
 
 export const Row = styled.div`
   display: flex;
-  gap: 12px;
-  @media (max-width: 844px) {
+  gap: ${theme.space.md};
+
+  @media ${theme.device.mobile} {
     flex-wrap: wrap;
   }
 `;
@@ -89,72 +151,67 @@ export const Field = styled.div<WithTheme>`
   gap: 6px;
   flex: 1;
   min-width: 140px;
-  margin-bottom: 16px;
+  margin-bottom: ${theme.space.lg};
 
   > label {
-    font-size: ${({ theme }) => theme.sizes.small};
-    font-weight: 600;
-    color: ${({ theme }) => theme.colors.subColor};
+    color: ${c.textStrong};
+    font-size: 14px;
+    font-weight: 700;
   }
+
   input[type='text'],
   input[type='number'] {
-    height: 42px;
-    padding: 0 10px;
-    border: 1px solid #c4c4c4;
-    border-radius: 6px;
-    font-size: 16px;
-    &:focus {
-      outline: none;
-      border-color: #093a6e;
-    }
+    ${inputStyle};
   }
 `;
 
 export const FileRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: ${theme.space.md};
+  min-width: 0;
 `;
 
 export const FileButton = styled.label<WithTheme>`
-  display: inline-flex;
-  align-items: center;
-  padding: 9px 16px;
-  background: #093a6e;
-  color: #fff;
-  border-radius: 6px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  &:hover {
-    opacity: 0.9;
-  }
+  ${buttonStyle('secondary', 'md')};
+  flex-shrink: 0;
 `;
 
 export const FileName = styled.span<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.navColor};
+  min-width: 0;
+  color: ${c.textMuted};
+  font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 `;
 
 export const PreviewBox = styled.div`
-  margin-top: 8px;
+  margin-top: ${theme.space.sm};
+
   img {
-    max-width: 220px;
+    display: block;
     width: 100%;
-    border-radius: 8px;
+    max-width: 220px;
+    border: 1px solid ${c.border};
+    border-radius: ${theme.radius.md};
   }
 `;
 
 export const CheckLine = styled.label<WithTheme>`
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.navColor};
+  gap: ${theme.space.sm};
+  min-height: 44px;
+  margin-top: ${theme.space.xs};
+  color: ${c.textBody};
+  font-size: 14px;
   cursor: pointer;
+
+  input {
+    width: 18px;
+    height: 18px;
+    accent-color: ${c.primary};
+    ${focusRing};
+  }
 `;

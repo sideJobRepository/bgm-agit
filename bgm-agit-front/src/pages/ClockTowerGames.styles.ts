@@ -1,104 +1,123 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { theme } from '../styles/theme.ts';
+import { buttonStyle, cardStyle, focusRing, inputStyle, sectionTitleStyle } from '../styles/mixins.ts';
+
+const c = theme.colors;
 
 export const Box = styled.div`
-  padding: 10px;
+  padding: ${theme.space.xl} 0 ${theme.space.xxl};
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.lg} 0 ${theme.space.xl};
+  }
 `;
 
+// 예전엔 bgColor 색 띠였다. 흰 바탕 제목 영역이 되면서 bgColor 는 받기만 하고 쓰지 않는다
 export const Header = styled.div.withConfig({ shouldForwardProp: p => p !== 'bgColor' })<{ bgColor: string } & WithTheme>`
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  background-color: ${({ bgColor }) => bgColor};
-  color: #fff;
-  padding: 20px;
+  gap: ${theme.space.xl};
+  padding-bottom: ${theme.space.xl};
+  border-bottom: 1px solid ${c.border};
 
-  @media ${({ theme }) => theme.device.mobile} {
+  @media ${theme.device.mobile} {
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 10px;
-    padding: 14px;
+    align-items: stretch;
+    gap: ${theme.space.lg};
+    padding-bottom: ${theme.space.lg};
   }
 `;
 
 export const TitleBox = styled.div<WithTheme>`
+  ${sectionTitleStyle};
+  min-width: 0;
+
   h2 {
-    font-family: ${theme.fonts.display};
-    font-size: ${({ theme }) => theme.sizes.xxlarge};
+    font-size: 30px;
   }
-  p {
-    margin-top: 6px;
-    font-weight: ${({ theme }) => theme.weight.semiBold};
-    font-size: ${({ theme }) => theme.sizes.small};
+
+  @media ${theme.device.mobile} {
+    h2 {
+      font-size: 24px;
+    }
   }
 `;
 
 export const CreateButton = styled.button<WithTheme>`
-  padding: 8px 16px;
-  background: #fff;
-  color: #4a2c82;
-  border: none;
-  border-radius: 6px;
-  font-weight: ${({ theme }) => theme.weight.bold};
-  cursor: pointer;
+  ${buttonStyle('primary', 'md')};
+  flex-shrink: 0;
 `;
 
 export const SearchRow = styled.div<WithTheme>`
   display: flex;
-  gap: 8px;
-  margin: 18px 0;
+  gap: ${theme.space.sm};
+  margin: ${theme.space.xl} 0;
 
   input {
+    ${inputStyle};
     flex: 1;
-    height: 42px;
-    padding: 0 12px;
-    border: 1px solid ${({ theme }) => theme.colors.lineColor};
-    border-radius: 6px;
-    font-size: 16px;
+    min-width: 0;
   }
+
   button {
-    padding: 0 18px;
-    background: #4a2c82;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
+    ${buttonStyle('primary', 'md')};
+    flex-shrink: 0;
+  }
+
+  @media ${theme.device.mobile} {
+    margin: ${theme.space.lg} 0;
   }
 `;
 
 export const CardList = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: ${theme.space.xl};
 
-  @media (max-width: 1280px) {
-    grid-template-columns: repeat(2, 1fr);
+  @media ${theme.device.tablet} {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: ${theme.space.lg};
   }
-  @media (max-width: 844px) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+
+  @media ${theme.device.mobile} {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: ${theme.space.md};
   }
 `;
 
 export const Card = styled.div<WithTheme>`
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 10px;
+  ${cardStyle};
+  ${focusRing};
+  display: flex;
+  flex-direction: column;
+  padding: ${theme.space.md};
   overflow: hidden;
   cursor: pointer;
-  background: #fff;
-  transition: box-shadow 0.15s;
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+
   &:hover {
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    border-color: ${c.borderStrong};
+    box-shadow: ${theme.shadow.md};
+  }
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.sm};
   }
 `;
 
 export const Cover = styled.div`
   width: 100%;
   aspect-ratio: 3 / 4;
-  background: #f1efe9;
+  background: ${c.surfaceAlt};
+  border-radius: ${theme.radius.md};
+  overflow: hidden;
+
   img {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: contain;
@@ -111,52 +130,68 @@ export const NoImage = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: ${({ theme }) => theme.colors.navColor};
-  font-size: ${({ theme }) => theme.sizes.small};
-  letter-spacing: 1px;
+  color: ${c.textSubtle};
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 `;
 
 export const CardBody = styled.div`
-  padding: 12px 14px;
+  padding: ${theme.space.md} ${theme.space.xs} ${theme.space.xs};
 
-  @media (max-width: 844px) {
-    padding: 10px;
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.sm} ${theme.space.xs} ${theme.space.xs};
   }
 `;
 
 export const CardTitle = styled.div<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.large};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
   margin-bottom: 6px;
+  color: ${c.textStrong};
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  word-break: keep-all;
 
-  @media (max-width: 844px) {
-    font-size: ${({ theme }) => theme.sizes.medium};
+  @media ${theme.device.mobile} {
+    font-size: 15px;
   }
 `;
 
 export const Meta = styled.div<WithTheme>`
   display: flex;
-  gap: 12px;
   flex-wrap: wrap;
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.navColor};
+  align-items: center;
+  gap: 4px 10px;
+  color: ${c.textMuted};
+  font-size: 14px;
 
-  @media (max-width: 844px) {
-    gap: 8px;
-    font-size: ${({ theme }) => theme.sizes.xsmall};
+  span + span::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 3px;
+    margin-right: 10px;
+    border-radius: ${theme.radius.pill};
+    background: ${c.textSubtle};
+    vertical-align: middle;
+  }
+
+  @media ${theme.device.mobile} {
+    font-size: 13px;
   }
 `;
 
 export const Empty = styled.div<WithTheme>`
   grid-column: 1 / -1;
+  padding: 48px 0;
+  color: ${c.textMuted};
+  font-size: 15px;
+  font-weight: 600;
   text-align: center;
-  padding: 40px 0;
-  color: ${({ theme }) => theme.colors.navColor};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
 `;
 
 export const PaginationWrapper = styled.div`
   text-align: center;
-  margin-top: 24px;
+  margin-top: ${theme.space.xl};
 `;

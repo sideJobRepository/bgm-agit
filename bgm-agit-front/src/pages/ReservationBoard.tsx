@@ -16,7 +16,6 @@ import type {
   ReservationBoardItem,
   ReservationBoardRoom,
 } from '../types/reservation.ts';
-import { theme } from '../styles/theme.ts';
 import { BoardBox, HeaderWrapper, TitleBox, DateNav, NavButton, TodayButton, DateInput, DateLabel, SummaryRow, SummaryChip, TabRow, TabButton, ControlRow, FilterRow, ViewToggle, ViewButton, PastNotice, CardList, Card, CardTop, CardTime, CardName, CardMeta, CardRequest, CardActions, FilterButton, Legend, LegendItem, LegendSwatch, LegendNote, BoardScroll, BoardGrid, TimeColumn, TimeHeadCell, TimeCell, RoomColumn, RoomHeadCell, RoomHeadName, RoomDot, ColumnTrack, GridLine, Block, BlockName, BlockTime, DetailPanel, DetailHead, DetailTitle, StatusTag, RoomTag, CloseButton, DetailGrid, DetailField, DetailActions, ActionButton, EmptyBox, RetryButton } from './ReservationBoard.styles.ts';
 
 type StatusFilter = 'ALL' | 'CONFIRMED' | 'WAITING' | 'CANCELED';
@@ -459,7 +458,7 @@ export default function ReservationBoard() {
                     {canManage && item.cancelStatus !== 'Y' && item.approvalStatus !== 'Y' && (
                       <ActionButton
                         type="button"
-                        color="#1A7D55"
+                        $variant="primary"
                         onClick={() => changeStatus(item, 'N', 'Y')}
                       >
                         확정
@@ -468,7 +467,7 @@ export default function ReservationBoard() {
                     {canManage && item.cancelStatus !== 'Y' && (
                       <ActionButton
                         type="button"
-                        color="#FF5E57"
+                        $variant="danger"
                         onClick={() => changeStatus(item, 'Y', 'N')}
                       >
                         취소
@@ -477,7 +476,7 @@ export default function ReservationBoard() {
                     {item.receiptUrl && (
                       <ActionButton
                         type="button"
-                        color={theme.colors.primary}
+                        $variant="secondary"
                         onClick={() =>
                           window.open(item.receiptUrl as string, '_blank', 'noopener,noreferrer')
                         }
@@ -624,7 +623,7 @@ export default function ReservationBoard() {
               {canManage && selected.cancelStatus !== 'Y' && selected.approvalStatus !== 'Y' && (
                 <ActionButton
                   type="button"
-                  color="#1A7D55"
+                  $variant="primary"
                   onClick={() => changeStatus(selected, 'N', 'Y')}
                 >
                   확정
@@ -633,7 +632,7 @@ export default function ReservationBoard() {
               {canManage && selected.cancelStatus !== 'Y' && (
                 <ActionButton
                   type="button"
-                  color="#FF5E57"
+                  $variant="danger"
                   onClick={() => changeStatus(selected, 'Y', 'N')}
                 >
                   취소
@@ -642,7 +641,7 @@ export default function ReservationBoard() {
               {selected.receiptUrl && (
                 <ActionButton
                   type="button"
-                  color={theme.colors.primary}
+                  $variant="secondary"
                   onClick={() =>
                     window.open(selected.receiptUrl as string, '_blank', 'noopener,noreferrer')
                   }

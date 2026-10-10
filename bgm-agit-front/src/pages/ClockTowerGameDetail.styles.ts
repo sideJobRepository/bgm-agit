@@ -1,45 +1,68 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
+import { theme } from '../styles/theme.ts';
+import { buttonStyle, cardStyle, focusRing, inputStyle, type ButtonVariant } from '../styles/mixins.ts';
 
+const c = theme.colors;
+
+// 상세·등록 화면 전체를 카드 한 장으로 감싼다
 export const Box = styled.div`
-  padding: 16px;
+  ${cardStyle};
   max-width: 760px;
-  margin: 0 auto;
+  margin: ${theme.space.xl} auto ${theme.space.xxl};
+  padding: ${theme.space.xxl};
+
+  @media ${theme.device.mobile} {
+    margin: ${theme.space.lg} 0 ${theme.space.xl};
+    padding: ${theme.space.lg};
+  }
 `;
 
 export const ButtonRow = styled.div`
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: ${theme.space.sm};
+  margin-bottom: ${theme.space.xl};
+
+  /* 등록·수정 폼 아래쪽 버튼 줄 */
+  &:last-child {
+    margin: ${theme.space.xl} 0 0;
+    padding-top: ${theme.space.xl};
+    border-top: 1px solid ${c.border};
+  }
+
+  @media ${theme.device.mobile} {
+    > button {
+      flex: 1;
+    }
+  }
 `;
 
-export const Button = styled.button.withConfig({ shouldForwardProp: p => p !== 'color' })<{ color: string } & WithTheme>`
-  padding: 8px 16px;
-  background: ${({ color }) => color};
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  &:hover {
-    opacity: 0.9;
-  }
+// color 는 예전 호출부 호환용으로만 받는다. 색은 $variant 가 정한다
+export const Button = styled.button.withConfig({ shouldForwardProp: p => p !== 'color' })<
+  { color?: string; $variant?: ButtonVariant } & WithTheme
+>`
+  ${({ $variant = 'primary' }) => buttonStyle($variant, 'md')};
 `;
 
 export const Cover = styled.div`
   width: 100%;
   max-width: 280px;
   aspect-ratio: 3 / 4;
-  background: #f1efe9;
-  border-radius: 10px;
+  margin: 0 auto;
+  background: ${c.surfaceAlt};
+  border-radius: ${theme.radius.md};
   overflow: hidden;
+
   img {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: contain;
   }
 
-  @media (max-width: 844px) {
+  @media ${theme.device.mobile} {
     max-width: 220px;
   }
 `;
@@ -50,82 +73,121 @@ export const NoImage = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: ${({ theme }) => theme.colors.navColor};
+  color: ${c.textSubtle};
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 `;
 
 export const DetailTitle = styled.h2<WithTheme>`
-  margin-top: 16px;
-  font-size: ${({ theme }) => theme.sizes.xlarge};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
+  margin-top: ${theme.space.xl};
+  color: ${c.textStrong};
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-align: center;
+  word-break: keep-all;
+
+  @media ${theme.device.mobile} {
+    font-size: 22px;
+  }
 `;
 
 export const DetailMeta = styled.div<WithTheme>`
   display: flex;
-  gap: 14px;
-  margin-top: 10px;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  color: ${({ theme }) => theme.colors.navColor};
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: ${theme.space.sm};
+  margin-top: ${theme.space.md};
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: ${theme.radius.pill};
+    background: ${c.surfaceAlt};
+    color: ${c.textBody};
+    font-size: 14px;
+    font-weight: 600;
+  }
 `;
 
 export const SectionTitle = styled.h3<WithTheme>`
-  margin: 26px 0 12px;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
+  margin: ${theme.space.xxl} 0 ${theme.space.lg};
+  padding-top: ${theme.space.xl};
+  border-top: 1px solid ${c.border};
+  color: ${c.textStrong};
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 `;
 
 export const CharViewList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: ${theme.space.sm};
 `;
 
 export const CharViewItem = styled.div<WithTheme>`
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 8px;
-  padding: 12px 14px;
-  background: #fff;
+  padding: 14px ${theme.space.lg};
+  border: 1px solid ${c.border};
+  border-radius: ${theme.radius.md};
+  background: ${c.surface};
 `;
 
 export const CharHead = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: ${theme.space.sm};
 `;
 
 export const CharName = styled.span<WithTheme>`
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
+  color: ${c.textStrong};
+  font-size: 16px;
+  font-weight: 700;
 `;
 
+// 캐릭터 진영 색(TYPE_COLOR)은 의미를 담은 데이터 색이라 그대로 받는다
 export const TypeTag = styled.span.withConfig({ shouldForwardProp: p => p !== 'color' })<{ color: string }>`
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: ${theme.radius.pill};
   background: ${({ color }) => color};
+  color: ${c.onPrimary};
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
 `;
 
 export const CharDesc = styled.div<WithTheme>`
-  margin-top: 6px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.navColor};
-  line-height: 1.5;
+  margin-top: ${theme.space.sm};
+  color: ${c.textMuted};
+  font-size: 14px;
+  line-height: 1.6;
   white-space: pre-line;
 `;
 
 export const FormTitle = styled.h2<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.xlarge};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
-  margin-bottom: 18px;
+  margin-bottom: ${theme.space.xl};
+  padding-bottom: ${theme.space.lg};
+  border-bottom: 1px solid ${c.border};
+  color: ${c.textStrong};
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+
+  @media ${theme.device.mobile} {
+    font-size: 22px;
+  }
 `;
 
 export const Row = styled.div`
   display: flex;
-  gap: 12px;
-  @media (max-width: 844px) {
+  gap: ${theme.space.md};
+
+  @media ${theme.device.mobile} {
     flex-wrap: wrap;
   }
 `;
@@ -133,156 +195,153 @@ export const Row = styled.div`
 export const Field = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: ${theme.space.sm};
   flex: 1;
   min-width: 140px;
-  margin-bottom: 16px;
+  margin-bottom: ${theme.space.xl};
 
   > label {
-    font-size: ${({ theme }) => theme.sizes.small};
-    font-weight: 600;
-    color: ${({ theme }) => theme.colors.subColor};
+    color: ${c.textStrong};
+    font-size: 14px;
+    font-weight: 700;
   }
+
   input[type='text'],
   input[type='number'] {
-    height: 42px;
-    padding: 0 10px;
-    border: 1px solid #c4c4c4;
-    border-radius: 6px;
-    font-size: 16px;
-    &:focus {
-      outline: none;
-      border-color: #4a2c82;
-    }
+    ${inputStyle};
   }
 `;
 
 export const FileRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: ${theme.space.md};
+  min-width: 0;
 `;
 
+// label 이라 키보드 포커스는 안 받지만 모양은 버튼과 맞춘다
 export const FileButton = styled.label<WithTheme>`
-  display: inline-flex;
-  align-items: center;
-  padding: 9px 16px;
-  background: #4a2c82;
-  color: #fff;
-  border-radius: 6px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  &:hover {
-    opacity: 0.9;
-  }
+  ${buttonStyle('secondary', 'md')};
+  flex-shrink: 0;
 `;
 
 export const FileName = styled.span<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.navColor};
+  min-width: 0;
+  color: ${c.textMuted};
+  font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 `;
 
 export const PreviewBox = styled.div`
-  margin-top: 8px;
+  margin-top: ${theme.space.sm};
+
   img {
-    max-width: 220px;
+    display: block;
     width: 100%;
-    border-radius: 8px;
+    max-width: 220px;
+    border: 1px solid ${c.border};
+    border-radius: ${theme.radius.md};
   }
 `;
 
 export const CheckLine = styled.label<WithTheme>`
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.navColor};
+  gap: ${theme.space.sm};
+  min-height: 44px;
+  color: ${c.textBody};
+  font-size: 14px;
   cursor: pointer;
+
+  input {
+    width: 18px;
+    height: 18px;
+    accent-color: ${c.primary};
+    cursor: pointer;
+    ${focusRing};
+  }
 `;
 
 export const CharEditList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: ${theme.space.md};
 `;
 
 export const CharEditRow = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 8px;
-  padding: 10px;
+  gap: ${theme.space.sm};
+  padding: ${theme.space.md};
+  border: 1px solid ${c.border};
+  border-radius: ${theme.radius.md};
+  background: ${c.surfaceSunken};
 
   textarea {
-    border: 1px solid #c4c4c4;
-    border-radius: 6px;
-    padding: 8px 10px;
-    font-size: 16px;
-    font-family: inherit;
+    ${inputStyle};
+    line-height: 1.5;
     resize: vertical;
-    &:focus {
-      outline: none;
-      border-color: #4a2c82;
-    }
   }
 `;
 
 export const CharLineTop = styled.div`
   display: flex;
-  gap: 8px;
+  gap: ${theme.space.sm};
 
   input {
+    ${inputStyle};
     flex: 1;
     min-width: 0;
-    height: 42px;
-    padding: 0 10px;
-    border: 1px solid #c4c4c4;
-    border-radius: 6px;
-    font-size: 16px;
   }
+
   select {
-    flex: 0 0 110px;
-    height: 42px;
-    padding: 0 8px;
-    border: 1px solid #c4c4c4;
-    border-radius: 6px;
-    font-size: 16px;
+    ${inputStyle};
+    flex: 0 0 120px;
+    width: 120px;
+    padding: 0 10px;
+    cursor: pointer;
+  }
+
+  @media ${theme.device.mobile} {
+    flex-wrap: wrap;
+
+    input {
+      flex: 1 1 100%;
+    }
+
+    select {
+      flex: 1;
+      width: auto;
+    }
   }
 `;
 
 export const RemoveBtn = styled.button`
+  ${buttonStyle('danger', 'md')};
   flex: 0 0 auto;
-  padding: 0 12px;
-  background: #fff;
-  color: #ff5e57;
-  border: 1px solid #ff5e57;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
+  padding: 0 14px;
+  font-size: 14px;
 `;
 
 export const AddBtn = styled.button<WithTheme>`
-  margin-top: 10px;
+  ${buttonStyle('ghost', 'md')};
   align-self: flex-start;
-  padding: 9px 16px;
-  background: #fff;
-  color: #4a2c82;
-  border: 1px dashed #4a2c82;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
+  margin-top: ${theme.space.md};
+  border: 1px dashed ${c.primary};
+
+  @media ${theme.device.mobile} {
+    align-self: stretch;
+  }
 `;
 
 export const Empty = styled.div<WithTheme>`
+  padding: ${theme.space.xl} 0;
+  border-radius: ${theme.radius.md};
+  background: ${c.surfaceSunken};
+  color: ${c.textMuted};
+  font-size: 15px;
+  font-weight: 600;
   text-align: center;
-  padding: 24px 0;
-  color: ${({ theme }) => theme.colors.navColor};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
 `;

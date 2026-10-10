@@ -1,97 +1,114 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { theme } from '../styles/theme.ts';
+import { badgeStyle, buttonStyle, cardStyle, focusRing, sectionTitleStyle } from '../styles/mixins.ts';
+
+const c = theme.colors;
+
+// 선인승/악마승 진영색. 의미를 담은 색이라 토큰으로 바꾸지 않는다
+const GOOD_COLOR = '#1565C0';
+const EVIL_COLOR = '#6A1B9A';
 
 export const Box = styled.div`
-  padding: 10px;
+  padding: ${theme.space.xl} 0 ${theme.space.xxl};
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.lg} 0 ${theme.space.xl};
+  }
 `;
 
+// 예전엔 bgColor 색 띠였다. 흰 바탕 제목 영역으로 바꾸면서 bgColor 는 받기만 하고 쓰지 않는다
 export const Header = styled.div.withConfig({ shouldForwardProp: p => p !== 'bgColor' })<{ bgColor: string } & WithTheme>`
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  background-color: ${({ bgColor }) => bgColor};
-  color: #fff;
-  padding: 20px;
+  gap: ${theme.space.xl};
+  padding: 0 0 ${theme.space.xl};
+  border-bottom: 1px solid ${c.border};
 
   @media ${({ theme }) => theme.device.mobile} {
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 10px;
-    padding: 14px;
+    align-items: stretch;
+    gap: ${theme.space.lg};
+    padding-bottom: ${theme.space.lg};
   }
 `;
 
 export const TitleBox = styled.div<WithTheme>`
+  ${sectionTitleStyle};
+  min-width: 0;
+
   h2 {
-    font-family: ${theme.fonts.display};
-    font-size: ${({ theme }) => theme.sizes.xxlarge};
+    font-size: 30px;
   }
-  p {
-    margin-top: 6px;
-    font-weight: ${({ theme }) => theme.weight.semiBold};
-    font-size: ${({ theme }) => theme.sizes.small};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    h2 {
+      font-size: 24px;
+    }
   }
 `;
 
 export const HeaderButtons = styled.div`
   display: flex;
-  gap: 8px;
+  flex-shrink: 0;
+  gap: ${theme.space.sm};
+
+  @media ${theme.device.mobile} {
+    > button {
+      flex: 1;
+    }
+  }
 `;
 
 export const CreateButton = styled.button<WithTheme>`
-  padding: 8px 16px;
-  background: #fff;
-  color: #2e7d32;
-  border: none;
-  border-radius: 6px;
-  font-weight: ${({ theme }) => theme.weight.bold};
-  cursor: pointer;
+  ${buttonStyle('primary', 'md')};
 `;
 
 export const GhostButton = styled.button<WithTheme>`
-  padding: 8px 16px;
-  background: transparent;
-  color: #fff;
-  border: 1px solid #fff;
-  border-radius: 6px;
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  cursor: pointer;
+  ${buttonStyle('secondary', 'md')};
 `;
 
 export const CardList = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-  margin-top: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: ${theme.space.lg};
+  margin-top: ${theme.space.xl};
 
-  @media (max-width: 844px) {
+  @media ${theme.device.mobile} {
     grid-template-columns: 1fr;
+    gap: ${theme.space.md};
+    margin-top: ${theme.space.lg};
   }
 `;
 
 export const Card = styled.div<WithTheme>`
+  ${cardStyle};
   display: flex;
-  gap: 12px;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 10px;
-  padding: 12px;
+  gap: ${theme.space.md};
+  min-width: 0;
+  padding: ${theme.space.md};
   cursor: pointer;
-  background: #fff;
-  transition: box-shadow 0.15s;
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+
   &:hover {
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    border-color: ${c.borderStrong};
+    box-shadow: ${theme.shadow.md};
   }
+
+  ${focusRing};
 `;
 
 export const Thumb = styled.div`
   flex: 0 0 84px;
   width: 84px;
   height: 84px;
-  border-radius: 8px;
+  border-radius: ${theme.radius.md};
   overflow: hidden;
-  background: #f1efe9;
+  background: ${c.surfaceAlt};
+
   img {
     width: 100%;
     height: 100%;
@@ -106,9 +123,12 @@ export const NoImage = styled.div`
   align-items: center;
   justify-content: center;
   font-size: 30px;
+  color: ${c.textSubtle};
 `;
 
 export const CardBody = styled.div`
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-width: 0;
 `;
@@ -116,67 +136,71 @@ export const CardBody = styled.div`
 export const CardTitleRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: ${theme.space.sm};
+  min-width: 0;
 `;
 
 export const CardTitle = styled.div<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.large};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
+  min-width: 0;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: ${c.textStrong};
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 `;
 
+// 진영색 배지(흰 글씨)
 export const ResultTag = styled.span<{ $evil: boolean }>`
+  ${badgeStyle('primary')};
   flex: 0 0 auto;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  color: #fff;
-  background: ${({ $evil }) => ($evil ? '#6A1B9A' : '#1565C0')};
+  color: ${c.onPrimary};
+  background: ${({ $evil }) => ($evil ? EVIL_COLOR : GOOD_COLOR)};
 `;
 
+// 임시저장 = 골드 배지
 export const DraftTag = styled.span`
+  ${badgeStyle('accent')};
   flex: 0 0 auto;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  color: #fff;
-  background: #b5651d;
 `;
 
 export const Meta = styled.div<WithTheme>`
   display: flex;
-  gap: 12px;
-  margin: 4px 0;
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.navColor};
+  flex-wrap: wrap;
+  gap: ${theme.space.md};
+  margin: 6px 0 4px;
+  font-size: 13px;
+  color: ${c.textMuted};
 `;
 
 export const Participants = styled.div<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.subColor};
+  font-size: 14px;
+  color: ${c.textBody};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 `;
 
 export const Writer = styled.div<WithTheme>`
-  margin-top: 4px;
-  font-size: ${({ theme }) => theme.sizes.xsmall};
-  color: ${({ theme }) => theme.colors.navColor};
+  margin-top: auto;
+  padding-top: 6px;
+  font-size: 12px;
+  color: ${c.textMuted};
 `;
 
 export const Empty = styled.div<WithTheme>`
   grid-column: 1 / -1;
-  text-align: center;
-  padding: 40px 0;
-  color: ${({ theme }) => theme.colors.navColor};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  color: ${c.textMuted};
+  font-size: 15px;
+  font-weight: 600;
 `;
 
 export const PaginationWrapper = styled.div`
   text-align: center;
-  margin-top: 24px;
+  margin-top: ${theme.space.xl};
 `;

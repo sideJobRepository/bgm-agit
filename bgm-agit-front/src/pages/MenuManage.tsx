@@ -8,6 +8,7 @@ import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts'
 import { mainMenuState } from '../recoil/state/mainState.ts';
 import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
+import { theme } from '../styles/theme.ts';
 import { Box, Notice, Header, FormCard, FormTitle, Field, RowFields, ToggleLabel, RoleChips, RoleChip, FormButtons, PrimaryButton, GhostButton, TreeHeader, TreeTitle, TreeTools, TreeHint, TreeWrap, TreeRow, RowMain, Indent, ToggleButton, LeafMark, NameArea, NameLine, MenuTitle, CountBadge, OffBadge, MetaLine, LinkText, MetaDim, RowActions, RowButton } from './MenuManage.styles.ts';
 
 interface MenuOption {
@@ -277,7 +278,7 @@ export default function MenuManage() {
   return (
     <Wrapper>
       <Box>
-        <Header bgColor="#093A6E">
+        <Header bgColor={theme.colors.primary}>
           <h2>Menu</h2>
           <p>헤더 메뉴를 추가·수정·삭제합니다.</p>
         </Header>

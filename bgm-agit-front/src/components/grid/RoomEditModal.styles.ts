@@ -1,24 +1,37 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../../styles/styled-props.ts';
+import { theme } from '../../styles/theme.ts';
+import { buttonStyle, inputStyle, type ButtonVariant } from '../../styles/mixins.ts';
 
+const c = theme.colors;
+
+// 흰 카드(모서리·그림자)는 Modal 의 ModalBox 가 맡는다
 export const ModalWrapper = styled.div`
-  padding: 24px;
-  width: min(420px, calc(100vw - 40px));
+  padding: ${theme.space.xl};
+  width: min(440px, calc(100vw - 32px));
+  background: ${c.surface};
+  border-radius: ${theme.radius.lg};
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.lg};
+  }
 `;
 
 export const ModalTitle = styled.h3<WithTheme>`
-  margin-bottom: 16px;
-  font-size: ${({ theme }) => theme.sizes.large};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.menuColor};
+  margin: 0 0 ${theme.space.lg};
+  color: ${c.textStrong};
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 `;
 
 export const ImageUploadWrapper = styled.div`
   width: 100%;
   aspect-ratio: 16 / 9;
-  border: 2px dashed #ccc;
-  border-radius: 12px;
-  margin-bottom: 16px;
+  border: 1px dashed ${c.borderStrong};
+  border-radius: ${theme.radius.md};
+  background: ${c.surfaceSunken};
+  margin-bottom: ${theme.space.lg};
   position: relative;
   overflow: hidden;
 `;
@@ -30,8 +43,9 @@ export const UploadLabel = styled.label<{ $empty: boolean }>`
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  color: ${({ $empty }) => ($empty ? '#999' : '#ffffff')};
-  background-color: ${({ $empty }) => ($empty ? 'transparent' : 'rgba(0, 0, 0, 0.4)')};
+  color: ${({ $empty }) => ($empty ? c.textMuted : c.onPrimary)};
+  /* textStrong(#16181D) 40% 덮개 */
+  background-color: ${({ $empty }) => ($empty ? 'transparent' : 'rgba(22, 24, 29, 0.4)')};
   opacity: ${({ $empty }) => ($empty ? 1 : 0)};
   transition: opacity 0.2s ease-in-out;
 
@@ -57,7 +71,7 @@ export const PreviewImage = styled.img`
 
 export const Row = styled.div`
   display: flex;
-  gap: 10px;
+  gap: ${theme.space.md};
 
   & > label {
     flex: 1;
@@ -72,67 +86,38 @@ export const Field = styled.label<WithTheme>`
   margin-bottom: 14px;
 
   span {
-    font-size: ${({ theme }) => theme.sizes.small};
-    font-weight: ${({ theme }) => theme.weight.semiBold};
-    color: ${({ theme }) => theme.colors.subColor};
+    color: ${c.textMuted};
+    font-size: 13px;
+    font-weight: 600;
   }
 `;
 
 export const Input = styled.input<WithTheme>`
-  width: 100%;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: ${({ theme }) => theme.sizes.medium};
-
-  &:focus {
-    border-color: ${({ theme }) => theme.colors.subColor};
-    outline: none;
-  }
-
-  /* iOS Safari 자동 줌 방지 */
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: 16px;
-  }
+  ${inputStyle};
 `;
 
 export const Select = styled.select<WithTheme>`
-  width: 100%;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: ${({ theme }) => theme.sizes.medium};
+  ${inputStyle};
   cursor: pointer;
-  background: white;
-
-  &:focus {
-    border-color: ${({ theme }) => theme.colors.subColor};
-    outline: none;
-  }
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: 16px;
-  }
 `;
 
 export const ButtonBox = styled.div`
   display: flex;
   align-items: center;
-  gap: 4px;
-  justify-content: center;
-  margin-top: 6px;
+  gap: ${theme.space.sm};
+  justify-content: flex-end;
+  margin-top: ${theme.space.sm};
+  padding-top: ${theme.space.lg};
+  border-top: 1px solid ${c.border};
+
+  @media ${theme.device.mobile} {
+    button {
+      flex: 1;
+    }
+  }
 `;
 
-export const Button = styled.button<WithTheme & { color: string }>`
-  padding: 6px 16px;
-  background-color: ${({ color }) => color};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.medium};
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
-  }
+// $variant 로 저장(primary) · 삭제(danger) · 닫기(secondary)를 나눈다
+export const Button = styled.button<WithTheme & { color?: string; $variant?: ButtonVariant }>`
+  ${({ $variant }) => buttonStyle($variant ?? 'primary', 'md')};
 `;

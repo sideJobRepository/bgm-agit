@@ -2,6 +2,10 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import Calendar from 'react-calendar';
 import type { WithTheme } from '../styles/styled-props.ts';
+import { theme } from '../styles/theme.ts';
+import { buttonStyle, cardStyle, focusRing } from '../styles/mixins.ts';
+
+const c = theme.colors;
 
 export const Wrapper = styled.div<WithTheme>`
   display: flex;
@@ -9,15 +13,21 @@ export const Wrapper = styled.div<WithTheme>`
   min-width: 1280px;
   min-height: 600px;
   height: 100%;
-  gap: 36px;
+  gap: ${theme.space.xxl};
   margin: 0 auto;
   flex-direction: column;
+  background: ${c.bg};
+  font-family: ${theme.fonts.body};
 
   @media ${({ theme }) => theme.device.tablet} {
     width: 100vw;
     max-width: 100%;
     min-width: 100%;
     min-height: unset;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    gap: ${theme.space.xl};
   }
 `;
 
@@ -26,9 +36,10 @@ export const Hero = styled.section<WithTheme>`
   width: 100%;
   height: 240px;
   overflow: hidden;
+  background: ${c.textStrong};
 
   @media ${({ theme }) => theme.device.mobile} {
-    height: 140px;
+    height: 160px;
   }
 `;
 
@@ -40,144 +51,188 @@ export const HeroBg = styled.div`
     width: 100%;
     height: 100%;
     object-fit: cover;
-
     filter: blur(2px);
-    transform: scale(1);
+    transform: scale(1.02);
   }
 `;
 
+// 사진 위 흰 글씨 대비를 위한 고정 어둡게 깔기
 export const FixedDarkOverlay = styled.div`
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(22, 24, 29, 0.35);
   z-index: 0;
 `;
 
 export const HeroOverlay = styled(motion.div)`
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(22, 24, 29, 0.25);
 `;
 
 export const HeroContent = styled.div<WithTheme>`
   position: relative;
   z-index: 2;
-
   height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 10px;
-
+  gap: ${theme.space.md};
+  padding: 0 ${theme.space.lg};
   text-align: center;
-  color: ${({ theme }) => theme.colors.whiteColor};
+  color: ${c.onPrimary};
 
   h1 {
-    font-size: ${({ theme }) => theme.desktop.sizes.titleSize};
+    margin: 0;
+    font-size: ${theme.desktop.sizes.h1Size};
     font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.mobile.sizes.titleSize};
+      font-size: ${theme.sizes.xxlarge};
     }
   }
 
   span {
-    font-size: ${({ theme }) => theme.desktop.sizes.xl};
-    font-weight: 600;
-    opacity: 0.8;
+    font-size: ${theme.sizes.medium};
+    font-weight: 500;
+    opacity: 0.9;
+    word-break: keep-all;
 
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.mobile.sizes.xl};
+      font-size: ${theme.sizes.small};
     }
   }
 `;
 
-export const ContentBox = styled.div`
+export const ContentBox = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  padding: 0 12px 48px 12px;
-  gap: 24px;
+  padding: 0 ${theme.space.lg} 48px;
+  gap: ${theme.space.xl};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    gap: ${theme.space.lg};
+  }
 `;
 
 export const StyledCalendar = styled(Calendar)<WithTheme>`
-  border: 1px solid #ccc;
-  border-radius: 12px;
-  padding: 10px;
+  ${cardStyle}
   width: 100%;
   max-width: 600px;
+  padding: ${theme.space.lg};
+  font-family: inherit;
+
+  @media ${({ theme }) => theme.device.mobile} {
+    padding: ${theme.space.md} ${theme.space.sm};
+  }
 
   .react-calendar__tile--now {
-    //오늘날짜 표시 제거
+    /* 오늘날짜 표시 제거 */
     background: transparent !important;
     color: inherit !important;
   }
 
   .react-calendar__navigation {
+    height: 44px;
+    margin-bottom: ${theme.space.md};
     background-color: transparent;
   }
 
   .react-calendar__navigation button {
-    color: ${({ theme }) => theme.colors.black} !important;
+    min-width: 44px;
+    border-radius: ${theme.radius.md};
+    color: ${c.textStrong} !important;
     background: transparent !important;
+    font-family: inherit;
+    font-size: ${theme.sizes.medium};
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    ${focusRing}
+
+    &:hover:enabled {
+      background: ${c.surfaceAlt} !important;
+    }
+  }
+
+  .react-calendar__month-view__weekdays {
+    padding-bottom: ${theme.space.xs};
+    margin-bottom: ${theme.space.xs};
+    border-bottom: 1px solid ${c.border};
   }
 
   .react-calendar__month-view__weekdays__weekday {
-    //요일
+    /* 요일 */
+    color: ${c.textMuted};
+    font-size: ${theme.sizes.xsmall};
+    font-weight: 700;
+
     abbr {
       text-decoration: unset;
     }
 
     &:first-child abbr {
-      color: ${({ theme }) => theme.colors.redColor};
+      color: ${c.redColor};
     }
 
     &:last-child abbr {
-      color: ${({ theme }) => theme.colors.blueColor};
+      color: ${c.blueColor};
     }
   }
 
   .react-calendar__tile.sunday,
   .react-calendar__tile.sunday abbr {
-    color: ${({ theme }) => theme.colors.redColor};
+    color: ${c.redColor};
   }
 
   .react-calendar__tile.saturday,
   .react-calendar__tile.saturday abbr {
-    color: ${({ theme }) => theme.colors.blueColor};
+    color: ${c.blueColor};
   }
 
   .react-calendar__tile {
     display: flex;
     flex-direction: column;
     align-items: center !important;
-    color: ${({ theme }) => theme.colors.black};
+    gap: 2px;
+    min-height: 56px;
+    padding: ${theme.space.xs} 2px;
+    background: transparent;
+    color: ${c.textStrong};
+    font-family: inherit;
+    font-size: ${theme.sizes.small};
+    font-weight: 600;
     -webkit-tap-highlight-color: transparent;
+    ${focusRing}
+
     abbr {
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
       margin: 0 auto;
-      text-align: center;
-      width: 100%;
-      padding: 10px 0;
-      @media ${({ theme }) => theme.device.mobile} {
-        padding: 10px 0;
-      }
+      border-radius: ${theme.radius.pill};
+      font-variant-numeric: tabular-nums;
+      transition: background 0.15s ease;
     }
   }
 
   .react-calendar__tile:hover {
     background-color: transparent;
+
     abbr {
-      background: ${({ theme }) => theme.colors.softColor};
+      background: ${c.surfaceAlt};
     }
   }
 
-  .react-calendar__tile.selected {
-    abbr {
-      color: ${({ theme }) => theme.colors.white};
-      background: ${({ theme }) => theme.colors.blueColor};
-    }
+  .react-calendar__tile.selected abbr {
+    color: ${c.onPrimary};
+    background: ${c.primary};
   }
 
   .react-calendar__tile--active {
@@ -193,37 +248,44 @@ export const StyledCalendar = styled(Calendar)<WithTheme>`
     display: flex;
     width: 100%;
     justify-content: center;
-    font-weight: ${({ theme }) => theme.weight.semiBold};
-    font-size: ${({ theme }) => theme.desktop.sizes.xs};
-    color: ${({ theme }) => theme.colors.greenColor};
+    font-weight: ${theme.weight.semiBold};
+    font-size: ${theme.sizes.xxsmall};
+    color: ${c.success};
   }
 
   .date-available {
+    padding: 1px 6px;
+    border-radius: ${theme.radius.pill};
+    background: ${c.primarySoft};
+    color: ${c.primary};
+    font-size: ${theme.sizes.xxsmall};
     font-weight: 700;
-    font-size: ${({ theme }) => theme.desktop.sizes.xs};
-    color: ${({ theme }) => theme.colors.greenColor};
+    white-space: nowrap;
   }
 `;
 
 export const TopBox = styled.div<WithTheme>`
+  ${cardStyle}
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: ${theme.space.xl};
   max-width: 600px;
   padding: 28px;
-  border-radius: 16px;
-  background: #f3f3f3;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.24);
+
   @media ${({ theme }) => theme.device.mobile} {
+    gap: ${theme.space.lg};
+    padding: ${theme.space.xl} ${theme.space.lg};
   }
 `;
 
 export const InstructorImage = styled.div`
   width: 160px;
   height: 160px;
-  border-radius: 12px;
+  border-radius: ${theme.radius.lg};
+  border: 1px solid ${c.border};
+  background: ${c.surfaceAlt};
   overflow: hidden;
 
   img {
@@ -231,61 +293,52 @@ export const InstructorImage = styled.div`
     height: 100%;
     object-fit: cover;
   }
+
+  @media ${theme.device.mobile} {
+    width: 128px;
+    height: 128px;
+  }
 `;
 
 export const InstructorInfo = styled.div<WithTheme>`
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: ${theme.space.md};
 
   h3 {
-    font-size: ${({ theme }) => theme.desktop.sizes.h3Size};
-    font-weight: 700;
-    color: ${({ theme }) => theme.colors.inputColor};
-    letter-spacing: 0.02em;
+    margin: 0;
+    font-size: ${theme.desktop.sizes.h3Size};
+    font-weight: 800;
+    color: ${c.textStrong};
+    letter-spacing: -0.02em;
   }
 
   p {
-    font-size: ${({ theme }) => theme.desktop.sizes.xl};
+    margin: 0;
+    font-size: 15px;
     line-height: 1.7;
-    opacity: 0.8;
+    color: ${c.textMuted};
     word-break: keep-all;
   }
 
   @media ${({ theme }) => theme.device.mobile} {
     h3 {
-      font-size: ${({ theme }) => theme.mobile.sizes.h3Size};
+      font-size: ${theme.sizes.menu};
     }
     p {
-      font-size: ${({ theme }) => theme.mobile.sizes.xl};
+      font-size: ${theme.sizes.small};
     }
   }
 `;
 
 export const Button = styled.button<WithTheme>`
-  padding: 12px 24px;
-  border-radius: 4px;
+  ${buttonStyle('primary', 'lg')}
   width: 100%;
   max-width: 600px;
-  background-color: ${({ theme }) => theme.colors.blueColor};
-  border: none;
-  color: ${({ theme }) => theme.colors.white};
-  cursor: pointer;
-  font-size: ${({ theme }) => theme.desktop.sizes.xl};
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.6;
-  }
-
-  &:hover {
-    opacity: 0.8;
-  }
-
-  @media ${({ theme }) => theme.device.mobile} {
-    width: 100%;
-    font-size: ${({ theme }) => theme.mobile.sizes.xl};
   }
 `;
 
@@ -294,7 +347,7 @@ export const TimeBox = styled.div<WithTheme>`
   max-width: 600px;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: ${theme.space.sm};
 
   @media ${({ theme }) => theme.device.mobile} {
     grid-template-columns: 1fr;
@@ -302,39 +355,45 @@ export const TimeBox = styled.div<WithTheme>`
 `;
 
 export const TimeSlotButton = styled.button<WithTheme & { selected: boolean }>`
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: ${theme.radius.md};
+  border: 1px solid ${({ selected }) => (selected ? c.primary : c.borderStrong)};
   cursor: pointer;
-  font-size: ${({ theme }) => theme.desktop.sizes.xl};
-  background: ${({ selected, theme }) =>
-    selected ? theme.colors.blueColor : theme.colors.whiteColor};
-  color: ${({ selected, theme }) => (selected ? theme.colors.whiteColor : theme.colors.inputColor)};
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: ${({ selected }) => (selected ? c.primary : c.surface)};
+  color: ${({ selected }) => (selected ? c.onPrimary : c.textStrong)};
   transition:
-    opacity 0.15s,
-    transform 0.15s;
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+  ${focusRing}
 
-  &:hover {
-    opacity: 0.9;
-  }
-
-  &:active {
-    transform: scale(0.99);
+  &:hover:not(:disabled) {
+    border-color: ${c.primary};
+    background: ${({ selected }) => (selected ? c.primaryHover : c.primarySoft)};
   }
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.35;
-    background: ${({ theme }) => theme.colors.softColor};
-    color: ${({ theme }) => theme.colors.grayColor};
+    border-color: ${c.border};
+    background: ${c.surfaceSunken};
+    color: ${c.textSubtle};
+    text-decoration: line-through;
   }
 `;
 
 export const EmptySlot = styled.div<WithTheme>`
+  grid-column: 1 / -1;
   width: 100%;
-  padding: 14px 12px;
-  border-radius: 12px;
+  padding: ${theme.space.lg} ${theme.space.md};
+  border: 1px dashed ${c.borderStrong};
+  border-radius: ${theme.radius.md};
   text-align: center;
-  color: ${({ theme }) => theme.colors.grayColor};
-  background: ${({ theme }) => theme.colors.softColor};
+  font-size: ${theme.sizes.small};
+  color: ${c.textMuted};
+  background: ${c.surfaceSunken};
 `;

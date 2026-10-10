@@ -1,45 +1,72 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { theme } from '../styles/theme.ts';
+import {
+  badgeStyle,
+  buttonStyle,
+  cardStyle,
+  focusRing,
+  inputStyle,
+  sectionTitleStyle,
+} from '../styles/mixins.ts';
+
+const c = theme.colors;
 
 export const Box = styled.div`
-  padding: 10px;
+  padding: ${theme.space.xl} 10px ${theme.space.xxl};
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.lg} 0 ${theme.space.xl};
+  }
 `;
 
 export const Notice = styled.div`
   text-align: center;
   padding: 60px 0;
-  color: #757575;
+  color: ${c.textMuted};
+  font-size: 15px;
 `;
 
-export const Header = styled.div.withConfig({ shouldForwardProp: p => p !== 'bgColor' })<{ bgColor: string } & WithTheme>`
-  background: ${({ bgColor }) => bgColor};
-  color: #fff;
-  padding: 20px;
+// 예전엔 bgColor 색 띠였다. 지금은 흰 바탕 제목 영역이라 bgColor 는 아래 구분선에만 쓴다
+export const Header = styled.div.withConfig({ shouldForwardProp: p => p !== 'bgColor' })<
+  { bgColor: string } & WithTheme
+>`
+  ${sectionTitleStyle};
+  padding: 0 0 ${theme.space.xl};
+  border-bottom: 2px solid ${({ bgColor }) => bgColor};
+
   h2 {
-    font-family: ${theme.fonts.display};
-    font-size: ${({ theme }) => theme.sizes.xxlarge};
+    font-size: 30px;
   }
-  p {
-    margin-top: 6px;
-    font-size: ${({ theme }) => theme.sizes.small};
+
+  @media ${theme.device.mobile} {
+    padding-bottom: ${theme.space.lg};
+
+    h2 {
+      font-size: 24px;
+    }
   }
 `;
 
 export const FormCard = styled.div<WithTheme>`
+  ${cardStyle};
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 10px;
-  padding: 18px;
-  margin: 20px 0;
+  gap: ${theme.space.lg};
+  padding: ${theme.space.xl};
+  margin: ${theme.space.xl} 0;
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.lg};
+  }
 `;
 
 export const FormTitle = styled.h3<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.large};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
+  margin: 0;
+  color: ${c.textStrong};
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 `;
 
 export const Field = styled.div<WithTheme>`
@@ -47,130 +74,170 @@ export const Field = styled.div<WithTheme>`
   flex-direction: column;
   gap: 6px;
   flex: 1;
-  label {
-    font-size: ${({ theme }) => theme.sizes.small};
-    font-weight: ${({ theme }) => theme.weight.semiBold};
-    color: ${({ theme }) => theme.colors.navColor};
+  min-width: 0;
+
+  > label {
+    color: ${c.textMuted};
+    font-size: 13px;
+    font-weight: 600;
   }
-  input,
+
+  input:not([type='checkbox']),
   select {
-    padding: 10px;
-    border: 1px solid ${({ theme }) => theme.colors.lineColor};
-    border-radius: 6px;
-    font-size: 16px;
-    width: 100%;
+    ${inputStyle};
+  }
+
+  select {
+    cursor: pointer;
   }
 `;
 
 export const RowFields = styled.div`
   display: flex;
-  gap: 12px;
-  @media (max-width: 844px) {
+  gap: ${theme.space.md};
+
+  @media ${theme.device.mobile} {
     flex-direction: column;
   }
 `;
 
 export const ToggleLabel = styled.label<WithTheme>`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  padding: 8px 0;
+  && {
+    display: flex;
+    align-items: center;
+    gap: ${theme.space.sm};
+    min-height: 44px;
+    color: ${c.textBody};
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
   input {
-    width: auto;
-    accent-color: #093a6e;
+    width: 18px;
+    min-height: 0;
+    height: 18px;
+    padding: 0;
+    accent-color: ${c.primary};
+    cursor: pointer;
   }
 `;
 
 export const RoleChips = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: ${theme.space.sm};
 `;
 
 export const RoleChip = styled.label<{ $checked: boolean } & WithTheme>`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 16px;
-  cursor: pointer;
-  font-size: ${({ theme }) => theme.sizes.small};
-  border: 1px solid ${({ $checked }) => ($checked ? '#093A6E' : '#D9D9D9')};
-  background: ${({ $checked }) => ($checked ? '#093A6E' : '#fff')};
-  color: ${({ $checked }) => ($checked ? '#fff' : '#424548')};
+  && {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 0 14px;
+    border-radius: ${theme.radius.pill};
+    border: 1px solid ${({ $checked }) => ($checked ? c.primary : c.borderStrong)};
+    background: ${({ $checked }) => ($checked ? c.primary : c.surface)};
+    color: ${({ $checked }) => ($checked ? c.onPrimary : c.textBody)};
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease;
+  }
+
+  &:has(input:focus-visible) {
+    outline: 2px solid ${c.primary};
+    outline-offset: 2px;
+  }
+
   input {
-    accent-color: #fff;
+    width: 16px;
+    height: 16px;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    accent-color: ${({ $checked }) => ($checked ? c.onPrimary : c.primary)};
+    cursor: pointer;
+  }
+
+  @media ${theme.device.mobile} {
+    && {
+      min-height: 44px;
+    }
   }
 `;
 
 export const FormButtons = styled.div`
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: ${theme.space.sm};
+  padding-top: ${theme.space.xs};
 `;
 
 export const PrimaryButton = styled.button<WithTheme>`
-  padding: 10px 22px;
-  background: #093a6e;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-weight: ${({ theme }) => theme.weight.bold};
-  cursor: pointer;
+  ${buttonStyle('primary', 'md')};
 `;
 
 export const GhostButton = styled.button<WithTheme>`
-  padding: 10px 22px;
-  background: #fff;
-  color: #424548;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 6px;
-  cursor: pointer;
+  ${buttonStyle('secondary', 'md')};
 `;
 
 export const TreeHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-top: 8px;
+  gap: ${theme.space.md};
+  margin-top: ${theme.space.sm};
+
+  @media ${theme.device.mobile} {
+    flex-wrap: wrap;
+  }
 `;
 
 export const TreeTitle = styled.h3<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.large};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
+  margin: 0;
+  color: ${c.textStrong};
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 `;
 
 export const TreeTools = styled.div`
   display: flex;
-  gap: 8px;
+  gap: ${theme.space.sm};
 
   button {
-    padding: 7px 14px;
-    font-size: 13px;
+    ${buttonStyle('secondary', 'sm')};
+  }
+
+  @media ${theme.device.mobile} {
+    button {
+      height: 44px;
+    }
   }
 `;
 
 export const TreeHint = styled.p<WithTheme>`
-  margin: 10px 0 12px;
-  padding: 10px 12px;
-  border-radius: 6px;
-  background: ${({ theme }) => theme.colors.softColor};
-  font-size: ${({ theme }) => theme.sizes.small};
-  line-height: 1.5;
-  color: ${({ theme }) => theme.colors.navColor};
+  margin: ${theme.space.md} 0;
+  padding: ${theme.space.md} 14px;
+  border-radius: ${theme.radius.md};
+  background: ${c.surfaceSunken};
+  border: 1px solid ${c.border};
+  color: ${c.textMuted};
+  font-size: 14px;
+  line-height: 1.6;
 
   strong {
-    color: ${({ theme }) => theme.colors.subColor};
-    font-weight: ${({ theme }) => theme.weight.bold};
+    color: ${c.textStrong};
+    font-weight: 700;
   }
 `;
 
 export const TreeWrap = styled.div<WithTheme>`
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 10px;
+  ${cardStyle};
   overflow: hidden;
 `;
 
@@ -178,29 +245,29 @@ export const TreeRow = styled.div<{ $depth: number; $editing: boolean } & WithTh
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 14px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
-  /* 최상위는 흰 배경, 하위로 갈수록 살짝 눕혀 계층이 보이게 */
+  gap: ${theme.space.md};
+  padding: ${theme.space.md} ${theme.space.lg};
+  border-bottom: 1px solid ${c.border};
+  /* 최상위는 흰 배경, 하위로 갈수록 살짝 눕혀 계층이 보이게. 수정 중인 행은 보라 옅은 배경 */
   background: ${({ $depth, $editing }) =>
-    $editing ? '#E8EEF6' : $depth === 0 ? '#ffffff' : '#FAFAFA'};
+    $editing ? c.primarySoft : $depth === 0 ? c.surface : c.surfaceSunken};
 
   &:last-child {
     border-bottom: none;
   }
 
-  @media ${({ theme }) => theme.device.mobile} {
+  @media ${theme.device.mobile} {
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
-    padding: 10px;
+    gap: ${theme.space.sm};
+    padding: ${theme.space.md};
   }
 `;
 
 export const RowMain = styled.div`
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: ${theme.space.sm};
   min-width: 0;
   flex: 1;
 `;
@@ -210,28 +277,46 @@ export const Indent = styled.div<{ $depth: number }>`
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 24px;
+  width: 32px;
+  min-height: 32px;
   margin-left: ${({ $depth }) => $depth * 24}px;
 
-  @media (max-width: 844px) {
+  @media ${theme.device.mobile} {
+    width: 44px;
+    min-height: 44px;
     margin-left: ${({ $depth }) => $depth * 14}px;
   }
 `;
 
 export const ToggleButton = styled.button<WithTheme>`
-  width: 24px;
-  height: 24px;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 4px;
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.subColor};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid ${c.borderStrong};
+  border-radius: ${theme.radius.sm};
+  background: ${c.surface};
+  color: ${c.textBody};
   font-size: 12px;
   line-height: 1;
   cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: ${c.surfaceAlt};
+  }
+
+  ${focusRing};
+
+  @media ${theme.device.mobile} {
+    width: 44px;
+    height: 44px;
+  }
 `;
 
 export const LeafMark = styled.span<WithTheme>`
-  color: ${({ theme }) => theme.colors.lineColor};
+  color: ${c.textSubtle};
   font-size: 18px;
   line-height: 1;
 `;
@@ -239,6 +324,11 @@ export const LeafMark = styled.span<WithTheme>`
 export const NameArea = styled.div`
   min-width: 0;
   flex: 1;
+  padding-top: 4px;
+
+  @media ${theme.device.mobile} {
+    padding-top: 10px;
+  }
 `;
 
 export const NameLine = styled.div`
@@ -249,27 +339,21 @@ export const NameLine = styled.div`
 `;
 
 export const MenuTitle = styled.span<{ $muted: boolean } & WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.medium};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  color: ${({ $muted, theme }) => ($muted ? theme.colors.navColor : theme.colors.subColor)};
+  color: ${({ $muted }) => ($muted ? c.textMuted : c.textStrong)};
+  font-size: 16px;
+  font-weight: 700;
 
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
+  @media ${theme.device.mobile} {
+    font-size: 15px;
   }
 `;
 
 export const CountBadge = styled.span<WithTheme>`
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: ${({ theme }) => theme.colors.basicColor};
-  color: ${({ theme }) => theme.colors.navColor};
-  font-size: ${({ theme }) => theme.sizes.xxsmall};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
+  ${badgeStyle('neutral')};
 `;
 
-export const OffBadge = styled(CountBadge)`
-  background: #f6dcdb;
-  color: #b2413c;
+export const OffBadge = styled.span<WithTheme>`
+  ${badgeStyle('danger')};
 `;
 
 export const MetaLine = styled.div`
@@ -277,39 +361,36 @@ export const MetaLine = styled.div`
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 3px;
+  margin-top: 4px;
 `;
 
 export const LinkText = styled.span<{ $empty: boolean } & WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.xsmall};
-  color: ${({ $empty, theme }) => ($empty ? theme.colors.navColor : theme.colors.blueColor)};
+  color: ${({ $empty }) => ($empty ? c.textMuted : c.primary)};
+  font-size: 13px;
   font-style: ${({ $empty }) => ($empty ? 'italic' : 'normal')};
   word-break: break-all;
 `;
 
 export const MetaDim = styled.span<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.xsmall};
-  color: ${({ theme }) => theme.colors.navColor};
+  color: ${c.textMuted};
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
 `;
 
 export const RowActions = styled.div`
   display: flex;
   flex-shrink: 0;
-  gap: 4px;
+  gap: 6px;
 
-  @media (max-width: 844px) {
+  @media ${theme.device.mobile} {
     justify-content: flex-end;
   }
 `;
 
 export const RowButton = styled.button<{ $danger?: boolean } & WithTheme>`
-  padding: 5px 10px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  color: #fff;
-  font-size: ${({ theme }) => theme.sizes.xsmall};
-  white-space: nowrap;
-  background: ${({ $danger }) => ($danger ? '#FF5E57' : theme.colors.primary)};
+  ${({ $danger }) => buttonStyle($danger ? 'danger' : 'secondary', 'sm')};
+
+  @media ${theme.device.mobile} {
+    height: 44px;
+  }
 `;

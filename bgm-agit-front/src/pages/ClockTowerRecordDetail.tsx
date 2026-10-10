@@ -21,7 +21,6 @@ import type {
   ClockTowerResultType,
   MemberOption,
 } from '../types/clocktower.ts';
-import { theme } from '../styles/theme.ts';
 
 function todayStr() {
   const d = new Date();
@@ -482,11 +481,11 @@ export default function ClockTowerRecordDetail() {
           <ButtonRow>
             {detail?.canManage && canWrite && (
               <>
-                <Button color="#4A2C82" onClick={() => setEditMode(true)}>수정</Button>
-                <Button color="#FF5E57" onClick={onDelete}>삭제</Button>
+                <Button $variant="primary" onClick={() => setEditMode(true)}>수정</Button>
+                <Button $variant="danger" onClick={onDelete}>삭제</Button>
               </>
             )}
-            <Button color={theme.colors.primary} onClick={() => navigate('/clocktower-records')}>목록</Button>
+            <Button $variant="secondary" onClick={() => navigate('/clocktower-records')}>목록</Button>
           </ButtonRow>
 
           <DetailHead>
@@ -664,9 +663,9 @@ export default function ClockTowerRecordDetail() {
         </Field>
 
         <ButtonRow>
-          <Button color="#1A7D55" onClick={() => onSubmit()}>저장</Button>
-          <Button color="#B5651D" onClick={() => onSubmit({ draft: true })}>임시저장</Button>
-          <Button color={theme.colors.primary} onClick={() => (id ? setEditMode(false) : navigate('/clocktower-records'))}>취소</Button>
+          <Button $variant="primary" onClick={() => onSubmit()}>저장</Button>
+          <Button $variant="secondary" onClick={() => onSubmit({ draft: true })}>임시저장</Button>
+          <Button $variant="ghost" onClick={() => (id ? setEditMode(false) : navigate('/clocktower-records'))}>취소</Button>
         </ButtonRow>
       </Box>
     </Wrapper>
