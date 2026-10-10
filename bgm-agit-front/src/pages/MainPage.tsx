@@ -12,7 +12,30 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { NoticeContent } from '../types/notice.ts';
 import NoticePopupDetail from './NoticePopupDetail.tsx';
 import { theme } from '../styles/theme.ts';
-import { TopSection, LeftSection, ContentBox, LogoBox, GridItem, RightSection, GameFoodSection, ReservationNoticeSection, GameSection, FoodSection, ReservationSection, NoticeSection, TitleBox, SliderBox, ABox } from './MainPage.styles.ts';
+import {
+  Hero,
+  HeroText,
+  Eyebrow,
+  HeroTitle,
+  HeroLead,
+  FeatureList,
+  HeroActions,
+  PrimaryAction,
+  SecondaryAction,
+  TextAction,
+  HeroMedia,
+  Section,
+  ReservationSection,
+  PairRow,
+  SectionHead,
+  TitleBox,
+  MoreLink,
+  Steps,
+  RoomList,
+  RoomCard,
+  ReservationFooter,
+  SliderBox,
+} from './MainPage.styles.ts';
 
 // 모듈 상수로 둬야 렌더마다 새 배열이 되어 재조회가 도는 일이 없다
 const ROOM_SLIDER_LINKS = ['/detail/room', '/detail/mahjongRental'];
@@ -111,98 +134,132 @@ export default function MainPage() {
 
   return (
     <Wrapper>
-      <TopSection>
-        <LeftSection>
-          <ContentBox>
-            <div>
-              <p>BGM 아지트란.</p>
-              <a
-                onClick={() => {
-                  navigate('/about');
-                }}
-              >
-                더보기
-              </a>
-            </div>
-            <h2>
-              누구에게나
-              <br />
-              편안한 아지트 같은 쉼터가 될 수 있는 곳!
-            </h2>
-          </ContentBox>
-          <LogoBox>
-            <GridItem>
-              <FaUsers />
-              <span>단체 가능</span>
-            </GridItem>
-            <GridItem>
-              <FaCalendarAlt />
-              <span>예약 가능</span>
-            </GridItem>
-            <GridItem>
-              <FaWifi />
-              <span>무선 와이파이</span>
-            </GridItem>
-            <GridItem>
-              <FaCar />
-              <span>주차 가능</span>
-            </GridItem>
-          </LogoBox>
-        </LeftSection>
-        <RightSection>
+      <Hero>
+        <HeroText>
+          <Eyebrow>대전 탄방역 4번 출구 3분 · 연중무휴 24시간</Eyebrow>
+          <HeroTitle>
+            누구에게나
+            <br />
+            편안한 아지트 같은 쉼터가 될 수 있는 곳!
+          </HeroTitle>
+          <HeroLead>
+            대전 보드게임 매니아들의 성지, 최대규모의 크라임씬(머더미스터리) 게임 보유.
+          </HeroLead>
+          <FeatureList>
+            <li>
+              <FaUsers aria-hidden="true" />
+              단체 가능
+            </li>
+            <li>
+              <FaCalendarAlt aria-hidden="true" />
+              예약 가능
+            </li>
+            <li>
+              <FaWifi aria-hidden="true" />
+              무선 와이파이
+            </li>
+            <li>
+              <FaCar aria-hidden="true" />
+              주차 가능
+            </li>
+          </FeatureList>
+          <HeroActions>
+            <PrimaryAction type="button" onClick={() => navigate('/detail/room')}>
+              룸 예약하기
+            </PrimaryAction>
+            <SecondaryAction type="button" onClick={() => navigate('/detail/game')}>
+              보유게임 보기
+            </SecondaryAction>
+            <TextAction type="button" onClick={() => navigate('/about')}>
+              BGM 아지트 소개
+            </TextAction>
+          </HeroActions>
+        </HeroText>
+        <HeroMedia>
           <ImageGridSlider visibleCount={visibleCountMain} labelGb={1} items={items[1]} />
-        </RightSection>
-      </TopSection>
-      <GameFoodSection>
-        <GameSection>
-          <TitleBox>
-            <h2>게임찾기</h2>
-            <p>다채롭고 색다른 게임들을 만나보세요!</p>
-          </TitleBox>
-          <SliderBox>
-            <ImageGridSlider visibleCount={visibleCountGame} labelGb={2} items={items[2]} />
-          </SliderBox>
-        </GameSection>
-        <FoodSection>
-          <TitleBox>
-            <h2>먹거리 소개</h2>
-            <p>게임하면서 간편하게 즐기는 먹거리를 확인해보세요!</p>
-          </TitleBox>
-          <SliderBox>
-            <ImageGridSlider visibleCount={visibleCountFood} labelGb={4} items={items[4]} />
-          </SliderBox>
-        </FoodSection>
-      </GameFoodSection>
-      <ReservationNoticeSection>
-        <ReservationSection>
+        </HeroMedia>
+      </Hero>
+
+      <ReservationSection>
+        <SectionHead>
           <TitleBox>
             <h2>실시간 예약하기</h2>
             <p>내가 원하는 날짜, 시간에 간편하게 예약하세요!</p>
           </TitleBox>
+          <Steps aria-label="예약 순서">
+            <li>1 날짜</li>
+            <li>2 방</li>
+            <li>3 시간</li>
+          </Steps>
+        </SectionHead>
+        {roomItems ? (
+          <RoomList>
+            {roomItems.map(room => (
+              <li key={room.imageId}>
+                <RoomCard type="button" onClick={() => navigate(room.link || '/detail/room')}>
+                  <strong>{room.label}</strong>
+                  {room.group && <span>{room.group}</span>}
+                </RoomCard>
+              </li>
+            ))}
+          </RoomList>
+        ) : (
           <SliderBox>
             {/* 방이 없으면 undefined 로 넘겨 슬라이더의 "사진을 준비중입니다." 를 그대로 쓴다 */}
             <ImageGridSlider visibleCount={visibleCountReserve} labelGb={3} items={roomItems!} />
           </SliderBox>
-        </ReservationSection>
-        <NoticeSection>
+        )}
+        <ReservationFooter>
+          <span>날짜를 먼저 고르면 그날 예약 가능한 방과 시간이 보여요.</span>
+          <PrimaryAction type="button" onClick={() => navigate('/detail/room')}>
+            날짜 고르고 예약하기
+          </PrimaryAction>
+        </ReservationFooter>
+      </ReservationSection>
+
+      <PairRow>
+        <Section>
+          <SectionHead>
+            <TitleBox>
+              <h2>게임찾기</h2>
+              <p>다채롭고 색다른 게임들을 만나보세요!</p>
+            </TitleBox>
+            <MoreLink type="button" onClick={() => navigate('/detail/game')}>
+              더보기
+            </MoreLink>
+          </SectionHead>
+          <SliderBox>
+            <ImageGridSlider visibleCount={visibleCountGame} labelGb={2} items={items[2]} />
+          </SliderBox>
+        </Section>
+        <Section>
+          <SectionHead>
+            <TitleBox>
+              <h2>먹거리 소개</h2>
+              <p>게임하면서 간편하게 즐기는 먹거리를 확인해보세요!</p>
+            </TitleBox>
+          </SectionHead>
+          <SliderBox>
+            <ImageGridSlider visibleCount={visibleCountFood} labelGb={4} items={items[4]} />
+          </SliderBox>
+        </Section>
+      </PairRow>
+
+      <Section>
+        <SectionHead>
           <TitleBox>
             <h2>공지사항</h2>
             <p>BGM 아지트 중요 정보 및 이벤트를 확인해주세요!</p>
           </TitleBox>
-          <ABox>
-            <a
-              onClick={() => {
-                navigate('/notice');
-              }}
-            >
-              더보기
-            </a>
-          </ABox>
-          <SliderBox>
-            <Notice mainGb={false} />
-          </SliderBox>
-        </NoticeSection>
-      </ReservationNoticeSection>
+          <MoreLink type="button" onClick={() => navigate('/notice')}>
+            더보기
+          </MoreLink>
+        </SectionHead>
+        <SliderBox>
+          <Notice mainGb={false} />
+        </SliderBox>
+      </Section>
+
       {popupItems.map(item => (
         <NoticePopupDetail
           key={item.bgmAgitNoticeId}

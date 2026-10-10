@@ -18,7 +18,8 @@ export default function Detail() {
 
   const visibleGameCount = isMobile ? 2 : 4;
   const visibleFoodCount = isMobile ? 2 : 5;
-  const visibleCountReserve = isMobile ? 1 : 1;
+  // 데스크톱 예약 화면은 왼쪽 달력 옆에 방 카드 3열(ImageGrid 의 좌우 분할)
+  const visibleCountReserve = isMobile ? 1 : 3;
 
   const pageData = {
     game: {

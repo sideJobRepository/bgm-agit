@@ -1,4 +1,37 @@
-import { Wrapper, SearchWrapper, TitleBox, SearchBox, GridContainer, GridItemBox, ImageWrapper, DeleteBox, TopLabel, HiddenTag, CommentLabel, FoodLabel, NoSearchBox, TimeSection, DateSection, StickySummary, SummaryText, ChangeButton, ButtonBox, ButtonBox2, Button, ImageModalWraaper, ImageUploadWrapper, UploadLabel, HiddenInput, PreviewImage, TextArea, SelectBox, PaginationWrapper } from './ImageGrid.styles.ts';
+import {
+  Wrapper,
+  SearchWrapper,
+  TitleBox,
+  SearchBox,
+  GridContainer,
+  GridItemBox,
+  ImageWrapper,
+  DeleteBox,
+  TopLabel,
+  HiddenTag,
+  CommentLabel,
+  FoodLabel,
+  NoSearchBox,
+  TimeSection,
+  DateSection,
+  StickySummary,
+  SummaryText,
+  ChangeButton,
+  ButtonBox,
+  ButtonBox2,
+  Button,
+  ImageModalWraaper,
+  ImageUploadWrapper,
+  UploadLabel,
+  HiddenInput,
+  PreviewImage,
+  TextArea,
+  SelectBox,
+  PaginationWrapper,
+  ReserveLayout,
+  ReserveAside,
+  ReserveMain,
+} from './ImageGrid.styles.ts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FaUsers } from 'react-icons/fa';
 import ImageLightbox from '../ImageLightbox.tsx';
@@ -363,6 +396,26 @@ export default function ImageGrid({ pageData }: Props) {
     }
   }, [writeModalOpen]);
 
+  // 데스크톱 예약 화면만 좌우 분할. 시간 패널은 분할이면 방 카드 묶음 아래, 아니면 고른 카드 바로 아래
+  const splitLayout = labelGb === 3 && !isMobile;
+  const selectedItem = filteredItems?.find(i => i.imageId === reservationData?.id);
+
+  const renderTimePanel = (item: NonNullable<typeof filteredItems>[number], date: string) => (
+    <TimeSection
+      ref={el => {
+        timePanelRefs.current[item.imageId] = el as HTMLDivElement | null;
+      }}
+    >
+      {/* key 로 방·날짜가 바뀔 때 리마운트시켜 선택한 시간·합치기·이용방식을 초기화한다 */}
+      <ReservationTimePanel
+        key={`${item.imageId}-${date}`}
+        id={item.imageId}
+        date={date}
+        combinable={combinableItems(item)}
+      />
+    </TimeSection>
+  );
+
   return (
     <Wrapper>
       <SearchWrapper bgColor={bgColor}>
@@ -389,116 +442,117 @@ export default function ImageGrid({ pageData }: Props) {
           </Button>
         </ButtonBox>
       )}
-      {labelGb === 3 && (
-        <>
-          <StickySummary>
-            <SummaryText>
-              {selectedDate ? formatYmdWithWeekday(selectedDate) : '날짜를 선택해주세요'}
-              {selectedDate && reservationData && (
-                <em>· {filteredItems?.find(i => i.imageId === reservationData.id)?.label}</em>
+      {/* 데스크톱 예약 화면은 왼쪽 달력 · 오른쪽 방 카드 + 아래 시간. 모바일·예약 외 화면은 위아래로 쌓인다 */}
+      <ReserveLayout $split={splitLayout}>
+        {labelGb === 3 && (
+          <ReserveAside $split={splitLayout}>
+            <StickySummary>
+              <SummaryText>
+                {selectedDate ? formatYmdWithWeekday(selectedDate) : '날짜를 선택해주세요'}
+                {selectedDate && reservationData && (
+                  <em>· {filteredItems?.find(i => i.imageId === reservationData.id)?.label}</em>
+                )}
+              </SummaryText>
+              {selectedDate && !calendarOpen && (
+                <ChangeButton type="button" onClick={() => setCalendarOpen(true)}>
+                  날짜 변경
+                </ChangeButton>
               )}
-            </SummaryText>
-            {selectedDate && !calendarOpen && (
-              <ChangeButton type="button" onClick={() => setCalendarOpen(true)}>
-                날짜 변경
-              </ChangeButton>
+            </StickySummary>
+            {calendarOpen && (
+              <DateSection>
+                <ReservationDatePicker
+                  value={selectedDate}
+                  onChange={ymd => {
+                    setSelectedDate(ymd);
+                    // 모바일은 캘린더가 약 330px를 먹어 방 카드가 한 개밖에 안 보인다. 고르면 접어서 회수한다.
+                    if (isMobile) setCalendarOpen(false);
+                  }}
+                />
+              </DateSection>
             )}
-          </StickySummary>
-          {calendarOpen && (
-            <DateSection>
-              <ReservationDatePicker
-                value={selectedDate}
-                onChange={ymd => {
-                  setSelectedDate(ymd);
-                  // 모바일은 캘린더가 약 330px를 먹어 방 카드가 한 개밖에 안 보인다. 고르면 접어서 회수한다.
-                  if (isMobile) setCalendarOpen(false);
-                }}
-              />
-            </DateSection>
-          )}
-        </>
-      )}
-      {labelGb === 3 && !selectedDate ? (
-        <NoSearchBox>날짜를 먼저 선택해주세요.</NoSearchBox>
-      ) : (
-        <GridContainer $columnCount={columnCount}>
-          {filteredItems &&
-            filteredItems.map((item, idx) => {
-              const roomStatus = roomStatusOf(item.imageId);
-              const soldOut = roomStatus ? !roomStatus.available : false;
-              // 숨김 방은 관리자에게만 내려온다(includeHidden). 흐리게 + 표시
-              const hidden = labelGb === 3 && item.room?.useStatus === 'N';
-              return (
-                <GridItemBox key={idx}>
-                  <ImageWrapper
-                    radius={labelGb === 4}
-                    ratio={labelGb === 3}
-                    $dimmed={soldOut || hidden}
-                    $selected={labelGb === 3 && item.imageId === reservationData?.id}
-                    onClick={() => {
-                      if (labelGb !== 3) {
-                        handleImageClick(idx);
-                      } else {
-                        reservationClickEvent(item);
-                      }
-                    }}
-                  >
-                    <img src={item.image} alt={`img-${idx}`} draggable={false} />
-                    {labelGb === 3 && (
-                      <TopLabel>
-                        <p>{item.label}</p>
-                        <FaUsers /> <span>{item.group}</span>
-                      </TopLabel>
-                    )}
-                    {hidden && <HiddenTag>숨김</HiddenTag>}
-                    {labelGb === 3 && getReservationComment(item.label) && (
-                      <CommentLabel>{getReservationComment(item.label)}</CommentLabel>
-                    )}
-                    {/* 카드 본문 마지막 줄. 사진 위 오버레이가 아니라 카드 안 텍스트 영역에 둔다 */}
-                    {labelGb === 3 && <RoomAvailabilityBadge status={roomStatus} />}
-                    {user?.roles.includes('ROLE_ADMIN') && (
-                      <DeleteBox
-                        onClick={e => {
-                          e.stopPropagation();
-                          if (labelGb === 3) {
-                            if (item.room) setRoomEditTarget(item.room);
-                            return;
+          </ReserveAside>
+        )}
+        <ReserveMain>
+          {labelGb === 3 && !selectedDate ? (
+            <NoSearchBox>날짜를 먼저 선택해주세요.</NoSearchBox>
+          ) : (
+            <GridContainer $columnCount={columnCount}>
+              {filteredItems &&
+                filteredItems.map((item, idx) => {
+                  const roomStatus = roomStatusOf(item.imageId);
+                  const soldOut = roomStatus ? !roomStatus.available : false;
+                  // 숨김 방은 관리자에게만 내려온다(includeHidden). 흐리게 + 표시
+                  const hidden = labelGb === 3 && item.room?.useStatus === 'N';
+                  return (
+                    <GridItemBox key={idx}>
+                      <ImageWrapper
+                        radius={labelGb === 4}
+                        ratio={labelGb === 3}
+                        $dimmed={soldOut || hidden}
+                        $selected={labelGb === 3 && item.imageId === reservationData?.id}
+                        onClick={() => {
+                          if (labelGb !== 3) {
+                            handleImageClick(idx);
+                          } else {
+                            reservationClickEvent(item);
                           }
-                          setWriteModalOpen(true);
-                          setIsEditMode(true);
-                          setText(item.label); // 라벨 바인딩
-                          setSelectedImage(item.image); // 이미지 프리뷰
-                          setEditCategory(item.category); // 카테고리 게임일 경우
-                          setEditTarget({ imageId: item.imageId, image: item.image }); // 수정 대상 ID
                         }}
                       >
-                        <FiEdit />
-                      </DeleteBox>
-                    )}
-                  </ImageWrapper>
+                        <img src={item.image} alt={`img-${idx}`} draggable={false} />
+                        {labelGb === 3 && (
+                          <TopLabel>
+                            <p>{item.label}</p>
+                            <FaUsers /> <span>{item.group}</span>
+                          </TopLabel>
+                        )}
+                        {hidden && <HiddenTag>숨김</HiddenTag>}
+                        {labelGb === 3 && getReservationComment(item.label) && (
+                          <CommentLabel>{getReservationComment(item.label)}</CommentLabel>
+                        )}
+                        {/* 카드 본문 마지막 줄. 사진 위 오버레이가 아니라 카드 안 텍스트 영역에 둔다 */}
+                        {labelGb === 3 && <RoomAvailabilityBadge status={roomStatus} />}
+                        {user?.roles.includes('ROLE_ADMIN') && (
+                          <DeleteBox
+                            onClick={e => {
+                              e.stopPropagation();
+                              if (labelGb === 3) {
+                                if (item.room) setRoomEditTarget(item.room);
+                                return;
+                              }
+                              setWriteModalOpen(true);
+                              setIsEditMode(true);
+                              setText(item.label); // 라벨 바인딩
+                              setSelectedImage(item.image); // 이미지 프리뷰
+                              setEditCategory(item.category); // 카테고리 게임일 경우
+                              setEditTarget({ imageId: item.imageId, image: item.image }); // 수정 대상 ID
+                            }}
+                          >
+                            <FiEdit />
+                          </DeleteBox>
+                        )}
+                      </ImageWrapper>
 
-                  {item.labelGb === 3 && item.imageId === reservationData?.id && selectedDate && (
-                    <TimeSection
-                      ref={el => {
-                        timePanelRefs.current[item.imageId] = el as HTMLDivElement | null;
-                      }}
-                    >
-                      {/* key 로 방·날짜가 바뀔 때 리마운트시켜 선택한 시간·합치기·이용방식을 초기화한다 */}
-                      <ReservationTimePanel
-                        key={`${item.imageId}-${selectedDate}`}
-                        id={item.imageId}
-                        date={selectedDate}
-                        combinable={combinableItems(item)}
-                      />
-                    </TimeSection>
-                  )}
+                      {/* 모바일은 고른 방 카드 바로 아래에 시간을 펼친다 */}
+                      {!splitLayout &&
+                        item.labelGb === 3 &&
+                        item.imageId === reservationData?.id &&
+                        selectedDate &&
+                        renderTimePanel(item, selectedDate)}
 
-                  {labelGb !== 3 && <FoodLabel textColor={textColor}>{item.label}</FoodLabel>}
-                </GridItemBox>
-              );
-            })}
-        </GridContainer>
-      )}
+                      {labelGb !== 3 && <FoodLabel textColor={textColor}>{item.label}</FoodLabel>}
+                    </GridItemBox>
+                  );
+                })}
+            </GridContainer>
+          )}
+          {/* 데스크톱은 방 카드 묶음 아래에 넓게 펼친다(3열 카드 안에 넣으면 시간 칸이 좁아진다) */}
+          {splitLayout &&
+            selectedItem &&
+            selectedDate &&
+            renderTimePanel(selectedItem, selectedDate)}
+        </ReserveMain>
+      </ReserveLayout>
       {filteredItems?.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
       {!items && <NoSearchBox>사진을 준비중입니다.</NoSearchBox>}
       {/* 예약 페이지는 main-image(페이징 없음)를 쓰므로 페이지네이션이 의미가 없다 */}

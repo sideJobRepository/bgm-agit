@@ -12,7 +12,7 @@ export default function Footer() {
     <Wrapper>
       <Left>
         <div>
-          <span>찾아오시는 길 : 찾아오시는 길 : 대전 서구 문정로 62 3층 </span>
+          <span>찾아오시는 길 : 대전 서구 문정로 62 3층 </span>
           <img
             src={logo}
             alt="로고"
@@ -21,8 +21,7 @@ export default function Footer() {
             }}
           />
         </div>
-        <span>금, 토 : 13:00 ~ 06:00 </span>
-        <p>월, 화, 수, 목, 일 : 13:00 ~ 02:00 </p>
+        <span>연중무휴 24시간</span>
       </Left>
       <Right>
         <BusinessInfo>

@@ -1,7 +1,7 @@
 import styled, { css } from 'styled-components';
 import type { WithTheme } from '../../styles/styled-props.ts';
 import { theme } from '../../styles/theme.ts';
-import { badgeStyle, buttonStyle, focusRing, inputStyle } from '../../styles/mixins.ts';
+import { badgeStyle, buttonStyle, cardStyle, focusRing, inputStyle } from '../../styles/mixins.ts';
 import { StatusRow } from './RoomAvailabilityBadge.styles.ts';
 
 const c = theme.colors;
@@ -518,4 +518,61 @@ export const PaginationWrapper = styled.div`
   text-align: center;
   height: 30px;
   margin-top: 20px;
+`;
+
+/*
+ * 데스크톱 예약 화면 = 왼쪽 달력(고정) · 오른쪽 방 카드 + 시간.
+ * $split 이 false 면(모바일, 예약 외 화면) 예전처럼 위아래로 쌓이는 평범한 블록이다.
+ */
+export const ReserveLayout = styled.div.withConfig({
+  shouldForwardProp: prop => prop !== '$split',
+})<{ $split: boolean }>`
+  ${({ $split }) =>
+    $split &&
+    css`
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      gap: ${theme.space.xxl};
+      align-items: start;
+      margin-top: ${theme.space.lg};
+    `}
+`;
+
+export const ReserveAside = styled.div.withConfig({
+  shouldForwardProp: prop => prop !== '$split',
+})<{ $split: boolean }>`
+  min-width: 0;
+
+  ${({ $split }) =>
+    $split &&
+    css`
+      position: sticky;
+      /* 고정 헤더(80px) 아래 */
+      top: 96px;
+      display: flex;
+      flex-direction: column;
+      gap: ${theme.space.md};
+
+      ${StickySummary} {
+        position: static;
+        margin-top: 0;
+      }
+
+      ${DateSection} {
+        padding: ${theme.space.lg};
+        ${cardStyle};
+
+        .custom-calender {
+          width: 100%;
+        }
+      }
+    `}
+`;
+
+export const ReserveMain = styled.div`
+  min-width: 0;
+
+  ${ReserveLayout} > & > ${GridContainer} {
+    padding-top: 0;
+  }
 `;

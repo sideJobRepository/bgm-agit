@@ -8,7 +8,7 @@ import { buttonStyle, cardStyle } from '../../styles/mixins.ts';
 const HEADER_HEIGHT = '80px';
 
 // 대메뉴 칸 너비. 서브메뉴 열(SubLi)도 같은 너비라 위아래 칸이 맞는다
-const MENU_COLUMN_WIDTH = '160px';
+const MENU_COLUMN_WIDTH = '132px';
 
 export const Wrapper = styled.div<WithTheme>`
   height: ${HEADER_HEIGHT};
@@ -118,7 +118,7 @@ export const Right = styled.div<WithTheme>`
     gap: 12px;
 
     li {
-      ${buttonStyle('secondary', 'md')}
+      ${buttonStyle('dark', 'md')}
 
       a {
         flex-wrap: nowrap;
