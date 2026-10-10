@@ -22,6 +22,7 @@ export default function Footer() {
           />
         </div>
         <span>연중무휴 24시간</span>
+        <p>직원 상주 : 13:00 ~ 02:00</p>
       </Left>
       <Right>
         <BusinessInfo>
