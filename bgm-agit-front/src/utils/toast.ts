@@ -1,4 +1,5 @@
 import Swal, { type SweetAlertIcon } from 'sweetalert2';
+import { theme } from '../styles/theme.ts';
 
 /**
  * 알림. 예전 react-toastify 의 toast.success / error / warning / info 와 같은 모양으로 부르면
@@ -13,8 +14,8 @@ import Swal, { type SweetAlertIcon } from 'sweetalert2';
 const Alert = Swal.mixin({
   confirmButtonText: '확인',
   cancelButtonText: '닫기',
-  confirmButtonColor: '#482768',
-  cancelButtonColor: '#FF5E57',
+  confirmButtonColor: theme.colors.purpleColor,
+  cancelButtonColor: theme.colors.danger,
   heightAuto: false,
   scrollbarPadding: false,
   returnFocus: false,
@@ -28,8 +29,8 @@ const MIN_MS = 2500;
 
 // 아이콘 색. bgm 로고 보라(theme.colors.purpleColor)를 바탕으로, 실패는 빨강
 const ICON_COLORS: Record<SweetAlertIcon, string> = {
-  success: '#482768',
-  error: '#FF5E57',
+  success: theme.colors.purpleColor,
+  error: theme.colors.danger,
   warning: '#f59e0b',
   info: '#6B4A94',
   question: '#6B4A94',

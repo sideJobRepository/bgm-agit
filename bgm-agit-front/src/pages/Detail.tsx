@@ -1,4 +1,3 @@
-import styled from 'styled-components';
 import ImageGrid from '../components/grid/ImageGrid.tsx';
 import { useMediaQuery } from 'react-responsive';
 import { Wrapper } from '../styles';
@@ -9,24 +8,27 @@ import { detailDataState } from '../recoil';
 import { userState } from '../recoil/state/userState.ts';
 import type { GridItem, PageItem } from '../types/main.ts';
 import { useEffect, useState } from 'react';
+import { GridBox } from './Detail.styles.ts';
+import { theme } from '../styles/theme.ts';
 
 export default function Detail() {
-  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+  const isMobile = useMediaQuery({ query: theme.device.mobile });
 
   const location = useLocation();
 
   const visibleGameCount = isMobile ? 2 : 4;
   const visibleFoodCount = isMobile ? 2 : 5;
-  const visibleCountReserve = isMobile ? 1 : 1;
+  // 데스크톱 예약 화면은 왼쪽 달력 옆에 방 카드 3열(ImageGrid 의 좌우 분할)
+  const visibleCountReserve = isMobile ? 1 : 3;
 
   const pageData = {
     game: {
       labelGb: 2,
       title: 'BEST GAME',
       subTitle: 'BGM 아지트에서 선별한 가장 사랑받는 게임들을 확인해보세요.',
-      bgColor: '#1A7D55',
-      textColor: '#ffffff',
-      searchColor: '#1A7D55',
+      bgColor: theme.colors.greenColor,
+      textColor: theme.colors.white,
+      searchColor: theme.colors.greenColor,
       columnCount: visibleGameCount,
       label: '게임 이름',
     },
@@ -34,9 +36,9 @@ export default function Detail() {
       labelGb: 3,
       title: 'Your Game Starts Here',
       subTitle: '지금 바로 원하는 방을 예약하고 특별한 아지트를 만나보세요.',
-      bgColor: '#093A6E',
-      textColor: '#ffffff',
-      searchColor: '#093A6E',
+      bgColor: theme.colors.blueColor,
+      textColor: theme.colors.white,
+      searchColor: theme.colors.blueColor,
       columnCount: visibleCountReserve,
       label: '방 이름',
     },
@@ -44,9 +46,9 @@ export default function Detail() {
       labelGb: 3,
       title: 'Reserve Your Mahjong Table',
       subTitle: '지금 원하는 마작 테이블을 예약하고 특별한 시간을 즐겨보세요.',
-      bgColor: '#093A6E',
-      textColor: '#ffffff',
-      searchColor: '#093A6E',
+      bgColor: theme.colors.blueColor,
+      textColor: theme.colors.white,
+      searchColor: theme.colors.blueColor,
       columnCount: visibleCountReserve,
       label: '테이블 이름',
     },
@@ -54,9 +56,9 @@ export default function Detail() {
       labelGb: 4,
       title: 'Pick Your Drink',
       subTitle: '당신의 취향에 맞는 음료를 골라보세요.',
-      bgColor: '#F2EDEA',
-      textColor: '#5C3A21',
-      searchColor: '#5C3A21',
+      bgColor: theme.colors.basicColor,
+      textColor: theme.colors.bronzeColor,
+      searchColor: theme.colors.bronzeColor,
       columnCount: visibleFoodCount,
       label: '음료 이름',
     },
@@ -64,9 +66,9 @@ export default function Detail() {
       labelGb: 4,
       title: 'Tasty Dishes',
       subTitle: '하루를 채워줄 진짜 한 끼, 여기서 만나보세요.',
-      bgColor: '#F2EDEA',
-      textColor: '#5C3A21',
-      searchColor: '#5C3A21',
+      bgColor: theme.colors.basicColor,
+      textColor: theme.colors.bronzeColor,
+      searchColor: theme.colors.bronzeColor,
       columnCount: visibleFoodCount,
       label: '음식 이름',
     },
@@ -132,11 +134,3 @@ export default function Detail() {
     </Wrapper>
   );
 }
-
-const GridBox = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-  max-width: 1280px;
-`;

@@ -7,8 +7,10 @@ import {
   isInAppBrowser,
   isIos,
   isMobile,
+  isInstallBannerSnoozed,
   isStandalone,
   promptInstall,
+  snoozeInstallBanner,
   subscribeInstallPrompt,
 } from '@/lib/pwa';
 
@@ -16,12 +18,18 @@ type Mode = 'hidden' | 'prompt' | 'ios';
 
 export default function InstallBanner() {
   // 서버 렌더와 첫 화면을 맞추려고 처음엔 숨겨 두고 마운트 뒤에 판정한다.
-  // 닫기는 지금 화면에서만 — 설치를 안 했으면 다음 방문(새로고침)에 다시 띄운다
+  // ✕ 로 닫으면 일주일 동안 안 띄운다(snoozeInstallBanner)
   const [mode, setMode] = useState<Mode>('hidden');
   const [closed, setClosed] = useState(false);
 
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'production' || !isMobile() || isStandalone()) return;
+    if (
+      process.env.NODE_ENV !== 'production' ||
+      !isMobile() ||
+      isStandalone() ||
+      isInstallBannerSnoozed()
+    )
+      return;
     // 안드로이드는 브라우저가 설치 가능하다고 알려 온 뒤에만 띄운다(HTTPS·manifest 조건을 브라우저가 판정).
     // 아이폰은 설치 창을 띄우는 방법이 없어 메뉴 안내만 한다
     const fallback: Mode = isIos() && !isInAppBrowser() ? 'ios' : 'hidden';
@@ -33,6 +41,10 @@ export default function InstallBanner() {
   if (mode === 'hidden' || closed) return null;
 
   const close = () => setClosed(true);
+  const dismiss = () => {
+    snoozeInstallBanner();
+    close();
+  };
 
   // 설치하면 브라우저가 더는 설치 가능 신호를 보내지 않아 다음 방문부터 저절로 안 뜬다.
   // 설치 창에서 취소했으면 이번 화면에서만 거둔다
@@ -53,7 +65,7 @@ export default function InstallBanner() {
         )}
       </Text>
       {mode === 'prompt' && <InstallButton onClick={install}>설치</InstallButton>}
-      <CloseButton onClick={close} aria-label="닫기">
+      <CloseButton onClick={dismiss} aria-label="닫기">
         ✕
       </CloseButton>
     </Banner>

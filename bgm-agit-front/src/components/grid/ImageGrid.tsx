@@ -1,6 +1,38 @@
-import styled from 'styled-components';
+import {
+  Wrapper,
+  SearchWrapper,
+  TitleBox,
+  SearchBox,
+  GridContainer,
+  GridItemBox,
+  ImageWrapper,
+  DeleteBox,
+  TopLabel,
+  HiddenTag,
+  CommentLabel,
+  FoodLabel,
+  NoSearchBox,
+  TimeSection,
+  DateSection,
+  StickySummary,
+  SummaryText,
+  ChangeButton,
+  ButtonBox,
+  ButtonBox2,
+  Button,
+  ImageModalWraaper,
+  ImageUploadWrapper,
+  UploadLabel,
+  HiddenInput,
+  PreviewImage,
+  TextArea,
+  SelectBox,
+  PaginationWrapper,
+  ReserveLayout,
+  ReserveAside,
+  ReserveMain,
+} from './ImageGrid.styles.ts';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { WithTheme } from '../../styles/styled-props.ts';
 import { FaUsers } from 'react-icons/fa';
 import ImageLightbox from '../ImageLightbox.tsx';
 import SearchBar from '../SearchBar.tsx';
@@ -32,6 +64,7 @@ import Pagination from '../Pagination.tsx';
 import { getCombinableLabels, getReservationComment } from '../../config/reservationComments.ts';
 import { useMediaQuery } from 'react-responsive';
 import { formatYmdWithWeekday } from '../../utils/date.ts';
+import { theme } from '../../styles/theme.ts';
 
 interface Props {
   pageData: {
@@ -325,6 +358,18 @@ export default function ImageGrid({ pageData }: Props) {
     setReservationData(prev => (prev ? { ...prev, date: selectedDate, ids: undefined } : prev));
   }, [selectedDate, location.pathname, labelGb]);
 
+  // 예약 화면은 날짜를 고르기 전엔 방 카드를 그리지 않아서, 날짜를 누른 뒤에야 사진을 받기 시작해 늦게 떴다.
+  // 방 목록이 오면 사진을 미리 받아 둬서 날짜를 누르면 브라우저 캐시에서 바로 그리게 한다
+  useEffect(() => {
+    if (labelGb !== 3 || !items) return;
+    items.forEach(item => {
+      if (!item.image) return;
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = item.image;
+    });
+  }, [items, labelGb]);
+
   // /detail/room ↔ /detail/mahjongRental 는 App.tsx 의 "detail/*" 한 라우트라 언마운트되지 않는다.
   // 초기화하지 않으면 마작 페이지에 방 페이지의 날짜·선택이 그대로 남는다.
   useEffect(() => {
@@ -363,6 +408,26 @@ export default function ImageGrid({ pageData }: Props) {
     }
   }, [writeModalOpen]);
 
+  // 데스크톱 예약 화면만 좌우 분할. 시간 패널은 분할이면 방 카드 묶음 아래, 아니면 고른 카드 바로 아래
+  const splitLayout = labelGb === 3 && !isMobile;
+  const selectedItem = filteredItems?.find(i => i.imageId === reservationData?.id);
+
+  const renderTimePanel = (item: NonNullable<typeof filteredItems>[number], date: string) => (
+    <TimeSection
+      ref={el => {
+        timePanelRefs.current[item.imageId] = el as HTMLDivElement | null;
+      }}
+    >
+      {/* key 로 방·날짜가 바뀔 때 리마운트시켜 선택한 시간·합치기·이용방식을 초기화한다 */}
+      <ReservationTimePanel
+        key={`${item.imageId}-${date}`}
+        id={item.imageId}
+        date={date}
+        combinable={combinableItems(item)}
+      />
+    </TimeSection>
+  );
+
   return (
     <Wrapper>
       <SearchWrapper bgColor={bgColor}>
@@ -389,117 +454,119 @@ export default function ImageGrid({ pageData }: Props) {
           </Button>
         </ButtonBox>
       )}
-      {labelGb === 3 && (
-        <>
-          <StickySummary>
-            <SummaryText>
-              {selectedDate ? formatYmdWithWeekday(selectedDate) : '날짜를 선택해주세요'}
-              {selectedDate && reservationData && (
-                <em>· {filteredItems?.find(i => i.imageId === reservationData.id)?.label}</em>
+      {/* 데스크톱 예약 화면은 왼쪽 달력 · 오른쪽 방 카드 + 아래 시간. 모바일·예약 외 화면은 위아래로 쌓인다 */}
+      <ReserveLayout $split={splitLayout}>
+        {labelGb === 3 && (
+          <ReserveAside $split={splitLayout}>
+            <StickySummary>
+              <SummaryText>
+                {selectedDate ? formatYmdWithWeekday(selectedDate) : '날짜를 선택해주세요'}
+                {selectedDate && reservationData && (
+                  <em>· {filteredItems?.find(i => i.imageId === reservationData.id)?.label}</em>
+                )}
+              </SummaryText>
+              {selectedDate && !calendarOpen && (
+                <ChangeButton type="button" onClick={() => setCalendarOpen(true)}>
+                  날짜 변경
+                </ChangeButton>
               )}
-            </SummaryText>
-            {selectedDate && !calendarOpen && (
-              <ChangeButton type="button" onClick={() => setCalendarOpen(true)}>
-                날짜 변경
-              </ChangeButton>
+            </StickySummary>
+            {calendarOpen && (
+              <DateSection>
+                <ReservationDatePicker
+                  value={selectedDate}
+                  // 서버가 내려준 휴무 요일을 쓴다. 첫 조회 전에는 컴포넌트 기본값으로 그린다
+                  closedWeekday={availableRooms?.closedWeekday}
+                  onChange={ymd => {
+                    setSelectedDate(ymd);
+                    // 모바일은 캘린더가 약 330px를 먹어 방 카드가 한 개밖에 안 보인다. 고르면 접어서 회수한다.
+                    if (isMobile) setCalendarOpen(false);
+                  }}
+                />
+              </DateSection>
             )}
-          </StickySummary>
-          {calendarOpen && (
-            <DateSection>
-              <ReservationDatePicker
-                value={selectedDate}
-                // 서버가 내려준 휴무 요일을 쓴다. 첫 조회 전에는 컴포넌트 기본값으로 그린다
-                closedWeekday={availableRooms?.closedWeekday}
-                onChange={ymd => {
-                  setSelectedDate(ymd);
-                  // 모바일은 캘린더가 약 330px를 먹어 방 카드가 한 개밖에 안 보인다. 고르면 접어서 회수한다.
-                  if (isMobile) setCalendarOpen(false);
-                }}
-              />
-            </DateSection>
-          )}
-        </>
-      )}
-      {labelGb === 3 && !selectedDate ? (
-        <NoSearchBox>날짜를 먼저 선택해주세요.</NoSearchBox>
-      ) : (
-        <GridContainer $columnCount={columnCount}>
-          {filteredItems &&
-            filteredItems.map((item, idx) => {
-              const roomStatus = roomStatusOf(item.imageId);
-              const soldOut = roomStatus ? !roomStatus.available : false;
-              // 숨김 방은 관리자에게만 내려온다(includeHidden). 흐리게 + 표시
-              const hidden = labelGb === 3 && item.room?.useStatus === 'N';
-              return (
-                <GridItemBox key={idx}>
-                  <ImageWrapper
-                    radius={labelGb === 4}
-                    ratio={labelGb === 3}
-                    $dimmed={soldOut || hidden}
-                    onClick={() => {
-                      if (labelGb !== 3) {
-                        handleImageClick(idx);
-                      } else {
-                        reservationClickEvent(item);
-                      }
-                    }}
-                  >
-                    <img src={item.image} alt={`img-${idx}`} draggable={false} />
-                    {labelGb === 3 && (
-                      <TopLabel>
-                        <p>{item.label}</p>
-                        <FaUsers /> <span>{item.group}</span>
-                      </TopLabel>
-                    )}
-                    {hidden && <HiddenTag>숨김</HiddenTag>}
-                    {labelGb === 3 && getReservationComment(item.label) && (
-                      <CommentLabel>{getReservationComment(item.label)}</CommentLabel>
-                    )}
-                    {user?.roles.includes('ROLE_ADMIN') && (
-                      <DeleteBox
-                        onClick={e => {
-                          e.stopPropagation();
-                          if (labelGb === 3) {
-                            if (item.room) setRoomEditTarget(item.room);
-                            return;
+          </ReserveAside>
+        )}
+        <ReserveMain>
+          {labelGb === 3 && !selectedDate ? (
+            <NoSearchBox>날짜를 먼저 선택해주세요.</NoSearchBox>
+          ) : (
+            <GridContainer $columnCount={columnCount}>
+              {filteredItems &&
+                filteredItems.map((item, idx) => {
+                  const roomStatus = roomStatusOf(item.imageId);
+                  const soldOut = roomStatus ? !roomStatus.available : false;
+                  // 숨김 방은 관리자에게만 내려온다(includeHidden). 흐리게 + 표시
+                  const hidden = labelGb === 3 && item.room?.useStatus === 'N';
+                  return (
+                    <GridItemBox key={idx}>
+                      <ImageWrapper
+                        radius={labelGb === 4}
+                        ratio={labelGb === 3}
+                        $dimmed={soldOut || hidden}
+                        $selected={labelGb === 3 && item.imageId === reservationData?.id}
+                        onClick={() => {
+                          if (labelGb !== 3) {
+                            handleImageClick(idx);
+                          } else {
+                            reservationClickEvent(item);
                           }
-                          setWriteModalOpen(true);
-                          setIsEditMode(true);
-                          setText(item.label); // 라벨 바인딩
-                          setSelectedImage(item.image); // 이미지 프리뷰
-                          setEditCategory(item.category); // 카테고리 게임일 경우
-                          setEditTarget({ imageId: item.imageId, image: item.image }); // 수정 대상 ID
                         }}
                       >
-                        <FiEdit />
-                      </DeleteBox>
-                    )}
-                  </ImageWrapper>
+                        <img src={item.image} alt={`img-${idx}`} draggable={false} />
+                        {labelGb === 3 && (
+                          <TopLabel>
+                            <p>{item.label}</p>
+                            <FaUsers /> <span>{item.group}</span>
+                          </TopLabel>
+                        )}
+                        {hidden && <HiddenTag>숨김</HiddenTag>}
+                        {labelGb === 3 && getReservationComment(item.label) && (
+                          <CommentLabel>{getReservationComment(item.label)}</CommentLabel>
+                        )}
+                        {/* 카드 본문 마지막 줄. 사진 위 오버레이가 아니라 카드 안 텍스트 영역에 둔다 */}
+                        {labelGb === 3 && <RoomAvailabilityBadge status={roomStatus} />}
+                        {user?.roles.includes('ROLE_ADMIN') && (
+                          <DeleteBox
+                            onClick={e => {
+                              e.stopPropagation();
+                              if (labelGb === 3) {
+                                if (item.room) setRoomEditTarget(item.room);
+                                return;
+                              }
+                              setWriteModalOpen(true);
+                              setIsEditMode(true);
+                              setText(item.label); // 라벨 바인딩
+                              setSelectedImage(item.image); // 이미지 프리뷰
+                              setEditCategory(item.category); // 카테고리 게임일 경우
+                              setEditTarget({ imageId: item.imageId, image: item.image }); // 수정 대상 ID
+                            }}
+                          >
+                            <FiEdit />
+                          </DeleteBox>
+                        )}
+                      </ImageWrapper>
 
-                  {labelGb === 3 && <RoomAvailabilityBadge status={roomStatus} />}
+                      {/* 모바일은 고른 방 카드 바로 아래에 시간을 펼친다 */}
+                      {!splitLayout &&
+                        item.labelGb === 3 &&
+                        item.imageId === reservationData?.id &&
+                        selectedDate &&
+                        renderTimePanel(item, selectedDate)}
 
-                  {item.labelGb === 3 && item.imageId === reservationData?.id && selectedDate && (
-                    <TimeSection
-                      ref={el => {
-                        timePanelRefs.current[item.imageId] = el as HTMLDivElement | null;
-                      }}
-                    >
-                      {/* key 로 방·날짜가 바뀔 때 리마운트시켜 선택한 시간·합치기·이용방식을 초기화한다 */}
-                      <ReservationTimePanel
-                        key={`${item.imageId}-${selectedDate}`}
-                        id={item.imageId}
-                        date={selectedDate}
-                        combinable={combinableItems(item)}
-                      />
-                    </TimeSection>
-                  )}
-
-                  {labelGb !== 3 && <FoodLabel textColor={textColor}>{item.label}</FoodLabel>}
-                </GridItemBox>
-              );
-            })}
-        </GridContainer>
-      )}
+                      {labelGb !== 3 && <FoodLabel textColor={textColor}>{item.label}</FoodLabel>}
+                    </GridItemBox>
+                  );
+                })}
+            </GridContainer>
+          )}
+          {/* 데스크톱은 방 카드 묶음 아래에 넓게 펼친다(3열 카드 안에 넣으면 시간 칸이 좁아진다) */}
+          {splitLayout &&
+            selectedItem &&
+            selectedDate &&
+            renderTimePanel(selectedItem, selectedDate)}
+        </ReserveMain>
+      </ReserveLayout>
       {filteredItems?.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
       {!items && <NoSearchBox>사진을 준비중입니다.</NoSearchBox>}
       {/* 예약 페이지는 main-image(페이징 없음)를 쓰므로 페이지네이션이 의미가 없다 */}
@@ -552,16 +619,16 @@ export default function ImageGrid({ pageData }: Props) {
               </SelectBox>
             )}
             <ButtonBox2>
-              <Button color="#1A7D55" onClick={() => insertData()}>
+              <Button color={theme.colors.success} onClick={() => insertData()}>
                 저장
               </Button>
               {isEditMode && (
-                <Button onClick={deleteData} color="#FF5E57">
+                <Button onClick={deleteData} color={theme.colors.danger}>
                   삭제
                 </Button>
               )}
 
-              <Button color="#988271" onClick={() => setWriteModalOpen(false)}>
+              <Button color={theme.colors.primary} onClick={() => setWriteModalOpen(false)}>
                 닫기
               </Button>
             </ButtonBox2>
@@ -579,460 +646,3 @@ export default function ImageGrid({ pageData }: Props) {
     </Wrapper>
   );
 }
-
-const Wrapper = styled.div`
-  width: 100%;
-  height: 100%;
-  padding: 10px;
-  /* auto 로 두면 이 요소가 스크롤 컨테이너가 되어 상단 요약 바의 sticky 가 페이지 스크롤을 따라오지 못한다 */
-  overflow: visible;
-`;
-
-const SearchWrapper = styled.div.withConfig({
-  shouldForwardProp: prop => prop !== 'bgColor',
-})<{ bgColor: string } & WithTheme>`
-  display: flex;
-  width: 100%;
-  background-color: ${({ bgColor }) => bgColor};
-  padding: 20px;
-  align-items: center;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    flex-direction: column;
-    padding: 10px;
-  }
-`;
-
-const TitleBox = styled.div.withConfig({
-  shouldForwardProp: prop => prop !== 'textColor',
-})<{ textColor: string } & WithTheme>`
-  display: flex;
-  flex-direction: column;
-  width: 60%;
-  height: 60px;
-  color: ${({ textColor }) => textColor};
-
-  h2 {
-    font-family: 'Bungee', sans-serif;
-    font-weight: ${({ theme }) => theme.weight.bold};
-    font-size: ${({ theme }) => theme.sizes.xxlarge};
-  }
-  p {
-    margin-top: auto;
-    font-weight: ${({ theme }) => theme.weight.semiBold};
-    font-size: ${({ theme }) => theme.sizes.medium};
-  }
-
-  @media ${({ theme }) => theme.device.mobile} {
-    width: 100%;
-    height: 40px;
-    text-align: center;
-    margin-bottom: 10px;
-
-    h2 {
-      font-size: ${({ theme }) => theme.sizes.large};
-    }
-    p {
-      font-size: ${({ theme }) => theme.sizes.xsmall};
-    }
-  }
-`;
-
-const SearchBox = styled.div<WithTheme>`
-  width: 40%;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    width: 100%;
-  }
-`;
-
-const GridContainer = styled.div.withConfig({
-  shouldForwardProp: prop => prop !== '$columnCount',
-})<WithTheme & { $columnCount: number }>`
-  display: grid;
-  grid-template-columns: repeat(${props => props.$columnCount}, 1fr);
-  gap: 40px;
-  padding: 40px 0;
-  min-width: 100%;
-  @media ${({ theme }) => theme.device.mobile} {
-    /* 방 카드에 가용 현황 배지가 붙은 만큼 여백을 줄여, 한 화면에 보이는 방 개수를 유지한다 */
-    gap: 16px;
-    padding: 20px 0;
-  }
-`;
-
-const GridItemBox = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-const ImageWrapper = styled.div.withConfig({
-  shouldForwardProp: prop => prop !== 'radius' && prop !== 'ratio' && prop !== '$dimmed',
-})<WithTheme & { radius: boolean; ratio: boolean; $dimmed?: boolean }>`
-  width: 100%;
-  aspect-ratio: ${({ ratio }) => (ratio ? '16 / 9' : '1 / 1')};
-  overflow: hidden;
-  border-radius: ${({ radius }) => (radius ? '999px' : '12px')};
-  position: relative;
-  /*
-   * 마감된 방은 흐리게. 초록 배지만 세로로 훑으면 되는 화면이 된다.
-   * pointer-events 로 막지는 않는다 — 안에 관리자 이미지 수정 버튼이 들어 있어서 같이 죽는다.
-   * 선택 차단은 reservationClickEvent 가 한다.
-   */
-  opacity: ${({ $dimmed }) => ($dimmed ? 0.45 : 1)};
-
-  @media ${({ theme }) => theme.device.mobile} {
-    /* 예약 카드는 모바일에서 조금 더 납작하게 — 한 화면에 보이는 방 개수를 벌기 위함 */
-    aspect-ratio: ${({ ratio }) => (ratio ? '2 / 1' : '1 / 1')};
-  }
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    cursor: pointer;
-  }
-`;
-
-const DeleteBox = styled.div<WithTheme>`
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  top: 50%;
-  left: 50%;
-  cursor: pointer;
-  color: ${({ theme }) => theme.colors.white};
-  background-color: ${({ theme }) => theme.colors.blueColor};
-  padding: 10px;
-  border-radius: 999px;
-  transform: translate(-50%, -50%);
-
-  svg {
-    width: 20px;
-    height: 20px;
-    @media ${({ theme }) => theme.device.mobile} {
-      width: 16px;
-      height: 16px;
-    }
-  }
-`;
-
-const TopLabel = styled.div<WithTheme>`
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(66, 69, 72, 0.6);
-  border-radius: 8px;
-  padding: 6px 12px;
-  top: 6px;
-  left: 6px;
-  color: white;
-  p {
-    @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.sizes.xsmall};
-    }
-  }
-
-  svg {
-    margin: 0 4px 0 8px;
-
-    @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.sizes.xsmall};
-    }
-  }
-
-  span {
-    font-size: ${({ theme }) => theme.sizes.small};
-
-    @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.sizes.xxsmall};
-    }
-  }
-`;
-
-const HiddenTag = styled.div<WithTheme>`
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  background-color: ${({ theme }) => theme.colors.redColor};
-  border-radius: 8px;
-  padding: 4px 10px;
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.small};
-`;
-
-const CommentLabel = styled.div<WithTheme>`
-  position: absolute;
-  bottom: 6px;
-  left: 6px;
-  max-width: calc(100% - 12px);
-  background-color: rgba(66, 69, 72, 0.6);
-  border-radius: 8px;
-  padding: 6px 12px;
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.small};
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.xxsmall};
-    padding: 4px 8px;
-  }
-`;
-
-const FoodLabel = styled.div.withConfig({
-  shouldForwardProp: prop => prop !== 'textColor',
-})<WithTheme & { textColor: string }>`
-  margin-top: 18px;
-  text-align: center;
-  font-family: 'Jua', sans-serif;
-  font-size: ${({ theme }) => theme.sizes.bigLarge};
-  color: ${({ theme }) => theme.colors.black};
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
-  }
-`;
-
-const NoSearchBox = styled.div<WithTheme>`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  font-size: ${({ theme }) => theme.sizes.menu};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  font-family: 'Jua', sans-serif;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
-  }
-`;
-
-/*
- * 시간 선택 영역.
- * 예전에는 max-height 로 아코디언을 만들었는데, 값이 하드코딩(1300px)이라 안내 문구가 한 줄만 늘어도
- * 예약 버튼이 말없이 잘렸다. 조건부 렌더로 바꾸면서 높이 제한과 overflow: hidden 을 둘 다 없앴다.
- * 열릴 때의 느낌은 transform 페이드로 대신한다(레이아웃을 밀지 않아 높이 계산과 무관).
- */
-const TimeSection = styled.section<WithTheme>`
-  width: 100%;
-  margin-top: 20px;
-  /* 고정 헤더(약 100px)에 가리지 않도록. scrollIntoView 가 이 값을 존중한다 */
-  scroll-margin-top: 110px;
-  animation: timePanelIn 0.25s ease;
-
-  @keyframes timePanelIn {
-    from {
-      opacity: 0;
-      transform: translateY(-6px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  @media ${({ theme }) => theme.device.mobile} {
-    margin-top: 12px;
-    /* 헤더 + 상단 요약 바 */
-    scroll-margin-top: 150px;
-  }
-`;
-
-const DateSection = styled.section<WithTheme>`
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  padding-top: 16px;
-
-  .custom-calender {
-    width: 50%;
-
-    @media ${({ theme }) => theme.device.mobile} {
-      width: 100%;
-    }
-  }
-`;
-
-/*
- * 선택한 날짜·방을 스크롤 중에도 계속 보이게 하는 요약 바.
- * 오예약의 원인이 "날짜를 잘못 인지한 것"이라 날짜를 화면에서 놓치지 않게 하는 게 목적이다.
- * sticky 는 가장 가까운 스크롤 조상 기준이라 Wrapper 의 overflow 를 visible 로 풀어야 붙는다.
- */
-const StickySummary = styled.div<WithTheme>`
-  position: sticky;
-  top: 0;
-  /* TopArea 가 3 이라 그보다 낮게 둔다. 높이면 고정 헤더를 덮는다 */
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  padding: 10px 14px;
-  background: ${({ theme }) => theme.colors.white};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
-
-  @media ${({ theme }) => theme.device.mobile} {
-    padding: 8px 10px;
-  }
-`;
-
-const SummaryText = styled.span<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.medium};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  color: ${({ theme }) => theme.colors.menuColor};
-
-  em {
-    margin-left: 6px;
-    font-style: normal;
-    color: ${({ theme }) => theme.colors.blueColor};
-  }
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
-  }
-`;
-
-const ChangeButton = styled.button<WithTheme>`
-  -webkit-tap-highlight-color: transparent;
-  flex-shrink: 0;
-  padding: 8px 12px;
-  min-height: 36px;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 8px;
-  background: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.subColor};
-  cursor: pointer;
-
-  &:hover {
-    background: ${({ theme }) => theme.colors.softColor};
-  }
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.xsmall};
-  }
-`;
-
-const ButtonBox = styled.div`
-  display: flex;
-  justify-content: right;
-  margin: 10px 0;
-`;
-
-const ButtonBox2 = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  justify-content: center;
-`;
-
-const Button = styled.button<WithTheme & { color: string }>`
-  padding: 6px 16px;
-  background-color: ${({ color }) => color};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.medium};
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
-  }
-`;
-
-const ImageModalWraaper = styled.div`
-  padding: 24px;
-`;
-
-const ImageUploadWrapper = styled.div`
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  border: 2px dashed #ccc;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  position: relative;
-  overflow: hidden;
-`;
-
-const UploadLabel = styled.label`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  color: #ffffff;
-  background-color: rgba(0, 0, 0, 0.4);
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out;
-  font-size: 14px;
-
-  svg {
-    width: 30px;
-    height: 30px;
-  }
-
-  &:hover {
-    opacity: 1;
-  }
-`;
-
-const HiddenInput = styled.input`
-  display: none;
-`;
-
-const PreviewImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-`;
-
-const TextArea = styled.input<WithTheme>`
-  width: 100%;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  resize: none;
-  margin-bottom: 20px;
-
-  &:focus {
-    border-color: ${({ theme }) => theme.colors.subColor}; // 원하시는 포커스 색상
-    outline: none;
-  }
-`;
-
-const SelectBox = styled.select<WithTheme>`
-  width: 100%;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  margin-bottom: 20px;
-  cursor: pointer;
-
-  /* 화살표 위치 조정 */
-  appearance: none;
-  background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
-
-  &:focus {
-    border-color: ${({ theme }) => theme.colors.subColor};
-    outline: none;
-  }
-`;
-
-const PaginationWrapper = styled.div`
-  text-align: center;
-  height: 30px;
-  margin-top: 20px;
-`;

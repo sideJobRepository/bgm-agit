@@ -1,5 +1,3 @@
-import styled from 'styled-components';
-import type { WithTheme } from '../styles/styled-props.ts';
 import { useMediaQuery } from 'react-responsive';
 import { Wrapper } from '../styles';
 import SearchBar from '../components/SearchBar.tsx';
@@ -11,6 +9,8 @@ import { userState } from '../recoil/state/userState.ts';
 
 import { useNavigate } from 'react-router-dom';
 import Pagination from '../components/Pagination.tsx';
+import { theme } from '../styles/theme.ts';
+import { NoticeBox, TableBox, Table, Th, Td, SearchWrapper, TitleBox, SearchBox, PaginationWrapper, Button, ButtonBox, NoSearchBox } from './Notice.styles.ts';
 
 interface NoticeProps {
   mainGb: boolean;
@@ -24,7 +24,7 @@ export default function Notice({ mainGb }: NoticeProps) {
   const items = useRecoilValue(noticeState);
 
   const user = useRecoilValue(userState);
-  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+  const isMobile = useMediaQuery({ query: theme.device.mobile });
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);
@@ -42,14 +42,14 @@ export default function Notice({ mainGb }: NoticeProps) {
       {mainGb ? (
         <Wrapper>
           <NoticeBox>
-            <SearchWrapper bgColor="#988271">
-              <TitleBox textColor="#ffffff">
+            <SearchWrapper bgColor={theme.colors.primary}>
+              <TitleBox textColor={theme.colors.white}>
                 <h2>News & Updates</h2>
                 <p>공지사항 및 이벤트를 빠르게 확인해보세요.</p>
               </TitleBox>
               <SearchBox>
                 <SearchBar<string>
-                  color="#988271"
+                  color={theme.colors.primary}
                   label="제목 및 내용"
                   onSearch={setSearchKeyword}
                 />
@@ -59,7 +59,7 @@ export default function Notice({ mainGb }: NoticeProps) {
               {user?.roles.includes('ROLE_ADMIN') && (
                 <ButtonBox>
                   <Button
-                    color="#988271"
+                    color={theme.colors.primary}
                     onClick={() => {
                       navigate(`/noticeDetail`);
                     }}
@@ -137,149 +137,3 @@ export default function Notice({ mainGb }: NoticeProps) {
     </>
   );
 }
-
-const NoticeBox = styled.div`
-  padding: 10px;
-`;
-
-const TableBox = styled.div`
-  padding: 40px 0;
-`;
-
-const Table = styled.table<WithTheme>`
-  width: 100%;
-  border-collapse: collapse;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  color: ${({ theme }) => theme.colors.subColor};
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.xsmall};
-  }
-
-  th,
-  td {
-    padding: 14px;
-    text-align: center;
-  }
-
-  tbody tr {
-    cursor: pointer;
-
-    @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.sizes.xxsmall};
-    }
-
-    &:hover {
-      opacity: 0.6;
-    }
-  }
-
-  td {
-    border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
-  }
-`;
-
-const Th = styled.th<WithTheme>`
-  background-color: ${({ theme }) => theme.colors.basicColor};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-`;
-
-const Td = styled.td``;
-
-const SearchWrapper = styled.div.withConfig({
-  shouldForwardProp: prop => prop !== 'bgColor',
-})<{ bgColor: string } & WithTheme>`
-  display: flex;
-  width: 100%;
-  background-color: ${({ bgColor }) => bgColor};
-  padding: 20px;
-  align-items: center;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    flex-direction: column;
-    padding: 10px;
-  }
-`;
-
-const TitleBox = styled.div.withConfig({
-  shouldForwardProp: prop => prop !== 'textColor',
-})<{ textColor: string } & WithTheme>`
-  display: flex;
-  flex-direction: column;
-  width: 60%;
-  height: 60px;
-  color: ${({ textColor }) => textColor};
-
-  h2 {
-    font-family: 'Bungee', sans-serif;
-    font-weight: ${({ theme }) => theme.weight.bold};
-    font-size: ${({ theme }) => theme.sizes.xxlarge};
-  }
-  p {
-    margin-top: auto;
-    font-weight: ${({ theme }) => theme.weight.semiBold};
-    font-size: ${({ theme }) => theme.sizes.medium};
-  }
-
-  @media ${({ theme }) => theme.device.mobile} {
-    width: 100%;
-    height: 40px;
-    text-align: center;
-    margin-bottom: 10px;
-
-    h2 {
-      font-size: ${({ theme }) => theme.sizes.large};
-    }
-    p {
-      font-size: ${({ theme }) => theme.sizes.xsmall};
-    }
-  }
-`;
-
-const SearchBox = styled.div<WithTheme>`
-  width: 40%;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    width: 100%;
-  }
-`;
-
-const PaginationWrapper = styled.div`
-  text-align: center;
-  margin-top: 20px;
-`;
-
-const Button = styled.button<WithTheme & { color: string }>`
-  padding: 6px 16px;
-  background-color: ${({ color }) => color};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.medium};
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
-  }
-`;
-
-const ButtonBox = styled.div`
-  display: flex;
-  justify-content: right;
-  margin-bottom: 10px;
-`;
-
-const NoSearchBox = styled.div<WithTheme>`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-  font-size: ${({ theme }) => theme.sizes.menu};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  font-family: 'Jua', sans-serif;\
-    margin-top: 20px;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
-  }
-`;
