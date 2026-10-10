@@ -1,9 +1,10 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../../styles/styled-props.ts';
+import { theme } from '../../styles/theme.ts';
 
-// 어두운 바탕 위 보조 글자·구분선. theme 에 없는 값이라 여기서만 쓴다
-const MUTED_TEXT = 'rgba(255, 255, 255, 0.72)';
-const DIVIDER = 'rgba(255, 255, 255, 0.12)';
+// 갈색 바탕 위 글자·구분선. 예전처럼 흰색
+const MUTED_TEXT = theme.colors.white;
+const DIVIDER = theme.colors.white;
 
 export const Wrapper = styled.div<WithTheme>`
   display: flex;

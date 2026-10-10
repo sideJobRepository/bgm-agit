@@ -60,13 +60,13 @@ export const LogoTextBox = styled.div<WithTheme>`
   flex-wrap: wrap;
   gap: ${({ theme }) => theme.space.sm};
   padding: ${({ theme }) => theme.space.lg};
-  font-family: ${({ theme }) => theme.fonts.body};
+  font-family: ${({ theme }) => theme.fonts.display};
   font-weight: 800;
   letter-spacing: -0.02em;
-  background-color: ${({ theme }) => theme.colors.primary};
+  background-color: ${({ theme }) => theme.colors.purpleColor};
   border-radius: ${({ theme }) => theme.radius.lg};
   font-size: 15px;
-  color: ${({ theme }) => theme.colors.onPrimary};
+  color: ${({ theme }) => theme.colors.white};
   height: 30%;
   align-items: center;
   justify-content: center;
@@ -88,7 +88,7 @@ export const LogoBox = styled.div<WithTheme>`
   ${cardStyle}
   display: grid;
   height: 70%;
-  color: ${({ theme }) => theme.colors.textBody};
+  color: ${({ theme }) => theme.colors.subColor};
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(2, auto);
   gap: ${({ theme }) => theme.space.lg} ${({ theme }) => theme.space.md};
@@ -106,13 +106,13 @@ export const GridItem = styled.div<WithTheme>`
 
   svg {
     font-size: 24px;
-    color: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.subColor};
   }
   span {
     font-weight: 700;
     margin-top: ${({ theme }) => theme.space.sm};
     font-size: 14px;
-    color: ${({ theme }) => theme.colors.textBody};
+    color: ${({ theme }) => theme.colors.subColor};
     word-break: keep-all;
   }
 
@@ -139,8 +139,8 @@ export const Right = styled.div<WithTheme>`
 
 export const Bottom = styled.section<WithTheme>`
   width: 100%;
-  background-color: ${({ theme }) => theme.colors.surfaceSunken};
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  background-color: ${({ theme }) => theme.colors.softColor};
+  border: 1px solid ${({ theme }) => theme.colors.softColor};
   border-radius: ${({ theme }) => theme.radius.lg};
   margin-top: ${({ theme }) => theme.space.lg};
 
@@ -161,17 +161,17 @@ export const ContentBox = styled.div<WithTheme>`
   }
 `;
 
-// 이 페이지의 골드 포인트는 이 아이브로 하나뿐
+// 예전 'BGM 아지트란.' 문구의 남색
 export const Line1 = styled.p<WithTheme>`
   align-self: flex-start;
   margin: 0;
   padding: 4px 12px;
   border-radius: ${({ theme }) => theme.radius.pill};
-  background-color: ${({ theme }) => theme.colors.accentSoft};
-  font-family: ${({ theme }) => theme.fonts.body};
+  background-color: transparent;
+  font-family: ${({ theme }) => theme.fonts.display};
   font-size: 14px;
   font-weight: 800;
-  color: ${({ theme }) => theme.colors.accentText};
+  color: ${({ theme }) => theme.colors.blueColor};
   letter-spacing: -0.01em;
 `;
 
@@ -201,9 +201,9 @@ export const Line3 = styled.div<WithTheme>`
   margin-left: 26%;
   font-weight: 500;
   font-size: 18px;
-  color: ${({ theme }) => theme.colors.textMuted};
+  color: ${({ theme }) => theme.colors.subColor};
   line-height: 1.7;
-  font-family: ${({ theme }) => theme.fonts.body};
+  font-family: ${({ theme }) => theme.fonts.display};
   word-break: keep-all;
 
   @media ${({ theme }) => theme.device.tablet} {
@@ -221,7 +221,7 @@ export const ContentSetion = styled.section.withConfig({
   align-items: center;
   padding: 30px 10px;
   background-color: ${({ bgColor, theme }) => bgColor ?? theme.colors.surfaceSunken};
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  border: 1px solid ${({ bgColor, theme }) => bgColor ?? theme.colors.border};
   margin: 60px 0;
   border-radius: ${({ theme }) => theme.radius.lg};
 
@@ -240,7 +240,7 @@ export const ReservationSetion = styled.section<WithTheme>`
   align-items: center;
   padding: 30px 10px;
   flex-direction: column;
-  background-color: ${({ theme }) => theme.colors.primary};
+  background-color: ${({ theme }) => theme.colors.blueColor};
   border-radius: ${({ theme }) => theme.radius.lg};
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -324,7 +324,7 @@ export const TextBox = styled.div.withConfig({
   padding-right: 10px;
 
   h2 {
-    font-family: ${({ theme }) => theme.fonts.body};
+    font-family: ${({ theme }) => theme.fonts.display};
     font-size: 28px;
     font-weight: 800;
     letter-spacing: -0.02em;
@@ -336,6 +336,7 @@ export const TextBox = styled.div.withConfig({
   div {
     ${cardStyle}
     background-color: ${({ bgColor, theme }) => bgColor ?? theme.colors.surface};
+    border-color: ${({ bgColor, theme }) => bgColor ?? theme.colors.border};
     padding: 20px ${({ theme }) => theme.space.xl};
     p {
       font-size: 17px;
@@ -377,7 +378,7 @@ export const ReservationTextBox = styled.div<WithTheme>`
   align-items: center;
 
   h2 {
-    font-family: ${({ theme }) => theme.fonts.body};
+    font-family: ${({ theme }) => theme.fonts.display};
     font-size: 28px;
     font-weight: 800;
     letter-spacing: -0.02em;

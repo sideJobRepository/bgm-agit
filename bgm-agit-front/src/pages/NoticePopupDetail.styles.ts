@@ -34,10 +34,18 @@ export const ButtonBox = styled.div`
   }
 `;
 
-// 색 prop 으로 역할을 고른다 — 주 색이면 "오늘 하루 보지 않기"(주 버튼), 그 외는 "닫기"(보조 버튼)
+// 예전처럼 color 로 꽉 채운 버튼(흰 글씨) — 닫기 = 빨강, 오늘 하루 보지 않기 = 보라
 export const Button = styled.button<WithTheme & { color: string }>`
-  ${({ color }) =>
-    color === c.primary ? buttonStyle('primary', 'md') : buttonStyle('secondary', 'md')};
+  ${buttonStyle('primary', 'md')};
+  background: ${({ color }) => color};
+  border-color: ${({ color }) => color};
+  color: ${c.white};
+
+  &:hover:not(:disabled) {
+    background: ${({ color }) => color};
+    border-color: ${({ color }) => color};
+    opacity: 0.85;
+  }
 
   @media ${theme.device.mobile} {
     flex: 1;
@@ -51,7 +59,8 @@ export const TitleBox = styled.div<WithTheme>`
   flex-direction: column;
   width: 100%;
   padding: ${theme.space.xl} ${theme.space.xl} ${theme.space.lg};
-  border-bottom: 1px solid ${c.border};
+  background-color: ${c.basicColor};
+  border-bottom: 1px solid ${c.basicColor};
 
   div {
     display: flex;
@@ -61,20 +70,22 @@ export const TitleBox = styled.div<WithTheme>`
 
     h3 {
       ${badgeStyle('primary')};
+      color: ${c.bronzeColor};
       margin: 0;
       font-size: 13px;
     }
 
     span {
       margin-left: auto;
-      color: ${c.textMuted};
+      color: ${c.subColor};
       font-size: 14px;
     }
   }
 
   h2 {
     margin: ${theme.space.md} 0 0;
-    color: ${c.textStrong};
+    color: ${c.subColor};
+    font-family: ${theme.fonts.display};
     font-size: 24px;
     font-weight: 800;
     line-height: 1.35;
@@ -95,7 +106,7 @@ export const ContentBox = styled.div<WithTheme>`
   width: 100%;
   padding: ${theme.space.xl};
   flex: 1;
-  color: ${c.textBody};
+  color: ${c.subColor};
   line-height: 1.7;
 
   img {
@@ -133,7 +144,8 @@ export const StyledFileUl = styled.ul<WithTheme>`
   padding: ${theme.space.md} ${theme.space.xl};
   gap: ${theme.space.sm};
   list-style: none;
-  border-bottom: 1px solid ${c.border};
+  color: ${c.bronzeColor};
+  border-bottom: 1px solid ${c.basicColor};
 
   li {
     display: flex;
@@ -148,10 +160,10 @@ export const StyledFileUl = styled.ul<WithTheme>`
       min-height: 36px;
       max-width: 100%;
       padding: 0 ${theme.space.md};
-      border: 1px solid ${c.border};
+      border: 1px solid ${c.basicColor};
       border-radius: ${theme.radius.pill};
-      background-color: ${c.surfaceSunken};
-      color: ${c.textBody};
+      background-color: ${c.basicColor};
+      color: ${c.bronzeColor};
       font-weight: 600;
       cursor: pointer;
       word-break: break-all;
@@ -160,9 +172,9 @@ export const StyledFileUl = styled.ul<WithTheme>`
         border-color 0.15s ease;
 
       &:hover {
-        background-color: ${c.primarySoft};
-        border-color: ${c.primary};
-        color: ${c.primary};
+        background-color: ${c.subTextBoxColor};
+        border-color: ${c.subTextBoxColor};
+        color: ${c.bronzeColor};
       }
 
       ${focusRing}
@@ -174,7 +186,7 @@ export const StyledFileUl = styled.ul<WithTheme>`
 
     svg {
       flex-shrink: 0;
-      color: ${c.primary};
+      color: ${c.bronzeColor};
     }
   }
 
@@ -188,8 +200,8 @@ export const PopupBox = styled.div<WithTheme>`
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: ${c.surface};
-  border-top: 1px solid ${c.border};
+  background-color: ${c.topBg};
+  border-top: 1px solid ${c.basicColor};
   z-index: 3;
   border-radius: 0 0 ${theme.radius.lg} ${theme.radius.lg};
 `;

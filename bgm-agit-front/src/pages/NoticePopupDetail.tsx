@@ -138,7 +138,7 @@ export default function NoticePopupDetail({
             <Button onClick={onClose} color={theme.colors.danger}>
               닫기
             </Button>
-            <Button color={theme.colors.primary} onClick={hideToday}>
+            <Button color={theme.colors.purpleColor} onClick={hideToday}>
               오늘 하루 보지 않기
             </Button>
           </ButtonBox>

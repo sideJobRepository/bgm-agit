@@ -481,11 +481,11 @@ export default function ClockTowerRecordDetail() {
           <ButtonRow>
             {detail?.canManage && canWrite && (
               <>
-                <Button $variant="primary" onClick={() => setEditMode(true)}>수정</Button>
-                <Button $variant="danger" onClick={onDelete}>삭제</Button>
+                <Button $variant="primary" color="#4A2C82" onClick={() => setEditMode(true)}>수정</Button>
+                <Button $variant="danger" color="#FF5E57" onClick={onDelete}>삭제</Button>
               </>
             )}
-            <Button $variant="secondary" onClick={() => navigate('/clocktower-records')}>목록</Button>
+            <Button $variant="secondary" color="#988271" onClick={() => navigate('/clocktower-records')}>목록</Button>
           </ButtonRow>
 
           <DetailHead>
@@ -663,9 +663,9 @@ export default function ClockTowerRecordDetail() {
         </Field>
 
         <ButtonRow>
-          <Button $variant="primary" onClick={() => onSubmit()}>저장</Button>
-          <Button $variant="secondary" onClick={() => onSubmit({ draft: true })}>임시저장</Button>
-          <Button $variant="ghost" onClick={() => (id ? setEditMode(false) : navigate('/clocktower-records'))}>취소</Button>
+          <Button $variant="primary" color="#1A7D55" onClick={() => onSubmit()}>저장</Button>
+          <Button $variant="secondary" color="#B5651D" onClick={() => onSubmit({ draft: true })}>임시저장</Button>
+          <Button $variant="ghost" color="#988271" onClick={() => (id ? setEditMode(false) : navigate('/clocktower-records'))}>취소</Button>
         </ButtonRow>
       </Box>
     </Wrapper>

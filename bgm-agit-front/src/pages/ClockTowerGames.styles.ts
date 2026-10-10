@@ -5,6 +5,9 @@ import { buttonStyle, cardStyle, focusRing, inputStyle, sectionTitleStyle } from
 
 const c = theme.colors;
 
+// 시계탑 화면 고유의 보라(예전 화면 값 그대로)
+const CT_PURPLE = '#4A2C82';
+
 export const Box = styled.div`
   padding: ${theme.space.xl} 0 ${theme.space.xxl};
 
@@ -13,20 +16,21 @@ export const Box = styled.div`
   }
 `;
 
-// 예전엔 bgColor 색 띠였다. 흰 바탕 제목 영역이 되면서 bgColor 는 받기만 하고 쓰지 않는다
+// 예전 화면처럼 bgColor 색 띠 + 흰 글자
 export const Header = styled.div.withConfig({ shouldForwardProp: p => p !== 'bgColor' })<{ bgColor: string } & WithTheme>`
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: ${theme.space.xl};
-  padding-bottom: ${theme.space.xl};
-  border-bottom: 1px solid ${c.border};
+  padding: ${theme.space.xl};
+  background-color: ${({ bgColor }) => bgColor};
+  color: ${c.white};
 
   @media ${theme.device.mobile} {
     flex-direction: column;
     align-items: stretch;
     gap: ${theme.space.lg};
-    padding-bottom: ${theme.space.lg};
+    padding: ${theme.space.lg};
   }
 `;
 
@@ -34,7 +38,13 @@ export const TitleBox = styled.div<WithTheme>`
   ${sectionTitleStyle};
   min-width: 0;
 
+  h2,
+  p {
+    color: ${c.white};
+  }
+
   h2 {
+    font-family: ${({ theme }) => theme.fonts.displayEn};
     font-size: 30px;
   }
 
@@ -48,6 +58,15 @@ export const TitleBox = styled.div<WithTheme>`
 export const CreateButton = styled.button<WithTheme>`
   ${buttonStyle('primary', 'md')};
   flex-shrink: 0;
+  background: ${c.white};
+  color: ${CT_PURPLE};
+  border-color: ${c.white};
+
+  &:hover:not(:disabled) {
+    background: ${c.white};
+    border-color: ${c.white};
+    opacity: 0.9;
+  }
 `;
 
 export const SearchRow = styled.div<WithTheme>`
@@ -64,6 +83,15 @@ export const SearchRow = styled.div<WithTheme>`
   button {
     ${buttonStyle('primary', 'md')};
     flex-shrink: 0;
+    background: ${CT_PURPLE};
+    border-color: ${CT_PURPLE};
+    color: ${c.white};
+
+    &:hover:not(:disabled) {
+      background: ${CT_PURPLE};
+      border-color: ${CT_PURPLE};
+      opacity: 0.9;
+    }
   }
 
   @media ${theme.device.mobile} {
@@ -90,6 +118,7 @@ export const CardList = styled.div`
 export const Card = styled.div<WithTheme>`
   ${cardStyle};
   ${focusRing};
+  border-color: ${c.lineColor};
   display: flex;
   flex-direction: column;
   padding: ${theme.space.md};
@@ -112,7 +141,7 @@ export const Card = styled.div<WithTheme>`
 export const Cover = styled.div`
   width: 100%;
   aspect-ratio: 3 / 4;
-  background: ${c.surfaceAlt};
+  background: ${c.basicColor};
   border-radius: ${theme.radius.md};
   overflow: hidden;
 
@@ -130,7 +159,7 @@ export const NoImage = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: ${c.textSubtle};
+  color: ${c.navColor};
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -146,7 +175,7 @@ export const CardBody = styled.div`
 
 export const CardTitle = styled.div<WithTheme>`
   margin-bottom: 6px;
-  color: ${c.textStrong};
+  color: ${c.subColor};
   font-size: 17px;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -163,7 +192,7 @@ export const Meta = styled.div<WithTheme>`
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 10px;
-  color: ${c.textMuted};
+  color: ${c.navColor};
   font-size: 14px;
 
   span + span::before {
@@ -173,7 +202,7 @@ export const Meta = styled.div<WithTheme>`
     height: 3px;
     margin-right: 10px;
     border-radius: ${theme.radius.pill};
-    background: ${c.textSubtle};
+    background: ${c.navColor};
     vertical-align: middle;
   }
 
@@ -185,7 +214,7 @@ export const Meta = styled.div<WithTheme>`
 export const Empty = styled.div<WithTheme>`
   grid-column: 1 / -1;
   padding: 48px 0;
-  color: ${c.textMuted};
+  color: ${c.navColor};
   font-size: 15px;
   font-weight: 600;
   text-align: center;

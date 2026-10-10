@@ -42,16 +42,16 @@ export const Slide = styled.div.withConfig({
   aspect-ratio: ${({ ratio }) => (ratio ? '16 / 9' : '1 / 1')};
   box-sizing: border-box;
   position: relative;
-  color: ${c.onPrimary};
+  color: ${c.white};
   font-size: 14px;
 
-  /* 이미지 위 라벨 — 어두운 반투명 알약 */
+  /* 이미지 위 라벨 — 예전 반투명 회색 알약 */
   div {
     position: absolute;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: ${c.textStrong}B3;
+    background-color: ${c.labelGb};
     border-radius: ${theme.radius.pill};
     padding: 6px 12px;
     top: 10px;
@@ -93,7 +93,7 @@ export const Slide = styled.div.withConfig({
   img {
     width: 100%;
     height: 100%;
-    background-color: ${c.surfaceAlt};
+    background-color: ${c.white};
     object-fit: cover;
     border-radius: ${({ radius }) => (radius ? theme.radius.pill : theme.radius.md)};
     border: ${({ radius }) => (radius ? `1px solid ${c.border}` : 'none')};
@@ -116,7 +116,8 @@ export const NoSearchBox = styled.div<WithTheme>`
   border: 1px dashed ${c.borderStrong};
   border-radius: ${theme.radius.md};
   background: ${c.surfaceSunken};
-  color: ${c.textMuted};
+  color: ${c.menuColor};
+  font-family: ${theme.fonts.display};
   font-size: 16px;
   font-weight: 600;
 

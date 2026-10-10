@@ -13,7 +13,7 @@ export const LoginModalWrapper = styled.div<WithTheme>`
   max-width: 100%;
   padding: ${theme.space.xl};
   border-radius: ${theme.radius.lg};
-  background-color: ${c.surface};
+  background-color: ${c.topBg};
 
   @media ${theme.device.mobile} {
     width: 100%;
@@ -32,13 +32,13 @@ export const TopModalBox = styled.div<WithTheme>`
     height: 44px;
     padding: 11px;
     border-radius: ${theme.radius.md};
-    color: ${c.textMuted};
+    color: ${c.menuColor};
     cursor: pointer;
     transition: background 0.15s ease;
 
     &:hover {
-      background: ${c.surfaceAlt};
-      color: ${c.textStrong};
+      background: ${c.subTextBoxColor};
+      color: ${c.menuColor};
     }
   }
 `;
@@ -57,11 +57,11 @@ export const CenterModalBox = styled.div<WithTheme>`
 
   h2 {
     margin: 0;
-    font-family: ${theme.fonts.body};
+    font-family: ${theme.fonts.display};
     font-size: 20px;
     font-weight: 800;
     letter-spacing: -0.02em;
-    color: ${c.textStrong};
+    color: ${c.purpleColor};
   }
 `;
 
@@ -73,12 +73,29 @@ export const FormBox = styled.form<WithTheme>`
 
 export const Input = styled.input<WithTheme>`
   ${inputStyle}
+  border-color: ${c.lineColor};
+  background-color: ${c.white};
+  color: ${c.inputColor};
+
+  &::placeholder {
+    color: ${c.navColor};
+  }
 `;
 
 export const SubmitButton = styled.button<WithTheme>`
   ${buttonStyle('primary', 'lg')}
+  background: ${c.purpleColor};
+  border-color: ${c.purpleColor};
+  color: ${c.white};
+
+  &:hover:not(:disabled) {
+    background: ${c.purpleColor};
+    border-color: ${c.purpleColor};
+    opacity: 0.9;
+  }
   width: 100%;
   margin-top: ${theme.space.sm};
+  font-family: ${theme.fonts.display};
 `;
 
 export const SwitchLine = styled.div<WithTheme>`
@@ -87,7 +104,7 @@ export const SwitchLine = styled.div<WithTheme>`
   align-items: center;
   gap: ${theme.space.xs};
   font-size: 14px;
-  color: ${c.textMuted};
+  color: ${c.subColor};
 
   button {
     min-height: 44px;
@@ -95,7 +112,7 @@ export const SwitchLine = styled.div<WithTheme>`
     border: none;
     border-radius: ${theme.radius.sm};
     background: transparent;
-    color: ${c.primary};
+    color: ${c.purpleColor};
     font-family: inherit;
     font-size: 14px;
     font-weight: 700;
@@ -110,7 +127,7 @@ export const Divider = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   gap: ${theme.space.md};
-  color: ${c.textMuted};
+  color: ${c.navColor};
   font-size: 13px;
 
   &::before,
@@ -118,7 +135,7 @@ export const Divider = styled.div<WithTheme>`
     content: '';
     flex: 1;
     height: 1px;
-    background-color: ${c.border};
+    background-color: ${c.lineColor};
   }
 `;
 
@@ -130,10 +147,19 @@ export const BottomModalBox = styled.div<WithTheme>`
 
   button {
     ${buttonStyle('secondary', 'md')}
+    /* 예전처럼 크림 바탕 위 투명 버튼 + 옅은 회색 테두리 */
+    background: transparent;
+    border-color: ${c.border};
+    color: ${c.menuColor};
+
+    &:hover:not(:disabled) {
+      background: ${c.subTextBoxColor};
+    }
     position: relative;
     width: 100%;
     height: 48px;
     font-weight: 600;
+    font-family: ${theme.fonts.display};
 
     img {
       position: absolute;

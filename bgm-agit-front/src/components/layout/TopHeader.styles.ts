@@ -71,7 +71,7 @@ export const Center = styled.nav<WithTheme>`
   margin: 0 auto;
 
   ul {
-    color: ${({ theme }) => theme.colors.textStrong};
+    color: ${({ theme }) => theme.colors.menuColor};
     font-size: ${({ theme }) => theme.sizes.medium};
     font-weight: ${({ theme }) => theme.weight.semiBold};
 
@@ -95,8 +95,8 @@ export const Center = styled.nav<WithTheme>`
 
       &:hover a,
       &.active a {
-        background-color: ${({ theme }) => theme.colors.primarySoft};
-        color: ${({ theme }) => theme.colors.primary};
+        background-color: ${({ theme }) => theme.colors.subTextBoxColor};
+        color: ${({ theme }) => theme.colors.activeMenuColor};
         font-weight: ${({ theme }) => theme.weight.bold};
       }
     }
@@ -118,7 +118,13 @@ export const Right = styled.div<WithTheme>`
     gap: 12px;
 
     li {
-      ${buttonStyle('dark', 'md')}
+      ${buttonStyle('ghost', 'md')}
+      /* 예전처럼 채우지 않은 글자+아이콘 버튼 */
+      color: ${({ theme }) => theme.colors.subMenuColor};
+
+      &:hover:not(:disabled) {
+        background: ${({ theme }) => theme.colors.subTextBoxColor};
+      }
 
       a {
         flex-wrap: nowrap;
@@ -144,7 +150,7 @@ export const PhoneIcon = styled(FaPhone)`
   transform: rotate(-240deg);
 `;
 
-// 서브메뉴 뒤 흰 판. 높이는 TopHeader 가 SubMenuWrapper 를 재서 넣는다
+// 서브메뉴 뒤 베이지 판. 높이는 TopHeader 가 SubMenuWrapper 를 재서 넣는다
 export const BgSubWrapper = styled.div<WithTheme & { $height: number }>`
   position: absolute;
   top: 100%;
@@ -152,6 +158,8 @@ export const BgSubWrapper = styled.div<WithTheme & { $height: number }>`
   width: 100%;
   height: ${({ $height }) => `${$height}px`};
   ${cardStyle}
+  background: ${({ theme }) => theme.colors.subBgColor};
+  border-color: ${({ theme }) => theme.colors.subTextBoxColor};
   border-top: 0;
   border-radius: 0 0 ${({ theme }) => theme.radius.lg} ${({ theme }) => theme.radius.lg};
   box-shadow: ${({ theme }) => theme.shadow.md};
@@ -215,8 +223,9 @@ export const SubLi = styled.li<WithTheme & { $active: boolean }>`
   border-radius: ${({ theme }) => theme.radius.md};
   text-align: center;
   cursor: pointer;
-  background-color: ${({ $active, theme }) => ($active ? theme.colors.primarySoft : 'transparent')};
-  color: ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.textBody)};
+  background-color: ${({ $active, theme }) =>
+    $active ? theme.colors.activeMenuColor : 'transparent'};
+  color: ${({ $active, theme }) => ($active ? theme.colors.white : theme.colors.subMenuColor)};
   font-weight: ${({ $active, theme }) => ($active ? theme.weight.bold : theme.weight.semiBold)};
   transition:
     background 0.15s ease,
@@ -224,8 +233,8 @@ export const SubLi = styled.li<WithTheme & { $active: boolean }>`
 
   &:hover {
     background-color: ${({ $active, theme }) =>
-      $active ? theme.colors.primarySoft : theme.colors.surfaceAlt};
-    color: ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.textStrong)};
+      $active ? theme.colors.activeMenuColor : theme.colors.subTextBoxColor};
+    color: ${({ $active, theme }) => ($active ? theme.colors.white : theme.colors.subMenuColor)};
   }
 `;
 
@@ -234,11 +243,11 @@ export const Hamburger = styled(GiHamburgerMenu)<WithTheme>`
   box-sizing: content-box;
   padding: 10px;
   border-radius: ${({ theme }) => theme.radius.md};
-  color: ${({ theme }) => theme.colors.textStrong};
+  color: ${({ theme }) => theme.colors.subMenuColor};
   cursor: pointer;
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.surfaceAlt};
+    background-color: ${({ theme }) => theme.colors.subTextBoxColor};
   }
 
   @media ${({ theme }) => theme.device.tablet} {
@@ -253,8 +262,8 @@ export const MobileMenu = styled.div<WithTheme & { $open: boolean }>`
   width: min(80%, 320px);
   height: calc(100vh - ${HEADER_HEIGHT});
   overflow-y: auto;
-  background-color: ${({ theme }) => theme.colors.surface};
-  border-left: 1px solid ${({ theme }) => theme.colors.border};
+  background-color: ${({ theme }) => theme.colors.subBgColor};
+  border-left: 1px solid ${({ theme }) => theme.colors.subTextBoxColor};
   box-shadow: ${({ theme }) => theme.shadow.lg};
 
   transform: ${({ $open }) => ($open ? 'translateX(0)' : 'translateX(100%)')};
@@ -271,7 +280,7 @@ export const MobileMenu = styled.div<WithTheme & { $open: boolean }>`
     height: auto;
     padding: 16px 12px 24px;
     gap: 4px;
-    color: ${({ theme }) => theme.colors.textStrong};
+    color: ${({ theme }) => theme.colors.subMenuColor};
     font-size: ${({ theme }) => theme.sizes.medium};
     font-weight: ${({ theme }) => theme.weight.bold};
 
@@ -286,7 +295,7 @@ export const MobileMenu = styled.div<WithTheme & { $open: boolean }>`
       transition: background 0.15s ease;
 
       &:hover {
-        background-color: ${({ theme }) => theme.colors.surfaceAlt};
+        background-color: ${({ theme }) => theme.colors.subTextBoxColor};
       }
 
       img {
@@ -296,7 +305,7 @@ export const MobileMenu = styled.div<WithTheme & { $open: boolean }>`
 
       svg {
         margin-left: auto;
-        color: ${({ theme }) => theme.colors.textSubtle};
+        color: ${({ theme }) => theme.colors.subMenuColor};
       }
     }
   }
@@ -311,12 +320,13 @@ export const MobileSubLi = styled.li<WithTheme & { $active: boolean }>`
   padding-left: 28px !important;
   font-size: ${({ theme }) => theme.sizes.small};
   font-weight: ${({ $active, theme }) => ($active ? theme.weight.bold : theme.weight.semiBold)};
-  background-color: ${({ $active, theme }) => ($active ? theme.colors.primarySoft : 'transparent')};
-  color: ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.textBody)};
+  background-color: ${({ $active, theme }) =>
+    $active ? theme.colors.activeMenuColor : theme.colors.subTextBoxColor};
+  color: ${({ $active, theme }) => ($active ? theme.colors.white : theme.colors.subMenuColor)};
 
   &:hover {
     background-color: ${({ $active, theme }) =>
-      $active ? theme.colors.primarySoft : theme.colors.surfaceAlt} !important;
+      $active ? theme.colors.activeMenuColor : theme.colors.subTextBoxColor} !important;
   }
 `;
 
@@ -336,8 +346,14 @@ export const AnimatedSubLiWrapper = styled.div<WithTheme & { $visible: boolean }
 export const SubMainLi = styled.li<WithTheme>`
   ${buttonStyle('secondary', 'md')}
   justify-content: center !important;
-  border: 1px solid ${({ theme }) => theme.colors.borderStrong};
-  color: ${({ theme }) => theme.colors.textStrong};
+  /* 예전 모바일 메뉴의 문의하기·로그인 줄처럼 베이지 바탕 위 글자 */
+  background: transparent;
+  border: 1px solid ${({ theme }) => theme.colors.subTextBoxColor};
+  color: ${({ theme }) => theme.colors.subMenuColor};
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.colors.subTextBoxColor};
+  }
 
   margin-top: 12px;
 

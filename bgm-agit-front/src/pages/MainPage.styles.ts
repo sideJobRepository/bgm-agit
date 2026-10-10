@@ -32,10 +32,13 @@ export const HeroText = styled.div`
   }
 `;
 
-// 위치·영업 한 줄. 골드는 여기에만(대비를 위해 accentText)
+// 메인 색은 남색이 주인공, 베이지는 옅은 바탕에만(칩·안내 줄), 글씨 포인트는 갈색.
+// 갈색·초록·남색을 다 채워 쓰면 색이 따로 놀아서 채움은 남색 하나로 정했다(2026-10-10)
+
+// 위치·영업 한 줄
 export const Eyebrow = styled.p`
   margin: 0;
-  color: ${c.accentText};
+  color: ${c.noticeColor};
   font-size: 14px;
   font-weight: 700;
 `;
@@ -60,7 +63,7 @@ export const HeroTitle = styled.h2`
 
 export const HeroLead = styled.p`
   margin: 0;
-  color: ${c.textMuted};
+  color: ${c.subColor};
   font-size: 17px;
   line-height: 1.7;
   word-break: keep-all;
@@ -82,15 +85,15 @@ export const FeatureList = styled.ul`
     align-items: center;
     gap: 6px;
     padding: 8px 14px;
-    border: 1px solid ${c.border};
+    border: 1px solid ${c.subTextBoxColor};
     border-radius: ${theme.radius.pill};
-    background: ${c.surface};
-    color: ${c.textBody};
+    background: ${c.subBgColor};
+    color: ${c.bronzeColor};
     font-size: 14px;
     font-weight: 600;
 
     svg {
-      color: ${c.primary};
+      color: ${c.bronzeColor};
       font-size: 14px;
     }
   }
@@ -110,17 +113,35 @@ export const HeroActions = styled.div`
   }
 `;
 
+// 남색 채움. 룸 예약 화면의 예약 버튼과 같은 색이라 메인에서 넘어갈 때 이어진다
 export const PrimaryAction = styled.button`
   ${buttonStyle('primary', 'lg')}
+  background: ${c.blueColor};
+  border-color: ${c.blueColor};
+
+  &:hover:not(:disabled) {
+    background: ${c.blueColor};
+    border-color: ${c.blueColor};
+    opacity: 0.9;
+  }
 `;
 
+// 흰 바탕 + 옅은 남색 테두리 + 남색 글씨
 export const SecondaryAction = styled.button`
   ${buttonStyle('secondary', 'lg')}
+  background: ${c.white};
+  border-color: ${c.blueColor}40;
+  color: ${c.blueColor};
+
+  &:hover:not(:disabled) {
+    background: ${c.blueColor}0D;
+  }
 `;
 
 export const TextAction = styled.button`
   ${buttonStyle('ghost', 'lg')}
   padding: 0 12px;
+  color: ${c.bronzeColor};
 `;
 
 export const HeroMedia = styled.div`
@@ -146,8 +167,12 @@ export const Section = styled.section`
   ${sectionCard};
 `;
 
+// 예전 메인 '실시간 예약하기' 영역과 같은 남색 바탕·흰 글씨
 export const ReservationSection = styled.section`
   ${sectionCard};
+  background: ${c.blueColor};
+  border-color: ${c.blueColor};
+  color: ${c.white};
   display: flex;
   flex-direction: column;
   gap: ${theme.space.xl};
@@ -159,7 +184,20 @@ export const ReservationSection = styled.section`
   }
 `;
 
+// 예전 메인: 게임찾기 = 옅은 회색 바탕·초록 글씨, 먹거리 = 베이지 회색 바탕·진갈색 글씨
 export const PairRow = styled.div`
+  & > ${Section}:first-child {
+    background: ${c.softColor};
+    border-color: ${c.softColor};
+    color: ${c.greenColor};
+  }
+
+  & > ${Section}:last-child {
+    background: ${c.basicColor};
+    border-color: ${c.basicColor};
+    color: ${c.bronzeColor};
+  }
+
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${theme.space.xl};
@@ -191,35 +229,35 @@ export const SectionHead = styled.div`
 export const TitleBox = styled.div`
   ${sectionTitleStyle};
   min-width: 0;
+
+  h2 {
+    font-family: ${theme.fonts.display};
+  }
+
+  /* 섹션 글자색(남색 띠의 흰색, 게임 초록, 먹거리 진갈색)을 제목·설명이 그대로 따른다 */
+  ${ReservationSection} &,
+  ${PairRow} & {
+    h2,
+    p {
+      color: inherit;
+    }
+  }
+
+  /* 공지사항은 예전처럼 본문 회색 */
+  h2,
+  p {
+    color: ${c.subColor};
+  }
 `;
 
 export const MoreLink = styled.button`
   ${buttonStyle('ghost', 'sm')}
+  /* 예전 '더보기' 링크의 회색 */
+  color: ${c.navColor};
   flex-shrink: 0;
 
   @media ${theme.device.mobile} {
     min-height: 44px;
-  }
-`;
-
-// 1 날짜 · 2 방 · 3 시간 — 예약 순서 안내(밑줄 탭 모양)
-export const Steps = styled.ol`
-  display: flex;
-  gap: 20px;
-  flex-shrink: 0;
-  margin: 0;
-  padding: 0;
-
-  li {
-    padding-bottom: 6px;
-    border-bottom: 2px solid ${c.primary};
-    color: ${c.primary};
-    font-size: 14px;
-    font-weight: 700;
-  }
-
-  @media ${theme.device.mobile} {
-    display: none;
   }
 `;
 
@@ -266,7 +304,7 @@ export const RoomCard = styled.button`
   }
 
   &:hover {
-    border-color: ${c.primary};
+    border-color: ${c.primarySoft};
     background: ${c.primarySoft};
   }
 
@@ -280,10 +318,10 @@ export const ReservationFooter = styled.div`
   gap: ${theme.space.lg};
   padding: 18px 22px;
   border-radius: ${theme.radius.md};
-  background: ${c.primarySoft};
+  background: ${c.subBgColor};
 
   span {
-    color: ${c.textBody};
+    color: ${c.bronzeColor};
     font-size: 15px;
     font-weight: 600;
   }

@@ -14,7 +14,7 @@ export const ModalWrapper = styled.div<WithTheme>`
   margin: 0 auto;
   padding: ${theme.space.xl};
   border-radius: ${theme.radius.lg};
-  background-color: ${c.surface};
+  background-color: ${c.topBg};
 
   @media ${theme.device.mobile} {
     width: calc(100vw - 32px);
@@ -33,13 +33,13 @@ export const TopModalBox = styled.div<WithTheme>`
     height: 44px;
     padding: 11px;
     border-radius: ${theme.radius.md};
-    color: ${c.textMuted};
+    color: ${c.menuColor};
     cursor: pointer;
     transition: background 0.15s ease;
 
     &:hover {
-      background: ${c.surfaceAlt};
-      color: ${c.textStrong};
+      background: ${c.subTextBoxColor};
+      color: ${c.menuColor};
     }
   }
 `;
@@ -58,11 +58,11 @@ export const CenterModalBox = styled.div<WithTheme>`
 
   h2 {
     margin: 0;
-    font-family: ${theme.fonts.body};
+    font-family: ${theme.fonts.display};
     font-size: 20px;
     font-weight: 800;
     letter-spacing: -0.02em;
-    color: ${c.textStrong};
+    color: ${c.purpleColor};
   }
 `;
 
@@ -74,8 +74,19 @@ export const BottomModalBox = styled.div<WithTheme>`
   /* 수정하기·비밀번호 변경 같은 주 동작 */
   button {
     ${buttonStyle('primary', 'md')}
+    /* 예전 마이페이지 주 버튼은 로고 보라 채움 */
+    background: ${c.purpleColor};
+    border-color: ${c.purpleColor};
+    color: ${c.white};
+
+    &:hover:not(:disabled) {
+      background: ${c.purpleColor};
+      border-color: ${c.purpleColor};
+      opacity: 0.9;
+    }
     width: 100%;
     margin-top: ${theme.space.xs};
+    font-family: ${theme.fonts.display};
   }
 `;
 
@@ -86,23 +97,32 @@ export const MahjongBox = styled.div<WithTheme>`
   gap: 10px;
   margin-top: ${theme.space.xs};
   padding-top: ${theme.space.lg};
-  border-top: 1px solid ${c.border};
+  border-top: 1px solid ${c.lineColor};
 
   p {
     font-size: 13px;
-    color: ${c.textMuted};
+    color: ${c.subColor};
     text-align: center;
   }
 
-  /* BottomModalBox의 기본 버튼(보라) 대신 보조 스타일로 오버라이드 */
+  /* BottomModalBox의 기본 버튼(보라) 대신 진갈색 테두리 버튼으로 오버라이드 */
   button {
     ${buttonStyle('secondary', 'md')}
+    background: transparent;
+    border-color: ${c.bronzeColor};
+    color: ${c.bronzeColor};
+
+    &:hover:not(:disabled) {
+      background: ${c.subTextBoxColor};
+      border-color: ${c.bronzeColor};
+    }
     width: 100%;
     margin-top: 0;
   }
 
   button.cancel {
     ${buttonStyle('danger', 'md')}
+    background: transparent;
     width: 100%;
     margin-top: 0;
   }
@@ -114,15 +134,15 @@ export const PasswordBox = styled.div<WithTheme>`
   gap: 14px;
   margin-top: ${theme.space.xs};
   padding-top: 20px;
-  border-top: 1px solid ${c.border};
+  border-top: 1px solid ${c.lineColor};
 
   h3 {
     margin: 0;
-    font-family: ${theme.fonts.body};
+    font-family: ${theme.fonts.display};
     font-size: 16px;
     font-weight: 800;
     letter-spacing: -0.02em;
-    color: ${c.textStrong};
+    color: ${c.purpleColor};
     text-align: left;
   }
 `;
@@ -136,12 +156,17 @@ export const InputBox = styled.div<WithTheme>`
   label {
     font-size: 13px;
     font-weight: 700;
-    color: ${c.textBody};
+    color: ${c.bronzeColor};
     white-space: nowrap;
   }
 
   input {
     ${inputStyle}
+    border-color: #c4c4c4; /* 예전 값(CKEditor 기본 테두리 색상) */
+
+    &:focus {
+      border-color: ${c.noticeColor};
+    }
   }
 
   /* 읽기 전용 값(가입일자·이름)은 입력칸이 아니라 값처럼 보이게 */

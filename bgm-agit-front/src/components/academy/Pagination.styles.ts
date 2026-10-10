@@ -18,7 +18,7 @@ export const Nav = styled.nav<WithTheme>`
     height: 36px;
     padding: 10px;
     border-radius: ${theme.radius.md};
-    color: ${c.textBody};
+    color: ${c.subColor};
     cursor: pointer;
     transition: background 0.15s ease;
 
@@ -28,7 +28,7 @@ export const Nav = styled.nav<WithTheme>`
     }
 
     &.active {
-      color: ${c.borderStrong};
+      color: ${c.white};
       cursor: default;
     }
   }
@@ -54,14 +54,14 @@ export const PageButton = styled.button<WithTheme>`
   ${buttonStyle('ghost', 'sm')}
   min-width: 36px;
   padding: 0 10px;
-  color: ${c.textBody};
+  color: ${c.subColor};
   font-weight: 600;
 
   &.active,
   &.active:hover:not(:disabled) {
-    background-color: ${c.primary};
-    border-color: ${c.primary};
-    color: ${c.onPrimary};
+    background-color: ${c.blackColor};
+    border-color: ${c.blackColor};
+    color: ${c.white};
     font-weight: 700;
   }
 
@@ -74,6 +74,6 @@ export const PageButton = styled.button<WithTheme>`
 export const Ellipsis = styled.span<WithTheme>`
   display: inline-flex;
   align-items: center;
-  color: ${c.textMuted};
+  color: ${c.subColor};
   user-select: none;
 `;

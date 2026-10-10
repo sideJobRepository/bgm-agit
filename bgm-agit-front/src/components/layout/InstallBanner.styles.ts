@@ -30,7 +30,7 @@ export const Text = styled.div<WithTheme>`
   flex: 1;
   min-width: 0;
   gap: 2px;
-  color: ${({ theme }) => theme.colors.textStrong};
+  color: ${({ theme }) => theme.colors.text};
 
   strong {
     font-size: ${({ theme }) => theme.sizes.medium};
@@ -39,15 +39,25 @@ export const Text = styled.div<WithTheme>`
   }
   span {
     font-size: ${({ theme }) => theme.sizes.xsmall};
-    color: ${({ theme }) => theme.colors.textMuted};
+    color: ${({ theme }) => theme.colors.subColor};
     line-height: 1.4;
   }
 `;
 
-export const InstallButton = styled.button`
+// 예전 설치 버튼은 로고 보라(purpleColor) 채움
+export const InstallButton = styled.button<WithTheme>`
   flex-shrink: 0;
   ${buttonStyle('primary', 'md')}
   padding: 0 16px;
+  background: ${({ theme }) => theme.colors.purpleColor};
+  border-color: ${({ theme }) => theme.colors.purpleColor};
+  color: ${({ theme }) => theme.colors.white};
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.colors.purpleColor};
+    border-color: ${({ theme }) => theme.colors.purpleColor};
+    opacity: 0.9;
+  }
 `;
 
 export const CloseButton = styled.button<WithTheme>`
@@ -61,7 +71,7 @@ export const CloseButton = styled.button<WithTheme>`
   border: 0;
   border-radius: ${({ theme }) => theme.radius.md};
   background: none;
-  color: ${({ theme }) => theme.colors.textMuted};
+  color: ${({ theme }) => theme.colors.navColor};
   font-size: ${({ theme }) => theme.sizes.medium};
   cursor: pointer;
 

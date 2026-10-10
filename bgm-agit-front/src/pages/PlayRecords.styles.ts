@@ -13,20 +13,21 @@ export const Box = styled.div`
   }
 `;
 
-// 예전엔 bgColor 색 띠였다. 지금은 흰 바탕 제목 영역이라 bgColor 는 받기만 하고 쓰지 않는다(포인트 색 하나로 통일)
+// 개편 전처럼 bgColor 색 띠 + 흰 글씨. 색 띠라 안쪽 여백(예전 값 20px/14px)을 같이 준다
 export const Header = styled.div.withConfig({ shouldForwardProp: p => p !== 'bgColor' })<{ bgColor: string } & WithTheme>`
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: ${theme.space.xl};
-  padding-bottom: ${theme.space.xl};
-  border-bottom: 2px solid ${c.primary};
+  padding: 20px;
+  background-color: ${({ bgColor }) => bgColor};
+  color: ${c.white};
 
   @media ${({ theme }) => theme.device.mobile} {
     flex-direction: column;
     align-items: stretch;
     gap: ${theme.space.lg};
-    padding-bottom: ${theme.space.lg};
+    padding: 14px;
   }
 `;
 
@@ -35,7 +36,13 @@ export const TitleBox = styled.div<WithTheme>`
   min-width: 0;
 
   h2 {
+    font-family: ${({ theme }) => theme.fonts.displayEn};
+    color: ${c.white};
     font-size: 30px;
+  }
+
+  p {
+    color: ${c.white};
   }
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -57,12 +64,30 @@ export const HeaderButtons = styled.div`
   }
 `;
 
+// 개편 전: 색 띠 위 흰 버튼 + 초록 글씨
 export const CreateButton = styled.button<WithTheme>`
   ${buttonStyle('primary', 'md')};
+  background: ${c.white};
+  border-color: ${c.white};
+  color: ${c.success};
+
+  &:hover:not(:disabled) {
+    background: ${c.white};
+    border-color: ${c.white};
+    opacity: 0.9;
+  }
 `;
 
+// 개편 전: 투명 바탕 + 흰 테두리·흰 글씨
 export const GhostButton = styled.button<WithTheme>`
   ${buttonStyle('secondary', 'md')};
+  background: transparent;
+  border-color: ${c.white};
+  color: ${c.white};
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+  }
 `;
 
 export const CardList = styled.div`
@@ -122,7 +147,7 @@ export const NoImage = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: ${c.textSubtle};
+  color: ${c.navColor};
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -134,7 +159,7 @@ export const CardBody = styled.div`
 `;
 
 export const CardTitle = styled.div<WithTheme>`
-  color: ${c.textStrong};
+  color: ${c.subColor};
   font-size: 17px;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -159,7 +184,7 @@ export const Meta = styled.div<WithTheme>`
 `;
 
 export const Participants = styled.div<WithTheme>`
-  color: ${c.textBody};
+  color: ${c.subColor};
   font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
@@ -168,7 +193,7 @@ export const Participants = styled.div<WithTheme>`
 
 export const Writer = styled.div<WithTheme>`
   margin-top: ${theme.space.xs};
-  color: ${c.textMuted};
+  color: ${c.navColor};
   font-size: 13px;
 `;
 
@@ -176,7 +201,7 @@ export const Empty = styled.div<WithTheme>`
   grid-column: 1 / -1;
   padding: 56px 0;
   text-align: center;
-  color: ${c.textMuted};
+  color: ${c.navColor};
   font-size: 15px;
   font-weight: 600;
 `;

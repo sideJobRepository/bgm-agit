@@ -8,10 +8,10 @@ export const Container = styled.div<WithTheme>`
   margin: 48px auto;
   padding: ${({ theme }) => theme.space.xxl};
   border-radius: ${({ theme }) => theme.radius.lg};
-  background-color: ${({ theme }) => theme.colors.surfaceSunken};
+  background-color: ${({ theme }) => theme.colors.softColor};
   font-family: ${({ theme }) => theme.fonts.body};
   line-height: 1.7;
-  color: ${({ theme }) => theme.colors.textBody};
+  color: ${({ theme }) => theme.colors.text};
 
   @media ${({ theme }) => theme.device.mobile} {
     margin: ${({ theme }) => theme.space.xl} ${({ theme }) => theme.space.lg};
@@ -55,7 +55,7 @@ export const SubTitle = styled.h3<WithTheme>`
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.4;
-  color: ${({ theme }) => theme.colors.textStrong};
+  color: ${({ theme }) => theme.colors.subColor};
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: 17px;
@@ -66,7 +66,7 @@ export const Text = styled.p<WithTheme>`
   margin: 0;
   font-size: 16px;
   line-height: 1.7;
-  color: ${({ theme }) => theme.colors.textBody};
+  color: ${({ theme }) => theme.colors.subColor};
   word-break: keep-all;
   overflow-wrap: break-word;
 
@@ -88,7 +88,7 @@ export const List = styled.ul<WithTheme>`
     margin-bottom: ${({ theme }) => theme.space.sm};
     font-size: 16px;
     line-height: 1.7;
-    color: ${({ theme }) => theme.colors.textBody};
+    color: ${({ theme }) => theme.colors.subColor};
     word-break: keep-all;
     overflow-wrap: break-word;
 

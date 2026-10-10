@@ -31,7 +31,7 @@ export const Table = styled.table<WithTheme>`
   td {
     padding: 14px 12px;
     text-align: center;
-    border-bottom: 1px solid ${c.border};
+    border-bottom: 1px solid ${c.lineColor};
   }
 
   /* 제목 칸은 왼쪽 정렬 + 한 줄 말줄임 */
@@ -85,8 +85,8 @@ export const Table = styled.table<WithTheme>`
 `;
 
 export const Th = styled.th<WithTheme>`
-  background-color: ${c.surfaceAlt};
-  color: ${c.textMuted};
+  background-color: ${c.basicColor};
+  color: ${c.subColor};
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
@@ -98,26 +98,26 @@ export const Th = styled.th<WithTheme>`
 
 export const Td = styled.td``;
 
-// 예전엔 bgColor 색 띠였다. 지금은 깨끗한 제목 영역으로 그리고 bgColor 는 아래 구분선에만 쓴다
+// bgColor 색 띠(갈색 제목 띠). 띠 안쪽 여백이 있어야 글씨가 가장자리에 붙지 않는다
 export const SearchWrapper = styled.div.withConfig({
   shouldForwardProp: prop => prop !== 'bgColor',
 })<{ bgColor: string } & WithTheme>`
   display: flex;
   width: 100%;
   gap: ${theme.space.xl};
-  padding: 0 0 ${theme.space.xl};
+  padding: ${theme.space.xl};
   align-items: flex-end;
-  border-bottom: 2px solid ${({ bgColor }) => bgColor};
+  background-color: ${({ bgColor }) => bgColor};
 
   @media ${({ theme }) => theme.device.mobile} {
     flex-direction: column;
     align-items: stretch;
     gap: ${theme.space.lg};
-    padding-bottom: ${theme.space.lg};
+    padding: ${theme.space.lg};
   }
 `;
 
-// textColor 는 색 띠 위 흰 글씨용이었다. 흰 바탕이 됐으므로 글자색은 토큰으로 고정한다
+// textColor 는 색 띠 위 흰 글씨
 export const TitleBox = styled.div.withConfig({
   shouldForwardProp: prop => prop !== 'textColor',
 })<{ textColor: string } & WithTheme>`
@@ -127,7 +127,13 @@ export const TitleBox = styled.div.withConfig({
   width: 60%;
   min-width: 0;
 
+  h2,
+  p {
+    color: ${({ textColor }) => textColor};
+  }
+
   h2 {
+    font-family: ${({ theme }) => theme.fonts.displayEn};
     font-size: 30px;
   }
 
@@ -172,6 +178,7 @@ export const NoSearchBox = styled.div<WithTheme>`
   min-height: 120px;
   margin-top: ${theme.space.lg};
   color: ${c.textMuted};
+  font-family: ${theme.fonts.display};
   font-size: 16px;
   font-weight: 600;
 

@@ -122,6 +122,9 @@ export const ContentBox = styled.div<WithTheme>`
 
 export const StyledCalendar = styled(Calendar)<WithTheme>`
   ${cardStyle}
+  /* 예전 색: 회색 테두리, 그림자 없음 */
+  border-color: ${c.lineColor};
+  box-shadow: none;
   width: 100%;
   max-width: 600px;
   padding: ${theme.space.lg};
@@ -146,7 +149,7 @@ export const StyledCalendar = styled(Calendar)<WithTheme>`
   .react-calendar__navigation button {
     min-width: 44px;
     border-radius: ${theme.radius.md};
-    color: ${c.textStrong} !important;
+    color: ${c.black} !important;
     background: transparent !important;
     font-family: inherit;
     font-size: ${theme.sizes.medium};
@@ -155,19 +158,19 @@ export const StyledCalendar = styled(Calendar)<WithTheme>`
     ${focusRing}
 
     &:hover:enabled {
-      background: ${c.surfaceAlt} !important;
+      background: ${c.softColor} !important;
     }
   }
 
   .react-calendar__month-view__weekdays {
     padding-bottom: ${theme.space.xs};
     margin-bottom: ${theme.space.xs};
-    border-bottom: 1px solid ${c.border};
+    border-bottom: 1px solid ${c.lineColor};
   }
 
   .react-calendar__month-view__weekdays__weekday {
     /* 요일 */
-    color: ${c.textMuted};
+    color: ${c.black};
     font-size: ${theme.sizes.xsmall};
     font-weight: 700;
 
@@ -202,7 +205,7 @@ export const StyledCalendar = styled(Calendar)<WithTheme>`
     min-height: 56px;
     padding: ${theme.space.xs} 2px;
     background: transparent;
-    color: ${c.textStrong};
+    color: ${c.black};
     font-family: inherit;
     font-size: ${theme.sizes.small};
     font-weight: 600;
@@ -226,13 +229,14 @@ export const StyledCalendar = styled(Calendar)<WithTheme>`
     background-color: transparent;
 
     abbr {
-      background: ${c.surfaceAlt};
+      background: ${c.softColor};
     }
   }
 
+  /* 예전 색: 선택 날짜 = 남색 채움 */
   .react-calendar__tile.selected abbr {
-    color: ${c.onPrimary};
-    background: ${c.primary};
+    color: ${c.white};
+    background: ${c.blueColor};
   }
 
   .react-calendar__tile--active {
@@ -250,22 +254,27 @@ export const StyledCalendar = styled(Calendar)<WithTheme>`
     justify-content: center;
     font-weight: ${theme.weight.semiBold};
     font-size: ${theme.sizes.xxsmall};
-    color: ${c.success};
+    color: ${c.greenColor};
   }
 
+  /* 예전 색: 바탕 없이 초록 글씨 */
   .date-available {
     padding: 1px 6px;
     border-radius: ${theme.radius.pill};
-    background: ${c.primarySoft};
-    color: ${c.primary};
+    background: transparent;
+    color: ${c.greenColor};
     font-size: ${theme.sizes.xxsmall};
     font-weight: 700;
     white-space: nowrap;
   }
 `;
 
+// 예전 색: 연회색 바탕 + 진한 그림자(토큰 없는 값)
 export const TopBox = styled.div<WithTheme>`
   ${cardStyle}
+  border-color: transparent;
+  background: #f3f3f3;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.24);
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -310,7 +319,7 @@ export const InstructorInfo = styled.div<WithTheme>`
     margin: 0;
     font-size: ${theme.desktop.sizes.h3Size};
     font-weight: 800;
-    color: ${c.textStrong};
+    color: ${c.inputColor};
     letter-spacing: -0.02em;
   }
 
@@ -318,7 +327,7 @@ export const InstructorInfo = styled.div<WithTheme>`
     margin: 0;
     font-size: 15px;
     line-height: 1.7;
-    color: ${c.textMuted};
+    color: ${c.subColor};
     word-break: keep-all;
   }
 
@@ -334,8 +343,18 @@ export const InstructorInfo = styled.div<WithTheme>`
 
 export const Button = styled.button<WithTheme>`
   ${buttonStyle('primary', 'lg')}
+  /* 예전 색: 남색 채움 + 흰 글씨 */
+  background: ${c.blueColor};
+  border-color: ${c.blueColor};
+  color: ${c.white};
   width: 100%;
   max-width: 600px;
+
+  &:hover:not(:disabled) {
+    background: ${c.blueColor};
+    border-color: ${c.blueColor};
+    opacity: 0.8;
+  }
 
   &:disabled {
     cursor: not-allowed;
@@ -358,14 +377,15 @@ export const TimeSlotButton = styled.button<WithTheme & { selected: boolean }>`
   min-height: 44px;
   padding: 10px 14px;
   border-radius: ${theme.radius.md};
-  border: 1px solid ${({ selected }) => (selected ? c.primary : c.borderStrong)};
+  border: 1px solid ${({ selected }) => (selected ? c.blueColor : c.lineColor)};
   cursor: pointer;
   font-family: inherit;
   font-size: 15px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  background: ${({ selected }) => (selected ? c.primary : c.surface)};
-  color: ${({ selected }) => (selected ? c.onPrimary : c.textStrong)};
+  /* 예전 색: 선택 = 남색 채움, 나머지 흰 바탕 */
+  background: ${({ selected }) => (selected ? c.blueColor : c.whiteColor)};
+  color: ${({ selected }) => (selected ? c.whiteColor : c.inputColor)};
   transition:
     background 0.15s ease,
     border-color 0.15s ease,
@@ -373,15 +393,15 @@ export const TimeSlotButton = styled.button<WithTheme & { selected: boolean }>`
   ${focusRing}
 
   &:hover:not(:disabled) {
-    border-color: ${c.primary};
-    background: ${({ selected }) => (selected ? c.primaryHover : c.primarySoft)};
+    border-color: ${c.blueColor};
+    background: ${({ selected }) => (selected ? c.blueColor : c.softColor)};
   }
 
   &:disabled {
     cursor: not-allowed;
-    border-color: ${c.border};
-    background: ${c.surfaceSunken};
-    color: ${c.textSubtle};
+    border-color: ${c.lineColor};
+    background: ${c.softColor};
+    color: ${c.grayColor};
     text-decoration: line-through;
   }
 `;
@@ -390,10 +410,10 @@ export const EmptySlot = styled.div<WithTheme>`
   grid-column: 1 / -1;
   width: 100%;
   padding: ${theme.space.lg} ${theme.space.md};
-  border: 1px dashed ${c.borderStrong};
+  border: 1px dashed ${c.lineColor};
   border-radius: ${theme.radius.md};
   text-align: center;
   font-size: ${theme.sizes.small};
-  color: ${c.textMuted};
-  background: ${c.surfaceSunken};
+  color: ${c.grayColor};
+  background: ${c.softColor};
 `;

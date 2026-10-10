@@ -9,7 +9,7 @@ export const Wrapper = styled.div<WithTheme>`
   flex-direction: column;
   min-height: 100vh;
   overflow: hidden;
-  background-color: ${({ theme }) => theme.colors.surfaceSunken};
+  background-color: ${({ theme }) => theme.colors.white};
 `;
 
 export const Inner = styled.div`
@@ -24,15 +24,15 @@ export const TopArea = styled.header<WithTheme>`
   left: 0;
   right: 0;
   height: ${HEADER_HEIGHT};
-  background-color: ${({ theme }) => theme.colors.surface};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+  background-color: ${({ theme }) => theme.colors.topBg};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.topBg};
   z-index: 3;
 `;
 
 export const NavArea = styled.nav<WithTheme & { $home: boolean }>`
   display: flex;
   height: ${({ $home }) => ($home ? '0' : '40px')};
-  background-color: ${({ theme }) => theme.colors.surfaceSunken};
+  background-color: ${({ theme }) => theme.colors.softColor};
   margin-top: ${HEADER_HEIGHT};
   overflow: hidden;
 `;
@@ -44,7 +44,7 @@ export const MainArea = styled.main<WithTheme>`
   height: 100%;
   overflow-y: auto;
   overflow-x: auto;
-  background-color: ${({ theme }) => theme.colors.surfaceSunken};
+  background-color: ${({ theme }) => theme.colors.white};
 
   @media ${({ theme }) => theme.device.tablet} {
     padding: 20px 16px;
@@ -53,7 +53,7 @@ export const MainArea = styled.main<WithTheme>`
 
 export const FooterBox = styled.footer<WithTheme>`
   display: flex;
-  background-color: ${({ theme }) => theme.colors.footer};
+  background-color: ${({ theme }) => theme.colors.bottomBg};
   font-size: ${({ theme }) => theme.sizes.medium};
   line-height: 1.6;
   justify-content: center;

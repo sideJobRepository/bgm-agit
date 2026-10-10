@@ -19,7 +19,7 @@ export const ModalWrapper = styled.div`
 
 export const ModalTitle = styled.h3<WithTheme>`
   margin: 0 0 ${theme.space.lg};
-  color: ${c.textStrong};
+  color: ${c.menuColor};
   font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -86,7 +86,7 @@ export const Field = styled.label<WithTheme>`
   margin-bottom: 14px;
 
   span {
-    color: ${c.textMuted};
+    color: ${c.subColor};
     font-size: 13px;
     font-weight: 600;
   }
@@ -117,7 +117,24 @@ export const ButtonBox = styled.div`
   }
 `;
 
+// 예전 색: 저장 = 초록, 삭제 = 빨강, 닫기 = 갈색. 모두 채움 버튼에 흰 글씨
+const LEGACY_BUTTON_COLORS: Partial<Record<ButtonVariant, string>> = {
+  primary: c.greenColor,
+  danger: c.redColor,
+  secondary: c.noticeColor,
+};
+
 // $variant 로 저장(primary) · 삭제(danger) · 닫기(secondary)를 나눈다
 export const Button = styled.button<WithTheme & { color?: string; $variant?: ButtonVariant }>`
   ${({ $variant }) => buttonStyle($variant ?? 'primary', 'md')};
+  background: ${({ $variant }) => LEGACY_BUTTON_COLORS[$variant ?? 'primary']};
+  border-color: ${({ $variant }) => LEGACY_BUTTON_COLORS[$variant ?? 'primary']};
+  color: ${c.white};
+
+  &:hover:not(:disabled) {
+    background: ${({ $variant }) => LEGACY_BUTTON_COLORS[$variant ?? 'primary']};
+    border-color: ${({ $variant }) => LEGACY_BUTTON_COLORS[$variant ?? 'primary']};
+    color: ${c.white};
+    opacity: 0.85;
+  }
 `;

@@ -1,33 +1,32 @@
 // 색은 palette 한 곳에서 정한다. 포인트 색을 바꾸려면 primary 계열만 고치면 된다.
 const palette = {
-  // BGM 로고 보라
-  primary: '#482768',
-  primaryHover: '#3A1F55',
-  // 선택·활성 칸의 옅은 바탕. 연보라를 쓰면 안내 박스·탭까지 전부 보라로 물들어서 무채색으로 둔다.
-  // 보라는 테두리·글자·꽉 찬 버튼에서만 쓴다
-  primarySoft: '#F1F3F5',
+  // 개편 전 갈색 계열(2026-10-10 보라 리디자인에서 되돌림). 화면 구조·파일 분리는 리디자인 것을 그대로 두고 색만 예전 값이다
+  primary: '#988271',
+  primaryHover: '#7F6B5C',
+  // 선택·활성 칸, 예약 시간 강조 등의 옅은 바탕(베이지)
+  primarySoft: '#F1E7CE',
   onPrimary: '#FFFFFF',
 
-  // 보조 포인트(골드). 배지·강조처럼 작은 곳에만 쓴다
-  accent: '#E0B341',
-  accentSoft: '#FBF1D3',
-  accentText: '#8A6410',
+  // 보조 포인트. 배지·강조처럼 작은 곳에 쓴다(진갈색)
+  accent: '#5C3A21',
+  accentSoft: '#F8EFD9',
+  accentText: '#5C3A21',
 
   bg: '#FFFFFF',
   surface: '#FFFFFF',
-  // 바탕·테두리는 색기 없는 회색. 보라를 섞으면 화면 전체가 탁해 보였다(2026-10-10).
-  // 페이지 바탕 #F8F9FA 는 개편 전 메인 바탕(softColor)과 같은 값
-  surfaceAlt: '#F1F3F5',
+  // 상단 헤더 바탕(크림)
+  header: '#FCF8E6',
+  surfaceAlt: '#F2EDEA',
   surfaceSunken: '#F8F9FA',
-  footer: '#16181D',
+  footer: '#988271',
 
-  textStrong: '#16181D',
-  textBody: '#344054',
+  textStrong: '#222222',
+  textBody: '#424548',
   textMuted: '#5B6270',
   textSubtle: '#8A919E',
 
-  border: '#E5E7EB',
-  borderStrong: '#D1D5DB',
+  border: '#E5E5E5',
+  borderStrong: '#D9D9D9',
 
   success: '#1A7D55',
   danger: '#FF5E57',
@@ -39,11 +38,11 @@ export const theme = {
     ...palette,
 
     // 아래는 예전 키. 화면들이 아직 이 이름을 쓰고 있어서 새 palette 값으로 이어 둔다
-    topBg: palette.bg,
-    subBgColor: palette.surfaceAlt,
-    subTextBoxColor: palette.surfaceAlt,
-    activeMenuColor: palette.primary,
-    subMenuColor: palette.textStrong,
+    topBg: palette.header,
+    subBgColor: palette.accentSoft,
+    subTextBoxColor: palette.primarySoft,
+    activeMenuColor: '#3D2D1E',
+    subMenuColor: '#2C1E0F',
     bottomBg: palette.footer,
     menuColor: '#2E2E2E',
     subColor: '#424548',
@@ -52,7 +51,7 @@ export const theme = {
     redColor: palette.danger,
     greenColor: palette.success,
     basicColor: palette.surfaceAlt,
-    bronzeColor: palette.textStrong,
+    bronzeColor: palette.accent,
     yellowColor: '#FBE157',
     noticeColor: palette.primary,
     softColor: palette.surfaceSunken,
@@ -72,8 +71,9 @@ export const theme = {
   },
   fonts: {
     body: "'Pretendard', sans-serif",
-    // 예전 제목 폰트(Jua·Bungee) 자리. 지금은 본문과 같은 Pretendard 로 통일
-    display: "'Pretendard', sans-serif",
+    // 제목 폰트. 한글 제목은 Jua, 영문 큰 제목(Reservation History 등)은 Bungee. index.html 에서 구글 폰트로 받는다
+    display: "'Jua', sans-serif",
+    displayEn: "'Bungee', sans-serif",
   },
   radius: {
     sm: '6px',

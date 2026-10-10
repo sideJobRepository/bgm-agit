@@ -164,11 +164,11 @@ export default function ClockTowerGameDetail() {
           <ButtonRow>
             {user?.roles.includes('ROLE_ADMIN') && (
               <>
-                <Button $variant="primary" onClick={() => setEditMode(true)}>수정</Button>
-                <Button $variant="danger" onClick={onDelete}>삭제</Button>
+                <Button $variant="primary" color="#4A2C82" onClick={() => setEditMode(true)}>수정</Button>
+                <Button $variant="danger" color="#FF5E57" onClick={onDelete}>삭제</Button>
               </>
             )}
-            <Button $variant="secondary" onClick={() => navigate('/clocktower-games')}>목록</Button>
+            <Button $variant="secondary" color="#988271" onClick={() => navigate('/clocktower-games')}>목록</Button>
           </ButtonRow>
 
           <Cover>
@@ -303,8 +303,8 @@ export default function ClockTowerGameDetail() {
         </Field>
 
         <ButtonRow>
-          <Button $variant="primary" onClick={onSubmit}>저장</Button>
-          <Button $variant="secondary" onClick={() => (id ? setEditMode(false) : navigate('/clocktower-games'))}>취소</Button>
+          <Button $variant="primary" color="#1A7D55" onClick={onSubmit}>저장</Button>
+          <Button $variant="secondary" color="#988271" onClick={() => (id ? setEditMode(false) : navigate('/clocktower-games'))}>취소</Button>
         </ButtonRow>
       </Box>
     </Wrapper>

@@ -102,7 +102,7 @@ export const TableBox = styled.div`
     display: block;
     max-width: 100%;
     margin: 0 auto;
-    border: 1px solid ${theme.colors.border};
+    border: 1px solid ${theme.colors.lineColor};
     border-radius: ${theme.radius.sm};
     object-fit: cover;
   }
@@ -136,6 +136,6 @@ export const TitleCell = styled.div<WithTheme>`
     gap: 4px;
     font-size: 13px;
     font-weight: 600;
-    color: ${({ theme }) => theme.colors.textMuted};
+    color: ${({ theme }) => theme.colors.inputColor};
   }
 `;

@@ -13,20 +13,21 @@ export const Box = styled.div`
   }
 `;
 
-// 예전엔 bgColor 색 띠였다. 흰 바탕 제목 영역으로 바꾸면서 bgColor 는 받기만 하고 쓰지 않는다
+// 예전 화면처럼 bgColor 색 띠 + 흰 글자
 export const Header = styled.div.withConfig({ shouldForwardProp: p => p !== 'bgColor' })<{ bgColor: string } & WithTheme>`
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: ${theme.space.xl};
-  padding: 0 0 ${theme.space.xl};
-  border-bottom: 1px solid ${c.border};
+  padding: ${theme.space.xl};
+  background-color: ${({ bgColor }) => bgColor};
+  color: ${c.white};
 
   @media ${({ theme }) => theme.device.mobile} {
     flex-direction: column;
     align-items: stretch;
     gap: ${theme.space.lg};
-    padding-bottom: ${theme.space.lg};
+    padding: ${theme.space.lg};
   }
 `;
 
@@ -34,7 +35,13 @@ export const TitleBox = styled.div<WithTheme>`
   ${sectionTitleStyle};
   min-width: 0;
 
+  h2,
+  p {
+    color: ${c.white};
+  }
+
   h2 {
+    font-family: ${({ theme }) => theme.fonts.displayEn};
     font-size: 30px;
   }
 
@@ -66,13 +73,19 @@ export const Badge = styled.div<WithTheme>`
   gap: 2px;
   min-width: 96px;
   padding: ${theme.space.md} ${theme.space.lg};
+  /* 색 띠 위의 반투명 흰 타일(예전 화면) */
+  background: rgba(255, 255, 255, 0.15);
+  border-color: transparent;
+  box-shadow: none;
 
   span {
     ${badgeStyle('accent')};
+    background: transparent;
+    color: ${c.white};
   }
 
   strong {
-    color: ${c.primary};
+    color: ${c.white};
     font-size: 26px;
     font-weight: 800;
     letter-spacing: -0.02em;
@@ -85,7 +98,7 @@ export const SectionTitle = styled.h3<WithTheme>`
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: ${c.textStrong};
+  color: ${c.subColor};
 
   @media ${theme.device.mobile} {
     margin-top: ${theme.space.xl};
@@ -106,6 +119,7 @@ export const CardList = styled.div`
 
 export const Card = styled.div<WithTheme>`
   ${cardStyle};
+  border-color: ${c.lineColor};
   display: flex;
   align-items: center;
   gap: ${theme.space.md};
@@ -130,7 +144,7 @@ export const Thumb = styled.div`
   height: 72px;
   border-radius: ${theme.radius.md};
   overflow: hidden;
-  background: ${c.surfaceAlt};
+  background: ${c.basicColor};
 
   img {
     width: 100%;
@@ -148,7 +162,7 @@ export const NoImage = styled.div`
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  color: ${c.textSubtle};
+  color: ${c.navColor};
 `;
 
 export const CardBody = styled.div`
@@ -160,7 +174,7 @@ export const CardTitle = styled.div<WithTheme>`
   font-size: 16px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: ${c.textStrong};
+  color: ${c.subColor};
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -177,11 +191,13 @@ export const Meta = styled.div`
 export const Count = styled.span`
   ${badgeStyle('primary')};
   font-size: 13px;
+  background: ${c.purpleColor};
+  color: ${c.white};
 `;
 
 export const Last = styled.span<WithTheme>`
   font-size: 13px;
-  color: ${c.textMuted};
+  color: ${c.navColor};
 `;
 
 export const MonthlyList = styled.div`
@@ -197,18 +213,18 @@ export const MonthlyItem = styled.div<WithTheme>`
   min-height: 44px;
   padding: 0 ${theme.space.lg};
   background: ${c.surface};
-  border: 1px solid ${c.border};
+  border: 1px solid ${c.lineColor};
   border-radius: ${theme.radius.pill};
 
   span {
     font-size: 14px;
-    color: ${c.textMuted};
+    color: ${c.navColor};
   }
 
   strong {
     font-size: 14px;
     font-weight: 800;
-    color: ${c.primary};
+    color: ${c.subColor};
   }
 `;
 
@@ -218,7 +234,7 @@ export const Empty = styled.div<WithTheme>`
   align-items: center;
   justify-content: center;
   min-height: 120px;
-  color: ${c.textMuted};
+  color: ${c.navColor};
   font-size: 15px;
   font-weight: 600;
 `;

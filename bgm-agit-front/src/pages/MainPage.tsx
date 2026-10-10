@@ -30,7 +30,6 @@ import {
   SectionHead,
   TitleBox,
   MoreLink,
-  Steps,
   RoomList,
   RoomCard,
   ReservationFooter,
@@ -186,11 +185,6 @@ export default function MainPage() {
             <h2>실시간 예약하기</h2>
             <p>내가 원하는 날짜, 시간에 간편하게 예약하세요!</p>
           </TitleBox>
-          <Steps aria-label="예약 순서">
-            <li>1 날짜</li>
-            <li>2 방</li>
-            <li>3 시간</li>
-          </Steps>
         </SectionHead>
         {roomItems ? (
           <RoomList>

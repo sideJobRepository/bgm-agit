@@ -14,7 +14,7 @@ import { theme } from '../styles/theme.ts';
 const Alert = Swal.mixin({
   confirmButtonText: '확인',
   cancelButtonText: '닫기',
-  confirmButtonColor: theme.colors.primary,
+  confirmButtonColor: theme.colors.purpleColor,
   cancelButtonColor: theme.colors.danger,
   heightAuto: false,
   scrollbarPadding: false,
@@ -27,13 +27,13 @@ const Alert = Swal.mixin({
 const SUCCESS_MS = 3000;
 const MIN_MS = 2500;
 
-// 아이콘 색. 포인트 색(theme.colors.primary)을 바탕으로, 실패는 빨강
+// 아이콘 색. bgm 로고 보라(theme.colors.purpleColor)를 바탕으로, 실패는 빨강
 const ICON_COLORS: Record<SweetAlertIcon, string> = {
-  success: theme.colors.primary,
+  success: theme.colors.purpleColor,
   error: theme.colors.danger,
   warning: '#f59e0b',
-  info: theme.colors.primary,
-  question: theme.colors.primary,
+  info: '#6B4A94',
+  question: '#6B4A94',
 };
 
 interface ToastOptions {

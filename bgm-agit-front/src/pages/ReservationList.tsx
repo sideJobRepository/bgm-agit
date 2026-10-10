@@ -301,6 +301,7 @@ export default function ReservationList() {
                       <ActionButton
                         type="button"
                         $variant="primary"
+                        $tone="pay"
                         disabled={payingReservationId === item.reservationId}
                         onClick={() => openPayment(item)}
                       >
@@ -318,6 +319,7 @@ export default function ReservationList() {
                       <ActionButton
                         type="button"
                         $variant="primary"
+                        $tone="approve"
                         onClick={() => updateData(item, true, 'N', 'Y')}
                       >
                         <CheckCircle weight="bold" />
@@ -328,6 +330,7 @@ export default function ReservationList() {
                       <ActionButton
                         type="button"
                         $variant="danger"
+                        $tone="cancel"
                         onClick={() => updateData(item, isAdmin, 'Y', 'N')}
                       >
                         <XCircle weight="bold" />
@@ -338,6 +341,7 @@ export default function ReservationList() {
                       <ActionButton
                         type="button"
                         $variant="secondary"
+                        $tone="receipt"
                         onClick={() =>
                           window.open(item.receiptUrl as string, '_blank', 'noopener,noreferrer')
                         }
@@ -349,6 +353,7 @@ export default function ReservationList() {
                     <ActionButton
                       type="button"
                       $variant="secondary"
+                      $tone="share"
                       onClick={() => shareReservation(item)}
                     >
                       <Share weight="bold" />

@@ -94,6 +94,16 @@ export const ButtonBox = styled.div`
 
 export const Button = styled.button<WithTheme & { color: string; $variant?: ButtonVariant }>`
   ${({ color, $variant }) => buttonStyle($variant ?? variantFromColor(color))};
+  /* 색은 예전처럼 color 로 꽉 채운다(흰 글씨). 옅은 바탕(댓글달기·답글)만 진갈색 글씨 */
+  background: ${({ color }) => color};
+  border-color: ${({ color }) => color};
+  color: ${({ color }) => ((color ?? '').toUpperCase() === c.basicColor.toUpperCase() ? c.bronzeColor : c.white)};
+
+  &:hover:not(:disabled) {
+    background: ${({ color }) => color};
+    border-color: ${({ color }) => color};
+    opacity: 0.85;
+  }
 `;
 
 export const StyledRadioGroup = styled.div`
@@ -146,8 +156,9 @@ export const TitleBox = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
   width: 100%;
-  background: ${c.surface};
-  border: 1px solid ${c.border};
+  background: ${c.basicColor};
+  border: 1px solid ${c.basicColor};
+  border-top-color: ${c.bronzeColor};
   border-radius: ${theme.radius.lg} ${theme.radius.lg} 0 0;
   padding: ${theme.space.xl} ${theme.space.xl} ${theme.space.lg};
 
@@ -162,10 +173,11 @@ export const TitleBox = styled.div<WithTheme>`
     /* 공지사항 / 이벤트 구분 */
     h3 {
       ${badgeStyle('primary')};
+      color: ${c.bronzeColor};
     }
 
     span {
-      color: ${c.textMuted};
+      color: ${c.subColor};
       font-size: 14px;
     }
   }
@@ -173,7 +185,8 @@ export const TitleBox = styled.div<WithTheme>`
   h2 {
     order: 1;
     margin: 0;
-    color: ${c.textStrong};
+    color: ${c.subColor};
+    font-family: ${theme.fonts.display};
     font-size: 22px;
     font-weight: 800;
     letter-spacing: -0.02em;
@@ -203,8 +216,9 @@ export const ContentBox = styled.div<WithTheme>`
   padding: ${theme.space.xl};
   margin-bottom: ${theme.space.xl};
   background: ${c.surface};
-  color: ${c.textBody};
-  border: 1px solid ${c.border};
+  color: ${c.subColor};
+  border: 1px solid ${c.basicColor};
+  border-bottom-color: ${c.bronzeColor};
   border-top: none;
   border-radius: 0 0 ${theme.radius.lg} ${theme.radius.lg};
   box-shadow: ${theme.shadow.sm};
@@ -243,9 +257,9 @@ export const StyledFileUl = styled.ul<WithTheme>`
   gap: ${theme.space.sm};
   padding: ${theme.space.md} ${theme.space.xl};
   background: ${c.surface};
-  border: 1px solid ${c.border};
+  border: 1px solid ${c.basicColor};
   border-top: none;
-  color: ${c.textBody};
+  color: ${c.bronzeColor};
 
   li {
     display: flex;
@@ -261,17 +275,17 @@ export const StyledFileUl = styled.ul<WithTheme>`
       min-height: 36px;
       max-width: 100%;
       padding: 0 12px;
-      background-color: ${c.surfaceAlt};
-      border: 1px solid ${c.border};
+      background-color: ${c.basicColor};
+      border: 1px solid ${c.basicColor};
       border-radius: ${theme.radius.pill};
-      color: ${c.textBody};
+      color: ${c.bronzeColor};
       cursor: pointer;
       overflow-wrap: anywhere;
       ${focusRing};
 
       &:hover {
-        background-color: ${c.primarySoft};
-        color: ${c.primary};
+        background-color: ${c.subTextBoxColor};
+        color: ${c.bronzeColor};
       }
     }
 
@@ -302,9 +316,9 @@ const fileButton = css`
   height: 36px;
   margin-right: ${theme.space.md};
   padding: 0 14px;
-  background: ${c.surface};
-  color: ${c.textStrong};
-  border: 1px solid ${c.borderStrong};
+  background: ${c.noticeColor};
+  color: ${c.white};
+  border: 1px solid ${c.noticeColor};
   border-radius: ${theme.radius.md};
   font-family: inherit;
   font-size: 14px;

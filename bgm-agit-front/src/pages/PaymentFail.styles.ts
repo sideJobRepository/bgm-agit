@@ -45,10 +45,20 @@ export const ResultCard = styled.div`
     font-weight: 600;
   }
 
+  /* 예전 색: 남색 채움·흰 글씨 */
   button {
     ${buttonStyle('primary', 'md')}
     width: 100%;
     margin-top: ${theme.space.md};
+    background: ${c.blueColor};
+    border-color: ${c.blueColor};
+    color: ${c.white};
+
+    &:hover:not(:disabled) {
+      background: ${c.blueColor};
+      border-color: ${c.blueColor};
+      opacity: 0.9;
+    }
   }
 
   @media ${theme.device.mobile} {

@@ -18,10 +18,10 @@ export const SelectedChip = styled.span<WithTheme>`
   align-self: flex-start;
   min-height: 44px;
   padding: 0 6px 0 14px;
-  border: 1px solid ${c.primary};
+  border: 1px solid ${c.greenColor};
   border-radius: ${theme.radius.pill};
-  background: ${c.primarySoft};
-  color: ${c.primary};
+  background: ${c.greenColor};
+  color: ${c.white};
   font-size: 15px;
   font-weight: 700;
 
@@ -34,7 +34,7 @@ export const SelectedChip = styled.span<WithTheme>`
     cursor: pointer;
 
     &:hover {
-      background: ${c.surface};
+      background: rgba(255, 255, 255, 0.2);
     }
   }
 `;
@@ -44,7 +44,13 @@ export const SearchBox = styled.div`
 
   input {
     ${inputStyle}
+    border-color: #c4c4c4; /* 예전 값 */
     box-sizing: border-box;
+
+    &:focus {
+      border-color: ${c.greenColor};
+      box-shadow: none;
+    }
   }
 `;
 
@@ -57,10 +63,10 @@ export const Dropdown = styled.div<WithTheme>`
   max-height: 240px;
   overflow-y: auto;
   padding: ${theme.space.xs};
-  background: ${c.surface};
-  border: 1px solid ${c.border};
+  background: ${c.white};
+  border: 1px solid ${c.lineColor};
   border-radius: ${theme.radius.md};
-  box-shadow: ${theme.shadow.md};
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
 `;
 
 export const Option = styled.button<WithTheme>`
@@ -72,7 +78,7 @@ export const Option = styled.button<WithTheme>`
   padding: 10px 12px;
   border: none;
   border-radius: ${theme.radius.sm};
-  background: ${c.surface};
+  background: ${c.white};
   font-family: inherit;
   text-align: left;
   cursor: pointer;
@@ -80,17 +86,17 @@ export const Option = styled.button<WithTheme>`
   strong {
     font-size: 14px;
     font-weight: 700;
-    color: ${c.textStrong};
+    color: ${c.subColor};
   }
 
   span {
     font-size: 12px;
-    color: ${c.textMuted};
+    color: ${c.navColor};
   }
 
   &:hover,
   &:focus-visible {
-    background: ${c.primarySoft};
+    background: #f7f4ef; /* 예전 값 */
     outline: none;
   }
 `;
@@ -98,6 +104,6 @@ export const Option = styled.button<WithTheme>`
 export const Empty = styled.div<WithTheme>`
   padding: ${theme.space.md};
   font-size: 14px;
-  color: ${c.textMuted};
+  color: ${c.navColor};
   text-align: center;
 `;

@@ -28,8 +28,24 @@ export const ButtonRow = styled.div`
   }
 `;
 
-export const Button = styled.button<{ $variant?: ButtonVariant } & WithTheme>`
+// $fill 이 있으면 개편 전처럼 그 색으로 꽉 채운 버튼 + 흰 글씨(수정 남색·삭제 빨강·저장 초록·목록/취소 갈색)
+export const Button = styled.button<{ $variant?: ButtonVariant; $fill?: string } & WithTheme>`
   ${({ $variant }) => buttonStyle($variant ?? 'primary', 'md')};
+
+  ${({ $fill }) =>
+    $fill &&
+    `
+    background: ${$fill};
+    border-color: ${$fill};
+    color: ${c.white};
+
+    &:hover:not(:disabled) {
+      background: ${$fill};
+      border-color: ${$fill};
+      color: ${c.white};
+      opacity: 0.9;
+    }
+  `}
 `;
 
 // 상세: 포스터 + 정보 카드
@@ -83,7 +99,7 @@ export const NoImage = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: ${c.textSubtle};
+  color: ${c.navColor};
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -91,7 +107,7 @@ export const NoImage = styled.div<WithTheme>`
 
 export const DetailTitle = styled.h2<WithTheme>`
   margin: 0;
-  color: ${c.textStrong};
+  color: ${c.subColor};
   font-size: 26px;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -126,7 +142,7 @@ export const FormTitle = styled.h2<WithTheme>`
   margin: 0 0 ${theme.space.xl};
   padding-bottom: ${theme.space.lg};
   border-bottom: 2px solid ${c.primary};
-  color: ${c.textStrong};
+  color: ${c.subColor};
   font-size: 26px;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -154,7 +170,7 @@ export const Field = styled.div<WithTheme>`
   margin-bottom: ${theme.space.lg};
 
   > label {
-    color: ${c.textStrong};
+    color: ${c.subColor};
     font-size: 14px;
     font-weight: 700;
   }
@@ -162,6 +178,10 @@ export const Field = styled.div<WithTheme>`
   input[type='text'],
   input[type='number'] {
     ${inputStyle};
+
+    &:focus {
+      border-color: ${c.info};
+    }
   }
 `;
 
@@ -172,14 +192,23 @@ export const FileRow = styled.div`
   min-width: 0;
 `;
 
+// 개편 전: 남색 채운 버튼 + 흰 글씨
 export const FileButton = styled.label<WithTheme>`
   ${buttonStyle('secondary', 'md')};
   flex-shrink: 0;
+  background: ${c.info};
+  border-color: ${c.info};
+  color: ${c.white};
+
+  &:hover:not(:disabled) {
+    background: ${c.info};
+    opacity: 0.9;
+  }
 `;
 
 export const FileName = styled.span<WithTheme>`
   min-width: 0;
-  color: ${c.textMuted};
+  color: ${c.navColor};
   font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -204,7 +233,7 @@ export const CheckLine = styled.label<WithTheme>`
   gap: ${theme.space.sm};
   min-height: 44px;
   margin-top: ${theme.space.xs};
-  color: ${c.textBody};
+  color: ${c.navColor};
   font-size: 14px;
   cursor: pointer;
 

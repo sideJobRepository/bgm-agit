@@ -13,6 +13,8 @@ const c = theme.colors;
 export const StyledCalendar = styled(Calendar)<WithTheme>`
   && {
     ${cardStyle}
+    /* 예전 달력 테두리(옅은 회색) */
+    border-color: ${c.lineColor};
     max-width: 100%;
     padding: ${theme.space.lg};
     font-family: ${theme.fonts.body};
@@ -38,13 +40,13 @@ export const StyledCalendar = styled(Calendar)<WithTheme>`
       min-height: 44px;
       border-radius: ${theme.radius.md};
       background: transparent;
-      color: ${c.textStrong};
+      color: ${c.black};
       font-size: 16px;
       font-weight: 700;
 
       &:enabled:hover,
       &:enabled:focus {
-        background: ${c.surfaceAlt};
+        background: ${c.softColor};
       }
 
       &:focus-visible {
@@ -82,11 +84,11 @@ export const StyledCalendar = styled(Calendar)<WithTheme>`
       }
 
       &:first-child abbr {
-        color: ${c.danger};
+        color: ${c.redColor};
       }
 
       &:last-child abbr {
-        color: ${c.info};
+        color: ${c.blueColor};
       }
     }
 
@@ -98,7 +100,7 @@ export const StyledCalendar = styled(Calendar)<WithTheme>`
       min-height: 46px;
       padding: 2px 0;
       background: transparent;
-      color: ${c.textStrong};
+      color: ${c.black};
       font-size: 15px;
       font-weight: 500;
       -webkit-tap-highlight-color: transparent;
@@ -129,7 +131,7 @@ export const StyledCalendar = styled(Calendar)<WithTheme>`
 
     /* 기본 CSS 의 주말 빨강·오늘 노랑·활성 파랑 제거 */
     .react-calendar__month-view__days__day--weekend {
-      color: ${c.textStrong};
+      color: ${c.black};
     }
 
     .react-calendar__tile--now,
@@ -148,15 +150,15 @@ export const StyledCalendar = styled(Calendar)<WithTheme>`
     }
 
     .react-calendar__tile.sunday {
-      color: ${c.danger};
+      color: ${c.redColor};
     }
 
     .react-calendar__tile.saturday {
-      color: ${c.info};
+      color: ${c.blueColor};
     }
 
     .react-calendar__tile:enabled:hover abbr {
-      background: ${c.surfaceAlt};
+      background: ${c.softColor};
     }
 
     .react-calendar__tile:focus-visible {
@@ -168,14 +170,14 @@ export const StyledCalendar = styled(Calendar)<WithTheme>`
       }
     }
 
-    /* 선택한 날짜 — 요일 색보다 뒤에 둬야 일·토요일도 흰 글자가 된다 */
+    /* 선택한 날짜 — 요일 색보다 뒤에 둬야 일·토요일도 흰 글자가 된다. 예전처럼 남색 */
     .react-calendar__tile.selected,
     .react-calendar__tile.selected:enabled:hover {
-      color: ${c.onPrimary};
+      color: ${c.white};
 
       abbr {
-        background: ${c.primary};
-        color: ${c.onPrimary};
+        background: ${c.blueColor};
+        color: ${c.white};
         font-weight: 800;
       }
     }

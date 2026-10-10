@@ -114,13 +114,23 @@ export const FileButtonBox = styled.div<WithTheme>`
   flex-shrink: 0;
   justify-content: flex-end;
   padding-top: ${theme.space.sm};
-  border-top: 1px solid ${c.border};
+  border-top: 1px solid ${c.lineColor};
 `;
 
 // 아이콘만 든 버튼이 많아서 최소 폭을 높이와 같게 둔다
 export const Button = styled.button<WithTheme & { color: string; $variant?: ButtonVariant }>`
   ${({ color, $variant }) => buttonStyle($variant ?? variantFromColor(color))};
+  /* 색은 예전처럼 color 로 꽉 채운다(흰 글씨) */
+  background: ${({ color }) => color};
+  border-color: ${({ color }) => color};
+  color: ${c.white};
   min-width: 44px;
+
+  &:hover:not(:disabled) {
+    background: ${({ color }) => color};
+    border-color: ${({ color }) => color};
+    opacity: 0.8;
+  }
   padding: 0 12px;
 
   svg {
@@ -135,8 +145,8 @@ export const TitleBox = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
   width: 100%;
-  background: ${c.surface};
-  border: 1px solid ${c.border};
+  background: ${c.softColor};
+  border: 1px solid ${c.lineColor};
   border-radius: ${theme.radius.lg} ${theme.radius.lg} 0 0;
   padding: ${theme.space.xl} ${theme.space.xl} ${theme.space.lg};
 
@@ -154,12 +164,12 @@ export const TitleBox = styled.div<WithTheme>`
       align-items: center;
       flex-wrap: wrap;
       min-width: 0;
-      color: ${c.textMuted};
+      color: ${c.grayColor};
       font-size: 14px;
 
       strong {
         margin-left: ${theme.space.sm};
-        color: ${c.textBody};
+        color: ${c.grayColor};
         font-weight: 700;
       }
     }
@@ -172,14 +182,14 @@ export const TitleBox = styled.div<WithTheme>`
       min-height: 36px;
       padding: 0 12px;
       border-radius: ${theme.radius.pill};
-      color: ${c.primary};
+      color: ${c.grayColor};
       font-size: 14px;
       font-weight: 700;
       cursor: pointer;
       ${focusRing};
 
       &:hover {
-        background: ${c.primarySoft};
+        background: ${c.lineColor};
       }
 
       svg {
@@ -194,7 +204,7 @@ export const TitleBox = styled.div<WithTheme>`
     display: flex;
     align-items: center;
     margin: 0;
-    color: ${c.textStrong};
+    color: ${c.inputColor};
     font-size: 22px;
     font-weight: 800;
     letter-spacing: -0.02em;
@@ -229,8 +239,8 @@ export const ContentBox = styled.div<WithTheme>`
   padding: ${theme.space.xl};
   margin-bottom: ${theme.space.xl};
   background: ${c.surface};
-  color: ${c.textBody};
-  border: 1px solid ${c.border};
+  color: ${c.subColor};
+  border: 1px solid ${c.lineColor};
   border-top: none;
   border-radius: 0 0 ${theme.radius.lg} ${theme.radius.lg};
   box-shadow: ${theme.shadow.sm};
@@ -271,16 +281,16 @@ export const FileSvgBox = styled.div<{ $color: string }>`
   width: 20px;
   height: 20px;
   border-radius: ${theme.radius.pill};
-  background-color: ${({ $color }) => ($color.toUpperCase() === '#D9625E' ? c.danger : c.success)};
+  background-color: ${({ $color }) => $color};
 
   svg {
     width: 12px;
     height: 12px;
     cursor: pointer;
-    color: ${c.onPrimary};
+    color: ${c.white};
 
     &:hover {
-      opacity: 0.7;
+      opacity: 0.6;
     }
   }
 `;
@@ -294,9 +304,9 @@ export const StyledFileUl = styled.ul<WithTheme>`
   gap: ${theme.space.sm};
   padding: ${theme.space.md} ${theme.space.xl};
   background: ${c.surface};
-  border: 1px solid ${c.border};
+  border: 1px solid ${c.lineColor};
   border-top: none;
-  color: ${c.textBody};
+  color: ${c.inputColor};
 
   li {
     display: flex;
@@ -314,16 +324,15 @@ export const StyledFileUl = styled.ul<WithTheme>`
       min-height: 36px;
       max-width: 100%;
       padding: 0 12px;
-      background-color: ${c.surfaceAlt};
+      background-color: ${c.border};
       border: 1px solid ${c.border};
       border-radius: ${theme.radius.pill};
-      color: ${c.textBody};
+      color: ${c.inputColor};
       cursor: pointer;
       ${focusRing};
 
       &:hover {
-        background-color: ${c.primarySoft};
-        color: ${c.primary};
+        background-color: ${c.lineColor};
       }
     }
   }
@@ -407,12 +416,13 @@ export const ReplyBox = styled.div<WithTheme>`
     gap: ${theme.space.md};
     padding-bottom: ${theme.space.lg};
     border-bottom: 1px solid ${c.border};
+    font-family: ${theme.fonts.display};
 
     h4 {
       display: flex;
       align-items: center;
       gap: ${theme.space.sm};
-      color: ${c.textStrong};
+      color: ${c.inputColor};
       font-size: 17px;
       font-weight: 800;
       letter-spacing: -0.02em;
@@ -420,11 +430,11 @@ export const ReplyBox = styled.div<WithTheme>`
       svg {
         width: 18px;
         height: 18px;
-        color: ${c.primary};
+        color: ${c.inputColor};
       }
 
       span {
-        color: ${c.primary};
+        color: ${c.inputColor};
         font-size: 15px;
       }
     }
@@ -439,11 +449,12 @@ export const ReplyBox = styled.div<WithTheme>`
 
   .reply-top {
     font-size: 13px;
-    color: ${c.textMuted};
+    color: ${c.navColor};
     margin-bottom: ${theme.space.sm};
 
     strong {
-      color: ${c.textStrong};
+      font-family: ${theme.fonts.display};
+      color: ${c.text};
       font-size: 15px;
       font-weight: 700;
       margin-right: ${theme.space.sm};
@@ -451,7 +462,7 @@ export const ReplyBox = styled.div<WithTheme>`
   }
 
   .reply-center {
-    color: ${c.textBody};
+    color: ${c.subColor};
     font-size: 15px;
     line-height: 1.6;
     white-space: pre-wrap;
@@ -468,4 +479,11 @@ export const TextArea = styled.textarea<WithTheme>`
   min-height: 96px;
   resize: vertical;
   line-height: 1.6;
+  color: ${c.inputColor};
+  border-color: ${c.grayColor};
+
+  &:focus {
+    border-color: ${c.inputColor};
+    box-shadow: none;
+  }
 `;

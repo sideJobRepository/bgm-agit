@@ -1,4 +1,5 @@
 import { Wrapper } from '../styles';
+import { theme } from '../styles/theme.ts';
 import { Box, ButtonRow, Button, DetailHead, Thumb, NoImage, DetailTitle, DetailMeta, SectionTitle, ChipRow, ViewChip, Memo, FormTitle, NoticeBox, NoticeLine, Field } from './PlayRecordDetail.styles.ts';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -156,11 +157,11 @@ export default function PlayRecordDetail() {
           <ButtonRow>
             {detail?.canManage && (
               <>
-                <Button $variant="primary" onClick={() => setEditMode(true)}>수정</Button>
-                <Button $variant="danger" onClick={onDelete}>삭제</Button>
+                <Button $variant="primary" $fill={theme.colors.info} onClick={() => setEditMode(true)}>수정</Button>
+                <Button $variant="danger" $fill={theme.colors.danger} onClick={onDelete}>삭제</Button>
               </>
             )}
-            <Button $variant="secondary" onClick={() => navigate('/play-records')}>목록</Button>
+            <Button $variant="secondary" $fill={theme.colors.primary} onClick={() => navigate('/play-records')}>목록</Button>
           </ButtonRow>
 
           <DetailHead>
@@ -238,8 +239,8 @@ export default function PlayRecordDetail() {
         </Field>
 
         <ButtonRow>
-          <Button $variant="primary" onClick={onSubmit}>저장</Button>
-          <Button $variant="secondary" onClick={() => (id ? setEditMode(false) : navigate('/play-records'))}>취소</Button>
+          <Button $variant="primary" $fill={theme.colors.success} onClick={onSubmit}>저장</Button>
+          <Button $variant="secondary" $fill={theme.colors.primary} onClick={() => (id ? setEditMode(false) : navigate('/play-records'))}>취소</Button>
         </ButtonRow>
       </Box>
     </Wrapper>

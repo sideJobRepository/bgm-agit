@@ -5,9 +5,16 @@ import { badgeStyle } from '../../styles/mixins.ts';
 
 export type Tone = 'open' | 'soldout' | 'muted';
 
-// 남은 시간대 = 골드(accent) 배지, 마감·불가 사유 = 중립 배지
+// 예전 색: 옅은 회색 바탕에 남은 시간대 = 초록, 마감 = 빨강, 그 외 사유 = 회색 글씨
 export const StatusRow = styled.div<WithTheme & { $tone: Tone }>`
   ${({ $tone }) => ($tone === 'open' ? badgeStyle('accent') : badgeStyle('neutral'))}
+  background: ${theme.colors.softColor};
+  color: ${({ $tone }) =>
+    $tone === 'open'
+      ? theme.colors.greenColor
+      : $tone === 'soldout'
+        ? theme.colors.redColor
+        : theme.colors.navColor};
   align-self: flex-start;
   max-width: calc(100% - 32px);
   margin: 10px 16px 0;
@@ -32,6 +39,7 @@ export const StatusRow = styled.div<WithTheme & { $tone: Tone }>`
 
 export const Total = styled.span<WithTheme>`
   font-weight: 500;
+  color: ${theme.colors.navColor};
 
   @media ${theme.device.mobile} {
     display: none;

@@ -20,10 +20,10 @@ export const SearchGroup = styled.form<{ color: string } & WithTheme>`
   justify-content: space-between;
   gap: ${theme.space.sm};
   padding: 6px 6px 6px 14px;
-  border: 1px solid ${c.borderStrong};
+  border: 1px solid ${({ color }) => color};
   border-radius: ${theme.radius.md};
-  background-color: ${c.surface};
-  box-shadow: ${theme.shadow.sm};
+  background-color: ${c.white};
+  box-shadow: none;
   flex-wrap: nowrap;
   transition:
     border-color 0.15s ease,
@@ -67,7 +67,7 @@ const fieldInner = (color: string) => `
     border: none;
     outline: none;
     background: transparent;
-    color: ${c.textStrong};
+    color: ${c.subColor};
     font-family: inherit;
     font-size: 15px;
 
@@ -108,6 +108,8 @@ export const SearchButton = styled.button<{ color: string }>`
   flex-shrink: 0;
   background: ${({ color }) => color};
   border-color: ${({ color }) => color};
+  color: ${c.white};
+  box-shadow: 2px 4px 2px rgba(0, 0, 0, 0.2);
 
   &:hover:not(:disabled) {
     background: ${({ color }) => color};
@@ -140,13 +142,13 @@ export const DateRange = styled.div<WithTheme>`
   span {
     font-size: 14px;
     font-weight: 700;
-    color: ${c.textBody};
+    color: ${c.subColor};
   }
 `;
 
 export const DateCenter = styled.div`
   display: flex;
-  color: ${c.textMuted};
+  color: ${c.subColor};
 `;
 
 export const SortSelect = styled.div`

@@ -14,7 +14,7 @@ export const TitleBox = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.space.md};
-  color: ${({ theme }) => theme.colors.textBody};
+  color: ${({ theme }) => theme.colors.subColor};
   width: 100%;
   max-width: 760px;
 
@@ -32,7 +32,7 @@ export const TitleBox = styled.div<WithTheme>`
 
     h2 {
       margin-right: ${({ theme }) => theme.space.sm};
-      color: ${({ theme }) => theme.colors.textStrong};
+      color: ${({ theme }) => theme.colors.menuColor};
       font-size: ${({ theme }) => theme.sizes.bigLarge};
       font-weight: 800;
       letter-spacing: -0.02em;
@@ -40,12 +40,12 @@ export const TitleBox = styled.div<WithTheme>`
     }
 
     svg {
-      color: ${({ theme }) => theme.colors.primary};
+      color: ${({ theme }) => theme.colors.subColor};
       font-size: ${({ theme }) => theme.sizes.medium};
     }
 
     span {
-      color: ${({ theme }) => theme.colors.textMuted};
+      color: ${({ theme }) => theme.colors.subColor};
       font-size: ${({ theme }) => theme.sizes.medium};
       font-weight: ${({ theme }) => theme.weight.semiBold};
     }
@@ -57,8 +57,8 @@ export const TimeTitle = styled.div<WithTheme>`
   max-width: 760px;
   padding: ${({ theme }) => `${theme.space.md} ${theme.space.lg}`};
   border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.colors.surfaceAlt};
-  color: ${({ theme }) => theme.colors.textStrong};
+  background: ${({ theme }) => theme.colors.basicColor};
+  color: ${({ theme }) => theme.colors.menuColor};
   font-size: ${({ theme }) => theme.sizes.medium};
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -88,11 +88,12 @@ export const TimeSlotButton = styled.button<WithTheme & { selected: boolean }>`
   min-height: 44px;
   padding: 0 ${({ theme }) => theme.space.md};
   border-radius: ${({ theme }) => theme.radius.md};
+  /* 예전 색: 선택 = 남색 채움·흰 글씨, 나머지 = 흰 바탕·회색 글씨 */
   border: 1px solid
-    ${({ selected, theme }) => (selected ? theme.colors.primary : theme.colors.border)};
+    ${({ selected, theme }) => (selected ? theme.colors.blueColor : theme.colors.lineColor)};
   background-color: ${({ selected, theme }) =>
-    selected ? theme.colors.primary : theme.colors.surface};
-  color: ${({ selected, theme }) => (selected ? theme.colors.onPrimary : theme.colors.textStrong)};
+    selected ? theme.colors.blueColor : theme.colors.white};
+  color: ${({ selected, theme }) => (selected ? theme.colors.white : theme.colors.subColor)};
   font-family: inherit;
   font-size: ${({ theme }) => theme.sizes.small};
   font-weight: ${({ selected }) => (selected ? 700 : 500)};
@@ -105,17 +106,14 @@ export const TimeSlotButton = styled.button<WithTheme & { selected: boolean }>`
   ${focusRing}
 
   &:hover:not(:disabled) {
-    border-color: ${({ theme }) => theme.colors.primary};
     background-color: ${({ selected, theme }) =>
-      selected ? theme.colors.primaryHover : theme.colors.primarySoft};
+      selected ? theme.colors.blueColor : theme.colors.softColor};
   }
 
   &:disabled {
     cursor: not-allowed;
-    /* "없는 시간"과 "찬 시간"을 구분하도록 회색 바탕 + 취소선으로 표시한다 */
-    border-color: ${({ theme }) => theme.colors.surfaceAlt};
-    background-color: ${({ theme }) => theme.colors.surfaceAlt};
-    color: ${({ theme }) => theme.colors.textMuted};
+    /* "없는 시간"과 "찬 시간"을 구분하도록 흐리게 + 취소선으로 표시한다(예전 방식) */
+    opacity: 0.45;
     text-decoration: line-through;
   }
 `;
@@ -133,7 +131,7 @@ export const OptionTitle = styled.div<WithTheme>`
   margin-bottom: ${({ theme }) => theme.space.sm};
   font-size: ${({ theme }) => theme.sizes.small};
   font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.textStrong};
+  color: ${({ theme }) => theme.colors.subColor};
 `;
 
 // 세그먼트 형태의 알약 묶음
@@ -154,9 +152,10 @@ export const ToggleButton = styled.button<WithTheme & { $active: boolean }>`
   min-height: 44px;
   padding: 0 ${({ theme }) => theme.space.lg};
   border-radius: ${({ theme }) => theme.radius.pill};
-  border: 1px solid ${({ $active, theme }) => ($active ? theme.colors.primary : 'transparent')};
-  background-color: ${({ $active, theme }) => ($active ? theme.colors.primarySoft : 'transparent')};
-  color: ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.textMuted)};
+  /* 예전 색: 선택 = 남색 채움·흰 글씨 */
+  border: 1px solid ${({ $active, theme }) => ($active ? theme.colors.blueColor : 'transparent')};
+  background-color: ${({ $active, theme }) => ($active ? theme.colors.blueColor : 'transparent')};
+  color: ${({ $active, theme }) => ($active ? theme.colors.white : theme.colors.subColor)};
   font-family: inherit;
   font-size: ${({ theme }) => theme.sizes.small};
   font-weight: ${({ $active }) => ($active ? 700 : 600)};
@@ -168,15 +167,25 @@ export const ToggleButton = styled.button<WithTheme & { $active: boolean }>`
   ${focusRing}
 
   &:hover {
-    color: ${({ theme }) => theme.colors.primary};
+    opacity: 0.85;
   }
 `;
 
+// 예약하기 버튼. 예전처럼 남색 채움·흰 글씨
 export const Button = styled.button<WithTheme>`
   ${buttonStyle('primary', 'lg')}
   width: 100%;
   max-width: 760px;
   margin-top: ${({ theme }) => theme.space.sm};
+  background: ${({ theme }) => theme.colors.blueColor};
+  border-color: ${({ theme }) => theme.colors.blueColor};
+  color: ${({ theme }) => theme.colors.white};
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.colors.blueColor};
+    border-color: ${({ theme }) => theme.colors.blueColor};
+    opacity: 0.8;
+  }
 
   &:disabled {
     cursor: not-allowed;
@@ -193,11 +202,12 @@ export const MessageBox = styled.div<WithTheme>`
   gap: ${({ theme }) => theme.space.xs};
   padding: ${({ theme }) => `${theme.space.md} ${theme.space.lg}`};
   border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.colors.primarySoft};
+  background: ${({ theme }) => theme.colors.softColor};
   text-align: left;
 
+  /* 예전 안내 문구의 빨간 글씨 */
   p {
-    color: ${({ theme }) => theme.colors.textBody};
+    color: ${({ theme }) => theme.colors.redColor};
     font-size: ${({ theme }) => theme.sizes.small};
     line-height: 1.5;
   }

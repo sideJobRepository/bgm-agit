@@ -77,7 +77,7 @@ export const Summary = styled.div`
 
   span {
     flex: 0 0 auto;
-    color: ${c.primary};
+    color: ${c.text};
     font-size: 22px;
     font-weight: 800;
     letter-spacing: -0.02em;
@@ -89,17 +89,28 @@ export const NoticeBox = styled.div`
   margin-bottom: ${theme.space.lg};
   padding: ${theme.space.md} ${theme.space.lg};
   border-radius: ${theme.radius.md};
-  background: ${c.primarySoft};
-  color: ${c.textBody};
+  /* 예전 안내 상자: 아주 옅은 초록 바탕(#f2f7f5 근사) + 초록 글씨 */
+  background: ${c.greenColor}0F;
+  color: ${c.greenColor};
   font-size: 13px;
   font-weight: 600;
   line-height: 1.6;
 `;
 
+// 예전 결제 버튼: 초록 채움·흰 글씨
 export const PayButton = styled.button`
   ${buttonStyle('primary', 'lg')}
   width: 100%;
   margin-top: ${theme.space.sm};
+  background: ${c.greenColor};
+  border-color: ${c.greenColor};
+  color: ${c.white};
+
+  &:hover:not(:disabled) {
+    background: ${c.greenColor};
+    border-color: ${c.greenColor};
+    opacity: 0.9;
+  }
 
   &:disabled {
     cursor: not-allowed;

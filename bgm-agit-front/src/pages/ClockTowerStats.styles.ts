@@ -5,6 +5,10 @@ import { cardStyle, inputStyle, sectionTitleStyle, tableStyle } from '../styles/
 
 const c = theme.colors;
 
+// 시계탑 화면 고유의 보라·표 색(예전 화면 값 그대로)
+const CT_PURPLE = '#4A2C82';
+const CT_ROW_HOVER = '#f7f4ef';
+
 export const Box = styled.div`
   padding: ${theme.space.xl} 0 ${theme.space.xxl};
 
@@ -13,20 +17,21 @@ export const Box = styled.div`
   }
 `;
 
-// 예전엔 bgColor 색 띠였다. 흰 바탕 제목 영역이 되면서 bgColor 는 받기만 하고 쓰지 않는다
+// 예전 화면처럼 bgColor 색 띠 + 흰 글자
 export const Header = styled.div.withConfig({ shouldForwardProp: p => p !== 'bgColor' })<{ bgColor: string } & WithTheme>`
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: ${theme.space.xl};
-  padding-bottom: ${theme.space.xl};
-  border-bottom: 1px solid ${c.border};
+  padding: ${theme.space.xl};
+  background-color: ${({ bgColor }) => bgColor};
+  color: ${c.white};
 
   @media ${theme.device.mobile} {
     flex-direction: column;
     align-items: stretch;
     gap: ${theme.space.lg};
-    padding-bottom: ${theme.space.lg};
+    padding: ${theme.space.lg};
   }
 `;
 
@@ -34,7 +39,13 @@ export const TitleBox = styled.div<WithTheme>`
   ${sectionTitleStyle};
   min-width: 0;
 
+  h2,
+  p {
+    color: ${c.white};
+  }
+
   h2 {
+    font-family: ${({ theme }) => theme.fonts.displayEn};
     font-size: 30px;
   }
 
@@ -70,6 +81,7 @@ export const PickerRow = styled.div<WithTheme>`
 // 표는 카드 안에서 가로 스크롤
 export const TableScroll = styled.div`
   ${cardStyle};
+  border-color: ${c.lineColor};
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -85,13 +97,28 @@ export const Table = styled.table<WithTheme>`
     padding: 14px 12px;
   }
 
+  th {
+    background: ${c.basicColor};
+    color: ${c.subColor};
+    border-bottom-color: ${c.lineColor};
+  }
+
+  td {
+    color: ${c.subColor};
+    border-bottom-color: ${c.lineColor};
+  }
+
+  tbody tr:hover td {
+    background: ${CT_ROW_HOVER};
+  }
+
   td:nth-child(2) {
-    color: ${c.textStrong};
+    color: ${c.subColor};
     font-weight: 600;
   }
 
   strong {
-    color: ${c.textStrong};
+    color: ${c.subColor};
     font-weight: 800;
   }
 
@@ -130,13 +157,13 @@ export const Rank = styled.span<{ $top: boolean } & WithTheme>`
   height: 30px;
   border-radius: ${theme.radius.pill};
   font-weight: 800;
-  color: ${({ $top }) => ($top ? c.onPrimary : c.textMuted)};
-  background: ${({ $top }) => ($top ? c.primary : 'transparent')};
+  color: ${({ $top }) => ($top ? c.white : c.subColor)};
+  background: ${({ $top }) => ($top ? CT_PURPLE : 'transparent')};
 `;
 
 export const Empty = styled.div<WithTheme>`
   padding: 48px 0;
-  color: ${c.textMuted};
+  color: ${c.navColor};
   font-size: 15px;
   font-weight: 600;
   text-align: center;

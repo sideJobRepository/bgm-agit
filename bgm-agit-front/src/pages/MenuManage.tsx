@@ -278,7 +278,7 @@ export default function MenuManage() {
   return (
     <Wrapper>
       <Box>
-        <Header bgColor={theme.colors.primary}>
+        <Header bgColor={theme.colors.blueColor}>
           <h2>Menu</h2>
           <p>헤더 메뉴를 추가·수정·삭제합니다.</p>
         </Header>

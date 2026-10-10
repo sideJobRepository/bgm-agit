@@ -7,8 +7,8 @@ export const ModalBackdrop = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  /* textStrong(#16181D) 50% — 순검정보다 덜 무겁게 */
-  background: rgba(22, 24, 29, 0.5);
+  /* 예전 값: 검정 50% */
+  background: rgba(0, 0, 0, 0.5);
   z-index: 3;
   display: flex;
   /* 내용이 화면보다 길면 백드롭이 세로 스크롤되도록 (align-items:center 는 넘칠 때 위아래가 잘림) */
@@ -28,6 +28,7 @@ export const ModalBox = styled.div`
   background: ${theme.colors.surface};
   position: relative;
   border-radius: ${theme.radius.lg};
-  box-shadow: ${theme.shadow.lg};
+  /* 예전 값 */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   z-index: 4;
 `;

@@ -9,6 +9,7 @@ import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts'
 import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import { playersLabel } from './MurderGames.tsx';
+import { theme } from '../styles/theme.ts';
 import {
   Box,
   ButtonRow,
@@ -144,11 +145,11 @@ export default function MurderGameDetail() {
           <ButtonRow>
             {user?.roles.includes('ROLE_ADMIN') && (
               <>
-                <Button $variant="primary" onClick={() => setEditMode(true)}>수정</Button>
-                <Button $variant="danger" onClick={onDelete}>삭제</Button>
+                <Button $variant="primary" $fill={theme.colors.info} onClick={() => setEditMode(true)}>수정</Button>
+                <Button $variant="danger" $fill={theme.colors.danger} onClick={onDelete}>삭제</Button>
               </>
             )}
-            <Button $variant="secondary" onClick={() => navigate('/murder-games')}>목록</Button>
+            <Button $variant="secondary" $fill={theme.colors.primary} onClick={() => navigate('/murder-games')}>목록</Button>
           </ButtonRow>
 
           <DetailCard>
@@ -236,9 +237,10 @@ export default function MurderGameDetail() {
         </Field>
 
         <ButtonRow>
-          <Button $variant="primary" onClick={onSubmit}>저장</Button>
+          <Button $variant="primary" $fill={theme.colors.success} onClick={onSubmit}>저장</Button>
           <Button
             $variant="secondary"
+            $fill={theme.colors.primary}
             onClick={() => (id ? setEditMode(false) : navigate('/murder-games'))}
           >
             취소

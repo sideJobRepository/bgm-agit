@@ -122,7 +122,7 @@ export default function About() {
           </ContentBox>
         </Bottom>
       </TopSection>
-      <ContentSetion bgColor={theme.colors.primarySoft}>
+      <ContentSetion bgColor={theme.colors.greenColor}>
         <ContentImage>
           <section>
             <img
@@ -133,7 +133,11 @@ export default function About() {
             />
           </section>
         </ContentImage>
-        <TextBox>
+        <TextBox
+          headerColor={theme.colors.white}
+          bgColor={theme.colors.greenColor}
+          textColor={theme.colors.white}
+        >
           <h2>원하는 게임이 무엇이든지!</h2>
           <div>
             <p>
@@ -190,7 +194,7 @@ export default function About() {
           </div>
         </ReservationTextBox>
       </ReservationSetion>
-      <ContentSetion bgColor={theme.colors.surfaceAlt}>
+      <ContentSetion bgColor={theme.colors.basicColor}>
         <ContentImage>
           <section>
             <img
@@ -201,7 +205,11 @@ export default function About() {
             />
           </section>
         </ContentImage>
-        <TextBox>
+        <TextBox
+          headerColor={theme.colors.bronzeColor}
+          bgColor={theme.colors.basicColor}
+          textColor={theme.colors.bronzeColor}
+        >
           <h2>게임하면서 즐기는 먹거리!</h2>
           <div>
             <p>

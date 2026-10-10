@@ -43,7 +43,7 @@ export const TitleBox = styled.div.withConfig({
 
   h2 {
     margin: 0;
-    font-family: ${theme.fonts.display};
+    font-family: ${theme.fonts.displayEn};
     font-weight: 800;
     letter-spacing: -0.02em;
     font-size: ${theme.sizes.xxlarge};
@@ -134,10 +134,10 @@ export const ImageWrapper = styled.div.withConfig({
           display: flex;
           flex-direction: column;
           padding-bottom: 14px;
-          background: ${$selected ? c.primarySoft : c.surface};
-          border: 1px solid ${$selected ? c.primary : c.border};
+          background: ${$selected ? c.subTextBoxColor : c.surface};
+          border: 1px solid ${$selected ? c.noticeColor : c.subTextBoxColor};
           /* 테두리 2px 효과. border 굵기를 바꾸면 선택할 때 카드가 1px 씩 밀린다 */
-          box-shadow: ${$selected ? `0 0 0 1px ${c.primary}` : theme.shadow.sm};
+          box-shadow: ${$selected ? `0 0 0 1px ${c.noticeColor}` : theme.shadow.sm};
           border-radius: ${theme.radius.lg};
           cursor: pointer;
           transition:
@@ -146,13 +146,13 @@ export const ImageWrapper = styled.div.withConfig({
             box-shadow 0.15s ease;
 
           &:hover {
-            border-color: ${$selected ? c.primary : c.borderStrong};
+            border-color: ${c.noticeColor};
           }
 
           img {
             height: auto;
             aspect-ratio: 16 / 9;
-            border-bottom: 1px solid ${c.border};
+            border-bottom: 1px solid ${c.subTextBoxColor};
           }
 
           @media ${theme.device.mobile} {
@@ -180,15 +180,16 @@ export const DeleteBox = styled.div<WithTheme>`
   width: 44px;
   height: 44px;
   cursor: pointer;
-  color: ${c.primary};
-  background-color: ${c.surface};
-  border: 1px solid ${c.border};
+  /* 예전 관리자 이미지 수정 버튼: 남색 바탕·흰 아이콘 */
+  color: ${c.white};
+  background-color: ${c.blueColor};
+  border: 1px solid ${c.blueColor};
   border-radius: ${theme.radius.pill};
   box-shadow: ${theme.shadow.md};
   transform: translate(-50%, -50%);
 
   &:hover {
-    background-color: ${c.primarySoft};
+    opacity: 0.9;
   }
 
   svg {
@@ -208,12 +209,12 @@ export const TopLabel = styled.div<WithTheme>`
   align-items: center;
   gap: 2px 6px;
   margin: 14px 16px 0;
-  color: ${c.textMuted};
+  color: ${c.subColor};
 
   p {
     flex-basis: 100%;
     margin: 0;
-    color: ${c.textStrong};
+    color: ${c.bronzeColor};
     font-size: 17px;
     font-weight: 800;
     letter-spacing: -0.02em;
@@ -224,7 +225,7 @@ export const TopLabel = styled.div<WithTheme>`
     flex-shrink: 0;
     width: 13px;
     height: 13px;
-    color: ${c.textSubtle};
+    color: ${c.noticeColor};
   }
 
   span {
@@ -250,14 +251,15 @@ export const HiddenTag = styled.div<WithTheme>`
   top: 10px;
   right: 10px;
   ${badgeStyle('neutral')}
-  background: ${c.surface};
-  color: ${c.textStrong};
+  /* 예전 '숨김' 표시: 빨간 바탕·흰 글씨 */
+  background: ${c.redColor};
+  color: ${c.white};
   box-shadow: ${theme.shadow.md};
 `;
 
 export const CommentLabel = styled.div<WithTheme>`
   margin: 4px 16px 0;
-  color: ${c.textMuted};
+  color: ${c.subColor};
   font-size: 12px;
   line-height: 1.5;
 
@@ -275,7 +277,7 @@ export const FoodLabel = styled.div.withConfig({
   font-size: ${theme.sizes.large};
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: ${c.textStrong};
+  color: ${c.black};
 
   @media ${theme.device.mobile} {
     margin-top: 10px;
@@ -364,8 +366,8 @@ export const StickySummary = styled.div<WithTheme>`
   min-height: 56px;
   margin-top: ${theme.space.lg};
   padding: 10px 16px;
-  background: ${c.surface};
-  border: 1px solid ${c.border};
+  background: ${c.white};
+  border: 1px solid ${c.lineColor};
   border-radius: ${theme.radius.lg};
   box-shadow: ${theme.shadow.sm};
 
@@ -381,12 +383,12 @@ export const SummaryText = styled.span<WithTheme>`
   font-size: ${theme.sizes.medium};
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: ${c.textStrong};
+  color: ${c.menuColor};
 
   em {
     margin-left: 6px;
     font-style: normal;
-    color: ${c.primary};
+    color: ${c.blueColor};
   }
 
   @media ${theme.device.mobile} {
@@ -398,6 +400,13 @@ export const ChangeButton = styled.button<WithTheme>`
   -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
   ${buttonStyle('secondary', 'sm')}
+  background: ${c.white};
+  border-color: ${c.lineColor};
+  color: ${c.subColor};
+
+  &:hover:not(:disabled) {
+    background: ${c.softColor};
+  }
 
   @media ${theme.device.mobile} {
     height: 44px;

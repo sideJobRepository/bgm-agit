@@ -13,20 +13,21 @@ export const Box = styled.div`
   }
 `;
 
-// 예전엔 bgColor 색 띠였다. 지금은 흰 바탕 제목 영역이라 bgColor 는 받기만 하고 쓰지 않는다(포인트 색 하나로 통일)
+// 개편 전처럼 bgColor 색 띠 + 흰 글씨. 색 띠라 안쪽 여백(예전 값 20px/14px)을 같이 준다
 export const Header = styled.div.withConfig({ shouldForwardProp: p => p !== 'bgColor' })<{ bgColor: string } & WithTheme>`
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: ${theme.space.xl};
-  padding-bottom: ${theme.space.xl};
-  border-bottom: 2px solid ${c.primary};
+  padding: 20px;
+  background-color: ${({ bgColor }) => bgColor};
+  color: ${c.white};
 
   @media ${({ theme }) => theme.device.mobile} {
     flex-direction: column;
     align-items: stretch;
     gap: ${theme.space.lg};
-    padding-bottom: ${theme.space.lg};
+    padding: 14px;
   }
 `;
 
@@ -35,7 +36,13 @@ export const TitleBox = styled.div<WithTheme>`
   min-width: 0;
 
   h2 {
+    font-family: ${({ theme }) => theme.fonts.displayEn};
+    color: ${c.white};
     font-size: 30px;
+  }
+
+  p {
+    color: ${c.white};
   }
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -47,6 +54,16 @@ export const TitleBox = styled.div<WithTheme>`
 
 export const CreateButton = styled.button<WithTheme>`
   ${buttonStyle('primary', 'md')};
+  /* 개편 전: 색 띠 위 흰 버튼 + 남색 글씨 */
+  background: ${c.white};
+  border-color: ${c.white};
+  color: ${c.info};
+
+  &:hover:not(:disabled) {
+    background: ${c.white};
+    border-color: ${c.white};
+    opacity: 0.9;
+  }
 
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
@@ -67,6 +84,15 @@ export const SearchRow = styled.div<WithTheme>`
   button {
     ${buttonStyle('primary', 'md')};
     flex-shrink: 0;
+    /* 개편 전: 남색 채운 버튼 */
+    background: ${c.info};
+    border-color: ${c.info};
+
+    &:hover:not(:disabled) {
+      background: ${c.info};
+      border-color: ${c.info};
+      opacity: 0.9;
+    }
   }
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -132,7 +158,7 @@ export const NoImage = styled.div<WithTheme>`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: ${c.textSubtle};
+  color: ${c.navColor};
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -148,7 +174,7 @@ export const CardBody = styled.div`
 
 export const CardTitle = styled.div<WithTheme>`
   margin-bottom: ${theme.space.sm};
-  color: ${c.textStrong};
+  color: ${c.subColor};
   font-size: 17px;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -180,7 +206,7 @@ export const Empty = styled.div<WithTheme>`
   grid-column: 1 / -1;
   padding: 56px 0;
   text-align: center;
-  color: ${c.textMuted};
+  color: ${c.navColor};
   font-size: 15px;
   font-weight: 600;
 `;

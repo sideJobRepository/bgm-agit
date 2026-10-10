@@ -69,13 +69,31 @@ export const ButtonRow = styled.div`
   width: 100%;
   margin-top: ${theme.space.md};
 
+  /* 예전 색: 링크 = 갈색 채움, 버튼 = 남색 채움. 둘 다 흰 글씨 */
   a {
     ${buttonStyle('secondary', 'md')}
+    background: ${c.noticeColor};
+    border-color: ${c.noticeColor};
+    color: ${c.white};
     text-decoration: none;
+
+    &:hover:not(:disabled) {
+      background: ${c.noticeColor};
+      opacity: 0.9;
+    }
   }
 
   button {
     ${buttonStyle('primary', 'md')}
+    background: ${c.blueColor};
+    border-color: ${c.blueColor};
+    color: ${c.white};
+
+    &:hover:not(:disabled) {
+      background: ${c.blueColor};
+      border-color: ${c.blueColor};
+      opacity: 0.9;
+    }
   }
 
   a,

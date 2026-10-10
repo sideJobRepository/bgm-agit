@@ -78,6 +78,14 @@ export const IconButton = styled.button`
 
 export const ActionButton = styled.button<WithTheme>`
   ${buttonStyle('secondary', 'sm')};
+  /* 예전 색: 갈색 테두리·갈색 글씨 외곽선 버튼 */
+  background: transparent;
+  color: ${c.primary};
+  border-color: ${c.primary};
+
+  &:hover:not(:disabled) {
+    background: ${c.primarySoft};
+  }
 
   @media ${theme.device.mobile} {
     height: 44px;
@@ -92,15 +100,15 @@ export const DeleteButton = styled.button<WithTheme>`
   }
 `;
 
-// 알약형 탭. 활성 = 보라 채움
+// 알약형 탭. 활성 = 갈색 채움, 비활성 = 흰 바탕 갈색 글씨(예전 색)
 export const TabBar = styled.div`
   display: inline-flex;
   gap: 4px;
   margin-top: ${theme.space.xl};
   padding: 4px;
-  border: 1px solid ${c.border};
+  border: 1px solid ${c.primary};
   border-radius: ${theme.radius.pill};
-  background: ${c.surfaceAlt};
+  background: ${c.white};
 
   @media ${theme.device.mobile} {
     display: flex;
@@ -117,7 +125,7 @@ export const TabButton = styled.button.withConfig({
   border: none;
   border-radius: ${theme.radius.pill};
   background-color: ${({ $active }) => ($active ? c.primary : 'transparent')};
-  color: ${({ $active }) => ($active ? c.onPrimary : c.textMuted)};
+  color: ${({ $active }) => ($active ? c.onPrimary : c.primary)};
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;
@@ -127,7 +135,7 @@ export const TabButton = styled.button.withConfig({
     color 0.15s ease;
 
   &:hover {
-    color: ${({ $active }) => ($active ? c.onPrimary : c.textStrong)};
+    background-color: ${({ $active }) => ($active ? c.primary : c.primarySoft)};
   }
 
   ${focusRing};
@@ -154,7 +162,19 @@ export const TableWrapper = styled.div<WithTheme>`
 
 export const Table = styled.table<WithTheme>`
   ${tableStyle};
-  border-top: 1px solid ${c.border};
+  border-top: 1px solid ${c.lineColor};
+  color: ${c.subColor};
+
+  /* 예전 색: 머리줄 basicColor 바탕 + 본문색, 줄 구분선 lineColor */
+  th {
+    background: ${c.basicColor};
+    color: ${c.subColor};
+    border-bottom-color: ${c.lineColor};
+  }
+
+  td {
+    border-bottom-color: ${c.lineColor};
+  }
 
   /* 모바일: 컬럼이 많아 가로 스크롤(TableWrapper overflow-x) 되도록 최소 너비 보장 */
   @media ${theme.device.mobile} {
@@ -218,26 +238,26 @@ export const Td = styled.td<WithTheme>`
   }
 `;
 
-// 예전엔 bgColor 색 띠였다. 지금은 흰 바탕 제목 영역이라 bgColor 는 아래 구분선에만 쓴다
+// 예전 색: bgColor 로 채운 색 띠 + 흰 글씨. 채운 띠라 안쪽 여백을 둔다
 export const SearchWrapper = styled.div.withConfig({
   shouldForwardProp: prop => prop !== 'bgColor',
 })<{ bgColor: string } & WithTheme>`
   display: flex;
   width: 100%;
   gap: ${theme.space.xl};
-  padding: 0 0 ${theme.space.xl};
+  padding: ${theme.space.xl};
   align-items: flex-end;
-  border-bottom: 2px solid ${({ bgColor }) => bgColor};
+  background-color: ${({ bgColor }) => bgColor};
 
   @media ${theme.device.mobile} {
     flex-direction: column;
     align-items: stretch;
     gap: ${theme.space.lg};
-    padding-bottom: ${theme.space.lg};
+    padding: ${theme.space.lg};
   }
 `;
 
-// textColor 는 색 띠 위 흰 글씨용이었다. 흰 바탕이 됐으므로 글자색은 토큰으로 고정한다
+// textColor = 색 띠 위 글씨색(예전 색)
 export const TitleBox = styled.div.withConfig({
   shouldForwardProp: prop => prop !== 'textColor',
 })<{ textColor: string } & WithTheme>`
@@ -246,9 +266,16 @@ export const TitleBox = styled.div.withConfig({
   flex-direction: column;
   width: 60%;
   min-width: 0;
+  color: ${({ textColor }) => textColor};
 
   h2 {
+    font-family: ${({ theme }) => theme.fonts.displayEn};
     font-size: 30px;
+    color: ${({ textColor }) => textColor};
+  }
+
+  p {
+    color: ${({ textColor }) => textColor};
   }
 
   @media ${theme.device.mobile} {
@@ -283,6 +310,7 @@ export const NoSearchBox = styled.div<WithTheme>`
   min-height: 120px;
   margin-top: ${theme.space.lg};
   color: ${c.textMuted};
+  font-family: ${theme.fonts.display};
   font-size: 16px;
   font-weight: 600;
 

@@ -10,7 +10,8 @@ export const Wrapper = styled.div<WithTheme>`
   height: 100%;
   margin: 0 auto;
   flex-direction: column;
-  background-color: ${({ theme }) => theme.colors.surfaceSunken};
+  /* 예전 이용안내 바탕(옅은 올리브 회색). 맞는 토큰이 없어 예전 값을 그대로 쓴다 */
+  background-color: #f3f4ee;
   font-family: ${({ theme }) => theme.fonts.body};
 
   @media ${({ theme }) => theme.device.tablet} {
@@ -46,7 +47,7 @@ export const ContentBox = styled.div<WithTheme>`
     overflow-wrap: break-word;
     line-height: 1.4;
     letter-spacing: -0.02em;
-    color: ${({ theme }) => theme.colors.textStrong};
+    color: ${({ theme }) => theme.colors.text};
     @media ${({ theme }) => theme.device.mobile} {
       font-size: 28px;
     }
@@ -59,7 +60,7 @@ export const ContentBox = styled.div<WithTheme>`
     text-align: center;
     line-height: 1.4;
     letter-spacing: -0.02em;
-    color: ${({ theme }) => theme.colors.textStrong};
+    color: ${({ theme }) => theme.colors.inputColor};
   }
 
   h5 {
@@ -68,7 +69,7 @@ export const ContentBox = styled.div<WithTheme>`
     word-break: keep-all;
     overflow-wrap: break-word;
     line-height: 1.4;
-    color: ${({ theme }) => theme.colors.textMuted};
+    color: ${({ theme }) => theme.colors.grayColor};
     text-align: center;
     @media ${({ theme }) => theme.device.mobile} {
       font-size: 15px;
@@ -81,9 +82,11 @@ export const ContentBox = styled.div<WithTheme>`
   }
 `;
 
-// $bg 는 예전 화면에서 흰색/회색을 번갈아 넣던 값이다. 지금은 모든 블록을 같은 흰 카드로 그린다
+// $bg 는 예전 화면에서 흰색/회색을 번갈아 넣던 값이다. 예전처럼 블록마다 그 바탕을 쓴다
 export const SubContent = styled.div<WithTheme & { $bg: string }>`
   ${cardStyle}
+  background-color: ${({ $bg }) => $bg};
+  border-color: ${({ $bg }) => $bg};
   display: flex;
   padding: ${({ theme }) => theme.space.xl};
   margin: 0 ${({ theme }) => theme.space.xl};
@@ -93,7 +96,7 @@ export const SubContent = styled.div<WithTheme & { $bg: string }>`
     font-size: 16px;
     font-weight: 500;
     line-height: 1.7;
-    color: ${({ theme }) => theme.colors.textBody};
+    color: ${({ theme }) => theme.colors.inputColor};
 
     @media ${({ theme }) => theme.device.mobile} {
       font-size: 15px;
@@ -135,11 +138,11 @@ export const TextBox = styled.div<WithTheme & { $align: string; $bg: string }>`
   text-align: ${({ $align }) => $align};
   line-height: 1.7;
   font-weight: 500;
-  color: ${({ theme }) => theme.colors.textBody};
+  color: ${({ theme }) => theme.colors.inputColor};
   width: 50%;
-  background-color: ${({ theme }) => theme.colors.surfaceSunken};
+  background-color: ${({ $bg }) => $bg};
   border-radius: ${({ theme }) => theme.radius.md};
-  font-family: ${({ theme }) => theme.fonts.body};
+  font-family: ${({ theme }) => theme.fonts.display};
 
   @media ${({ theme }) => theme.device.mobile} {
     font-size: 15px;
@@ -152,7 +155,7 @@ export const TextBox = styled.div<WithTheme & { $align: string; $bg: string }>`
     line-height: 1.4;
     letter-spacing: -0.02em;
     text-align: ${({ $align }) => ($align === 'left' ? 'right' : 'left')};
-    color: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.blackColor};
     @media ${({ theme }) => theme.device.mobile} {
       font-size: 20px;
     }
