@@ -2,6 +2,8 @@ import styled from 'styled-components';
 import type { WithTheme } from '../../styles/styled-props.ts';
 import { theme } from '../../styles/theme.ts';
 
+const c = theme.colors;
+
 export const Wrapper = styled.div`
   width: 100%;
   height: 100%;
@@ -24,6 +26,10 @@ export const Slider = styled.div<{
 
   transform: ${({ $index, $itemCount }) =>
     `translateX(calc(-${$index} * (100% + 20px) / ${$itemCount}))`};
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;
 
 export const Slide = styled.div.withConfig({
@@ -36,39 +42,50 @@ export const Slide = styled.div.withConfig({
   aspect-ratio: ${({ ratio }) => (ratio ? '16 / 9' : '1 / 1')};
   box-sizing: border-box;
   position: relative;
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.medium};
+  color: ${c.onPrimary};
+  font-size: 14px;
 
+  /* 이미지 위 라벨 — 어두운 반투명 알약 */
   div {
     position: absolute;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(66, 69, 72, 0.6);
-    border-radius: 8px;
-    padding: 6px 12px 4px 12px;
-    top: 6px;
-    left: 6px;
+    background-color: ${c.textStrong}B3;
+    border-radius: ${theme.radius.pill};
+    padding: 6px 12px;
+    top: 10px;
+    left: 10px;
+    max-width: calc(100% - 20px);
+    line-height: 1.3;
+    pointer-events: none;
 
     p {
-      @media ${({ theme }) => theme.device.mobile} {
-        font-size: ${({ theme }) => theme.sizes.xsmall};
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      @media ${theme.device.mobile} {
+        font-size: 12px;
       }
     }
 
     svg {
+      flex-shrink: 0;
       margin: 0 4px 0 8px;
 
-      @media ${({ theme }) => theme.device.mobile} {
-        font-size: ${({ theme }) => theme.sizes.xsmall};
+      @media ${theme.device.mobile} {
+        font-size: 12px;
       }
     }
 
     span {
-      font-size: ${({ theme }) => theme.sizes.small};
+      font-size: 13px;
+      white-space: nowrap;
 
-      @media ${({ theme }) => theme.device.mobile} {
-        font-size: ${({ theme }) => theme.sizes.xxsmall};
+      @media ${theme.device.mobile} {
+        font-size: 11px;
       }
     }
   }
@@ -76,11 +93,17 @@ export const Slide = styled.div.withConfig({
   img {
     width: 100%;
     height: 100%;
-    background-color: ${({ theme }) => theme.colors.white};
+    background-color: ${c.surfaceAlt};
     object-fit: cover;
-    border-radius: ${({ radius }) => (radius ? '999px' : '12px')};
+    border-radius: ${({ radius }) => (radius ? theme.radius.pill : theme.radius.md)};
+    border: ${({ radius }) => (radius ? `1px solid ${c.border}` : 'none')};
     display: block;
     cursor: pointer;
+    transition: opacity 0.15s ease;
+
+    &:hover {
+      opacity: 0.92;
+    }
   }
 `;
 
@@ -89,12 +112,16 @@ export const NoSearchBox = styled.div<WithTheme>`
   align-items: center;
   justify-content: center;
   width: 100%;
-  font-size: ${({ theme }) => theme.sizes.menu};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  font-family: ${theme.fonts.display};
-  color: ${({ theme }) => theme.colors.menuColor};
+  min-height: 160px;
+  border: 1px dashed ${c.borderStrong};
+  border-radius: ${theme.radius.md};
+  background: ${c.surfaceSunken};
+  color: ${c.textMuted};
+  font-size: 16px;
+  font-weight: 600;
 
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
+  @media ${theme.device.mobile} {
+    min-height: 120px;
+    font-size: 14px;
   }
 `;

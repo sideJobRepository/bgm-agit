@@ -1,6 +1,24 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { theme } from '../styles/theme.ts';
+import { buttonStyle, focusRing, inputStyle, type ButtonVariant } from '../styles/mixins.ts';
+
+const c = theme.colors;
+
+// 예전엔 color 로 바탕색을 직접 받았다. tsx 가 넘기는 같은 값을 버튼 종류로 읽는다
+// (취소처럼 색이 겹치는 버튼은 tsx 에서 $variant 로 직접 지정)
+const variantFromColor = (color?: string): ButtonVariant => {
+  switch ((color ?? '').toUpperCase()) {
+    case '#1A7D55': // 저장
+      return 'primary';
+    case '#FF5E57': // 삭제
+      return 'danger';
+    case '#F2EDEA': // 댓글달기·답글
+      return 'ghost';
+    default: // 수정·목록·취소
+      return 'secondary';
+  }
+};
 
 export const EditorWrapper = styled.div`
   display: flex;
@@ -11,19 +29,11 @@ export const EditorWrapper = styled.div`
 `;
 
 export const InputBox = styled.input<WithTheme>`
-  height: 40px;
-  width: 100%;
-  margin-bottom: 10px;
-  padding: 0 8px;
-
-  border: 1px solid #c4c4c4; /* CKEditor 기본 테두리 색상 */
-  border-radius: 4px;
-  box-shadow: none;
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.noticeColor};
-  }
+  ${inputStyle};
+  flex-shrink: 0;
+  margin-bottom: ${theme.space.md};
+  font-size: 16px;
+  font-weight: 600;
 `;
 
 export const EditorBox = styled.section<WithTheme>`
@@ -47,94 +57,111 @@ export const EditorBox = styled.section<WithTheme>`
     overflow: auto;
   }
 
+  .ck.ck-toolbar {
+    border-color: ${c.borderStrong} !important;
+    border-radius: ${theme.radius.md} ${theme.radius.md} 0 0 !important;
+    background: ${c.surfaceAlt} !important;
+  }
+
+  .ck.ck-editor__editable:not(.ck-focused) {
+    border-color: ${c.borderStrong} !important;
+  }
+
+  .ck.ck-editor__main > .ck-editor__editable {
+    border-radius: 0 0 ${theme.radius.md} ${theme.radius.md} !important;
+    background: ${c.surface};
+  }
+
   .ck.ck-editor__editable.ck-focused:not(.ck-editor__nested-editable) {
-    border-color: ${({ theme }) => theme.colors.noticeColor} !important;
-    box-shadow: none !important;
+    border-color: ${c.primary} !important;
+    box-shadow: 0 0 0 3px ${c.primarySoft} !important;
   }
 `;
 
 export const ButtonBox = styled.div`
   flex-shrink: 0;
-  height: 30px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
-  margin-bottom: 10px;
+  gap: ${theme.space.sm};
+  margin-bottom: ${theme.space.lg};
 `;
 
-export const Button = styled.button<WithTheme & { color: string }>`
-  padding: 6px 16px;
-  background-color: ${({ color }) => color};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.medium};
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
-  }
+export const Button = styled.button<WithTheme & { color: string; $variant?: ButtonVariant }>`
+  ${({ color, $variant }) => buttonStyle($variant ?? variantFromColor(color))};
 `;
 
+// 글 카드의 윗부분: 작성자·날짜 줄 + 제목. 아래 파일 목록·본문과 이어져 한 장의 카드가 된다
 export const TitleBox = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
   width: 100%;
-  border-top: 1px solid ${({ theme }) => theme.colors.bronzeColor};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.basicColor};
+  background: ${c.surface};
+  border: 1px solid ${c.border};
+  border-radius: ${theme.radius.lg} ${theme.radius.lg} 0 0;
+  padding: ${theme.space.xl} ${theme.space.xl} ${theme.space.lg};
 
   div {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 14px 20px;
+    gap: ${theme.space.md};
     width: 100%;
-    background-color: ${({ theme }) => theme.colors.basicColor};
+    order: 2;
+    margin-top: ${theme.space.sm};
 
     h3 {
-      color: ${({ theme }) => theme.colors.bronzeColor};
-      font-size: ${({ theme }) => theme.sizes.menu};
-      font-weight: ${({ theme }) => theme.weight.bold};
-
-      @media ${({ theme }) => theme.device.mobile} {
-        font-size: ${({ theme }) => theme.sizes.large};
-      }
+      color: ${c.textBody};
+      font-size: 14px;
+      font-weight: 700;
     }
-    span {
-      margin-left: auto;
-      color: ${({ theme }) => theme.colors.subColor};
-      font-size: ${({ theme }) => theme.sizes.medium};
 
-      @media ${({ theme }) => theme.device.mobile} {
-        font-size: ${({ theme }) => theme.sizes.small};
-      }
+    span {
+      color: ${c.textMuted};
+      font-size: 14px;
     }
   }
 
   h2 {
-    display: flex;
-    height: 100%;
-    align-items: center;
-    padding: 20px 10px;
-    color: ${({ theme }) => theme.colors.subColor};
-    font-size: ${({ theme }) => theme.sizes.xlarge};
-    font-weight: ${({ theme }) => theme.weight.bold};
-    font-family: ${theme.fonts.display};
+    order: 1;
+    margin: 0;
+    color: ${c.textStrong};
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.4;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
 
-    @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.sizes.menu};
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.lg};
+
+    h2 {
+      font-size: 19px;
+    }
+
+    div h3,
+    div span {
+      font-size: 13px;
     }
   }
 `;
 
+// 글 카드의 본문 (ck-content 규칙은 전역에 있다)
 export const ContentBox = styled.div<WithTheme>`
   height: 100%;
   width: 100%;
   min-height: calc(100vh - 360px);
-  padding: 20px 10px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.bronzeColor};
-  margin-bottom: 20px;
+  padding: ${theme.space.xl};
+  margin-bottom: ${theme.space.xl};
+  background: ${c.surface};
+  color: ${c.textBody};
+  border: 1px solid ${c.border};
+  border-top: none;
+  border-radius: 0 0 ${theme.radius.lg} ${theme.radius.lg};
+  box-shadow: ${theme.shadow.sm};
+  overflow-wrap: anywhere;
 
   iframe {
     width: 100%;
@@ -145,10 +172,19 @@ export const ContentBox = styled.div<WithTheme>`
     display: block;
   }
 
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
   figure.media {
     margin: 20px 0;
     max-height: unset;
     overflow: visible;
+  }
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.lg};
   }
 `;
 
@@ -156,157 +192,224 @@ export const ReplyBox = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: 16px;
-  padding: 10px;
+  gap: ${theme.space.lg};
+  padding: ${theme.space.xl};
+  margin-bottom: ${theme.space.xl};
+  background: ${c.surfaceAlt};
+  border-radius: ${theme.radius.lg};
 
   .textarea-box {
     display: flex;
-    padding: 10px 0;
+    padding: ${theme.space.sm} 0;
     flex-direction: column;
-    gap: 4px;
+    gap: ${theme.space.sm};
     justify-content: right;
-    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
 
     .reply-button-box {
-      justify-content: right;
+      justify-content: flex-end;
     }
   }
 
   .reply-button-box {
     display: flex;
-    margin-top: 6px;
-    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: ${theme.space.sm};
+    gap: ${theme.space.xs};
 
     button {
-      font-family: ${theme.fonts.display};
-      font-size: ${({ theme }) => theme.sizes.xsmall};
-      padding: 4px 6px;
+      height: 34px;
+      padding: 0 12px;
+      font-size: 13px;
+
+      @media ${theme.device.mobile} {
+        height: 44px;
+        padding: 0 16px;
+      }
     }
   }
 
   .reply-header-box {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    padding-bottom: 16px;
-    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-    font-family: ${theme.fonts.display};
+    gap: ${theme.space.md};
+    padding-bottom: ${theme.space.lg};
+    border-bottom: 1px solid ${c.border};
 
     h3 {
       display: flex;
-      color: ${({ theme }) => theme.colors.bronzeColor};
-      gap: 6px;
       align-items: center;
+      gap: ${theme.space.sm};
+      color: ${c.textStrong};
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+
+      svg {
+        color: ${c.primary};
+      }
 
       span {
-        font-size: ${({ theme }) => theme.sizes.medium};
-        color: ${({ theme }) => theme.colors.bronzeColor};
+        color: ${c.primary};
+        font-size: 15px;
       }
-    }
-
-    button {
-      color: ${({ theme }) => theme.colors.bronzeColor};
-      font-family: ${theme.fonts.display};
     }
   }
 
   .reply-box {
     display: flex;
     flex-direction: column;
-    padding-bottom: 10px;
-    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+    padding-bottom: ${theme.space.lg};
+    border-bottom: 1px solid ${c.border};
   }
 
   .reply-children-box {
     display: flex;
-    gap: 6px;
-    margin-top: 8px;
+    gap: ${theme.space.sm};
+    margin-top: ${theme.space.md};
+    padding: ${theme.space.md};
+    background: ${c.surface};
+    border-radius: ${theme.radius.md};
+
+    > svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+      color: ${c.textSubtle};
+    }
+
+    > div {
+      flex: 1;
+      min-width: 0;
+    }
   }
 
   .reply-top {
-    font-size: ${({ theme }) => theme.sizes.xsmall};
-    color: ${({ theme }) => theme.colors.navColor};
-    margin-bottom: 12px;
+    font-size: 13px;
+    color: ${c.textMuted};
+    margin-bottom: ${theme.space.sm};
 
     strong {
-      font-family: ${theme.fonts.display};
-      color: ${({ theme }) => theme.colors.text};
-      font-size: ${({ theme }) => theme.sizes.medium};
-      margin-right: 8px;
+      color: ${c.textStrong};
+      font-size: 15px;
+      font-weight: 700;
+      margin-right: ${theme.space.sm};
     }
   }
-  .reply-center {
-    color: ${({ theme }) => theme.colors.subColor};
-    font-size: ${({ theme }) => theme.sizes.small};
 
-    button {
-      color: ${({ theme }) => theme.colors.bronzeColor};
-    }
+  .reply-center {
+    color: ${c.textBody};
+    font-size: 15px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.lg};
   }
 `;
 
 export const TextArea = styled.textarea<WithTheme>`
-  width: 100%;
-  padding: 8px;
-  resize: none;
-  font-size: ${({ theme }) => theme.sizes.small};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 6px;
-  margin-bottom: 20px;
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.noticeColor};
-  }
+  ${inputStyle};
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.6;
 `;
 
+// 첨부 파일: 글 카드 가운데 띠. 수정 화면(EditorWrapper 안)에서는 카드 없이 놓인다
 export const StyledFileUl = styled.ul<WithTheme>`
   display: flex;
-  flex-direction: column;
-  text-align: left;
+  flex-wrap: wrap;
   width: 100%;
-  color: ${({ theme }) => theme.colors.bronzeColor};
-  padding-top: 10px;
-  gap: 4px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.basicColor};
+  gap: ${theme.space.sm};
+  padding: ${theme.space.md} ${theme.space.xl};
+  background: ${c.surface};
+  border: 1px solid ${c.border};
+  border-top: none;
+  color: ${c.textBody};
 
   li {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: ${({ theme }) => theme.sizes.xsmall};
+    gap: ${theme.space.sm};
+    min-width: 0;
+    font-size: 13px;
 
     a {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 4px 8px;
-      background-color: ${({ theme }) => theme.colors.basicColor};
-      border-radius: 4px;
+      gap: ${theme.space.sm};
+      min-height: 36px;
+      max-width: 100%;
+      padding: 0 12px;
+      background-color: ${c.surfaceAlt};
+      border: 1px solid ${c.border};
+      border-radius: ${theme.radius.pill};
+      color: ${c.textBody};
       cursor: pointer;
+      overflow-wrap: anywhere;
+      ${focusRing};
 
       &:hover {
-        opacity: 0.7;
+        background-color: ${c.primarySoft};
+        color: ${c.primary};
       }
     }
 
-    svg {
+    > svg {
       cursor: pointer;
+      color: ${c.danger};
+    }
+  }
+
+  ${EditorWrapper} & {
+    flex-shrink: 0;
+    padding: 0;
+    margin-bottom: ${theme.space.sm};
+    background: transparent;
+    border: none;
+  }
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.md} ${theme.space.lg};
+
+    li a {
+      min-height: 44px;
     }
   }
 `;
 
+const fileButton = css`
+  height: 36px;
+  margin-right: ${theme.space.md};
+  padding: 0 14px;
+  background: ${c.surface};
+  color: ${c.textStrong};
+  border: 1px solid ${c.borderStrong};
+  border-radius: ${theme.radius.md};
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+`;
+
 export const StyledFileInput = styled.input<WithTheme>`
-  margin-bottom: 10px;
+  flex-shrink: 0;
+  margin-bottom: ${theme.space.md};
   width: 100%;
-  padding: 10px 0;
+  padding: ${theme.space.sm} 0;
   border: none;
+  color: ${c.textMuted};
+  font-size: 14px;
+
+  /* 두 선택자를 한 규칙에 묶으면 모르는 쪽 브라우저가 규칙 전체를 버린다 */
+  &::file-selector-button {
+    ${fileButton};
+  }
 
   &::-webkit-file-upload-button {
-    background: ${({ theme }) => theme.colors.noticeColor};
-    color: ${({ theme }) => theme.colors.white};
-    border: none;
-    padding: 6px 12px;
-    cursor: pointer;
-    font-size: ${({ theme }) => theme.sizes.small};
+    ${fileButton};
   }
+
+  ${focusRing};
 `;

@@ -1,162 +1,143 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { theme } from '../styles/theme.ts';
+import { buttonStyle, focusRing, inputStyle } from '../styles/mixins.ts';
+
+const c = theme.colors;
 
 export const LoginModalWrapper = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  width: 360px;
-  max-width: 92vw;
-  padding-bottom: 36px;
-  border-radius: 12px;
-  background-color: ${({ theme }) => theme.colors.topBg};
-  @media ${({ theme }) => theme.device.mobile} {
+  gap: ${theme.space.lg};
+  width: 400px;
+  max-width: 100%;
+  padding: ${theme.space.xl};
+  border-radius: ${theme.radius.lg};
+  background-color: ${c.surface};
+
+  @media ${theme.device.mobile} {
     width: 100%;
+    padding: 20px ${theme.space.lg} ${theme.space.xl};
   }
 `;
 
+// 닫기 아이콘 줄. 아이콘 자체를 44px 터치 영역으로 키우고 위·오른쪽 여백으로 끌어 올린다
 export const TopModalBox = styled.div<WithTheme>`
-  width: 100%;
   display: flex;
-  padding: 20px;
-  border-radius: 12px 12px 0 0;
+  justify-content: flex-end;
+  margin: -12px -12px -${theme.space.xl} 0;
 
   svg {
-    color: ${({ theme }) => theme.colors.menuColor};
-    margin-left: auto;
-    width: 22px;
-    height: 22px;
+    width: 44px;
+    height: 44px;
+    padding: 11px;
+    border-radius: ${theme.radius.md};
+    color: ${c.textMuted};
     cursor: pointer;
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: ${c.surfaceAlt};
+      color: ${c.textStrong};
+    }
   }
 `;
 
 export const CenterModalBox = styled.div<WithTheme>`
-  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 4px 0;
+  gap: ${theme.space.md};
+  margin-bottom: ${theme.space.sm};
 
   img {
-    border-radius: 999px;
     height: 48px;
+    border-radius: ${theme.radius.pill};
   }
 
   h2 {
-    font-family: ${theme.fonts.display};
-    font-size: ${({ theme }) => theme.sizes.bigLarge};
-    color: ${({ theme }) => theme.colors.purpleColor};
-    font-weight: 600;
+    margin: 0;
+    font-family: ${theme.fonts.body};
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: ${c.textStrong};
   }
 `;
 
 export const FormBox = styled.form<WithTheme>`
-  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 0 30px;
+  gap: 10px;
 `;
 
 export const Input = styled.input<WithTheme>`
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 10px;
-  background-color: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.inputColor};
-  font-size: ${({ theme }) => theme.sizes.small};
-
-  &::placeholder {
-    color: ${({ theme }) => theme.colors.navColor};
-  }
-
-  /* iOS Safari 자동 줌 방지 */
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: 16px;
-  }
+  ${inputStyle}
 `;
 
 export const SubmitButton = styled.button<WithTheme>`
+  ${buttonStyle('primary', 'lg')}
   width: 100%;
-  margin-top: 4px;
-  padding: 12px;
-  border: none;
-  border-radius: 80px;
-  background-color: ${({ theme }) => theme.colors.purpleColor};
-  color: ${({ theme }) => theme.colors.white};
-  font-family: ${theme.fonts.display};
-  font-size: ${({ theme }) => theme.sizes.medium};
-  font-weight: 600;
-  cursor: pointer;
+  margin-top: ${theme.space.sm};
 `;
 
 export const SwitchLine = styled.div<WithTheme>`
-  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
-  padding: 0 30px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.subColor};
+  gap: ${theme.space.xs};
+  font-size: 14px;
+  color: ${c.textMuted};
 
   button {
-    background: transparent;
+    min-height: 44px;
+    padding: 0 ${theme.space.sm};
     border: none;
-    color: ${({ theme }) => theme.colors.purpleColor};
-    font-size: ${({ theme }) => theme.sizes.small};
-    font-weight: 600;
-    cursor: pointer;
+    border-radius: ${theme.radius.sm};
+    background: transparent;
+    color: ${c.primary};
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
     text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    ${focusRing}
   }
 `;
 
 export const Divider = styled.div<WithTheme>`
-  width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 30px;
-  color: ${({ theme }) => theme.colors.navColor};
-  font-size: ${({ theme }) => theme.sizes.xsmall};
+  gap: ${theme.space.md};
+  color: ${c.textMuted};
+  font-size: 13px;
 
   &::before,
   &::after {
     content: '';
     flex: 1;
     height: 1px;
-    background-color: ${({ theme }) => theme.colors.lineColor};
+    background-color: ${c.border};
   }
 `;
 
+// 소셜 로그인 버튼. 브랜드 로고 이미지를 그대로 두고 버튼은 중립 테두리형으로 둔다
 export const BottomModalBox = styled.div<WithTheme>`
-  width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  padding: 0 30px;
+  gap: 10px;
 
   button {
-    display: flex;
-    align-items: center;
-    max-width: 310px;
+    ${buttonStyle('secondary', 'md')}
+    position: relative;
     width: 100%;
-    padding: 12px 60px;
-    gap: 16px;
-    background-color: transparent;
-    color: ${({ theme }) => theme.colors.menuColor};
-    border: 1px solid rgba(225, 225, 225, 1);
-    border-radius: 80px;
-    font-family: ${theme.fonts.display};
-    font-size: ${({ theme }) => theme.sizes.medium};
-    font-weight: 500;
-    cursor: pointer;
+    height: 48px;
+    font-weight: 600;
 
     img {
+      position: absolute;
+      left: ${theme.space.lg};
       width: 24px;
       height: 24px;
     }

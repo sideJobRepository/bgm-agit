@@ -434,6 +434,7 @@ export default function ImageGrid({ pageData }: Props) {
                     radius={labelGb === 4}
                     ratio={labelGb === 3}
                     $dimmed={soldOut || hidden}
+                    $selected={labelGb === 3 && item.imageId === reservationData?.id}
                     onClick={() => {
                       if (labelGb !== 3) {
                         handleImageClick(idx);
@@ -453,6 +454,8 @@ export default function ImageGrid({ pageData }: Props) {
                     {labelGb === 3 && getReservationComment(item.label) && (
                       <CommentLabel>{getReservationComment(item.label)}</CommentLabel>
                     )}
+                    {/* 카드 본문 마지막 줄. 사진 위 오버레이가 아니라 카드 안 텍스트 영역에 둔다 */}
+                    {labelGb === 3 && <RoomAvailabilityBadge status={roomStatus} />}
                     {user?.roles.includes('ROLE_ADMIN') && (
                       <DeleteBox
                         onClick={e => {
@@ -473,8 +476,6 @@ export default function ImageGrid({ pageData }: Props) {
                       </DeleteBox>
                     )}
                   </ImageWrapper>
-
-                  {labelGb === 3 && <RoomAvailabilityBadge status={roomStatus} />}
 
                   {item.labelGb === 3 && item.imageId === reservationData?.id && selectedDate && (
                     <TimeSection
@@ -550,11 +551,11 @@ export default function ImageGrid({ pageData }: Props) {
               </SelectBox>
             )}
             <ButtonBox2>
-              <Button color="#1A7D55" onClick={() => insertData()}>
+              <Button color={theme.colors.success} onClick={() => insertData()}>
                 저장
               </Button>
               {isEditMode && (
-                <Button onClick={deleteData} color="#FF5E57">
+                <Button onClick={deleteData} color={theme.colors.danger}>
                   삭제
                 </Button>
               )}

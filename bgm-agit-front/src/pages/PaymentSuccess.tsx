@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ResultBox, ButtonRow } from './PaymentSuccess.styles.ts';
+import { FaCheck } from 'react-icons/fa';
+import { ResultBox, ResultCard, IconCircle, ButtonRow } from './PaymentSuccess.styles.ts';
 import { toast } from '../utils/toast';
 import api from '../utils/axiosInstance.ts';
 
@@ -55,18 +56,23 @@ export default function PaymentSuccess() {
 
   return (
     <ResultBox>
-      <h2>결제 완료</h2>
-      <p>{message}</p>
-      <ButtonRow>
-        {receiptUrl && (
-          <a href={receiptUrl} target="_blank" rel="noopener noreferrer">
-            영수증 보기
-          </a>
-        )}
-        <button type="button" onClick={() => navigate('/reservationList')}>
-          예약내역으로 이동
-        </button>
-      </ButtonRow>
+      <ResultCard>
+        <IconCircle aria-hidden="true">
+          <FaCheck />
+        </IconCircle>
+        <h2>결제 완료</h2>
+        <p>{message}</p>
+        <ButtonRow>
+          {receiptUrl && (
+            <a href={receiptUrl} target="_blank" rel="noopener noreferrer">
+              영수증 보기
+            </a>
+          )}
+          <button type="button" onClick={() => navigate('/reservationList')}>
+            예약내역으로 이동
+          </button>
+        </ButtonRow>
+      </ResultCard>
     </ResultBox>
   );
 }

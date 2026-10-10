@@ -17,6 +17,7 @@ import { useFetchMainData } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { mainDataState } from '../recoil';
 import { useNavigate } from 'react-router-dom';
+import { theme } from '../styles/theme.ts';
 import {
   TopSection,
   Top,
@@ -121,7 +122,7 @@ export default function About() {
           </ContentBox>
         </Bottom>
       </TopSection>
-      <ContentSetion bgColor="#1A7D55" textColor="#D9D9D9">
+      <ContentSetion bgColor={theme.colors.primarySoft}>
         <ContentImage>
           <section>
             <img
@@ -132,7 +133,7 @@ export default function About() {
             />
           </section>
         </ContentImage>
-        <TextBox headerColor="#ffffff" bgColor="#1A7D55" textColor="#ffffff">
+        <TextBox>
           <h2>원하는 게임이 무엇이든지!</h2>
           <div>
             <p>
@@ -189,7 +190,7 @@ export default function About() {
           </div>
         </ReservationTextBox>
       </ReservationSetion>
-      <ContentSetion bgColor="#F2EDEA" textColor="#ffffff">
+      <ContentSetion bgColor={theme.colors.surfaceAlt}>
         <ContentImage>
           <section>
             <img
@@ -200,7 +201,7 @@ export default function About() {
             />
           </section>
         </ContentImage>
-        <TextBox headerColor="#5C3A21" bgColor="#F2EDEA" textColor="#5C3A21">
+        <TextBox>
           <h2>게임하면서 즐기는 먹거리!</h2>
           <div>
             <p>

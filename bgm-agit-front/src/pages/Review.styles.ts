@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
+import { theme } from '../styles/theme.ts';
 
 export const Wrapper = styled.div<WithTheme>`
   display: flex;
@@ -75,6 +76,7 @@ export const HeroContent = styled.div<WithTheme>`
   h1 {
     font-size: ${({ theme }) => theme.desktop.sizes.titleSize};
     font-weight: 800;
+    letter-spacing: -0.02em;
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.mobile.sizes.titleSize};
     }
@@ -83,7 +85,7 @@ export const HeroContent = styled.div<WithTheme>`
   span {
     font-size: ${({ theme }) => theme.desktop.sizes.xl};
     font-weight: 600;
-    opacity: 0.8;
+    opacity: 0.9;
 
     @media ${({ theme }) => theme.device.mobile} {
       font-size: ${({ theme }) => theme.mobile.sizes.xl};
@@ -94,6 +96,16 @@ export const HeroContent = styled.div<WithTheme>`
 export const TableBox = styled.div`
   width: 100%;
   overflow: hidden;
+
+  /* 목록 썸네일 */
+  td img {
+    display: block;
+    max-width: 100%;
+    margin: 0 auto;
+    border: 1px solid ${theme.colors.border};
+    border-radius: ${theme.radius.sm};
+    object-fit: cover;
+  }
 `;
 
 export const TitleCell = styled.div<WithTheme>`
@@ -122,7 +134,8 @@ export const TitleCell = styled.div<WithTheme>`
     flex-shrink: 0;
     align-items: center;
     gap: 4px;
-    font-size: ${({ theme }) => theme.desktop.sizes.xs};
-    color: ${({ theme }) => theme.colors.inputColor};
+    font-size: 13px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.colors.textMuted};
   }
 `;

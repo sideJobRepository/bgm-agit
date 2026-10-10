@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
-import { theme } from '../styles/theme.ts';
+import { cardStyle } from '../styles/mixins.ts';
 
 export const Wrapper = styled.div<WithTheme>`
   display: flex;
@@ -10,7 +10,8 @@ export const Wrapper = styled.div<WithTheme>`
   height: 100%;
   margin: 0 auto;
   flex-direction: column;
-  background-color: #f3f4ee;
+  background-color: ${({ theme }) => theme.colors.surfaceSunken};
+  font-family: ${({ theme }) => theme.fonts.body};
 
   @media ${({ theme }) => theme.device.tablet} {
     width: 100vw;
@@ -22,15 +23,20 @@ export const Wrapper = styled.div<WithTheme>`
 
 export const TopBox = styled.div`
   padding-bottom: 24px;
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
 `;
 
 export const ContentBox = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding: 24px 0 48px 0;
-  gap: 24px;
-  //background-color: white;
+  padding: ${({ theme }) => theme.space.xl} 0 48px 0;
+  gap: ${({ theme }) => theme.space.xl};
 
   h1 {
     font-size: ${({ theme }) => theme.desktop.sizes.h1Size};
@@ -39,9 +45,10 @@ export const ContentBox = styled.div<WithTheme>`
     text-align: center;
     overflow-wrap: break-word;
     line-height: 1.4;
-    letter-spacing: 4px;
+    letter-spacing: -0.02em;
+    color: ${({ theme }) => theme.colors.textStrong};
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.mobile.sizes.h1Size};
+      font-size: 28px;
     }
   }
 
@@ -50,9 +57,9 @@ export const ContentBox = styled.div<WithTheme>`
     word-break: keep-all;
     overflow-wrap: break-word;
     text-align: center;
-    line-height: 2;
-    letter-spacing: 1px;
-    color: ${({ theme }) => theme.colors.inputColor};
+    line-height: 1.4;
+    letter-spacing: -0.02em;
+    color: ${({ theme }) => theme.colors.textStrong};
   }
 
   h5 {
@@ -61,35 +68,43 @@ export const ContentBox = styled.div<WithTheme>`
     word-break: keep-all;
     overflow-wrap: break-word;
     line-height: 1.4;
-    color: ${({ theme }) => theme.colors.grayColor};
+    color: ${({ theme }) => theme.colors.textMuted};
     text-align: center;
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.mobile.sizes.h5Size};
+      font-size: 15px;
     }
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    padding: ${({ theme }) => theme.space.lg} 0 ${({ theme }) => theme.space.xxl};
+    gap: ${({ theme }) => theme.space.lg};
   }
 `;
 
+// $bg 는 예전 화면에서 흰색/회색을 번갈아 넣던 값이다. 지금은 모든 블록을 같은 흰 카드로 그린다
 export const SubContent = styled.div<WithTheme & { $bg: string }>`
+  ${cardStyle}
   display: flex;
-  border-radius: 4px;
-  padding: 24px;
-  background-color: ${({ $bg }) => $bg};
-  margin: 0 24px;
-  gap: 24px;
+  padding: ${({ theme }) => theme.space.xl};
+  margin: 0 ${({ theme }) => theme.space.xl};
+  gap: ${({ theme }) => theme.space.xl};
+
   span {
-    font-size: ${({ theme }) => theme.desktop.sizes.xl};
-    font-weight: 600;
-    opacity: 0.8;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.7;
+    color: ${({ theme }) => theme.colors.textBody};
 
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.mobile.sizes.xl};
+      font-size: 15px;
     }
   }
 
   @media ${({ theme }) => theme.device.mobile} {
     flex-direction: column;
-    padding: 12px;
-    margin: 0 8px;
+    padding: ${({ theme }) => theme.space.md};
+    margin: 0 ${({ theme }) => theme.space.lg};
+    gap: ${({ theme }) => theme.space.md};
   }
 `;
 
@@ -100,7 +115,7 @@ export const ImageBox = styled.div<WithTheme>`
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 4px;
+    border-radius: ${({ theme }) => theme.radius.md};
   }
 
   @media ${({ theme }) => theme.device.mobile} {
@@ -112,34 +127,34 @@ export const TextBox = styled.div<WithTheme & { $align: string; $bg: string }>`
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 24px;
-  gap: 4px;
-  font-size: ${({ theme }) => theme.desktop.sizes.h4Size};
+  padding: ${({ theme }) => theme.space.xxl};
+  gap: ${({ theme }) => theme.space.xs};
+  font-size: 16px;
   word-break: keep-all;
   overflow-wrap: break-word;
   text-align: ${({ $align }) => $align};
-  line-height: 2;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.inputColor};
+  line-height: 1.7;
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.textBody};
   width: 50%;
-  background-color: ${({ $bg }) => $bg};
-  border-radius: 4px;
-  font-family: ${theme.fonts.display};
+  background-color: ${({ theme }) => theme.colors.surfaceSunken};
+  border-radius: ${({ theme }) => theme.radius.md};
+  font-family: ${({ theme }) => theme.fonts.body};
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.mobile.sizes.h4Size};
+    font-size: 15px;
     width: 100%;
-    padding: 24px 12px;
+    padding: ${({ theme }) => theme.space.xl} ${({ theme }) => theme.space.lg};
   }
 
   strong {
     font-size: ${({ theme }) => theme.desktop.sizes.h3Size};
     line-height: 1.4;
-    letter-spacing: 2px;
+    letter-spacing: -0.02em;
     text-align: ${({ $align }) => ($align === 'left' ? 'right' : 'left')};
-    color: ${({ theme }) => theme.colors.blackColor};
+    color: ${({ theme }) => theme.colors.primary};
     @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.mobile.sizes.h3Size};
+      font-size: 20px;
     }
   }
 `;

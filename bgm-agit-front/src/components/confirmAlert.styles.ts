@@ -1,84 +1,95 @@
 import styled from 'styled-components';
+import { theme } from '../styles/theme.ts';
+import { badgeStyle, buttonStyle, inputStyle } from '../styles/mixins.ts';
 
-// 스타일 컴포넌트 정의
+const c = theme.colors;
+
+// react-confirm-alert customUI 의 흰 창. 바깥 오버레이는 라이브러리 CSS(.react-confirm-alert-overlay)가 그린다
 export const AlertWrapper = styled.div<{ $wide?: boolean }>`
-  background: #fff;
-  padding: ${({ $wide }) => ($wide ? '24px' : '18px 50px')};
-  border-radius: 8px;
-  width: 100%;
-  max-width: ${({ $wide }) => ($wide ? '420px' : '360px')};
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+  width: calc(100vw - 32px);
+  max-width: ${({ $wide }) => ($wide ? '440px' : '380px')};
+  /* 내용이 긴 예약 확인창이 작은 화면에서 잘리지 않게 창 안에서 스크롤 */
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: ${theme.space.xl};
+  border-radius: ${theme.radius.lg};
+  background: ${c.surface};
+  box-shadow: ${theme.shadow.lg};
   text-align: center;
   animation: fadeIn 0.25s ease;
   box-sizing: border-box;
+
+  @media ${theme.device.mobile} {
+    padding: 20px;
+  }
 `;
 
 export const Message = styled.div`
   font-size: 16px;
   font-weight: 600;
-  line-height: 1.5;
-  color: #757575;
+  line-height: 1.55;
+  color: ${c.textStrong};
   white-space: pre-line;
 `;
 
 export const FieldLabel = styled.div`
-  margin-top: 14px;
+  margin-top: ${theme.space.lg};
   font-size: 13px;
-  font-weight: 600;
-  color: #9e9e9e;
+  font-weight: 700;
+  color: ${c.textBody};
   text-align: left;
 `;
 
 export const ButtonGroup = styled.div`
   display: flex;
   justify-content: space-between;
-  margin-top: 24px;
-  gap: 12px;
-  font-weight: 600;
+  gap: 10px;
+  margin-top: ${theme.space.xl};
 `;
 
 export const ReservationHeader = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: flex-start;
+  gap: ${theme.space.sm};
+  margin-bottom: ${theme.space.lg};
   text-align: left;
-  margin-bottom: 18px;
 
   span {
-    font-size: 13px;
-    font-weight: 700;
-    color: #1a7d55;
+    ${badgeStyle('accent')}
   }
 
   strong {
     font-size: 20px;
+    font-weight: 800;
     line-height: 1.3;
-    color: #333;
+    letter-spacing: -0.02em;
+    color: ${c.textStrong};
   }
 `;
 
 export const FieldGroup = styled.div`
-  padding: 14px 0;
-  border-top: 1px solid #eeeeee;
+  padding: ${theme.space.lg} 0;
+  border-top: 1px solid ${c.border};
 `;
 
 export const FieldTitle = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: ${theme.space.md};
   margin-bottom: 10px;
   text-align: left;
 
   span {
     font-size: 14px;
     font-weight: 700;
-    color: #333;
+    color: ${c.textStrong};
   }
 
   small {
     font-size: 12px;
-    color: #999;
+    color: ${c.textMuted};
   }
 `;
 
@@ -90,16 +101,9 @@ export const Stepper = styled.div`
 `;
 
 export const IconButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  ${buttonStyle('secondary', 'md')}
   width: 44px;
-  height: 44px;
-  border: 1px solid #d7d7d7;
-  border-radius: 8px;
-  background: #fff;
-  color: #333;
-  cursor: pointer;
+  padding: 0;
 
   svg {
     font-size: 22px;
@@ -113,15 +117,16 @@ export const IconButton = styled.button`
 
 export const CountValue = styled.div`
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
   min-height: 44px;
-  border-radius: 8px;
-  background: #f7f8f8;
-  color: #333;
+  border-radius: ${theme.radius.md};
+  background: ${c.surfaceAlt};
+  color: ${c.textStrong};
 
   strong {
-    font-size: 24px;
+    font-size: 22px;
+    font-weight: 800;
     line-height: 1;
   }
 
@@ -136,102 +141,63 @@ export const SummaryList = styled.ul`
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 12px;
-  border-radius: 8px;
-  background: #f7f8f8;
+  padding: ${theme.space.md} 14px;
+  border-radius: ${theme.radius.md};
+  background: ${c.surfaceSunken};
   text-align: left;
   list-style: none;
 
   li {
     font-size: 14px;
     font-weight: 600;
-    color: #333;
+    color: ${c.textBody};
   }
 `;
 
 export const ReasonTextarea = styled.textarea`
-  width: 100%;
+  ${inputStyle}
   min-height: 92px;
-  padding: 12px;
-  border: 1px solid #d7d7d7;
-  border-radius: 8px;
-  font-size: 14px;
   line-height: 1.5;
   resize: vertical;
-  outline: none;
-  color: #333;
   box-sizing: border-box;
-
-  &:focus {
-    border-color: #1a7d55;
-    box-shadow: 0 0 0 3px rgba(26, 125, 85, 0.1);
-  }
-
-  &::placeholder {
-    color: #aaa;
-  }
 `;
 
 export const HelperText = styled.div`
   margin-top: 6px;
   text-align: right;
   font-size: 12px;
-  color: #aaa;
+  color: ${c.textMuted};
 `;
 
 export const NoticeMessage = styled.div`
-  padding: 12px;
-  border-radius: 8px;
-  background: #f2f7f5;
-  color: #1a7d55;
+  padding: ${theme.space.md} 14px;
+  border-radius: ${theme.radius.md};
+  background: ${c.primarySoft};
+  color: ${c.primary};
   font-size: 13px;
-  font-weight: 700;
-  line-height: 1.5;
+  font-weight: 600;
+  line-height: 1.55;
   text-align: left;
 `;
 
 export const BaseButton = styled.button`
+  ${buttonStyle('primary', 'md')}
   flex: 1;
-  padding: 10px 16px;
-  font-size: 14px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background 0.2s ease;
 `;
 
-export const CancelButton = styled(BaseButton)`
-  background-color: #ff5e57;
-  color: #ffffff;
-
-  &:hover {
-    opacity: 0.8;
-  }
+// 취소(닫기) — 보조 버튼
+export const CancelButton = styled.button`
+  ${buttonStyle('secondary', 'md')}
+  flex: 1;
 `;
 
-export const ConfirmButton = styled(BaseButton)`
-  background-color: #1a7d55;
-  color: #ffffff;
-
-  &:hover {
-    opacity: 0.8;
-  }
+export const ConfirmButton = styled.button`
+  ${buttonStyle('primary', 'md')}
+  flex: 1;
 `;
 
 export const ReasonInput = styled.input`
-  width: 100%;
-  margin-top: 12px;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 16px;
-  text-align: center;
-  outline: none;
-  color: #757575;
+  ${inputStyle}
+  margin-top: 10px;
   box-sizing: border-box;
-
-  &:focus {
-    border-color: #1a7d55;
-  }
 `;

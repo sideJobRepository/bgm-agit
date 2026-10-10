@@ -43,7 +43,7 @@ export default function Notice({ mainGb }: NoticeProps) {
         <Wrapper>
           <NoticeBox>
             <SearchWrapper bgColor={theme.colors.primary}>
-              <TitleBox textColor="#ffffff">
+              <TitleBox textColor={theme.colors.textStrong}>
                 <h2>News & Updates</h2>
                 <p>공지사항 및 이벤트를 빠르게 확인해보세요.</p>
               </TitleBox>

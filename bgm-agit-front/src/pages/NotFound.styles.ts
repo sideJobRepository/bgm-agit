@@ -1,92 +1,75 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
+import { badgeStyle, buttonStyle, cardStyle } from '../styles/mixins.ts';
 
-export const Wrapper = styled.section`
+export const Wrapper = styled.section<WithTheme>`
   flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 60vh;
-  padding: 40px 0;
+  padding: 48px ${({ theme }) => theme.space.lg};
+  background-color: ${({ theme }) => theme.colors.surfaceSunken};
 `;
 
 export const Box = styled.div<WithTheme>`
+  ${cardStyle}
   width: 100%;
   max-width: 440px;
-  padding: 40px 32px 32px;
-  border-radius: 16px;
-  background-color: ${({ theme }) => theme.colors.topBg};
-  border: 1px solid ${({ theme }) => theme.colors.subTextBoxColor};
+  padding: 40px ${({ theme }) => theme.space.xxl} ${({ theme }) => theme.space.xxl};
+  box-shadow: ${({ theme }) => theme.shadow.md};
   text-align: center;
 
   @media ${({ theme }) => theme.device.mobile} {
-    padding: 32px 20px 20px;
+    padding: ${({ theme }) => theme.space.xxl} 20px 20px;
   }
 `;
 
+// 페이지당 하나뿐인 골드 포인트
 export const Code = styled.div<WithTheme>`
-  font-size: 72px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 2px;
-  color: ${({ theme }) => theme.colors.bottomBg};
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: 56px;
-  }
+  ${badgeStyle('accent')}
+  padding: 4px 12px;
+  font-size: 14px;
+  letter-spacing: 0.04em;
 `;
 
 export const Title = styled.h1<WithTheme>`
-  margin-top: 16px;
-  font-size: ${({ theme }) => theme.sizes.xlarge};
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.activeMenuColor};
+  margin: ${({ theme }) => theme.space.lg} 0 0;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  color: ${({ theme }) => theme.colors.textStrong};
+  word-break: keep-all;
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.menu};
+    font-size: 20px;
   }
 `;
 
 export const Message = styled.p<WithTheme>`
-  margin-top: 12px;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  line-height: 1.6;
-  color: ${({ theme }) => theme.colors.subColor};
+  margin: ${({ theme }) => theme.space.md} 0 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: ${({ theme }) => theme.colors.textMuted};
   word-break: keep-all;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
-  }
 `;
 
-export const Buttons = styled.div`
+export const Buttons = styled.div<WithTheme>`
   display: flex;
-  gap: 8px;
+  gap: ${({ theme }) => theme.space.sm};
   margin-top: 28px;
 `;
 
 export const BaseButton = styled.button<WithTheme>`
   flex: 1;
-  min-height: 44px;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  font-weight: 700;
-  cursor: pointer;
-
-  &:hover {
-    opacity: 0.85;
-  }
+  min-width: 0;
 `;
 
 export const SubButton = styled(BaseButton)`
-  border: 1px solid ${({ theme }) => theme.colors.bottomBg};
-  background-color: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.activeMenuColor};
+  ${buttonStyle('secondary', 'md')}
 `;
 
 export const MainButton = styled(BaseButton)`
-  border: none;
-  background-color: ${({ theme }) => theme.colors.greenColor};
-  color: ${({ theme }) => theme.colors.white};
+  ${buttonStyle('primary', 'md')}
 `;

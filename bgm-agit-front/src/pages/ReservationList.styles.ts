@@ -1,14 +1,41 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { theme } from '../styles/theme.ts';
+import {
+  badgeStyle,
+  buttonStyle,
+  cardStyle,
+  focusRing,
+  type ButtonVariant,
+} from '../styles/mixins.ts';
+
+const c = theme.colors;
 
 export type StatusTone = 'waiting' | 'approved' | 'canceled';
 
-// 상태는 진한 단색으로 칠해 헤더바 위 배지와 카드 테두리에 같이 쓴다
+// 상태 대표색. 배지가 이 색 계열로 칠해진다
 export const STATUS_COLORS: Record<StatusTone, string> = {
-  waiting: '#E08700',
-  approved: '#1A7D55',
-  canceled: '#6B6B6B',
+  waiting: c.accentText,
+  approved: c.primary,
+  canceled: c.textMuted,
+};
+
+// 대기 = 옅은 골드, 확정 = 진한 보라(흰 글씨), 취소 = 회색 + 취소선.
+// 색상만이 아니라 명도·채움으로도 구분되게 한다
+const STATUS_BADGE: Record<StatusTone, ReturnType<typeof css>> = {
+  waiting: css`
+    ${badgeStyle('accent')}
+    box-shadow: inset 0 0 0 1px ${c.accent};
+  `,
+  approved: css`
+    ${badgeStyle('primary')}
+    background: ${c.primary};
+    color: ${c.onPrimary};
+  `,
+  canceled: css`
+    ${badgeStyle('neutral')}
+    text-decoration: line-through;
+  `,
 };
 
 export const NoticeBox = styled.div`
@@ -28,31 +55,30 @@ export const ListBox = styled.div<WithTheme>`
 // 전 구간 2열. 600px 밑의 좁은 폭은 Row 의 컴팩트 레이아웃이 받는다.
 export const CardGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: ${theme.space.lg};
 
   @media (max-width: 900px) {
-    gap: 10px;
+    gap: ${theme.space.md};
   }
 
   @media (max-width: 600px) {
-    gap: 8px;
+    gap: ${theme.space.sm};
   }
 `;
 
 export const Card = styled.div<WithTheme & { $tone: StatusTone }>`
+  ${cardStyle}
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding: 10px;
-  /* 카드 테두리 전체를 상태 색으로 둘러 목록을 훑을 때 상태가 먼저 보이게 한다 */
-  border: 2px solid ${({ $tone }) => STATUS_COLORS[$tone]};
-  border-radius: 8px;
-  background-color: ${({ theme }) => theme.colors.white};
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  min-width: 0;
+  padding: ${theme.space.md};
+  /* 취소된 예약은 카드 전체를 한 단계 가라앉혀 유효 예약과 구분한다 */
+  background-color: ${({ $tone }) => ($tone === 'canceled' ? c.surfaceSunken : c.surface)};
 
   @media (max-width: 600px) {
-    padding: 6px;
+    padding: ${theme.space.sm};
   }
 `;
 
@@ -63,8 +89,9 @@ export const CardTable = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
   flex: 1;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 6px;
+  border: 1px solid ${c.border};
+  border-radius: ${theme.radius.md};
+  background: ${c.surface};
   overflow: hidden;
 `;
 
@@ -73,17 +100,17 @@ export const Header = styled.div<WithTheme & { $canceled: boolean }>`
   flex: 0 0 auto;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 8px 10px;
-  /* 취소된 예약은 헤더를 회색으로 내려 유효 예약과 구분한다 (삭제 표현은 쓰지 않음) */
-  background-color: ${({ theme, $canceled }) =>
-    $canceled ? theme.colors.grayColor : theme.colors.noticeColor};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.medium};
-  font-weight: ${({ theme }) => theme.weight.bold};
+  gap: ${theme.space.sm};
+  padding: 10px ${theme.space.md};
+  border-bottom: 1px solid ${c.border};
+  background-color: ${c.surfaceAlt};
+  color: ${({ $canceled }) => ($canceled ? c.textMuted : c.textStrong)};
+  font-size: ${theme.sizes.medium};
+  font-weight: 800;
+  letter-spacing: -0.02em;
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
+    font-size: ${theme.sizes.small};
   }
 
   /* 2열이라 장소·배지·일자가 한 줄에 안 들어가므로 위아래로 쌓는다 */
@@ -91,15 +118,15 @@ export const Header = styled.div<WithTheme & { $canceled: boolean }>`
     flex-direction: column;
     align-items: flex-start;
     gap: 2px;
-    padding: 6px 8px;
-    font-size: ${({ theme }) => theme.sizes.xsmall};
+    padding: 6px ${theme.space.sm};
+    font-size: ${theme.sizes.xsmall};
   }
 `;
 
 export const HeaderLeft = styled.div`
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: ${theme.space.sm};
   min-width: 0;
   max-width: 100%;
 `;
@@ -112,25 +139,19 @@ export const HeaderPlace = styled.span`
 
 export const HeaderDate = styled.span`
   flex: 0 0 auto;
+  color: ${c.textMuted};
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 `;
 
 export const StatusBadge = styled.span<WithTheme & { $tone: StatusTone }>`
-  display: inline-flex;
-  align-items: center;
   flex: 0 0 auto;
-  padding: 3px 12px;
-  border: 1px solid ${({ theme }) => theme.colors.white};
-  border-radius: 4px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  letter-spacing: 0.04em;
-  color: ${({ theme }) => theme.colors.white};
-  background-color: ${({ $tone }) => STATUS_COLORS[$tone]};
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  ${({ $tone }) => STATUS_BADGE[$tone]}
+  letter-spacing: 0.02em;
 
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.xsmall};
+  @media (max-width: 600px) {
+    padding: 2px 6px;
+    font-size: 11px;
   }
 `;
 
@@ -138,56 +159,58 @@ export const Row = styled.div<WithTheme & { $highlight?: boolean }>`
   display: flex;
   /* 카드 높이가 맞춰질 때 남는 공간을 행들이 균등하게 나눠 흡수한다 */
   flex: 1 1 auto;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.subColor};
+  border-bottom: 1px solid ${c.border};
+  font-size: ${theme.sizes.small};
+  color: ${c.textBody};
 
   &:last-child {
     border-bottom: none;
   }
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.xsmall};
+    font-size: ${theme.sizes.xsmall};
   }
 
   /* 행이 늘어났을 때 글자가 위로 붙지 않게 세로 가운데 정렬 */
   span {
     display: flex;
     align-items: center;
-    padding: 8px 10px;
+    padding: 9px ${theme.space.md};
   }
 
   span:nth-child(1) {
     flex: 1;
     white-space: nowrap;
-    background-color: ${({ theme }) => theme.colors.softColor};
-    border-right: 1px solid ${({ theme }) => theme.colors.border};
-    font-weight: ${({ theme }) => theme.weight.semiBold};
+    background-color: ${c.surfaceSunken};
+    border-right: 1px solid ${c.border};
+    color: ${c.textMuted};
+    font-weight: ${theme.weight.semiBold};
   }
 
   span:nth-child(2) {
     flex: 2.4;
+    min-width: 0;
     white-space: pre-wrap;
     word-break: break-word;
     font-variant-numeric: tabular-nums;
   }
 
-  /* 예약 시간은 핵심 정보라 값 칸만 따뜻한 톤으로 강조한다 */
-  ${({ theme, $highlight }) =>
+  /* 예약 시간은 핵심 정보라 값 칸만 포인트 톤으로 강조한다 */
+  ${({ $highlight }) =>
     $highlight &&
-    `
-    span:nth-child(2) {
-      background-color: ${theme.colors.subTextBoxColor};
-      color: ${theme.colors.bronzeColor};
-      font-weight: ${theme.weight.bold};
-    }
-  `}
+    css`
+      span:nth-child(2) {
+        background-color: ${c.primarySoft};
+        color: ${c.primary};
+        font-weight: ${theme.weight.bold};
+      }
+    `}
 
   /* 카드가 좁아 라벨 칸을 따로 둘 수 없으므로, 라벨을 값 앞의 작은 회색 글씨로 붙인다.
      칸 배경·수직선을 없애 회색/흰색 띠가 쌓이는 것도 같이 사라진다 */
   @media (max-width: 600px) {
     align-items: baseline;
-    padding: 5px 6px;
+    padding: 6px;
 
     span {
       padding: 0;
@@ -198,39 +221,38 @@ export const Row = styled.div<WithTheme & { $highlight?: boolean }>`
       padding-right: 5px;
       background-color: transparent;
       border-right: none;
-      color: ${({ theme }) => theme.colors.grayColor};
-      font-size: ${({ theme }) => theme.sizes.xxsmall};
-      font-weight: ${({ theme }) => theme.weight.semiBold};
+      color: ${c.textMuted};
+      font-size: 11px;
+      font-weight: ${theme.weight.semiBold};
     }
 
     span:nth-child(2) {
       flex: 1;
     }
   }
+
+  ${({ $highlight }) =>
+    $highlight &&
+    css`
+      @media (max-width: 600px) {
+        span:nth-child(2) {
+          background-color: transparent;
+        }
+      }
+    `}
 `;
 
 export const ActionBox = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding-top: 8px;
+  padding-top: 10px;
 `;
 
-export const ActionButton = styled.button<WithTheme & { color: string }>`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+export const ActionButton = styled.button<WithTheme & { $variant: ButtonVariant }>`
+  ${({ $variant }) => buttonStyle($variant, 'sm')}
   flex: 1 1 auto;
-  min-width: 120px;
-  padding: 8px 14px;
-  border: none;
-  border-radius: 4px;
-  background-color: ${({ color }) => color};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.small};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  cursor: pointer;
+  min-width: 110px;
 
   svg {
     width: 16px;
@@ -238,26 +260,26 @@ export const ActionButton = styled.button<WithTheme & { color: string }>`
     flex-shrink: 0;
   }
 
-  &:hover {
-    opacity: 0.85;
-  }
-
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.55;
   }
 
   @media (max-width: 900px) {
-    min-width: 96px;
-    padding: 8px 10px;
+    min-width: 90px;
+    padding: 0 10px;
+  }
+
+  @media ${({ theme }) => theme.device.mobile} {
+    height: 44px;
   }
 
   /* 카드가 좁아지므로 최소폭을 풀고 한 줄에 두 개까지 들어가게 한다 */
   @media (max-width: 600px) {
     min-width: 0;
+    flex-basis: calc(50% - 3px);
     gap: 4px;
-    padding: 8px 6px;
-    font-size: ${({ theme }) => theme.sizes.xsmall};
+    padding: 0 6px;
+    font-size: ${theme.sizes.xsmall};
 
     svg {
       width: 13px;
@@ -272,12 +294,15 @@ export const SearchWrapper = styled.div.withConfig({
   display: flex;
   width: 100%;
   background-color: ${({ bgColor }) => bgColor};
-  padding: 20px;
+  border-radius: ${theme.radius.lg};
+  padding: ${theme.space.xl};
   align-items: center;
+  gap: ${theme.space.lg};
 
   @media ${({ theme }) => theme.device.mobile} {
     flex-direction: column;
-    padding: 10px;
+    gap: ${theme.space.sm};
+    padding: ${theme.space.lg};
   }
 `;
 
@@ -287,31 +312,33 @@ export const TitleBox = styled.div.withConfig({
   display: flex;
   flex-direction: column;
   width: 60%;
-  height: 60px;
+  min-height: 60px;
   color: ${({ textColor }) => textColor};
 
   h2 {
     font-family: ${theme.fonts.display};
-    font-weight: ${({ theme }) => theme.weight.bold};
-    font-size: ${({ theme }) => theme.sizes.xxlarge};
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    font-size: ${theme.sizes.xxlarge};
   }
   p {
     margin-top: auto;
-    font-weight: ${({ theme }) => theme.weight.semiBold};
-    font-size: ${({ theme }) => theme.sizes.medium};
+    font-weight: ${theme.weight.semiBold};
+    font-size: ${theme.sizes.medium};
   }
 
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
-    height: 40px;
+    min-height: 40px;
     text-align: center;
-    margin-bottom: 10px;
+    margin-bottom: ${theme.space.sm};
 
     h2 {
-      font-size: ${({ theme }) => theme.sizes.large};
+      font-size: ${theme.sizes.large};
     }
     p {
-      font-size: ${({ theme }) => theme.sizes.xsmall};
+      margin-top: 2px;
+      font-size: ${theme.sizes.xsmall};
     }
   }
 `;
@@ -335,60 +362,73 @@ export const NoSearchBox = styled.div<WithTheme>`
   align-items: center;
   justify-content: center;
   width: 100%;
-  font-size: ${({ theme }) => theme.sizes.menu};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  font-family: ${theme.fonts.display};
   margin-top: 20px;
+  padding: 40px ${theme.space.lg};
+  border: 1px dashed ${c.borderStrong};
+  border-radius: ${theme.radius.lg};
+  color: ${c.textMuted};
+  font-size: ${theme.sizes.medium};
+  font-weight: ${theme.weight.semiBold};
+  font-family: ${theme.fonts.display};
 
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
+    font-size: ${theme.sizes.small};
   }
 `;
 
 export const InfoBox = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: ${theme.space.sm};
+  margin-bottom: ${theme.space.md};
 `;
 
 export const InfoSummary = styled.div<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.xsmall};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  color: ${({ theme }) => theme.colors.redColor};
-  line-height: 1.4;
+  ${badgeStyle('primary')}
+  white-space: normal;
+  padding: ${theme.space.sm} ${theme.space.md};
+  border-radius: ${theme.radius.md};
+  font-size: ${theme.sizes.xsmall};
+  line-height: 1.5;
 `;
 
 export const InfoToggle = styled.button<WithTheme>`
   align-self: flex-start;
-  padding: 6px 12px;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 999px;
-  background-color: ${({ theme }) => theme.colors.softColor};
-  color: ${({ theme }) => theme.colors.subColor};
-  font-size: ${({ theme }) => theme.sizes.xsmall};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
+  min-height: 44px;
+  padding: 0 ${theme.space.lg};
+  border: 1px solid ${c.border};
+  border-radius: ${theme.radius.pill};
+  background-color: ${c.surface};
+  color: ${c.textBody};
+  font-family: inherit;
+  font-size: ${theme.sizes.xsmall};
+  font-weight: ${theme.weight.semiBold};
   cursor: pointer;
+  ${focusRing}
 `;
 
 export const TextBox = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
   justify-content: right;
-  margin-bottom: 10px;
+  margin-bottom: ${theme.space.lg};
   width: 100%;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  line-height: 1.4;
+  padding: ${theme.space.md} ${theme.space.lg};
+  border-radius: ${theme.radius.md};
+  background: ${c.primarySoft};
+  font-size: ${theme.sizes.small};
+  line-height: 1.7;
+
   @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.xxsmall};
+    font-size: ${theme.sizes.xsmall};
   }
 
   p {
-    color: ${({ theme }) => theme.colors.subColor};
+    color: ${c.textBody};
   }
 
   span {
-    color: ${({ theme }) => theme.colors.redColor};
-    font-weight: ${({ theme }) => theme.weight.semiBold};
+    color: ${c.textBody};
+    font-weight: ${theme.weight.semiBold};
   }
 `;

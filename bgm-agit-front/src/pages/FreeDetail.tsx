@@ -424,6 +424,7 @@ export default function FreeDetail() {
                       setWriteReplyMode(false);
                     }}
                     color="#FF5E57"
+                    $variant="secondary"
                   >
                     취소
                   </Button>
@@ -457,6 +458,7 @@ export default function FreeDetail() {
                                   setEditCommentId(null);
                                   setWriteConent('');
                                 }}
+                                $variant="secondary"
                               >
                                 취소
                               </Button>
@@ -523,7 +525,11 @@ export default function FreeDetail() {
                       >
                         저장
                       </Button>
-                      <Button color="#FF5E57" onClick={() => setReplyToId(null)}>
+                      <Button
+                        color="#FF5E57"
+                        onClick={() => setReplyToId(null)}
+                        $variant="secondary"
+                      >
                         취소
                       </Button>
                     </div>
@@ -559,6 +565,7 @@ export default function FreeDetail() {
                                         setEditCommentId(null);
                                         setWriteConent('');
                                       }}
+                                      $variant="secondary"
                                     >
                                       취소
                                     </Button>

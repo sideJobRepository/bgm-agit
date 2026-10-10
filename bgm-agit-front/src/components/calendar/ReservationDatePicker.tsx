@@ -93,6 +93,8 @@ export default function ReservationDatePicker({
         if (value && toLocalYmd(date) === value) classes.push('selected');
         if (date.getDay() === 0) classes.push('sunday');
         if (date.getDay() === 6) classes.push('saturday');
+        // 휴무(수요일)만 취소선. 기간 밖 날짜는 흐리게만 한다 — 스타일 전용 클래스
+        if (date.getDay() === 3) classes.push('closed');
         return classes.join(' ');
       }}
     />

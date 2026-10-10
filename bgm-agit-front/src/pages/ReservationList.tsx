@@ -207,7 +207,7 @@ export default function ReservationList() {
     <Wrapper>
       <NoticeBox>
         <SearchWrapper bgColor={theme.colors.primary}>
-          <TitleBox textColor="#ffffff">
+          <TitleBox textColor={theme.colors.onPrimary}>
             <h2>Reservation History</h2>
             <p>예약내역을 확인해보세요.</p>
           </TitleBox>
@@ -253,10 +253,7 @@ export default function ReservationList() {
                 upcoming &&
                 (isAdmin ? item.cancelStatus !== 'Y' : canCancelBeforeReservationDate(item));
               const canApprove =
-                upcoming &&
-                isAdmin &&
-                item.approvalStatus !== 'Y' &&
-                item.cancelStatus !== 'Y';
+                upcoming && isAdmin && item.approvalStatus !== 'Y' && item.cancelStatus !== 'Y';
 
               return (
                 <Card key={item.reservationId} $tone={status.tone}>
@@ -303,7 +300,7 @@ export default function ReservationList() {
                     {canPay && (
                       <ActionButton
                         type="button"
-                        color="#1A7D55"
+                        $variant="primary"
                         disabled={payingReservationId === item.reservationId}
                         onClick={() => openPayment(item)}
                       >
@@ -320,7 +317,7 @@ export default function ReservationList() {
                     {canApprove && (
                       <ActionButton
                         type="button"
-                        color="#1A7D55"
+                        $variant="primary"
                         onClick={() => updateData(item, true, 'N', 'Y')}
                       >
                         <CheckCircle weight="bold" />
@@ -330,7 +327,7 @@ export default function ReservationList() {
                     {canCancel && (
                       <ActionButton
                         type="button"
-                        color="#FF5E57"
+                        $variant="danger"
                         onClick={() => updateData(item, isAdmin, 'Y', 'N')}
                       >
                         <XCircle weight="bold" />
@@ -340,7 +337,7 @@ export default function ReservationList() {
                     {item.receiptUrl && (
                       <ActionButton
                         type="button"
-                        color={theme.colors.primary}
+                        $variant="secondary"
                         onClick={() =>
                           window.open(item.receiptUrl as string, '_blank', 'noopener,noreferrer')
                         }
@@ -351,7 +348,7 @@ export default function ReservationList() {
                     )}
                     <ActionButton
                       type="button"
-                      color="#5C3A21"
+                      $variant="secondary"
                       onClick={() => shareReservation(item)}
                     >
                       <Share weight="bold" />
@@ -370,11 +367,7 @@ export default function ReservationList() {
         </ListBox>
       </NoticeBox>
       {paymentOrder && user && (
-        <PaymentCheckoutModal
-          order={paymentOrder}
-          user={user}
-          onClose={closePaymentModal}
-        />
+        <PaymentCheckoutModal order={paymentOrder} user={user} onClose={closePaymentModal} />
       )}
     </Wrapper>
   );

@@ -194,7 +194,7 @@ export default function TopHeader() {
         </ul>
       </Right>
       <div ref={hamburgerRef}>
-        <Hamburger size={24} onClick={toggleMenu} />
+        <Hamburger size={24} onClick={toggleMenu} role="button" aria-label="메뉴 열기" />
       </div>
       <MobileMenu ref={menuRef} $open={isOpen} className={isSubOpen ? 'show' : ''}>
         <ul>

@@ -6,6 +6,7 @@ import { noticeState } from '../recoil/state/noticeState.ts';
 import { FaDownload } from 'react-icons/fa';
 import Modal from '../components/Modal.tsx';
 import type { NoticeContent } from '../types/notice.ts';
+import { theme } from '../styles/theme.ts';
 import {
   PopupWrapper,
   ButtonBox,
@@ -134,10 +135,10 @@ export default function NoticePopupDetail({
         />
         <PopupBox>
           <ButtonBox>
-            <Button onClick={onClose} color="#FF5E57">
+            <Button onClick={onClose} color={theme.colors.danger}>
               닫기
             </Button>
-            <Button color="#482768" onClick={hideToday}>
+            <Button color={theme.colors.primary} onClick={hideToday}>
               오늘 하루 보지 않기
             </Button>
           </ButtonBox>

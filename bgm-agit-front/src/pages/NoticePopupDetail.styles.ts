@@ -1,6 +1,9 @@
 import styled from 'styled-components';
 import type { WithTheme } from '../styles/styled-props.ts';
 import { theme } from '../styles/theme.ts';
+import { badgeStyle, buttonStyle, focusRing } from '../styles/mixins.ts';
+
+const c = theme.colors;
 
 export const PopupWrapper = styled.div<WithTheme>`
   width: 800px;
@@ -9,7 +12,9 @@ export const PopupWrapper = styled.div<WithTheme>`
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  border-radius: 8px 8px 0 0;
+  border-radius: ${theme.radius.lg} ${theme.radius.lg} 0 0;
+  background: ${c.surface};
+  color: ${c.textBody};
 
   @media ${({ theme }) => theme.device.tablet} {
     width: calc(100vw - 40px);
@@ -21,22 +26,23 @@ export const ButtonBox = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 40px;
-  padding: 8px;
-  gap: 4px;
+  padding: ${theme.space.md} ${theme.space.lg};
+  gap: ${theme.space.sm};
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.md};
+  }
 `;
 
+// 색 prop 으로 역할을 고른다 — 주 색이면 "오늘 하루 보지 않기"(주 버튼), 그 외는 "닫기"(보조 버튼)
 export const Button = styled.button<WithTheme & { color: string }>`
-  padding: 6px 16px;
-  background-color: ${({ color }) => color};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.medium};
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  ${({ color }) =>
+    color === c.primary ? buttonStyle('primary', 'md') : buttonStyle('secondary', 'md')};
 
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
+  @media ${theme.device.mobile} {
+    flex: 1;
+    padding: 0 12px;
+    font-size: 14px;
   }
 `;
 
@@ -44,58 +50,58 @@ export const TitleBox = styled.div<WithTheme>`
   display: flex;
   flex-direction: column;
   width: 100%;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.basicColor};
+  padding: ${theme.space.xl} ${theme.space.xl} ${theme.space.lg};
+  border-bottom: 1px solid ${c.border};
 
   div {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 14px 20px;
+    gap: ${theme.space.md};
     width: 100%;
-    background-color: ${({ theme }) => theme.colors.basicColor};
 
     h3 {
-      color: ${({ theme }) => theme.colors.bronzeColor};
-      font-size: ${({ theme }) => theme.sizes.menu};
-      font-weight: ${({ theme }) => theme.weight.bold};
-
-      @media ${({ theme }) => theme.device.mobile} {
-        font-size: ${({ theme }) => theme.sizes.large};
-      }
+      ${badgeStyle('primary')};
+      margin: 0;
+      font-size: 13px;
     }
+
     span {
       margin-left: auto;
-      color: ${({ theme }) => theme.colors.subColor};
-      font-size: ${({ theme }) => theme.sizes.medium};
-
-      @media ${({ theme }) => theme.device.mobile} {
-        font-size: ${({ theme }) => theme.sizes.small};
-      }
+      color: ${c.textMuted};
+      font-size: 14px;
     }
   }
 
   h2 {
-    display: flex;
-    height: 100%;
-    align-items: center;
-    padding: 20px 10px;
-    color: ${({ theme }) => theme.colors.subColor};
-    font-size: ${({ theme }) => theme.sizes.xlarge};
-    font-weight: ${({ theme }) => theme.weight.bold};
-    font-family: ${theme.fonts.display};
+    margin: ${theme.space.md} 0 0;
+    color: ${c.textStrong};
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.35;
+    letter-spacing: -0.02em;
+    word-break: keep-all;
 
-    @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.sizes.menu};
+    @media ${theme.device.mobile} {
+      font-size: 20px;
     }
+  }
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.lg};
   }
 `;
 
 export const ContentBox = styled.div<WithTheme>`
   width: 100%;
-  padding: 20px 10px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.bronzeColor};
-  margin-bottom: 20px;
+  padding: ${theme.space.xl};
   flex: 1;
+  color: ${c.textBody};
+  line-height: 1.7;
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
 
   iframe {
     width: 100%;
@@ -103,6 +109,7 @@ export const ContentBox = styled.div<WithTheme>`
     aspect-ratio: 16 / 9; /* 16:9 비율 유지 */
     max-width: 100%;
     border: none;
+    border-radius: ${theme.radius.md};
     display: block;
   }
 
@@ -111,41 +118,68 @@ export const ContentBox = styled.div<WithTheme>`
     max-height: unset;
     overflow: visible;
   }
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.lg};
+  }
 `;
 
 export const StyledFileUl = styled.ul<WithTheme>`
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   text-align: left;
   width: 100%;
-  color: ${({ theme }) => theme.colors.bronzeColor};
-  padding: 10px;
-  gap: 4px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.basicColor};
+  margin: 0;
+  padding: ${theme.space.md} ${theme.space.xl};
+  gap: ${theme.space.sm};
+  list-style: none;
+  border-bottom: 1px solid ${c.border};
 
   li {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: ${({ theme }) => theme.sizes.xsmall};
+    min-width: 0;
+    font-size: 13px;
 
     a {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 4px 8px;
-      background-color: ${({ theme }) => theme.colors.basicColor};
-      border-radius: 4px;
+      gap: ${theme.space.sm};
+      min-height: 36px;
+      max-width: 100%;
+      padding: 0 ${theme.space.md};
+      border: 1px solid ${c.border};
+      border-radius: ${theme.radius.pill};
+      background-color: ${c.surfaceSunken};
+      color: ${c.textBody};
+      font-weight: 600;
       cursor: pointer;
+      word-break: break-all;
+      transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
 
       &:hover {
-        opacity: 0.7;
+        background-color: ${c.primarySoft};
+        border-color: ${c.primary};
+        color: ${c.primary};
+      }
+
+      ${focusRing}
+
+      @media ${theme.device.mobile} {
+        min-height: 44px;
       }
     }
 
     svg {
-      cursor: pointer;
+      flex-shrink: 0;
+      color: ${c.primary};
     }
+  }
+
+  @media ${theme.device.mobile} {
+    padding: ${theme.space.md} ${theme.space.lg};
   }
 `;
 
@@ -154,7 +188,8 @@ export const PopupBox = styled.div<WithTheme>`
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: ${({ theme }) => theme.colors.topBg};
+  background-color: ${c.surface};
+  border-top: 1px solid ${c.border};
   z-index: 3;
-  border-radius: 0 0 8px 8px;
+  border-radius: 0 0 ${theme.radius.lg} ${theme.radius.lg};
 `;

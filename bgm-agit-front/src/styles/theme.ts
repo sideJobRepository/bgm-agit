@@ -13,8 +13,8 @@ const palette = {
 
   bg: '#FFFFFF',
   surface: '#FFFFFF',
-  surfaceAlt: '#F2F4F7',
-  surfaceSunken: '#F7F8FA',
+  surfaceAlt: '#F4F2F6',
+  surfaceSunken: '#F8F7FA',
   footer: '#16181D',
 
   textStrong: '#16181D',
@@ -22,8 +22,8 @@ const palette = {
   textMuted: '#5B6270',
   textSubtle: '#8A919E',
 
-  border: '#E4E7EC',
-  borderStrong: '#D0D5DD',
+  border: '#E6E1EB',
+  borderStrong: '#D3CCDB',
 
   success: '#1A7D55',
   danger: '#FF5E57',

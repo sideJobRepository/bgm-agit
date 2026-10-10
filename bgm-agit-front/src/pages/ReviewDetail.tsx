@@ -24,7 +24,22 @@ import { userState } from '../recoil/state/userState.ts';
 import { loadingState } from '../recoil/state/mainState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import type { ReviewComment, ReviewFile } from '../types/review.ts';
-import { Wrapper, EditorWrapper, InputBox, EditorBox, ButtonBox, FileButtonBox, Button, TitleBox, ContentBox, FileSvgBox, StyledFileUl, SkeletonBox, ReplyBox, TextArea } from './ReviewDetail.styles.ts';
+import {
+  Wrapper,
+  EditorWrapper,
+  InputBox,
+  EditorBox,
+  ButtonBox,
+  FileButtonBox,
+  Button,
+  TitleBox,
+  ContentBox,
+  FileSvgBox,
+  StyledFileUl,
+  SkeletonBox,
+  ReplyBox,
+  TextArea,
+} from './ReviewDetail.styles.ts';
 
 type NewReviewState = {
   id: number | null;
@@ -329,10 +344,10 @@ export default function ReviewDetail() {
           <>
             {detailReview?.isAuthor && (
               <ButtonBox>
-                <Button onClick={() => setIsEditMode(true)} color="#415B9C">
+                <Button onClick={() => setIsEditMode(true)} color="#415B9C" aria-label="수정">
                   <FileText weight="bold" />
                 </Button>
-                <Button onClick={deleteData} color="#D9625E">
+                <Button onClick={deleteData} color="#D9625E" aria-label="삭제">
                   <TrashSimple weight="bold" />
                 </Button>
               </ButtonBox>
@@ -391,6 +406,7 @@ export default function ReviewDetail() {
                       setReplyToId(null);
                       setEditCommentId(null);
                     }}
+                    aria-label="댓글 작성"
                   >
                     <PencilSimpleLine weight="bold" />
                   </Button>
@@ -399,7 +415,11 @@ export default function ReviewDetail() {
               {writeReplyMode && (
                 <div className="textarea-box">
                   <div className="reply-button-box">
-                    <Button color="#4A90E2" onClick={() => handleReplySubmit(null, true)}>
+                    <Button
+                      color="#4A90E2"
+                      onClick={() => handleReplySubmit(null, true)}
+                      aria-label="저장"
+                    >
                       <Check weight="bold" />
                     </Button>
                     <Button
@@ -408,6 +428,8 @@ export default function ReviewDetail() {
                         setWriteContent('');
                       }}
                       color="#D9625E"
+                      $variant="secondary"
+                      aria-label="취소"
                     >
                       <ArrowLeft weight="bold" />
                     </Button>
@@ -432,6 +454,7 @@ export default function ReviewDetail() {
                                 <Button
                                   color="#4A90E2"
                                   onClick={() => handleReplySubmit(item.commentId, false)}
+                                  aria-label="저장"
                                 >
                                   <Check weight="bold" />
                                 </Button>
@@ -441,6 +464,8 @@ export default function ReviewDetail() {
                                     setEditCommentId(null);
                                     setWriteContent('');
                                   }}
+                                  $variant="secondary"
+                                  aria-label="취소"
                                 >
                                   <ArrowLeft weight="bold" />
                                 </Button>
@@ -455,12 +480,14 @@ export default function ReviewDetail() {
                                     setWriteReplyMode(false);
                                     setReplyToId(null);
                                   }}
+                                  aria-label="수정"
                                 >
                                   <FileText weight="bold" />
                                 </Button>
                                 <Button
                                   color="#D9625E"
                                   onClick={() => deleteReplyData(item.commentId)}
+                                  aria-label="삭제"
                                 >
                                   <TrashSimple weight="bold" />
                                 </Button>
@@ -492,7 +519,11 @@ export default function ReviewDetail() {
                         >
                           저장
                         </Button>
-                        <Button color="#FF5E57" onClick={() => setReplyToId(null)}>
+                        <Button
+                          color="#FF5E57"
+                          onClick={() => setReplyToId(null)}
+                          $variant="secondary"
+                        >
                           취소
                         </Button>
                       </div>
@@ -512,10 +543,15 @@ export default function ReviewDetail() {
       ) : (
         <>
           <ButtonBox>
-            <Button onClick={handleSubmit} color="#4A90E2">
+            <Button onClick={handleSubmit} color="#4A90E2" aria-label="저장">
               <Check weight="bold" />
             </Button>
-            <Button onClick={() => cancelClick()} color="#D9625E">
+            <Button
+              onClick={() => cancelClick()}
+              color="#D9625E"
+              $variant="secondary"
+              aria-label="취소"
+            >
               <ArrowLeft weight="bold" />
             </Button>
           </ButtonBox>
@@ -527,7 +563,12 @@ export default function ReviewDetail() {
               onChange={e => setNewReview(prev => ({ ...prev, title: e.target.value }))}
             />
             <FileButtonBox>
-              <Button type="button" color="#415B9C" onClick={() => fileInputRef.current?.click()}>
+              <Button
+                type="button"
+                color="#415B9C"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="파일 첨부"
+              >
                 <FilePlus weight="bold" />
               </Button>
             </FileButtonBox>
