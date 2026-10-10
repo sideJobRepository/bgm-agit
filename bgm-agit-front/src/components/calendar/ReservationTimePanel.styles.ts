@@ -15,7 +15,8 @@ export const TitleBox = styled.div<WithTheme>`
   flex-direction: column;
   gap: ${({ theme }) => theme.space.md};
   color: ${({ theme }) => theme.colors.textBody};
-  width: 50%;
+  width: 100%;
+  max-width: 760px;
 
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
@@ -52,11 +53,12 @@ export const TitleBox = styled.div<WithTheme>`
 `;
 
 export const TimeTitle = styled.div<WithTheme>`
-  width: 50%;
+  width: 100%;
+  max-width: 760px;
   padding: ${({ theme }) => `${theme.space.md} ${theme.space.lg}`};
   border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.colors.primarySoft};
-  color: ${({ theme }) => theme.colors.primary};
+  background: ${({ theme }) => theme.colors.surfaceAlt};
+  color: ${({ theme }) => theme.colors.textStrong};
   font-size: ${({ theme }) => theme.sizes.medium};
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -71,7 +73,8 @@ export const TimeBox = styled.div<WithTheme>`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); // 너비 반응형
   gap: ${({ theme }) => theme.space.sm};
-  width: 50%;
+  width: 100%;
+  max-width: 760px;
 
   @media ${({ theme }) => theme.device.mobile} {
     grid-template-columns: repeat(2, 1fr); // 모바일에서는 2열 고정
@@ -118,7 +121,8 @@ export const TimeSlotButton = styled.button<WithTheme & { selected: boolean }>`
 `;
 
 export const OptionBox = styled.div<WithTheme>`
-  width: 50%;
+  width: 100%;
+  max-width: 760px;
 
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
@@ -170,7 +174,8 @@ export const ToggleButton = styled.button<WithTheme & { $active: boolean }>`
 
 export const Button = styled.button<WithTheme>`
   ${buttonStyle('primary', 'lg')}
-  width: 50%;
+  width: 100%;
+  max-width: 760px;
   margin-top: ${({ theme }) => theme.space.sm};
 
   &:disabled {

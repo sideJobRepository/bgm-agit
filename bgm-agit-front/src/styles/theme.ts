@@ -3,7 +3,9 @@ const palette = {
   // BGM 로고 보라
   primary: '#482768',
   primaryHover: '#3A1F55',
-  primarySoft: '#F3EEF8',
+  // 선택·활성 칸의 옅은 바탕. 연보라를 쓰면 안내 박스·탭까지 전부 보라로 물들어서 무채색으로 둔다.
+  // 보라는 테두리·글자·꽉 찬 버튼에서만 쓴다
+  primarySoft: '#F1F3F5',
   onPrimary: '#FFFFFF',
 
   // 보조 포인트(골드). 배지·강조처럼 작은 곳에만 쓴다

@@ -100,8 +100,11 @@ export const buttonStyle = (variant: ButtonVariant = 'primary', size: ButtonSize
   ${BUTTON_VARIANTS[variant]}
   ${focusRing}
 
+  /* 비활성은 색을 흐리지 않고 회색으로. 흐린 보라는 눌러도 되는 버튼처럼 보인다 */
   &:disabled {
-    opacity: 0.45;
+    background: ${c.surfaceAlt};
+    border-color: ${c.surfaceAlt};
+    color: ${c.textSubtle};
     cursor: default;
   }
 `;
