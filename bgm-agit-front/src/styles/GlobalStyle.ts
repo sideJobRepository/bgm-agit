@@ -38,7 +38,8 @@ export const GlobalStyle = createGlobalStyle`
     }
 
     body {
-        font-family: 'Pretendard', sans-serif;
+        font-family: ${({ theme }) => theme.fonts.body};
+        color: ${({ theme }) => theme.colors.textStrong};
         overscroll-behavior-y: none;
         -webkit-overflow-scrolling: touch;
     }
@@ -70,7 +71,7 @@ export const GlobalStyle = createGlobalStyle`
         padding: 16px;
     }
 
-    /* 흰 창. 색은 아이콘(종류별)과 버튼(보라) 두 곳에만 쓴다 */
+    /* 흰 창. 색은 아이콘(종류별)과 버튼(로고 보라) 두 곳에만 쓴다 */
     .swal2-popup.bgm-alert {
         width: min(360px, calc(100vw - 32px));
         padding: 28px 22px 22px;
@@ -88,7 +89,7 @@ export const GlobalStyle = createGlobalStyle`
     .bgm-alert .swal2-title {
         margin: 16px 0 6px;
         padding: 0;
-        color: #222;
+        color: ${({ theme }) => theme.colors.textStrong};
         font-size: 19px;
         font-weight: 700;
         line-height: 1.3;
@@ -104,7 +105,7 @@ export const GlobalStyle = createGlobalStyle`
     /* 버튼 포커스 테두리는 옅게 */
     .bgm-alert .swal2-styled:focus,
     .bgm-alert .swal2-styled:focus-visible {
-        box-shadow: 0 0 0 3px rgba(72, 39, 104, 0.22) !important;
+        box-shadow: 0 0 0 3px ${({ theme }) => theme.colors.purpleColor}38 !important;
     }
 
     .bgm-alert .swal2-styled:hover {
@@ -115,7 +116,7 @@ export const GlobalStyle = createGlobalStyle`
     .bgm-alert .swal2-html-container {
         margin: 0;
         padding: 0 4px;
-        color: #424548;
+        color: ${({ theme }) => theme.colors.textBody};
         font-size: 15px;
         line-height: 1.5;
         word-break: keep-all;
@@ -136,7 +137,7 @@ export const GlobalStyle = createGlobalStyle`
         border-radius: 10px;
         font-size: 15px;
         font-weight: 700;
-        box-shadow: 0 2px 6px rgba(72, 39, 104, 0.18);
+        box-shadow: 0 2px 6px ${({ theme }) => theme.colors.purpleColor}2E;
     }
 
     /* 폰: 여백·아이콘을 조금 줄이고 버튼을 한 줄에 꽉 채워 누르기 쉽게(최소 44px 높이) */

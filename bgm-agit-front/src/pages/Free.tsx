@@ -1,5 +1,3 @@
-import styled from 'styled-components';
-import type { WithTheme } from '../styles/styled-props.ts';
 import { useMediaQuery } from 'react-responsive';
 import { Wrapper } from '../styles';
 import SearchBar from '../components/SearchBar.tsx';
@@ -11,6 +9,22 @@ import { communityState } from '../recoil/state/communitySate.ts';
 import { FaCommentDots } from 'react-icons/fa';
 import { userState } from '../recoil/state/userState.ts';
 import Pagination from '../components/Pagination.tsx';
+import { theme } from '../styles/theme.ts';
+import {
+  NoticeBox,
+  TableBox,
+  TableScrollBox,
+  Table,
+  Th,
+  Td,
+  SearchWrapper,
+  TitleBox,
+  SearchBox,
+  PaginationWrapper,
+  Button,
+  ButtonBox,
+  NoSearchBox,
+} from './Free.styles.ts';
 
 export default function Free() {
   const user = useRecoilValue(userState);
@@ -21,7 +35,7 @@ export default function Free() {
 
   const items = useRecoilValue(communityState);
 
-  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+  const isMobile = useMediaQuery({ query: theme.device.mobile });
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);
@@ -37,20 +51,20 @@ export default function Free() {
   return (
     <Wrapper>
       <NoticeBox>
-        <SearchWrapper bgColor="#988271">
+        <SearchWrapper bgColor={theme.colors.primary}>
           <TitleBox textColor="#ffffff">
             <h2>Community Board</h2>
             <p>소소한 일상부터 궁금한 이야기까지, 자유롭게 나눠보세요.</p>
           </TitleBox>
           <SearchBox>
-            <SearchBar<string> color="#988271" label="제목 및 내용" onSearch={setSearchKeyword} />
+            <SearchBar<string> color={theme.colors.primary} label="제목 및 내용" onSearch={setSearchKeyword} />
           </SearchBox>
         </SearchWrapper>
         <TableBox>
           {user && (
             <ButtonBox>
               <Button
-                color="#988271"
+                color={theme.colors.primary}
                 onClick={() => {
                   navigate(`/freeDetail`);
                 }}
@@ -101,169 +115,3 @@ export default function Free() {
     </Wrapper>
   );
 }
-
-const NoticeBox = styled.div`
-  padding: 10px;
-`;
-
-const TableBox = styled.div`
-  padding: 40px 0;
-`;
-
-export const TableScrollBox = styled.div<WithTheme>`
-  @media ${({ theme }) => theme.device.mobile} {
-    width: 100%;
-    overflow-x: auto;
-  }
-`;
-
-const Table = styled.table<WithTheme>`
-  width: 100%;
-  border-collapse: collapse;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  color: ${({ theme }) => theme.colors.subColor};
-  table-layout: fixed;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.xsmall};
-  }
-
-  th,
-  td {
-    padding: 14px;
-    text-align: center;
-  }
-
-  tbody tr {
-    cursor: pointer;
-
-    @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.sizes.xxsmall};
-    }
-
-    &:hover {
-      opacity: 0.6;
-    }
-  }
-
-  td {
-    border-bottom: 1px solid ${({ theme }) => theme.colors.lineColor};
-  }
-`;
-
-const Th = styled.th<WithTheme>`
-  background-color: ${({ theme }) => theme.colors.basicColor};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-`;
-
-const Td = styled.td<WithTheme>`
-  span {
-    display: flex;
-    align-items: center;
-    margin-left: 8px;
-    gap: 4px;
-    font-size: ${({ theme }) => theme.sizes.small};
-
-    @media ${({ theme }) => theme.device.mobile} {
-      font-size: ${({ theme }) => theme.sizes.xxsmall};
-    }
-  }
-`;
-
-const SearchWrapper = styled.div.withConfig({
-  shouldForwardProp: prop => prop !== 'bgColor',
-})<{ bgColor: string } & WithTheme>`
-  display: flex;
-  width: 100%;
-  background-color: ${({ bgColor }) => bgColor};
-  padding: 20px;
-  align-items: center;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    flex-direction: column;
-    padding: 10px;
-  }
-`;
-
-const TitleBox = styled.div.withConfig({
-  shouldForwardProp: prop => prop !== 'textColor',
-})<{ textColor: string } & WithTheme>`
-  display: flex;
-  flex-direction: column;
-  width: 60%;
-  height: 60px;
-  color: ${({ textColor }) => textColor};
-
-  h2 {
-    font-family: 'Bungee', sans-serif;
-    font-weight: ${({ theme }) => theme.weight.bold};
-    font-size: ${({ theme }) => theme.sizes.xxlarge};
-  }
-  p {
-    margin-top: auto;
-    font-weight: ${({ theme }) => theme.weight.semiBold};
-    font-size: ${({ theme }) => theme.sizes.medium};
-  }
-
-  @media ${({ theme }) => theme.device.mobile} {
-    width: 100%;
-    height: 40px;
-    text-align: center;
-    margin-bottom: 10px;
-
-    h2 {
-      font-size: ${({ theme }) => theme.sizes.large};
-    }
-    p {
-      font-size: ${({ theme }) => theme.sizes.xsmall};
-    }
-  }
-`;
-
-const SearchBox = styled.div<WithTheme>`
-  width: 40%;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    width: 100%;
-  }
-`;
-
-const PaginationWrapper = styled.div`
-  text-align: center;
-  margin-top: 20px;
-`;
-
-const Button = styled.button<WithTheme & { color: string }>`
-  padding: 6px 16px;
-  background-color: ${({ color }) => color};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.sizes.medium};
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
-  }
-`;
-
-const ButtonBox = styled.div`
-  display: flex;
-  justify-content: right;
-  margin-bottom: 10px;
-`;
-
-const NoSearchBox = styled.div<WithTheme>`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-  font-size: ${({ theme }) => theme.sizes.menu};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-  font-family: 'Jua', sans-serif;\
-    margin-top: 20px;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    font-size: ${({ theme }) => theme.sizes.small};
-  }
-`;

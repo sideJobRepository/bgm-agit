@@ -1,6 +1,5 @@
 import { Wrapper } from '../styles';
-import styled from 'styled-components';
-import type { WithTheme } from '../styles/styled-props.ts';
+import { Box, ButtonRow, Button, Cover, NoImage, DetailTitle, DetailMeta, SectionTitle, CharViewList, CharViewItem, CharHead, CharName, TypeTag, CharDesc, FormTitle, Row, Field, FileRow, FileButton, FileName, PreviewBox, CheckLine, CharEditList, CharEditRow, CharLineTop, RemoveBtn, AddBtn, Empty } from './ClockTowerGameDetail.styles.ts';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
@@ -165,11 +164,11 @@ export default function ClockTowerGameDetail() {
           <ButtonRow>
             {user?.roles.includes('ROLE_ADMIN') && (
               <>
-                <Button color="#4A2C82" onClick={() => setEditMode(true)}>수정</Button>
-                <Button color="#FF5E57" onClick={onDelete}>삭제</Button>
+                <Button $variant="primary" color="#4A2C82" onClick={() => setEditMode(true)}>수정</Button>
+                <Button $variant="danger" color="#FF5E57" onClick={onDelete}>삭제</Button>
               </>
             )}
-            <Button color="#988271" onClick={() => navigate('/clocktower-games')}>목록</Button>
+            <Button $variant="secondary" color="#988271" onClick={() => navigate('/clocktower-games')}>목록</Button>
           </ButtonRow>
 
           <Cover>
@@ -177,8 +176,8 @@ export default function ClockTowerGameDetail() {
           </Cover>
           <DetailTitle>{detail?.name}</DetailTitle>
           <DetailMeta>
-            <span>👥 {ctPlayersLabel(detail?.minPlayers, detail?.maxPlayers)}</span>
-            {detail?.playMinutes ? <span>⏱ 약 {detail.playMinutes}분</span> : null}
+            <span>{ctPlayersLabel(detail?.minPlayers, detail?.maxPlayers)}</span>
+            {detail?.playMinutes ? <span>약 {detail.playMinutes}분</span> : null}
           </DetailMeta>
 
           <SectionTitle>캐릭터 ({detail?.characters?.length ?? 0})</SectionTitle>
@@ -304,296 +303,10 @@ export default function ClockTowerGameDetail() {
         </Field>
 
         <ButtonRow>
-          <Button color="#1A7D55" onClick={onSubmit}>저장</Button>
-          <Button color="#988271" onClick={() => (id ? setEditMode(false) : navigate('/clocktower-games'))}>취소</Button>
+          <Button $variant="primary" color="#1A7D55" onClick={onSubmit}>저장</Button>
+          <Button $variant="secondary" color="#988271" onClick={() => (id ? setEditMode(false) : navigate('/clocktower-games'))}>취소</Button>
         </ButtonRow>
       </Box>
     </Wrapper>
   );
 }
-
-const Box = styled.div`
-  padding: 16px;
-  max-width: 760px;
-  margin: 0 auto;
-`;
-
-const ButtonRow = styled.div`
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-`;
-
-const Button = styled.button.withConfig({ shouldForwardProp: p => p !== 'color' })<{ color: string } & WithTheme>`
-  padding: 8px 16px;
-  background: ${({ color }) => color};
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  &:hover {
-    opacity: 0.9;
-  }
-`;
-
-const Cover = styled.div`
-  width: 100%;
-  max-width: 280px;
-  aspect-ratio: 3 / 4;
-  background: #f1efe9;
-  border-radius: 10px;
-  overflow: hidden;
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-
-  @media (max-width: 844px) {
-    max-width: 220px;
-  }
-`;
-
-const NoImage = styled.div<WithTheme>`
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: ${({ theme }) => theme.colors.navColor};
-`;
-
-const DetailTitle = styled.h2<WithTheme>`
-  margin-top: 16px;
-  font-size: ${({ theme }) => theme.sizes.xlarge};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
-`;
-
-const DetailMeta = styled.div<WithTheme>`
-  display: flex;
-  gap: 14px;
-  margin-top: 10px;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  color: ${({ theme }) => theme.colors.navColor};
-`;
-
-const SectionTitle = styled.h3<WithTheme>`
-  margin: 26px 0 12px;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
-`;
-
-const CharViewList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-`;
-
-const CharViewItem = styled.div<WithTheme>`
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 8px;
-  padding: 12px 14px;
-  background: #fff;
-`;
-
-const CharHead = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const CharName = styled.span<WithTheme>`
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
-`;
-
-const TypeTag = styled.span.withConfig({ shouldForwardProp: p => p !== 'color' })<{ color: string }>`
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  color: #fff;
-  background: ${({ color }) => color};
-`;
-
-const CharDesc = styled.div<WithTheme>`
-  margin-top: 6px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.navColor};
-  line-height: 1.5;
-  white-space: pre-line;
-`;
-
-const FormTitle = styled.h2<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.xlarge};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
-  margin-bottom: 18px;
-`;
-
-const Row = styled.div`
-  display: flex;
-  gap: 12px;
-  @media (max-width: 844px) {
-    flex-wrap: wrap;
-  }
-`;
-
-const Field = styled.div<WithTheme>`
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-  min-width: 140px;
-  margin-bottom: 16px;
-
-  > label {
-    font-size: ${({ theme }) => theme.sizes.small};
-    font-weight: 600;
-    color: ${({ theme }) => theme.colors.subColor};
-  }
-  input[type='text'],
-  input[type='number'] {
-    height: 42px;
-    padding: 0 10px;
-    border: 1px solid #c4c4c4;
-    border-radius: 6px;
-    font-size: 16px;
-    &:focus {
-      outline: none;
-      border-color: #4a2c82;
-    }
-  }
-`;
-
-const FileRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
-
-const FileButton = styled.label<WithTheme>`
-  display: inline-flex;
-  align-items: center;
-  padding: 9px 16px;
-  background: #4a2c82;
-  color: #fff;
-  border-radius: 6px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  &:hover {
-    opacity: 0.9;
-  }
-`;
-
-const FileName = styled.span<WithTheme>`
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.navColor};
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const PreviewBox = styled.div`
-  margin-top: 8px;
-  img {
-    max-width: 220px;
-    width: 100%;
-    border-radius: 8px;
-  }
-`;
-
-const CheckLine = styled.label<WithTheme>`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ theme }) => theme.colors.navColor};
-  cursor: pointer;
-`;
-
-const CharEditList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-`;
-
-const CharEditRow = styled.div<WithTheme>`
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  border: 1px solid ${({ theme }) => theme.colors.lineColor};
-  border-radius: 8px;
-  padding: 10px;
-
-  textarea {
-    border: 1px solid #c4c4c4;
-    border-radius: 6px;
-    padding: 8px 10px;
-    font-size: 16px;
-    font-family: inherit;
-    resize: vertical;
-    &:focus {
-      outline: none;
-      border-color: #4a2c82;
-    }
-  }
-`;
-
-const CharLineTop = styled.div`
-  display: flex;
-  gap: 8px;
-
-  input {
-    flex: 1;
-    min-width: 0;
-    height: 42px;
-    padding: 0 10px;
-    border: 1px solid #c4c4c4;
-    border-radius: 6px;
-    font-size: 16px;
-  }
-  select {
-    flex: 0 0 110px;
-    height: 42px;
-    padding: 0 8px;
-    border: 1px solid #c4c4c4;
-    border-radius: 6px;
-    font-size: 16px;
-  }
-`;
-
-const RemoveBtn = styled.button`
-  flex: 0 0 auto;
-  padding: 0 12px;
-  background: #fff;
-  color: #ff5e57;
-  border: 1px solid #ff5e57;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-`;
-
-const AddBtn = styled.button<WithTheme>`
-  margin-top: 10px;
-  align-self: flex-start;
-  padding: 9px 16px;
-  background: #fff;
-  color: #4a2c82;
-  border: 1px dashed #4a2c82;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-`;
-
-const Empty = styled.div<WithTheme>`
-  text-align: center;
-  padding: 24px 0;
-  color: ${({ theme }) => theme.colors.navColor};
-  font-weight: ${({ theme }) => theme.weight.semiBold};
-`;

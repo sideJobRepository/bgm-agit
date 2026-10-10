@@ -1,7 +1,6 @@
 //pagindation
-import styled from 'styled-components';
+import { Nav, PageNumberBox, PageButton, Ellipsis } from './Pagination.styles.ts';
 import { CaretLeft, CaretRight } from 'phosphor-react';
-import type { WithTheme } from '../../styles/styled-props.ts';
 
 type Props = {
   current: number;
@@ -83,50 +82,3 @@ export default function Pagination({ current, totalPages, onChange }: Props) {
     </Nav>
   );
 }
-
-const Nav = styled.nav<WithTheme>`
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: center;
-
-  svg {
-    width: 12px;
-    height: 12px;
-    color: ${({ theme }) => theme.colors.subColor};
-    cursor: pointer;
-
-    &.active {
-      color: ${({ theme }) => theme.colors.white};
-    }
-  }
-`;
-
-const PageNumberBox = styled.div`
-  display: flex;
-  gap: 8px;
-`;
-
-const PageButton = styled.button<WithTheme>`
-  background-color: ${({ theme }) => theme.colors.white};
-  border: none;
-  cursor: pointer;
-  color: ${({ theme }) => theme.colors.subColor};
-  padding: 4px 8px;
-  font-size: ${({ theme }) => theme.desktop.sizes.sm};
-
-  &.active {
-    background-color: ${({ theme }) => theme.colors.blackColor};
-    color: ${({ theme }) => theme.colors.white};
-    border-radius: 4px;
-  }
-
-  &:hover:not(.active) {
-    opacity: 0.8;
-  }
-`;
-
-const Ellipsis = styled.span<WithTheme>`
-  color: ${({ theme }) => theme.colors.subColor};
-  user-select: none;
-`;

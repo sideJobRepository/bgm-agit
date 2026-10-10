@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import styled from 'styled-components';
+import { Wrapper, TitleBox, TimeTitle, ResetButton, TimeBox, TimeSlotButton, OptionBox, OptionTitle, ToggleGroup, ToggleButton, Button, MessageBox } from './ReservationTimePanel.styles.ts';
 import { FaUsers } from 'react-icons/fa';
-import type { WithTheme } from '../../styles/styled-props';
 import { useRecoilValue } from 'recoil';
 import { reservationDataState, reservationState } from '../../recoil/state/reservationState.ts';
 import type { ReservationDatas } from '../../types/reservation.ts';
@@ -131,12 +130,17 @@ export default function ReservationTimePanel({
       return;
     }
 
-    // 처음 고르거나, 선택 구간과 떨어진 칸이면 그 칸부터 새로 선택
+    // 처음 고르거나 한 칸만 골라 둔 상태면 누른 칸으로 바로 옮긴다.
+    // 두 칸 이상 골라 둔 뒤 떨어진 칸을 누르면 고른 구간을 지우지 않고 안내만 한다 —
+    // 예전엔 그 칸부터 새로 골라서, 잘못 누르면 공들여 고른 구간이 사라지고 잘못 누른 칸만 남았다
     const extendsRange =
       selectedIdx.length > 0 && (isAdjacent(clickedIdx, first) || isAdjacent(last, clickedIdx));
     if (!extendsRange) {
-      if (selectedIdx.length > 0) {
-        toast.info('예약 시간은 연속된 시간대로 선택해 주세요. 선택한 시간부터 다시 고릅니다.');
+      if (selectedIdx.length > 1) {
+        toast.info(
+          "이어진 시간만 추가할 수 있어요. 다른 시간대로 바꾸려면 '선택 초기화'를 눌러 주세요.",
+        );
+        return;
       }
       setSelectedTimes([time]);
       return;
@@ -315,7 +319,14 @@ export default function ReservationTimePanel({
       )}
 
       {/* 시간 버튼을 누르는 바로 그 순간에 날짜가 같은 화면에 있어야 오예약을 막을 수 있다 */}
-      <TimeTitle>{formatYmdWithWeekday(date)} 시간 선택</TimeTitle>
+      <TimeTitle>
+        <span>{formatYmdWithWeekday(date)} 시간 선택</span>
+        {selectedTimes.length > 0 && (
+          <ResetButton type="button" onClick={() => setSelectedTimes([])}>
+            선택 초기화
+          </ResetButton>
+        )}
+      </TimeTitle>
 
       <TimeBox>
         {intervals.map(([start, end], idx) => {
@@ -350,197 +361,3 @@ export default function ReservationTimePanel({
     </Wrapper>
   );
 }
-
-const Wrapper = styled.div<WithTheme>`
-  width: 100%;
-  display: flex;
-  gap: 16px;
-  flex-direction: column;
-  align-items: center;
-`;
-
-const TitleBox = styled.div<WithTheme>`
-  display: flex;
-  flex-direction: column;
-  color: ${({ theme }) => theme.colors.subColor};
-  width: 50%;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    width: 100%;
-  }
-
-  .count-box {
-    display: flex;
-    margin-top: 10px;
-    gap: 3px;
-    align-items: center;
-
-    .title {
-      color: ${({ theme }) => theme.colors.blueColor};
-      margin-right: 6px;
-    }
-
-    input {
-      flex: 1;
-      border: none;
-      width: 100%;
-      padding: 4px 4px;
-      text-align: center;
-      font-size: ${({ theme }) => theme.sizes.small};
-      outline: none;
-      color: ${({ theme }) => theme.colors.subColor};
-      background: transparent;
-    }
-  }
-
-  div {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-
-    h2 {
-      color: ${({ theme }) => theme.colors.menuColor};
-      font-size: ${({ theme }) => theme.sizes.bigLarge};
-      font-weight: ${({ theme }) => theme.weight.bold};
-      margin-right: 10px;
-      white-space: nowrap;
-    }
-
-    svg {
-      margin: 3px 4px 0 0;
-      font-size: ${({ theme }) => theme.sizes.medium};
-    }
-
-    span {
-      margin-top: 3px;
-      font-size: ${({ theme }) => theme.sizes.medium};
-    }
-
-    p {
-      padding: 4px 0;
-      color: ${({ theme }) => theme.colors.redColor};
-      font-size: ${({ theme }) => theme.sizes.small};
-    }
-  }
-`;
-
-const TimeTitle = styled.div<WithTheme>`
-  width: 50%;
-  font-size: ${({ theme }) => theme.sizes.medium};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.menuColor};
-
-  @media ${({ theme }) => theme.device.mobile} {
-    width: 100%;
-    font-size: ${({ theme }) => theme.sizes.small};
-  }
-`;
-
-const TimeBox = styled.div<WithTheme>`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); // 너비 반응형
-  gap: 10px;
-  width: 50%;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    grid-template-columns: repeat(2, 1fr); // 모바일에서는 2열 고정 (선택사항)
-    width: 100%;
-  }
-`;
-
-const TimeSlotButton = styled.button<WithTheme & { selected: boolean }>`
-  -webkit-tap-highlight-color: transparent;
-  padding: 10px 14px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  color: ${({ selected, theme }) => (selected ? theme.colors.white : theme.colors.subColor)};
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  background-color: ${({ selected, theme }) => (selected ? theme.colors.blueColor : 'white')};
-  cursor: pointer;
-  transition: all 0.2s;
-
-  /* 일반 룸은 13슬롯이 모바일 2열 = 7행으로 붙는다. 터치 타겟이 작으면 인접 시간대 오탭이 곧 오예약이 된다. */
-  @media ${({ theme }) => theme.device.mobile} {
-    min-height: 44px;
-  }
-
-  &:hover {
-    background-color: ${({ selected, theme }) =>
-      selected ? theme.colors.blueColor : theme.colors.softColor};
-    color: ${({ selected, theme }) => (selected ? theme.colors.white : theme.colors.subColor)};
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    /* 캘린더 비활성 타일과 같은 시각 언어. opacity 0.3 만으로는 "없는 시간"과 "찬 시간"이 구분되지 않았다. */
-    opacity: 0.45;
-    text-decoration: line-through;
-  }
-`;
-
-const OptionBox = styled.div<WithTheme>`
-  width: 50%;
-
-  @media ${({ theme }) => theme.device.mobile} {
-    width: 100%;
-  }
-`;
-
-const OptionTitle = styled.div<WithTheme>`
-  margin-bottom: 8px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  font-weight: ${({ theme }) => theme.weight.bold};
-  color: ${({ theme }) => theme.colors.subColor};
-`;
-
-const ToggleGroup = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-`;
-
-const ToggleButton = styled.button<WithTheme & { $active: boolean }>`
-  -webkit-tap-highlight-color: transparent;
-  flex: 1 1 auto;
-  min-width: 120px;
-  padding: 10px 14px;
-  font-size: ${({ theme }) => theme.sizes.small};
-  border-radius: 8px;
-  border: 1px solid ${({ $active, theme }) => ($active ? theme.colors.blueColor : '#ccc')};
-  background-color: ${({ $active, theme }) => ($active ? theme.colors.blueColor : 'white')};
-  color: ${({ $active, theme }) => ($active ? theme.colors.white : theme.colors.subColor)};
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    opacity: 0.85;
-  }
-`;
-
-const Button = styled.button<WithTheme>`
-  padding: 12px 0;
-  width: 50%;
-  background-color: ${({ theme }) => theme.colors.blueColor};
-  border: none;
-  color: ${({ theme }) => theme.colors.white};
-  cursor: pointer;
-  margin-top: 10px;
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-
-  &:hover {
-    opacity: 0.8;
-  }
-
-  @media ${({ theme }) => theme.device.mobile} {
-    width: 100%;
-  }
-`;
-
-const MessageBox = styled.div`
-  flex-direction: column;
-`;
