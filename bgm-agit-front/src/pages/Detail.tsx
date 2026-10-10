@@ -1,4 +1,3 @@
-import styled from 'styled-components';
 import ImageGrid from '../components/grid/ImageGrid.tsx';
 import { useMediaQuery } from 'react-responsive';
 import { Wrapper } from '../styles';
@@ -9,6 +8,7 @@ import { detailDataState } from '../recoil';
 import { userState } from '../recoil/state/userState.ts';
 import type { GridItem, PageItem } from '../types/main.ts';
 import { useEffect, useState } from 'react';
+import { GridBox } from './Detail.styles.ts';
 
 export default function Detail() {
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
@@ -132,11 +132,3 @@ export default function Detail() {
     </Wrapper>
   );
 }
-
-const GridBox = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-  max-width: 1280px;
-`;

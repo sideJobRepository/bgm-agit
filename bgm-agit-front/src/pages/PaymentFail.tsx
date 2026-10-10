@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import styled from 'styled-components';
 import { toPaymentFailMessage } from '../config/paymentErrors.ts';
 import { reportPaymentFailure } from '../utils/paymentReport.ts';
+import { ResultBox } from './PaymentFail.styles.ts';
 
 export default function PaymentFail() {
   const [searchParams] = useSearchParams();
@@ -36,25 +36,3 @@ export default function PaymentFail() {
     </ResultBox>
   );
 }
-
-const ResultBox = styled.div`
-  display: flex;
-  flex: 1;
-  width: 100%;
-  min-height: 360px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 40px 20px;
-  text-align: center;
-
-  button {
-    border: 0;
-    border-radius: 6px;
-    background: #093a6e;
-    color: #fff;
-    cursor: pointer;
-    padding: 10px 18px;
-  }
-`;
