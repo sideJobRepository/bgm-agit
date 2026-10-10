@@ -53,6 +53,10 @@ export const TitleBox = styled.div<WithTheme>`
 `;
 
 export const TimeTitle = styled.div<WithTheme>`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.space.sm};
   width: 100%;
   max-width: 760px;
   padding: ${({ theme }) => `${theme.space.md} ${theme.space.lg}`};
@@ -66,6 +70,26 @@ export const TimeTitle = styled.div<WithTheme>`
   @media ${({ theme }) => theme.device.mobile} {
     width: 100%;
     font-size: ${({ theme }) => theme.sizes.medium};
+  }
+`;
+
+// 시간 제목 줄 오른쪽의 '선택 초기화'. 고른 시간이 있을 때만 보인다
+export const ResetButton = styled.button<WithTheme>`
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid ${({ theme }) => theme.colors.borderStrong};
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.subColor};
+  font-family: inherit;
+  font-size: ${({ theme }) => theme.sizes.small};
+  font-weight: 700;
+  letter-spacing: normal;
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.softColor};
   }
 `;
 

@@ -25,8 +25,9 @@ const palette = {
   textMuted: '#5B6270',
   textSubtle: '#8A919E',
 
-  border: '#E5E5E5',
-  borderStrong: '#D9D9D9',
+  // 칸 경계가 또렷하게 보이도록 진하게 둔다. borderStrong 은 예전 입력칸·에디터 테두리(#c4c4c4)와 같은 값
+  border: '#DCDCDC',
+  borderStrong: '#C4C4C4',
 
   success: '#1A7D55',
   danger: '#FF5E57',

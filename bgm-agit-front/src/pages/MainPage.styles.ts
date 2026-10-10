@@ -4,7 +4,7 @@ import { buttonStyle, cardStyle, focusRing, sectionTitleStyle } from '../styles/
 
 const c = theme.colors;
 
-// 메인 = 카드 없이 바탕 위에 놓인 대표 영역(Hero) + 아래 흰 카드 섹션들
+// 메인 = 대표 영역(Hero) + 아래 카드 섹션들. 바탕이 흰색이라 Hero 도 테두리로 영역을 나눈다
 
 export const Hero = styled.section`
   display: grid;
@@ -12,12 +12,17 @@ export const Hero = styled.section`
   gap: 48px;
   align-items: center;
   width: 100%;
-  padding: 56px 0 48px;
+  margin: ${theme.space.lg} 0 ${theme.space.xl};
+  padding: 40px 32px;
+  border: 1px solid ${c.border};
+  border-radius: ${theme.radius.lg};
+  background: ${c.surface};
 
   @media ${theme.device.mobile} {
     grid-template-columns: minmax(0, 1fr);
     gap: ${theme.space.xl};
-    padding: ${theme.space.xl} 0;
+    margin: 0 0 ${theme.space.lg};
+    padding: ${theme.space.xl} ${theme.space.lg};
   }
 `;
 
@@ -138,10 +143,16 @@ export const SecondaryAction = styled.button`
   }
 `;
 
+// 흰 바탕 + 베이지 테두리 + 진갈색 글씨. 옆 '보유게임 보기'(남색 테두리)와 같은 모양, 색만 다르게
 export const TextAction = styled.button`
-  ${buttonStyle('ghost', 'lg')}
-  padding: 0 12px;
+  ${buttonStyle('secondary', 'lg')}
+  background: ${c.white};
+  border-color: ${c.subTextBoxColor};
   color: ${c.bronzeColor};
+
+  &:hover:not(:disabled) {
+    background: ${c.subBgColor};
+  }
 `;
 
 export const HeroMedia = styled.div`
@@ -188,13 +199,13 @@ export const ReservationSection = styled.section`
 export const PairRow = styled.div`
   & > ${Section}:first-child {
     background: ${c.softColor};
-    border-color: ${c.softColor};
+    border-color: ${c.border};
     color: ${c.greenColor};
   }
 
   & > ${Section}:last-child {
     background: ${c.basicColor};
-    border-color: ${c.basicColor};
+    border-color: ${c.border};
     color: ${c.bronzeColor};
   }
 

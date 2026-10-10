@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Wrapper, TitleBox, TimeTitle, TimeBox, TimeSlotButton, OptionBox, OptionTitle, ToggleGroup, ToggleButton, Button, MessageBox } from './ReservationTimePanel.styles.ts';
+import { Wrapper, TitleBox, TimeTitle, ResetButton, TimeBox, TimeSlotButton, OptionBox, OptionTitle, ToggleGroup, ToggleButton, Button, MessageBox } from './ReservationTimePanel.styles.ts';
 import { FaUsers } from 'react-icons/fa';
 import { useRecoilValue } from 'recoil';
 import { reservationDataState, reservationState } from '../../recoil/state/reservationState.ts';
@@ -130,12 +130,17 @@ export default function ReservationTimePanel({
       return;
     }
 
-    // 처음 고르거나, 선택 구간과 떨어진 칸이면 그 칸부터 새로 선택
+    // 처음 고르거나 한 칸만 골라 둔 상태면 누른 칸으로 바로 옮긴다.
+    // 두 칸 이상 골라 둔 뒤 떨어진 칸을 누르면 고른 구간을 지우지 않고 안내만 한다 —
+    // 예전엔 그 칸부터 새로 골라서, 잘못 누르면 공들여 고른 구간이 사라지고 잘못 누른 칸만 남았다
     const extendsRange =
       selectedIdx.length > 0 && (isAdjacent(clickedIdx, first) || isAdjacent(last, clickedIdx));
     if (!extendsRange) {
-      if (selectedIdx.length > 0) {
-        toast.info('예약 시간은 연속된 시간대로 선택해 주세요. 선택한 시간부터 다시 고릅니다.');
+      if (selectedIdx.length > 1) {
+        toast.info(
+          "이어진 시간만 추가할 수 있어요. 다른 시간대로 바꾸려면 '선택 초기화'를 눌러 주세요.",
+        );
+        return;
       }
       setSelectedTimes([time]);
       return;
@@ -314,7 +319,14 @@ export default function ReservationTimePanel({
       )}
 
       {/* 시간 버튼을 누르는 바로 그 순간에 날짜가 같은 화면에 있어야 오예약을 막을 수 있다 */}
-      <TimeTitle>{formatYmdWithWeekday(date)} 시간 선택</TimeTitle>
+      <TimeTitle>
+        <span>{formatYmdWithWeekday(date)} 시간 선택</span>
+        {selectedTimes.length > 0 && (
+          <ResetButton type="button" onClick={() => setSelectedTimes([])}>
+            선택 초기화
+          </ResetButton>
+        )}
+      </TimeTitle>
 
       <TimeBox>
         {intervals.map(([start, end], idx) => {

@@ -8,7 +8,10 @@ import { buttonStyle, cardStyle } from '../../styles/mixins.ts';
 const HEADER_HEIGHT = '80px';
 
 // 대메뉴 칸 너비. 서브메뉴 열(SubLi)도 같은 너비라 위아래 칸이 맞는다
-const MENU_COLUMN_WIDTH = '132px';
+const MENU_COLUMN_WIDTH = '148px';
+
+// 모바일 메뉴 하위 항목 한 칸 높이
+const SUB_ITEM_HEIGHT = 44;
 
 export const Wrapper = styled.div<WithTheme>`
   height: ${HEADER_HEIGHT};
@@ -72,8 +75,9 @@ export const Center = styled.nav<WithTheme>`
 
   ul {
     color: ${({ theme }) => theme.colors.menuColor};
-    font-size: ${({ theme }) => theme.sizes.medium};
-    font-weight: ${({ theme }) => theme.weight.semiBold};
+    /* 예전(20px bold)과 개편(16px) 사이 */
+    font-size: ${({ theme }) => theme.sizes.large};
+    font-weight: ${({ theme }) => theme.weight.bold};
 
     li {
       display: flex;
@@ -121,6 +125,7 @@ export const Right = styled.div<WithTheme>`
       ${buttonStyle('ghost', 'md')}
       /* 예전처럼 채우지 않은 글자+아이콘 버튼 */
       color: ${({ theme }) => theme.colors.subMenuColor};
+      font-size: ${({ theme }) => theme.sizes.medium};
 
       &:hover:not(:disabled) {
         background: ${({ theme }) => theme.colors.subTextBoxColor};
@@ -208,7 +213,7 @@ export const SubMenuWrapper = styled.nav<WithTheme>`
     align-items: stretch;
     list-style: none;
     gap: 4px;
-    font-size: ${({ theme }) => theme.sizes.small};
+    font-size: ${({ theme }) => theme.sizes.medium};
     font-weight: ${({ theme }) => theme.weight.semiBold};
   }
 `;
@@ -217,7 +222,7 @@ export const SubLi = styled.li<WithTheme & { $active: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
+  min-height: 48px;
   width: ${MENU_COLUMN_WIDTH};
   padding: 0 12px;
   border-radius: ${({ theme }) => theme.radius.md};
@@ -266,12 +271,15 @@ export const MobileMenu = styled.div<WithTheme & { $open: boolean }>`
   border-left: 1px solid ${({ theme }) => theme.colors.subTextBoxColor};
   box-shadow: ${({ theme }) => theme.shadow.lg};
 
-  transform: ${({ $open }) => ($open ? 'translateX(0)' : 'translateX(100%)')};
-  opacity: ${({ $open }) => ($open ? 1 : 0)};
+  /* 미끄러지기만 한다. 투명도까지 같이 바꾸면 큰 그림자를 매 프레임 다시 그려 저사양 폰에서 끊긴다.
+     닫힌 뒤엔 visibility 로 숨겨 그림자 끝이 화면 가장자리에 남지 않게 한다 */
+  transform: ${({ $open }) => ($open ? 'translate3d(0, 0, 0)' : 'translate3d(100%, 0, 0)')};
+  visibility: ${({ $open }) => ($open ? 'visible' : 'hidden')};
   pointer-events: ${({ $open }) => ($open ? 'auto' : 'none')};
+  will-change: transform;
   transition:
-    transform 0.3s ease,
-    opacity 0.3s ease;
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear ${({ $open }) => ($open ? '0s' : '0.32s')};
 
   ul {
     display: flex;
@@ -316,7 +324,8 @@ export const MobileMenu = styled.div<WithTheme & { $open: boolean }>`
 `;
 
 export const MobileSubLi = styled.li<WithTheme & { $active: boolean }>`
-  min-height: 44px !important;
+  /* AnimatedSubLiWrapper 의 펼침 높이(SUB_ITEM_HEIGHT)와 같아야 접고 펼 때 멈칫하지 않는다 */
+  min-height: ${SUB_ITEM_HEIGHT}px !important;
   padding-left: 28px !important;
   font-size: ${({ theme }) => theme.sizes.small};
   font-weight: ${({ $active, theme }) => ($active ? theme.weight.bold : theme.weight.semiBold)};
@@ -330,16 +339,20 @@ export const MobileSubLi = styled.li<WithTheme & { $active: boolean }>`
   }
 `;
 
+// 펼침 높이를 실제 칸 높이에 맞춘다. 예전엔 60px 까지 늘였는데 칸은 44px 이라 접을 때 앞 1/4 동안 아무 변화가 없었다.
+// 접힌 항목은 ul 의 gap(4px)을 음수 margin 으로 지워 펼치고 접을 때 칸이 밀리지 않게 한다
 export const AnimatedSubLiWrapper = styled.div<WithTheme & { $visible: boolean }>`
   width: 100%;
   overflow: hidden;
-  max-height: ${({ $visible }) => ($visible ? '60px' : '0')};
+  max-height: ${({ $visible }) => ($visible ? `${SUB_ITEM_HEIGHT}px` : '0')};
+  margin-top: ${({ $visible }) => ($visible ? '0' : '-4px')};
   opacity: ${({ $visible }) => ($visible ? 1 : 0)};
-  transform: translateY(${({ $visible }) => ($visible ? '0' : '-10px')});
+  visibility: ${({ $visible }) => ($visible ? 'visible' : 'hidden')};
   transition:
-    max-height 0.3s ease,
-    opacity 0.3s ease,
-    transform 0.3s ease;
+    max-height 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    margin-top 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease,
+    visibility 0s linear ${({ $visible }) => ($visible ? '0s' : '0.26s')};
 `;
 
 // 문의하기 · 로그인/로그아웃 — 메뉴 아래 버튼 줄

@@ -358,6 +358,18 @@ export default function ImageGrid({ pageData }: Props) {
     setReservationData(prev => (prev ? { ...prev, date: selectedDate, ids: undefined } : prev));
   }, [selectedDate, location.pathname, labelGb]);
 
+  // 예약 화면은 날짜를 고르기 전엔 방 카드를 그리지 않아서, 날짜를 누른 뒤에야 사진을 받기 시작해 늦게 떴다.
+  // 방 목록이 오면 사진을 미리 받아 둬서 날짜를 누르면 브라우저 캐시에서 바로 그리게 한다
+  useEffect(() => {
+    if (labelGb !== 3 || !items) return;
+    items.forEach(item => {
+      if (!item.image) return;
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = item.image;
+    });
+  }, [items, labelGb]);
+
   // /detail/room ↔ /detail/mahjongRental 는 App.tsx 의 "detail/*" 한 라우트라 언마운트되지 않는다.
   // 초기화하지 않으면 마작 페이지에 방 페이지의 날짜·선택이 그대로 남는다.
   useEffect(() => {

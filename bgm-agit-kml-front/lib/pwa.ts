@@ -88,3 +88,25 @@ export function setupPwa() {
     navigator.serviceWorker.register('/record/sw.js', { scope: '/record' }).catch(() => {});
   }
 }
+
+// 설치 배너 ✕ 를 누르면 일주일 동안 안 띄운다. 저장소를 못 쓰는 환경(사생활 보호 모드 등)이면 그냥 매번 띄운다.
+// 메인과 /record 는 같은 도메인이라 localStorage 를 같이 쓰므로 키를 앱마다 따로 둔다
+const BANNER_SNOOZE_KEY = 'pwaBannerSnoozeUntil_record';
+const BANNER_SNOOZE_MS = 7 * 24 * 60 * 60 * 1000;
+
+export function isInstallBannerSnoozed(): boolean {
+  try {
+    const until = Number(localStorage.getItem(BANNER_SNOOZE_KEY));
+    return Number.isFinite(until) && until > Date.now();
+  } catch {
+    return false;
+  }
+}
+
+export function snoozeInstallBanner(): void {
+  try {
+    localStorage.setItem(BANNER_SNOOZE_KEY, String(Date.now() + BANNER_SNOOZE_MS));
+  } catch {
+    // 저장 못 하면 이번 화면에서만 닫힌다
+  }
+}

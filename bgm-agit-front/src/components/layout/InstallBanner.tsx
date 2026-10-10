@@ -5,16 +5,18 @@ import {
   isInAppBrowser,
   isIos,
   isMobile,
+  isInstallBannerSnoozed,
   isStandalone,
   promptInstall,
+  snoozeInstallBanner,
   subscribeInstallPrompt,
 } from '../../utils/pwa.ts';
 import { Banner, Icon, Text, InstallButton, CloseButton } from './InstallBanner.styles.ts';
 
 export default function InstallBanner() {
   const [canPrompt, setCanPrompt] = useState(canPromptInstall);
-  // 닫기는 지금 화면에서만. 설치를 안 했으면 다음 방문(새로고침)에 다시 띄운다
-  const [closed, setClosed] = useState(false);
+  // ✕ 로 닫으면 일주일 동안 안 띄운다(snoozeInstallBanner)
+  const [closed, setClosed] = useState(isInstallBannerSnoozed);
 
   useEffect(() => subscribeInstallPrompt(() => setCanPrompt(canPromptInstall())), []);
 
@@ -26,6 +28,10 @@ export default function InstallBanner() {
   if (!canPrompt && !iosGuide) return null;
 
   const close = () => setClosed(true);
+  const dismiss = () => {
+    snoozeInstallBanner();
+    close();
+  };
 
   // 설치하면 브라우저가 더는 설치 가능 신호를 보내지 않아 다음 방문부터 저절로 안 뜬다.
   // 설치 창에서 취소했으면 이번 화면에서만 거둔다
@@ -46,7 +52,7 @@ export default function InstallBanner() {
         )}
       </Text>
       {canPrompt && <InstallButton onClick={install}>설치</InstallButton>}
-      <CloseButton onClick={close} aria-label="닫기">
+      <CloseButton onClick={dismiss} aria-label="닫기">
         <FiX size={18} aria-hidden="true" />
       </CloseButton>
     </Banner>
