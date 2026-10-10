@@ -11,6 +11,7 @@ import { noticePopupState } from '../recoil/state/noticeState.ts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { NoticeContent } from '../types/notice.ts';
 import NoticePopupDetail from './NoticePopupDetail.tsx';
+import { theme } from '../styles/theme.ts';
 import { TopSection, LeftSection, ContentBox, LogoBox, GridItem, RightSection, GameFoodSection, ReservationNoticeSection, GameSection, FoodSection, ReservationSection, NoticeSection, TitleBox, SliderBox, ABox } from './MainPage.styles.ts';
 
 // 모듈 상수로 둬야 렌더마다 새 배열이 되어 재조회가 도는 일이 없다
@@ -38,7 +39,7 @@ export default function MainPage() {
     [rooms]
   );
 
-  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+  const isMobile = useMediaQuery({ query: theme.device.mobile });
 
   const navigate = useNavigate();
 

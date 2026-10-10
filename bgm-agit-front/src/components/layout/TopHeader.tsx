@@ -142,8 +142,12 @@ export default function TopHeader() {
         <ul>
           {menus?.map((menu, i) => {
             if (menu.bgmAgitMainMenuId === 14 && !user) return null; // user가 없는데 id가 14면 안 보이게
+            // 하위 메뉴 중 지금 주소가 있으면 상위 메뉴를 현재 메뉴로 표시
+            const active = menu.subMenu.some(
+              sub => !!sub.link && (location.pathname === sub.link || location.pathname.startsWith(`${sub.link}/`))
+            );
             return (
-              <li key={i}>
+              <li key={i} className={active ? 'active' : undefined} aria-current={active ? 'page' : undefined}>
                 <a>{menu.name}</a>
               </li>
             );

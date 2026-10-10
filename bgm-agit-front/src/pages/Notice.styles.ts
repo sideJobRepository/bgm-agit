@@ -52,8 +52,8 @@ export const Table = styled.table<WithTheme>`
     color: ${c.textSubtle};
   }
 
-  /* 데스크탑에서는 3번째가 날짜 */
-  @media (min-width: 769px) {
+  /* 데스크탑에서는 3번째가 날짜. 845px = theme.device.mobile(844px) 바로 위 */
+  @media (min-width: 845px) {
     td:nth-child(3) {
       color: ${c.textMuted};
       font-size: 14px;

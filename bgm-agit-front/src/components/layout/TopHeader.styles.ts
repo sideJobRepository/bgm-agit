@@ -87,7 +87,8 @@ export const Center = styled.nav<WithTheme>`
           color 0.15s ease;
       }
 
-      &:hover a {
+      &:hover a,
+      &.active a {
         background-color: ${({ theme }) => theme.colors.primarySoft};
         color: ${({ theme }) => theme.colors.primary};
         font-weight: ${({ theme }) => theme.weight.bold};
