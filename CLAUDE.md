@@ -528,7 +528,8 @@ kml:
 - **표지 정리 화면** `/murderCoverBoard`(`pages/MurderCoverBoard.tsx`, 목록의 "표지 정리" 버튼) — 표지 없는 게임을 한 화면에 늘어놓고 줄마다 후보를 보여준다(보이는 줄만, 동시 2건). **후보를 누르면 확인 없이 바로 저장**되고 줄이 사라진다. 고른 줄에 이미지·주소 Ctrl+V, 드래그, 주소 입력 후 Enter 도 받는다. "이름도 그 제목으로 바꾸기"를 켜면 게임명을 머미로그 제목으로 바꾸고 인원·시간은 **빈 칸만** 채운다
   - 저장 `PUT /murder-games/{id}/cover`(multipart `image` 또는 `imageSourceUrl`, 선택 `name`/`minPlayers`/`maxPlayers`/`playMinutes`) → `MurderCoverAutoFillService.applyCover`
   - 운영 nginx `$bgm_spa_route` 에 `/murderCoverBoard` 추가 필요
-- 상세 폼 "표지 후보 보기"도 같은 `GET /murder-games/cover-candidates?name=` 를 쓴다. 직접 찾기 링크는 텀블벅·구글 이미지(`utils/murderCover.ts`)
+- **게임 상세에서 바로 넣기**(관리자) — 표지 없는 게임은 상세에 들어가면 후보가 바로 뜨고, 누르거나 Ctrl+V·표지 칸에 끌어놓으면 확인 없이 저장된다(`PUT /cover`). **수정 폼에는 표지가 없다**(이름·인원·시간만). 표지 지우기는 상세의 [표지 지우기]. 등록 폼만 표지를 같이 받는다(아직 게임이 없어서). 공용 함수 `utils/murderCover.ts`
+- **저장 전 크기 맞추기** — 표지는 전부 `murder/util/MurderCoverStorage` 를 거쳐 S3 에 올라간다. `CoverImageNormalizer` 가 둘레 여백(네 모서리 색 기준, 투명은 흰색으로)을 걷고 3:4 가운데 자르기 → 600×800 JPG. 흰 여백이 넓은 상품 사진·정사각형 그림이 섞여 카드 크기가 들쭉날쭉했다. webp 읽기는 TwelveMonkeys `imageio-webp`. 못 읽는 형식은 원본 그대로 올린다. **표지를 올리는 새 경로를 만들면 반드시 이걸 거칠 것**
 - 네이버 검색 API 는 신규 등록에 제휴 신청이 필요했다. 카카오(다음) 이미지 검색은 결과가 뉴스·블로그, 웹 검색은 텀블벅 페이지가 안 잡혀 쓰지 않았다
 - 주소는 서버가 받아온다(`murder/util/RemoteImageFetcher`, 브라우저 fetch 는 CORS). **페이지 주소**(텀블벅 프로젝트·판매처)면 `og:image`/`twitter:image` 를 꺼내 받는다. 미리보기는 `GET /murder-games/resolve-image?url=`. http(s)만, 내부 IP 거부(리다이렉트 단계마다), `image/*`·10MB 상한. 저장은 `S3FileUtils.storeBytes`
 - 등록·수정·삭제·표지 넣기는 컨트롤러 `requireAdmin`(2026-10-12 전엔 서버 검사가 없었다)

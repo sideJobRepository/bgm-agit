@@ -72,7 +72,9 @@ export const DetailInfo = styled.div`
   }
 `;
 
-export const Cover = styled.div`
+// 관리자에겐 표지 칸이 끌어놓기 자리도 된다($droppable). 끌고 있는 동안 테두리로 알려준다
+export const Cover = styled.div<{ $droppable?: boolean; $active?: boolean }>`
+  display: block;
   flex: 0 0 auto;
   width: 100%;
   max-width: 280px;
@@ -80,6 +82,8 @@ export const Cover = styled.div`
   border-radius: ${theme.radius.md};
   overflow: hidden;
   background: ${c.surfaceAlt};
+  border: 2px ${({ $droppable }) => ($droppable ? 'dashed' : 'solid')} ${({ $active }) => ($active ? c.info : 'transparent')};
+  cursor: ${({ $droppable }) => ($droppable ? 'pointer' : 'default')};
 
   img {
     display: block;
@@ -103,6 +107,9 @@ export const NoImage = styled.div<WithTheme>`
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.08em;
+  white-space: pre-line;
+  text-align: center;
+  line-height: 1.6;
 `;
 
 export const DetailTitle = styled.h2<WithTheme>`
@@ -185,64 +192,18 @@ export const Field = styled.div<WithTheme>`
   }
 `;
 
-export const FileRow = styled.div`
+// 상세·등록 폼의 표지 후보 영역
+export const CoverPanel = styled.div`
   display: flex;
-  align-items: center;
-  gap: ${theme.space.md};
-  min-width: 0;
-`;
-
-// 개편 전: 남색 채운 버튼 + 흰 글씨
-export const FileButton = styled.label<WithTheme>`
-  ${buttonStyle('secondary', 'md')};
-  flex-shrink: 0;
-  background: ${c.info};
-  border-color: ${c.info};
-  color: ${c.white};
-
-  &:hover:not(:disabled) {
-    background: ${c.info};
-    opacity: 0.9;
-  }
-`;
-
-export const FileName = styled.span<WithTheme>`
-  min-width: 0;
-  color: ${c.navColor};
-  font-size: 14px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-export const PreviewBox = styled.div`
-  margin-top: ${theme.space.sm};
-
-  img {
-    display: block;
-    width: 100%;
-    max-width: 220px;
-    border: 1px solid ${c.border};
-    border-radius: ${theme.radius.md};
-  }
-`;
-
-export const CheckLine = styled.label<WithTheme>`
-  display: inline-flex;
-  align-items: center;
+  flex-direction: column;
   gap: ${theme.space.sm};
-  min-height: 44px;
-  margin-top: ${theme.space.xs};
-  color: ${c.navColor};
-  font-size: 14px;
-  cursor: pointer;
+  margin-top: ${theme.space.lg};
+`;
 
-  input {
-    width: 18px;
-    height: 18px;
-    accent-color: ${c.primary};
-    ${focusRing};
-  }
+export const CoverHint = styled.p<WithTheme>`
+  margin: 0;
+  color: ${c.textMuted};
+  font-size: 14px;
 `;
 
 // 표지를 찾을 사이트 링크. 게임명으로 검색한 화면을 새 탭으로 연다
@@ -263,18 +224,7 @@ export const SearchLinks = styled.div<WithTheme>`
   }
 `;
 
-// 이미지를 끌어다 놓거나 Ctrl+V 로 붙여넣는 자리. 붙여넣기는 폼 전체에서 받지만 어디에 하면 되는지 보여주려고 둔다
-export const DropZone = styled.div<WithTheme & { $active: boolean }>`
-  padding: ${theme.space.md};
-  border: 2px dashed ${({ $active }) => ($active ? c.info : c.border)};
-  border-radius: ${theme.radius.md};
-  background: ${({ $active }) => ($active ? c.surfaceSunken : 'transparent')};
-  color: ${c.subColor};
-  font-size: 14px;
-  text-align: center;
-`;
-
-// 머미로그 표지 후보. 누르면 그 이미지 주소가 들어간다
+// 머미로그 표지 후보. 상세에선 누르면 바로 저장, 등록 폼에선 고르기
 export const CandidateGrid = styled.div<WithTheme>`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
@@ -293,6 +243,11 @@ export const CandidateGrid = styled.div<WithTheme>`
     text-align: left;
     cursor: pointer;
     ${focusRing};
+  }
+
+  button:disabled {
+    opacity: 0.5;
+    cursor: default;
   }
 
   button[aria-pressed='true'] {

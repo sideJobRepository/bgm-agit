@@ -1,16 +1,14 @@
 package com.bgmagitapi.origin.murder.service.impl;
 
 import com.bgmagitapi.origin.advice.exception.ValidException;
-import com.bgmagitapi.origin.config.S3FileUtils;
-import com.bgmagitapi.origin.config.UploadResult;
 import com.bgmagitapi.origin.murder.dto.request.MurderCoverApplyRequest;
 import com.bgmagitapi.origin.murder.dto.response.MurderCoverAutoFillResponse;
 import com.bgmagitapi.origin.murder.entity.BgmAgitMurderGame;
 import com.bgmagitapi.origin.murder.repository.BgmAgitMurderGameRepository;
+import com.bgmagitapi.origin.murder.util.MurderCoverStorage;
 import com.bgmagitapi.origin.murder.util.MurderLogCoverSearcher;
 import com.bgmagitapi.origin.murder.util.MurderLogCoverSearcher.CoverCandidate;
 import com.bgmagitapi.origin.murder.util.RemoteImageFetcher;
-import com.bgmagitapi.origin.murder.util.RemoteImageFetcher.FetchedImage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -34,12 +32,10 @@ import java.util.List;
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 public class MurderCoverAutoFillService {
 
-    private static final String S3_FOLDER = "murder-game";
-
     private final BgmAgitMurderGameRepository murderGameRepository;
     private final MurderLogCoverSearcher coverSearcher;
     private final RemoteImageFetcher remoteImageFetcher;
-    private final S3FileUtils s3FileUtils;
+    private final MurderCoverStorage coverStorage;
 
     public List<CoverCandidate> findCandidates(String name) {
         return coverSearcher.search(name);
@@ -68,7 +64,7 @@ public class MurderCoverAutoFillService {
 
         String url;
         try {
-            url = store(remoteImageFetcher.fetch(picked.imageUrl()));
+            url = coverStorage.store(remoteImageFetcher.fetch(picked.imageUrl()));
         } catch (ValidException e) {
             // 일괄 처리 중 한 건 실패로 전체가 멈추지 않게 사유만 돌려준다
             return skip(game, e.getMessage());
@@ -88,10 +84,9 @@ public class MurderCoverAutoFillService {
         MultipartFile file = request.getImage();
         String url;
         if (file != null && !file.isEmpty()) {
-            UploadResult uploaded = s3FileUtils.storeFile(file, S3_FOLDER);
-            url = uploaded.getUrl();
+            url = coverStorage.store(file);
         } else if (StringUtils.hasText(request.getImageSourceUrl())) {
-            url = store(remoteImageFetcher.fetch(request.getImageSourceUrl()));
+            url = coverStorage.store(remoteImageFetcher.fetch(request.getImageSourceUrl()));
         } else {
             throw new ValidException("넣을 이미지가 없습니다.");
         }
@@ -113,11 +108,7 @@ public class MurderCoverAutoFillService {
         murderGameRepository.save(game);
 
         if (StringUtils.hasText(oldUrl)) {
-            try {
-                s3FileUtils.deleteFile(oldUrl);
-            } catch (Exception ignore) {
-                // S3 삭제 실패는 무시 (DB 정합성 우선)
-            }
+            coverStorage.delete(oldUrl);
         }
         return new MurderCoverAutoFillResponse(game.getId(), game.getName(), true, "표지를 넣었습니다.", url);
     }
@@ -145,10 +136,6 @@ public class MurderCoverAutoFillService {
             return candidates.get(0);
         }
         return null;
-    }
-
-    private String store(FetchedImage image) {
-        return s3FileUtils.storeBytes(image.bytes(), image.contentType(), image.ext(), S3_FOLDER).getUrl();
     }
 
     private BgmAgitMurderGame findGame(Long id) {
