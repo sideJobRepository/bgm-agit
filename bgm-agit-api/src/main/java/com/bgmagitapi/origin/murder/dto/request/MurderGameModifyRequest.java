@@ -20,5 +20,7 @@ public class MurderGameModifyRequest {
     private Integer playMinutes;
 
     private MultipartFile image;
+    // 이미지 주소. image 가 없을 때만 서버가 받아와 교체한다
+    private String imageSourceUrl;
     private Boolean removeImage;
 }

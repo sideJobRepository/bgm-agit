@@ -32,21 +32,36 @@ export default function ClosedMenuGuard({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [closed, setClosed] = useState<string[] | null>(null);
 
-  useEffect(() => {
-    // useRequest 를 쓰지 않는다. 실패하면 /error 로 보내는데, 목록을 못 받았다고 화면을 막을 일은 아니다
+  // useRequest 를 쓰지 않는다. 실패하면 /error 로 보내는데, 목록을 못 받았다고 화면을 막을 일은 아니다
+  const loadClosed = () =>
     api
       .get<string[]>('/bgm-agit/main-menu/closed-links')
-      .then(res => setClosed(res.data ?? []))
-      .catch(() => setClosed([]));
-  }, []);
-
-  const blocked = !!closed?.includes(menuLinkOf(pathname));
+      .then(res => res.data ?? [])
+      .catch(() => [] as string[]);
 
   useEffect(() => {
+    loadClosed().then(setClosed);
+  }, []);
+
+  const link = menuLinkOf(pathname);
+  const blocked = !!closed?.includes(link);
+
+  // 목록은 앱이 뜰 때 한 번 받는다. 메뉴 관리에서 켠 뒤 새로고침 없이 들어오면 옛 목록에 걸리므로
+  // 막기 직전에 한 번 더 받아 보고, 그래도 닫혀 있을 때만 돌려보낸다
+  useEffect(() => {
     if (!blocked) return;
-    toast.info('준비 중인 메뉴입니다.');
-    navigate('/', { replace: true });
-  }, [blocked]);
+    let cancelled = false;
+    loadClosed().then(latest => {
+      if (cancelled) return;
+      setClosed(latest);
+      if (!latest.includes(link)) return;
+      toast.info('준비 중인 메뉴입니다.');
+      navigate('/', { replace: true });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [blocked, link]);
 
   // 목록이 오기 전에는 공개 페이지만 먼저 그린다. 닫힌 화면이 잠깐 보였다 사라지지 않게
   if (blocked) return null;

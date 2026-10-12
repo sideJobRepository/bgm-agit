@@ -244,3 +244,64 @@ export const CheckLine = styled.label<WithTheme>`
     ${focusRing};
   }
 `;
+
+// 표지를 찾을 사이트 링크. 게임명으로 검색한 화면을 새 탭으로 연다
+export const SearchLinks = styled.div<WithTheme>`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${theme.space.sm};
+
+  a,
+  button {
+    ${buttonStyle('secondary', 'md')};
+    text-decoration: none;
+  }
+
+  a[aria-disabled='true'] {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+`;
+
+// 이미지를 끌어다 놓거나 Ctrl+V 로 붙여넣는 자리. 붙여넣기는 폼 전체에서 받지만 어디에 하면 되는지 보여주려고 둔다
+export const DropZone = styled.div<WithTheme & { $active: boolean }>`
+  padding: ${theme.space.md};
+  border: 2px dashed ${({ $active }) => ($active ? c.info : c.border)};
+  border-radius: ${theme.radius.md};
+  background: ${({ $active }) => ($active ? c.surfaceSunken : 'transparent')};
+  color: ${c.subColor};
+  font-size: 14px;
+  text-align: center;
+`;
+
+// 보드라이프 표지 후보. 누르면 그 이미지 주소가 들어간다
+export const CandidateGrid = styled.div<WithTheme>`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: ${theme.space.sm};
+
+  button {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px;
+    border: 1px solid ${c.border};
+    border-radius: ${theme.radius.md};
+    background: ${c.white};
+    color: ${c.subColor};
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+    ${focusRing};
+  }
+
+  button[aria-pressed='true'] {
+    border: 2px solid ${c.info};
+  }
+
+  img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: contain;
+  }
+`;

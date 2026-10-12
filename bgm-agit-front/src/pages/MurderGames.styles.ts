@@ -215,3 +215,44 @@ export const PaginationWrapper = styled.div`
   text-align: center;
   margin-top: ${theme.space.xl};
 `;
+
+export const HeaderActions = styled.div<WithTheme>`
+  display: flex;
+  gap: ${theme.space.sm};
+
+  @media ${({ theme }) => theme.device.mobile} {
+    flex-direction: column;
+  }
+`;
+
+// 표지 자동 채우기 진행·결과. 건너뛴 게임은 상세에서 후보를 골라 넣으면 된다
+export const AutoFillPanel = styled.div<WithTheme>`
+  ${cardStyle};
+  margin-top: ${theme.space.lg};
+  padding: ${theme.space.lg};
+  font-size: 14px;
+  color: ${c.subColor};
+
+  strong {
+    color: ${c.textStrong};
+  }
+
+  ul {
+    margin: ${theme.space.sm} 0 0;
+    padding-left: 18px;
+  }
+
+  li {
+    margin-top: 4px;
+  }
+
+  button {
+    background: none;
+    border: none;
+    padding: 0;
+    color: ${c.info};
+    text-decoration: underline;
+    cursor: pointer;
+    font: inherit;
+  }
+`;
