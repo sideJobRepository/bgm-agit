@@ -1,6 +1,6 @@
 import { Wrapper } from '../styles';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import { murderGameListState } from '../recoil/state/murderState.ts';
 import { useMurderGameListFetch } from '../recoil/murderFetch.ts';
@@ -41,18 +41,30 @@ export default function MurderGames() {
   const data = useRecoilValue(murderGameListState);
   const user = useRecoilValue(userState);
 
-  const [page, setPage] = useState(0);
-  const [keyword, setKeyword] = useState('');
-  const [input, setInput] = useState('');
+  // 페이지·검색어는 주소에 둔다(?page=3&keyword=…). 상태로만 두면 상세에 갔다 뒤로 오면 1페이지로 돌아갔다
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = Math.max(0, Number(searchParams.get('page') ?? 1) - 1 || 0);
+  const keyword = searchParams.get('keyword') ?? '';
+  const [input, setInput] = useState(keyword);
+
+  const moveTo = (nextPage: number, nextKeyword: string) => {
+    const params: Record<string, string> = {};
+    if (nextPage > 0) params.page = String(nextPage + 1);
+    if (nextKeyword) params.keyword = nextKeyword;
+    setSearchParams(params);
+  };
+  const setPage = (next: number) => moveTo(next, keyword);
 
   useEffect(() => {
     fetchGames(page, keyword);
   }, [page, keyword]);
 
-  const onSearch = () => {
-    setPage(0);
-    setKeyword(input.trim());
-  };
+  // 뒤로가기로 검색어가 바뀌면 입력칸도 맞춘다
+  useEffect(() => {
+    setInput(keyword);
+  }, [keyword]);
+
+  const onSearch = () => moveTo(0, input.trim());
 
   // 표지 자동 채우기. 서버에서 한 번에 돌리면 nginx 타임아웃에 걸려 한 건씩 부르며 진행을 보여준다
   const [autoFill, setAutoFill] = useState<{ done: number; total: number; results: MurderCoverAutoFillResult[] } | null>(
