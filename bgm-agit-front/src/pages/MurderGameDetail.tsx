@@ -1,6 +1,6 @@
 import { Wrapper } from '../styles';
 import { useEffect, useState, type DragEvent } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import { toast } from '../utils/toast';
 import { murderGameDetailState } from '../recoil/state/murderState.ts';
@@ -44,6 +44,7 @@ import {
 // 등록할 때만 폼에서 표지를 같이 받는다(아직 게임이 없어 바로 저장할 곳이 없다)
 export default function MurderGameDetail() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const id = searchParams.get('id');
 
@@ -310,6 +311,9 @@ export default function MurderGameDetail() {
     </CoverPanel>
   );
 
+  // 목록에서 들어왔으면 뒤로 가서 보던 페이지로. 주소로 바로 들어왔으면(앞 기록 없음) 목록 첫 페이지로
+  const goList = () => (location.key !== 'default' ? navigate(-1) : navigate('/murder-games'));
+
   // ---------- 상세 보기 ----------
   if (showDetail) {
     return (
@@ -322,7 +326,7 @@ export default function MurderGameDetail() {
                 <Button $variant="danger" $fill={theme.colors.danger} onClick={onDelete}>삭제</Button>
               </>
             )}
-            <Button $variant="secondary" $fill={theme.colors.primary} onClick={() => navigate('/murder-games')}>목록</Button>
+            <Button $variant="secondary" $fill={theme.colors.primary} onClick={goList}>목록</Button>
           </ButtonRow>
 
           <DetailCard>
