@@ -1,7 +1,9 @@
 //pagindation
 import { ReactComponent as PrevIcon } from '../assets/prev.svg?react';
 import { ReactComponent as NextIcon } from '../assets/next.svg?react';
+import { useMediaQuery } from 'react-responsive';
 import { Nav, PageNumberBox, PageButton, Ellipsis } from './Pagination.styles.ts';
+import { theme } from '../styles/theme.ts';
 
 type Props = {
   current: number;
@@ -9,13 +11,25 @@ type Props = {
   onChange: (next: number) => void;
 };
 
+// 모바일: 처음·끝 + 현재 ±1 만(1 … 2 3 4 … 21). 다 보여주면 한 줄에 안 들어가 번호가 줄바꿈되고
+// 이전·다음 화살표가 위아래로 갈라졌다
+function mobilePages(current: number, totalPages: number): (number | string)[] {
+  const last = totalPages - 1;
+  if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i);
+  if (current <= 2) return [0, 1, 2, 3, '···', last];
+  if (current >= last - 2) return [0, '···', last - 3, last - 2, last - 1, last];
+  return [0, '···', current - 1, current, current + 1, '···', last];
+}
+
 export default function Pagination({ current, totalPages, onChange }: Props) {
+  const isMobile = useMediaQuery({ query: theme.device.mobile });
   if (!totalPages || totalPages < 1) return null;
 
   const windowSize = 6;
 
   const pages = (): (number | string)[] => {
     if (!totalPages || totalPages <= 0) return [];
+    if (isMobile) return mobilePages(current, totalPages);
     // 0~(totalPages-1) 기반
     const last = totalPages - 1;
 
