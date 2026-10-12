@@ -74,7 +74,7 @@ export default function Pagination({ current, totalPages, onChange }: Props) {
         {pages().map((p, i) =>
           typeof p === 'number' ? (
             <PageButton
-              key={i}
+              key={p}
               type="button"
               aria-current={p === current ? 'page' : undefined}
               className={p === current ? 'active' : ''}
@@ -83,7 +83,7 @@ export default function Pagination({ current, totalPages, onChange }: Props) {
               {p + 1}
             </PageButton>
           ) : (
-            <Ellipsis key={i}>···</Ellipsis>
+            <Ellipsis key={`gap-${i}`}>···</Ellipsis>
           )
         )}
       </PageNumberBox>

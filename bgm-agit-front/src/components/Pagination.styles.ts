@@ -26,11 +26,14 @@ export const Nav = styled.nav<WithTheme>`
     border-radius: ${theme.radius.md};
     color: ${c.subColor};
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
     transition: background 0.15s ease;
 
-    &:hover:not(.active) {
-      background: ${c.primarySoft};
-      color: ${c.primary};
+    @media (hover: hover) {
+      &:hover:not(.active) {
+        background: ${c.primarySoft};
+        color: ${c.primary};
+      }
     }
 
     &.active {
