@@ -7,11 +7,19 @@ import { useCallback, useEffect, useRef, useState, type DragEvent, type Keyboard
 import { useNavigate } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import { userState } from '../recoil/state/userState.ts';
-import api from '../utils/axiosInstance';
 import { toast } from '../utils/toast';
 import type { MurderCoverCandidate, MurderGame } from '../types/murder.ts';
 import { playersLabel } from './MurderGames.tsx';
-import { COVER_SEARCH_SITES, firstImageFile } from '../utils/murderCover.ts';
+import api from '../utils/axiosInstance';
+import {
+  COVER_SEARCH_SITES,
+  droppedUrl,
+  errorMessage,
+  fetchCoverCandidates,
+  firstImageFile,
+  putCover,
+  type CoverSource,
+} from '../utils/murderCover.ts';
 import {
   Box,
   Toolbar,
@@ -25,7 +33,6 @@ import {
 } from './MurderCoverBoard.styles.ts';
 
 type CandidateState = { status: 'loading' | 'done' | 'error'; list: MurderCoverCandidate[] };
-type CoverSource = { file: File } | { url: string; candidate?: MurderCoverCandidate };
 
 // 머미로그에 동시에 거는 검색 수. 후보마다 상세를 한 번씩 더 부르므로 남의 서버에 몰리지 않게 작게 둔다
 const CANDIDATE_CONCURRENCY = 2;
@@ -64,9 +71,8 @@ export default function MurderCoverBoard() {
       const game = queueRef.current.shift()!;
       activeRef.current++;
       setCandidates(prev => ({ ...prev, [game.id]: { status: 'loading', list: [] } }));
-      api
-        .get<MurderCoverCandidate[]>('/bgm-agit/murder-games/cover-candidates', { params: { name: game.name } })
-        .then(res => setCandidates(prev => ({ ...prev, [game.id]: { status: 'done', list: res.data ?? [] } })))
+      fetchCoverCandidates(game.name)
+        .then(list => setCandidates(prev => ({ ...prev, [game.id]: { status: 'done', list } })))
         .catch(() => setCandidates(prev => ({ ...prev, [game.id]: { status: 'error', list: [] } })))
         .finally(() => {
           activeRef.current--;
@@ -96,29 +102,14 @@ export default function MurderCoverBoard() {
 
   const apply = async (game: MurderGame, source: CoverSource) => {
     if (savingId != null) return;
-    const form = new FormData();
-    if ('file' in source) {
-      form.append('image', source.file);
-    } else {
-      form.append('imageSourceUrl', source.url);
-      const c = source.candidate;
-      if (c && renameToo) {
-        form.append('name', c.title);
-        if (c.minPlayers) form.append('minPlayers', String(c.minPlayers));
-        if (c.maxPlayers) form.append('maxPlayers', String(c.maxPlayers));
-        if (c.playMinutes) form.append('playMinutes', String(c.playMinutes));
-      }
-    }
-
     setSavingId(game.id);
     try {
-      await api.put(`/bgm-agit/murder-games/${game.id}/cover`, form);
+      await putCover(game.id, source, renameToo);
       toast.success(`"${game.name}" 표지를 넣었습니다.`);
       setDoneCount(n => n + 1);
       removeGame(game.id);
     } catch (err) {
-      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast.error(message ?? '표지를 넣지 못했습니다.');
+      toast.error(errorMessage(err, '표지를 넣지 못했습니다.'));
     } finally {
       setSavingId(null);
     }
@@ -132,7 +123,7 @@ export default function MurderCoverBoard() {
       const file = firstImageFile(e.clipboardData?.items);
       if (file) {
         e.preventDefault();
-        apply(game, { file: new File([file], file.name || `cover.${file.type.split('/')[1] ?? 'png'}`, { type: file.type }) });
+        apply(game, { file });
         return;
       }
       if ((e.target as HTMLElement | null)?.tagName === 'INPUT') return;
@@ -242,8 +233,8 @@ function CoverRow({
       onApply({ file });
       return;
     }
-    const dropped = (e.dataTransfer?.getData('text/uri-list') || e.dataTransfer?.getData('text/plain'))?.trim();
-    if (dropped && /^https?:\/\//.test(dropped)) onApply({ url: dropped });
+    const dropped = droppedUrl(e.dataTransfer);
+    if (dropped) onApply({ url: dropped });
   };
 
   const onUrlKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -263,7 +254,7 @@ function CoverRow({
         <RowLinks onClick={e => e.stopPropagation()}>
           {COVER_SEARCH_SITES.map(site => (
             <a key={site.label} href={site.url(query)} target="_blank" rel="noopener noreferrer" onClick={onSelect}>
-              {site.label.replace(/에서 찾기$/, '')}
+              {site.label}
             </a>
           ))}
           <button type="button" onClick={onSkip}>

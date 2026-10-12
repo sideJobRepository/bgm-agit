@@ -1,5 +1,5 @@
 import { Wrapper } from '../styles';
-import { useEffect, useState, type ClipboardEvent, type DragEvent } from 'react';
+import { useEffect, useState, type DragEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import { toast } from '../utils/toast';
@@ -23,25 +23,32 @@ import {
   FormTitle,
   Row,
   Field,
-  FileRow,
-  FileButton,
-  FileName,
-  PreviewBox,
-  CheckLine,
+  CoverPanel,
+  CoverHint,
   SearchLinks,
-  DropZone,
   CandidateGrid,
 } from './MurderGameDetail.styles.ts';
-import api from '../utils/axiosInstance';
 import type { MurderCoverCandidate } from '../types/murder.ts';
-import { COVER_SEARCH_SITES, firstImageFile } from '../utils/murderCover.ts';
+import {
+  COVER_SEARCH_SITES,
+  droppedUrl,
+  errorMessage,
+  fetchCoverCandidates,
+  firstImageFile,
+  putCover,
+  type CoverSource,
+} from '../utils/murderCover.ts';
 
+// 표지는 수정 폼이 아니라 상세 화면에서 바로 넣는다(관리자).
+// 예전엔 수정 → 검색 → 붙여넣기 → 저장 → 확인을 거쳐야 했다. 지금은 후보를 누르거나 Ctrl+V·끌어놓기 하면 바로 저장된다.
+// 등록할 때만 폼에서 표지를 같이 받는다(아직 게임이 없어 바로 저장할 곳이 없다)
 export default function MurderGameDetail() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const id = searchParams.get('id');
 
   const user = useRecoilValue(userState);
+  const isAdmin = !!user?.roles.includes('ROLE_ADMIN');
   const detail = useRecoilValue(murderGameDetailState);
   const fetchDetail = useMurderGameDetailFetch();
   const { insert } = useInsertPost();
@@ -53,15 +60,23 @@ export default function MurderGameDetail() {
   const [minPlayers, setMinPlayers] = useState('');
   const [maxPlayers, setMaxPlayers] = useState('');
   const [playMinutes, setPlayMinutes] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [removeImage, setRemoveImage] = useState(false);
-  const [imageSourceUrl, setImageSourceUrl] = useState('');
+
+  // 등록 폼에서 고른 표지(파일 또는 주소)와 미리보기
+  const [newCover, setNewCover] = useState<CoverSource | null>(null);
+  const [newCoverPreview, setNewCoverPreview] = useState<string | null>(null);
+
+  // 상세 화면 표지 넣기
+  const [savingCover, setSavingCover] = useState(false);
+  const [candidates, setCandidates] = useState<MurderCoverCandidate[] | null>(null);
+  const [candidateLoading, setCandidateLoading] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const [sourceError, setSourceError] = useState<string | null>(null);
+
+  const showDetail = !!id && !editMode;
+  const loaded = !!detail && String(detail.id) === id;
 
   useEffect(() => {
     if (id) fetchDetail(Number(id));
+    setCandidates(null);
   }, [id]);
 
   useEffect(() => {
@@ -70,99 +85,119 @@ export default function MurderGameDetail() {
       setMinPlayers(detail.minPlayers != null ? String(detail.minPlayers) : '');
       setMaxPlayers(detail.maxPlayers != null ? String(detail.maxPlayers) : '');
       setPlayMinutes(detail.playMinutes != null ? String(detail.playMinutes) : '');
-      setPreview(detail.imageUrl ?? null);
-      setRemoveImage(false);
-      setImageFile(null);
-      setImageSourceUrl('');
     }
   }, [detail, id]);
 
-  const onPickImage = (file: File | null) => {
-    setImageFile(file);
-    setRemoveImage(false);
-    if (file) {
-      setPreview(URL.createObjectURL(file));
-      setImageSourceUrl('');
-    }
-  };
-
-  // 사이트에서 "이미지 복사" 후 폼 어디서든 Ctrl+V. 글자를 붙여넣을 때는 건드리지 않는다
-  const onPaste = (e: ClipboardEvent) => {
-    const file = firstImageFile(e.clipboardData?.items);
-    if (!file) return;
-    e.preventDefault();
-    onPickImage(new File([file], file.name || `cover.${file.type.split('/')[1] ?? 'png'}`, { type: file.type }));
-    toast.success('이미지를 붙여넣었습니다.');
-  };
-
-  const onDrop = (e: DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    const file = firstImageFile(e.dataTransfer?.items);
-    if (file) {
-      onPickImage(file);
-      return;
-    }
-    // 다른 탭의 이미지를 끌어오면 파일이 아니라 주소만 올 때가 있다
-    const url = e.dataTransfer?.getData('text/uri-list') || e.dataTransfer?.getData('text/plain');
-    if (url && /^https?:\/\//.test(url.trim())) onSourceUrlChange(url.trim());
-  };
-
-  const onSourceUrlChange = (value: string) => {
-    setImageSourceUrl(value);
-    setSourceError(null);
-    if (value.trim()) {
-      setImageFile(null);
-      setRemoveImage(false);
-      setPreview(null);
-    }
-  };
-
-  // 주소를 넣으면 서버에 실제 이미지 주소를 물어 미리보기를 그린다. 텀블벅·판매 페이지 주소면 그 페이지의 대표 이미지가 온다.
-  // 저장 때도 서버가 같은 규칙으로 받으므로 여기서 보이는 그림이 저장된다
-  useEffect(() => {
-    const url = imageSourceUrl.trim();
-    if (!/^https?:\/\//.test(url)) return;
-    let cancelled = false;
-    const timer = setTimeout(() => {
-      api
-        .get<{ imageUrl: string }>('/bgm-agit/murder-games/resolve-image', { params: { url } })
-        .then(res => {
-          if (!cancelled) setPreview(res.data.imageUrl);
-        })
-        .catch(err => {
-          if (!cancelled) setSourceError(err?.response?.data?.message ?? '이미지를 가져올 수 없습니다.');
-        });
-    }, 500);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [imageSourceUrl]);
-
-  const searchQuery = encodeURIComponent(name.trim());
-
-  // 머미로그 표지 후보. 고르면 이미지 주소 칸에 넣어 저장 때 서버가 받아오게 한다
-  const [candidates, setCandidates] = useState<MurderCoverCandidate[] | null>(null);
-  const [candidateLoading, setCandidateLoading] = useState(false);
-
-  const onFindCandidates = async () => {
-    if (!name.trim()) {
+  const findCandidates = async (gameName: string) => {
+    if (!gameName.trim()) {
       toast.error('게임명을 먼저 입력해주세요.');
       return;
     }
     setCandidateLoading(true);
     try {
-      const res = await api.get<MurderCoverCandidate[]>('/bgm-agit/murder-games/cover-candidates', {
-        params: { name: name.trim() },
-      });
-      setCandidates(res.data ?? []);
-      if (!res.data?.length) toast.info('머미로그에서 찾은 게임이 없습니다. 텀블벅·구글에서 찾아 붙여넣어 주세요.');
+      setCandidates(await fetchCoverCandidates(gameName.trim()));
     } catch {
-      toast.error('표지 후보 검색에 실패했습니다.');
+      setCandidates([]);
+      toast.error('표지 후보를 찾지 못했습니다.');
     } finally {
       setCandidateLoading(false);
     }
+  };
+
+  // 표지 없는 게임은 들어오자마자 후보를 띄운다. 표지가 있으면 [다른 표지 찾기]를 눌렀을 때만
+  useEffect(() => {
+    if (showDetail && isAdmin && loaded && !detail.imageUrl && candidates == null && !candidateLoading) {
+      findCandidates(detail.name);
+    }
+  }, [showDetail, isAdmin, loaded, detail?.imageUrl]);
+
+  // 상세 화면: 바로 저장
+  const saveCover = async (source: CoverSource) => {
+    if (!id || savingCover) return;
+    setSavingCover(true);
+    try {
+      await putCover(Number(id), source);
+      toast.success('표지를 넣었습니다.');
+      setCandidates(null);
+      fetchDetail(Number(id));
+    } catch (err) {
+      toast.error(errorMessage(err, '표지를 넣지 못했습니다.'));
+    } finally {
+      setSavingCover(false);
+    }
+  };
+
+  // 등록 폼: 저장 때 같이 보낸다
+  const pickNewCover = (source: CoverSource) => {
+    setNewCover(source);
+    setNewCoverPreview('file' in source ? URL.createObjectURL(source.file) : source.url);
+  };
+
+  const takeCover = (source: CoverSource) => (showDetail ? saveCover(source) : pickNewCover(source));
+
+  // Ctrl+V: 이미지면 어디서든, 주소 글자는 입력칸 밖에서만(입력칸에는 글자 그대로 들어가게).
+  // 수정 폼에서는 받지 않는다(표지는 상세에서)
+  useEffect(() => {
+    if (!isAdmin || (id && !showDetail)) return;
+    const onPaste = (e: ClipboardEvent) => {
+      const file = firstImageFile(e.clipboardData?.items);
+      if (file) {
+        e.preventDefault();
+        takeCover({ file });
+        return;
+      }
+      if ((e.target as HTMLElement | null)?.tagName === 'INPUT') return;
+      const text = e.clipboardData?.getData('text/plain')?.trim();
+      if (text && /^https?:\/\//.test(text)) {
+        e.preventDefault();
+        takeCover({ url: text });
+      }
+    };
+    document.addEventListener('paste', onPaste);
+    return () => document.removeEventListener('paste', onPaste);
+  });
+
+  const dropHandlers = {
+    onDragOver: (e: DragEvent) => {
+      e.preventDefault();
+      setDragging(true);
+    },
+    onDragLeave: () => setDragging(false),
+    onDrop: (e: DragEvent) => {
+      e.preventDefault();
+      setDragging(false);
+      const file = firstImageFile(e.dataTransfer?.items);
+      if (file) {
+        takeCover({ file });
+        return;
+      }
+      const url = droppedUrl(e.dataTransfer);
+      if (url) takeCover({ url });
+    },
+  };
+
+  const onRemoveCover = () => {
+    if (!id || !detail) return;
+    showConfirmModal({
+      message: '표지를 지우시겠습니까?',
+      onConfirm: () => {
+        const form = new FormData();
+        form.append('name', detail.name);
+        if (detail.minPlayers != null) form.append('minPlayers', String(detail.minPlayers));
+        if (detail.maxPlayers != null) form.append('maxPlayers', String(detail.maxPlayers));
+        if (detail.playMinutes != null) form.append('playMinutes', String(detail.playMinutes));
+        form.append('removeImage', 'true');
+        update({
+          url: `/bgm-agit/murder-games/${id}`,
+          body: form,
+          ignoreHttpError: true,
+          onSuccess: () => {
+            toast.success('표지를 지웠습니다.');
+            fetchDetail(Number(id));
+          },
+        });
+      },
+    });
   };
 
   const onSubmit = () => {
@@ -180,35 +215,33 @@ export default function MurderGameDetail() {
     if (minPlayers) form.append('minPlayers', minPlayers);
     if (maxPlayers) form.append('maxPlayers', maxPlayers);
     if (playMinutes) form.append('playMinutes', playMinutes);
-    if (imageFile) form.append('image', imageFile);
-    else if (imageSourceUrl.trim()) form.append('imageSourceUrl', imageSourceUrl.trim());
 
-    showConfirmModal({
-      message: '저장하시겠습니까?',
-      onConfirm: () => {
-        if (id) {
-          form.append('removeImage', String(removeImage));
-          update({
-            url: `/bgm-agit/murder-games/${id}`,
-            body: form,
-            ignoreHttpError: true,
-            onSuccess: () => {
-              toast.success('게임이 수정되었습니다.');
-              fetchDetail(Number(id));
-              setEditMode(false);
-            },
-          });
-        } else {
-          insert({
-            url: '/bgm-agit/murder-games',
-            body: form,
-            ignoreHttpError: true,
-            onSuccess: () => {
-              toast.success('게임이 등록되었습니다.');
-              navigate('/murder-games');
-            },
-          });
-        }
+    if (id) {
+      // 수정은 이름·인원·시간만. 표지는 상세 화면에서 바로 바꾼다
+      update({
+        url: `/bgm-agit/murder-games/${id}`,
+        body: form,
+        ignoreHttpError: true,
+        onSuccess: () => {
+          toast.success('게임이 수정되었습니다.');
+          fetchDetail(Number(id));
+          setEditMode(false);
+        },
+      });
+      return;
+    }
+
+    if (newCover) {
+      if ('file' in newCover) form.append('image', newCover.file);
+      else form.append('imageSourceUrl', newCover.url);
+    }
+    insert({
+      url: '/bgm-agit/murder-games',
+      body: form,
+      ignoreHttpError: true,
+      onSuccess: () => {
+        toast.success('게임이 등록되었습니다.');
+        navigate('/murder-games');
       },
     });
   };
@@ -230,13 +263,60 @@ export default function MurderGameDetail() {
     });
   };
 
+  // 후보 + 직접 찾기 링크. 상세에선 누르면 바로 저장, 등록 폼에선 고르기만
+  const coverPicker = (gameName: string) => (
+    <CoverPanel>
+      <SearchLinks>
+        <button type="button" disabled={candidateLoading || savingCover} onClick={() => findCandidates(gameName)}>
+          {candidateLoading ? '찾는 중…' : candidates ? '다시 찾기' : showDetail ? '다른 표지 찾기' : '표지 후보 찾기'}
+        </button>
+        {COVER_SEARCH_SITES.map(site => (
+          <a
+            key={site.label}
+            href={gameName.trim() ? site.url(encodeURIComponent(gameName.trim())) : undefined}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-disabled={!gameName.trim()}
+          >
+            {site.label}
+          </a>
+        ))}
+        {showDetail && detail?.imageUrl && (
+          <button type="button" disabled={savingCover} onClick={onRemoveCover}>
+            표지 지우기
+          </button>
+        )}
+      </SearchLinks>
+      {candidates && candidates.length === 0 && (
+        <CoverHint>머미로그에 없습니다. 텀블벅·구글에서 이미지를 복사해 Ctrl+V 하세요.</CoverHint>
+      )}
+      {candidates && candidates.length > 0 && (
+        <CandidateGrid>
+          {candidates.map(c => (
+            <button
+              key={c.imageUrl}
+              type="button"
+              disabled={savingCover}
+              aria-pressed={!showDetail && !!newCover && 'url' in newCover && newCover.url === c.imageUrl}
+              onClick={() => takeCover({ url: c.imageUrl, candidate: c })}
+              title={c.title}
+            >
+              <img src={c.thumbnailUrl} alt={c.title} loading="lazy" />
+              {c.title}
+            </button>
+          ))}
+        </CandidateGrid>
+      )}
+    </CoverPanel>
+  );
+
   // ---------- 상세 보기 ----------
-  if (id && !editMode) {
+  if (showDetail) {
     return (
       <Wrapper>
         <Box>
           <ButtonRow>
-            {user?.roles.includes('ROLE_ADMIN') && (
+            {isAdmin && (
               <>
                 <Button $variant="primary" $fill={theme.colors.info} onClick={() => setEditMode(true)}>수정</Button>
                 <Button $variant="danger" $fill={theme.colors.danger} onClick={onDelete}>삭제</Button>
@@ -246,8 +326,14 @@ export default function MurderGameDetail() {
           </ButtonRow>
 
           <DetailCard>
-            <Cover>
-              {detail?.imageUrl ? <img src={detail.imageUrl} alt={detail.name} /> : <NoImage>NO IMAGE</NoImage>}
+            <Cover $droppable={isAdmin} $active={dragging} {...(isAdmin ? dropHandlers : {})}>
+              {savingCover ? (
+                <NoImage>저장 중…</NoImage>
+              ) : detail?.imageUrl ? (
+                <img src={detail.imageUrl} alt={detail.name} />
+              ) : (
+                <NoImage>{isAdmin ? '아래 후보를 누르거나\nCtrl+V·끌어놓기' : 'NO IMAGE'}</NoImage>
+              )}
             </Cover>
             <DetailInfo>
               <DetailTitle>{detail?.name}</DetailTitle>
@@ -257,6 +343,8 @@ export default function MurderGameDetail() {
               </DetailMeta>
             </DetailInfo>
           </DetailCard>
+
+          {isAdmin && loaded && coverPicker(detail.name)}
         </Box>
       </Wrapper>
     );
@@ -265,7 +353,7 @@ export default function MurderGameDetail() {
   // ---------- 등록 / 수정 ----------
   return (
     <Wrapper>
-      <Box onPaste={onPaste}>
+      <Box>
         <FormTitle>{id ? '게임 수정' : '게임 등록'}</FormTitle>
 
         <Field>
@@ -288,103 +376,28 @@ export default function MurderGameDetail() {
           </Field>
         </Row>
 
-        <Field>
-          <label>커버 이미지 (선택)</label>
-          <SearchLinks>
-            <button type="button" disabled={!searchQuery || candidateLoading} onClick={onFindCandidates}>
-              {candidateLoading ? '찾는 중…' : '표지 후보 보기'}
-            </button>
-            {COVER_SEARCH_SITES.map(site => (
-              <a
-                key={site.label}
-                href={searchQuery ? site.url(searchQuery) : undefined}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-disabled={!searchQuery}
-              >
-                {site.label}
-              </a>
-            ))}
-          </SearchLinks>
-          {candidates && candidates.length > 0 && (
-            <CandidateGrid>
-              {candidates.map(c => (
-                <button
-                  key={c.imageUrl}
-                  type="button"
-                  aria-pressed={imageSourceUrl === c.imageUrl}
-                  onClick={() => onSourceUrlChange(c.imageUrl)}
-                  title={c.title}
-                >
-                  <img src={c.thumbnailUrl} alt={c.title} loading="lazy" />
-                  {c.title}
-                </button>
-              ))}
-            </CandidateGrid>
-          )}
-          <DropZone
-            $active={dragging}
-            onDragOver={e => {
-              e.preventDefault();
-              setDragging(true);
-            }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={onDrop}
-          >
-            찾은 이미지를 우클릭 → "이미지 복사" 후 이 화면에서 Ctrl+V, 또는 여기로 끌어다 놓으세요
-          </DropZone>
-          <input
-            type="text"
-            value={imageSourceUrl}
-            onChange={e => onSourceUrlChange(e.target.value)}
-            placeholder="또는 주소 붙여넣기 — 텀블벅 프로젝트·판매 페이지 주소나 이미지 주소"
-          />
-          {sourceError && <FileName role="alert">{sourceError}</FileName>}
-          <FileRow>
-            <FileButton>
-              {preview && !removeImage ? '이미지 변경' : '이미지 선택'}
+        {!id && (
+          <Field>
+            <label>표지 (선택)</label>
+            <Cover as="label" $droppable $active={dragging} {...dropHandlers}>
+              {newCoverPreview ? (
+                <img src={newCoverPreview} alt="표지 미리보기" />
+              ) : (
+                <NoImage>{'후보를 누르거나\nCtrl+V·끌어놓기·눌러서 선택'}</NoImage>
+              )}
               <input
                 type="file"
                 accept="image/*"
-                onChange={e => onPickImage(e.target.files?.[0] ?? null)}
                 hidden
-              />
-            </FileButton>
-            <FileName>
-              {imageFile
-                ? imageFile.name
-                : imageSourceUrl.trim()
-                  ? '이미지 주소'
-                  : preview && !removeImage
-                    ? '기존 이미지'
-                    : '선택된 파일 없음'}
-            </FileName>
-          </FileRow>
-          {preview && !removeImage && (
-            <PreviewBox>
-              <img src={preview} alt="미리보기" />
-            </PreviewBox>
-          )}
-          {id && detail?.imageUrl && (
-            <CheckLine>
-              <input
-                type="checkbox"
-                checked={removeImage}
                 onChange={e => {
-                  setRemoveImage(e.target.checked);
-                  if (e.target.checked) {
-                    setImageFile(null);
-                    setImageSourceUrl('');
-                    setPreview(null);
-                  } else {
-                    setPreview(detail.imageUrl ?? null);
-                  }
+                  const file = e.target.files?.[0];
+                  if (file) pickNewCover({ file });
                 }}
               />
-              기존 이미지 삭제
-            </CheckLine>
-          )}
-        </Field>
+            </Cover>
+            {coverPicker(name)}
+          </Field>
+        )}
 
         <ButtonRow>
           <Button $variant="primary" $fill={theme.colors.success} onClick={onSubmit}>저장</Button>
