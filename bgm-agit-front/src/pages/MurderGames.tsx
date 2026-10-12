@@ -90,7 +90,7 @@ export default function MurderGames() {
 
   const onAutoFill = () =>
     showConfirmModal({
-      message: '표지가 없는 게임을 보드라이프에서 찾아 채웁니다. 이름이 똑같은 게임만 넣고 나머지는 건너뜁니다.',
+      message: '표지가 없는 게임을 머미로그에서 찾아 채웁니다. 같은 게임이 확실한 것만 넣고 나머지는 건너뜁니다.',
       onConfirm: runAutoFill,
     });
 
@@ -110,6 +110,9 @@ export default function MurderGames() {
               <CreateButton onClick={onAutoFill} disabled={autoFillRunning}>
                 {autoFillRunning ? `표지 찾는 중 ${autoFill!.done}/${autoFill!.total}` : '표지 자동 채우기'}
               </CreateButton>
+              <CreateButton onClick={() => navigate('/murderCoverBoard')} disabled={autoFillRunning}>
+                표지 정리
+              </CreateButton>
               <CreateButton onClick={() => navigate('/murderGameDetail')}>게임 등록</CreateButton>
             </HeaderActions>
           )}
@@ -122,7 +125,13 @@ export default function MurderGames() {
             </strong>
             {skipped.length > 0 && (
               <>
-                <div>건너뛴 게임은 눌러서 상세에서 "보드라이프 후보 보기"로 골라 주세요.</div>
+                <div>
+                  건너뛴 게임은{' '}
+                  <button type="button" onClick={() => navigate('/murderCoverBoard')}>
+                    표지 정리
+                  </button>
+                  에서 후보를 눌러 넣어 주세요.
+                </div>
                 <ul>
                   {skipped.map(r => (
                     <li key={r.id}>

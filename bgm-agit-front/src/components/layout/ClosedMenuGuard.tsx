@@ -10,6 +10,7 @@ import pages from '../../seo/pages.json';
 // 메뉴에 없는 상세·내 기록 화면은 속한 메뉴를 따라 막는다
 const PARENT_LINK: Record<string, string> = {
   '/murderGameDetail': '/murder-games',
+  '/murderCoverBoard': '/murder-games',
   '/playRecordDetail': '/play-records',
   '/play-history': '/play-records',
   '/clockTowerGameDetail': '/clocktower-games',
