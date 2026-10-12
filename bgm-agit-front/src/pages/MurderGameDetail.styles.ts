@@ -274,7 +274,7 @@ export const DropZone = styled.div<WithTheme & { $active: boolean }>`
   text-align: center;
 `;
 
-// 보드라이프 표지 후보. 누르면 그 이미지 주소가 들어간다
+// 머미로그 표지 후보. 누르면 그 이미지 주소가 들어간다
 export const CandidateGrid = styled.div<WithTheme>`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));

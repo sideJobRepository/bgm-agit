@@ -2,13 +2,14 @@ package com.bgmagitapi.origin.murder.controller;
 
 import com.bgmagitapi.origin.advice.exception.ForbiddenException;
 import com.bgmagitapi.origin.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.murder.dto.request.MurderCoverApplyRequest;
 import com.bgmagitapi.origin.murder.dto.request.MurderGameCreateRequest;
 import com.bgmagitapi.origin.murder.dto.request.MurderGameModifyRequest;
 import com.bgmagitapi.origin.murder.dto.response.MurderCoverAutoFillResponse;
 import com.bgmagitapi.origin.murder.dto.response.MurderGameResponse;
 import com.bgmagitapi.origin.murder.service.BgmAgitMurderGameService;
 import com.bgmagitapi.origin.murder.service.impl.MurderCoverAutoFillService;
-import com.bgmagitapi.origin.murder.util.BoardlifeCoverSearcher;
+import com.bgmagitapi.origin.murder.util.MurderLogCoverSearcher;
 import com.bgmagitapi.origin.page.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -70,9 +71,9 @@ public class BgmAgitMurderGameController {
         return bgmAgitMurderGameService.deleteMurderGame(id);
     }
 
-    // 표지 후보: 보드라이프에서 게임명으로 찾은 목록. 관리자가 등록 폼에서 하나를 고른다
+    // 표지 후보: 머미로그에서 게임명으로 찾은 목록. 관리자가 정리 화면·등록 폼에서 하나를 고른다
     @GetMapping("/murder-games/cover-candidates")
-    public List<BoardlifeCoverSearcher.CoverCandidate> getCoverCandidates(@AuthenticationPrincipal Jwt jwt,
+    public List<MurderLogCoverSearcher.CoverCandidate> getCoverCandidates(@AuthenticationPrincipal Jwt jwt,
                                                                          @RequestParam("name") String name) {
         requireAdmin(jwt);
         return murderCoverAutoFillService.findCandidates(name);
@@ -90,6 +91,15 @@ public class BgmAgitMurderGameController {
     public MurderCoverAutoFillResponse autoFillCover(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
         requireAdmin(jwt);
         return murderCoverAutoFillService.autoFill(id);
+    }
+
+    // 표지 정리 화면에서 고른 표지 바로 넣기. 이름·인원 같은 나머지는 선택(없으면 표지만 바뀐다)
+    @PutMapping("/murder-games/{id}/cover")
+    public MurderCoverAutoFillResponse applyCover(@AuthenticationPrincipal Jwt jwt,
+                                                  @PathVariable Long id,
+                                                  @ModelAttribute MurderCoverApplyRequest request) {
+        requireAdmin(jwt);
+        return murderCoverAutoFillService.applyCover(id, request);
     }
 
     private void requireAdmin(Jwt jwt) {

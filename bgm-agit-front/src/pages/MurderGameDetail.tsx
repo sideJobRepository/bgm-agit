@@ -34,21 +34,7 @@ import {
 } from './MurderGameDetail.styles.ts';
 import api from '../utils/axiosInstance';
 import type { MurderCoverCandidate } from '../types/murder.ts';
-
-// 표지를 찾는 곳. 크롤링 대신 게임명 검색 화면만 열어 준다(표지 고르기는 사람이 한다)
-const COVER_SEARCH_SITES = [
-  { label: '텀블벅에서 찾기', url: (q: string) => `https://tumblbug.com/search?query=${q}` },
-  { label: '보드라이프에서 찾기', url: (q: string) => `https://boardlife.co.kr/search.php?query=${q}&page=game` },
-];
-
-// 클립보드·드래그로 들어온 것 중 첫 이미지 파일
-function firstImageFile(items: DataTransferItemList | undefined): File | null {
-  if (!items) return null;
-  for (const item of Array.from(items)) {
-    if (item.kind === 'file' && item.type.startsWith('image/')) return item.getAsFile();
-  }
-  return null;
-}
+import { COVER_SEARCH_SITES, firstImageFile } from '../utils/murderCover.ts';
 
 export default function MurderGameDetail() {
   const navigate = useNavigate();
@@ -156,7 +142,7 @@ export default function MurderGameDetail() {
 
   const searchQuery = encodeURIComponent(name.trim());
 
-  // 보드라이프 표지 후보. 고르면 이미지 주소 칸에 넣어 저장 때 서버가 받아오게 한다
+  // 머미로그 표지 후보. 고르면 이미지 주소 칸에 넣어 저장 때 서버가 받아오게 한다
   const [candidates, setCandidates] = useState<MurderCoverCandidate[] | null>(null);
   const [candidateLoading, setCandidateLoading] = useState(false);
 
@@ -171,9 +157,9 @@ export default function MurderGameDetail() {
         params: { name: name.trim() },
       });
       setCandidates(res.data ?? []);
-      if (!res.data?.length) toast.info('보드라이프에서 찾은 게임이 없습니다. 이름을 줄여서 다시 찾아보세요.');
+      if (!res.data?.length) toast.info('머미로그에서 찾은 게임이 없습니다. 텀블벅·구글에서 찾아 붙여넣어 주세요.');
     } catch {
-      toast.error('보드라이프 검색에 실패했습니다.');
+      toast.error('표지 후보 검색에 실패했습니다.');
     } finally {
       setCandidateLoading(false);
     }
@@ -306,7 +292,7 @@ export default function MurderGameDetail() {
           <label>커버 이미지 (선택)</label>
           <SearchLinks>
             <button type="button" disabled={!searchQuery || candidateLoading} onClick={onFindCandidates}>
-              {candidateLoading ? '찾는 중…' : '보드라이프 후보 보기'}
+              {candidateLoading ? '찾는 중…' : '표지 후보 보기'}
             </button>
             {COVER_SEARCH_SITES.map(site => (
               <a
