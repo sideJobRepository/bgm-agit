@@ -116,3 +116,20 @@ export interface PlayRecordFormBody {
   memberIds: number[];
   memo?: string | null;
 }
+
+// 보드라이프에서 찾은 표지 후보 (GET /murder-games/cover-candidates)
+export interface MurderCoverCandidate {
+  title: string;
+  thumbnailUrl: string;
+  imageUrl: string;
+  pageUrl: string;
+}
+
+// 표지 자동 채우기 한 건의 결과 (POST /murder-games/{id}/auto-cover). filled=false 면 message 가 사유
+export interface MurderCoverAutoFillResult {
+  id: number;
+  name: string;
+  filled: boolean;
+  message: string;
+  imageUrl?: string | null;
+}

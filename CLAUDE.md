@@ -518,6 +518,17 @@ kml:
 - `/main-menu` 는 권한으로도 걸러서 프론트가 '꺼 둔 메뉴'와 '권한이 없는 메뉴'를 구분할 수 없어 따로 뒀다
 - 프론트 `components/layout/ClosedMenuGuard.tsx` 가 해당하면 관리자 포함 모두 메인으로 보낸다(관리자 예외 없음으로 결정). 상세 화면은 `PARENT_LINK` 로 속한 메뉴를 따른다 — **메뉴 하위 상세 라우트를 추가하면 여기도 추가**
 - 목록 조회가 실패하면 막지 않는다
+- 목록은 앱이 뜰 때 한 번 받고, **막기 직전에 한 번 더 받아 확인**한다. 예전엔 메뉴 관리에서 켠 뒤 새로고침 없이 들어가면 옛 목록에 걸려 "준비 중인 메뉴"로 튕겼다(2026-10-12)
+
+### 머더 게임 표지 등록
+출처는 **보드라이프만**. 텀블벅은 robots.txt 가 `/search?` 를 막고 결과를 JS 로 그려서 수집하지 않는다(검색 탭 열기 링크만 있다).
+- **자동 채우기** — 목록(`MurderGames.tsx`) 관리자 버튼. 표지 없는 게임마다 `POST /murder-games/{id}/auto-cover` 를 **프론트가 한 건씩** 부른다(서버 일괄은 nginx 타임아웃). 같은 게임 판정은 `MurderCoverAutoFillService.pickSameGame`(테스트 있음) — ① 이름이 정확히 같은 후보 1개 + 후보 전체 3개 이하("타워"·"보물섬"처럼 짧은 이름은 일반 보드게임과 겹친다) ② 후보 1개이고 그 이름이 우리 이름으로 **끝남**("머더 미스터리 미니: 시체와 온천"). 띄어쓰기·문장부호·대소문자만 무시. 운영 241개 중 보드라이프에 아예 없는 게 129개(2026-10-12) — 인디 머더미스터리는 텀블벅에서 끝나는 경우가 많다
+- 네이버 검색 API 는 신규 등록에 제휴 신청이 필요했다. 카카오(다음) 이미지 검색은 키는 되지만 결과가 뉴스·블로그라 쓰지 않았다
+- **후보 고르기** — 상세 폼 "보드라이프 후보 보기" → `GET /murder-games/cover-candidates?name=` → 누르면 이미지 주소 칸에 들어간다. 자동이 건너뛴 게임은 이걸로
+- 보드라이프 화면 구조(`a.search-game-card`, `.search-game-title`)에 기댄다. 후보가 늘 0개면 선택자부터 볼 것. 썸네일 `_w100` 을 떼면 원본
+- 그 밖에 이미지 Ctrl+V·드래그·이미지 주소 입력도 받는다(`MurderGameDetail.tsx`)
+- 주소는 서버가 받아온다(`murder/util/RemoteImageFetcher`, 브라우저 fetch 는 CORS). **페이지 주소**(텀블벅 프로젝트·판매처)면 `og:image`/`twitter:image` 를 꺼내 받는다. 미리보기는 `GET /murder-games/resolve-image?url=`. http(s)만, 내부 IP 거부(리다이렉트 단계마다), `image/*`·10MB 상한. 저장은 `S3FileUtils.storeBytes`
+- 등록·수정·삭제는 컨트롤러 `requireAdmin`(2026-10-12 전엔 서버 검사가 없었다)
 
 ### 메뉴 관리 API 관리자 검사
 `/main-menu/options`, `POST/PUT/DELETE /main-menu` 는 URL_RESOURCES 매핑이 없어 **로그인 없이도 메뉴를 만들고 지울 수 있었다**(2026-10-02 발견). 컨트롤러 `requireAdmin` 으로 막고 비관리자는 `ForbiddenException`(403)

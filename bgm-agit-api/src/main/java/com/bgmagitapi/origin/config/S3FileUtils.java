@@ -70,6 +70,30 @@ public class S3FileUtils {
         }
     }
     
+    // 파일이 아니라 바이트로 받은 이미지(주소로 받아온 표지 등)를 올린다. ext 는 점 없이
+    public UploadResult storeBytes(byte[] bytes, String contentType, String ext, String folder) {
+        String uuid = UUID.randomUUID().toString();
+        String storeFileName = folder + "/" + uuid + "." + ext;
+
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("Content-Type", contentType);
+        metadata.put("Content-Disposition", "inline");
+
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(storeFileName)
+                .contentType(contentType)
+                .metadata(metadata)
+                .build();
+
+        s3Client.putObject(putObjectRequest, RequestBody.fromBytes(bytes));
+
+        String url = s3Client.utilities()
+                .getUrl(b -> b.bucket(bucketName).key(storeFileName))
+                .toExternalForm();
+        return new UploadResult(url, uuid, uuid + "." + ext);
+    }
+
     public void deleteFile(String fileUrl) {
         String key = getFileNameFromUrl(fileUrl);
         DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
