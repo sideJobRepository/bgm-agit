@@ -563,6 +563,21 @@ kml:
 - `/main-menu` 는 권한으로도 걸러서 프론트가 '꺼 둔 메뉴'와 '권한이 없는 메뉴'를 구분할 수 없어 따로 뒀다
 - 프론트 `components/layout/ClosedMenuGuard.tsx` 가 해당하면 관리자 포함 모두 메인으로 보낸다(관리자 예외 없음으로 결정). 상세 화면은 `PARENT_LINK` 로 속한 메뉴를 따른다 — **메뉴 하위 상세 라우트를 추가하면 여기도 추가**
 - 목록 조회가 실패하면 막지 않는다
+- 목록은 앱이 뜰 때 한 번 받고, **막기 직전에 한 번 더 받아 확인**한다. 예전엔 메뉴 관리에서 켠 뒤 새로고침 없이 들어가면 옛 목록에 걸려 "준비 중인 메뉴"로 튕겼다(2026-10-12)
+
+### 머더 게임 표지 등록
+출처는 **머미로그(murdermysterylog.com)만**(2026-10-12 보드라이프에서 교체). 머더미스터리 전용 리뷰 사이트라 표지 없던 161개 중 108개에서 후보가 나왔다(보드라이프 65개 — 일반 보드게임과 이름이 겹쳐 오답도 많았다). 텀블벅은 robots.txt 가 `/search?` 를 막고, 다음 웹 검색으로도 텀블벅 페이지가 안 잡혀 수집하지 않는다(검색 탭 열기 링크만).
+- `murder/util/MurderLogCoverSearcher` — 화면이 쓰는 JSON API 를 부른다(공개 문서 없음, 번들에서 확인). 검색 `ser.murdermysterylog.com/api/theme/search?keyword=` → 후보마다 상세 `/api/posts/{index}` 의 `mm.image`(파일명이면 `murdermysterylog.com/images/` 앞에 붙임)·인원·시간. **후보가 늘 0개면 이 두 API 응답 형식부터 볼 것**
+- 우리 게임명은 시리즈명이 붙거나("미스터리 파티 시리즈 : …") 표기가 달라 그대로는 안 걸리는 게 많아 **검색어를 줄여 가며** 찾는다(`queries()` — 전체 → 구분자로 나눈 조각 뒤에서부터 → 앞 두 단어, 테스트 있음)
+- **자동 채우기** — 목록(`MurderGames.tsx`) 관리자 버튼. 표지 없는 게임마다 `POST /murder-games/{id}/auto-cover` 를 **프론트가 한 건씩** 부른다(서버 일괄은 nginx 타임아웃). **전체 이름 검색 결과만** 보고(줄인 검색어 결과는 사람이 고른다) `pickSameGame`(테스트 있음) — ① 이름이 정확히 같은 후보 1개 + 후보 전체 3개 이하 ② 후보 1개이고 그 이름에 우리 이름이 통째로 들어 있음("햇살고아원" → "햇살고아원: 여섯 아이의 탈출극"). 띄어쓰기·문장부호·대소문자만 무시. 161개 중 58개가 자동으로 들어갔다
+- **표지 정리 화면** `/murderCoverBoard`(`pages/MurderCoverBoard.tsx`, 목록의 "표지 정리" 버튼) — 표지 없는 게임을 한 화면에 늘어놓고 줄마다 후보를 보여준다(보이는 줄만, 동시 2건). **후보를 누르면 확인 없이 바로 저장**되고 줄이 사라진다. 고른 줄에 이미지·주소 Ctrl+V, 드래그, 주소 입력 후 Enter 도 받는다. "이름도 그 제목으로 바꾸기"를 켜면 게임명을 머미로그 제목으로 바꾸고 인원·시간은 **빈 칸만** 채운다
+  - 저장 `PUT /murder-games/{id}/cover`(multipart `image` 또는 `imageSourceUrl`, 선택 `name`/`minPlayers`/`maxPlayers`/`playMinutes`) → `MurderCoverAutoFillService.applyCover`
+  - 운영 nginx `$bgm_spa_route` 에 `/murderCoverBoard` 추가 필요
+- **게임 상세에서 바로 넣기**(관리자) — 표지 없는 게임은 상세에 들어가면 후보가 바로 뜨고, 누르거나 Ctrl+V·표지 칸에 끌어놓으면 확인 없이 저장된다(`PUT /cover`). **수정 폼에는 표지가 없다**(이름·인원·시간만). 표지 지우기는 상세의 [표지 지우기]. 등록 폼만 표지를 같이 받는다(아직 게임이 없어서). 공용 함수 `utils/murderCover.ts`
+- **저장 전 크기 맞추기** — 표지는 전부 `murder/util/MurderCoverStorage` 를 거쳐 S3 에 올라간다. `CoverImageNormalizer` 가 둘레 여백(네 모서리 색 기준, 투명은 흰색으로)을 걷고 3:4 가운데 자르기 → 600×800 JPG. 흰 여백이 넓은 상품 사진·정사각형 그림이 섞여 카드 크기가 들쭉날쭉했다. webp 읽기는 TwelveMonkeys `imageio-webp`. 못 읽는 형식은 원본 그대로 올린다. **표지를 올리는 새 경로를 만들면 반드시 이걸 거칠 것**
+- 네이버 검색 API 는 신규 등록에 제휴 신청이 필요했다. 카카오(다음) 이미지 검색은 결과가 뉴스·블로그, 웹 검색은 텀블벅 페이지가 안 잡혀 쓰지 않았다
+- 주소는 서버가 받아온다(`murder/util/RemoteImageFetcher`, 브라우저 fetch 는 CORS). **페이지 주소**(텀블벅 프로젝트·판매처)면 `og:image`/`twitter:image` 를 꺼내 받는다. 미리보기는 `GET /murder-games/resolve-image?url=`. http(s)만, 내부 IP 거부(리다이렉트 단계마다), `image/*`·10MB 상한. 저장은 `S3FileUtils.storeBytes`
+- 등록·수정·삭제·표지 넣기는 컨트롤러 `requireAdmin`(2026-10-12 전엔 서버 검사가 없었다)
 
 ### 메뉴 관리 API 관리자 검사
 `/main-menu/options`, `POST/PUT/DELETE /main-menu` 는 URL_RESOURCES 매핑이 없어 **로그인 없이도 메뉴를 만들고 지울 수 있었다**(2026-10-02 발견). 컨트롤러 `requireAdmin` 으로 막고 비관리자는 `ForbiddenException`(403)

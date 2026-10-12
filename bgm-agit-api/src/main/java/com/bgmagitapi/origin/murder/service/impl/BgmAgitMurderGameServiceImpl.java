@@ -1,8 +1,6 @@
 package com.bgmagitapi.origin.murder.service.impl;
 
 import com.bgmagitapi.origin.apiresponse.ApiResponse;
-import com.bgmagitapi.origin.config.S3FileUtils;
-import com.bgmagitapi.origin.config.UploadResult;
 import com.bgmagitapi.origin.murder.dto.request.MurderGameCreateRequest;
 import com.bgmagitapi.origin.murder.dto.request.MurderGameModifyRequest;
 import com.bgmagitapi.origin.murder.dto.response.MurderGameResponse;
@@ -10,6 +8,8 @@ import com.bgmagitapi.origin.murder.entity.BgmAgitMurderGame;
 import com.bgmagitapi.origin.murder.repository.BgmAgitMurderGameRepository;
 import com.bgmagitapi.origin.murder.repository.BgmAgitPlayRecordRepository;
 import com.bgmagitapi.origin.murder.service.BgmAgitMurderGameService;
+import com.bgmagitapi.origin.murder.util.MurderCoverStorage;
+import com.bgmagitapi.origin.murder.util.RemoteImageFetcher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,11 +25,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BgmAgitMurderGameServiceImpl implements BgmAgitMurderGameService {
 
-    private static final String S3_FOLDER = "murder-game";
-
     private final BgmAgitMurderGameRepository murderGameRepository;
     private final BgmAgitPlayRecordRepository playRecordRepository;
-    private final S3FileUtils s3FileUtils;
+    private final MurderCoverStorage coverStorage;
+    private final RemoteImageFetcher remoteImageFetcher;
 
     @Override
     @Transactional(readOnly = true)
@@ -61,7 +60,7 @@ public class BgmAgitMurderGameServiceImpl implements BgmAgitMurderGameService {
     public ApiResponse createMurderGame(MurderGameCreateRequest request) {
         validatePlayers(request.getMinPlayers(), request.getMaxPlayers());
 
-        String imageUrl = uploadIfPresent(request.getImage());
+        String imageUrl = uploadIfPresent(request.getImage(), request.getImageSourceUrl());
         BgmAgitMurderGame game = new BgmAgitMurderGame(
                 request.getName(),
                 request.getMinPlayers(),
@@ -82,10 +81,12 @@ public class BgmAgitMurderGameServiceImpl implements BgmAgitMurderGameService {
         game.update(request.getName(), request.getMinPlayers(), request.getMaxPlayers(), request.getPlayMinutes());
 
         MultipartFile newImage = request.getImage();
-        if (newImage != null && !newImage.isEmpty()) {
-            // 새 이미지로 교체 (기존 삭제)
+        boolean hasNewFile = newImage != null && !newImage.isEmpty();
+        if (hasNewFile || StringUtils.hasText(request.getImageSourceUrl())) {
+            // 새 이미지로 교체. 주소로 받아오다 실패하면 기존 이미지가 남도록 업로드 후에 지운다
+            String newUrl = uploadIfPresent(newImage, request.getImageSourceUrl());
             deleteImageIfPresent(game.getImageUrl());
-            game.changeImageUrl(uploadIfPresent(newImage));
+            game.changeImageUrl(newUrl);
         } else if (Boolean.TRUE.equals(request.getRemoveImage())) {
             // 이미지 제거
             deleteImageIfPresent(game.getImageUrl());
@@ -120,19 +121,20 @@ public class BgmAgitMurderGameServiceImpl implements BgmAgitMurderGameService {
         }
     }
 
-    private String uploadIfPresent(MultipartFile image) {
-        if (image == null || image.isEmpty()) return null;
-        UploadResult result = s3FileUtils.storeFile(image, S3_FOLDER);
-        return result != null ? result.getUrl() : null;
+    // 파일이 있으면 파일, 없고 주소가 있으면 서버가 받아와 올린다. 둘 다 크기를 맞춰 올린다
+    private String uploadIfPresent(MultipartFile image, String sourceUrl) {
+        if (image != null && !image.isEmpty()) {
+            return coverStorage.store(image);
+        }
+        if (StringUtils.hasText(sourceUrl)) {
+            return coverStorage.store(remoteImageFetcher.fetch(sourceUrl));
+        }
+        return null;
     }
 
     private void deleteImageIfPresent(String imageUrl) {
         if (StringUtils.hasText(imageUrl)) {
-            try {
-                s3FileUtils.deleteFile(imageUrl);
-            } catch (Exception ignore) {
-                // S3 삭제 실패는 무시 (DB 정합성 우선)
-            }
+            coverStorage.delete(imageUrl);
         }
     }
 }

@@ -39,6 +39,7 @@ const MenuManage = lazy(() => import('./pages/MenuManage.tsx'));
 const HolidayManage = lazy(() => import('./pages/HolidayManage.tsx'));
 const MurderGames = lazy(() => import('./pages/MurderGames.tsx'));
 const MurderGameDetail = lazy(() => import('./pages/MurderGameDetail.tsx'));
+const MurderCoverBoard = lazy(() => import('./pages/MurderCoverBoard.tsx'));
 const PlayRecords = lazy(() => import('./pages/PlayRecords.tsx'));
 const PlayRecordDetail = lazy(() => import('./pages/PlayRecordDetail.tsx'));
 const PlayHistory = lazy(() => import('./pages/PlayHistory.tsx'));
@@ -95,6 +96,7 @@ function App() {
                   <Route path="holiday" element={<HolidayManage />} />
                   <Route path="murder-games" element={<MurderGames />} />
                   <Route path="/murderGameDetail" element={<MurderGameDetail />} />
+                  <Route path="/murderCoverBoard" element={<MurderCoverBoard />} />
                   <Route path="play-records" element={<PlayRecords />} />
                   <Route path="/playRecordDetail" element={<PlayRecordDetail />} />
                   <Route path="play-history" element={<PlayHistory />} />
