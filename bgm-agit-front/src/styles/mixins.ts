@@ -16,47 +16,59 @@ export const focusRing = css`
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'dark';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
+// hover 색은 마우스가 있는 기기에서만. 터치폰은 누른 뒤에도 그 자리에 hover 가 남아
+// 페이지 번호처럼 다시 그려지는 버튼에서 엉뚱한 버튼이 색칠돼 보였다
 const BUTTON_VARIANTS: Record<ButtonVariant, ReturnType<typeof css>> = {
   primary: css`
     background: ${c.primary};
     color: ${c.onPrimary};
     border-color: ${c.primary};
-    &:hover:not(:disabled) {
-      background: ${c.primaryHover};
-      border-color: ${c.primaryHover};
+    @media (hover: hover) {
+      &:hover:not(:disabled) {
+        background: ${c.primaryHover};
+        border-color: ${c.primaryHover};
+      }
     }
   `,
   secondary: css`
     background: ${c.surface};
     color: ${c.textStrong};
     border-color: ${c.borderStrong};
-    &:hover:not(:disabled) {
-      background: ${c.surfaceAlt};
+    @media (hover: hover) {
+      &:hover:not(:disabled) {
+        background: ${c.surfaceAlt};
+      }
     }
   `,
   ghost: css`
     background: transparent;
     color: ${c.primary};
     border-color: transparent;
-    &:hover:not(:disabled) {
-      background: ${c.primarySoft};
+    @media (hover: hover) {
+      &:hover:not(:disabled) {
+        background: ${c.primarySoft};
+      }
     }
   `,
   danger: css`
     background: ${c.surface};
     color: ${c.danger};
     border-color: ${c.danger};
-    &:hover:not(:disabled) {
-      background: ${c.danger};
-      color: ${c.onPrimary};
+    @media (hover: hover) {
+      &:hover:not(:disabled) {
+        background: ${c.danger};
+        color: ${c.onPrimary};
+      }
     }
   `,
   dark: css`
     background: ${c.textStrong};
     color: ${c.onPrimary};
     border-color: ${c.textStrong};
-    &:hover:not(:disabled) {
-      opacity: 0.9;
+    @media (hover: hover) {
+      &:hover:not(:disabled) {
+        opacity: 0.9;
+      }
     }
   `,
 };
@@ -91,6 +103,7 @@ export const buttonStyle = (variant: ButtonVariant = 'primary', size: ButtonSize
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition:
     background 0.15s ease,
     border-color 0.15s ease,
