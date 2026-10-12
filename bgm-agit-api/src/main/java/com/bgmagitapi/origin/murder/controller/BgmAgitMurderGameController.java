@@ -19,6 +19,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -75,6 +76,13 @@ public class BgmAgitMurderGameController {
                                                                          @RequestParam("name") String name) {
         requireAdmin(jwt);
         return murderCoverAutoFillService.findCandidates(name);
+    }
+
+    // 붙여넣은 주소(이미지 또는 텀블벅·판매 페이지)가 가리키는 실제 이미지 주소. 저장 전 미리보기용
+    @GetMapping("/murder-games/resolve-image")
+    public Map<String, String> resolveCoverImage(@AuthenticationPrincipal Jwt jwt, @RequestParam("url") String url) {
+        requireAdmin(jwt);
+        return Map.of("imageUrl", murderCoverAutoFillService.resolveImageUrl(url));
     }
 
     // 표지 자동 채우기 한 건. 일괄은 프론트가 표지 없는 게임마다 부른다

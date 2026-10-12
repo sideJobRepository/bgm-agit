@@ -72,6 +72,7 @@ export default function MurderGameDetail() {
   const [removeImage, setRemoveImage] = useState(false);
   const [imageSourceUrl, setImageSourceUrl] = useState('');
   const [dragging, setDragging] = useState(false);
+  const [sourceError, setSourceError] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) fetchDetail(Number(id));
@@ -123,13 +124,35 @@ export default function MurderGameDetail() {
 
   const onSourceUrlChange = (value: string) => {
     setImageSourceUrl(value);
+    setSourceError(null);
     if (value.trim()) {
       setImageFile(null);
       setRemoveImage(false);
-      // 미리보기는 브라우저가 직접 그린다. 핫링크가 막힌 곳이면 안 보여도 서버는 받아올 수 있다
-      setPreview(value.trim());
+      setPreview(null);
     }
   };
+
+  // 주소를 넣으면 서버에 실제 이미지 주소를 물어 미리보기를 그린다. 텀블벅·판매 페이지 주소면 그 페이지의 대표 이미지가 온다.
+  // 저장 때도 서버가 같은 규칙으로 받으므로 여기서 보이는 그림이 저장된다
+  useEffect(() => {
+    const url = imageSourceUrl.trim();
+    if (!/^https?:\/\//.test(url)) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      api
+        .get<{ imageUrl: string }>('/bgm-agit/murder-games/resolve-image', { params: { url } })
+        .then(res => {
+          if (!cancelled) setPreview(res.data.imageUrl);
+        })
+        .catch(err => {
+          if (!cancelled) setSourceError(err?.response?.data?.message ?? '이미지를 가져올 수 없습니다.');
+        });
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [imageSourceUrl]);
 
   const searchQuery = encodeURIComponent(name.trim());
 
@@ -328,8 +351,9 @@ export default function MurderGameDetail() {
             type="text"
             value={imageSourceUrl}
             onChange={e => onSourceUrlChange(e.target.value)}
-            placeholder="또는 이미지 주소 붙여넣기 (우클릭 → 이미지 주소 복사)"
+            placeholder="또는 주소 붙여넣기 — 텀블벅 프로젝트·판매 페이지 주소나 이미지 주소"
           />
+          {sourceError && <FileName role="alert">{sourceError}</FileName>}
           <FileRow>
             <FileButton>
               {preview && !removeImage ? '이미지 변경' : '이미지 선택'}
