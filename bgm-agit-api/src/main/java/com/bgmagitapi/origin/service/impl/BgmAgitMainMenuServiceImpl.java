@@ -47,18 +47,8 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
     @Override
     @Transactional(readOnly = true)
     public List<BgmAgitMainMenuResponse> getMainMenu() {
-        // 1. 현재 인증된 사용자
-         Authentication authentication = SecurityContextHolder.getContextHolderStrategy().getContext().getAuthentication();
-        
-        // 2. 계층 권한 포함 모든 역할 가져오기
-        List<String> expandedRoleNames = roleHierarchy.getReachableGrantedAuthorities(authentication.getAuthorities())
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .map(role -> role.replace("ROLE_", ""))
-                .toList();
-        
-        // 3. 해당 권한으로 접근 가능한 메뉴 ID 조회
-        List<Long> menuIds = bgmAgitMenuRoleRepository.findMenuIdByRoleNames(expandedRoleNames);
+        // 1~3. 현재 사용자의 계층 권한으로 접근 가능한 메뉴 ID 조회
+        List<Long> menuIds = bgmAgitMenuRoleRepository.findMenuIdByRoleNames(currentRoleNames());
         
         // 4. 전체 메뉴 조회 (권한 있는 메뉴만 필터링할 경우 이 시점에 filter 가능)
         List<BgmAgitMainMenu> allMenus = bgmAgitMainMenuRepository.findByBgmAgitUseStatusTrue();
@@ -146,6 +136,37 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
         Set<String> closed = new TreeSet<>(linksByOpen.get(false));
         closed.removeAll(linksByOpen.get(true));
         return List.copyOf(closed);
+    }
+
+    // 권한이 없어 메뉴에서 숨겨진 주소. 메뉴만 숨기고 주소를 치면 그대로 들어가져서(관리자 전용 화면 등) 프론트가 이 목록으로 막는다.
+    // 권한 행이 하나도 없는 메뉴는 넣지 않는다 — 원래 누구에게도 안 보이는 메뉴라 넣으면 관리자까지 막힌다.
+    // 같은 주소를 볼 수 있는 메뉴가 하나라도 있으면 뺀다. 데이터 API 권한 검사는 이것과 별개로 컨트롤러·URL_RESOURCES 가 맡는다
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getDeniedMenuLinks() {
+        Set<Long> permitted = new HashSet<>(bgmAgitMenuRoleRepository.findMenuIdByRoleNames(currentRoleNames()));
+        Set<Long> restricted = bgmAgitMenuRoleRepository.findAll().stream()
+                .map(menuRole -> menuRole.getBgmAgitMainMenu().getBgmAgitMainMenuId())
+                .collect(Collectors.toSet());
+        Map<Boolean, Set<String>> linksByPermitted = bgmAgitMainMenuRepository.findAll().stream()
+                .filter(menu -> menu.getBgmAgitMenuLink() != null && menu.getBgmAgitMenuLink().startsWith("/"))
+                .filter(menu -> restricted.contains(menu.getBgmAgitMainMenuId()))
+                .collect(Collectors.partitioningBy(
+                        menu -> permitted.contains(menu.getBgmAgitMainMenuId()),
+                        Collectors.mapping(BgmAgitMainMenu::getBgmAgitMenuLink, Collectors.toSet())));
+        Set<String> denied = new TreeSet<>(linksByPermitted.get(false));
+        denied.removeAll(linksByPermitted.get(true));
+        return List.copyOf(denied);
+    }
+
+    // 계층 권한까지 펼친 현재 사용자의 역할 이름(ROLE_ 접두어 없이). 비로그인은 ANONYMOUS
+    private List<String> currentRoleNames() {
+        Authentication authentication = SecurityContextHolder.getContextHolderStrategy().getContext().getAuthentication();
+        return roleHierarchy.getReachableGrantedAuthorities(authentication.getAuthorities())
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .map(role -> role.replace("ROLE_", ""))
+                .toList();
     }
 
     private boolean isOpen(BgmAgitMainMenu menu, Map<Long, BgmAgitMainMenu> byId) {
