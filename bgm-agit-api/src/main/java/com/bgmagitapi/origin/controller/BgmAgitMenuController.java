@@ -46,6 +46,11 @@ public class BgmAgitMenuController {
     public List<String> getClosedMenuLinks() {
         return bgmAgitMainMenuService.getClosedMenuLinks();
     }
+
+    @GetMapping(value = "/main-menu/denied-links")
+    public List<String> getDeniedMenuLinks() {
+        return bgmAgitMainMenuService.getDeniedMenuLinks();
+    }
     
     @GetMapping(value = "/main-image")
     public Map<Long, List<BgmAgitMainMenuImageResponse>> getMenuImage(
