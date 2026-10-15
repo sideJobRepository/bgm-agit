@@ -140,7 +140,9 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
 
     // 권한이 없어 메뉴에서 숨겨진 주소. 메뉴만 숨기고 주소를 치면 그대로 들어가져서(관리자 전용 화면 등) 프론트가 이 목록으로 막는다.
     // 권한 행이 하나도 없는 메뉴는 넣지 않는다 — 원래 누구에게도 안 보이는 메뉴라 넣으면 관리자까지 막힌다.
-    // 같은 주소를 볼 수 있는 메뉴가 하나라도 있으면 뺀다. 데이터 API 권한 검사는 이것과 별개로 컨트롤러·URL_RESOURCES 가 맡는다
+    // 같은 주소를 볼 수 있는 메뉴가 하나라도 있으면 뺀다. 데이터 API 권한 검사는 이것과 별개로 컨트롤러·URL_RESOURCES 가 맡는다.
+    // 보이는지 판정은 getMainMenu 와 같아야 한다 — 거기서는 상위 메뉴 권한이 없으면 하위가 제 권한이 있어도 빠진다.
+    // 처음엔 하위 메뉴 자기 권한만 봐서, 상위(머더미스터리 등)만 막아 둔 메뉴는 주소로 그대로 들어가졌다
     @Override
     @Transactional(readOnly = true)
     public List<String> getDeniedMenuLinks() {
@@ -150,9 +152,11 @@ public class BgmAgitMainMenuServiceImpl implements BgmAgitMainMenuService {
                 .collect(Collectors.toSet());
         Map<Boolean, Set<String>> linksByPermitted = bgmAgitMainMenuRepository.findAll().stream()
                 .filter(menu -> menu.getBgmAgitMenuLink() != null && menu.getBgmAgitMenuLink().startsWith("/"))
-                .filter(menu -> restricted.contains(menu.getBgmAgitMainMenuId()))
+                .filter(menu -> restricted.contains(menu.getBgmAgitMainMenuId())
+                        || (menu.getParentMenuId() != null && restricted.contains(menu.getParentMenuId())))
                 .collect(Collectors.partitioningBy(
-                        menu -> permitted.contains(menu.getBgmAgitMainMenuId()),
+                        menu -> permitted.contains(menu.getBgmAgitMainMenuId())
+                                && (menu.getParentMenuId() == null || permitted.contains(menu.getParentMenuId())),
                         Collectors.mapping(BgmAgitMainMenu::getBgmAgitMenuLink, Collectors.toSet())));
         Set<String> denied = new TreeSet<>(linksByPermitted.get(false));
         denied.removeAll(linksByPermitted.get(true));
