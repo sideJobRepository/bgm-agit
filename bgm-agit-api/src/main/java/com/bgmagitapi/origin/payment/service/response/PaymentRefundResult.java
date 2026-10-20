@@ -15,23 +15,33 @@ public record PaymentRefundResult(
         int refundedAmount,
         boolean failed,
         boolean rejected,
-        String failMessage
+        String failMessage,
+        boolean unpaid
 ) {
+    /**
+     * 환불할 결제가 아예 없음(미결제 대기 예약).
+     * "결제했지만 환불 0%"(nothingToRefund)와 구분해야 손님에게 "환불 금액 없음"이라는 오해 문구가 안 나간다.
+     */
+    public static PaymentRefundResult noPayment(int rate) {
+        return new PaymentRefundResult(rate, 0, 0, false, false, null, true);
+    }
+
+    /** 결제는 있으나 환불 비율·잔액상 돌려줄 금액이 0원. */
     public static PaymentRefundResult nothingToRefund(int rate) {
-        return new PaymentRefundResult(rate, 0, 0, false, false, null);
+        return new PaymentRefundResult(rate, 0, 0, false, false, null, false);
     }
 
     public static PaymentRefundResult succeeded(int rate, int requested, int refunded) {
-        return new PaymentRefundResult(rate, requested, refunded, false, false, null);
+        return new PaymentRefundResult(rate, requested, refunded, false, false, null, false);
     }
 
     /** 토스가 거절한 실패(돈이 움직이지 않음이 확실). */
     public static PaymentRefundResult rejected(int rate, int requested, int refunded, String message) {
-        return new PaymentRefundResult(rate, requested, refunded, true, true, message);
+        return new PaymentRefundResult(rate, requested, refunded, true, true, message, false);
     }
 
     /** 결과를 알 수 없는 실패(타임아웃·통신 오류). */
     public static PaymentRefundResult failed(int rate, int requested, int refunded, String message) {
-        return new PaymentRefundResult(rate, requested, refunded, true, false, message);
+        return new PaymentRefundResult(rate, requested, refunded, true, false, message, false);
     }
 }

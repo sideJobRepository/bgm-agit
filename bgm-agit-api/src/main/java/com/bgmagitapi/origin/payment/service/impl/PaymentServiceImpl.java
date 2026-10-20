@@ -201,7 +201,7 @@ public class PaymentServiceImpl implements PaymentService {
     private PaymentRefundResult doRefund(Long reservationId, List<BgmAgitPayment> payments,
                                          Integer baseAmount, int refundRate, String cancelReason) {
         if (payments.isEmpty()) {
-            return PaymentRefundResult.nothingToRefund(refundRate);
+            return PaymentRefundResult.noPayment(refundRate);
         }
 
         int totalRemaining = payments.stream().mapToInt(BgmAgitPayment::remainingAmount).sum();
