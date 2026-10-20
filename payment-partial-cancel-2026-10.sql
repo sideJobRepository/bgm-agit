@@ -81,16 +81,22 @@ SELECT BGM_AGIT_URL_RESOURCES_ID INTO @URL_ID
    AND BGM_AGIT_URL_HTTP_METHOD = 'PUT'
  LIMIT 1;
 
--- 본인 예약만 바꿀 수 있으므로 로그인 사용자 전체에 허용한다(1=관리자, 2=유저, 4=멘토)
+-- 본인 예약만 바꿀 수 있으므로 로그인 사용자 전체에 허용한다 — 유저(2) 하나만 건다.
+-- 권한은 계층(관리자 > 멘토 > 유저)이라 유저만 걸면 멘토·관리자도 통과한다.
+-- 한 주소에 여러 역할을 넣지 말 것: 매핑 로딩(BgmAgitUrlRoleMapping)이 주소당 역할 하나만 남겨서
+-- 1·2·4 를 넣었더니 마지막 하나만 살아 유저가 403 이 났다
 INSERT INTO BGM_AGIT_URL_RESOURCES_ROLE (BGM_AGIT_ROLE_ID, BGM_AGIT_URL_RESOURCES_ID, REGIST_DATE)
-SELECT r.BGM_AGIT_ROLE_ID, @URL_ID, NOW()
-  FROM (SELECT 1 AS BGM_AGIT_ROLE_ID
-        UNION ALL SELECT 2
-        UNION ALL SELECT 4) r
+SELECT 2, @URL_ID, NOW()
+  FROM DUAL
  WHERE NOT EXISTS (
        SELECT 1 FROM BGM_AGIT_URL_RESOURCES_ROLE x
         WHERE x.BGM_AGIT_URL_RESOURCES_ID = @URL_ID
-          AND x.BGM_AGIT_ROLE_ID = r.BGM_AGIT_ROLE_ID);
+          AND x.BGM_AGIT_ROLE_ID = 2);
+
+-- 예전 버전으로 1·2·4 가 들어간 곳이면 유저만 남긴다
+DELETE FROM BGM_AGIT_URL_RESOURCES_ROLE
+ WHERE BGM_AGIT_URL_RESOURCES_ID = @URL_ID
+   AND BGM_AGIT_ROLE_ID IN (1, 4);
 
 COMMIT;
 
