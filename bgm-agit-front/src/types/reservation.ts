@@ -177,14 +177,14 @@ export type ReservationBoard = {
   rooms: ReservationBoardRoom[];
 };
 
-// 관리자 예약 랭킹 (GET /bgm-agit/reservation/ranking) — 월별 확정 예약, 이용일 기준
+// 예약 랭킹 (GET /bgm-agit/reservation/ranking) — 월별 확정 예약, 이용일 기준. 회원 누구나 본다
 export type ReservationRankingItem = {
   // 공동 순위(예약 횟수가 같으면 같은 순위)
   rank: number;
-  memberId: number;
-  memberName: string | null;
-  memberNickname: string | null;
-  phoneNo: string | null;
+  // 관리자일 때만 내려온다
+  memberId: number | null;
+  // 관리자는 원문, 회원은 서버가 가린 값(홍x동)
+  nickname: string | null;
   reservationCount: number;
   totalPeople: number;
 };

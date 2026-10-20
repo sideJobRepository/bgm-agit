@@ -30,6 +30,7 @@ import com.bgmagitapi.origin.repository.BgmAgitRoomRepository;
 import com.bgmagitapi.origin.service.BgmAgitHolidayService;
 import com.bgmagitapi.origin.service.BgmAgitReservationService;
 import com.bgmagitapi.origin.service.response.ReservationTalkContext;
+import com.bgmagitapi.origin.util.NicknameMasker;
 import com.bgmagitapi.origin.util.ReservationRefundPolicy;
 import com.bgmagitapi.origin.util.SlotSchedule;
 import lombok.RequiredArgsConstructor;
@@ -679,10 +680,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     @Override
     @Transactional(readOnly = true)
     public ReservationRankingResponse getReservationRanking(YearMonth month, Integer people, List<String> roles) {
-        // 회원 이름·연락처가 나가는 목록이라 URL 매핑과 별개로 서비스에서도 막는다
-        if (!isAdmin(roles)) {
-            throw new ValidException("관리자만 조회할 수 있습니다.");
-        }
+        // 회원 누구나 본다. 이름·연락처는 내리지 않고, 닉네임은 관리자만 원문으로 본다
+        boolean admin = isAdmin(roles);
         YearMonth target = month == null || month.isBefore(RANKING_FROM) ? RANKING_FROM : month;
         LocalDate from = target.atDay(1);
         LocalDate toExclusive = target.plusMonths(1).atDay(1);
@@ -702,12 +701,12 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 rank = i + 1;
                 previousCount = row.reservationCount();
             }
+            // 닉네임이 비어 있는 회원은 이름으로 대신한다(가리는 규칙은 같다)
+            String nickname = StringUtils.hasText(row.memberNickname()) ? row.memberNickname() : row.memberName();
             items.add(new ReservationRankingResponse.Item(
                     rank,
-                    row.memberId(),
-                    row.memberName(),
-                    row.memberNickname(),
-                    row.phoneNo() == null ? null : row.phoneNo().replace("+82", "0").replaceAll("\\s+", ""),
+                    admin ? row.memberId() : null,
+                    admin ? nickname : NicknameMasker.mask(nickname),
                     row.reservationCount(),
                     row.totalPeople()));
             totalReservations += row.reservationCount();

@@ -39,12 +39,12 @@ public interface BgmAgitReservationCustomRepository {
     List<BgmAgitReservation> findReservationsByDate(LocalDate date);
 
     /**
-     * 관리자 예약 랭킹. 이용일 [from, toExclusive) 의 확정(승인·취소 아님) 예약을 회원별로 센다.
+     * 예약 랭킹. 이용일 [from, toExclusive) 의 확정(승인·취소 아님) 예약을 회원별로 센다.
      * people 이 있으면 그 인원 예약만. 예약 횟수 → 인원 합계 내림차순, 최대 limit 명.
      */
     List<RankingRow> findReservationRanking(LocalDate from, LocalDate toExclusive, Integer people, int limit);
 
-    record RankingRow(Long memberId, String memberName, String memberNickname, String phoneNo,
+    record RankingRow(Long memberId, String memberName, String memberNickname,
                       long reservationCount, long totalPeople) {
     }
 

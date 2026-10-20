@@ -23,12 +23,12 @@ function addMonths(ym: string, diff: number) {
 }
 
 /**
- * 관리자 예약 랭킹 — 월별(이용일 기준) 확정 예약 횟수를 회원별로 순위 매긴다.
+ * 예약 랭킹 — 월별(이용일 기준) 확정 예약 횟수를 회원별로 순위 매긴다. 로그인한 회원 누구나 본다.
  * 사장님이 월별 리워드에 쓰려고 요청했다. 인원수 탭을 고르면 그 인원으로 예약한 건만 센 순위를 본다.
+ * 닉네임은 관리자가 아니면 서버가 가려서 보낸다(홍x동). 화면에서 따로 가리지 말 것.
  */
 export default function ReservationRanking() {
   const user = useRecoilValue(userState);
-  const isAdmin = !!user?.roles?.includes('ROLE_ADMIN');
   const { request } = useRequest();
 
   // 세기 시작한 달 전이면 그 달부터 연다
@@ -58,10 +58,10 @@ export default function ReservationRanking() {
   );
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!user) return;
     fetchRanking(month, people);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [month, people, isAdmin]);
+  }, [month, people, user]);
 
   // 달이 바뀌면 그 달에 없는 인원 탭이 남지 않게 전체로 돌린다
   const changeMonth = (next: string) => {
@@ -72,11 +72,11 @@ export default function ReservationRanking() {
   const [y, m] = month.split('-');
   const monthLabel = useMemo(() => `${y}년 ${Number(m)}월`, [y, m]);
 
-  if (!isAdmin) {
+  if (!user) {
     return (
       <Wrapper>
         <BoardBox>
-          <EmptyBox>관리자만 이용할 수 있는 화면입니다.</EmptyBox>
+          <EmptyBox>로그인 후 확인할 수 있습니다.</EmptyBox>
         </BoardBox>
       </Wrapper>
     );
@@ -144,20 +144,16 @@ export default function ReservationRanking() {
               <thead>
                 <tr>
                   <Th>순위</Th>
-                  <Th>이름</Th>
                   <Th>닉네임</Th>
-                  <Th>연락처</Th>
                   <Th>예약 횟수</Th>
                   <Th>총 인원</Th>
                 </tr>
               </thead>
               <tbody>
-                {data.items.map(item => (
-                  <tr key={item.memberId}>
+                {data.items.map((item, index) => (
+                  <tr key={item.memberId ?? `${item.rank}-${index}`}>
                     <Td>{item.rank}</Td>
-                    <Td>{item.memberName || '-'}</Td>
-                    <Td>{item.memberNickname || '-'}</Td>
-                    <Td>{item.phoneNo || '-'}</Td>
+                    <Td>{item.nickname || '-'}</Td>
                     <Td>
                       <strong>{item.reservationCount}</strong>회
                     </Td>

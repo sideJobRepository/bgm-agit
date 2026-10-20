@@ -97,8 +97,8 @@ public class BgmAgitReservationController {
     }
 
     /**
-     * 관리자 예약 랭킹(월별). month 는 "YYYY-MM"(없으면 이번 달), people 이 있으면 그 인원 예약만.
-     * 회원 연락처가 나가므로 서비스단에서도 관리자 여부를 다시 확인한다.
+     * 예약 랭킹(월별, 회원 누구나). month 는 "YYYY-MM"(없으면 이번 달), people 이 있으면 그 인원 예약만.
+     * 닉네임은 관리자만 원문이고 그 외는 서버가 가려서 내려준다(NicknameMasker).
      */
     @GetMapping("/reservation/ranking")
     public ReservationRankingResponse getReservationRanking(
