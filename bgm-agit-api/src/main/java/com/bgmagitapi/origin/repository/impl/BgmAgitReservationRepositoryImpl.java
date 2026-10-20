@@ -2,7 +2,6 @@ package com.bgmagitapi.origin.repository.impl;
 
 import com.bgmagitapi.origin.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
-import com.bgmagitapi.origin.entity.BgmAgitReservationRoom;
 import com.bgmagitapi.origin.repository.custom.BgmAgitReservationCustomRepository;
 import com.querydsl.core.group.GroupBy;
 import com.querydsl.core.types.ConstructorExpression;
@@ -32,13 +31,16 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
     private final JPAQueryFactory queryFactory;
 
     /**
-     * 예약 점유 구간 프로젝션.
+     * 점유 구간 프로젝션(RESERVATION_ROOM ⋈ RESERVATION ⋈ ROOM).
      * ReservedTimeDto 는 @AllArgsConstructor + Projections.constructor 라 <b>인자 순서가 곧 필드 순서</b>다.
-     * 순서가 어긋나도 타입만 맞으면 컴파일이 통과하므로 프로젝션은 여기 한 곳에서만 만든다.
+     * roomId·reservationId·memberId 가 전부 Long 이라 순서가 어긋나도 컴파일이 통과하므로,
+     * 프로젝션을 쓰는 쿼리가 갈리지 않도록 여기 한 곳에서만 만든다.
      */
     private ConstructorExpression<ReservedTimeDto> reservedTimeProjection() {
         return Projections.constructor(
                 ReservedTimeDto.class,
+                bgmAgitRoom.bgmAgitRoomId,
+                bgmAgitReservation.bgmAgitReservationId,
                 bgmAgitReservation.bgmAgitReservationStartDate,
                 bgmAgitReservation.bgmAgitReservationStartTime,
                 bgmAgitReservation.bgmAgitReservationEndTime,
@@ -48,49 +50,41 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
         );
     }
 
+    /** 예약방 기준 조인. 점유 조회는 전부 여기서 시작한다. */
+    private JPAQuery<?> reservedTimeBase() {
+        return queryFactory
+                .from(bgmAgitReservationRoom)
+                .join(bgmAgitReservationRoom.bgmAgitReservation, bgmAgitReservation)
+                .join(bgmAgitReservationRoom.bgmAgitRoom, bgmAgitRoom);
+    }
+
     @Override
     public Map<Long, List<ReservedTimeDto>> findReservedTimesByRoomIds(List<Long> roomIds, LocalDate from, LocalDate to) {
         if (roomIds == null || roomIds.isEmpty()) {
             return Map.of();
         }
-        Map<Long, List<ReservedTimeDto>> grouped = queryFactory
-                .from(bgmAgitReservationRoom)
-                .join(bgmAgitReservationRoom.bgmAgitReservation, bgmAgitReservation)
+        Map<Long, List<ReservedTimeDto>> grouped = reservedTimeBase()
                 .where(
-                        bgmAgitReservationRoom.bgmAgitRoom.bgmAgitRoomId.in(roomIds),
+                        bgmAgitRoom.bgmAgitRoomId.in(roomIds),
                         bgmAgitReservation.bgmAgitReservationStartDate.between(from, to)
                 )
-                .transform(GroupBy.groupBy(bgmAgitReservationRoom.bgmAgitRoom.bgmAgitRoomId)
+                .transform(GroupBy.groupBy(bgmAgitRoom.bgmAgitRoomId)
                         .as(GroupBy.list(reservedTimeProjection())));
         return grouped == null ? Map.of() : grouped;
     }
 
     @Override
-    public List<BgmAgitReservationRoom> findActiveReservationRooms(List<Long> roomIds, LocalDate date) {
-        if (roomIds == null || roomIds.isEmpty()) {
-            return List.of();
-        }
-        return queryFactory
-                .selectFrom(bgmAgitReservationRoom)
-                .join(bgmAgitReservationRoom.bgmAgitReservation, bgmAgitReservation).fetchJoin()
-                .join(bgmAgitReservationRoom.bgmAgitRoom, bgmAgitRoom).fetchJoin()
-                .where(
-                        bgmAgitRoom.bgmAgitRoomId.in(roomIds),
-                        bgmAgitReservation.bgmAgitReservationStartDate.eq(date),
-                        bgmAgitReservation.bgmAgitReservationCancelStatus.eq("N")
-                )
-                .fetch();
+    public Map<Long, List<ReservedTimeDto>> findReservedTimesByRoomIdsAndDate(List<Long> roomIds, LocalDate date) {
+        return findReservedTimesByRoomIds(roomIds, date, date);
     }
 
     @Override
-    public List<BgmAgitReservationRoom> findConfirmedReservationRooms(List<Long> roomIds, LocalDate date, Long excludeReservationId) {
+    public List<ReservedTimeDto> findConfirmedReservations(List<Long> roomIds, LocalDate date, Long excludeReservationId) {
         if (roomIds == null || roomIds.isEmpty()) {
             return List.of();
         }
-        return queryFactory
-                .selectFrom(bgmAgitReservationRoom)
-                .join(bgmAgitReservationRoom.bgmAgitReservation, bgmAgitReservation).fetchJoin()
-                .join(bgmAgitReservationRoom.bgmAgitRoom, bgmAgitRoom).fetchJoin()
+        return reservedTimeBase()
+                .select(reservedTimeProjection())
                 .where(
                         bgmAgitRoom.bgmAgitRoomId.in(roomIds),
                         bgmAgitReservation.bgmAgitReservationStartDate.eq(date),
@@ -108,42 +102,46 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
         if (reservationId == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(
-                queryFactory
-                        .selectFrom(bgmAgitReservation)
-                        .distinct()
-                        .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember).fetchJoin()
-                        .leftJoin(bgmAgitReservation.bgmAgitReservationRooms, bgmAgitReservationRoom).fetchJoin()
-                        .leftJoin(bgmAgitReservationRoom.bgmAgitRoom, bgmAgitRoom).fetchJoin()
-                        .where(bgmAgitReservation.bgmAgitReservationId.eq(reservationId))
-                        .fetchOne()
-        );
+        // 컬렉션 fetch join 이라 fetchOne(내부적으로 limit 을 걸 수 있다) 대신 fetch 후 첫 건을 쓴다.
+        // 예약 ID 는 PK 라 distinct 뒤에는 0 또는 1건이다.
+        return queryFactory
+                .selectFrom(bgmAgitReservation)
+                .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember).fetchJoin()
+                .leftJoin(bgmAgitReservation.rooms, bgmAgitReservationRoom).fetchJoin()
+                .leftJoin(bgmAgitReservationRoom.bgmAgitRoom, bgmAgitRoom).fetchJoin()
+                .where(bgmAgitReservation.bgmAgitReservationId.eq(reservationId))
+                .distinct()
+                .fetch()
+                .stream()
+                .findFirst();
     }
 
     @Override
-    public Page<BgmAgitReservation> findReservationPageForDetail(Long memberId, boolean isUserRole, LocalDate start, LocalDate end, Pageable pageable) {
-        // 1) 부모만 페이징. N:1 회원만 fetch join 한다(컬렉션 fetch join 과 페이징을 섞으면 메모리 페이징이 된다)
-        List<BgmAgitReservation> content = queryFactory
-                .selectFrom(bgmAgitReservation)
-                .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember).fetchJoin()
+    public Page<BgmAgitReservation> findReservationPageForDetail(Long memberId, boolean isUserRole,
+                                                                LocalDate start, LocalDate end, Pageable pageable) {
+        // 컬렉션 fetch join 과 limit 을 같이 쓰면 Hibernate 가 전체를 메모리에서 자른다.
+        // 그래서 페이지 id 만 먼저 고르고, 그 id 들로 방까지 한 번에 가져온다.
+        List<Long> pageIds = queryFactory
+                .select(bgmAgitReservation.bgmAgitReservationId)
+                .from(bgmAgitReservation)
                 .where(isUserFilter(memberId, isUserRole), dateBetween(start, end))
                 .orderBy(bgmAgitReservation.bgmAgitReservationId.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        if (content.isEmpty()) {
+        if (pageIds.isEmpty()) {
             return new PageImpl<>(List.of(), pageable, 0L);
         }
 
-        // 2) 같은 영속성 컨텍스트에서 방을 fetch 해 위 엔티티들의 컬렉션을 채운다
-        List<Long> ids = content.stream().map(BgmAgitReservation::getBgmAgitReservationId).toList();
-        queryFactory
+        List<BgmAgitReservation> content = queryFactory
                 .selectFrom(bgmAgitReservation)
-                .distinct()
-                .leftJoin(bgmAgitReservation.bgmAgitReservationRooms, bgmAgitReservationRoom).fetchJoin()
+                .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember).fetchJoin()
+                .leftJoin(bgmAgitReservation.rooms, bgmAgitReservationRoom).fetchJoin()
                 .leftJoin(bgmAgitReservationRoom.bgmAgitRoom, bgmAgitRoom).fetchJoin()
-                .where(bgmAgitReservation.bgmAgitReservationId.in(ids))
+                .where(bgmAgitReservation.bgmAgitReservationId.in(pageIds))
+                .orderBy(bgmAgitReservation.bgmAgitReservationId.desc())
+                .distinct()
                 .fetch();
 
         JPAQuery<Long> countQuery = queryFactory
@@ -158,12 +156,15 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
     public List<BgmAgitReservation> findReservationsByDate(LocalDate date) {
         return queryFactory
                 .selectFrom(bgmAgitReservation)
-                .distinct()
                 .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember).fetchJoin()
-                .leftJoin(bgmAgitReservation.bgmAgitReservationRooms, bgmAgitReservationRoom).fetchJoin()
+                .leftJoin(bgmAgitReservation.rooms, bgmAgitReservationRoom).fetchJoin()
                 .leftJoin(bgmAgitReservationRoom.bgmAgitRoom, bgmAgitRoom).fetchJoin()
                 .where(bgmAgitReservation.bgmAgitReservationStartDate.eq(date))
-                .orderBy(bgmAgitReservation.bgmAgitReservationId.asc())
+                .orderBy(
+                        bgmAgitReservation.bgmAgitReservationStartTime.asc(),
+                        bgmAgitReservation.bgmAgitReservationId.asc()
+                )
+                .distinct()
                 .fetch();
     }
 

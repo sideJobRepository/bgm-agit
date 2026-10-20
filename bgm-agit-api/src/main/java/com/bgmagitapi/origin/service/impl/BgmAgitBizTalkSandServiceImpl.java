@@ -3,7 +3,6 @@ package com.bgmagitapi.origin.service.impl;
 import com.bgmagitapi.origin.entity.BgmAgitBiztalkSendHistory;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
-import com.bgmagitapi.origin.entity.BgmAgitRoom;
 import com.bgmagitapi.origin.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.origin.entity.enumeration.BgmAgitSubject;
 import com.bgmagitapi.origin.event.dto.InquiryEvent;
@@ -18,6 +17,7 @@ import com.bgmagitapi.kml.review.dto.events.ReviewPostEvents;
 import com.bgmagitapi.origin.repository.BgmAgitBiztalkSendHistoryRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.origin.service.BgmAgitBizTalkSandService;
+import com.bgmagitapi.origin.service.BgmAgitHolidayService;
 import com.bgmagitapi.origin.service.BgmAgitBizTalkService;
 import com.bgmagitapi.origin.service.response.Attach;
 import com.bgmagitapi.origin.service.response.BizTalkTokenResponse;
@@ -34,6 +34,7 @@ import org.springframework.web.client.RestClient;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -60,6 +61,9 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
 
     private final BgmAgitReservationRepository bgmAgitReservationRepository;
 
+    // 알림톡 고지 금액도 결제와 같은 주말/공휴일 판정을 써야 청구액과 갈리지 않는다
+    private final BgmAgitHolidayService bgmAgitHolidayService;
+
     private static final String PHONE1 = "010-5059-3499";
     private static final String PHONE2 = "010-5592-8832";
 
@@ -67,42 +71,61 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     // payment.live 는 결제 승인 후 예약 자동확정에 쓰이므로 알림톡 문구 전환과 분리한다.
     @Value("${biztalk.reservation-payment-live:false}")
     private boolean reservationPaymentTalkLive;
-    
+
+    // 전액결제 개정 템플릿(-2) 전환 스위치. 카카오 검수 리드타임 때문에 코드 배포와 분리한다.
+    // 통과 후 yml 한 줄만 true 로 바꾸면 된다.
+    @Value("${biztalk.reservation-payment-v2:false}")
+    private boolean reservationFullPaymentTalkLive;
+
+
     @Value("${biztalk.sender-key}")
     private String senderKey;
     
     private final String bizTalkUrl = "https://www.biztalk-api.com";
     
     @Override
-    public void sandBizTalk(BgmAgitMember member, BgmAgitReservation reservation, List<BgmAgitRoom> rooms) {
+    public void sandBizTalk(BgmAgitMember member, BgmAgitReservation reservation) {
 
         String formattedTimes = AlimtalkUtils.formatTimes(reservation);
         String formattedDate = AlimtalkUtils.formatDate(reservation.getBgmAgitReservationStartDate());
         String people = String.valueOf(reservation.getBgmAgitReservationPeople());
         String reservationRequest = reservation.getBgmAgitReservationRequest();
 
-        // 룸/마작 구분은 기준 방(첫 번째) 링크로. rooms 는 서비스가 로딩해 넘긴 엔티티라 지연 로딩이 없다
-        if (rooms == null || rooms.isEmpty()) {
-            throw new IllegalArgumentException("존재하지 않는 룸입니다.");
-        }
-        boolean isRoom = !rooms.get(0).isMahjong();
-        // 합쳐 예약한 경우 "M-1, M-2" 처럼 예약된 방 전체를 노출 (템플릿 변수라 검수 영향 없음)
-        String roomName = rooms.stream()
-                .map(BgmAgitRoom::getBgmAgitRoomName)
-                .filter(StringUtils::hasText)
-                .distinct()
-                .collect(Collectors.joining(", "));
+        // 룸/마작 구분은 방의 메뉴 링크로 한다(카테고리 컬럼 없음)
+        boolean isRoom = !reservation.isMahjong();
+        // 항목을 합쳐 예약한 경우 "M-1, M-2" 처럼 예약된 방 전체를 노출 (템플릿 변수라 검수 영향 없음)
+        String roomName = reservation.getRoomNames();
 
         // 메시지 구성 (명시적으로 켠 경우에만 계좌안내 → 예약금 결제안내로 스위칭)
         String message;
         String template;
         if (reservationPaymentTalkLive) {
-            // 예약금은 템플릿 변수라 실제 청구액을 그대로 넣는다. 합쳐 예약이면 방 수만큼 합산된 금액
-            String deposit = AlimtalkUtils.formatAmount(SlotSchedule.totalDepositAmount(rooms));
-            message = AlimtalkUtils.buildReservationPaymentMessage(
-                    member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, deposit, reservationRequest
-            );
-            template = AlimtalkTemplate.BGMAGIT_RES_PAYMENT;
+            // 금액은 템플릿 변수라 실제 청구액을 그대로 넣는다.
+            // 결제 주문(createPaymentOrder)과 반드시 같은 메서드로 계산할 것 — 갈리면 고지액과 청구액이 달라진다
+            LocalDate useDate = reservation.getBgmAgitReservationStartDate();
+            int headCount = reservation.getBgmAgitReservationPeople() == null ? 0 : reservation.getBgmAgitReservationPeople();
+            boolean weekendRate = bgmAgitHolidayService.isWeekendRate(useDate);
+            // 월간패스 본인 1명분 할인도 결제 주문과 같은 판정으로 뺀다
+            int discount = SlotSchedule.monthlyPassDiscount(
+                    member.isMonthlyPassHolder(), reservation.getRoomList(), headCount, weekendRate, useDate,
+                    LocalDate.now(ZoneId.of("Asia/Seoul")));
+            String deposit = AlimtalkUtils.formatAmount(SlotSchedule.totalPaymentAmount(
+                    reservation.getRoomList(), headCount, weekendRate, useDate) - discount);
+            // 전액결제 개정판(-2)은 카카오 검수를 따로 받아야 해서 스위치로 가른다.
+            // 통과 전에는 구 템플릿이 나가고, 그 기간에는 환불 안내 문구가 실제 규정과 다르다
+            // (예약 화면·결제 모달·환불정책 페이지가 정확한 문구를 갖고 있어 그쪽으로 보완한다).
+            // 10월 이용분(종전 정책)은 "예약금 결제·전날까지 취소" 문구가 맞으므로 늘 -1 이다
+            if (reservationFullPaymentTalkLive && SlotSchedule.isNewPolicy(useDate)) {
+                message = AlimtalkUtils.buildReservationFullPaymentMessage(
+                        member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, deposit, reservationRequest
+                );
+                template = AlimtalkTemplate.BGMAGIT_RES_PAYMENT_V2;
+            } else {
+                message = AlimtalkUtils.buildReservationPaymentMessage(
+                        member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, deposit, reservationRequest
+                );
+                template = AlimtalkTemplate.BGMAGIT_RES_PAYMENT;
+            }
         } else {
             message = AlimtalkUtils.buildReservationMessage(
                     member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, reservationRequest
@@ -112,6 +135,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
 
         // 버튼명 정의
         String buttonName = "예약 내역 확인 하기";
+        // 알림톡 이력의 SUBJECT_ID 는 예약 ID(구 예약번호와 같은 값)
         Long subjectId = reservation.getBgmAgitReservationId();
         BgmAgitSubject subject = isRoom ? BgmAgitSubject.RESERVATION : BgmAgitSubject.MAHJONG_RENTAL;
 
@@ -126,7 +150,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     @Override
     public void sendCancelBizTalk(ReservationTalkContext ctx) {
         BgmAgitReservation reservation = ctx.getReservation();
-        boolean isRoom = !ctx.isMahjong();
+        boolean isRoom = !reservation.isMahjong();
         String times = AlimtalkUtils.formatTimes(reservation);
         String date = AlimtalkUtils.formatDate(reservation.getBgmAgitReservationStartDate());
         String bgmAgitReservationPeople = String.valueOf(reservation.getBgmAgitReservationPeople());
@@ -151,7 +175,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     @Override
     public void sendCompleteBizTalk(ReservationTalkContext ctx) {
         BgmAgitReservation reservation = ctx.getReservation();
-        boolean isRoom = !ctx.isMahjong();
+        boolean isRoom = !reservation.isMahjong();
         String times = AlimtalkUtils.formatTimes(reservation);
         String date = AlimtalkUtils.formatDate(reservation.getBgmAgitReservationStartDate());
         String people = String.valueOf(reservation.getBgmAgitReservationPeople());
@@ -341,8 +365,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     @Override
     public void sendAdminDailyReservation(LocalDate date) {
 
-        // 예약 1건 = 1행(이어진 한 구간). 취소건은 빼고 영업일 시작시각 순으로 정렬한다.
-        // 방은 fetch join 으로 같이 읽어 둔다(합쳐 예약이면 "M-1, M-2")
+        // 예약 1건 = 1행. 취소건은 빼고 영업일 시간 순으로 정렬한다.
         List<BgmAgitReservation> reservations = bgmAgitReservationRepository.findReservationsByDate(date).stream()
                 .filter(r -> r.getBgmAgitReservationStartTime() != null)
                 .filter(r -> !r.isCanceled())
@@ -355,8 +378,8 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
 
         List<String> lines = reservations.stream()
                 .map(r -> {
-                    LocalTime end = r.getBgmAgitReservationEndTime();
-                    String roomName = r.getRooms().stream()
+                    // 합쳐 예약은 방이 여러 개라 이름을 전부 모은다
+                    String roomName = r.getRoomList().stream()
                             .map(room -> Objects.toString(room.getBgmAgitRoomName(), ""))
                             .filter(label -> !label.isEmpty())
                             .distinct()
@@ -367,8 +390,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
                     String state = r.isApproved() ? "확정" : "대기";
                     int people = r.getBgmAgitReservationPeople() == null ? 0 : r.getBgmAgitReservationPeople();
 
-                    return AlimtalkUtils.TIME_FMT.format(r.getBgmAgitReservationStartTime())
-                            + " ~ " + (end == null ? "" : AlimtalkUtils.TIME_FMT.format(end))
+                    return AlimtalkUtils.formatTimes(r)
                             + " " + roomName
                             + " " + memberName
                             + " " + people + "명"

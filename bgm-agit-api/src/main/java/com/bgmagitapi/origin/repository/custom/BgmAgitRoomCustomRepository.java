@@ -2,6 +2,7 @@ package com.bgmagitapi.origin.repository.custom;
 
 import com.bgmagitapi.origin.entity.BgmAgitRoom;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface BgmAgitRoomCustomRepository {
@@ -21,4 +22,10 @@ public interface BgmAgitRoomCustomRepository {
      * 이 방에 걸린 예약이 하나라도 있는지(취소건 포함). 있으면 FK RESTRICT 라 삭제할 수 없다.
      */
     boolean existsReservationByRoomId(Long roomId);
+
+    /**
+     * 이 방에 걸린, fromDate 이후(포함) 이용일의 미취소 예약 수(대기·확정 모두).
+     * 방을 숨길 때 남아 있는 예약을 관리자에게 알리는 용도다.
+     */
+    long countActiveReservationsFrom(Long roomId, LocalDate fromDate);
 }

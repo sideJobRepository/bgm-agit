@@ -10,5 +10,4 @@ public interface BgmAgitPaymentRepository extends JpaRepository<BgmAgitPayment, 
 
     // 토스 orderId로 결제 조회 (confirm 시 조회 키, UNIQUE)
     Optional<BgmAgitPayment> findByBgmAgitOrderNo(String bgmAgitOrderNo);
-
 }

@@ -1,10 +1,12 @@
 package com.bgmagitapi.origin.service.impl;
 
+import com.bgmagitapi.origin.advice.exception.ForbiddenException;
 import com.bgmagitapi.origin.advice.exception.ValidException;
 import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.origin.controller.request.BgmAgitMemberNicknameChangeRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitMemberPasswordChangeRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitRoleModifyRequest;
+import com.bgmagitapi.origin.controller.response.BgmAgitMonthlyPassResponse;
 import com.bgmagitapi.origin.controller.response.BgmAgitRoleResponse;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.BgmAgitMemberRole;
@@ -237,6 +239,50 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
             member.disableMahjongUse();
             return new ApiResponse(200, true, "마작 기록 연동이 해제되었습니다.");
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BgmAgitMonthlyPassResponse> getMonthlyPassMembers(Pageable pageable, String keyword, boolean onlyPass, List<String> actorRoles) {
+        // 전화번호가 나가는 목록이라 URL 매핑과 별개로 서비스에서도 막는다(매핑이 빠지면 기본 permit 이다)
+        requireAdmin(actorRoles);
+        Page<BgmAgitMonthlyPassResponse> page = bgmAgitMemberRepository.findMonthlyPassMembers(pageable, keyword, onlyPass);
+        page.getContent().forEach(item -> item.setMemberPhoneNo(formatPhoneNo(item.getMemberPhoneNo())));
+        return page;
+    }
+
+    @Override
+    public ApiResponse setMonthlyPass(Long memberId, boolean pass, List<String> actorRoles) {
+        requireAdmin(actorRoles);
+        BgmAgitMember member = bgmAgitMemberRepository.findById(memberId)
+                .orElseThrow(() -> new ValidException("해당 회원을 찾을 수 없습니다."));
+        member.changeMonthlyPass(pass);
+        return new ApiResponse(200, true, pass
+                ? "월간패스 회원으로 등록되었습니다. (매월 1일에 자동 해제)"
+                : "월간패스가 해제되었습니다.");
+    }
+
+    @Override
+    public long resetMonthlyPass() {
+        return bgmAgitMemberRepository.resetMonthlyPass();
+    }
+
+    private void requireAdmin(List<String> actorRoles) {
+        if (!hasRole(actorRoles, ROLE_ADMIN)) {
+            throw new ForbiddenException("관리자만 사용할 수 있습니다.");
+        }
+    }
+
+    private String formatPhoneNo(String raw) {
+        if (raw == null) return null;
+        String digits = raw.replace("+82", "0").replaceAll("\\D", "");
+        if (digits.length() == 11) {
+            return digits.substring(0, 3) + "-" + digits.substring(3, 7) + "-" + digits.substring(7);
+        }
+        if (digits.length() == 10) {
+            return digits.substring(0, 3) + "-" + digits.substring(3, 6) + "-" + digits.substring(6);
+        }
+        return digits;
     }
 
     private boolean hasRole(List<String> roles, String role) {

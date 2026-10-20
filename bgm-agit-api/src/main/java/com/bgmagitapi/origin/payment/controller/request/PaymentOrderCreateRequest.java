@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PaymentOrderCreateRequest {
 
-    // 결제할 예약 ID
+    // 결제할 예약 그룹 번호
     @NotNull(message = "예약 ID는 필수입니다.")
     private Long reservationId;
 }

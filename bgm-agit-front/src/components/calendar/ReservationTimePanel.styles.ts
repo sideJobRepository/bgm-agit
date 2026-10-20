@@ -106,6 +106,33 @@ export const TimeBox = styled.div<WithTheme>`
   }
 `;
 
+/* 고른 구간 되짚기. 버튼이 24개라 무엇을 골랐는지 버튼만 봐서는 안 들어온다 */
+export const SelectedRange = styled.div<WithTheme>`
+  width: 100%;
+  max-width: 760px;
+  padding: 10px 12px;
+  border-radius: ${({ theme }) => theme.radius.md};
+  background-color: ${({ theme }) => theme.colors.softColor};
+  font-size: ${({ theme }) => theme.sizes.small};
+  color: ${({ theme }) => theme.colors.subColor};
+
+  strong {
+    font-weight: ${({ theme }) => theme.weight.bold};
+  }
+`;
+
+/* 00~09시 버튼은 다음 날이다. 표시가 없으면 하루 앞선 날로 착각한다 */
+export const NextDayTag = styled.span<WithTheme>`
+  display: inline-block;
+  margin-right: 4px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background-color: ${({ theme }) => theme.colors.menuColor};
+  color: ${({ theme }) => theme.colors.white};
+  font-size: 10px;
+  vertical-align: middle;
+`;
+
 export const TimeSlotButton = styled.button<WithTheme & { selected: boolean }>`
   -webkit-tap-highlight-color: transparent;
   /* 일반 룸은 13슬롯이 모바일 2열 = 7행으로 붙는다. 터치 타겟이 작으면 인접 시간대 오탭이 곧 오예약이 된다. */

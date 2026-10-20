@@ -5,6 +5,7 @@ import com.bgmagitapi.origin.advice.exception.ValidException;
 import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationModifyRequest;
+import com.bgmagitapi.origin.controller.request.BgmAgitReservationPeopleRequest;
 import com.bgmagitapi.origin.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AdminReservationBoardResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AvailableRoomsResponse;
@@ -13,7 +14,6 @@ import com.bgmagitapi.origin.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.origin.controller.response.reservation.TimeRange;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
-import com.bgmagitapi.origin.entity.BgmAgitReservationRoom;
 import com.bgmagitapi.origin.entity.BgmAgitRoom;
 import com.bgmagitapi.origin.event.dto.ReservationTalkEvent;
 import com.bgmagitapi.origin.event.dto.ReservationWaitingEvent;
@@ -21,17 +21,19 @@ import com.bgmagitapi.origin.event.dto.TalkAction;
 import com.bgmagitapi.origin.payment.controller.response.PaymentOrderResponse;
 import com.bgmagitapi.origin.payment.repository.BgmAgitPaymentRepository;
 import com.bgmagitapi.origin.payment.service.PaymentService;
+import com.bgmagitapi.origin.payment.service.response.PaymentRefundResult;
 import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.origin.repository.BgmAgitRoomRepository;
+import com.bgmagitapi.origin.service.BgmAgitHolidayService;
 import com.bgmagitapi.origin.service.BgmAgitReservationService;
-import com.bgmagitapi.origin.service.response.BizTalkCancel;
 import com.bgmagitapi.origin.service.response.ReservationTalkContext;
-import com.bgmagitapi.origin.util.LunarCalendar;
+import com.bgmagitapi.origin.util.ReservationRefundPolicy;
 import com.bgmagitapi.origin.util.SlotSchedule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,7 +45,6 @@ import org.springframework.util.StringUtils;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -55,7 +56,17 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     /** 영업 기준 시간대. 서버 JVM 타임존에 기대지 말고 날짜 판단은 항상 이걸로 한다. */
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
-    private static final DateTimeFormatter HHMM = DateTimeFormatter.ofPattern("HH:mm");
+    /** 마작 대탁 3시간 대여료. 조회 응답의 안내용 금액이며 결제 금액과는 별개다. */
+    private static final int MAHJONG_RENTAL_PRICE = 40000;
+
+    private static final DateTimeFormatter HH_MM = DateTimeFormatter.ofPattern("HH:mm");
+
+    /** 떨어진 시간대 선택 거절 문구. 프론트도 같은 규칙(붙은 칸만 선택)으로 막는다. */
+    static final String NOT_CONTIGUOUS_MESSAGE = "예약 시간은 연속된 시간대로 선택해 주세요.";
+
+    /** 종전 정책(10월 이용분) G룸 하루 1팀 제한 문구. */
+    private static final String LEGACY_G_ROOM_MESSAGE =
+            "G룸은 하루에 1팀당 1개의 예약이 가능하여 다른 시간대의 예약이 불가능 합니다.";
 
     private final BgmAgitRoomRepository bgmAgitRoomRepository;
 
@@ -69,12 +80,18 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
 
     private final BgmAgitPaymentRepository bgmAgitPaymentRepository;
 
+    // 요금의 주말/평일 판정. 토·일 + 공휴일(법정 계산 + 관리자 수동 예외)
+    private final BgmAgitHolidayService bgmAgitHolidayService;
+
     @Override
     @Transactional(readOnly = true)
     public BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id, LocalDate date) {
         return getReservation(labelGb, link, id, null, date);
     }
 
+    /**
+     * 예약 캘린더. id/ids 는 방 ID(BGM_AGIT_ROOM_ID) 다. labelGb 는 이미지 메뉴 시절의 값이라 쓰지 않는다.
+     */
     @Override
     @Transactional(readOnly = true)
     public BgmAgitReservationResponse getReservation(Long labelGb, String link, Long id, List<Long> extraIds, LocalDate date) {
@@ -87,24 +104,18 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         LocalDate endOfWindow = today.plusMonths(SlotSchedule.RESERVATION_WINDOW_MONTHS).isAfter(windowEnd)
                 ? windowEnd
                 : today.plusMonths(SlotSchedule.RESERVATION_WINDOW_MONTHS);
-        // 1. 대상 방 조회 (첫 번째가 기준 방, 나머지는 합쳐 쓸 방). id/ids 파라미터 값은 roomId 다
+        // 1. 대상 방 조회 (첫 번째가 기준 방, 나머지는 합쳐 쓸 방)
         List<BgmAgitRoom> rooms = loadReservableRooms(mergeRoomIds(id, extraIds));
         BgmAgitRoom primary = rooms.get(0);
-        // 항목 정보는 방 기준으로 1회 세팅 (전 기간 만실이어도 제목/인원이 비지 않게)
+        boolean mahjong = primary.isMahjong();
+        // 방 정보는 1회 세팅 (전 기간 만실이어도 제목/인원이 비지 않게)
         String label = rooms.stream()
                 .map(BgmAgitRoom::getBgmAgitRoomName)
                 .collect(Collectors.joining(", "));
         String group = primary.getBgmAgitRoomGuide();
-        // 합쳐 쓸 때 최소인원은 가장 큰 최소값, 최대인원은 합산
-        Integer minPeople = rooms.stream()
-                .map(BgmAgitRoom::getBgmAgitRoomMinPeople)
-                .filter(Objects::nonNull)
-                .max(Integer::compareTo)
-                .orElse(null);
-        Integer maxPeople = rooms.stream()
-                .map(BgmAgitRoom::getBgmAgitRoomMaxPeople)
-                .filter(Objects::nonNull)
-                .reduce(0, Integer::sum);
+        // 합쳐 쓸 때 최소·최대 인원 모두 방별 값의 합산. 등록·결제 검증도 같은 규칙을 쓴다
+        Integer minPeople = effectiveMinPeople(rooms);
+        Integer maxPeople = effectiveMaxPeople(rooms);
 
         // 2. 방별 예약 현황 Map<영업일, List<TimeRange>> — 방 수와 무관하게 쿼리 1회
         Map<Long, List<ReservedTimeDto>> reservedByRoom = bgmAgitReservationRepository.findReservedTimesByRoomIds(
@@ -119,11 +130,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
 
         for (LocalDate d = today; !d.isAfter(endOfWindow); d = d.plusDays(1)) {
             if (d.isEqual(now)) {
-                timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(
-                        d,
-                        List.of(),
-                        "당일 예약은 불가능합니다."
-                ));
+                timeSlots.add(timeSlotByDate(rooms, d, List.of(), "당일 예약은 불가능합니다."));
                 continue;
             }
 
@@ -145,60 +152,77 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 }
             }
 
-            timeSlots.add(new BgmAgitReservationResponse.TimeSlotByDate(
-                    d,
+            timeSlots.add(timeSlotByDate(rooms, d,
                     availableSlots == null ? List.of() : availableSlots,
                     blockedMessage));
         }
 
-        // 4. 공휴일/주말 가격 계산
-        Set<String> holidaySet = new HashSet<>();
-
-        int startYear = today.getYear();
-        int endYear = endOfWindow.getYear();
-
-        for (int y = startYear; y <= endYear; y++) {
-            holidaySet.addAll(new LunarCalendar().getHolidaySet(String.valueOf(y)));
-        }
-
-        DateTimeFormatter formatterYY = DateTimeFormatter.ofPattern("yyyyMMdd");
-
+        // 4. 날짜별 1인 단가 계산
+        //
+        // 조회 시점에는 인원이 아직 정해지지 않아(인원 입력이 예약 확인 모달에서 일어난다)
+        // 총액을 만들 수 없다. 그래서 단가만 내려주고 프론트가 "인원 × 단가"를 미리보기로 조립한다.
+        // 실제 청구는 결제 주문 생성 시 서버가 저장된 인원으로 다시 계산한다.
         List<BgmAgitReservationResponse.PriceByDate> prices = new ArrayList<>();
 
         for (LocalDate d = today; !d.isAfter(endOfWindow); d = d.plusDays(1)) {
             if (d.isEqual(now)) {
                 continue;
             }
-            String dateStr = d.format(formatterYY);
-            boolean isWeekend = d.getDayOfWeek() == DayOfWeek.SATURDAY || d.getDayOfWeek() == DayOfWeek.SUNDAY;
-            boolean isHoliday = holidaySet.contains(dateStr);
-            int price = (isWeekend || isHoliday) ? 4000 : 3000;
-            if (SlotSchedule.isMahjongRental(primary)) {
-                price = 40000;
-            }
-            prices.add(new BgmAgitReservationResponse.PriceByDate(d, price, isWeekend || isHoliday));
+            // 토·일 + 공휴일(법정 계산 + 관리자 수동 예외)이 주말 단가다
+            boolean isWeekend = bgmAgitHolidayService.isWeekendRate(d);
+            // 마작 대탁은 개편 대상이 아니라 예전 그대로 3시간 대여료를 그대로 내려준다(1인 단가가 아니다).
+            // 종전 정책 날짜(10월)의 룸은 예약금 정액이라 단가 대신 예약금을 내려준다(프론트는 FLAT 이면 depositAmount 를 쓴다)
+            int price = mahjong
+                    ? MAHJONG_RENTAL_PRICE
+                    : SlotSchedule.isNewPolicy(d) ? SlotSchedule.unitPrice(isWeekend) : SlotSchedule.LEGACY_DEPOSIT_AMOUNT;
+            prices.add(new BgmAgitReservationResponse.PriceByDate(d, price, isWeekend));
         }
 
-        // 5. 슬롯 정책(후보 시간대 / 선택 제한 / 예약 타입) — 프론트가 하드코딩 대신 이걸 쓴다
-        List<BgmAgitReservationResponse.SlotRange> slotRanges = SlotSchedule.of(primary, today)
-                .slots()
-                .stream()
-                .map(slot -> new BgmAgitReservationResponse.SlotRange(
-                        slot.start().format(HHMM),
-                        slot.end().format(HHMM)))
-                .toList();
-
-        // 예약금은 방별 합산 (합쳐 예약이면 M-1 + M-2 = 2만원). 결제 주문과 같은 메서드
-        int depositAmount = SlotSchedule.totalDepositAmount(rooms);
+        // 5. 슬롯 정책(후보 시간대 / 선택 제한 / 예약 타입) — 프론트가 하드코딩 대신 이걸 쓴다.
+        // 날짜마다 다를 수 있어(10월 종전 정책) 날짜별 값은 timeSlots 에 실었고, 최상위는 조회 기준일 값이다
+        BgmAgitReservationResponse.TimeSlotByDate base = timeSlotByDate(rooms, today, List.of(), null);
 
         return new BgmAgitReservationResponse(
                 timeSlots, prices, label, group, minPeople, maxPeople,
+                base.getSlotRanges(),
+                base.getMaxSelectableSlots(),
+                SlotSchedule.resolveReservationType(mahjong).name(),
+                base.getPricingMode(),
+                base.getDepositAmount()
+        );
+    }
+
+    /**
+     * 날짜 하나의 응답 항목. 후보 시간대·선택 제한·요금 방식을 그날의 정책(SlotSchedule.NEW_POLICY_FROM)으로 채운다.
+     * 합쳐 예약은 기준 방(첫 번째)의 시간 모델을 쓴다 — 합칠 수 있는 방은 같은 시간 모델끼리다.
+     */
+    private BgmAgitReservationResponse.TimeSlotByDate timeSlotByDate(List<BgmAgitRoom> rooms,
+                                                                     LocalDate d,
+                                                                     List<String> availableSlots,
+                                                                     String message) {
+        BgmAgitRoom primary = rooms.get(0);
+        List<BgmAgitReservationResponse.SlotRange> slotRanges = SlotSchedule.of(primary, d)
+                .slots()
+                .stream()
+                .map(slot -> new BgmAgitReservationResponse.SlotRange(
+                        slot.start().format(HH_MM),
+                        slot.end().format(HH_MM)))
+                .toList();
+        boolean flat = SlotSchedule.isFlatPricing(rooms, d);
+        // 룸 일무제한은 인원이 정해져야 총액이 나오므로 방식만 알려주고 금액은 prices 의 단가로 조립하게 한다.
+        // 정액(마작 대탁·종전 정책 룸)은 방당 정액을 합산해 확정 금액을 내려준다
+        Integer depositAmount = flat
+                ? SlotSchedule.totalPaymentAmount(rooms, 0, false, d)
+                : null;
+        return new BgmAgitReservationResponse.TimeSlotByDate(
+                d,
+                availableSlots,
+                message,
                 slotRanges,
-                SlotSchedule.maxSelectableSlots(primary),
-                SlotSchedule.resolveReservationType(primary).name(),
+                SlotSchedule.maxSelectableSlots(primary, d),
+                flat ? "FLAT" : "PER_PERSON",
                 depositAmount
         );
-
     }
 
     @Override
@@ -209,7 +233,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         Long userId = currentUserIdOrNull();
         LocalDate now = LocalDate.now(KST);
 
-        // 방 카드 목록(GET /rooms)과 같은 필터 — 숨김 제외
+        // 방 카드 목록(GET /rooms)과 같은 필터여야 배지가 빠지는 카드가 안 생긴다
         List<BgmAgitRoom> rooms = bgmAgitRoomRepository.findReservableRooms(link);
 
         String blockedMessage = resolveDateBlockMessage(date, now);
@@ -224,7 +248,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
 
         List<Long> roomIds = rooms.stream().map(BgmAgitRoom::getBgmAgitRoomId).toList();
         Map<Long, List<ReservedTimeDto>> reservedByRoom =
-                bgmAgitReservationRepository.findReservedTimesByRoomIds(roomIds, date, date);
+                bgmAgitReservationRepository.findReservedTimesByRoomIdsAndDate(roomIds, date);
 
         List<AvailableRoomsResponse.Room> result = new ArrayList<>();
         for (BgmAgitRoom room : rooms) {
@@ -278,8 +302,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         );
     }
 
-    /** 프론트 탭·카드 구분용 카테고리 문자열. 방 테이블엔 카테고리 컬럼이 없어 링크로 정한다. */
-    private String categoryOf(BgmAgitRoom room) {
+    /** 프론트 탭·배지 분류값. 카테고리 컬럼이 없어 메뉴 링크로 판정한다. */
+    private static String categoryOf(BgmAgitRoom room) {
         return room.isMahjong() ? "MAHJONG" : "ROOM";
     }
 
@@ -296,13 +320,25 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         // 합쳐 예약(예: M-1 + M-2)이면 방이 여러 개. 첫 번째가 기준 방
         List<BgmAgitRoom> rooms = loadReservableRooms(mergeRoomIds(request.getRoomId(), request.getRoomIds()));
         BgmAgitRoom primary = rooms.get(0);
+        boolean mahjong = primary.isMahjong();
         Integer people = request.getBgmAgitReservationPeople();
         String reservationRequest = !StringUtils.hasText(request.getBgmAgitReservationRequest()) ? "없음" : request.getBgmAgitReservationRequest();
+
         // 날짜 보정
         LocalDate kstDate = ZonedDateTime
                 .parse(request.getBgmAgitReservationStartDate())
                 .withZoneSameInstant(KST)
                 .toLocalDate();
+
+        // 인원이 곧 결제 금액이므로 서버가 범위를 직접 검증한다.
+        // 프론트 스테퍼만 믿으면 people=1 로 POST 해서 7인 룸을 1인 요금에 잡을 수 있다.
+        // 종전 정책 날짜(10월)는 예약금 정액이라 인원이 금액과 무관했고 서버 검증도 없었다.
+        // 방 인원값은 11월 기준으로 이미 바뀌어 있어서 그대로 검증하면 10월에 받던 인원이 거절된다
+        if (SlotSchedule.isNewPolicy(kstDate)) {
+            validateReservationPeople(rooms, people);
+        } else if (people == null || people < 1) {
+            throw new ReservationConflictException("예약 인원을 입력해 주세요.");
+        }
 
         // 예약 가능 기간: 당일·과거 불가 + 현재일 기준 RESERVATION_WINDOW_MONTHS 개월 이내.
         // 조회(getReservation)에서 슬롯을 안 내려주는 것만으로는 직접 POST 를 막지 못하므로 등록에서도 검증한다.
@@ -321,71 +357,83 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             throw new ReservationConflictException(SlotSchedule.CLOSED_DAY_MESSAGE);
         }
 
-        // 고른 시작 시각 → 그 날의 슬롯. 후보에 없는 시각이 섞이면 거부한다
-        List<SlotSchedule.Slot> slots = SlotSchedule.of(primary, kstDate)
-                .resolveSlots(parseStartTimes(request.getStartTimeEndTime()));
-        if (slots.isEmpty()) {
-            throw new ValidException("선택할 수 없는 시간대입니다.");
-        }
-        // G룸 등 선택 개수 제한(응답의 maxSelectableSlots 는 프론트 안내용이라 직접 POST 는 여기서 막는다)
-        Integer maxSelectableSlots = SlotSchedule.maxSelectableSlots(primary);
-        if (maxSelectableSlots != null && slots.size() > maxSelectableSlots) {
+        // 시간: 이어진 한 구간. 프론트도 막지만 직접 POST 를 막는 건 서버다.
+        SlotSchedule schedule = SlotSchedule.of(primary, kstDate);
+        Set<LocalTime> requestedStartTimes = parseStartTimes(request.getStartTimeEndTime());
+        // 선택 개수 제한(종전 정책 G룸 1개). 응답의 maxSelectableSlots 는 프론트 안내용이라 직접 POST 는 여기서 막는다
+        Integer maxSelectableSlots = SlotSchedule.maxSelectableSlots(primary, kstDate);
+        if (maxSelectableSlots != null && requestedStartTimes.size() > maxSelectableSlots) {
             throw new ValidException("한 번에 선택할 수 있는 시간대는 " + maxSelectableSlots + "개입니다.");
         }
-        // 예약 1건 = 이어진 한 구간. 떨어진 시간대는 담을 수 없으므로 등록에서 막는다(프론트 가드는 안내용)
-        if (!SlotSchedule.isContiguous(slots)) {
-            throw new ValidException(SlotSchedule.NOT_CONTIGUOUS_MESSAGE);
-        }
-        SlotSchedule.Slot period = new SlotSchedule.Slot(slots.get(0).start(), slots.get(slots.size() - 1).end());
-
-        // 방별 충돌 검사 — 확정건 + 내 대기건과 구간이 겹치면 거부(조회 화면의 TimeRange.isOverlapping 과 같은 규칙)
-        List<Long> roomIds = rooms.stream().map(BgmAgitRoom::getBgmAgitRoomId).toList();
-        for (BgmAgitReservationRoom taken : bgmAgitReservationRepository.findActiveReservationRooms(roomIds, kstDate)) {
-            BgmAgitReservation other = taken.getBgmAgitReservation();
-            boolean blocks = other.isApproved()
-                    || Objects.equals(other.getBgmAgitMember().getBgmAgitMemberId(), userId);
-            if (blocks && SlotSchedule.overlaps(period, other.getPeriod())) {
-                throw new ReservationConflictException(
-                        taken.getBgmAgitRoom().getBgmAgitRoomName() + " 이미 예약된 시간대입니다: "
-                                + formatTime(other.getBgmAgitReservationStartTime()) + "-"
-                                + formatTime(other.getBgmAgitReservationEndTime()));
-            }
-        }
+        validateSelectedSlots(schedule, requestedStartTimes);
+        SlotSchedule.Slot span = schedule.span(requestedStartTimes);
 
         // 예약 기본 정보 조회
         BgmAgitMember member = bgmAgitMemberRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User Not Found"));
 
-        // 예약 1건(첫 슬롯 시작 ~ 마지막 슬롯 종료) + 방 수만큼 예약-방 행(cascade)
-        // 예약 타입은 클라이언트 값이 아니라 방 링크로 서버가 결정
+        // 방별 구간 겹침 충돌 검사(확정건 + 내 대기건). 캘린더·배지와 같은 TimeRange.isOverlapping 규칙이다.
+        // 슬롯 문자열 일치가 아니라 구간 겹침이라 13~17시 위에 15~18시를 거는 일부 겹침도 막힌다.
+        Map<Long, List<ReservedTimeDto>> reservedByRoom = bgmAgitReservationRepository.findReservedTimesByRoomIdsAndDate(
+                rooms.stream().map(BgmAgitRoom::getBgmAgitRoomId).toList(), kstDate);
+        // 종전 정책 G룸은 하루 1팀 1개 — 캘린더(resolveDayAvailability)와 같은 규칙을 등록에서도 건다
+        if (!SlotSchedule.isNewPolicy(kstDate) && SlotSchedule.isGroom(primary)
+                && hasMyActiveReservation(reservedByRoom.getOrDefault(primary.getBgmAgitRoomId(), List.of())
+                        .stream().map(ReservedTimeDto::toTimeRange).toList(), userId)) {
+            throw new ReservationConflictException(LEGACY_G_ROOM_MESSAGE);
+        }
+        for (BgmAgitRoom room : rooms) {
+            boolean conflict = reservedByRoom.getOrDefault(room.getBgmAgitRoomId(), List.of()).stream()
+                    .map(ReservedTimeDto::toTimeRange)
+                    .anyMatch(r -> r.isOverlapping(span.start(), span.end(), userId));
+            if (conflict) {
+                throw new ReservationConflictException(
+                        room.getBgmAgitRoomName() + " 이미 예약된 시간대입니다: "
+                                + span.start().format(HH_MM) + " ~ " + span.end().format(HH_MM));
+            }
+        }
+
+        // 예약 1건(구간 하나) + 방 수만큼 예약방 행. 예약 타입은 클라이언트 값이 아니라 방으로 서버가 결정
         BgmAgitReservation reservation = new BgmAgitReservation(
                 member,
-                SlotSchedule.resolveReservationType(primary),
+                SlotSchedule.resolveReservationType(mahjong),
                 kstDate,
-                period.start().toLocalTime(),
-                period.end().toLocalTime(),
+                span.start().toLocalTime(),
+                span.end().toLocalTime(),
                 people,
                 reservationRequest
         );
         rooms.forEach(reservation::addRoom);
         bgmAgitReservationRepository.save(reservation);
 
-        eventPublisher.publishEvent(new ReservationWaitingEvent(member, reservation, rooms));
+        eventPublisher.publishEvent(new ReservationWaitingEvent(member, reservation));
         return new ApiResponse(200, true, "예약이 완료되었습니다.");
     }
 
-    /** "13:00" 목록 → LocalTime. 형식이 틀리면 400. */
-    private List<LocalTime> parseStartTimes(List<String> startTimes) {
+    /** "HH:mm" 목록 → 시작시각 집합. 형식이 틀리면 400. */
+    private Set<LocalTime> parseStartTimes(List<String> startTimes) {
         if (startTimes == null || startTimes.isEmpty()) {
-            return List.of();
+            throw new ValidException("예약 시간을 선택해 주세요.");
         }
-        try {
-            return startTimes.stream()
-                    .filter(StringUtils::hasText)
-                    .map(time -> LocalTime.parse(time.trim(), HHMM))
-                    .toList();
-        } catch (DateTimeParseException e) {
-            throw new ValidException("잘못된 시간 형식입니다.");
+        Set<LocalTime> result = new LinkedHashSet<>();
+        for (String value : startTimes) {
+            try {
+                result.add(LocalTime.parse(value.trim(), HH_MM));
+            } catch (RuntimeException e) {
+                throw new ValidException("잘못된 시간 형식입니다: " + value);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 선택 슬롯 검증 — 연속 구간.
+     * 떨어진 시간대를 받으면 사이 시간이 비어 보이면서 실제로는 못 쓰는 방이 되고,
+     * 예약 1건 = 한 구간이라는 저장 구조와도 맞지 않는다.
+     */
+    static void validateSelectedSlots(SlotSchedule schedule, Collection<LocalTime> startTimes) {
+        if (!schedule.isContiguous(startTimes)) {
+            throw new ValidException(NOT_CONTIGUOUS_MESSAGE);
         }
     }
 
@@ -395,7 +443,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 .orElseThrow(() -> new ReservationConflictException("존재하지 않는 예약입니다."));
 
         // 소유자 검증: 본인 예약만 결제 가능
-        if (!Objects.equals(reservation.getBgmAgitMember().getBgmAgitMemberId(), userId)) {
+        if (!Objects.equals(reservation.getMemberId(), userId)) {
             throw new ReservationConflictException("본인의 예약이 아닙니다.");
         }
         // 취소된 예약은 결제 불가
@@ -407,37 +455,105 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             throw new ReservationConflictException("이미 확정된 예약입니다.");
         }
 
-        // 금액 서버 계산(방당 1만원). 합쳐 예약이면 방 수만큼 합산.
-        // 예약 대기 알림톡의 예약금 안내도 같은 메서드를 쓰므로 여기서 갈라지지 않게 할 것
-        int amount = SlotSchedule.totalDepositAmount(reservation.getRooms());
-        String orderName = "BGM아지트 예약 - " + reservation.getBgmAgitReservationStartDate();
+        // 이미 지난 예약은 결제 불가. 없으면 끝난 예약에 전액을 결제하고 환불은 0%가 되는 조합이 만들어진다
+        LocalDateTime useStartAt = reservation.getUseStartAt();
+        if (useStartAt != null && !useStartAt.isAfter(LocalDateTime.now(KST))) {
+            throw new ReservationConflictException("이미 시작된 예약은 결제할 수 없습니다.");
+        }
+
+        // 금액 서버 계산 — 저장된 인원과 예약일로 다시 구한다(클라이언트 금액 불신).
+        // 예약 대기 알림톡의 금액 안내도 같은 메서드를 쓰므로 여기서 갈라지지 않게 할 것
+        List<BgmAgitRoom> rooms = reservation.getRoomList();
+        // 운영 종료로 숨긴 방의 대기 예약은 결제(=자동 확정)하지 못하게 한다. 이미 확정된 건은 이력 보존을 위해 그대로 둔다
+        if (rooms.stream().anyMatch(BgmAgitRoom::isHidden)) {
+            throw new ReservationConflictException("예약이 종료된 항목입니다. 매장으로 문의해 주세요.");
+        }
+        // 인원 범위는 등록·인원 변경 때 이미 검증했다. 여기서 지금의 방 인원 범위로 다시 보면
+        // 관리자가 최소 인원을 올린 뒤 그 전에 들어온 대기 예약이 영영 결제하지 못하게 된다
+        Integer people = reservation.getBgmAgitReservationPeople();
+        if (people == null || people < 1) {
+            throw new ReservationConflictException("예약 인원 정보가 없어 결제할 수 없습니다. 매장으로 문의해 주세요.");
+        }
+
+        LocalDate reservationDate = reservation.getBgmAgitReservationStartDate();
+        boolean weekendRate = bgmAgitHolidayService.isWeekendRate(reservationDate);
+        int discount = monthlyPassDiscount(reservation, rooms, people, weekendRate);
+        int amount = SlotSchedule.totalPaymentAmount(rooms, people, weekendRate, reservationDate) - discount;
+        String orderName = "BGM아지트 예약 - " + reservationDate;
+
+        // 인원·단가를 결제행에 박아 둔다. 환불은 결제 시점 기준으로 계산해야 하는데
+        // 예약의 인원은 뒤에 바뀔 수 있어서 그때 가서는 복원할 수 없다. 정액(마작·10월 이용분)은 null
+        Integer unitPrice = SlotSchedule.unitPriceSnapshot(rooms, reservationDate, weekendRate);
+        // 결제 모달 안내 문구용. 10월 이용분은 환불 규정까지 달라서(전날까지 전액) 따로 구분한다
+        String paymentKind = !SlotSchedule.isNewPolicy(reservationDate)
+                ? "LEGACY_DEPOSIT"
+                : SlotSchedule.isFlatPricing(rooms, reservationDate) ? "DEPOSIT" : "FULL";
 
         // 공통 결제 모듈에 주문 생성 위임
-        return paymentService.createOrder(userId, reservationId, amount, orderName);
+        return paymentService.createOrder(userId, reservationId, amount, orderName, people, unitPrice, discount, paymentKind);
+    }
+
+    /**
+     * 예약자 본인이 월간패스 회원이면 1명분 할인. 판정은 주문 생성 시점의 패스 여부·이번 달 기준이다
+     * (SlotSchedule.monthlyPassDiscount). 결제 금액 계산과 알림톡 안내가 같은 판정을 쓰도록 여기 한 곳에 둔다.
+     */
+    private int monthlyPassDiscount(BgmAgitReservation reservation, List<BgmAgitRoom> rooms, int people, boolean weekendRate) {
+        BgmAgitMember member = reservation.getBgmAgitMember();
+        return SlotSchedule.monthlyPassDiscount(
+                member != null && member.isMonthlyPassHolder(),
+                rooms,
+                people,
+                weekendRate,
+                reservation.getBgmAgitReservationStartDate(),
+                LocalDate.now(KST));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<GroupedReservationResponse> getReservationDetail(Long memberId, String role, String startDate, String endDate, Pageable pageable) {
+    public Page<GroupedReservationResponse> getReservationDetail(Long memberId, List<String> roles, String startDate, String endDate, Pageable pageable) {
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate start = StringUtils.hasText(startDate) ? LocalDate.parse(startDate, fmt) : null;
         LocalDate end   = StringUtils.hasText(endDate)   ? LocalDate.parse(endDate, fmt)   : null;
-        boolean isUser = "ROLE_USER".equals(role) || "ROLE_MENTOR".equals(role);
+        // 본인 예약만 볼지 전체를 볼지. **관리자일 때만** 전체를 연다.
+        //
+        // 예전에는 "ROLE_USER 이거나 ROLE_MENTOR 이면 본인 것만"이라는 블랙리스트였다.
+        // isUserFilter 는 false 면 where 절을 아예 안 걸기 때문에, 역할이 그 둘이 아니기만 하면
+        // (역할 추가, roles 클레임이 빈 토큰 → "GUEST") 전 회원 예약이 통째로 내려갔다.
+        // 이 응답에는 이름·전화번호·요청사항·영수증 URL·결제 잔액이 들어 있다.
+        boolean isUser = !isAdmin(roles);
 
-        // 예약 1건 = 1행이라 그대로 페이징한다(방은 리포지토리가 같은 컨텍스트로 채워 둔다)
+        // 예약 1건 = 1행이라 부모 그대로 페이징한다(방은 같은 페이지 id 로 fetch)
         Page<BgmAgitReservation> page = bgmAgitReservationRepository
                 .findReservationPageForDetail(memberId, isUser, start, end, pageable);
+        if (page.getContent().isEmpty()) {
+            return new PageImpl<>(new ArrayList<>(), pageable, page.getTotalElements());
+        }
 
-        // 결제 완료건 영수증 URL 배치 조회 (예약별 최신 DONE)
-        List<Long> ids = page.getContent().stream().map(BgmAgitReservation::getBgmAgitReservationId).toList();
-        Map<Long, String> receiptUrls = bgmAgitPaymentRepository.findDoneReceiptUrlsByReservationIds(ids);
+        List<Long> pageIds = page.getContent().stream().map(BgmAgitReservation::getBgmAgitReservationId).toList();
+        // 결제 완료건 영수증 URL 배치 조회 (예약별 최신 결제)
+        Map<Long, String> receiptUrls = bgmAgitPaymentRepository.findDoneReceiptUrlsByReservationIds(pageIds);
+        // 환불 예상액 계산에 쓸 결제 잔액 배치 조회
+        Map<Long, Integer> paidAmounts = bgmAgitPaymentRepository.findPaidAmountsByReservationIds(pageIds);
 
-        return page.map(reservation -> {
+        LocalDateTime now = LocalDateTime.now(KST);
+
+        List<GroupedReservationResponse> content = new ArrayList<>();
+        for (BgmAgitReservation reservation : page.getContent()) {
+            Long reservationId = reservation.getBgmAgitReservationId();
             GroupedReservationResponse dto = new GroupedReservationResponse(reservation);
-            dto.setReceiptUrl(receiptUrls.get(reservation.getBgmAgitReservationId()));
-            return dto;
-        });
+            dto.setReceiptUrl(receiptUrls.get(reservationId));
+
+            int paid = paidAmounts.getOrDefault(reservationId, 0);
+            int rate = ReservationRefundPolicy.refundRate(
+                    reservation.getBgmAgitReservationStartDate(), reservation.getUseStartAt(), now);
+            dto.setPaidAmount(paid);
+            dto.setRefundRate(rate);
+            dto.setRefundAmount(ReservationRefundPolicy.refundAmount(paid, rate));
+            content.add(dto);
+        }
+
+        return new PageImpl<>(content, pageable, page.getTotalElements());
     }
 
     @Override
@@ -476,9 +592,9 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 people += reservation.getBgmAgitReservationPeople();
             }
 
-            // 합쳐 예약은 방마다 같은 항목을 넣는다(M-1+M-2+M-3 이면 세 열 모두에 표시)
+            // 합쳐 예약은 방이 여러 개라 각 장소 열에 같은 항목을 넣는다.
             Map<String, String> roomsOfReservation = new LinkedHashMap<>();
-            for (BgmAgitRoom room : reservation.getRooms()) {
+            for (BgmAgitRoom room : reservation.getRoomList()) {
                 String name = StringUtils.hasText(room.getBgmAgitRoomName()) ? room.getBgmAgitRoomName() : "기타";
                 roomsOfReservation.putIfAbsent(name, categoryOf(room));
             }
@@ -487,11 +603,19 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             }
             List<String> roomNames = roomsOfReservation.keySet().stream().sorted().toList();
 
+            int startMinutes = SlotSchedule.toSortableMinutes(reservation.getBgmAgitReservationStartTime());
+            int endMinutes = SlotSchedule.toSortableMinutes(reservation.getBgmAgitReservationEndTime());
+            // 종료가 시작보다 같거나 이르면 익일 같은 시각까지다(룸 하루 전체 10:00~10:00 등)
+            if (endMinutes <= startMinutes) {
+                endMinutes += 24 * 60;
+            }
+
+            BgmAgitMember member = reservation.getBgmAgitMember();
             AdminReservationBoardResponse.Item item = new AdminReservationBoardResponse.Item(
                     reservation.getBgmAgitReservationId(),
                     roomNames,
-                    reservation.getBgmAgitMember() != null ? reservation.getBgmAgitMember().getBgmAgitMemberName() : null,
-                    extractPhoneNo(reservation),
+                    member != null ? member.getBgmAgitMemberName() : null,
+                    extractPhoneNo(member),
                     reservation.getBgmAgitReservationPeople(),
                     reservation.getBgmAgitReservationRequest(),
                     reservation.getBgmAgitReservationApprovalStatus(),
@@ -500,8 +624,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     reservation.getRegistDate(),
                     formatTime(reservation.getBgmAgitReservationStartTime()),
                     formatTime(reservation.getBgmAgitReservationEndTime()),
-                    SlotSchedule.toSortableMinutes(reservation.getBgmAgitReservationStartTime()),
-                    SlotSchedule.toSortableMinutes(reservation.getBgmAgitReservationEndTime())
+                    startMinutes,
+                    endMinutes
             );
 
             roomsOfReservation.forEach((roomKey, category) -> {
@@ -528,54 +652,86 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     }
 
     private String formatTime(LocalTime time) {
-        return time != null ? time.format(HHMM) : null;
+        return time != null ? time.format(HH_MM) : null;
     }
 
-    private String extractPhoneNo(BgmAgitReservation reservation) {
-        if (reservation.getBgmAgitMember() == null) {
+    private String extractPhoneNo(BgmAgitMember member) {
+        if (member == null || member.getBgmAgitMemberPhoneNo() == null) {
             return null;
         }
-        String phoneNo = reservation.getBgmAgitMember().getBgmAgitMemberPhoneNo();
-        if (phoneNo == null) {
-            return null;
-        }
-        return phoneNo.replace("+82", "0").replaceAll("\\s+", "");
+        return member.getBgmAgitMemberPhoneNo().replace("+82", "0").replaceAll("\\s+", "");
     }
 
     @Override
-    public ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request, String role) {
+    public ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request, List<String> roles) {
 
         Long reservationId = request.getReservationId();
-        String cancelStatus = request.getCancelStatus();
-        String approvalStatus = request.getApprovalStatus();
+        // 상태값은 Y/N 으로 정규화해서 받는다.
+        //
+        // 게이트는 equalsIgnoreCase 인데 DB 에는 요청 문자열이 그대로 들어가고 판독은 "Y".equals 라
+        // 대소문자가 갈렸다. cancelStatus="y" 로 보내면 환불은 집행되는데 DB 에는 'y' 가 남아
+        // 예약내역·현황판·결제 검증이 모두 "취소 아님"으로 봤다 — 환불받고 자리는 유지되는 상태.
+        String cancelStatus = normalizeYn(request.getCancelStatus());
+        String approvalStatus = normalizeYn(request.getApprovalStatus());
 
         BgmAgitReservation reservation = bgmAgitReservationRepository.findReservationWithRooms(reservationId)
                 .orElseThrow(() -> new ReservationConflictException("존재하지 않는 예약입니다."));
 
-        if ("Y".equalsIgnoreCase(cancelStatus) && !isAdmin(role)) {
+        boolean admin = isAdmin(roles);
+        boolean canceling = "Y".equals(cancelStatus);
+
+        // 손님이 이 API 로 할 수 있는 일은 "본인 예약 취소" 하나뿐이다.
+        //
+        // 예전에는 상태 검증이 취소 분기에만 있어서, 프론트가 숨긴 동작을 API 직접 호출로 전부 할 수 있었다.
+        //  - approvalStatus='Y'  → 결제 없이 확정(예약금 1만원 시절과 달리 지금은 한 건에 수만 원이다)
+        //  - cancelStatus='N'    → 이미 환불받은 예약을 되살리기(돈은 돌려받고 자리는 그대로)
+        //  - 남의 예약번호       → 소유자 검증이 취소 분기 안에만 있어 그대로 통과
+        // 관리자가 남의 예약을 확정·취소하는 것은 전화·현장 예약 대응이라 의도된 동작이므로 그대로 둔다.
+        if (!admin) {
+            if ("Y".equals(approvalStatus)) {
+                throw new ReservationConflictException("예약 확정은 관리자만 할 수 있습니다. 결제를 완료하시면 자동으로 확정됩니다.");
+            }
+            if (!canceling) {
+                throw new ReservationConflictException("예약 상태를 변경할 수 없습니다. 매장으로 문의해 주세요.");
+            }
             validateUserCancelableReservation(id, reservation);
         }
 
-        if ("Y".equalsIgnoreCase(cancelStatus)) {
-            paymentService.cancelDonePaymentByReservationId(reservationId, "예약 취소");
+        // 이미 취소된 예약은 여기서 끊는다. 재취소를 막지 않으면 잔액이 남아 있는 결제를 또 환불하게 된다
+        // (전액취소 시절엔 토스가 ALREADY_CANCELED_PAYMENT 로 막아줘서 드러나지 않던 구멍이다)
+        if (canceling && reservation.isCanceled()) {
+            return new ApiResponse(200, true, "이미 취소된 예약입니다.");
         }
 
-        // 상태를 바꾸기 전에 읽는다 — approvalStatus 가 "변경 전" 값이어야 대기→확정 전환을 가려낸다
-        BizTalkCancel bizTalkCancel = BizTalkCancel.from(reservation);
+        PaymentRefundResult refund = null;
+        if (canceling) {
+            // 환불 비율은 이용 시작 시각 기준 48h/24h. 관리자 취소도 같은 규칙을 쓴다.
+            // 10월 이용분(종전 정책)은 예약금 전액 환불이다 — 사용자 취소를 전날까지만 받는 건 위 검증이 막는다
+            int rate = ReservationRefundPolicy.refundRate(
+                    reservation.getBgmAgitReservationStartDate(), reservation.getUseStartAt(), LocalDateTime.now(KST));
+            refund = paymentService.refundReservation(reservationId, rate, "예약 취소");
+            // 승인되지 않은 주문이 남아 있으면 취소 뒤에 결제되는 일이 생긴다
+            paymentService.abortReadyOrders(reservationId, "예약 취소됨");
+        }
 
+        // 변경 전 확정 여부를 상태 변경보다 먼저 읽는다(예전 findBizTalkCancel 을 업데이트 전에 읽던 순서).
+        // 뒤에서 읽으면 이미 'Y' 로 바뀐 값이라 "대기 → 확정" 전환을 알아보지 못해 확정 알림톡이 안 나간다.
+        boolean wasPending = !reservation.isApproved();
+
+        // 1건 = 1행이라 벌크 업데이트 없이 더티체킹으로 반영한다
         reservation.changeStatus(cancelStatus, approvalStatus);
 
-        ReservationTalkContext ctx = ReservationTalkContext.of(role, reservation, bizTalkCancel);
+        // 알림톡 쪽은 role 문자열을 "ROLE_ADMIN" 인지만 비교하므로 판정 결과를 그대로 넘긴다.
+        // 예전엔 JWT roles 의 첫 값을 그대로 썼는데, 관리자에게 USER 권한이 같이 있으면
+        // 첫 값이 ROLE_USER 로 나와 관리자 취소가 사용자 취소 문구로 나갈 수 있었다.
+        ReservationTalkContext ctx = ReservationTalkContext.of(admin ? "ROLE_ADMIN" : "ROLE_USER", reservation);
 
-        // 명확한 조건 변수로 가독성 ↑ (대/소문자 및 null 안전)
-        boolean approvedNow = "Y".equalsIgnoreCase(approvalStatus);
-        boolean wasApproved = "N".equalsIgnoreCase(bizTalkCancel.getApprovalStatus());
-        boolean canceledNow = "Y".equalsIgnoreCase(cancelStatus);
+        boolean approvedNow = "Y".equals(approvalStatus);
 
         TalkAction action = TalkAction.NONE;
-        if (approvedNow && wasApproved) {
+        if (approvedNow && wasPending) {
             action = TalkAction.COMPLETE;
-        } else if (canceledNow) {
+        } else if (canceling) {
             action = TalkAction.CANCEL;
         }
 
@@ -583,14 +739,89 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             eventPublisher.publishEvent(new ReservationTalkEvent(action, ctx));
         }
 
-        return new ApiResponse(200, true, "수정 되었습니다.");
+        return new ApiResponse(200, true, refundMessage(refund));
+    }
+
+    @Override
+    public ApiResponse modifyReservationPeople(Long userId, BgmAgitReservationPeopleRequest request, List<String> roles) {
+        Long reservationId = request.getReservationId();
+        Integer newPeople = request.getPeople();
+
+        BgmAgitReservation reservation = bgmAgitReservationRepository.findReservationWithRooms(reservationId)
+                .orElseThrow(() -> new ReservationConflictException("존재하지 않는 예약입니다."));
+
+        if (!isAdmin(roles) && !Objects.equals(reservation.getMemberId(), userId)) {
+            throw new ReservationConflictException("본인의 예약만 변경할 수 있습니다.");
+        }
+        if (reservation.isCanceled()) {
+            throw new ReservationConflictException("취소된 예약입니다.");
+        }
+
+        LocalDateTime useStartAt = reservation.getUseStartAt();
+        if (useStartAt != null && !useStartAt.isAfter(LocalDateTime.now(KST))) {
+            throw new ReservationConflictException("이미 시작된 예약은 변경할 수 없습니다. 매장으로 문의해 주세요.");
+        }
+
+        Integer currentPeople = reservation.getBgmAgitReservationPeople();
+        if (currentPeople == null) {
+            throw new ReservationConflictException("예약 인원 정보가 없어 변경할 수 없습니다. 매장으로 문의해 주세요.");
+        }
+        if (newPeople == null || newPeople.equals(currentPeople)) {
+            return new ApiResponse(200, true, "변경할 내용이 없습니다.");
+        }
+        // 증원은 받지 않는다. 룸 정원·다른 예약까지 다시 봐야 해서 결제만 더 받는 걸로 끝나지 않는다
+        if (newPeople > currentPeople) {
+            throw new ReservationConflictException(
+                    "예약 인원은 줄일 수만 있습니다. 추가 인원은 현장에서 워크인 요금으로 결제해 주세요.");
+        }
+
+        LocalDate useDate = reservation.getBgmAgitReservationStartDate();
+        // 10월 이용분(종전 정책)은 인원 검증이 없었고 예약금 정액이라 차액 환불도 없다(결제 단가 스냅샷이 null 이라 건너뛴다)
+        if (SlotSchedule.isNewPolicy(useDate)) {
+            validateReservationPeople(reservation.getRoomList(), newPeople);
+        } else if (newPeople < 1) {
+            throw new ReservationConflictException("예약 인원을 입력해 주세요.");
+        }
+
+        PaymentRefundResult refund = null;
+        if (reservation.isApproved()) {
+            int rate = ReservationRefundPolicy.refundRate(useDate, useStartAt, LocalDateTime.now(KST));
+            refund = paymentService.refundPeopleReduction(
+                    reservationId, currentPeople - newPeople, rate, "예약 인원 축소");
+            // 토스가 환불을 거절했고 한 푼도 안 나갔으면 인원 변경도 되돌린다(예외 → 롤백).
+            // 인원만 줄고 환불이 없으면 다음 축소는 줄어든 인원을 기준으로 계산해 그 차액이 영영 청구되지 않는다.
+            // 실패 시도 이력(PaymentCancel)은 별도 트랜잭션이라 남는다.
+            // 타임아웃처럼 토스 처리 여부를 모르는 실패는 되돌리지 않는다 — 재시도가 새 멱등키로 나가 이중 환불이 될 수 있어서다.
+            if (refund.failed() && refund.rejected() && refund.refundedAmount() == 0) {
+                throw new ReservationConflictException(
+                        "환불이 처리되지 않아 인원을 변경하지 않았습니다. 매장으로 문의해 주세요. (" + refund.failMessage() + ")");
+            }
+        } else {
+            // 미결제 대기건은 환불할 게 없다. 다만 옛 인원으로 만들어 둔 주문은 못 쓰게 막아야 한다
+            paymentService.abortReadyOrders(reservationId, "예약 인원 변경");
+        }
+
+        reservation.changePeople(newPeople);
+
+        return new ApiResponse(200, true, peopleChangeMessage(newPeople, refund));
+    }
+
+    private String peopleChangeMessage(Integer newPeople, PaymentRefundResult refund) {
+        String base = "예약 인원이 " + newPeople + "명으로 변경되었습니다.";
+        if (refund == null) {
+            return base + " 결제 시 변경된 인원으로 금액이 계산됩니다.";
+        }
+        if (refund.failed()) {
+            return base + " 환불 처리 중 문제가 있어 확인 후 안내드리겠습니다. (" + refund.failMessage() + ")";
+        }
+        if (refund.refundedAmount() <= 0) {
+            return base + " 환불 규정에 따라 환불 금액은 없습니다.";
+        }
+        return base + " " + String.format("%,d", refund.refundedAmount()) + "원이 환불됩니다.";
     }
 
     /** 기준 방 + 합쳐 쓸 방을 중복 없이 합친다(기준 방이 항상 첫 번째). */
     private List<Long> mergeRoomIds(Long id, List<Long> extraIds) {
-        if (id == null) {
-            throw new ValidException("방 ID는 필수입니다.");
-        }
         List<Long> merged = new ArrayList<>();
         merged.add(id);
         if (extraIds != null) {
@@ -604,13 +835,19 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
 
     /**
      * 예약 가능한 방들을 조회하고 합쳐 쓸 수 있는 조합인지 검증한다.
-     * 같은 메뉴 링크(= 룸/마작 같은 종류)여야 하고, 하루 1팀 제한이 있는 방(G룸)은 합칠 수 없다.
+     * 같은 메뉴 링크(룸끼리 / 마작끼리)여야 하고, 이름 조합이 화이트리스트(SlotSchedule.isCombinable)에 있어야 한다.
+     *
+     * "maxSelectableSlots == null 인 방만 합칠 수 있다"던 옛 규칙은 쓰지 않는다. 지금은 모든 룸이
+     * 8시간 상한(=null 아님)이라 그 규칙을 적용하면 M-1+M-2 도 막힌다. 그래서 허용 조합을 서버가 직접 들고 있다.
      */
     private List<BgmAgitRoom> loadReservableRooms(List<Long> roomIds) {
         List<BgmAgitRoom> rooms = new ArrayList<>();
         for (Long roomId : roomIds) {
+            if (roomId == null) {
+                throw new ValidException("방을 선택해 주세요.");
+            }
             BgmAgitRoom room = bgmAgitRoomRepository.findById(roomId)
-                    .orElseThrow(() -> new ValidException("존재하지 않는 방입니다."));
+                    .orElseThrow(() -> new ReservationConflictException("존재하지 않는 방입니다."));
             if (room.isHidden()) {
                 throw new ReservationConflictException("예약이 종료된 항목입니다.");
             }
@@ -620,11 +857,13 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         if (rooms.size() > 1) {
             BgmAgitRoom primary = rooms.get(0);
             for (BgmAgitRoom room : rooms) {
-                boolean sameKind = Objects.equals(room.getBgmAgitRoomLink(), primary.getBgmAgitRoomLink());
-                boolean limitedItem = SlotSchedule.maxSelectableSlots(room) != null;
-                if (!sameKind || limitedItem) {
+                if (!Objects.equals(room.getBgmAgitRoomLink(), primary.getBgmAgitRoomLink())) {
                     throw new ReservationConflictException("함께 예약할 수 없는 항목입니다.");
                 }
+            }
+            List<String> names = rooms.stream().map(BgmAgitRoom::getBgmAgitRoomName).toList();
+            if (!SlotSchedule.isCombinable(names)) {
+                throw new ReservationConflictException("함께 예약할 수 없는 항목입니다.");
             }
         }
         return rooms;
@@ -636,32 +875,23 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                                                   LocalDate d,
                                                   LocalDate today,
                                                   Long userId) {
-        List<TimeRange> reserved = reservedMap
-                .getOrDefault(d, Collections.emptyList())
-                .stream()
-                .sorted(Comparator.comparing(TimeRange::getStart))
-                .toList();
+        List<TimeRange> reserved = reservedMap.getOrDefault(d, Collections.emptyList());
 
-        if (userId != null && SlotSchedule.isGroom(room)) {
-            boolean alreadyBookedTodayByMe = reserved.stream().anyMatch(r ->
-                    Objects.equals(r.getMemberId(), userId) &&
-                            !"Y".equals(r.getCancelStatus())
-            );
-            if (alreadyBookedTodayByMe) {
-                return new DayAvailability(List.of(), "G룸은 하루에 1팀당 1개의 예약이 가능하여 다른 시간대의 예약이 불가능 합니다.");
-            }
+        // 종전 정책(10월) G룸은 하루 1팀 1개. 이미 내 예약(대기·확정)이 있으면 그날 다른 시간대는 막는다
+        if (!SlotSchedule.isNewPolicy(d) && SlotSchedule.isGroom(room) && hasMyActiveReservation(reserved, userId)) {
+            return new DayAvailability(List.of(), LEGACY_G_ROOM_MESSAGE);
         }
 
-        // 예약은 구간(시작~종료)이라 슬롯마다 구간과 겹치는지로 점유를 판정한다
         List<String> availableSlots = new ArrayList<>();
         for (SlotSchedule.Slot slot : SlotSchedule.of(room, d).slots()) {
-            if (d.isEqual(today) && slot.end().isBefore(LocalDateTime.now())) {
+            if (d.isEqual(today) && slot.end().isBefore(LocalDateTime.now(KST))) {
                 continue;
             }
+            // 예약은 구간으로 저장되므로 슬롯과 구간이 겹치는지로 점유를 판정한다(확정건 + 내 대기건)
             boolean overlapped = reserved.stream()
                     .anyMatch(r -> r.isOverlapping(slot.start(), slot.end(), userId));
             if (!overlapped) {
-                availableSlots.add(slot.start().format(HHMM));
+                availableSlots.add(slot.start().format(HH_MM));
             }
         }
         return new DayAvailability(availableSlots, null);
@@ -670,20 +900,105 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     private record DayAvailability(List<String> slots, String message) {
     }
 
-    private void validateUserCancelableReservation(Long memberId, BgmAgitReservation reservation) {
-        Long reservationMemberId = reservation.getBgmAgitMember().getBgmAgitMemberId();
-        if (!Objects.equals(reservationMemberId, memberId)) {
-            throw new ReservationConflictException("본인의 예약만 취소할 수 있습니다.");
-        }
+    private static boolean hasMyActiveReservation(List<TimeRange> reserved, Long userId) {
+        return userId != null && reserved.stream().anyMatch(r ->
+                Objects.equals(r.getMemberId(), userId) && !"Y".equalsIgnoreCase(r.getCancelStatus()));
+    }
 
-        LocalDate today = LocalDate.now(KST);
-        if (!reservation.getBgmAgitReservationStartDate().isAfter(today)) {
-            throw new ReservationConflictException("예약 취소는 예약일 전날까지만 가능합니다.");
+    /**
+     * 취소 결과 안내 문구.
+     *
+     * 환불액은 목록에 미리 보여준 예상액이 아니라 **실제 처리된 금액**을 쓴다.
+     * 48시간 경계를 목록을 열어둔 채 넘기면 예상액과 실제액이 갈리기 때문이다.
+     */
+    private String refundMessage(PaymentRefundResult refund) {
+        if (refund == null) {
+            return "수정 되었습니다.";
+        }
+        if (refund.failed()) {
+            return "예약이 취소되었습니다. 환불 처리 중 문제가 있어 확인 후 안내드리겠습니다. (" + refund.failMessage() + ")";
+        }
+        if (refund.refundedAmount() <= 0) {
+            return "예약이 취소되었습니다. 환불 규정에 따라 환불 금액은 없습니다.";
+        }
+        return "예약이 취소되었습니다. " + String.format("%,d", refund.refundedAmount()) + "원이 환불됩니다.";
+    }
+
+    /**
+     * 합쳐 예약의 최소 인원 — 방별 최소값 <b>합산</b>(최대 인원 합산과 같은 규칙). 값이 하나도 없으면 null.
+     *
+     * 룸은 인원 × 단가가 곧 결제액이라 최소 인원이 과금 하한이다(CLAUDE.md 개편 설계: 합쳐 예약의 하한은 합산).
+     * 예전처럼 "최소값 중 최대"를 쓰면 M-1+M-2+M-3(각 4~7명)을 4명 36,000원에 잡을 수 있었고,
+     * 인원 축소로 이미 결제한 합쳐 예약도 4명까지 줄여 차액을 돌려받을 수 있었다.
+     * 조회 응답(minPeople)·등록·결제 주문·인원 변경 검증이 모두 이 값을 봐야 화면과 서버가 갈리지 않는다.
+     */
+    private Integer effectiveMinPeople(List<BgmAgitRoom> rooms) {
+        List<Integer> minima = rooms.stream()
+                .map(BgmAgitRoom::getBgmAgitRoomMinPeople)
+                .filter(Objects::nonNull)
+                .toList();
+        return minima.isEmpty() ? null : minima.stream().reduce(0, Integer::sum);
+    }
+
+    /** 합쳐 예약의 최대 인원 — 방별 최대값 합산. 값이 하나도 없으면 null(=제한 없음). */
+    private Integer effectiveMaxPeople(List<BgmAgitRoom> rooms) {
+        List<Integer> maxima = rooms.stream()
+                .map(BgmAgitRoom::getBgmAgitRoomMaxPeople)
+                .filter(Objects::nonNull)
+                .toList();
+        return maxima.isEmpty() ? null : maxima.stream().reduce(0, Integer::sum);
+    }
+
+    /** 예약 인원이 방의 허용 범위 안인지. 컬럼이 비어 있는 방은 그 방향 검증을 건너뛴다. */
+    private void validateReservationPeople(List<BgmAgitRoom> rooms, Integer people) {
+        if (people == null || people < 1) {
+            throw new ReservationConflictException("예약 인원을 입력해 주세요.");
+        }
+        Integer min = effectiveMinPeople(rooms);
+        Integer max = effectiveMaxPeople(rooms);
+        if (min != null && people < min) {
+            throw new ReservationConflictException("최소 " + min + "명부터 예약할 수 있습니다.");
+        }
+        if (max != null && people > max) {
+            throw new ReservationConflictException("최대 " + max + "명까지 예약할 수 있습니다.");
         }
     }
 
-    private boolean isAdmin(String role) {
-        return "ROLE_ADMIN".equals(role);
+    private void validateUserCancelableReservation(Long memberId, BgmAgitReservation reservation) {
+        if (!Objects.equals(reservation.getMemberId(), memberId)) {
+            throw new ReservationConflictException("본인의 예약만 취소할 수 있습니다.");
+        }
+
+        // 10월 이용분(종전 정책)은 예약일 전날까지만 손님이 취소할 수 있다(그때까지는 예약금 전액 환불)
+        if (!SlotSchedule.isNewPolicy(reservation.getBgmAgitReservationStartDate())) {
+            if (!reservation.getBgmAgitReservationStartDate().isAfter(LocalDate.now(KST))) {
+                throw new ReservationConflictException("예약 취소는 예약일 전날까지만 가능합니다.");
+            }
+            return;
+        }
+
+        // 기한 제한은 날짜가 아니라 시각으로 본다. 24시간 이내 취소도 허용하고 환불만 0원이다
+        // (자리를 비워주는 쪽이 매장에 이득이라 막지 않는다). 이미 시작된 예약만 거절한다.
+        LocalDateTime useStartAt = reservation.getUseStartAt();
+        if (useStartAt != null && !useStartAt.isAfter(LocalDateTime.now(KST))) {
+            throw new ReservationConflictException("이미 시작된 예약은 취소할 수 없습니다. 매장으로 문의해 주세요.");
+        }
+    }
+
+    /**
+     * Y/N 상태값 정규화. 그 외 값은 거절한다.
+     *
+     * 예전에는 요청 문자열이 검증 없이 컬럼에 그대로 들어가서, 대소문자가 다르거나 아예 엉뚱한 값도
+     * 저장됐다. 판독하는 쪽은 전부 `"Y".equals` 라 조용히 어긋난다.
+     */
+    private String normalizeYn(String value) {
+        if ("Y".equalsIgnoreCase(value)) {
+            return "Y";
+        }
+        if ("N".equalsIgnoreCase(value)) {
+            return "N";
+        }
+        throw new ReservationConflictException("잘못된 예약 상태값입니다.");
     }
 
     private boolean isAdmin(List<String> roles) {

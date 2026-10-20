@@ -4,6 +4,7 @@ import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.origin.controller.request.BgmAgitMemberNicknameChangeRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitMemberPasswordChangeRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitRoleModifyRequest;
+import com.bgmagitapi.origin.controller.response.BgmAgitMonthlyPassResponse;
 import com.bgmagitapi.origin.controller.response.BgmAgitRoleResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,4 +28,13 @@ public interface BgmAgitRoleService {
 
     // 관리자가 자체로그인 회원의 마작(BML) 연동을 켜고 끔 (use=true면 KML 등록까지)
     ApiResponse setMahjongUse(Long memberId, boolean use, List<String> actorRoles);
+
+    // 월간패스 탭 목록 (관리자 전용, 전체 회원)
+    Page<BgmAgitMonthlyPassResponse> getMonthlyPassMembers(Pageable pageable, String keyword, boolean onlyPass, List<String> actorRoles);
+
+    // 관리자가 회원의 이번 달 월간패스 여부를 켜고 끔
+    ApiResponse setMonthlyPass(Long memberId, boolean pass, List<String> actorRoles);
+
+    // 매월 1일 스케줄러 — 전 회원 월간패스 해제. 바뀐 행 수
+    long resetMonthlyPass();
 }
