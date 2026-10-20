@@ -667,8 +667,11 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         return new AdminReservationBoardResponse(date, summary, roomList);
     }
 
-    /** 예약 랭킹은 11월 개편(전액결제)부터 센다 — 월별 리워드용이라 예약금 시절 달과 섞지 않는다 */
-    static final YearMonth RANKING_FROM = YearMonth.of(2026, 11);
+    /**
+     * 예약 랭킹을 세기 시작한 달(월별 리워드, 사장님 요청으로 10월부터).
+     * 10월 이용분은 예약금 1만원 결제로 확정된 예약이 들어간다 — 인원 합계는 예약할 때 입력한 인원이다.
+     */
+    static final YearMonth RANKING_FROM = YearMonth.of(2026, 10);
 
     /** 한 화면에 보여줄 최대 인원 */
     private static final int RANKING_LIMIT = 100;

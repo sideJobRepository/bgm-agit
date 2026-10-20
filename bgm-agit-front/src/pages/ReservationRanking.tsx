@@ -9,7 +9,7 @@ import { BoardBox, HeaderWrapper, TitleBox, DateNav, NavButton, DateLabel, Summa
 import { TableWrapper, Table, Th, Td } from './Role.styles.ts';
 
 /** 랭킹을 세기 시작한 달. 서버 BgmAgitReservationServiceImpl.RANKING_FROM 과 같은 값 */
-const RANKING_FROM = '2026-11';
+const RANKING_FROM = '2026-10';
 
 function currentYm() {
   const now = new Date();
@@ -31,7 +31,7 @@ export default function ReservationRanking() {
   const isAdmin = !!user?.roles?.includes('ROLE_ADMIN');
   const { request } = useRequest();
 
-  // 11월 전에는 보여줄 달이 없으니 11월부터 연다
+  // 세기 시작한 달 전이면 그 달부터 연다
   const [month, setMonth] = useState(() => (currentYm() < RANKING_FROM ? RANKING_FROM : currentYm()));
   const [people, setPeople] = useState<number | null>(null);
   const [data, setData] = useState<RankingData | null>(null);

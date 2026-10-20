@@ -231,7 +231,7 @@
 사장님이 **월별 리워드**에 쓰려고 요청. `pages/ReservationRanking.tsx`, `GET /bgm-agit/reservation/ranking?month=YYYY-MM[&people=N]` → `getReservationRanking`.
 - **확정 예약만**(승인 Y·취소 N), **이용일 기준 월**로 회원별 예약 횟수·인원 합계. 횟수 → 인원 합계 내림차순, 최대 100명, 같은 횟수는 공동 순위(1, 1, 3…)
 - 인원수 탭(`people`) = 그 인원으로 예약한 건만 센 순위. 탭 목록은 그 달에 실제 나온 인원 값(`peopleOptions`)
-- **2026-11 부터** 센다(`RANKING_FROM`, 서버·프론트 같은 값). 예약금 시절 달과 섞지 않으려고
+- **2026-10 부터** 센다(`RANKING_FROM`, 서버·프론트 같은 값, 사장님 요청). 10월은 예약금 1만원 결제로 확정된 예약이 들어간다
 - 관리자 전용 — 서비스단 `isAdmin` + URL 매핑(관리자) + 메뉴 권한(관리자). DB 는 `reservation-ranking-2026-11.sql`(운영·스테이징 적용 완료). 운영 nginx `$bgm_spa_route` 에 `/reservation-ranking` 추가 필요(없어도 화면은 뜨고 상태코드만 404)
 
 ### 함정: `toISOString()` 날짜 밀림
