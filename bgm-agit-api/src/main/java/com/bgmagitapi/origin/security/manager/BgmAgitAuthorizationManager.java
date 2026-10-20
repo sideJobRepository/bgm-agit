@@ -58,9 +58,8 @@ public class BgmAgitAuthorizationManager implements AuthorizationManager<Request
     private AuthorizationManager<RequestAuthorizationContext> bgmAgitAuthorizationManager(String role) {
         if (role != null) {
             if (role.startsWith("ROLE")) {
-                // "ROLE_ADMIN,ROLE_USER" 처럼 여러 역할이 올 수 있다(BgmAgitUrlRoleMapping)
                 AuthorityAuthorizationManager<RequestAuthorizationContext> authorizationManager =
-                        AuthorityAuthorizationManager.hasAnyAuthority(role.split(","));
+                        AuthorityAuthorizationManager.hasAnyAuthority(role);
                 authorizationManager.setRoleHierarchy(roleHierarchy);
                 return authorizationManager;
             } else {
