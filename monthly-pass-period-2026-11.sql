@@ -1,0 +1,67 @@
+-- 월간패스를 "이번 달 Y/N" 에서 "기간(시작월~끝월)" 으로 바꾼다 (2026-10-20)
+--
+-- 다음 달 패스를 미리 사거나 1년치를 한 번에 결제하는 손님을 표현하려고 회원별 기간 표를 둔다.
+-- 회원 1명이 기간을 여러 개 가질 수 있다(연장·중간에 끊긴 달). 기간이 지나면 저절로 무효라 매월 초기화가 없다.
+-- 예전 회원 컬럼 BGM_AGIT_MEMBER_MONTHLY_PASS_STATUS 는 더 이상 읽지 않는다(지워도 되지만 롤백 대비로 남김).
+--
+-- ddl-auto: none 이라 수동 실행. 앱 배포 **전에** 돌린다.
+-- mysql 클라이언트로 실행할 때 --default-character-set=utf8mb4 를 붙일 것.
+
+CREATE TABLE IF NOT EXISTS BGM_AGIT_MONTHLY_PASS (
+    BGM_AGIT_MONTHLY_PASS_ID          BIGINT   NOT NULL AUTO_INCREMENT,
+    BGM_AGIT_MEMBER_ID                BIGINT   NOT NULL COMMENT '패스 회원',
+    BGM_AGIT_MONTHLY_PASS_START_MONTH DATE     NOT NULL COMMENT '시작월 1일(포함)',
+    BGM_AGIT_MONTHLY_PASS_END_MONTH   DATE     NOT NULL COMMENT '끝월 1일(포함)',
+    REGIST_DATE                       DATETIME NULL,
+    MODIFY_DATE                       DATETIME NULL,
+    PRIMARY KEY (BGM_AGIT_MONTHLY_PASS_ID),
+    KEY IDX_MONTHLY_PASS_MEMBER (BGM_AGIT_MEMBER_ID, BGM_AGIT_MONTHLY_PASS_END_MONTH),
+    CONSTRAINT FK_MONTHLY_PASS_MEMBER FOREIGN KEY (BGM_AGIT_MEMBER_ID)
+        REFERENCES BGM_AGIT_MEMBER (BGM_AGIT_MEMBER_ID) ON DELETE RESTRICT
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- 권한 매핑 — 관리자(1)만. 주소당 역할 하나(권한 계층 규칙).
+-- 등록 POST /bgm-agit/role/monthly-pass, 삭제 DELETE /bgm-agit/role/monthly-pass/{id}
+-- 조회 GET /bgm-agit/role/monthly-pass 는 monthly-pass-2026-11.sql 에서 이미 넣었다.
+-- 예전 켜기/끄기 PUT 은 더 쓰지 않아 지운다.
+-- **INSERT 후 앱 재시작 필요** — 매핑 로딩이 @PostConstruct 1회다.
+
+START TRANSACTION;
+
+INSERT INTO BGM_AGIT_URL_RESOURCES (BGM_AGIT_URL_RESOURCES_PATH, BGM_AGIT_URL_HTTP_METHOD, REGIST_DATE)
+SELECT v.path, v.method, NOW()
+  FROM (SELECT '/bgm-agit/role/monthly-pass' AS path, 'POST' AS method
+        UNION ALL SELECT '/bgm-agit/role/monthly-pass/**', 'DELETE') v
+ WHERE NOT EXISTS (
+       SELECT 1 FROM BGM_AGIT_URL_RESOURCES u
+        WHERE u.BGM_AGIT_URL_RESOURCES_PATH = v.path
+          AND u.BGM_AGIT_URL_HTTP_METHOD = v.method);
+
+INSERT INTO BGM_AGIT_URL_RESOURCES_ROLE (BGM_AGIT_ROLE_ID, BGM_AGIT_URL_RESOURCES_ID, REGIST_DATE)
+SELECT 1, u.BGM_AGIT_URL_RESOURCES_ID, NOW()
+  FROM BGM_AGIT_URL_RESOURCES u
+ WHERE ((u.BGM_AGIT_URL_RESOURCES_PATH = '/bgm-agit/role/monthly-pass' AND u.BGM_AGIT_URL_HTTP_METHOD = 'POST')
+     OR (u.BGM_AGIT_URL_RESOURCES_PATH = '/bgm-agit/role/monthly-pass/**' AND u.BGM_AGIT_URL_HTTP_METHOD = 'DELETE'))
+   AND NOT EXISTS (
+       SELECT 1 FROM BGM_AGIT_URL_RESOURCES_ROLE r
+        WHERE r.BGM_AGIT_URL_RESOURCES_ID = u.BGM_AGIT_URL_RESOURCES_ID);
+
+DELETE r FROM BGM_AGIT_URL_RESOURCES_ROLE r
+  JOIN BGM_AGIT_URL_RESOURCES u ON u.BGM_AGIT_URL_RESOURCES_ID = r.BGM_AGIT_URL_RESOURCES_ID
+ WHERE u.BGM_AGIT_URL_RESOURCES_PATH = '/bgm-agit/role/monthly-pass' AND u.BGM_AGIT_URL_HTTP_METHOD = 'PUT';
+DELETE FROM BGM_AGIT_URL_RESOURCES
+ WHERE BGM_AGIT_URL_RESOURCES_PATH = '/bgm-agit/role/monthly-pass' AND BGM_AGIT_URL_HTTP_METHOD = 'PUT';
+
+COMMIT;
+
+-- 확인
+SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'BGMAGIT' AND TABLE_NAME = 'BGM_AGIT_MONTHLY_PASS';
+SELECT u.BGM_AGIT_URL_HTTP_METHOD AS method, u.BGM_AGIT_URL_RESOURCES_PATH AS path,
+       GROUP_CONCAT(r.BGM_AGIT_ROLE_ID) AS role_ids
+  FROM BGM_AGIT_URL_RESOURCES u
+  LEFT JOIN BGM_AGIT_URL_RESOURCES_ROLE r ON r.BGM_AGIT_URL_RESOURCES_ID = u.BGM_AGIT_URL_RESOURCES_ID
+ WHERE u.BGM_AGIT_URL_RESOURCES_PATH LIKE '/bgm-agit/role/monthly-pass%'
+ GROUP BY u.BGM_AGIT_URL_RESOURCES_ID, u.BGM_AGIT_URL_HTTP_METHOD, u.BGM_AGIT_URL_RESOURCES_PATH;
+
+-- 롤백 (스테이징에서만)
+-- DROP TABLE IF EXISTS BGM_AGIT_MONTHLY_PASS;

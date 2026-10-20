@@ -7,6 +7,7 @@ import com.bgmagitapi.origin.repository.custom.BgmAgitMemberCustomRepository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +16,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.StringUtils;
 
+import java.time.YearMonth;
 import java.util.List;
 
 import static com.bgmagitapi.origin.entity.QBgmAgitMember.bgmAgitMember;
+import static com.bgmagitapi.origin.entity.QBgmAgitMonthlyPass.bgmAgitMonthlyPass;
 
 @RequiredArgsConstructor
 public class BgmAgitMemberRepositoryImpl implements BgmAgitMemberCustomRepository {
@@ -37,7 +40,6 @@ public class BgmAgitMemberRepositoryImpl implements BgmAgitMemberCustomRepositor
                                 bgmAgitMember.bgmAgitMemberNicknameUseStatus,
                                 bgmAgitMember.bgmAgitMemberAlimtalkStatus,
                                 bgmAgitMember.bgmAgitMemberMahjongUseStatus,
-                                bgmAgitMember.bgmAgitMemberMonthlyPassStatus,
                                 bgmAgitMember.registDate
                         )
                 )
@@ -47,7 +49,7 @@ public class BgmAgitMemberRepositoryImpl implements BgmAgitMemberCustomRepositor
     }
 
     @Override
-    public Page<BgmAgitMonthlyPassResponse> findMonthlyPassMembers(Pageable pageable, String keyword, boolean onlyPass) {
+    public Page<BgmAgitMonthlyPassResponse> findMonthlyPassMembers(Pageable pageable, String keyword, boolean onlyPass, YearMonth thisMonth) {
         List<BgmAgitMonthlyPassResponse> content = queryFactory
                 .select(Projections.constructor(
                         BgmAgitMonthlyPassResponse.class,
@@ -55,14 +57,11 @@ public class BgmAgitMemberRepositoryImpl implements BgmAgitMemberCustomRepositor
                         bgmAgitMember.bgmAgitMemberName,
                         bgmAgitMember.bgmAgitMemberNickname,
                         bgmAgitMember.bgmAgitMemberPhoneNo,
-                        bgmAgitMember.socialType.stringValue(),
-                        bgmAgitMember.bgmAgitMemberMonthlyPassStatus
+                        bgmAgitMember.socialType.stringValue()
                 ))
                 .from(bgmAgitMember)
-                .where(passOnly(onlyPass), nameOrNicknameOrPhoneNo(keyword))
-                // 패스 회원을 위로 — 이번 달 누가 켜져 있는지 바로 보이게
+                .where(passOnly(onlyPass, thisMonth), nameOrNicknameOrPhoneNo(keyword))
                 .orderBy(
-                        bgmAgitMember.bgmAgitMemberMonthlyPassStatus.desc(),
                         bgmAgitMember.bgmAgitMemberName.asc(),
                         bgmAgitMember.bgmAgitMemberId.asc()
                 )
@@ -73,22 +72,21 @@ public class BgmAgitMemberRepositoryImpl implements BgmAgitMemberCustomRepositor
         JPAQuery<Long> countQuery = queryFactory
                 .select(bgmAgitMember.count())
                 .from(bgmAgitMember)
-                .where(passOnly(onlyPass), nameOrNicknameOrPhoneNo(keyword));
+                .where(passOnly(onlyPass, thisMonth), nameOrNicknameOrPhoneNo(keyword));
 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 
-    @Override
-    public long resetMonthlyPass() {
-        return queryFactory
-                .update(bgmAgitMember)
-                .set(bgmAgitMember.bgmAgitMemberMonthlyPassStatus, "N")
-                .where(bgmAgitMember.bgmAgitMemberMonthlyPassStatus.eq("Y"))
-                .execute();
-    }
-
-    private BooleanExpression passOnly(boolean onlyPass) {
-        return onlyPass ? bgmAgitMember.bgmAgitMemberMonthlyPassStatus.eq("Y") : null;
+    /** 이번 달 이후에 끝나는(=지금 쓰거나 앞으로 쓸) 패스 기간이 있는 회원만 */
+    private BooleanExpression passOnly(boolean onlyPass, YearMonth thisMonth) {
+        if (!onlyPass) {
+            return null;
+        }
+        return JPAExpressions.selectOne()
+                .from(bgmAgitMonthlyPass)
+                .where(bgmAgitMonthlyPass.bgmAgitMember.bgmAgitMemberId.eq(bgmAgitMember.bgmAgitMemberId),
+                        bgmAgitMonthlyPass.bgmAgitMonthlyPassEndMonth.goe(thisMonth.atDay(1)))
+                .exists();
     }
 
     /**

@@ -174,4 +174,32 @@ public class BgmAgitPaymentRepositoryImpl implements BgmAgitPaymentCustomReposit
         }
         return result;
     }
+
+    @Override
+    public Map<Long, Integer> findUnitPricesByReservationIds(List<Long> reservationIds) {
+        Map<Long, Integer> result = new LinkedHashMap<>();
+        if (reservationIds == null || reservationIds.isEmpty()) {
+            return result;
+        }
+
+        List<Tuple> rows = queryFactory
+                .select(bgmAgitPayment.bgmAgitReservationId,
+                        bgmAgitPayment.bgmAgitPaymentUnitPrice)
+                .from(bgmAgitPayment)
+                .where(
+                        settled(),
+                        bgmAgitPayment.bgmAgitReservationId.in(reservationIds),
+                        bgmAgitPayment.bgmAgitPaymentUnitPrice.isNotNull()
+                )
+                .fetch();
+
+        // 환불 쪽(refundPeopleReduction)도 정산 결제 중 단가가 있는 첫 값을 쓴다
+        for (Tuple row : rows) {
+            Long reservationId = row.get(bgmAgitPayment.bgmAgitReservationId);
+            if (reservationId != null) {
+                result.putIfAbsent(reservationId, row.get(bgmAgitPayment.bgmAgitPaymentUnitPrice));
+            }
+        }
+        return result;
+    }
 }

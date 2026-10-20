@@ -39,6 +39,18 @@ public class GroupedReservationResponse {
      */
     private Integer refundRate;
     private Integer refundAmount;
+    /**
+     * 인원 변경 화면용. minPeople = 이 예약의 방(합쳐 예약이면 합산) 최소 인원 — 이 아래로는 줄일 수 없다.
+     * unitPrice = 결제 당시 1인 단가 스냅샷. 미결제·정액(마작·10월 이용분)이면 null 이라 차액 환불이 없다.
+     * 실제 환불액은 서버가 계산해 응답 메시지로 알려준다.
+     */
+    private Integer minPeople;
+    private Integer unitPrice;
+    /**
+     * 인원 줄이기 버튼을 보일지. 11월 이용분 룸(인원 × 단가)이고, 취소 안 됐고, 아직 시작 전이고, 최소 인원보다 많을 때만.
+     * 마작 대탁·10월 이용분은 정액이라 인원이 금액과 무관해 버튼을 두지 않는다.
+     */
+    private boolean peopleReducible;
 
     private List<TimeSlot> timeSlots;
     

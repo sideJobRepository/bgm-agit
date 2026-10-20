@@ -2,12 +2,12 @@ import { Wrapper } from '../styles';
 import SearchBar from '../components/SearchBar.tsx';
 import { useCallback, useEffect, useState } from 'react';
 import { useMediaQuery } from 'react-responsive';
-import { CheckCircle, CreditCard, Receipt, Share, XCircle } from 'phosphor-react';
+import { CheckCircle, CreditCard, Receipt, Share, UsersThree, XCircle } from 'phosphor-react';
 import { useReservationListFetch, useUpdatePost } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { reservationListDataState } from '../recoil/state/reservationState.ts';
 import { userState } from '../recoil/state/userState.ts';
-import { showConfirmModal } from '../components/confirmAlert.tsx';
+import { showConfirmModal, showPeopleReduceModal } from '../components/confirmAlert.tsx';
 import { toast } from '../utils/toast';
 import type { Reservation } from '../types/reservation.ts';
 import Pagination from '../components/Pagination.tsx';
@@ -187,6 +187,33 @@ export default function ReservationList() {
     });
   }
 
+  /**
+   * 예약 인원 줄이기. 확정(결제)된 예약이면 줄인 인원 × 결제 당시 단가 × 환불 비율만큼 바로 부분환불된다.
+   * 버튼 노출은 서버가 판정한 peopleReducible(11월 룸·시작 전·최소 인원 초과)을 따른다.
+   */
+  function reducePeople(item: Reservation) {
+    showPeopleReduceModal({
+      label: item.reservationAddr,
+      currentPeople: item.reservationPeople,
+      minPeople: item.minPeople ?? 1,
+      unitPrice: item.unitPrice,
+      refundRate: item.refundRate,
+      paidAmount: item.paidAmount,
+      onConfirm: people => {
+        update<{ reservationId: number; people: number }, ApiMessageResponse>({
+          url: '/bgm-agit/reservation/people',
+          body: { reservationId: item.reservationId, people },
+          ignoreHttpError: true,
+          // 실제 환불액은 서버가 처리한 금액으로 안내한다(목록을 열어둔 채 48시간 경계를 넘길 수 있다)
+          onSuccess: res => {
+            toast.success(res?.message ?? '예약 인원이 변경되었습니다.');
+            fetchReservationList(page, { startDate: start, endDate: end }, pageSize);
+          },
+        });
+      },
+    });
+  }
+
   //공유하기
   function shareReservation(item: Reservation) {
     if (!window.Kakao || !window.Kakao.isInitialized()) {
@@ -249,8 +276,8 @@ export default function ReservationList() {
       회원분은 현장에서 환불해 드립니다.
       <br />※ 환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후(당일·노쇼 포함)에는
       불가합니다.
-      <br />※ 인원 변경이 필요하시면 아래 번호로 문의해 주세요. 인원을 줄이시는 경우 줄어든 인원만큼 같은 기준으로 환불됩니다. 인원이 늘어나는
-      경우 추가 인원은 현장에서 워크인 요금으로 결제해 주세요.
+      <br />※ 예약 인원은 예약 카드의 [인원 변경] 버튼으로 줄이실 수 있습니다. 결제하신 예약이면 줄어든 인원만큼 위
+      환불 기준으로 바로 환불됩니다. 인원이 늘어나는 경우 추가 인원은 현장에서 워크인 요금으로 결제해 주세요.
       <br />※ 마작 대탁 대여는 기존과 같이 예약금 10,000원 결제 후 잔여 요금을 현장에서
       결제합니다.
       <br />※ 10월 31일 이용분까지는 종전 규정(룸 예약금 10,000원·잔여 요금 현장 결제·예약일 전날까지
@@ -380,6 +407,17 @@ export default function ReservationList() {
                       >
                         <CheckCircle weight="bold" />
                         확정
+                      </ActionButton>
+                    )}
+                    {item.peopleReducible && (
+                      <ActionButton
+                        type="button"
+                        $variant="secondary"
+                        $tone="people"
+                        onClick={() => reducePeople(item)}
+                      >
+                        <UsersThree weight="bold" />
+                        {isNarrow ? '인원' : '인원 변경'}
                       </ActionButton>
                     )}
                     {canCancel && (

@@ -1,5 +1,7 @@
 package com.bgmagitapi.origin.service.impl;
 
+import java.time.YearMonth;
+import com.bgmagitapi.origin.repository.BgmAgitMonthlyPassRepository;
 import com.bgmagitapi.origin.entity.BgmAgitBiztalkSendHistory;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
@@ -34,7 +36,6 @@ import org.springframework.web.client.RestClient;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -63,6 +64,9 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
 
     // 알림톡 고지 금액도 결제와 같은 주말/공휴일 판정을 써야 청구액과 갈리지 않는다
     private final BgmAgitHolidayService bgmAgitHolidayService;
+
+    // 월간패스 기간 — 고지 금액의 본인 1명분 할인 판정(결제 주문과 같은 판정)
+    private final BgmAgitMonthlyPassRepository bgmAgitMonthlyPassRepository;
 
     private static final String PHONE1 = "010-5059-3499";
     private static final String PHONE2 = "010-5592-8832";
@@ -106,9 +110,10 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
             int headCount = reservation.getBgmAgitReservationPeople() == null ? 0 : reservation.getBgmAgitReservationPeople();
             boolean weekendRate = bgmAgitHolidayService.isWeekendRate(useDate);
             // 월간패스 본인 1명분 할인도 결제 주문과 같은 판정으로 뺀다
+            boolean passCovered = useDate != null
+                    && bgmAgitMonthlyPassRepository.coversMonth(member.getBgmAgitMemberId(), YearMonth.from(useDate));
             int discount = SlotSchedule.monthlyPassDiscount(
-                    member.isMonthlyPassHolder(), reservation.getRoomList(), headCount, weekendRate, useDate,
-                    LocalDate.now(ZoneId.of("Asia/Seoul")));
+                    passCovered, reservation.getRoomList(), headCount, weekendRate, useDate);
             String deposit = AlimtalkUtils.formatAmount(SlotSchedule.totalPaymentAmount(
                     reservation.getRoomList(), headCount, weekendRate, useDate) - discount);
             // 전액결제 개정판(-2)은 카카오 검수를 따로 받아야 해서 스위치로 가른다.

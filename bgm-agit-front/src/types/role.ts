@@ -17,7 +17,10 @@ export type MonthlyPassMember = {
   memberNickname: string;
   memberPhoneNo: string;
   memberLoginType: string;
+  // 'Y' = 이번 달이 패스 기간 안
   monthlyPassStatus: 'Y' | 'N' | null;
+  // 이번 달 이후에 끝나는 패스 기간들(시작월 오름차순)
+  passes: { passId: number; startMonth: string; endMonth: string }[];
 };
 
 export type PageMonthlyPass = {

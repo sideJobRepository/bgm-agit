@@ -126,6 +126,10 @@ export type Reservation = {
   // 지금 취소하면 적용될 환불 비율(%)과 금액. 최종 금액은 취소 응답 메시지가 알려준다
   refundRate?: number | null;
   refundAmount?: number | null;
+  // 인원 변경용: 방 최소 인원(합쳐 예약이면 합산), 결제 당시 1인 단가(미결제·정액이면 null), 줄이기 버튼 노출 여부
+  minPeople?: number | null;
+  unitPrice?: number | null;
+  peopleReducible?: boolean;
   timeSlots: {
     startTime: string;
     endTime: string;

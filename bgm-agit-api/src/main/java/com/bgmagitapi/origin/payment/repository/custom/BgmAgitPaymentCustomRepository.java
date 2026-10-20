@@ -48,4 +48,7 @@ public interface BgmAgitPaymentCustomRepository {
 
     /** 예약별 실제 결제 잔액(결제액 - 누적취소액) 배치 조회. 환불 예상액 표시에 쓴다. */
     Map<Long, Integer> findPaidAmountsByReservationIds(List<Long> reservationIds);
+
+    /** 예약별 결제 당시 1인 단가 스냅샷 배치 조회(정산된 결제만). 인원 변경 환불 예상액 표시에 쓴다. 없으면 키가 없다. */
+    Map<Long, Integer> findUnitPricesByReservationIds(List<Long> reservationIds);
 }

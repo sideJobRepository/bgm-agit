@@ -5,15 +5,18 @@ import com.bgmagitapi.origin.advice.exception.ValidException;
 import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.origin.controller.request.BgmAgitMemberNicknameChangeRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitMemberPasswordChangeRequest;
+import com.bgmagitapi.origin.controller.request.BgmAgitMonthlyPassRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitRoleModifyRequest;
 import com.bgmagitapi.origin.controller.response.BgmAgitMonthlyPassResponse;
 import com.bgmagitapi.origin.controller.response.BgmAgitRoleResponse;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.BgmAgitMemberRole;
+import com.bgmagitapi.origin.entity.BgmAgitMonthlyPass;
 import com.bgmagitapi.origin.entity.BgmAgitRole;
 import com.bgmagitapi.origin.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.origin.repository.BgmAgitMemberRoleRepository;
+import com.bgmagitapi.origin.repository.BgmAgitMonthlyPassRepository;
 import com.bgmagitapi.origin.repository.BgmAgitRefreshTokenRepository;
 import com.bgmagitapi.origin.repository.BgmAgitRoleRepository;
 import com.bgmagitapi.origin.security.manager.BgmAgitAuthorizationManager;
@@ -27,8 +30,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 @Service
@@ -39,6 +45,7 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final String ROLE_MENTOR = "ROLE_MENTOR";
     private static final String ROLE_NAME_USER = "USER";
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final BgmAgitRoleRepository bgmAgitRoleRepository;
 
@@ -53,6 +60,8 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
     private final KmlUserClient kmlUserClient;
 
     private final BgmAgitRefreshTokenRepository bgmAgitRefreshTokenRepository;
+
+    private final BgmAgitMonthlyPassRepository bgmAgitMonthlyPassRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -246,25 +255,52 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
     public Page<BgmAgitMonthlyPassResponse> getMonthlyPassMembers(Pageable pageable, String keyword, boolean onlyPass, List<String> actorRoles) {
         // 전화번호가 나가는 목록이라 URL 매핑과 별개로 서비스에서도 막는다(매핑이 빠지면 기본 permit 이다)
         requireAdmin(actorRoles);
-        Page<BgmAgitMonthlyPassResponse> page = bgmAgitMemberRepository.findMonthlyPassMembers(pageable, keyword, onlyPass);
-        page.getContent().forEach(item -> item.setMemberPhoneNo(formatPhoneNo(item.getMemberPhoneNo())));
+        YearMonth thisMonth = YearMonth.now(KST);
+        Page<BgmAgitMonthlyPassResponse> page =
+                bgmAgitMemberRepository.findMonthlyPassMembers(pageable, keyword, onlyPass, thisMonth);
+        Map<Long, List<BgmAgitMonthlyPass>> passes = bgmAgitMonthlyPassRepository.findActivePassesByMemberIds(
+                page.getContent().stream().map(BgmAgitMonthlyPassResponse::getMemberId).toList(), thisMonth);
+        page.getContent().forEach(item -> {
+            item.setMemberPhoneNo(formatPhoneNo(item.getMemberPhoneNo()));
+            List<BgmAgitMonthlyPass> mine = passes.getOrDefault(item.getMemberId(), List.of());
+            item.setPasses(mine.stream()
+                    .map(p -> new BgmAgitMonthlyPassResponse.Period(
+                            p.getBgmAgitMonthlyPassId(), p.getStartYearMonth().toString(), p.getEndYearMonth().toString()))
+                    .toList());
+            boolean coversNow = mine.stream().anyMatch(p ->
+                    !p.getStartYearMonth().isAfter(thisMonth) && !p.getEndYearMonth().isBefore(thisMonth));
+            item.setMonthlyPassStatus(coversNow ? "Y" : "N");
+        });
         return page;
     }
 
     @Override
-    public ApiResponse setMonthlyPass(Long memberId, boolean pass, List<String> actorRoles) {
+    public ApiResponse addMonthlyPass(BgmAgitMonthlyPassRequest request, List<String> actorRoles) {
         requireAdmin(actorRoles);
-        BgmAgitMember member = bgmAgitMemberRepository.findById(memberId)
+        BgmAgitMember member = bgmAgitMemberRepository.findById(request.getMemberId())
                 .orElseThrow(() -> new ValidException("해당 회원을 찾을 수 없습니다."));
-        member.changeMonthlyPass(pass);
-        return new ApiResponse(200, true, pass
-                ? "월간패스 회원으로 등록되었습니다. (매월 1일에 자동 해제)"
-                : "월간패스가 해제되었습니다.");
+        YearMonth start;
+        try {
+            start = YearMonth.parse(request.getStartMonth());
+        } catch (RuntimeException e) {
+            throw new ValidException("시작월 형식이 올바르지 않습니다.");
+        }
+        // 지난 달부터 시작하는 기간은 받지 않는다(이미 지난 이용분은 할인될 일이 없다)
+        if (start.isBefore(YearMonth.now(KST))) {
+            throw new ValidException("시작월은 이번 달 이후로 선택해 주세요.");
+        }
+        BgmAgitMonthlyPass pass = bgmAgitMonthlyPassRepository.save(new BgmAgitMonthlyPass(member, start, request.getMonths()));
+        return new ApiResponse(200, true, "월간패스가 등록되었습니다. ("
+                + pass.getStartYearMonth() + " ~ " + pass.getEndYearMonth() + ")");
     }
 
     @Override
-    public long resetMonthlyPass() {
-        return bgmAgitMemberRepository.resetMonthlyPass();
+    public ApiResponse deleteMonthlyPass(Long passId, List<String> actorRoles) {
+        requireAdmin(actorRoles);
+        BgmAgitMonthlyPass pass = bgmAgitMonthlyPassRepository.findById(passId)
+                .orElseThrow(() -> new ValidException("해당 월간패스를 찾을 수 없습니다."));
+        bgmAgitMonthlyPassRepository.delete(pass);
+        return new ApiResponse(200, true, "월간패스가 삭제되었습니다.");
     }
 
     private void requireAdmin(List<String> actorRoles) {

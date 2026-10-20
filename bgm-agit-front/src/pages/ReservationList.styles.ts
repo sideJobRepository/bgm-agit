@@ -36,11 +36,12 @@ const STATUS_BADGE: Record<StatusTone, ReturnType<typeof css>> = {
 };
 
 // 예전 예약 카드 액션 버튼 색. 결제·확정 = 초록, 취소 = 빨강, 영수증 = 갈색, 공유 = 진갈색. 전부 채움·흰 글씨
-export type ActionTone = 'pay' | 'approve' | 'cancel' | 'receipt' | 'share';
+export type ActionTone = 'pay' | 'approve' | 'people' | 'cancel' | 'receipt' | 'share';
 
 export const ACTION_COLORS: Record<ActionTone, string> = {
   pay: c.greenColor,
   approve: c.greenColor,
+  people: c.noticeColor,
   cancel: c.redColor,
   receipt: c.noticeColor,
   share: c.bronzeColor,

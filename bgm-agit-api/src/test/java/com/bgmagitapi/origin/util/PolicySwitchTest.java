@@ -125,25 +125,18 @@ class PolicySwitchTest {
     @Test
     @DisplayName("월간패스 — 이번 달 이용분 룸 예약만 본인 1명분 할인")
     void monthlyPassDiscount() {
-        LocalDate todayInNov = LocalDate.of(2026, 11, 10);
         LocalDate nov20 = LocalDate.of(2026, 11, 20);   // 금요일
         LocalDate nov21 = LocalDate.of(2026, 11, 21);   // 토요일
 
-        assertThat(SlotSchedule.monthlyPassDiscount(true, List.of(B_ROOM), 4, false, nov20, todayInNov)).isEqualTo(9000);
-        assertThat(SlotSchedule.monthlyPassDiscount(true, List.of(B_ROOM), 4, true, nov21, todayInNov)).isEqualTo(10000);
-        // 패스 아님
-        assertThat(SlotSchedule.monthlyPassDiscount(false, List.of(B_ROOM), 4, false, nov20, todayInNov)).isZero();
-        // 다음 달 이용분 — 이번 달 패스로는 할인하지 않는다
-        assertThat(SlotSchedule.monthlyPassDiscount(true, List.of(B_ROOM), 4, false,
-                LocalDate.of(2026, 12, 3), todayInNov)).isZero();
-        // 10월에 결제하는 11월 이용분도 마찬가지
-        assertThat(SlotSchedule.monthlyPassDiscount(true, List.of(B_ROOM), 4, false,
-                nov20, LocalDate.of(2026, 10, 25))).isZero();
+        // 이용일의 달이 패스 기간 안이면(10월에 미리 산 11월 패스 포함) 본인 1명분
+        assertThat(SlotSchedule.monthlyPassDiscount(true, List.of(B_ROOM), 4, false, nov20)).isEqualTo(9000);
+        assertThat(SlotSchedule.monthlyPassDiscount(true, List.of(B_ROOM), 4, true, nov21)).isEqualTo(10000);
+        // 패스 기간 밖
+        assertThat(SlotSchedule.monthlyPassDiscount(false, List.of(B_ROOM), 4, false, nov20)).isZero();
         // 마작 대탁·10월 이용분(정액)은 할인 없음
-        assertThat(SlotSchedule.monthlyPassDiscount(true, List.of(TABLE), 4, false, nov20, todayInNov)).isZero();
-        assertThat(SlotSchedule.monthlyPassDiscount(true, List.of(B_ROOM), 4, false,
-                OCT_31, LocalDate.of(2026, 10, 25))).isZero();
+        assertThat(SlotSchedule.monthlyPassDiscount(true, List.of(TABLE), 4, false, nov20)).isZero();
+        assertThat(SlotSchedule.monthlyPassDiscount(true, List.of(B_ROOM), 4, false, OCT_31)).isZero();
         // 1명 예약은 0원 결제가 되므로 할인하지 않는다
-        assertThat(SlotSchedule.monthlyPassDiscount(true, List.of(B_ROOM), 1, false, nov20, todayInNov)).isZero();
+        assertThat(SlotSchedule.monthlyPassDiscount(true, List.of(B_ROOM), 1, false, nov20)).isZero();
     }
 }

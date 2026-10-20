@@ -23,6 +23,7 @@ import com.bgmagitapi.origin.payment.repository.BgmAgitPaymentRepository;
 import com.bgmagitapi.origin.payment.service.PaymentService;
 import com.bgmagitapi.origin.payment.service.response.PaymentRefundResult;
 import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
+import com.bgmagitapi.origin.repository.BgmAgitMonthlyPassRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.origin.repository.BgmAgitRoomRepository;
 import com.bgmagitapi.origin.service.BgmAgitHolidayService;
@@ -82,6 +83,9 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
 
     // 요금의 주말/평일 판정. 토·일 + 공휴일(법정 계산 + 관리자 수동 예외)
     private final BgmAgitHolidayService bgmAgitHolidayService;
+
+    // 월간패스 기간(본인 1명분 할인 판정)
+    private final BgmAgitMonthlyPassRepository bgmAgitMonthlyPassRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -496,18 +500,14 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     }
 
     /**
-     * 예약자 본인이 월간패스 회원이면 1명분 할인. 판정은 주문 생성 시점의 패스 여부·이번 달 기준이다
-     * (SlotSchedule.monthlyPassDiscount). 결제 금액 계산과 알림톡 안내가 같은 판정을 쓰도록 여기 한 곳에 둔다.
+     * 예약자 본인의 패스 기간에 이용일의 달이 들어 있으면 1명분 할인(SlotSchedule.monthlyPassDiscount).
+     * 판정 시점은 주문 생성 때이고, 결과는 결제행 스냅샷으로 남아 승인 재대조에 쓰인다.
      */
     private int monthlyPassDiscount(BgmAgitReservation reservation, List<BgmAgitRoom> rooms, int people, boolean weekendRate) {
-        BgmAgitMember member = reservation.getBgmAgitMember();
-        return SlotSchedule.monthlyPassDiscount(
-                member != null && member.isMonthlyPassHolder(),
-                rooms,
-                people,
-                weekendRate,
-                reservation.getBgmAgitReservationStartDate(),
-                LocalDate.now(KST));
+        LocalDate useDate = reservation.getBgmAgitReservationStartDate();
+        boolean covered = useDate != null
+                && bgmAgitMonthlyPassRepository.coversMonth(reservation.getMemberId(), YearMonth.from(useDate));
+        return SlotSchedule.monthlyPassDiscount(covered, rooms, people, weekendRate, useDate);
     }
 
     @Override
@@ -537,6 +537,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         Map<Long, String> receiptUrls = bgmAgitPaymentRepository.findDoneReceiptUrlsByReservationIds(pageIds);
         // 환불 예상액 계산에 쓸 결제 잔액 배치 조회
         Map<Long, Integer> paidAmounts = bgmAgitPaymentRepository.findPaidAmountsByReservationIds(pageIds);
+        // 인원 변경 화면의 환불 예상액용 결제 당시 단가
+        Map<Long, Integer> unitPrices = bgmAgitPaymentRepository.findUnitPricesByReservationIds(pageIds);
 
         LocalDateTime now = LocalDateTime.now(KST);
 
@@ -552,6 +554,17 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             dto.setPaidAmount(paid);
             dto.setRefundRate(rate);
             dto.setRefundAmount(ReservationRefundPolicy.refundAmount(paid, rate));
+            // 인원 변경 검증(validateReservationPeople)과 같은 하한. 방에 값이 없으면 1명
+            Integer minPeople = effectiveMinPeople(reservation.getRoomList());
+            int floor = minPeople == null ? 1 : Math.max(minPeople, 1);
+            dto.setMinPeople(floor);
+            dto.setUnitPrice(unitPrices.get(reservationId));
+            LocalDateTime useStartAt = reservation.getUseStartAt();
+            Integer people = reservation.getBgmAgitReservationPeople();
+            dto.setPeopleReducible(!reservation.isCanceled()
+                    && !SlotSchedule.isFlatPricing(reservation.getRoomList(), reservation.getBgmAgitReservationStartDate())
+                    && useStartAt != null && useStartAt.isAfter(now)
+                    && people != null && people > floor);
             content.add(dto);
         }
 
@@ -778,7 +791,11 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         }
 
         LocalDate useDate = reservation.getBgmAgitReservationStartDate();
-        // 10월 이용분(종전 정책)은 인원 검증이 없었고 예약금 정액이라 차액 환불도 없다(결제 단가 스냅샷이 null 이라 건너뛴다)
+        // 마작 대탁·10월 이용분은 예약금 정액이라 인원이 금액과 무관하다. 차액 환불이 없는데 "환불 없음"으로 안내되면
+        // 손님이 손해 본 것처럼 읽히므로 손님 요청은 막고, 관리자는 기록 정정용으로 인원만 바꿀 수 있게 둔다
+        if (SlotSchedule.isFlatPricing(reservation.getRoomList(), useDate) && !isAdmin(roles)) {
+            throw new ReservationConflictException("이 예약은 인원 변경이 필요 없습니다. 매장으로 문의해 주세요.");
+        }
         if (SlotSchedule.isNewPolicy(useDate)) {
             validateReservationPeople(reservation.getRoomList(), newPeople);
         } else if (newPeople < 1) {
