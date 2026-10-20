@@ -10,6 +10,7 @@ import com.bgmagitapi.origin.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AdminReservationBoardResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AvailableRoomsResponse;
 import com.bgmagitapi.origin.controller.response.reservation.GroupedReservationResponse;
+import com.bgmagitapi.origin.controller.response.reservation.ReservationRankingResponse;
 import com.bgmagitapi.origin.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.origin.controller.response.reservation.TimeRange;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
@@ -29,6 +30,7 @@ import com.bgmagitapi.origin.repository.BgmAgitRoomRepository;
 import com.bgmagitapi.origin.service.BgmAgitHolidayService;
 import com.bgmagitapi.origin.service.BgmAgitReservationService;
 import com.bgmagitapi.origin.service.response.ReservationTalkContext;
+import com.bgmagitapi.origin.util.NicknameMasker;
 import com.bgmagitapi.origin.util.ReservationRefundPolicy;
 import com.bgmagitapi.origin.util.SlotSchedule;
 import lombok.RequiredArgsConstructor;
@@ -664,6 +666,60 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 new AdminReservationBoardResponse.Summary(confirmed + waiting, confirmed, waiting, canceled, people);
 
         return new AdminReservationBoardResponse(date, summary, roomList);
+    }
+
+    /**
+     * 예약 랭킹을 세기 시작한 달(월별 리워드, 사장님 요청으로 10월부터).
+     * 10월 이용분은 예약금 1만원 결제로 확정된 예약이 들어간다 — 인원 합계는 예약할 때 입력한 인원이다.
+     */
+    static final YearMonth RANKING_FROM = YearMonth.of(2026, 10);
+
+    /** 한 화면에 보여줄 최대 인원 */
+    private static final int RANKING_LIMIT = 100;
+
+    @Override
+    @Transactional(readOnly = true)
+    public ReservationRankingResponse getReservationRanking(YearMonth month, Integer people, List<String> roles) {
+        // 회원 누구나 본다. 이름·연락처는 내리지 않고, 닉네임은 관리자만 원문으로 본다
+        boolean admin = isAdmin(roles);
+        YearMonth target = month == null || month.isBefore(RANKING_FROM) ? RANKING_FROM : month;
+        LocalDate from = target.atDay(1);
+        LocalDate toExclusive = target.plusMonths(1).atDay(1);
+
+        List<BgmAgitReservationRepository.RankingRow> rows =
+                bgmAgitReservationRepository.findReservationRanking(from, toExclusive, people, RANKING_LIMIT);
+
+        // 공동 순위: 예약 횟수가 같으면 같은 순위, 다음 순위는 그만큼 건너뛴다(1, 1, 3 …)
+        List<ReservationRankingResponse.Item> items = new ArrayList<>();
+        long totalReservations = 0;
+        long totalPeople = 0;
+        int rank = 0;
+        long previousCount = -1;
+        for (int i = 0; i < rows.size(); i++) {
+            BgmAgitReservationRepository.RankingRow row = rows.get(i);
+            if (row.reservationCount() != previousCount) {
+                rank = i + 1;
+                previousCount = row.reservationCount();
+            }
+            // 닉네임이 비어 있는 회원은 이름으로 대신한다(가리는 규칙은 같다)
+            String nickname = StringUtils.hasText(row.memberNickname()) ? row.memberNickname() : row.memberName();
+            items.add(new ReservationRankingResponse.Item(
+                    rank,
+                    admin ? row.memberId() : null,
+                    admin ? nickname : NicknameMasker.mask(nickname),
+                    row.reservationCount(),
+                    row.totalPeople()));
+            totalReservations += row.reservationCount();
+            totalPeople += row.totalPeople();
+        }
+
+        return new ReservationRankingResponse(
+                target.toString(),
+                bgmAgitReservationRepository.findConfirmedPeopleCounts(from, toExclusive),
+                people,
+                totalReservations,
+                totalPeople,
+                items);
     }
 
     private String formatTime(LocalTime time) {

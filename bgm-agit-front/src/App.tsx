@@ -19,6 +19,7 @@ const Error = lazy(() => import('./pages/Error.tsx'));
 const Notice = lazy(() => import('./pages/Notice.tsx'));
 const ReservationList = lazy(() => import('./pages/ReservationList.tsx'));
 const ReservationBoard = lazy(() => import('./pages/ReservationBoard.tsx'));
+const ReservationRanking = lazy(() => import('./pages/ReservationRanking.tsx'));
 const Role = lazy(() => import('./pages/Role.tsx'));
 const NoticeDetail = lazy(() => import('./pages/NoticeDetail.tsx'));
 const Privacy = lazy(() => import('./pages/Privacy.tsx'));
@@ -78,6 +79,7 @@ function App() {
                   <Route path="/noticeDetail" element={<NoticeDetail />} />
                   <Route path="reservationList" element={<ReservationList />} />
                   <Route path="reservation-board" element={<ReservationBoard />} />
+                  <Route path="reservation-ranking" element={<ReservationRanking />} />
                   <Route path="payment/success" element={<PaymentSuccess />} />
                   <Route path="payment/fail" element={<PaymentFail />} />
                   <Route path="role" element={<Role />} />
