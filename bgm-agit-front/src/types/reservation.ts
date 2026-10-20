@@ -185,6 +185,9 @@ export type ReservationRankingItem = {
   memberId: number | null;
   // 관리자는 원문, 회원은 서버가 가린 값(홍x동)
   nickname: string | null;
+  // 관리자일 때만 내려온다
+  memberName: string | null;
+  phoneNo: string | null;
   reservationCount: number;
   totalPeople: number;
 };
