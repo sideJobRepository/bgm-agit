@@ -1,7 +1,6 @@
 package com.bgmagitapi.origin.event;
 
 
-import com.bgmagitapi.origin.entity.BgmAgitRoom;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
 import com.bgmagitapi.origin.event.dto.InquiryEvent;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -52,12 +50,11 @@ public class BizTalkEventListener {
     public void ReservationWaitingEvent(ReservationWaitingEvent reservationWaiting) {
         BgmAgitMember bgmAgitMember = reservationWaiting.getBgmAgitMember();
         BgmAgitReservation reservation = reservationWaiting.getReservation();
-        List<BgmAgitRoom> rooms = reservationWaiting.getRooms();
         if (bgmAgitMember == null || reservation == null) return;
         try {
-            bgmAgitBizTalkSandService.sandBizTalk(bgmAgitMember, reservation, rooms);
+            bgmAgitBizTalkSandService.sandBizTalk(bgmAgitMember, reservation);
         } catch (Exception e) {
-            bgmAgitBizTalkSandService.sandBizTalk(bgmAgitMember, reservation, rooms);
+            bgmAgitBizTalkSandService.sandBizTalk(bgmAgitMember, reservation);
         }
     }
     

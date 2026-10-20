@@ -9,21 +9,21 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * 방 하나에 걸린 예약 1건의 점유 구간(조회용 프로젝션).
+ * 방 하나에 걸린 예약 한 건의 점유 구간(예약 ⋈ 예약방).
  *
- * <b>필드를 추가하지 말 것.</b> Projections.constructor 는 위치 기반이라 인자 순서가 곧 필드 순서이고,
- * 같은 타입(Long 등)이 섞이면 순서가 어긋나도 컴파일이 통과한다. 프로젝션은
- * BgmAgitReservationRepositoryImpl.reservedTimeProjection() 한 곳에서만 만든다.
- * (방 id 는 DTO 에 넣지 않고 transform(groupBy(roomId)) 의 키로 받는다)
+ * <b>필드 추가·순서 변경 금지.</b> Projections.constructor 가 위치 기반인데 roomId 와 memberId 가
+ * 둘 다 Long 이라 순서가 어긋나도 컴파일이 통과하고, 어긋나면 남의 대기 예약이 내 것처럼 점유 처리된다.
+ * 프로젝션은 BgmAgitReservationRepositoryImpl.reservedTimeProjection() 한 곳에서만 만든다.
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class ReservedTimeDto {
+    private Long roomId;
+    private Long reservationId;
     private LocalDate date;
     private LocalTime startTime;
     private LocalTime endTime;
@@ -31,18 +31,20 @@ public class ReservedTimeDto {
     private Long memberId;
     private String cancelStatus;
 
-    /** 영업일별 점유 구간. 키는 영업일(예약의 START_DATE)이라 익일 새벽 구간도 그 날에 묶인다. */
+    /** 실제 이용 구간 + 상태. 충돌·점유 판정은 이걸로 한다. */
+    public TimeRange toTimeRange() {
+        SlotSchedule.Slot range = SlotSchedule.useRange(date, startTime, endTime);
+        return new TimeRange(range.start(), range.end(), approvalStatus, memberId, cancelStatus);
+    }
+
+    /**
+     * 영업일별 점유 구간. 키는 예약의 영업일(startDate)이다 — 경계(10시) 이전 새벽 구간도 그 영업일 슬롯과 비교된다.
+     */
     public static Map<LocalDate, List<TimeRange>> groupedReservation(List<ReservedTimeDto> reservations) {
         return reservations.stream()
-                .map(res -> {
-                    SlotSchedule.Slot period = SlotSchedule.toPeriod(res.getDate(), res.getStartTime(), res.getEndTime());
-                    if (period == null) {
-                        return null;
-                    }
-                    return new TimeRange(res.getDate(), period.start(), period.end(),
-                            res.getApprovalStatus(), res.getMemberId(), res.getCancelStatus());
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.groupingBy(TimeRange::getBusinessDate));
+                .filter(res -> res.getDate() != null && res.getStartTime() != null && res.getEndTime() != null)
+                .collect(Collectors.groupingBy(
+                        ReservedTimeDto::getDate,
+                        Collectors.mapping(ReservedTimeDto::toTimeRange, Collectors.toList())));
     }
 }

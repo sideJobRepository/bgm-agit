@@ -27,7 +27,7 @@ public class BgmAgitPayment extends DateSuperClass {
     @JoinColumn(name = "BGM_AGIT_MEMBER_ID")
     private BgmAgitMember bgmAgitMember;
 
-    // BGM 아지트 예약 ID (FK, RESTRICT). UNIQUE 아님 — 재결제면 같은 예약에 결제행이 여러 개다
+    // BGM 아지트 예약 ID (BGM_AGIT_RESERVATION FK. 구 RESERVATION_NO 와 같은 값. 재결제 행이 있어 UNIQUE 아님)
     @Column(name = "BGM_AGIT_RESERVATION_ID")
     private Long bgmAgitReservationId;
 
@@ -76,12 +76,35 @@ public class BgmAgitPayment extends DateSuperClass {
     @Column(name = "BGM_AGIT_PAYMENT_FAIL_REASON")
     private String bgmAgitPaymentFailReason;
 
+    /**
+     * 주문 생성 시점의 예약 인원 스냅샷.
+     * 예약의 인원은 뒤에 바뀔 수 있어서, 환불액을 "지금 인원"으로 재계산하면 결제액과 어긋난다.
+     */
+    @Column(name = "BGM_AGIT_PAYMENT_PEOPLE")
+    private Integer bgmAgitPaymentPeople;
+
+    /** 주문 생성 시점의 1인 단가 스냅샷. 인원 축소 환불의 차액 계산 기준. 마작 대탁(정액)이면 null. */
+    @Column(name = "BGM_AGIT_PAYMENT_UNIT_PRICE")
+    private Integer bgmAgitPaymentUnitPrice;
+
+    /**
+     * 주문 생성 시점의 월간패스 할인액(본인 1명분) 스냅샷. 할인이 없으면 0, 개편 전 결제는 null.
+     * 승인 재대조가 이 값을 빼고 비교한다 — 주문과 승인 사이에 패스가 꺼져도(매월 1일 초기화·관리자 해제)
+     * 이미 안내한 금액으로 승인되게 하기 위해서다.
+     */
+    @Column(name = "BGM_AGIT_PAYMENT_DISCOUNT_AMOUNT")
+    private Integer bgmAgitPaymentDiscountAmount;
+
     // 주문 생성용 생성자 (READY 상태로 저장)
-    public BgmAgitPayment(BgmAgitMember member, Long reservationId, String orderNo, Integer amount) {
+    public BgmAgitPayment(BgmAgitMember member, Long reservationId, String orderNo, Integer amount,
+                          Integer people, Integer unitPrice, Integer discountAmount) {
         this.bgmAgitMember = member;
         this.bgmAgitReservationId = reservationId;
         this.bgmAgitOrderNo = orderNo;
         this.bgmAgitPaymentAmount = amount;
+        this.bgmAgitPaymentPeople = people;
+        this.bgmAgitPaymentUnitPrice = unitPrice;
+        this.bgmAgitPaymentDiscountAmount = discountAmount;
         this.bgmAgitPaymentStatus = PaymentStatus.READY;
     }
 
@@ -99,11 +122,34 @@ public class BgmAgitPayment extends DateSuperClass {
         this.bgmAgitPaymentFailReason = null;
     }
 
-    public void markCanceled(Integer cancelAmount, String cancelReason, LocalDateTime canceledAt) {
-        this.bgmAgitCancelAmount = cancelAmount;
+    /** 아직 환불할 수 있는 잔액. 취소 요청 금액은 항상 이 값으로 클램프한다. */
+    public int remainingAmount() {
+        int paid = this.bgmAgitPaymentAmount == null ? 0 : this.bgmAgitPaymentAmount;
+        int canceled = this.bgmAgitCancelAmount == null ? 0 : this.bgmAgitCancelAmount;
+        return Math.max(paid - canceled, 0);
+    }
+
+    public boolean isRefundable() {
+        return this.bgmAgitPaymentStatus != null
+                && this.bgmAgitPaymentStatus.isRefundable()
+                && remainingAmount() > 0;
+    }
+
+    /**
+     * 취소 결과 반영. 누적 취소액과 상태는 토스 원장(totalAmount - balanceAmount)을 그대로 따른다.
+     *
+     * 로컬에서 더하면 재시도·부분취소가 겹쳤을 때 토스와 갈린다. 그래서 canceledAmount 는
+     * 응답에서 계산한 누적값을 받고, 잔액이 남아 있으면 PARTIAL_CANCELED 로 둔다.
+     */
+    public void markCanceled(Integer canceledAmount, String cancelReason, LocalDateTime canceledAt) {
+        int paid = this.bgmAgitPaymentAmount == null ? 0 : this.bgmAgitPaymentAmount;
+        int accumulated = canceledAmount == null ? paid : canceledAmount;
+        this.bgmAgitCancelAmount = accumulated;
         this.bgmAgitCancelReason = cancelReason;
         this.bgmAgitPaymentCancelDate = canceledAt;
-        this.bgmAgitPaymentStatus = PaymentStatus.CANCELED;
+        this.bgmAgitPaymentStatus = accumulated >= paid
+                ? PaymentStatus.CANCELED
+                : PaymentStatus.PARTIAL_CANCELED;
     }
 
     public void markAborted(String failReason) {

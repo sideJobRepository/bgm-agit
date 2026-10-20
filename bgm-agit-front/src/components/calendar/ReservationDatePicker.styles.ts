@@ -149,7 +149,9 @@ export const StyledCalendar = styled(Calendar)<WithTheme>`
       color: inherit;
     }
 
-    .react-calendar__tile.sunday {
+    /* 공휴일도 일요일과 같은 빨강. 그날은 주말 단가라 색으로 미리 알아볼 수 있어야 한다 */
+    .react-calendar__tile.sunday,
+    .react-calendar__tile.holiday {
       color: ${c.redColor};
     }
 

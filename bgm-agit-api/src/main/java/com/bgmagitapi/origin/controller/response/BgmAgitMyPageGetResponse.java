@@ -20,11 +20,13 @@ public class BgmAgitMyPageGetResponse {
     private String nickNameUseStatus;
     private String alimtalkStatus;
     private String mahjongUseStatus;
+    // 'Y' = 이번 달 월간패스 회원(매월 1일 초기화)
+    private String monthlyPassStatus;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDateTime registDate;
 
     @QueryProjection
-    public BgmAgitMyPageGetResponse(Long id, String mail, String name, String nickName, String phoneNo, String nickNameUseStatus, String alimtalkStatus, String mahjongUseStatus, LocalDateTime registDate) {
+    public BgmAgitMyPageGetResponse(Long id, String mail, String name, String nickName, String phoneNo, String nickNameUseStatus, String alimtalkStatus, String mahjongUseStatus, String monthlyPassStatus, LocalDateTime registDate) {
         this.id = id;
         this.mail = mail;
         this.name = name;
@@ -33,6 +35,7 @@ public class BgmAgitMyPageGetResponse {
         this.nickNameUseStatus = nickNameUseStatus;
         this.alimtalkStatus = alimtalkStatus;
         this.mahjongUseStatus = mahjongUseStatus;
+        this.monthlyPassStatus = monthlyPassStatus;
         this.registDate = registDate;
     }
 }

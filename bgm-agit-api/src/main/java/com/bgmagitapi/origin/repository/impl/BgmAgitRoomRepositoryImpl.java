@@ -7,8 +7,10 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
 import java.util.List;
 
+import static com.bgmagitapi.origin.entity.QBgmAgitReservation.bgmAgitReservation;
 import static com.bgmagitapi.origin.entity.QBgmAgitReservationRoom.bgmAgitReservationRoom;
 import static com.bgmagitapi.origin.entity.QBgmAgitRoom.bgmAgitRoom;
 
@@ -39,6 +41,22 @@ public class BgmAgitRoomRepositoryImpl implements BgmAgitRoomCustomRepository {
                 .where(bgmAgitReservationRoom.bgmAgitRoom.bgmAgitRoomId.eq(roomId))
                 .fetchFirst();
         return found != null;
+    }
+
+    @Override
+    public long countActiveReservationsFrom(Long roomId, LocalDate fromDate) {
+        Long count = queryFactory
+                .select(bgmAgitReservation.bgmAgitReservationId.countDistinct())
+                .from(bgmAgitReservationRoom)
+                .join(bgmAgitReservationRoom.bgmAgitReservation, bgmAgitReservation)
+                .where(
+                        bgmAgitReservationRoom.bgmAgitRoom.bgmAgitRoomId.eq(roomId),
+                        bgmAgitReservation.bgmAgitReservationStartDate.goe(fromDate),
+                        bgmAgitReservation.bgmAgitReservationCancelStatus.isNull()
+                                .or(bgmAgitReservation.bgmAgitReservationCancelStatus.upper().ne("Y"))
+                )
+                .fetchOne();
+        return count == null ? 0L : count;
     }
 
     // 컬럼이 null 인 행도 노출로 취급(이관 후엔 NOT NULL 이지만 방어)
