@@ -295,8 +295,7 @@ public class SlotSchedule {
      * (13~02시 슬롯·G룸 5시간 하루 1팀·예약금 1만원·전날까지 전액환불)을 그대로 쓴다.
      * 슬롯·요금·환불·알림톡이 모두 이 판정 하나를 본다. 10월 이용분이 다 끝나면 종전 분기는 지워도 된다.
      */
-    // TODO 임시: 스테이징 월간패스 점검용(2026-10-20). 점검 후 반드시 2026-11-01 로 되돌릴 것 — 이대로 운영 머지 금지
-    public static final LocalDate NEW_POLICY_FROM = LocalDate.of(2026, 10, 21);
+    public static final LocalDate NEW_POLICY_FROM = LocalDate.of(2026, 11, 1);
 
     public static boolean isNewPolicy(LocalDate useDate) {
         return useDate == null || !useDate.isBefore(NEW_POLICY_FROM);
