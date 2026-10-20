@@ -66,7 +66,20 @@ class PolicySwitchTest {
         assertThat(SlotSchedule.maxSelectableSlots(B_ROOM, OCT_31)).isNull();
 
         assertThat(SlotSchedule.of(G_ROOM, NOV_1).slots()).hasSize(24);
-        assertThat(SlotSchedule.maxSelectableSlots(G_ROOM, NOV_1)).isNull();
+    }
+
+    @Test
+    @DisplayName("11월부터 모든 방은 한 번에 최대 12시간 — 룸 12칸, 마작 대탁 4칸(3시간 칸). 10월은 종전 그대로")
+    void maxTwelveHoursFromNovember() {
+        assertThat(SlotSchedule.maxSelectableSlots(B_ROOM, NOV_1)).isEqualTo(12);
+        assertThat(SlotSchedule.maxSelectableSlots(G_ROOM, NOV_1)).isEqualTo(12);
+        assertThat(SlotSchedule.maxSelectableSlots(M1, NOV_2)).isEqualTo(12);
+        assertThat(SlotSchedule.maxSelectableSlots(TABLE, NOV_1)).isEqualTo(4);
+
+        // 10월 이용분은 손대지 않는다
+        assertThat(SlotSchedule.maxSelectableSlots(G_ROOM, OCT_31)).isEqualTo(1);
+        assertThat(SlotSchedule.maxSelectableSlots(B_ROOM, OCT_31)).isNull();
+        assertThat(SlotSchedule.maxSelectableSlots(TABLE, OCT_31)).isNull();
     }
 
     @Test

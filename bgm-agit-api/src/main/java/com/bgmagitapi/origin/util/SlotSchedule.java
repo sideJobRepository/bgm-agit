@@ -337,12 +337,23 @@ public class SlotSchedule {
     }
 
     /**
-     * 한 번에 선택 가능한 슬롯 수. 제한이 없으면 null — 개편 후에는 전 항목 제한 없음.
-     * 룸 8시간 상한은 사장님이 요청(2026-09-22)했다가 철회(2026-10-09)했다. 다시 넣지 말 것.
-     * 종전 정책 날짜의 G룸만 1개다.
+     * 한 번 예약의 최대 이용 시간. 11월 이용분부터 모든 방에 적용한다.
+     *
+     * 일무제한 24칸이 열리면서 한 팀이 하루 종일 방을 잡아 다른 손님이 못 쓰는 일을 막으려고
+     * 사장님이 12시간 상한을 정했다(2026-10-20). 8시간 상한은 9월에 요청됐다가 철회된 별개 건이다.
+     */
+    public static final int MAX_RESERVATION_HOURS = 12;
+
+    /**
+     * 한 번에 선택 가능한 슬롯 수. 제한이 없으면 null.
+     *  - 11월 이용분부터: 모든 방 12시간 ÷ 칸 간격(룸 1시간 칸 → 12칸, 마작 대탁 3시간 칸 → 4칸)
+     *  - 10월 이용분(종전 정책): G룸만 1칸, 나머지 제한 없음
      */
     public static Integer maxSelectableSlots(BgmAgitRoom room, LocalDate d) {
-        return !isNewPolicy(d) && isGroom(room) ? 1 : null;
+        if (!isNewPolicy(d)) {
+            return isGroom(room) ? 1 : null;
+        }
+        return MAX_RESERVATION_HOURS / of(room, d).intervalHours();
     }
 
     /** 예약 타입은 방(메뉴 링크)에서 서버가 결정한다(클라이언트 값 신뢰 금지). */
