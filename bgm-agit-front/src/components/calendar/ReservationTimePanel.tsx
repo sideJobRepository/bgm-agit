@@ -329,11 +329,6 @@ export default function ReservationTimePanel({
               <strong>※ 예약하는 날짜에 한 팀당 한 개의 시간대만 선택이 가능합니다.</strong>
             </p>
           )}
-          {maxSelectableHours !== null && maxSelectableSlots !== 1 && (
-            <p>
-              <strong>※ 한 번 예약은 최대 {maxSelectableHours}시간까지 선택하실 수 있습니다.</strong>
-            </p>
-          )}
           {reservation.reservationType === 'DELEGATE_PLAY' && (
             <>
               <p>
@@ -362,11 +357,13 @@ export default function ReservationTimePanel({
           )}
           {isPerPerson && (
             <>
-              {/* 일무제한이라 시간 수는 요금과 무관하다. 시간 선택은 룸 점유 구간을 잡는 의미다 */}
+              {/* 일무제한이라 시간 수는 요금과 무관하다. 시간 선택은 룸을 배정받는 구간이고, 그 밖은 좌석 이용이다 */}
               <p>
                 <strong>
-                  ※ 일무제한 요금제입니다. 입장 시각만 고르시면 당일 오전 10시부터 익일 오전
-                  10시까지 이용하실 수 있습니다.
+                  ※ 일무제한 요금제로 당일 오전 10시부터 익일 오전 10시까지 매장을 이용하실 수
+                  있습니다. 룸은 선택하신 시간 동안 배정되며
+                  {maxSelectableHours !== null && `(한 번 예약 최대 ${maxSelectableHours}시간)`}, 그 외
+                  시간은 좌석으로 이용하실 수 있습니다.
                 </strong>
               </p>
               {unitPrice !== null && (
@@ -380,12 +377,19 @@ export default function ReservationTimePanel({
               <p>
                 <strong>
                   ※ 환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후에는 불가합니다.
+                  인원을 줄이실 때도 같은 기준으로 환불됩니다.
                 </strong>
               </p>
               <p>
                 <strong>
-                  ※ 월간패스 회원이 직접 예약하시면 결제 시 본인 1명분이 할인됩니다. 일행 중 다른
-                  월간패스 회원분은 현장에서 환불해 드립니다.
+                  ※ 예약 시간 기준 30분 이상 지각(일행 전원 미도착) 시 룸 배정이 해제될 수 있으며,
+                  결제 금액은 당일 좌석 이용으로 전환됩니다.
+                </strong>
+              </p>
+              <p>
+                <strong>
+                  ※ 월간패스 회원이 직접 예약하시면, 이용일이 패스 기간 안인 경우 결제 시 본인
+                  1명분이 할인됩니다. 일행 중 다른 월간패스 회원분은 현장에서 환불해 드립니다.
                 </strong>
               </p>
             </>
