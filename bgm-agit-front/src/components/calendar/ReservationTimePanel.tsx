@@ -77,6 +77,14 @@ export default function ReservationTimePanel({
     (matchedSlots?.slotRanges ? matchedSlots.maxSelectableSlots : reservation.maxSelectableSlots) ??
     null;
 
+  // 선택 가능한 최대 시간(11월부터 모든 방 12시간). 칸 하나의 길이(룸 1시간·마작 3시간)를 곱해 시간으로 안내한다
+  const maxSelectableHours = useMemo(() => {
+    if (maxSelectableSlots === null || !intervals.length) return null;
+    const [start, end] = intervals[0].map(t => Number(t.split(':')[0]));
+    const slotHours = (end - start + 24) % 24 || 24;
+    return maxSelectableSlots * slotHours;
+  }, [maxSelectableSlots, intervals]);
+
   // 합쳐 예약하면 서버 label이 "M-1, M-2"로 내려오므로 기준 항목 라벨만 떼서 쓴다
   const primaryLabel = reservation.label?.split(',')[0]?.trim();
 
@@ -204,7 +212,7 @@ export default function ReservationTimePanel({
       toast.error(
         maxSelectableSlots === 1
           ? '하나의 시간대만 예약이 가능합니다.'
-          : `최대 ${maxSelectableSlots}개의 시간대만 예약이 가능합니다.`
+          : `한 번에 최대 ${maxSelectableHours}시간까지 예약할 수 있습니다.`
       );
       return;
     }
@@ -319,6 +327,11 @@ export default function ReservationTimePanel({
           {maxSelectableSlots === 1 && (
             <p>
               <strong>※ 예약하는 날짜에 한 팀당 한 개의 시간대만 선택이 가능합니다.</strong>
+            </p>
+          )}
+          {maxSelectableHours !== null && maxSelectableSlots !== 1 && (
+            <p>
+              <strong>※ 한 번 예약은 최대 {maxSelectableHours}시간까지 선택하실 수 있습니다.</strong>
             </p>
           )}
           {reservation.reservationType === 'DELEGATE_PLAY' && (

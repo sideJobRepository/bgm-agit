@@ -105,7 +105,7 @@
 > 방·예약 테이블 분리(2026-10-09)는 staging 에서 먼저 운영까지 반영됐고 이 브랜치에 머지돼 있다. 개편 SQL
 > (`room-people-2026-10.sql`·`payment-partial-cancel-2026-10.sql`)은 ROOM·RESERVATION_ID 기준으로 개정돼 있다.
 >
-> 룸 8시간 상한은 사장님이 요청(2026-09-22)했다가 **철회**(2026-10-09)했다. 다시 넣지 말 것.
+> 룸 8시간 상한은 사장님이 요청(2026-09-22)했다가 **철회**(2026-10-09)했다. 대신 **12시간 상한**을 새로 정했다(2026-10-20, 아래 `maxSelectableSlots`).
 > 마작 대탁의 3시간×4타임 시간 모델은 개편에서도 **바꾸지 않는다**.
 
 ### 정책 시행일 = 이용일 기준 날짜 분기 (2026-10-20)
@@ -142,7 +142,7 @@
 `SlotSchedule`(origin/util)에 전부 모임: `of()`(open/close/interval/durationHours), `slots()`, `isContiguous()`, `maxSelectableSlots()`, `resolveReservationType()`, `isCombinable()`, `unitPrice()`, `totalPaymentAmount()`, 그리고 하루 경계(`DAY_BOUNDARY`/`slotDateTime`/`toSortableMinutes`/`useStartAt`).
 - **ROOM** = 하루 경계 10:00 ~ 익일 10:00, 1시간 간격 **24슬롯**(일무제한) / **MAHJONG** = 14:00~익일 02:00, 3시간 간격 4슬롯(개편 대상 아님)
 - **하루 경계는 오전 10시** — `DAY_BOUNDARY` 하나가 정본이고 현황판 정렬(`toBoardMinutes`)·알림톡 정렬(`AlimtalkUtils.BOUNDARY`)·환불 기한이 전부 여기에 위임한다. 예전엔 슬롯 13:00 / 알림톡 13:00 / 현황판 06:00 으로 **세 곳에 다른 값**이 흩어져 있었다
-- **`maxSelectableSlots`는 현재 전 항목 null.** G룸 "하루 1팀" 제한이 사라졌다. 응답 필드는 프론트 계약이라 남겨 뒀다
+- **한 번 예약 최대 12시간** — 11월 이용분부터 모든 방(룸·M·마작 대탁). `SlotSchedule.MAX_RESERVATION_HOURS` ÷ 칸 간격이 `maxSelectableSlots`(룸 12칸, 마작 4칸)이고, 등록 검증·프론트 선택 차단·안내 문구가 이 값 하나를 쓴다. 한 팀이 하루 종일 방을 잡는 걸 막으려는 사장님 결정(2026-10-20, 금액 2배안 대신). 10월 이용분은 종전대로(G룸 1칸, 나머지 제한 없음)
 - 시간은 **연속 구간만** 선택 가능(`isContiguous`). 띄엄띄엄 고르면 사이 시간이 비어 보이면서 실제로는 못 쓰는 룸이 된다. 프론트도 같은 규칙으로 즉시 막는다
 - 인원 범위(`minPeople`/`maxPeople`)는 **서버가 등록·결제주문·인원변경 세 곳에서 검증**한다. 인원이 곧 금액이라 프론트 스테퍼만 믿으면 `people=1` 로 7인 룸을 1인 요금에 잡을 수 있다
 - `GET /bgm-agit/reservation` 응답에 `slotRanges[{start,end}]`, `maxSelectableSlots`, `reservationType`(ROOM|DELEGATE_PLAY), `pricingMode`(PER_PERSON|FLAT), `prices[{date,price,colorGb}]` 포함 → `ReservationTimePanel.tsx`가 그대로 그림

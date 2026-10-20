@@ -360,10 +360,12 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         // 시간: 이어진 한 구간. 프론트도 막지만 직접 POST 를 막는 건 서버다.
         SlotSchedule schedule = SlotSchedule.of(primary, kstDate);
         Set<LocalTime> requestedStartTimes = parseStartTimes(request.getStartTimeEndTime());
-        // 선택 개수 제한(종전 정책 G룸 1개). 응답의 maxSelectableSlots 는 프론트 안내용이라 직접 POST 는 여기서 막는다
+        // 선택 개수 제한(11월부터 최대 12시간, 10월 G룸 1개). 응답의 maxSelectableSlots 는 프론트 안내용이라 직접 POST 는 여기서 막는다
         Integer maxSelectableSlots = SlotSchedule.maxSelectableSlots(primary, kstDate);
         if (maxSelectableSlots != null && requestedStartTimes.size() > maxSelectableSlots) {
-            throw new ValidException("한 번에 선택할 수 있는 시간대는 " + maxSelectableSlots + "개입니다.");
+            throw new ValidException(SlotSchedule.isNewPolicy(kstDate)
+                    ? "한 번에 최대 " + SlotSchedule.MAX_RESERVATION_HOURS + "시간까지 예약할 수 있습니다."
+                    : "한 번에 선택할 수 있는 시간대는 " + maxSelectableSlots + "개입니다.");
         }
         validateSelectedSlots(schedule, requestedStartTimes);
         SlotSchedule.Slot span = schedule.span(requestedStartTimes);
@@ -837,8 +839,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
      * 예약 가능한 방들을 조회하고 합쳐 쓸 수 있는 조합인지 검증한다.
      * 같은 메뉴 링크(룸끼리 / 마작끼리)여야 하고, 이름 조합이 화이트리스트(SlotSchedule.isCombinable)에 있어야 한다.
      *
-     * "maxSelectableSlots == null 인 방만 합칠 수 있다"던 옛 규칙은 쓰지 않는다. 지금은 모든 룸이
-     * 8시간 상한(=null 아님)이라 그 규칙을 적용하면 M-1+M-2 도 막힌다. 그래서 허용 조합을 서버가 직접 들고 있다.
+     * "maxSelectableSlots == null 인 방만 합칠 수 있다"던 옛 규칙은 쓰지 않는다. 11월부터 모든 방이
+     * 12시간 상한(=null 아님)이라 그 규칙을 적용하면 M-1+M-2 도 막힌다. 그래서 허용 조합을 서버가 직접 들고 있다.
      */
     private List<BgmAgitRoom> loadReservableRooms(List<Long> roomIds) {
         List<BgmAgitRoom> rooms = new ArrayList<>();
