@@ -455,21 +455,17 @@ public class SlotSchedule {
     /**
      * 월간패스 회원이 직접 예약할 때 빠지는 금액 — 본인 1명분 단가.
      *
-     * 패스는 매월 1일 초기화되는 "이번 달" 요금제라 이용일이 이번 달일 때만 준다.
-     * 이번 달 패스로 다음 달 예약을 할인받으면 그 달엔 패스 없이 이용하게 된다.
+     * passCoversUseMonth = 예약자의 패스 기간(BGM_AGIT_MONTHLY_PASS)에 <b>이용일의 달</b>이 들어 있는지.
+     * 결제하는 날이 아니라 이용하는 달을 본다 — 10월에 11월 패스를 미리 사 두고 11월 예약을 10월에 결제하는 경우도 할인된다.
      * 정액(마작·종전 정책)이거나 1명 예약이면 할인하지 않는다(결제액이 0원이면 결제 자체가 안 된다).
      * 일행 중 다른 패스 회원 몫은 현장에서 부분환불한다.
      */
-    public static int monthlyPassDiscount(boolean passHolder,
+    public static int monthlyPassDiscount(boolean passCoversUseMonth,
                                           Collection<BgmAgitRoom> rooms,
                                           int people,
                                           boolean weekendRate,
-                                          LocalDate useDate,
-                                          LocalDate today) {
-        if (!passHolder || useDate == null || today == null || people < 2 || isFlatPricing(rooms, useDate)) {
-            return 0;
-        }
-        if (useDate.getYear() != today.getYear() || useDate.getMonth() != today.getMonth()) {
+                                          LocalDate useDate) {
+        if (!passCoversUseMonth || useDate == null || people < 2 || isFlatPricing(rooms, useDate)) {
             return 0;
         }
         return unitPrice(weekendRate);

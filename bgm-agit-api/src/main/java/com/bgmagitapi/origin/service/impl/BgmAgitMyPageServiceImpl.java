@@ -6,14 +6,21 @@ import com.bgmagitapi.origin.controller.request.BgmAgitMyPasswordChangeRequest;
 import com.bgmagitapi.origin.controller.response.BgmAgitMyPageGetResponse;
 import com.bgmagitapi.origin.controller.response.notice.BgmAgitMyPagePutRequest;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
+import com.bgmagitapi.origin.entity.BgmAgitMonthlyPass;
 import com.bgmagitapi.origin.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
+import com.bgmagitapi.origin.repository.BgmAgitMonthlyPassRepository;
 import com.bgmagitapi.origin.security.service.kml.KmlUserClient;
 import com.bgmagitapi.origin.service.BgmAgitMyPageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.YearMonth;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Transactional
 @Service
@@ -23,10 +30,26 @@ public class BgmAgitMyPageServiceImpl implements BgmAgitMyPageService {
     private final BgmAgitMemberRepository  bgmAgitMemberRepository;
     private final PasswordEncoder passwordEncoder;
     private final KmlUserClient kmlUserClient;
+    private final BgmAgitMonthlyPassRepository bgmAgitMonthlyPassRepository;
 
     @Override
     public BgmAgitMyPageGetResponse getMyPage(Long id) {
-        return bgmAgitMemberRepository.findByMyPage(id);
+        BgmAgitMyPageGetResponse response = bgmAgitMemberRepository.findByMyPage(id);
+        if (response == null) {
+            return null;
+        }
+        // 월간패스는 기간 표(BGM_AGIT_MONTHLY_PASS)가 정본이다. 이번 달 이후에 끝나는 기간만 보여준다
+        YearMonth thisMonth = YearMonth.now(ZoneId.of("Asia/Seoul"));
+        List<BgmAgitMonthlyPass> passes = bgmAgitMonthlyPassRepository
+                .findActivePassesByMemberIds(List.of(id), thisMonth)
+                .getOrDefault(id, List.of());
+        boolean coversNow = passes.stream().anyMatch(p ->
+                !p.getStartYearMonth().isAfter(thisMonth) && !p.getEndYearMonth().isBefore(thisMonth));
+        response.setMonthlyPassStatus(coversNow ? "Y" : "N");
+        response.setMonthlyPassPeriods(passes.isEmpty() ? null : passes.stream()
+                .map(p -> p.getStartYearMonth() + " ~ " + p.getEndYearMonth())
+                .collect(Collectors.joining(", ")));
+        return response;
     }
 
     @Override

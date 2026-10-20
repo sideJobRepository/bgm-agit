@@ -118,9 +118,9 @@
 - 예약 주말·공휴일 단가는 **10,000원**(공지 4-2). 워크인 주말 11,000원과 헷갈리지 말 것
 
 ### 월간패스 (2026-10-20)
-- `BGM_AGIT_MEMBER_MONTHLY_PASS_STATUS`(Y/N). 관리자가 권한관리 `/role` → **월간패스 탭**(전체 회원)에서 켠다. `GET/PUT /bgm-agit/role/monthly-pass`, 서비스단 `requireAdmin` + URL 매핑(`monthly-pass-2026-11.sql`)
-- 매월 1일 0시 `BgmAgitMonthlyPassScheduler` 가 전원 'N'
-- 예약자 본인이 패스 회원이면 결제 시 **본인 1명분 단가 할인** — `SlotSchedule.monthlyPassDiscount`. 조건: 룸(신 정책) + 이용일이 **이번 달** + 인원 2명 이상. 일행 중 다른 패스 회원은 현장 부분환불
+- **기간 표 `BGM_AGIT_MONTHLY_PASS`(회원·시작월·끝월, 둘 다 포함)가 정본**(`monthly-pass-period-2026-11.sql`). 회원당 여러 기간 가능. 다음 달·1년치를 미리 산 손님 때문에 처음의 "회원 Y/N + 매월 1일 초기화" 방식을 버렸다 — 회원 컬럼 `BGM_AGIT_MEMBER_MONTHLY_PASS_STATUS` 는 DB 에만 남고 코드는 안 읽는다. 초기화 배치도 없다(기간이 지나면 저절로 끝)
+- 관리자: 권한관리 `/role` → **월간패스 탭**(전체 회원)에서 시작월 + 개월 수(1~12)로 등록, 기간별 삭제. `GET/POST /bgm-agit/role/monthly-pass`, `DELETE /bgm-agit/role/monthly-pass/{id}` — 서비스단 `requireAdmin` + URL 매핑(관리자)
+- 예약자 본인의 패스 기간에 **이용일의 달**이 들어 있으면 결제 시 **본인 1명분 단가 할인** — `SlotSchedule.monthlyPassDiscount` + `BgmAgitMonthlyPassRepository.coversMonth`. 결제하는 날이 아니라 이용하는 달 기준이라 10월에 11월 이용분을 결제해도 11월 패스가 있으면 할인. 룸(신 정책)·2명 이상만. 일행 중 다른 패스 회원은 현장 부분환불
 - 할인액은 결제행 `BGM_AGIT_PAYMENT_DISCOUNT_AMOUNT` 스냅샷. 승인 재대조는 재계산액 − 스냅샷(주문~승인 사이 패스가 꺼져도 승인 실패 안 나게). 예약 대기 알림톡 금액도 같은 할인 함수
 - 운영 DB 컬럼·테이블(결제 스냅샷·PAYMENT_CANCEL·HOLIDAY·월간패스)은 2026-10-20 선반영 완료. URL 매핑·방 인원 UPDATE·공휴일 메뉴 INSERT 는 배포 때
 

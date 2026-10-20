@@ -91,11 +91,17 @@ public class BgmAgitRoleController {
         return PageResponse.from(bgmAgitRoleService.getMonthlyPassMembers(pageable, res, onlyPass, extractRoles(jwt)));
     }
 
-    // 관리자가 회원의 이번 달 월간패스 여부를 켜고 끔. 매월 1일 0시에 스케줄러가 일괄 해제한다
-    @PutMapping("/role/monthly-pass")
-    public ApiResponse setMonthlyPass(@AuthenticationPrincipal Jwt jwt,
+    // 관리자가 회원의 월간패스 기간(시작월 + 개월 수)을 등록. 다음 달·1년치를 미리 산 손님도 여기서 넣는다
+    @PostMapping("/role/monthly-pass")
+    public ApiResponse addMonthlyPass(@AuthenticationPrincipal Jwt jwt,
                                       @Validated @RequestBody BgmAgitMonthlyPassRequest request) {
-        return bgmAgitRoleService.setMonthlyPass(request.getMemberId(), request.isPass(), extractRoles(jwt));
+        return bgmAgitRoleService.addMonthlyPass(request, extractRoles(jwt));
+    }
+
+    // 월간패스 기간 삭제(잘못 등록·환불)
+    @DeleteMapping("/role/monthly-pass/{passId}")
+    public ApiResponse deleteMonthlyPass(@AuthenticationPrincipal Jwt jwt, @PathVariable Long passId) {
+        return bgmAgitRoleService.deleteMonthlyPass(passId, extractRoles(jwt));
     }
 
     private List<String> extractRoles(Jwt jwt) {

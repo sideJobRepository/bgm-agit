@@ -183,15 +183,15 @@ export default function MyPageModal({ onClose }: Props) {
               readOnly
             />
           </InputBox>
-          {/* 관리자가 켜 주는 값이라 읽기 전용. 매월 1일에 해제된다 */}
-          {items?.monthlyPassStatus === 'Y' && (
+          {/* 관리자가 등록한 패스 기간이라 읽기 전용. 기간 안 이용분 예약은 결제 시 본인 1명분 할인 */}
+          {items?.monthlyPassPeriods && (
             <InputBox>
               <label htmlFor="monthlyPass">월간패스</label>
               <input
                 id="monthlyPass"
                 className="readonly-input"
                 type="text"
-                value="이번 달 이용중 (예약 결제 시 본인 1명분 할인)"
+                value={items.monthlyPassPeriods}
                 readOnly
               />
             </InputBox>

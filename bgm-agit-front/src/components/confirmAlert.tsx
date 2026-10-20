@@ -295,6 +295,112 @@ function PeopleReduceContent({
   );
 }
 
+interface MonthlyPassAddProps {
+  label: string;
+  onConfirm: (startMonth: string, months: number) => void;
+}
+
+// 'YYYY-MM' 로컬 기준(toISOString 은 UTC 라 월초에 한 달 밀린다)
+function ymOf(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+// 월간패스 기간 등록 모달 — 시작월 + 개월 수. 다음 달·1년치를 미리 산 손님도 여기서 넣는다
+function MonthlyPassAddContent({
+  label,
+  onConfirm,
+  onClose,
+}: MonthlyPassAddProps & { onClose: () => void }) {
+  const now = new Date();
+  // 이번 달부터 12개월 뒤까지 고를 수 있다(서버는 지난 달 시작을 거절한다)
+  const monthOptions = Array.from({ length: 13 }, (_, i) =>
+    ymOf(new Date(now.getFullYear(), now.getMonth() + i, 1))
+  );
+  const [startMonth, setStartMonth] = useState(monthOptions[0]);
+  const [months, setMonths] = useState(1);
+  const [y, m] = startMonth.split('-').map(Number);
+  const endMonth = ymOf(new Date(y, m - 1 + months - 1, 1));
+
+  return (
+    <AlertWrapper $wide>
+      <ReservationHeader>
+        <span>월간패스 등록</span>
+        <strong>{label}</strong>
+      </ReservationHeader>
+
+      <FieldGroup>
+        <FieldTitle>
+          <span>시작월</span>
+        </FieldTitle>
+        <select
+          value={startMonth}
+          onChange={e => setStartMonth(e.target.value)}
+          style={{ width: '100%', padding: '10px 12px', fontSize: 16, borderRadius: 8 }}
+        >
+          {monthOptions.map(ym => (
+            <option key={ym} value={ym}>
+              {ym}
+            </option>
+          ))}
+        </select>
+      </FieldGroup>
+
+      <FieldGroup>
+        <FieldTitle>
+          <span>개월 수</span>
+          <small>1 ~ 12개월</small>
+        </FieldTitle>
+        <Stepper>
+          <IconButton
+            type="button"
+            disabled={months <= 1}
+            onClick={() => setMonths(v => Math.max(1, v - 1))}
+            aria-label="개월 수 줄이기"
+          >
+            <MdRemove />
+          </IconButton>
+          <CountValue>
+            <strong>{months}</strong>
+            <span>개월</span>
+          </CountValue>
+          <IconButton
+            type="button"
+            disabled={months >= 12}
+            onClick={() => setMonths(v => Math.min(12, v + 1))}
+            aria-label="개월 수 늘리기"
+          >
+            <MdAdd />
+          </IconButton>
+        </Stepper>
+      </FieldGroup>
+
+      <NoticeMessage>
+        <strong>
+          {startMonth} ~ {endMonth}
+        </strong>{' '}
+        이용분 예약에 본인 1명분 할인이 적용됩니다.
+      </NoticeMessage>
+      <ButtonGroup>
+        <CancelButton onClick={onClose}>닫기</CancelButton>
+        <ConfirmButton
+          onClick={() => {
+            onConfirm(startMonth, months);
+            onClose();
+          }}
+        >
+          등록
+        </ConfirmButton>
+      </ButtonGroup>
+    </AlertWrapper>
+  );
+}
+
+export function showMonthlyPassAddModal(props: MonthlyPassAddProps) {
+  confirmAlert({
+    customUI: ({ onClose }) => <MonthlyPassAddContent {...props} onClose={onClose} />,
+  });
+}
+
 export function showPeopleReduceModal(props: PeopleReduceProps) {
   confirmAlert({
     customUI: ({ onClose }) => <PeopleReduceContent {...props} onClose={onClose} />,

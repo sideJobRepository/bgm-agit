@@ -23,6 +23,7 @@ import com.bgmagitapi.origin.payment.repository.BgmAgitPaymentRepository;
 import com.bgmagitapi.origin.payment.service.PaymentService;
 import com.bgmagitapi.origin.payment.service.response.PaymentRefundResult;
 import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
+import com.bgmagitapi.origin.repository.BgmAgitMonthlyPassRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.origin.repository.BgmAgitRoomRepository;
 import com.bgmagitapi.origin.service.BgmAgitHolidayService;
@@ -82,6 +83,9 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
 
     // 요금의 주말/평일 판정. 토·일 + 공휴일(법정 계산 + 관리자 수동 예외)
     private final BgmAgitHolidayService bgmAgitHolidayService;
+
+    // 월간패스 기간(본인 1명분 할인 판정)
+    private final BgmAgitMonthlyPassRepository bgmAgitMonthlyPassRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -496,18 +500,14 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     }
 
     /**
-     * 예약자 본인이 월간패스 회원이면 1명분 할인. 판정은 주문 생성 시점의 패스 여부·이번 달 기준이다
-     * (SlotSchedule.monthlyPassDiscount). 결제 금액 계산과 알림톡 안내가 같은 판정을 쓰도록 여기 한 곳에 둔다.
+     * 예약자 본인의 패스 기간에 이용일의 달이 들어 있으면 1명분 할인(SlotSchedule.monthlyPassDiscount).
+     * 판정 시점은 주문 생성 때이고, 결과는 결제행 스냅샷으로 남아 승인 재대조에 쓰인다.
      */
     private int monthlyPassDiscount(BgmAgitReservation reservation, List<BgmAgitRoom> rooms, int people, boolean weekendRate) {
-        BgmAgitMember member = reservation.getBgmAgitMember();
-        return SlotSchedule.monthlyPassDiscount(
-                member != null && member.isMonthlyPassHolder(),
-                rooms,
-                people,
-                weekendRate,
-                reservation.getBgmAgitReservationStartDate(),
-                LocalDate.now(KST));
+        LocalDate useDate = reservation.getBgmAgitReservationStartDate();
+        boolean covered = useDate != null
+                && bgmAgitMonthlyPassRepository.coversMonth(reservation.getMemberId(), YearMonth.from(useDate));
+        return SlotSchedule.monthlyPassDiscount(covered, rooms, people, weekendRate, useDate);
     }
 
     @Override

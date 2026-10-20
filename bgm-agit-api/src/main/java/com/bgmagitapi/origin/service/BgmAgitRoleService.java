@@ -3,6 +3,7 @@ package com.bgmagitapi.origin.service;
 import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.origin.controller.request.BgmAgitMemberNicknameChangeRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitMemberPasswordChangeRequest;
+import com.bgmagitapi.origin.controller.request.BgmAgitMonthlyPassRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitRoleModifyRequest;
 import com.bgmagitapi.origin.controller.response.BgmAgitMonthlyPassResponse;
 import com.bgmagitapi.origin.controller.response.BgmAgitRoleResponse;
@@ -32,9 +33,9 @@ public interface BgmAgitRoleService {
     // 월간패스 탭 목록 (관리자 전용, 전체 회원)
     Page<BgmAgitMonthlyPassResponse> getMonthlyPassMembers(Pageable pageable, String keyword, boolean onlyPass, List<String> actorRoles);
 
-    // 관리자가 회원의 이번 달 월간패스 여부를 켜고 끔
-    ApiResponse setMonthlyPass(Long memberId, boolean pass, List<String> actorRoles);
+    // 관리자가 회원의 월간패스 기간(시작월 + 개월 수)을 등록
+    ApiResponse addMonthlyPass(BgmAgitMonthlyPassRequest request, List<String> actorRoles);
 
-    // 매월 1일 스케줄러 — 전 회원 월간패스 해제. 바뀐 행 수
-    long resetMonthlyPass();
+    // 월간패스 기간 삭제(잘못 등록·환불)
+    ApiResponse deleteMonthlyPass(Long passId, List<String> actorRoles);
 }
