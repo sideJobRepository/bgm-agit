@@ -2,6 +2,15 @@
 
 한국마작연맹(KML) 기록 생태계와 연동되는 bgm-agit(마작장 + 보드게임카페) 도메인 시스템.
 
+> ### ⏰ 2026년 11월 1일이 지나면 할 일 — 10월 종전 정책 코드 정리
+> 11월 개편을 10월에 미리 배포하면서 **10월 이용분만 위한 임시 분기**를 넣어 두었다(예약 절 "정책 시행일 = 이용일 기준 날짜 분기").
+> 10/31 이용분이 끝나면(11/1 새벽 02시 이후) 10월 예약은 더 이상 결제·취소·인원 변경이 일어나지 않으므로 아래를 지운다.
+> - 서버 `SlotSchedule`: `NEW_POLICY_FROM`·`isNewPolicy`·`legacy()`·`isGroom`·`LEGACY_DEPOSIT_AMOUNT`, `of(room,d)`·`maxSelectableSlots`·`isFlatPricing` 안의 종전 분기
+> - 서버 `ReservationRefundPolicy.refundRate(useDate, …)` 종전 분기, `BgmAgitReservationServiceImpl` 의 종전 분기(G룸 하루 1팀, 전날까지 취소, 인원 검증 생략), 결제 `paymentKind` 의 `LEGACY_DEPOSIT`, 알림톡 `-1`/`-2` 날짜 분기
+> - 프론트 `config/reservationPolicy.ts`(`NEW_POLICY_FROM`)와 그 분기(`ReservationList` 취소·환불 문구, `ReservationTimePanel` 의 `isLegacyRoom` 안내, `PaymentCheckoutModal` 의 `LEGACY_DEPOSIT` 문구)
+> - 약관·환불정책·예약내역의 "10월 31일 이용분까지는 종전 규정" 경과 문구, 테스트 `PolicySwitchTest` 의 10월 경우
+> - 지운 뒤 이 알림도 지운다
+
 ## 구성
 
 | 앱 | 스택 | 경로 | 비고 |
