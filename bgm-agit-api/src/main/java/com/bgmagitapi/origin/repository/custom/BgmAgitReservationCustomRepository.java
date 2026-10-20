@@ -44,7 +44,7 @@ public interface BgmAgitReservationCustomRepository {
      */
     List<RankingRow> findReservationRanking(LocalDate from, LocalDate toExclusive, Integer people, int limit);
 
-    record RankingRow(Long memberId, String memberName, String memberNickname,
+    record RankingRow(Long memberId, String memberName, String memberNickname, String phoneNo,
                       long reservationCount, long totalPeople) {
     }
 

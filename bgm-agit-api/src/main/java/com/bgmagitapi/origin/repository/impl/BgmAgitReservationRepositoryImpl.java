@@ -183,6 +183,7 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
                 .select(bgmAgitMember.bgmAgitMemberId,
                         bgmAgitMember.bgmAgitMemberName,
                         bgmAgitMember.bgmAgitMemberNickname,
+                        bgmAgitMember.bgmAgitMemberPhoneNo,
                         reservationCount,
                         totalPeople)
                 .from(bgmAgitReservation)
@@ -190,7 +191,8 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
                 .where(confirmedBetween(from, toExclusive), peopleEq(people))
                 .groupBy(bgmAgitMember.bgmAgitMemberId,
                         bgmAgitMember.bgmAgitMemberName,
-                        bgmAgitMember.bgmAgitMemberNickname)
+                        bgmAgitMember.bgmAgitMemberNickname,
+                        bgmAgitMember.bgmAgitMemberPhoneNo)
                 .orderBy(reservationCount.desc(), totalPeople.desc(), bgmAgitMember.bgmAgitMemberId.asc())
                 .limit(limit)
                 .fetch();
@@ -200,6 +202,7 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
                         row.get(bgmAgitMember.bgmAgitMemberId),
                         row.get(bgmAgitMember.bgmAgitMemberName),
                         row.get(bgmAgitMember.bgmAgitMemberNickname),
+                        row.get(bgmAgitMember.bgmAgitMemberPhoneNo),
                         nullToZero(row.get(reservationCount)),
                         nullToZero(row.get(totalPeople))))
                 .toList();

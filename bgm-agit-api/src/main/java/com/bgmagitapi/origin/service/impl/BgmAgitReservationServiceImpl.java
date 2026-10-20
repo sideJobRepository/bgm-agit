@@ -680,7 +680,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
     @Override
     @Transactional(readOnly = true)
     public ReservationRankingResponse getReservationRanking(YearMonth month, Integer people, List<String> roles) {
-        // 회원 누구나 본다. 이름·연락처는 내리지 않고, 닉네임은 관리자만 원문으로 본다
+        // 회원 누구나 본다(URL·메뉴 권한 유저). 관리자에게만 이름·연락처·닉네임 원문을 내리고,
+        // 회원에게는 가린 닉네임만 보낸다. 관리자 전용으로 되돌릴 때는 DB 권한만 관리자(1)로 바꾸면 된다
         boolean admin = isAdmin(roles);
         YearMonth target = month == null || month.isBefore(RANKING_FROM) ? RANKING_FROM : month;
         LocalDate from = target.atDay(1);
@@ -707,6 +708,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     rank,
                     admin ? row.memberId() : null,
                     admin ? nickname : NicknameMasker.mask(nickname),
+                    admin ? row.memberName() : null,
+                    admin && row.phoneNo() != null ? row.phoneNo().replace("+82", "0").replaceAll("\\s+", "") : null,
                     row.reservationCount(),
                     row.totalPeople()));
             totalReservations += row.reservationCount();

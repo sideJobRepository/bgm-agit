@@ -29,6 +29,8 @@ function addMonths(ym: string, diff: number) {
  */
 export default function ReservationRanking() {
   const user = useRecoilValue(userState);
+  // 이름·연락처는 서버가 관리자에게만 내려준다. 칸도 관리자일 때만 그린다
+  const isAdmin = !!user?.roles?.includes('ROLE_ADMIN');
   const { request } = useRequest();
 
   // 세기 시작한 달 전이면 그 달부터 연다
@@ -145,6 +147,8 @@ export default function ReservationRanking() {
                 <tr>
                   <Th>순위</Th>
                   <Th>닉네임</Th>
+                  {isAdmin && <Th>이름</Th>}
+                  {isAdmin && <Th>연락처</Th>}
                   <Th>예약 횟수</Th>
                   <Th>총 인원</Th>
                 </tr>
@@ -154,6 +158,8 @@ export default function ReservationRanking() {
                   <tr key={item.memberId ?? `${item.rank}-${index}`}>
                     <Td>{item.rank}</Td>
                     <Td>{item.nickname || '-'}</Td>
+                    {isAdmin && <Td>{item.memberName || '-'}</Td>}
+                    {isAdmin && <Td>{item.phoneNo || '-'}</Td>}
                     <Td>
                       <strong>{item.reservationCount}</strong>회
                     </Td>
