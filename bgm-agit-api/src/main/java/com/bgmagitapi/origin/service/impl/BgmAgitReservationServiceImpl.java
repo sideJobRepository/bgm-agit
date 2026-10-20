@@ -915,6 +915,10 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         if (refund == null) {
             return "수정 되었습니다.";
         }
+        // 결제하지 않은 대기 예약이면 환불 이야기를 꺼내지 않는다. "환불 금액 없음"은 손님이 돈을 잃은 것처럼 읽힌다
+        if (refund.unpaid()) {
+            return "예약이 취소되었습니다.";
+        }
         if (refund.failed()) {
             return "예약이 취소되었습니다. 환불 처리 중 문제가 있어 확인 후 안내드리겠습니다. (" + refund.failMessage() + ")";
         }
