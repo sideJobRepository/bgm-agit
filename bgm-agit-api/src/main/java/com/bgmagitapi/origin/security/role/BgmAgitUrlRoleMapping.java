@@ -42,10 +42,12 @@ public class BgmAgitUrlRoleMapping {
                 .join(bgmAgitUrlResourcesRole.bgmAgitRole, bgmAgitRole)
                 .fetch();
         
+        // 한 주소에 역할이 여러 개 걸려 있으면 쉼표로 이어 붙인다(BgmAgitAuthorizationManager 가 hasAnyAuthority 로 나눠 쓴다).
+        // 예전엔 put 으로 덮어써서 마지막 역할 하나만 남았다 — PUT /reservation/people(관리자·회원·멘토)이 회원에게 403 이 났다
         resourcesList
                 .forEach(resources -> {
                     String key = resources.getHttpMethod().toUpperCase() + " " + resources.getBgmAgitUrlResourcesPath(); // "POST /bgm-agit/notice"
-                    urlRoleMappings.put(key, "ROLE_" + resources.getBgmAgitRoleName());
+                    urlRoleMappings.merge(key, "ROLE_" + resources.getBgmAgitRoleName(), (a, b) -> a + "," + b);
                 });
         return urlRoleMappings;
         
