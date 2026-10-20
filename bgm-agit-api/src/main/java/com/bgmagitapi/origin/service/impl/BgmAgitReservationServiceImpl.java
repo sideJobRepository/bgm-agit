@@ -10,6 +10,7 @@ import com.bgmagitapi.origin.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AdminReservationBoardResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AvailableRoomsResponse;
 import com.bgmagitapi.origin.controller.response.reservation.GroupedReservationResponse;
+import com.bgmagitapi.origin.controller.response.reservation.ReservationRankingResponse;
 import com.bgmagitapi.origin.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.origin.controller.response.reservation.TimeRange;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
@@ -664,6 +665,59 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 new AdminReservationBoardResponse.Summary(confirmed + waiting, confirmed, waiting, canceled, people);
 
         return new AdminReservationBoardResponse(date, summary, roomList);
+    }
+
+    /** 예약 랭킹은 11월 개편(전액결제)부터 센다 — 월별 리워드용이라 예약금 시절 달과 섞지 않는다 */
+    static final YearMonth RANKING_FROM = YearMonth.of(2026, 11);
+
+    /** 한 화면에 보여줄 최대 인원 */
+    private static final int RANKING_LIMIT = 100;
+
+    @Override
+    @Transactional(readOnly = true)
+    public ReservationRankingResponse getReservationRanking(YearMonth month, Integer people, List<String> roles) {
+        // 회원 이름·연락처가 나가는 목록이라 URL 매핑과 별개로 서비스에서도 막는다
+        if (!isAdmin(roles)) {
+            throw new ValidException("관리자만 조회할 수 있습니다.");
+        }
+        YearMonth target = month == null || month.isBefore(RANKING_FROM) ? RANKING_FROM : month;
+        LocalDate from = target.atDay(1);
+        LocalDate toExclusive = target.plusMonths(1).atDay(1);
+
+        List<BgmAgitReservationRepository.RankingRow> rows =
+                bgmAgitReservationRepository.findReservationRanking(from, toExclusive, people, RANKING_LIMIT);
+
+        // 공동 순위: 예약 횟수가 같으면 같은 순위, 다음 순위는 그만큼 건너뛴다(1, 1, 3 …)
+        List<ReservationRankingResponse.Item> items = new ArrayList<>();
+        long totalReservations = 0;
+        long totalPeople = 0;
+        int rank = 0;
+        long previousCount = -1;
+        for (int i = 0; i < rows.size(); i++) {
+            BgmAgitReservationRepository.RankingRow row = rows.get(i);
+            if (row.reservationCount() != previousCount) {
+                rank = i + 1;
+                previousCount = row.reservationCount();
+            }
+            items.add(new ReservationRankingResponse.Item(
+                    rank,
+                    row.memberId(),
+                    row.memberName(),
+                    row.memberNickname(),
+                    row.phoneNo() == null ? null : row.phoneNo().replace("+82", "0").replaceAll("\\s+", ""),
+                    row.reservationCount(),
+                    row.totalPeople()));
+            totalReservations += row.reservationCount();
+            totalPeople += row.totalPeople();
+        }
+
+        return new ReservationRankingResponse(
+                target.toString(),
+                bgmAgitReservationRepository.findConfirmedPeopleCounts(from, toExclusive),
+                people,
+                totalReservations,
+                totalPeople,
+                items);
     }
 
     private String formatTime(LocalTime time) {

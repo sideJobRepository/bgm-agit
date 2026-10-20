@@ -227,6 +227,13 @@
 - **권한 2중** — `BgmAgitAuthorizationManager`는 URL_RESOURCES에 없는 경로를 **기본 permit**으로 통과시킨다. 이 API는 회원 연락처가 나가므로 서비스단 `isAdmin(roles)` 검사 + URL 레벨 ADMIN 매핑 둘 다 필요(**매핑 INSERT 후 앱 재시작** — 로딩이 `@PostConstruct` 1회)
 - 메뉴 등록은 `/menuManage`에서. `getMainMenu`가 **subMenu 없는 root를 걸러내므로** 반드시 기존 부모 메뉴의 하위로
 
+### 관리자 예약 랭킹 `/reservation-ranking` (2026-10-20)
+사장님이 **월별 리워드**에 쓰려고 요청. `pages/ReservationRanking.tsx`, `GET /bgm-agit/reservation/ranking?month=YYYY-MM[&people=N]` → `getReservationRanking`.
+- **확정 예약만**(승인 Y·취소 N), **이용일 기준 월**로 회원별 예약 횟수·인원 합계. 횟수 → 인원 합계 내림차순, 최대 100명, 같은 횟수는 공동 순위(1, 1, 3…)
+- 인원수 탭(`people`) = 그 인원으로 예약한 건만 센 순위. 탭 목록은 그 달에 실제 나온 인원 값(`peopleOptions`)
+- **2026-11 부터** 센다(`RANKING_FROM`, 서버·프론트 같은 값). 예약금 시절 달과 섞지 않으려고
+- 관리자 전용 — 서비스단 `isAdmin` + URL 매핑(관리자) + 메뉴 권한(관리자). DB 는 `reservation-ranking-2026-11.sql`(운영·스테이징 적용 완료). 운영 nginx `$bgm_spa_route` 에 `/reservation-ranking` 추가 필요(없어도 화면은 뜨고 상태코드만 404)
+
 ### 함정: `toISOString()` 날짜 밀림
 `Date.toISOString()`은 UTC 변환이라 **KST 자정 Date가 하루 앞으로 밀린다**(`ReservationList` 검색이 실제로 이 버그였음). 서버로 보내는 날짜는 항상 `src/utils/date.ts`의 `toLocalYmd()`(`toLocaleDateString('sv-SE')` 기반) 사용. 같은 파일에 `todayYmd`/`addDaysYmd`/`formatYmdWithWeekday`.
 

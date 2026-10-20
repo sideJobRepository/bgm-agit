@@ -9,6 +9,7 @@ import com.bgmagitapi.origin.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AdminReservationBoardResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AvailableRoomsResponse;
 import com.bgmagitapi.origin.controller.response.reservation.GroupedReservationResponse;
+import com.bgmagitapi.origin.controller.response.reservation.ReservationRankingResponse;
 import com.bgmagitapi.origin.page.PageResponse;
 import com.bgmagitapi.origin.payment.service.ReservationCancelExecutor;
 import com.bgmagitapi.origin.service.BgmAgitReservationService;
@@ -23,6 +24,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.List;
 
@@ -92,6 +94,21 @@ public class BgmAgitReservationController {
                 ? LocalDate.parse(date.substring(0, 10))
                 : LocalDate.now(ZoneId.of("Asia/Seoul"));
         return bgmAgitReservationService.getReservationBoard(target, extractRoles(jwt));
+    }
+
+    /**
+     * 관리자 예약 랭킹(월별). month 는 "YYYY-MM"(없으면 이번 달), people 이 있으면 그 인원 예약만.
+     * 회원 연락처가 나가므로 서비스단에서도 관리자 여부를 다시 확인한다.
+     */
+    @GetMapping("/reservation/ranking")
+    public ReservationRankingResponse getReservationRanking(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(name = "month", required = false) String month,
+            @RequestParam(name = "people", required = false) Integer people) {
+        YearMonth target = (month != null && !month.isBlank())
+                ? YearMonth.parse(month.substring(0, 7))
+                : YearMonth.now(ZoneId.of("Asia/Seoul"));
+        return bgmAgitReservationService.getReservationRanking(target, people, extractRoles(jwt));
     }
 
 

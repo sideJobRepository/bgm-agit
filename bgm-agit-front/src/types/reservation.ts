@@ -177,6 +177,28 @@ export type ReservationBoard = {
   rooms: ReservationBoardRoom[];
 };
 
+// 관리자 예약 랭킹 (GET /bgm-agit/reservation/ranking) — 월별 확정 예약, 이용일 기준
+export type ReservationRankingItem = {
+  // 공동 순위(예약 횟수가 같으면 같은 순위)
+  rank: number;
+  memberId: number;
+  memberName: string | null;
+  memberNickname: string | null;
+  phoneNo: string | null;
+  reservationCount: number;
+  totalPeople: number;
+};
+
+export type ReservationRanking = {
+  month: string; // '2026-11'
+  // 그 달 확정 예약에 나온 인원 값(인원수 탭)
+  peopleOptions: number[];
+  people: number | null;
+  totalReservations: number;
+  totalPeople: number;
+  items: ReservationRankingItem[];
+};
+
 export type PagedReservation = {
   content: Reservation[];
   totalPages: number;

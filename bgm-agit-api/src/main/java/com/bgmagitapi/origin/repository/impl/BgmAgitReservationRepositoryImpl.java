@@ -3,7 +3,10 @@ package com.bgmagitapi.origin.repository.impl;
 import com.bgmagitapi.origin.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
 import com.bgmagitapi.origin.repository.custom.BgmAgitReservationCustomRepository;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.group.GroupBy;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.core.types.ConstructorExpression;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -166,6 +169,70 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
                 )
                 .distinct()
                 .fetch();
+    }
+
+    @Override
+    public List<RankingRow> findReservationRanking(LocalDate from, LocalDate toExclusive, Integer people, int limit) {
+        // 이 프로젝트 QueryDSL 은 인스턴스 집계(.count()/.sum())가 컴파일되지 않아 템플릿으로 쓴다
+        NumberExpression<Long> reservationCount =
+                Expressions.numberTemplate(Long.class, "COUNT({0})", bgmAgitReservation.bgmAgitReservationId);
+        NumberExpression<Long> totalPeople =
+                Expressions.numberTemplate(Long.class, "COALESCE(SUM({0}), 0)", bgmAgitReservation.bgmAgitReservationPeople);
+
+        List<Tuple> rows = queryFactory
+                .select(bgmAgitMember.bgmAgitMemberId,
+                        bgmAgitMember.bgmAgitMemberName,
+                        bgmAgitMember.bgmAgitMemberNickname,
+                        bgmAgitMember.bgmAgitMemberPhoneNo,
+                        reservationCount,
+                        totalPeople)
+                .from(bgmAgitReservation)
+                .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember)
+                .where(confirmedBetween(from, toExclusive), peopleEq(people))
+                .groupBy(bgmAgitMember.bgmAgitMemberId,
+                        bgmAgitMember.bgmAgitMemberName,
+                        bgmAgitMember.bgmAgitMemberNickname,
+                        bgmAgitMember.bgmAgitMemberPhoneNo)
+                .orderBy(reservationCount.desc(), totalPeople.desc(), bgmAgitMember.bgmAgitMemberId.asc())
+                .limit(limit)
+                .fetch();
+
+        return rows.stream()
+                .map(row -> new RankingRow(
+                        row.get(bgmAgitMember.bgmAgitMemberId),
+                        row.get(bgmAgitMember.bgmAgitMemberName),
+                        row.get(bgmAgitMember.bgmAgitMemberNickname),
+                        row.get(bgmAgitMember.bgmAgitMemberPhoneNo),
+                        nullToZero(row.get(reservationCount)),
+                        nullToZero(row.get(totalPeople))))
+                .toList();
+    }
+
+    @Override
+    public List<Integer> findConfirmedPeopleCounts(LocalDate from, LocalDate toExclusive) {
+        return queryFactory
+                .select(bgmAgitReservation.bgmAgitReservationPeople)
+                .distinct()
+                .from(bgmAgitReservation)
+                .where(confirmedBetween(from, toExclusive), bgmAgitReservation.bgmAgitReservationPeople.isNotNull())
+                .orderBy(bgmAgitReservation.bgmAgitReservationPeople.asc())
+                .fetch();
+    }
+
+    /** 이용일이 [from, toExclusive) 이고 확정(승인 Y·취소 N)된 예약 */
+    private BooleanExpression confirmedBetween(LocalDate from, LocalDate toExclusive) {
+        return bgmAgitReservation.bgmAgitReservationStartDate.goe(from)
+                .and(bgmAgitReservation.bgmAgitReservationStartDate.lt(toExclusive))
+                .and(bgmAgitReservation.bgmAgitReservationApprovalStatus.eq("Y"))
+                .and(bgmAgitReservation.bgmAgitReservationCancelStatus.eq("N"));
+    }
+
+    private BooleanExpression peopleEq(Integer people) {
+        return people == null ? null : bgmAgitReservation.bgmAgitReservationPeople.eq(people);
+    }
+
+    private static long nullToZero(Long value) {
+        return value == null ? 0L : value;
     }
 
     private BooleanExpression isUserFilter(Long memberId, boolean isUser) {

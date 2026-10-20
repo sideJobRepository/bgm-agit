@@ -8,11 +8,13 @@ import com.bgmagitapi.origin.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AdminReservationBoardResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AvailableRoomsResponse;
 import com.bgmagitapi.origin.controller.response.reservation.GroupedReservationResponse;
+import com.bgmagitapi.origin.controller.response.reservation.ReservationRankingResponse;
 import com.bgmagitapi.origin.payment.controller.response.PaymentOrderResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 public interface BgmAgitReservationService {
@@ -40,6 +42,9 @@ public interface BgmAgitReservationService {
      * 회원 연락처가 그대로 나가므로 관리자 외에는 차단한다.
      */
     AdminReservationBoardResponse getReservationBoard(LocalDate date, List<String> roles);
+
+    // 관리자 예약 랭킹(월별, 확정 예약·이용일 기준). people 이 있으면 그 인원 예약만
+    ReservationRankingResponse getReservationRanking(YearMonth month, Integer people, List<String> roles);
 
     ApiResponse modifyReservation(Long id, BgmAgitReservationModifyRequest request, List<String> roles);
 
