@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -70,7 +71,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentOrderResponse createOrder(Long memberId, Long reservationId, int amount, String orderName,
-                                            Integer people, Integer unitPrice) {
+                                            Integer people, Integer unitPrice, int discountAmount, String paymentKind) {
         BgmAgitMember member = bgmAgitMemberRepository.findById(memberId)
                 .orElseThrow(() -> new PaymentException("존재 하지 않은 회원입니다."));
 
@@ -81,10 +82,10 @@ public class PaymentServiceImpl implements PaymentService {
 
         String orderNo = "bgmagit_" + reservationId + "_" + System.currentTimeMillis();
 
-        BgmAgitPayment payment = new BgmAgitPayment(member, reservationId, orderNo, amount, people, unitPrice);
+        BgmAgitPayment payment = new BgmAgitPayment(member, reservationId, orderNo, amount, people, unitPrice, discountAmount);
         bgmAgitPaymentRepository.save(payment);
 
-        return new PaymentOrderResponse(orderNo, amount, orderName, tossClientKey);
+        return new PaymentOrderResponse(orderNo, amount, orderName, tossClientKey, discountAmount, paymentKind);
     }
 
     @Override
@@ -405,10 +406,15 @@ public class PaymentServiceImpl implements PaymentService {
             return;
         }
         Integer people = reservation.getBgmAgitReservationPeople();
+        LocalDate useDate = reservation.getBgmAgitReservationStartDate();
+        // 월간패스 할인은 지금의 패스 여부로 다시 판정하지 않고 주문 때 박아 둔 값을 뺀다.
+        // 주문 뒤 1일 초기화·관리자 해제로 패스가 꺼지면 안내받은 금액으로 결제하려는 손님이 승인에서 막힌다
+        Integer discount = payment.getBgmAgitPaymentDiscountAmount();
         int expected = SlotSchedule.totalPaymentAmount(
                 reservation.getRoomList(),
                 people == null ? 0 : people,
-                bgmAgitHolidayService.isWeekendRate(reservation.getBgmAgitReservationStartDate()));
+                bgmAgitHolidayService.isWeekendRate(useDate),
+                useDate) - (discount == null ? 0 : discount);
 
         if (!Objects.equals(payment.getBgmAgitPaymentAmount(), expected)) {
             paymentFailureRecorder.recordAborted(payment.getBgmAgitOrderNo(), null,

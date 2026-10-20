@@ -43,12 +43,22 @@ public class BgmAgitReservationResponse {
         private String end;     // "14:00"
     }
 
+    /**
+     * 날짜별 예약 가능 시간대 + 그날의 정책.
+     *
+     * 11월 개편이 이용일 기준이라(SlotSchedule.NEW_POLICY_FROM) 10월 날짜와 11월 날짜는 후보 시간대·선택 제한·요금 방식이 다르다.
+     * 최상위 slotRanges/maxSelectableSlots/pricingMode/depositAmount 는 조회 기준일 값이라, 프론트는 고른 날짜의 이 값을 먼저 쓴다.
+     */
     @Getter
     @AllArgsConstructor
     public static class TimeSlotByDate {
         private LocalDate date;
         private List<String> timeSlots;
         private String message;
+        private List<SlotRange> slotRanges;
+        private Integer maxSelectableSlots;
+        private String pricingMode;
+        private Integer depositAmount;
     }
     
     @Getter

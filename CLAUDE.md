@@ -108,17 +108,23 @@
 > 룸 8시간 상한은 사장님이 요청(2026-09-22)했다가 **철회**(2026-10-09)했다. 다시 넣지 말 것.
 > 마작 대탁의 3시간×4타임 시간 모델은 개편에서도 **바꾸지 않는다**.
 
-### 개편 오픈 전까지 11월 이후 예약 차단
-`SlotSchedule.RESERVATION_BLOCKED_FROM = 2026-11-01` — **그 날짜 이후 전 기간**이다(11월만이 아니다). 10월은 현행 정책(예약금 1만원·전날까지 전액환불)으로 받는다(2026-09-23 10/1→11/1 로 연기).
-지금 화면으로 받으면 예약금 1만원·전날까지 전액환불로 안내해 놓고 오픈 후에는 전액결제·3단계 환불이
-적용되어 고지한 내용과 실제가 갈린다.
-- 차단 방식은 `lastReservableDate` 를 그 전날까지로 줄이는 것이다. 그 값 하나를 조회 슬롯 생성 범위와
-  `isWithinReservableWindow` 가 같이 보고 있어서 호출부를 따로 고칠 필요가 없다. 다만 기간 초과와는
-  사유가 달라 문구(`RESERVATION_BLOCKED_MESSAGE`)는 따로 준다
-- 프론트 `ReservationDatePicker.RESERVATION_BLOCKED_FROM` 도 같은 날짜로 `maxDate` 를 자른다.
-  서버가 슬롯을 안 내려줘도 달력이 열려 있으면 날짜를 골랐을 때 방이 하나도 안 뜨는 화면이 된다
-- **오픈할 때는 서버·프론트 상수를 null 로** 바꾸면 3개월 창이 그대로 돌아온다
-- 신규 등록만 막는다. **이미 들어와 있는 11월 이후 예약건 정리는 별도 작업**이다
+### 정책 시행일 = 이용일 기준 날짜 분기 (2026-10-20)
+사장님 요청으로 개편 코드를 10월에 미리 배포하고 **11/1 이용분부터** 새 정책을 적용한다. 11월 차단(`RESERVATION_BLOCKED_FROM`)은 서버·프론트 모두 null 로 풀었다.
+- 판정은 `SlotSchedule.NEW_POLICY_FROM`(2026-11-01) / `isNewPolicy(useDate)` 하나. 프론트는 `config/reservationPolicy.ts` 에 같은 날짜(안내 문구·취소 버튼용)
+- 10월 이용분(종전): 슬롯 `SlotSchedule.legacy()`(룸 13~02시 1h, G룸 13~18·19~24 하루 1팀·1칸), 룸 예약금 항목당 1만원(`isFlatPricing`), 인원 서버검증 없음, 손님 취소는 전날까지·환불 100%(`ReservationRefundPolicy.refundRate(useDate,…)`), 알림톡은 `-1`
+- `GET /reservation` 의 `timeSlots[]` 항목마다 그날의 `slotRanges/maxSelectableSlots/pricingMode/depositAmount` 를 싣는다. 최상위 값은 조회 기준일 값
+- 결제 주문 응답 `paymentKind`(LEGACY_DEPOSIT / DEPOSIT / FULL)로 결제 모달 문구를 가른다
+- **10월이 지나면 종전 분기(`legacy`, `isGroom`, `LEGACY_*`, 프론트 `NEW_POLICY_FROM` 분기)는 지워도 된다**
+- 예약 주말·공휴일 단가는 **10,000원**(공지 4-2). 워크인 주말 11,000원과 헷갈리지 말 것
+
+### 월간패스 (2026-10-20)
+- `BGM_AGIT_MEMBER_MONTHLY_PASS_STATUS`(Y/N). 관리자가 권한관리 `/role` → **월간패스 탭**(전체 회원)에서 켠다. `GET/PUT /bgm-agit/role/monthly-pass`, 서비스단 `requireAdmin` + URL 매핑(`monthly-pass-2026-11.sql`)
+- 매월 1일 0시 `BgmAgitMonthlyPassScheduler` 가 전원 'N'
+- 예약자 본인이 패스 회원이면 결제 시 **본인 1명분 단가 할인** — `SlotSchedule.monthlyPassDiscount`. 조건: 룸(신 정책) + 이용일이 **이번 달** + 인원 2명 이상. 일행 중 다른 패스 회원은 현장 부분환불
+- 할인액은 결제행 `BGM_AGIT_PAYMENT_DISCOUNT_AMOUNT` 스냅샷. 승인 재대조는 재계산액 − 스냅샷(주문~승인 사이 패스가 꺼져도 승인 실패 안 나게). 예약 대기 알림톡 금액도 같은 할인 함수
+- 운영 DB 컬럼·테이블(결제 스냅샷·PAYMENT_CANCEL·HOLIDAY·월간패스)은 2026-10-20 선반영 완료. URL 매핑·방 인원 UPDATE·공휴일 메뉴 INSERT 는 배포 때
+
+> ⚠️ **`./gradlew test` 전체 실행 금지** — `@SpringBootTest` 테스트가 롤백 없이 `.env` DB 에 쓴다. 2026-10-20 `.env` 가 운영(33060)이라 테스트 데이터가 운영에 들어갔다. 단위 테스트만 `--tests "com.bgmagitapi.origin.util.*"` 로 돌릴 것
 
 ### 데이터 모델 (2026-10-09 방·예약 테이블 분리)
 예전엔 방이 `BGM_AGIT_IMAGE` 행이었고, 예약은 슬롯마다 1행을 쌓아 중복값 `RESERVATION_NO` 로 묶었다. 이관 SQL `room-reservation-split.sql`(스테이징·운영 적용 완료 2026-10-09).

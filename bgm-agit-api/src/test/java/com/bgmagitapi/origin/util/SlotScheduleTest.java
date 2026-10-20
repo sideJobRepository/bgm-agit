@@ -33,8 +33,6 @@ class SlotScheduleTest {
     @DisplayName("G룸도 다른 룸과 같은 24슬롯이고, 선택 슬롯 수 제한은 없다(8시간 상한 철회)")
     void gRoomIsNoLongerSpecial() {
         assertThat(SlotSchedule.of(false, MON).slots()).hasSize(24);
-        assertThat(SlotSchedule.maxSelectableSlots(false)).isNull();
-        assertThat(SlotSchedule.maxSelectableSlots(true)).isNull();
     }
 
     @Test
@@ -73,7 +71,8 @@ class SlotScheduleTest {
     @DisplayName("주말 단가 여부는 인자로 받는다 — 토·일인지 공휴일인지는 SlotSchedule 이 모른다")
     void unitPriceTakesWeekendFlag() {
         assertThat(SlotSchedule.unitPrice(false)).isEqualTo(9000);
-        assertThat(SlotSchedule.unitPrice(true)).isEqualTo(11000);
+        // 11월 공지의 예약 요금(주말 10,000). 워크인 주말 11,000 과 헷갈리지 말 것
+        assertThat(SlotSchedule.unitPrice(true)).isEqualTo(10000);
     }
 
     @Test

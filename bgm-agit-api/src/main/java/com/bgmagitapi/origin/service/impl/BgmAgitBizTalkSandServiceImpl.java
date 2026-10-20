@@ -34,6 +34,7 @@ import org.springframework.web.client.RestClient;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -101,17 +102,20 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         if (reservationPaymentTalkLive) {
             // 금액은 템플릿 변수라 실제 청구액을 그대로 넣는다.
             // 결제 주문(createPaymentOrder)과 반드시 같은 메서드로 계산할 것 — 갈리면 고지액과 청구액이 달라진다
+            LocalDate useDate = reservation.getBgmAgitReservationStartDate();
+            int headCount = reservation.getBgmAgitReservationPeople() == null ? 0 : reservation.getBgmAgitReservationPeople();
+            boolean weekendRate = bgmAgitHolidayService.isWeekendRate(useDate);
+            // 월간패스 본인 1명분 할인도 결제 주문과 같은 판정으로 뺀다
+            int discount = SlotSchedule.monthlyPassDiscount(
+                    member.isMonthlyPassHolder(), reservation.getRoomList(), headCount, weekendRate, useDate,
+                    LocalDate.now(ZoneId.of("Asia/Seoul")));
             String deposit = AlimtalkUtils.formatAmount(SlotSchedule.totalPaymentAmount(
-                    reservation.getRoomList(),
-                    reservation.getBgmAgitReservationPeople() == null
-                            ? 0
-                            : reservation.getBgmAgitReservationPeople(),
-                    bgmAgitHolidayService.isWeekendRate(reservation.getBgmAgitReservationStartDate())
-            ));
+                    reservation.getRoomList(), headCount, weekendRate, useDate) - discount);
             // 전액결제 개정판(-2)은 카카오 검수를 따로 받아야 해서 스위치로 가른다.
             // 통과 전에는 구 템플릿이 나가고, 그 기간에는 환불 안내 문구가 실제 규정과 다르다
             // (예약 화면·결제 모달·환불정책 페이지가 정확한 문구를 갖고 있어 그쪽으로 보완한다).
-            if (reservationFullPaymentTalkLive) {
+            // 10월 이용분(종전 정책)은 "예약금 결제·전날까지 취소" 문구가 맞으므로 늘 -1 이다
+            if (reservationFullPaymentTalkLive && SlotSchedule.isNewPolicy(useDate)) {
                 message = AlimtalkUtils.buildReservationFullPaymentMessage(
                         member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, deposit, reservationRequest
                 );

@@ -60,6 +60,15 @@ export type AvailableRooms = {
 export type ReservedTimeDto = {
   date: string; // '2025-07-24'
   timeSlots: string[]; // ['13:00', '14:00']
+  message?: string | null;
+  /**
+   * 그날의 정책. 11월 개편이 이용일 기준이라 10월 날짜(종전: 13~02시·G룸 1칸·예약금 1만원)와
+   * 11월 날짜(일무제한 24칸·인원 × 단가)가 다르다. 없으면 최상위 값을 쓴다.
+   */
+  slotRanges?: SlotRange[];
+  maxSelectableSlots?: number | null;
+  pricingMode?: 'PER_PERSON' | 'FLAT';
+  depositAmount?: number | null;
 };
 
 export type ReservationPriceDto = {

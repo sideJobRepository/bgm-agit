@@ -40,7 +40,7 @@ function formatWithWeekday(ymd: string) {
  *
  * 법정공휴일은 서버가 계산하므로 여기서 등록할 필요가 없다. 계산으로 알 수 없는
  * 선거일·임시공휴일만 추가하고, 반대로 "공휴일이지만 정상 영업"하는 날은 제외로 등록한다.
- * 공휴일이면 그날 예약은 주말 단가(11,000원)를 받는다.
+ * 공휴일이면 그날 예약은 주말 단가(10,000원)를 받는다.
  */
 export default function HolidayManage() {
   const user = useRecoilValue(userState);
@@ -134,7 +134,7 @@ export default function HolidayManage() {
     <Wrapper>
       <Header>
         <h2>공휴일 설정</h2>
-        <p>공휴일로 지정된 날은 예약 요금이 주말 단가(1인 11,000원)로 계산됩니다.</p>
+        <p>공휴일로 지정된 날은 예약 요금이 주말 단가(1인 10,000원)로 계산됩니다.</p>
       </Header>
 
       <NoticeBox>

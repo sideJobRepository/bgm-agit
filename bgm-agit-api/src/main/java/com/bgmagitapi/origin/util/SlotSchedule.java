@@ -99,10 +99,39 @@ public class SlotSchedule {
 
     // ===== 슬롯 =====
 
+    /** 방·날짜의 슬롯 정책. 11월 개편 이전 날짜는 종전 시간 모델을 쓴다({@link #isNewPolicy}). */
     public static SlotSchedule of(BgmAgitRoom room, LocalDate d) {
+        if (!isNewPolicy(d)) {
+            return legacy(isGroom(room), isMahjongRental(room), d);
+        }
         return of(isMahjongRental(room), d);
     }
 
+    /**
+     * 개편 전(2026-10-31 이용분까지) 시간 모델.
+     * 일반 룸 13:00~익일 02:00 1시간 / G룸 13:00~24:00 6시간 간격·5시간 이용(13~18, 19~24) / 마작 대탁은 개편과 같다.
+     */
+    static SlotSchedule legacy(boolean gRoom, boolean mahjongRental, LocalDate d) {
+        if (mahjongRental) {
+            return of(true, d);
+        }
+        if (gRoom) {
+            return new SlotSchedule(
+                    LocalDateTime.of(d, LocalTime.of(13, 0)),
+                    LocalDateTime.of(d.plusDays(1), LocalTime.of(0, 0)),
+                    6,
+                    5
+            );
+        }
+        return new SlotSchedule(
+                LocalDateTime.of(d, LocalTime.of(13, 0)),
+                LocalDateTime.of(d.plusDays(1), LocalTime.of(2, 0)),
+                1,
+                1
+        );
+    }
+
+    /** 개편 후 시간 모델. 날짜를 보지 않는다 — 방이 있으면 {@link #of(BgmAgitRoom, LocalDate)} 를 쓸 것. */
     public static SlotSchedule of(boolean mahjongRental, LocalDate d) {
         if (mahjongRental) {
             // 마작 대탁 대여는 개편 대상이 아니다. 3시간 단위 유지 — 시간 모델을 룸과 합치지 말 것
@@ -221,18 +250,16 @@ public class SlotSchedule {
     }
 
     /**
-     * 이 날짜부터는 예약을 받지 않는다. 막을 필요가 없어지면 null 로 둔다.
+     * 이 날짜부터는 예약을 받지 않는다. 막을 필요가 없으면 null.
      *
-     * 예약 정책 개편(일무제한·전액결제·3단계 환불)이 아직 오픈 전이다. 10월까지는 현행 정책으로 받고 11월부터 막는다.
-     * 지금 화면으로 11월 이후 예약을 받으면 예약금 1만원·전날까지 전액환불로 안내해 놓고
-     * 오픈 후에는 전액결제·3단계 환불이 적용되어 고지한 내용과 실제가 갈린다.
-     * 개편을 여는 시점에 이 상수만 null 로 바꾸면 3개월 창이 그대로 돌아온다.
+     * 개편 코드를 배포하기 전에는 11월 이후를 막아 두었다(구 화면으로 받으면 고지한 정책과 실제가 갈린다).
+     * 지금은 이용일로 정책을 나누므로({@link #NEW_POLICY_FROM}) 막지 않는다. 다시 막을 일이 생기면 날짜만 넣으면 된다.
      */
-    public static final LocalDate RESERVATION_BLOCKED_FROM = LocalDate.of(2026, 11, 1);
+    public static final LocalDate RESERVATION_BLOCKED_FROM = null;
 
     /** 차단 기간 안내 문구. 조회 응답 message 와 등록 예외가 같은 문구를 쓴다. */
     public static final String RESERVATION_BLOCKED_MESSAGE =
-            "11월 예약은 준비 중입니다. 공지 후 오픈되면 이용해 주세요.";
+            "해당 기간 예약은 준비 중입니다. 공지 후 오픈되면 이용해 주세요.";
 
     /** 아직 열지 않은 기간의 날짜인지. */
     public static boolean isBlockedDate(LocalDate date) {
@@ -257,6 +284,21 @@ public class SlotSchedule {
     /** 예약 가능 기간 안의 날짜인지. 과거·당일·상한 초과를 모두 거른다. */
     public static boolean isWithinReservableWindow(LocalDate date, LocalDate today) {
         return !date.isBefore(firstReservableDate(today)) && !date.isAfter(lastReservableDate(today));
+    }
+
+    // ===== 정책 시행일 =====
+
+    /**
+     * 11월 개편(일무제한·인원 × 단가 전액결제·48h/24h 환불) 시행일. **이용일** 기준이다.
+     *
+     * 코드는 10월에 배포했지만 공지가 "11/1 이용분부터"라서, 그 전 날짜는 종전 정책
+     * (13~02시 슬롯·G룸 5시간 하루 1팀·예약금 1만원·전날까지 전액환불)을 그대로 쓴다.
+     * 슬롯·요금·환불·알림톡이 모두 이 판정 하나를 본다. 10월 이용분이 다 끝나면 종전 분기는 지워도 된다.
+     */
+    public static final LocalDate NEW_POLICY_FROM = LocalDate.of(2026, 11, 1);
+
+    public static boolean isNewPolicy(LocalDate useDate) {
+        return useDate == null || !useDate.isBefore(NEW_POLICY_FROM);
     }
 
     // ===== 휴무일 =====
@@ -289,17 +331,18 @@ public class SlotSchedule {
         return room != null && room.isMahjong();
     }
 
-    /**
-     * 한 번에 선택 가능한 슬롯 수. 제한이 없으면 null — 지금은 전 항목 제한 없음.
-     * 룸 8시간 상한은 사장님이 요청(2026-09-22)했다가 철회(2026-10-09)했다. 다시 넣지 말 것.
-     * 응답 필드(maxSelectableSlots)와 프론트 안내는 남겨 둔다.
-     */
-    public static Integer maxSelectableSlots(boolean mahjongRental) {
-        return null;
+    /** 종전 정책에서 하루 1팀·5시간 슬롯이던 방. 개편 후에는 다른 룸과 같다. */
+    public static boolean isGroom(BgmAgitRoom room) {
+        return room != null && !room.isMahjong() && "G Room".equals(room.getBgmAgitRoomName());
     }
 
-    public static Integer maxSelectableSlots(BgmAgitRoom room) {
-        return maxSelectableSlots(isMahjongRental(room));
+    /**
+     * 한 번에 선택 가능한 슬롯 수. 제한이 없으면 null — 개편 후에는 전 항목 제한 없음.
+     * 룸 8시간 상한은 사장님이 요청(2026-09-22)했다가 철회(2026-10-09)했다. 다시 넣지 말 것.
+     * 종전 정책 날짜의 G룸만 1개다.
+     */
+    public static Integer maxSelectableSlots(BgmAgitRoom room, LocalDate d) {
+        return !isNewPolicy(d) && isGroom(room) ? 1 : null;
     }
 
     /** 예약 타입은 방(메뉴 링크)에서 서버가 결정한다(클라이언트 값 신뢰 금지). */
@@ -336,8 +379,11 @@ public class SlotSchedule {
     /** 마작 대탁 대여 예약금(정액). 룸과 달리 예약금 + 현장결제 방식이 유지된다. */
     public static final int MAHJONG_DEPOSIT_AMOUNT = 10000;
 
+    /** 종전 정책(2026-10-31 이용분까지)의 룸 예약금. 항목당 정액이고 잔액은 현장결제였다. */
+    public static final int LEGACY_DEPOSIT_AMOUNT = 10000;
+
     private static final int WEEKDAY_UNIT_PRICE = 9000;
-    private static final int WEEKEND_UNIT_PRICE = 11000;
+    private static final int WEEKEND_UNIT_PRICE = 10000;
 
     /**
      * 룸 일무제한 1인 단가.
@@ -351,30 +397,70 @@ public class SlotSchedule {
     }
 
     /**
-     * 한 예약(그룹)의 결제 총액.
+     * 요금이 항목당 정액(예약금)인지. 마작 대탁은 늘 정액이고, 종전 정책 날짜는 룸도 정액(1만원)이다.
+     * 조회 응답의 pricingMode(FLAT / PER_PERSON)와 결제 단가 스냅샷이 이 판정을 따른다.
+     */
+    public static boolean isFlatPricing(Collection<BgmAgitRoom> rooms, LocalDate useDate) {
+        if (!isNewPolicy(useDate)) {
+            return true;
+        }
+        return rooms != null && !rooms.isEmpty() && isMahjongRental(rooms.iterator().next());
+    }
+
+    /** 결제행에 박아 둘 1인 단가. 정액이면 null — 인원 축소 차액 환불이 null 을 보고 건너뛴다. */
+    public static Integer unitPriceSnapshot(Collection<BgmAgitRoom> rooms, LocalDate useDate, boolean weekendRate) {
+        return isFlatPricing(rooms, useDate) ? null : unitPrice(weekendRate);
+    }
+
+    /**
+     * 한 예약(그룹)의 결제 총액(월간패스 할인 전).
      *
      * 룸은 인원 × 단가이며 항목 수를 곱하지 않는다 — 합쳐 예약(M-1+M-2)을 쓰는 이유가
      * 인원이 많아서이고 그 인원만큼 이미 청구되므로, 항목 수까지 곱하면 이중과금이다.
-     * 마작 대탁만 예전 방식대로 항목당 정액을 합산한다.
+     * 마작 대탁과 종전 정책 날짜는 항목당 정액(1만원)을 합산한다.
      *
-     * 결제 주문 금액과 예약 대기 알림톡 안내 금액이 갈리지 않도록 두 곳 모두 이 메서드만 쓸 것.
+     * 결제 주문 금액·승인 재대조·예약 대기 알림톡 안내 금액이 갈리지 않도록 전부 이 메서드만 쓸 것.
      */
-    public static int totalPaymentAmount(Collection<BgmAgitRoom> rooms, int people, boolean weekendRate) {
+    public static int totalPaymentAmount(Collection<BgmAgitRoom> rooms, int people, boolean weekendRate, LocalDate useDate) {
         if (rooms == null || rooms.isEmpty()) {
             return 0;
         }
-        BgmAgitRoom first = rooms.iterator().next();
-        if (isMahjongRental(first)) {
+        if (isFlatPricing(rooms, useDate)) {
             Set<Long> countedRoomIds = new HashSet<>();
             int total = 0;
             for (BgmAgitRoom room : rooms) {
                 if (room == null || !countedRoomIds.add(room.getBgmAgitRoomId())) {
                     continue;
                 }
-                total += MAHJONG_DEPOSIT_AMOUNT;
+                total += isMahjongRental(room) ? MAHJONG_DEPOSIT_AMOUNT : LEGACY_DEPOSIT_AMOUNT;
             }
             return total;
         }
         return Math.max(people, 0) * unitPrice(weekendRate);
+    }
+
+    // ===== 월간패스 =====
+
+    /**
+     * 월간패스 회원이 직접 예약할 때 빠지는 금액 — 본인 1명분 단가.
+     *
+     * 패스는 매월 1일 초기화되는 "이번 달" 요금제라 이용일이 이번 달일 때만 준다.
+     * 이번 달 패스로 다음 달 예약을 할인받으면 그 달엔 패스 없이 이용하게 된다.
+     * 정액(마작·종전 정책)이거나 1명 예약이면 할인하지 않는다(결제액이 0원이면 결제 자체가 안 된다).
+     * 일행 중 다른 패스 회원 몫은 현장에서 부분환불한다.
+     */
+    public static int monthlyPassDiscount(boolean passHolder,
+                                          Collection<BgmAgitRoom> rooms,
+                                          int people,
+                                          boolean weekendRate,
+                                          LocalDate useDate,
+                                          LocalDate today) {
+        if (!passHolder || useDate == null || today == null || people < 2 || isFlatPricing(rooms, useDate)) {
+            return 0;
+        }
+        if (useDate.getYear() != today.getYear() || useDate.getMonth() != today.getMonth()) {
+            return 0;
+        }
+        return unitPrice(weekendRate);
     }
 }

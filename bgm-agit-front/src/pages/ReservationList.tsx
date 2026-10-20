@@ -15,6 +15,7 @@ import api from '../utils/axiosInstance.ts';
 import PaymentCheckoutModal from '../components/payment/PaymentCheckoutModal.tsx';
 import type { PaymentOrderResponse } from '../types/tossPayments.ts';
 import { todayYmd, toLocalYmd } from '../utils/date.ts';
+import { NEW_POLICY_FROM } from '../config/reservationPolicy.ts';
 import { theme } from '../styles/theme.ts';
 import {
   NoticeBox,
@@ -118,7 +119,10 @@ export default function ReservationList() {
    * 아직 시작하지 않은 예약이면 열어 둔다. 최종 판정은 서버가 이용 시작 시각으로 한다.
    */
   function canCancelBeforeReservationDate(item: Reservation) {
-    return item.cancelStatus !== 'Y' && item.reservationDate >= todayYmd();
+    if (item.cancelStatus === 'Y') return false;
+    // 10월 31일 이용분까지는 종전 규정(예약일 전날까지 취소·예약금 전액 환불)이라 당일엔 서버가 거절한다
+    if (item.reservationDate < NEW_POLICY_FROM) return item.reservationDate > todayYmd();
+    return item.reservationDate >= todayYmd();
   }
 
   /** 환불 예상액 안내 문구. 서버가 계산해 내려준 비율·금액을 그대로 쓴다 */
@@ -131,6 +135,9 @@ export default function ReservationList() {
     const amount = item.refundAmount ?? 0;
     if (amount <= 0) {
       return `이용일 24시간 이내라 환불이 불가합니다. (결제 ${paid.toLocaleString()}원)`;
+    }
+    if (item.reservationDate < NEW_POLICY_FROM) {
+      return `예약금 ${amount.toLocaleString()}원이 전액 환불됩니다.`;
     }
     return `환불 예상 금액 ${amount.toLocaleString()}원 (결제 ${paid.toLocaleString()}원의 ${rate}%)`;
   }
@@ -235,14 +242,18 @@ export default function ReservationList() {
           <br />
         </>
       )}
-      ※ 룸 이용요금은 1인 기준 평일 9,000원 / 주말 11,000원이며, 예약 시 인원수만큼 전액
-      결제합니다. (세트 이용을 원하시면 현장에서 3,000원만 추가 결제)
+      ※ 11월 1일 이용분부터 룸 이용요금은 1인 기준 평일 9,000원 / 주말·공휴일 10,000원이며, 예약 시
+      인원수만큼 전액 결제합니다. (세트 이용을 원하시면 현장에서 3,000원만 추가 결제)
+      <br />※ 월간패스 회원이 직접 예약하시면 결제 시 본인 1명분이 할인됩니다. 일행 중 다른 월간패스
+      회원분은 현장에서 환불해 드립니다.
       <br />※ 환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후(당일·노쇼 포함)에는
       불가합니다.
       <br />※ 인원 변경이 필요하시면 아래 번호로 문의해 주세요. 인원을 줄이시는 경우 줄어든 인원만큼 같은 기준으로 환불됩니다. 인원이 늘어나는
       경우 추가 인원은 현장에서 워크인 요금으로 결제해 주세요.
       <br />※ 마작 대탁 대여는 기존과 같이 예약금 10,000원 결제 후 잔여 요금을 현장에서
       결제합니다.
+      <br />※ 10월 31일 이용분까지는 종전 규정(룸 예약금 10,000원·잔여 요금 현장 결제·예약일 전날까지
+      취소 시 전액 환불)이 적용됩니다.
       <br />※ 기타 문의는 0507-1445-3503로 연락 부탁드립니다.
     </span>
   );
@@ -269,7 +280,7 @@ export default function ReservationList() {
           {isMobile ? (
             <InfoBox>
               <InfoSummary>
-                예약금 10,000원(항목당) / 잔여 이용요금 현장 결제 / 예약 당일 취소 불가
+                인원수만큼 전액 결제 / 48시간 전 100%·24시간 전 50% 환불
               </InfoSummary>
               <InfoToggle type="button" onClick={() => setInfoOpen(prev => !prev)}>
                 이용 안내 {infoOpen ? '▴' : '▾'}

@@ -1,6 +1,27 @@
 import { Wrapper } from '../styles';
 import SearchBar from '../components/SearchBar.tsx';
-import { NoticeBox, LinkBadge, NicknameCell, IconButton, ActionButton, DeleteButton, TabBar, TabButton, TableBox, TableWrapper, Table, Th, Td, SearchWrapper, TitleBox, SearchBox, PaginationWrapper, NoSearchBox, ButtonBox, Button } from './Role.styles.ts';
+import {
+  NoticeBox,
+  LinkBadge,
+  NicknameCell,
+  IconButton,
+  ActionButton,
+  DeleteButton,
+  TabBar,
+  TabButton,
+  TableBox,
+  TableWrapper,
+  Table,
+  Th,
+  Td,
+  SearchWrapper,
+  TitleBox,
+  SearchBox,
+  PaginationWrapper,
+  NoSearchBox,
+  ButtonBox,
+  Button,
+} from './Role.styles.ts';
 import { useEffect, useState } from 'react';
 import { useRoletFetch, useUpdatePost, useDeletePost } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
@@ -11,8 +32,9 @@ import { toast } from '../utils/toast';
 import { MdEdit } from 'react-icons/md';
 import Pagination from '../components/Pagination.tsx';
 import { theme } from '../styles/theme.ts';
+import MonthlyPassTable from '../components/role/MonthlyPassTable.tsx';
 
-type Tab = 'social' | 'mahjong';
+type Tab = 'social' | 'mahjong' | 'monthlyPass';
 
 // 로그인 타입 코드 → 한글 라벨
 const LOGIN_TYPE_LABEL: Record<string, string> = {
@@ -79,7 +101,7 @@ export default function Role() {
             setCheckedIds([]);
             setRoleMap([]);
 
-            fetchRole(page, searchKeyword);
+            fetchRole(page, searchKeyword, tab === 'mahjong');
           },
         });
       },
@@ -169,6 +191,8 @@ export default function Role() {
   }
 
   useEffect(() => {
+    // 월간패스 탭은 MonthlyPassTable 이 자기 목록을 따로 받는다
+    if (tab === 'monthlyPass') return;
     fetchRole(page, searchKeyword, tab === 'mahjong');
   }, [searchKeyword, page, tab]);
 
@@ -198,155 +222,167 @@ export default function Role() {
           <TabButton $active={tab === 'mahjong'} onClick={() => handleTabChange('mahjong')}>
             자체로그인
           </TabButton>
+          {isAdmin && (
+            <TabButton
+              $active={tab === 'monthlyPass'}
+              onClick={() => handleTabChange('monthlyPass')}
+            >
+              월간패스
+            </TabButton>
+          )}
         </TabBar>
         <TableBox>
-          <TableWrapper>
-            <ButtonBox>
-              <Button color={theme.colors.primary} onClick={() => updateData()}>
-                저장
-              </Button>
-            </ButtonBox>
-            <Table>
-              <thead>
-                <tr>
-                  <Th> </Th>
-                  <Th>번호</Th>
-                  <Th>아이디</Th>
-                  <Th>이름</Th>
-                  {tab === 'mahjong' && <Th>닉네임</Th>}
-                  <Th>연락처</Th>
-                  <Th>로그인 타입</Th>
-                  {tab === 'mahjong' && <Th>마작 연동</Th>}
-                  <Th>권한</Th>
-                  {tab === 'mahjong' && <Th>비밀번호</Th>}
-                  {tab === 'social' && <Th>삭제</Th>}
-                </tr>
-              </thead>
-              <tbody>
-                {items?.content.map((item, index) => (
-                  <tr key={item.memberId}>
-                    <Td>
-                      <input
-                        type="checkbox"
-                        checked={checkedIds.includes(item.memberId)}
-                        onChange={e => {
-                          const isChecked = e.target.checked;
-                          setCheckedIds(prev =>
-                            isChecked
-                              ? [...prev, item.memberId]
-                              : prev.filter(id => id !== item.memberId)
-                          );
-                        }}
-                      />
-                    </Td>
-                    <Td>{index + 1}</Td>
-                    <Td>{item.memberEmail || '-'}</Td>
-                    <Td>{item.memberName}</Td>
-                    {tab === 'mahjong' && (
-                      <Td>
-                        <NicknameCell>
-                          <span>{item.memberNickname}</span>
-                          <IconButton
-                            type="button"
-                            title="닉네임 변경"
-                            onClick={() => changeNickname(item.memberId, item.memberNickname)}
-                          >
-                            <MdEdit />
-                          </IconButton>
-                        </NicknameCell>
-                      </Td>
-                    )}
-                    <Td>{item.memberPhoneNo}</Td>
-                    <Td>{LOGIN_TYPE_LABEL[item.memberLoginType] ?? item.memberLoginType}</Td>
-                    {tab === 'mahjong' && (
-                      <Td>
-                        <LinkBadge
-                          as={isAdmin ? 'button' : 'span'}
-                          type={isAdmin ? 'button' : undefined}
-                          $linked={item.mahjongUseStatus === 'Y'}
-                          $clickable={isAdmin}
-                          title={isAdmin ? '클릭하여 연동/해제' : undefined}
-                          onClick={
-                            isAdmin
-                              ? () =>
-                                  toggleMahjongUse(
-                                    item.memberId,
-                                    item.mahjongUseStatus === 'Y',
-                                    item.memberNickname
-                                  )
-                              : undefined
-                          }
-                        >
-                          {item.mahjongUseStatus === 'Y' ? '연동' : '미연동'}
-                        </LinkBadge>
-                      </Td>
-                    )}
-                    <Td>
-                      <div>
-                        <label>
-                          <input
-                            type="radio"
-                            name={`role-${item.memberId}`}
-                            value="1"
-                            checked={(roleMap[item.memberId] ?? item.roleId) === 1}
-                            onChange={() => setRoleMap(prev => ({ ...prev, [item.memberId]: 1 }))}
-                          />
-                          관리자
-                        </label>
-                        <label style={{ marginLeft: '12px' }}>
-                          <input
-                            type="radio"
-                            name={`role-${item.memberId}`}
-                            value="4"
-                            checked={(roleMap[item.memberId] ?? item.roleId) === 4}
-                            onChange={() => setRoleMap(prev => ({ ...prev, [item.memberId]: 4 }))}
-                          />
-                          멘토
-                        </label>
-                        <label style={{ marginLeft: '12px' }}>
-                          <input
-                            type="radio"
-                            name={`role-${item.memberId}`}
-                            value="2"
-                            checked={(roleMap[item.memberId] ?? item.roleId) === 2}
-                            onChange={() => setRoleMap(prev => ({ ...prev, [item.memberId]: 2 }))}
-                          />
-                          일반
-                        </label>
-                      </div>
-                    </Td>
-                    {tab === 'mahjong' && (
-                      <Td>
-                        <ActionButton type="button" onClick={() => changePassword(item.memberId)}>
-                          변경
-                        </ActionButton>
-                      </Td>
-                    )}
-                    {tab === 'social' && (
-                      <Td>
-                        <DeleteButton
-                          type="button"
-                          onClick={() =>
-                            deleteMember(item.memberId, item.memberName || item.memberNickname)
-                          }
-                        >
-                          삭제
-                        </DeleteButton>
-                      </Td>
-                    )}
+          {tab === 'monthlyPass' ? (
+            <MonthlyPassTable keyword={searchKeyword} />
+          ) : (
+            <TableWrapper>
+              <ButtonBox>
+                <Button color={theme.colors.primary} onClick={() => updateData()}>
+                  저장
+                </Button>
+              </ButtonBox>
+              <Table>
+                <thead>
+                  <tr>
+                    <Th> </Th>
+                    <Th>번호</Th>
+                    <Th>아이디</Th>
+                    <Th>이름</Th>
+                    {tab === 'mahjong' && <Th>닉네임</Th>}
+                    <Th>연락처</Th>
+                    <Th>로그인 타입</Th>
+                    {tab === 'mahjong' && <Th>마작 연동</Th>}
+                    <Th>권한</Th>
+                    {tab === 'mahjong' && <Th>비밀번호</Th>}
+                    {tab === 'social' && <Th>삭제</Th>}
                   </tr>
-                ))}
-              </tbody>
-            </Table>
-            {items?.content.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
-            <PaginationWrapper>
-              <Pagination
-                current={page}
-                totalPages={items?.totalPages}
-                onChange={handlePageClick}
-              />
-            </PaginationWrapper>
-          </TableWrapper>
+                </thead>
+                <tbody>
+                  {items?.content.map((item, index) => (
+                    <tr key={item.memberId}>
+                      <Td>
+                        <input
+                          type="checkbox"
+                          checked={checkedIds.includes(item.memberId)}
+                          onChange={e => {
+                            const isChecked = e.target.checked;
+                            setCheckedIds(prev =>
+                              isChecked
+                                ? [...prev, item.memberId]
+                                : prev.filter(id => id !== item.memberId)
+                            );
+                          }}
+                        />
+                      </Td>
+                      <Td>{index + 1}</Td>
+                      <Td>{item.memberEmail || '-'}</Td>
+                      <Td>{item.memberName}</Td>
+                      {tab === 'mahjong' && (
+                        <Td>
+                          <NicknameCell>
+                            <span>{item.memberNickname}</span>
+                            <IconButton
+                              type="button"
+                              title="닉네임 변경"
+                              onClick={() => changeNickname(item.memberId, item.memberNickname)}
+                            >
+                              <MdEdit />
+                            </IconButton>
+                          </NicknameCell>
+                        </Td>
+                      )}
+                      <Td>{item.memberPhoneNo}</Td>
+                      <Td>{LOGIN_TYPE_LABEL[item.memberLoginType] ?? item.memberLoginType}</Td>
+                      {tab === 'mahjong' && (
+                        <Td>
+                          <LinkBadge
+                            as={isAdmin ? 'button' : 'span'}
+                            type={isAdmin ? 'button' : undefined}
+                            $linked={item.mahjongUseStatus === 'Y'}
+                            $clickable={isAdmin}
+                            title={isAdmin ? '클릭하여 연동/해제' : undefined}
+                            onClick={
+                              isAdmin
+                                ? () =>
+                                    toggleMahjongUse(
+                                      item.memberId,
+                                      item.mahjongUseStatus === 'Y',
+                                      item.memberNickname
+                                    )
+                                : undefined
+                            }
+                          >
+                            {item.mahjongUseStatus === 'Y' ? '연동' : '미연동'}
+                          </LinkBadge>
+                        </Td>
+                      )}
+                      <Td>
+                        <div>
+                          <label>
+                            <input
+                              type="radio"
+                              name={`role-${item.memberId}`}
+                              value="1"
+                              checked={(roleMap[item.memberId] ?? item.roleId) === 1}
+                              onChange={() => setRoleMap(prev => ({ ...prev, [item.memberId]: 1 }))}
+                            />
+                            관리자
+                          </label>
+                          <label style={{ marginLeft: '12px' }}>
+                            <input
+                              type="radio"
+                              name={`role-${item.memberId}`}
+                              value="4"
+                              checked={(roleMap[item.memberId] ?? item.roleId) === 4}
+                              onChange={() => setRoleMap(prev => ({ ...prev, [item.memberId]: 4 }))}
+                            />
+                            멘토
+                          </label>
+                          <label style={{ marginLeft: '12px' }}>
+                            <input
+                              type="radio"
+                              name={`role-${item.memberId}`}
+                              value="2"
+                              checked={(roleMap[item.memberId] ?? item.roleId) === 2}
+                              onChange={() => setRoleMap(prev => ({ ...prev, [item.memberId]: 2 }))}
+                            />
+                            일반
+                          </label>
+                        </div>
+                      </Td>
+                      {tab === 'mahjong' && (
+                        <Td>
+                          <ActionButton type="button" onClick={() => changePassword(item.memberId)}>
+                            변경
+                          </ActionButton>
+                        </Td>
+                      )}
+                      {tab === 'social' && (
+                        <Td>
+                          <DeleteButton
+                            type="button"
+                            onClick={() =>
+                              deleteMember(item.memberId, item.memberName || item.memberNickname)
+                            }
+                          >
+                            삭제
+                          </DeleteButton>
+                        </Td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+              {items?.content.length === 0 && <NoSearchBox>검색된 결과가 없습니다.</NoSearchBox>}
+              <PaginationWrapper>
+                <Pagination
+                  current={page}
+                  totalPages={items?.totalPages}
+                  onChange={handlePageClick}
+                />
+              </PaginationWrapper>
+            </TableWrapper>
+          )}
         </TableBox>
       </NoticeBox>
     </Wrapper>

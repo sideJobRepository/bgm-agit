@@ -60,7 +60,11 @@ public class BgmAgitMember extends DateSuperClass {
     // 마작(BML) 이용 회원 여부. 'Y' = KML 등록 대상 + 마작/시계탑/머더 검색 노출, 'N'/null = 보드게임 등 일반 가입자
     @Column(name = "BGM_AGIT_MEMBER_MAHJONG_USE_STATUS")
     private String bgmAgitMemberMahjongUseStatus;
-    
+
+    // 월간패스(이번 달 1일~말일 이용요금 포함 요금제) 보유 여부. 관리자가 권한관리 화면에서 켜고, 매월 1일 0시에 일괄 'N'
+    @Column(name = "BGM_AGIT_MEMBER_MONTHLY_PASS_STATUS")
+    private String bgmAgitMemberMonthlyPassStatus;
+
     
     
     public BgmAgitMember(SocialProfile socialProfile) {
@@ -73,6 +77,7 @@ public class BgmAgitMember extends DateSuperClass {
         this.bgmAgitMemberNickname = socialProfile.name();
         this.bgmAgitMemberNicknameUseStatus = "Y";
         this.bgmAgitMemberAlimtalkStatus = "Y";
+        this.bgmAgitMemberMonthlyPassStatus = "N";
     }
 
     public BgmAgitMember(String name, String nickname, String phoneNo, String hashedPassword, Long kmlId, boolean mahjongUse) {
@@ -87,6 +92,15 @@ public class BgmAgitMember extends DateSuperClass {
         this.socialType = BgmAgitSocialType.MAHJONG;
         this.bgmAgitMemberNicknameUseStatus = "Y";
         this.bgmAgitMemberAlimtalkStatus = "Y";
+        this.bgmAgitMemberMonthlyPassStatus = "N";
+    }
+
+    public void changeMonthlyPass(boolean pass) {
+        this.bgmAgitMemberMonthlyPassStatus = pass ? "Y" : "N";
+    }
+
+    public boolean isMonthlyPassHolder() {
+        return "Y".equals(this.bgmAgitMemberMonthlyPassStatus);
     }
 
     public void linkKml(Long kmlId) {

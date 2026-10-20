@@ -1,5 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Wrapper, TitleBox, TimeTitle, ResetButton, TimeBox, TimeSlotButton, SelectedRange, NextDayTag, OptionBox, OptionTitle, ToggleGroup, ToggleButton, Button, MessageBox } from './ReservationTimePanel.styles.ts';
+import {
+  Wrapper,
+  TitleBox,
+  TimeTitle,
+  ResetButton,
+  TimeBox,
+  TimeSlotButton,
+  SelectedRange,
+  NextDayTag,
+  OptionBox,
+  OptionTitle,
+  ToggleGroup,
+  ToggleButton,
+  Button,
+  MessageBox,
+} from './ReservationTimePanel.styles.ts';
 import { FaUsers } from 'react-icons/fa';
 import { useRecoilValue } from 'recoil';
 import { reservationDataState, reservationState } from '../../recoil/state/reservationState.ts';
@@ -48,13 +63,19 @@ export default function ReservationTimePanel({
   //user 정보
   const user = useRecoilValue(userState);
 
+  // 고른 날짜의 서버 응답. 11월 개편이 이용일 기준이라 시간대·선택제한·요금 방식을 날짜별로 받는다
+  const matchedSlots = reservation.timeSlots?.find(d => d.date === date);
+
   // 시간대·이용시간·선택제한은 서버(SlotSchedule)가 내려준다. 프론트에서 방 id로 분기하지 말 것.
+  const slotRanges = matchedSlots?.slotRanges ?? reservation.slotRanges;
   const intervals = useMemo<[string, string][]>(
-    () => (reservation.slotRanges ?? []).map(({ start, end }) => [start, end]),
-    [reservation.slotRanges]
+    () => (slotRanges ?? []).map(({ start, end }) => [start, end]),
+    [slotRanges]
   );
 
-  const maxSelectableSlots = reservation.maxSelectableSlots ?? null;
+  const maxSelectableSlots =
+    (matchedSlots?.slotRanges ? matchedSlots.maxSelectableSlots : reservation.maxSelectableSlots) ??
+    null;
 
   // 합쳐 예약하면 서버 label이 "M-1, M-2"로 내려오므로 기준 항목 라벨만 떼서 쓴다
   const primaryLabel = reservation.label?.split(',')[0]?.trim();
@@ -70,11 +91,16 @@ export default function ReservationTimePanel({
   // 함께 예약할 항목(테이블 합치기)
   const [combineIds, setCombineIds] = useState<number[]>([]);
 
-  // 요금 방식도 서버가 정한다.
-  // PER_PERSON(룸 일무제한)은 인원이 정해져야 총액이 나오므로 그날 단가만 내려오고,
-  // FLAT(마작 대탁)은 예전처럼 확정된 예약금이 내려온다.
-  const isPerPerson = reservation.pricingMode !== 'FLAT';
-  const depositAmount = reservation.depositAmount;
+  // 요금 방식도 서버가 정한다(날짜별).
+  // PER_PERSON(11월 이후 룸 일무제한)은 인원이 정해져야 총액이 나오므로 그날 단가만 내려오고,
+  // FLAT(마작 대탁·10월 이용분 룸)은 확정된 예약금이 내려온다.
+  const pricingMode = matchedSlots?.pricingMode ?? reservation.pricingMode;
+  const isPerPerson = pricingMode !== 'FLAT';
+  const depositAmount = matchedSlots?.pricingMode
+    ? matchedSlots.depositAmount
+    : reservation.depositAmount;
+  // 10월 이용분 룸(종전 정책) — 예약금 1만원·잔액 현장결제·전날까지 취소
+  const isLegacyRoom = !isPerPerson && reservation.reservationType !== 'DELEGATE_PLAY';
   const unitPrice = useMemo(
     () => reservation.prices?.find(p => p.date === date)?.price ?? null,
     [reservation.prices, date]
@@ -105,8 +131,6 @@ export default function ReservationTimePanel({
     }
   };
 
-  const matchedSlots = reservation.timeSlots?.find(d => d.date === date);
-
   // 영업 하루는 오전 10시에 넘어간다(서버 SlotSchedule.DAY_BOUNDARY 와 같은 값).
   // 00~09시 버튼은 다음 날이라 표시를 붙여주지 않으면 하루 앞선 날로 착각한다.
   const DAY_BOUNDARY_HOUR = 10;
@@ -124,7 +148,8 @@ export default function ReservationTimePanel({
     const lastEnd = intervals.find(([start]) => start === lastStart)?.[1] ?? lastStart;
     const head = `${isNextDaySlot(first) ? '익일 ' : ''}${first}`;
     // 종료가 24:00(자정)이면 익일 표기가 중복되지 않게 그대로 둔다
-    const tail = lastEnd === '00:00' ? '24:00' : `${isNextDaySlot(lastEnd) ? '익일 ' : ''}${lastEnd}`;
+    const tail =
+      lastEnd === '00:00' ? '24:00' : `${isNextDaySlot(lastEnd) ? '익일 ' : ''}${lastEnd}`;
     return `${head} ~ ${tail}`;
   }, [selectedTimes, intervals]);
 
@@ -166,7 +191,7 @@ export default function ReservationTimePanel({
     if (!extendsRange) {
       if (selectedIdx.length > 1) {
         toast.info(
-          "이어진 시간만 추가할 수 있어요. 다른 시간대로 바꾸려면 '선택 초기화'를 눌러 주세요.",
+          "이어진 시간만 추가할 수 있어요. 다른 시간대로 바꾸려면 '선택 초기화'를 눌러 주세요."
         );
         return;
       }
@@ -308,13 +333,27 @@ export default function ReservationTimePanel({
               </p>
             </>
           )}
+          {isLegacyRoom && (
+            <>
+              <p>
+                <strong>
+                  ※ 10월 31일 이용분까지는 종전 요금제입니다. 예약금{' '}
+                  {(depositAmount ?? 10000).toLocaleString()}원을 결제하시고 잔여 이용요금은
+                  현장에서 결제합니다.
+                </strong>
+              </p>
+              <p>
+                <strong>※ 취소는 예약일 전날까지 가능하며, 예약금은 전액 환불됩니다.</strong>
+              </p>
+            </>
+          )}
           {isPerPerson && (
             <>
               {/* 일무제한이라 시간 수는 요금과 무관하다. 시간 선택은 룸 점유 구간을 잡는 의미다 */}
               <p>
                 <strong>
-                  ※ 일무제한 요금제입니다. 입장 시각만 고르시면 당일 오전 10시부터 익일 오전 10시까지
-                  이용하실 수 있습니다.
+                  ※ 일무제한 요금제입니다. 입장 시각만 고르시면 당일 오전 10시부터 익일 오전
+                  10시까지 이용하실 수 있습니다.
                 </strong>
               </p>
               {unitPrice !== null && (
@@ -328,6 +367,12 @@ export default function ReservationTimePanel({
               <p>
                 <strong>
                   ※ 환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후에는 불가합니다.
+                </strong>
+              </p>
+              <p>
+                <strong>
+                  ※ 월간패스 회원이 직접 예약하시면 결제 시 본인 1명분이 할인됩니다. 일행 중 다른
+                  월간패스 회원분은 현장에서 환불해 드립니다.
                 </strong>
               </p>
             </>

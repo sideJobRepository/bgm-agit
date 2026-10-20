@@ -10,9 +10,10 @@ public interface PaymentService {
     /**
      * 주문 생성: 결제행을 READY로 저장하고 프론트 결제창용 주문정보를 반환.
      * people/unitPrice 는 결제 시점 스냅샷이다 — 환불액을 나중 인원으로 재계산하면 결제액과 어긋난다.
+     * amount 는 월간패스 할인(discountAmount)을 이미 뺀 금액이다. paymentKind 는 프론트 안내 문구용(LEGACY_DEPOSIT / DEPOSIT / FULL).
      */
     PaymentOrderResponse createOrder(Long memberId, Long reservationId, int amount, String orderName,
-                                     Integer people, Integer unitPrice);
+                                     Integer people, Integer unitPrice, int discountAmount, String paymentKind);
 
     PaymentConfirmResponse confirmPayment(String paymentKey, String orderId, Integer amount, Long memberId);
 

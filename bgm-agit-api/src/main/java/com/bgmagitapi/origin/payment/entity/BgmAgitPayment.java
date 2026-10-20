@@ -87,15 +87,24 @@ public class BgmAgitPayment extends DateSuperClass {
     @Column(name = "BGM_AGIT_PAYMENT_UNIT_PRICE")
     private Integer bgmAgitPaymentUnitPrice;
 
+    /**
+     * 주문 생성 시점의 월간패스 할인액(본인 1명분) 스냅샷. 할인이 없으면 0, 개편 전 결제는 null.
+     * 승인 재대조가 이 값을 빼고 비교한다 — 주문과 승인 사이에 패스가 꺼져도(매월 1일 초기화·관리자 해제)
+     * 이미 안내한 금액으로 승인되게 하기 위해서다.
+     */
+    @Column(name = "BGM_AGIT_PAYMENT_DISCOUNT_AMOUNT")
+    private Integer bgmAgitPaymentDiscountAmount;
+
     // 주문 생성용 생성자 (READY 상태로 저장)
     public BgmAgitPayment(BgmAgitMember member, Long reservationId, String orderNo, Integer amount,
-                          Integer people, Integer unitPrice) {
+                          Integer people, Integer unitPrice, Integer discountAmount) {
         this.bgmAgitMember = member;
         this.bgmAgitReservationId = reservationId;
         this.bgmAgitOrderNo = orderNo;
         this.bgmAgitPaymentAmount = amount;
         this.bgmAgitPaymentPeople = people;
         this.bgmAgitPaymentUnitPrice = unitPrice;
+        this.bgmAgitPaymentDiscountAmount = discountAmount;
         this.bgmAgitPaymentStatus = PaymentStatus.READY;
     }
 

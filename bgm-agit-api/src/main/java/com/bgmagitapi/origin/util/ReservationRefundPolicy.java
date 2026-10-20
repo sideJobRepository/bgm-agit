@@ -1,6 +1,7 @@
 package com.bgmagitapi.origin.util;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -36,6 +37,19 @@ public final class ReservationRefundPolicy {
             return 50;
         }
         return 0;
+    }
+
+    /**
+     * 예약의 이용일로 정책을 고른 환불 비율(%).
+     *
+     * 종전 정책(2026-10-31 이용분까지)은 예약금 1만원을 전액 돌려준다. 사용자 취소를 전날까지만 받는 것은
+     * 취소 가능 판정 쪽이 막고, 그 이후 관리자 취소도 종전처럼 전액이다.
+     */
+    public static int refundRate(LocalDate useDate, LocalDateTime useStartAt, LocalDateTime now) {
+        if (!SlotSchedule.isNewPolicy(useDate)) {
+            return 100;
+        }
+        return refundRate(useStartAt, now);
     }
 
     /**
