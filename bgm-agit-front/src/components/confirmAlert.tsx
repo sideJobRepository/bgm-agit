@@ -192,6 +192,115 @@ export function showReservationConfirmModal(props: ReservationConfirmProps) {
   });
 }
 
+interface PeopleReduceProps {
+  label: string;
+  currentPeople: number;
+  minPeople: number;
+  /** 결제 당시 1인 단가. 미결제면 null — 환불 없이 결제할 금액만 줄어든다 */
+  unitPrice?: number | null;
+  /** 지금 줄이면 적용될 환불 비율(%) */
+  refundRate?: number | null;
+  /** 아직 남아 있는 결제 금액. 예상 환불액은 이 값을 넘지 않는다 */
+  paidAmount?: number | null;
+  onConfirm: (people: number) => void;
+}
+
+// 예약 인원 줄이기 모달. 늘리기는 현장 워크인 결제라 받지 않는다
+function PeopleReduceContent({
+  label,
+  currentPeople,
+  minPeople,
+  unitPrice,
+  refundRate,
+  paidAmount,
+  onConfirm,
+  onClose,
+}: PeopleReduceProps & { onClose: () => void }) {
+  const maxNext = currentPeople - 1;
+  const [count, setCount] = useState(Math.max(minPeople, maxNext));
+  const reduced = currentPeople - count;
+  const paid = (paidAmount ?? 0) > 0 && unitPrice != null;
+  const rate = refundRate ?? 0;
+  // 서버(PaymentServiceImpl.refundPeopleReduction → doRefund)와 같은 순서:
+  // 줄인 인원 × 결제 당시 단가를 결제 잔액으로 자른 뒤 비율을 적용하고 원 단위 내림
+  const base = paid ? Math.min(reduced * (unitPrice as number), paidAmount ?? 0) : 0;
+  const expected = Math.floor((base * rate) / 100);
+
+  return (
+    <AlertWrapper $wide>
+      <ReservationHeader>
+        <span>예약 인원 변경</span>
+        <strong>{label}</strong>
+      </ReservationHeader>
+
+      <FieldGroup>
+        <FieldTitle>
+          <span>변경할 인원</span>
+          <small>
+            현재 {currentPeople}명 · 최소 {minPeople}명
+          </small>
+        </FieldTitle>
+        <Stepper>
+          <IconButton
+            type="button"
+            disabled={count <= minPeople}
+            onClick={() => setCount(c => Math.max(minPeople, c - 1))}
+            aria-label="인원 줄이기"
+          >
+            <MdRemove />
+          </IconButton>
+          <CountValue>
+            <strong>{count}</strong>
+            <span>명</span>
+          </CountValue>
+          <IconButton
+            type="button"
+            disabled={count >= maxNext}
+            onClick={() => setCount(c => Math.min(maxNext, c + 1))}
+            aria-label="인원 늘리기"
+          >
+            <MdAdd />
+          </IconButton>
+        </Stepper>
+      </FieldGroup>
+
+      <NoticeMessage>
+        {paid ? (
+          rate > 0 ? (
+            <>
+              {reduced}명 × {(unitPrice as number).toLocaleString()}원의 {rate}% ={' '}
+              <strong>{expected.toLocaleString()}원</strong> 환불 예정
+            </>
+          ) : (
+            <>이용일 24시간 이내라 줄어든 인원에 대한 환불은 없습니다.</>
+          )
+        ) : (
+          <>아직 결제 전이라 환불 없이 결제할 금액만 줄어듭니다.</>
+        )}
+        <br />
+        인원을 늘리시려면 현장에서 워크인 요금으로 결제해 주세요.
+      </NoticeMessage>
+      <ButtonGroup>
+        <CancelButton onClick={onClose}>닫기</CancelButton>
+        <ConfirmButton
+          onClick={() => {
+            onConfirm(count);
+            onClose();
+          }}
+        >
+          {count}명으로 변경
+        </ConfirmButton>
+      </ButtonGroup>
+    </AlertWrapper>
+  );
+}
+
+export function showPeopleReduceModal(props: PeopleReduceProps) {
+  confirmAlert({
+    customUI: ({ onClose }) => <PeopleReduceContent {...props} onClose={onClose} />,
+  });
+}
+
 // 텍스트/비밀번호 입력 모달 (닉네임·비밀번호 변경 등)
 interface InputModalProps {
   message: React.ReactNode;
