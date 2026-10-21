@@ -427,12 +427,12 @@ kml:
 - **카카오 검수 통과 템플릿과 고정 문구는 여전히 글자 단위로 일치해야 한다.** 변수(`#{예약금}`, `#{룸}` 등) 값만 자유롭게 조립 가능
 - **검수 통과 후 `biztalk.reservation-payment-live: true` 로 전환 완료**(real·staging). 로컬만 `false` 라 계좌안내 템플릿 `bgmagit-res-account2` 가 나간다. 되돌리려면 yml 한 줄만 `false`
 
-#### 전액결제 개정판 (`bgmagit-res-payment-2`) — **검수 통과, real·staging 켬(2026-10-21)**
+#### 전액결제 개정판 (`bgmagit-res-payment-2`) — **검수 대기 중**
 10월 전환으로 `-1` 의 **고정 문구 두 줄이 사실과 달라졌다**: "예약금 결제"라는 표현과 "취소는 예약일 전날까지 가능하며, 당일 취소나 노쇼 시 예약금은 환불되지 않습니다."
 금액은 변수라 상관없지만 고정 문구 변경은 재심사 대상이라 `-1` 을 고치지 않고 템플릿을 새로 팠다.
 - 빌더는 `AlimtalkUtils.buildReservationFullPaymentMessage`, 스위치는 **`biztalk.reservation-payment-v2`(기본 false)**
-- `biztalk.reservation-payment-v2: true`(real·staging). 켜도 **10월 이용분은 늘 `-1`**(예약금·전날까지 취소 문구가 맞다)
-- 예약 **완료** 알림톡(`bgmagit-res-complete`)은 개정하지 않았다 — 고정 문구 "취소는 1일전까지 … 예약금은 환불되지 않습니다"가 남아 있다(2026-10-21 결정: 대기 메시지만 바꾼다)
+- **통과 전에는 `-1` 이 그대로 나가므로 그 기간 동안 알림톡의 환불 안내가 실제 규정과 다르다.** 예약 화면·결제 모달·환불정책 페이지가 정확한 문구를 갖고 있어 그쪽으로 보완한다
+- 통과하면 real·staging yml 의 그 한 줄만 `true` 로 바꾸면 된다. 켜도 **10월 이용분은 늘 `-1`**(예약금·전날까지 취소 문구가 맞다)
 - **예약 대기 알림톡은 예약자 본인에게만 간다**(`sandBizTalk`). 결제 전이라 확정이 아니고 관리자가 대응할 일도 없는 데다, 템플릿 고정 문구를 글자 단위로 맞춰야 해서 관리자 전용 문구를 못 만들어 "예약금을 결제해 주세요" 안내가 그대로 나갔다. 관리자 발송(`ownerMessage`/`AlimtalkUtils.buildOwnerReservationMessage`)은 제거됨
 - 마작강의 신청(`bgmagit-res-lecture*`)은 결제 연동이 없어 **계좌 입금 안내 그대로**다(`AlimtalkUtils.buildLectureMessage`, 프론트 `components/academy/BaseTable.tsx`)
 
