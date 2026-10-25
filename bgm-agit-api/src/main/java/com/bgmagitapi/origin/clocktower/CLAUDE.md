@@ -91,6 +91,7 @@
 1. `clocktower-dictionary-2026-11.sql` — 사전·징크스 테이블, 게임·캐릭터 컬럼, 관리자 매핑(**스테이징·운영 적용**)
 2. `clocktower-participant-evil-2026-11.sql` — 참가자 최종 선악(**스테이징·운영 적용**)
 3. `clocktower-grimoire-v2-2026-11.sql` — 1) 메모 TEXT 2) 사전 이미지 컬럼 4개 3) `GET /clocktower-roles/**` 관리자 4) `GET /clocktower-games/script/fetch` 관리자(정확 경로) — **전부 스테이징·운영 적용**(2026-10-25). 2) 는 다시 돌리면 ADD COLUMN 오류가 나니 새 변경은 새 섹션·새 파일로
+4. `clocktower-text-length-2026-11.sql` — 사전·징크스 문구 varchar(1000)→4000, 리마인더 2개는 TEXT(**스테이징·운영 적용** 2026-10-25). 사전 표 varchar 다섯 개를 모두 4000 으로 하면 행 한도 65,535바이트(utf8mb4 글자당 4)를 넘어 ALTER 가 거부된다 — 새 긴 컬럼은 TEXT 로
 - 엔티티가 이미지 컬럼을 읽으므로 이 파일 2) 없이 백엔드를 배포하면 사전 조회가 전부 실패한다(운영은 이미 적용됨)
 - 운영 매핑은 **앱 재시작 후** 반영된다(로딩이 @PostConstruct 1회)
 - 운영의 "시계탑에 흐른피" 상위 메뉴는 꺼져 있어(USE_STATUS 0) 진행판·관리 화면이 메인으로 튕긴다 — 쓸 때 메뉴 관리에서 켠다
