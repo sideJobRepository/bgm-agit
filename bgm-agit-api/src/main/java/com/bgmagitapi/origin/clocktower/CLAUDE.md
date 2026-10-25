@@ -94,7 +94,7 @@
 - 엔티티가 이미지 컬럼을 읽으므로 이 파일 2) 없이 백엔드를 배포하면 사전 조회가 전부 실패한다(운영은 이미 적용됨)
 - 운영 매핑은 **앱 재시작 후** 반영된다(로딩이 @PostConstruct 1회)
 - 운영의 "시계탑에 흐른피" 상위 메뉴는 꺼져 있어(USE_STATUS 0) 진행판·관리 화면이 메인으로 튕긴다 — 쓸 때 메뉴 관리에서 켠다
-- 운영 nginx `$bgm_spa_route` 에 `/clocktower-roles`, `/clocktower-grimoire` 추가 필요
+- 운영 nginx `$bgm_spa_route` 에 `/clocktower-roles`, `/clocktower-grimoire` 추가 완료(2026-10-25)
 - 스테이징 MCP DB 도구는 DDL 금지 설정이다. 스키마 변경은 `.env` 접속정보 + mysql 클라이언트(`C:/Program Files/MySQL/MySQL Workbench 8.0/mysql`)로, **포트 33070 + 컨테이너명 `1b4addd69ee9` 확인 후** 실행
 
 ## 테스트
