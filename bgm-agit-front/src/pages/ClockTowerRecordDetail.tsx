@@ -285,7 +285,8 @@ export default function ClockTowerRecordDetail() {
     if (debounce.current) window.clearTimeout(debounce.current);
     debounce.current = window.setTimeout(() => {
       api
-        .get('/bgm-agit/all-members', { params: { keyword } })
+        // 시계탑 참가자는 전원 회원이고 메인 사이트 가입자도 찾아야 해서 마작 회원 전용 /all-members 대신 닉네임 검색을 쓴다
+        .get('/bgm-agit/clocktower-members', { params: { keyword } })
         .then(res => setCandidates(res.data as MemberOption[]))
         .catch(() => setCandidates([]));
     }, 250);

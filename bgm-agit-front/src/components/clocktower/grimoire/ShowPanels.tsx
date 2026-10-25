@@ -108,16 +108,16 @@ export function BluffPanel({
 }
 
 /**
- * 플레이어용 스크립트 시트 QR. 모두 한 번에 각자 찍으면 오늘 스크립트의 캐릭터 목록(게임 상세)이 열린다.
- * 누가 무슨 캐릭터인지는 담기지 않는다.
+ * 플레이어용 QR. 각자 찍으면 내 캐릭터 화면(/clocktower-my)이 열린다 — 로그인한 본인 자리만 보이고,
+ * 오늘 스크립트(게임 상세) 링크도 거기 있다. QR 자체에는 누가 무슨 캐릭터인지 담기지 않는다.
  */
 export function ScriptQrPanel({ state, onClose }: { state: GrimoireState; onClose: () => void }) {
-  const url = `${window.location.origin}/clockTowerGameDetail?id=${state.data.gameId}`;
+  const url = `${window.location.origin}/clocktower-my?game=${state.data.gameId}`;
   return (
     <Overlay onClick={onClose}>
       <Sheet onClick={e => e.stopPropagation()}>
         <SheetHead>
-          <h3>스크립트 시트 QR</h3>
+          <h3>내 캐릭터 · 스크립트 QR</h3>
           <Btn type="button" onClick={onClose}>
             닫기
           </Btn>
@@ -125,7 +125,7 @@ export function ScriptQrPanel({ state, onClose }: { state: GrimoireState; onClos
         <QrBox>
           <QRCodeSVG value={url} size={260} />
           <strong>{state.data.gameName}</strong>
-          <Hint>휴대폰 카메라로 찍으면 오늘 스크립트의 캐릭터 목록이 열립니다. 누가 무슨 캐릭터인지는 나오지 않습니다.</Hint>
+          <Hint>휴대폰으로 찍으면 내 캐릭터와 오늘 스크립트를 볼 수 있습니다</Hint>
         </QrBox>
       </Sheet>
     </Overlay>

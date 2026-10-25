@@ -93,6 +93,7 @@ function normalizeV2(raw: GrimoireState): GrimoireState {
     dayLogs: raw.dayLogs ?? [],
     settings: { ...DEFAULT_SETTINGS, ...(raw.settings ?? {}) },
     pendingNotices: raw.pendingNotices ?? [],
+    clocktowerSession: raw.clocktowerSession ?? null,
     seats: raw.seats.map(s => ({
       ...s,
       believedRoleKey: s.believedRoleKey ?? null,
@@ -206,6 +207,7 @@ export function createState(
     dayLogs: [],
     settings: DEFAULT_SETTINGS,
     pendingNotices: [],
+    clocktowerSession: null,
   };
 }
 
@@ -219,6 +221,8 @@ function mergeSilent(past: GrimoireState, now: GrimoireState): GrimoireState {
     ...past,
     notes: now.notes,
     nightChecked: now.nightChecked,
+    // 휴대폰 세션은 서버에 이미 있는 것이라 되돌리지 않는다(되돌리면 보낸 기록이 어긋나 엉뚱한 좌석을 다시 보낸다)
+    clocktowerSession: now.clocktowerSession ?? null,
     seats: past.seats.map(s => (names.has(s.id) ? { ...s, name: names.get(s.id) as string } : s)),
   };
 }

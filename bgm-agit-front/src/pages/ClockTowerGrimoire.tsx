@@ -23,6 +23,7 @@ import WinBanner from '../components/clocktower/grimoire/WinBanner.tsx';
 import RoleArt from '../components/clocktower/grimoire/RoleArt.tsx';
 import { preloadGrimoireImages, tokenImageCandidates } from '../components/clocktower/grimoire/tokenImage.ts';
 import { useImmersiveMode } from '../components/clocktower/grimoire/useImmersiveMode.ts';
+import { buildEvilInfo, usePhoneSession } from '../components/clocktower/grimoire/usePhoneSession.ts';
 import {
   checkGameEnd,
   type GameEvent,
@@ -39,6 +40,7 @@ import {
 import {
   BASE_TEAMS,
   MAX_BASE_PLAYERS,
+  MIN_PLAYERS_FOR_EVIL_INFO,
   activeJinxes,
   actualCounts,
   aliveAll,
@@ -55,6 +57,7 @@ import {
   pickBluffs,
   randomAssignment,
   roleMap,
+  runsEvilInfo,
   setTravellerAlignment,
   shownRole,
   totalPlayers,
@@ -201,6 +204,8 @@ export default function ClockTowerGrimoire() {
   const [joinedSeatId, setJoinedSeatId] = useState<string | null>(null);
 
   useWakeLock(!!state);
+  // 플레이어 휴대폰(/clocktower-my)으로 보낸 배정: 바뀐 좌석 자동 재전송 + 확인 여부
+  const phone = usePhoneSession(state, updateSilently);
   // 몰입 모드(사이트 머리·푸터 숨김 + 전체 화면)는 진행 중인 판에서만
   const { immersive, fullscreen, canFullscreen, enter, exit, requestFullscreen } = useImmersiveMode(
     !!user && !blockedByOtherOwner && !!state
@@ -576,11 +581,60 @@ export default function ClockTowerGrimoire() {
   const newGame = () =>
     showConfirmModal({
       message: '진행 중인 게임을 지우고 새로 시작할까요? 되돌릴 수 없습니다.',
-      onConfirm: () => {
+      onConfirm: async () => {
         setOpenSeatId(null);
+        // 플레이어 휴대폰에 지난 게임 캐릭터가 남지 않게 먼저 닫는다
+        await phone.close();
         reset();
       },
     });
+
+  // 회원 좌석마다 보여줄 캐릭터(주정뱅이 등은 믿는 캐릭터)를 휴대폰으로 보낸다
+  const sendToPhones = () => {
+    const memberSeats = seats.filter(s => s.memberId != null);
+    if (memberSeats.length === 0) {
+      toast.error('회원 자리가 없어 휴대폰으로 보낼 수 없습니다.');
+      return;
+    }
+    const guests = seats.length - memberSeats.length;
+    const go = async () => {
+      if (await phone.send())
+        toast.success(
+          `회원 ${memberSeats.length}명에게 보냈습니다. 각자 휴대폰으로 스크립트 QR 을 찍고 로그인하면 볼 수 있습니다.${
+            guests ? ` 회원이 아닌 ${guests}자리는 빠졌습니다.` : ''
+          }`
+        );
+    };
+    const missing = memberSeats.filter(s => !shownRole(s, roles));
+    const notes: string[] = [];
+    if (missing.length)
+      notes.push(
+        `캐릭터(주정뱅이 등은 믿는 캐릭터)가 정해지지 않은 자리가 ${missing.length}개 있습니다(${missing
+          .map(s => s.name)
+          .join(', ')}). 정하면 자동으로 다시 보냅니다.`
+      );
+    if (phone.session) notes.push('새로 보내면 플레이어 확인 표시가 처음부터 다시 시작됩니다.');
+    if (notes.length) showConfirmModal({ message: `${notes.join(' ')} 보낼까요?`, onConfirm: go });
+    else go();
+  };
+
+  // 첫날 밤 악 팀 정보(악마: 하수인+블러프, 하수인: 악마+다른 하수인)를 해당 좌석 휴대폰으로
+  const sendEvilInfo = () => {
+    const result = buildEvilInfo(state);
+    if (!result.ok) {
+      toast.error(result.message);
+      if (!(state.bluffs ?? []).length && runsEvilInfo(state, roles)) setBluffOpen(true);
+      return;
+    }
+    const count = Object.keys(result.infos).length;
+    if (count === 0) toast.error('휴대폰으로 받을 악 팀 회원 자리가 없습니다.');
+    else {
+      phone.setInfos(result.infos);
+      toast.success(`악 팀 ${count}명에게 정보를 보냅니다.`);
+    }
+    result.warnings.forEach(w => toast.error(w));
+  };
+  const evilInfoAvailable = runsEvilInfo(state, roles);
 
   const tokenOf = (seat: GrimoireSeat, i: number) => {
     const role = roles.get(seat.roleKey ?? '');
@@ -631,6 +685,14 @@ export default function ClockTowerGrimoire() {
       marks.push(
         <Mark key="v" $tone="vote">
           {seat.ghostVoteUsed ? '투표 끝' : '유령'}
+        </Mark>
+      );
+    // 휴대폰으로 보낸 캐릭터(정보)를 본인이 눌러 봤는지
+    const viewed = phone.viewStatusOf(seat.memberId);
+    if (viewed)
+      marks.unshift(
+        <Mark key="phone" $tone={viewed === 'viewed' ? 'good' : 'vote'}>
+          {viewed === 'viewed' ? '✓ 확인' : '미확인'}
         </Mark>
       );
     seat.reminders.forEach(m => marks.push(<Mark key={m.id}>{m.text}</Mark>));
@@ -690,6 +752,25 @@ export default function ClockTowerGrimoire() {
               <Btn type="button" onClick={() => setQrOpen(true)}>
                 스크립트 QR
               </Btn>
+              <Btn type="button" $active={!!phone.session} onClick={sendToPhones} disabled={phone.sending}>
+                {phone.sending ? '보내는 중…' : phone.session ? '휴대폰으로 다시 보내기' : '휴대폰으로 배정 보내기'}
+              </Btn>
+              {phone.session && state.day === 1 && state.phase !== 'DAY' && (
+                <Btn
+                  type="button"
+                  onClick={sendEvilInfo}
+                  disabled={!evilInfoAvailable}
+                  title={
+                    evilInfoAvailable
+                      ? undefined
+                      : `${MIN_PLAYERS_FOR_EVIL_INFO}명 미만이라 첫날 밤 하수인·악마 정보 단계가 없습니다`
+                  }
+                >
+                  {evilInfoAvailable
+                    ? '첫날 밤 악 팀 정보 보내기'
+                    : `악 팀 정보 없음(${MIN_PLAYERS_FOR_EVIL_INFO}명 미만)`}
+                </Btn>
+              )}
               <Btn type="button" onClick={addSeat}>
                 {isUnderway(state) ? '여행자 합류' : '자리 추가'}
               </Btn>
@@ -1117,6 +1198,8 @@ export default function ClockTowerGrimoire() {
             onClose={() => setEndOpen(false)}
             onSaved={() => {
               setEndOpen(false);
+              // 게임이 끝났으니 플레이어 휴대폰 배정을 닫는다
+              phone.close();
               showConfirmModal({
                 message: '기록을 남겼습니다. 진행판을 비우고 기록 목록으로 갈까요?',
                 onConfirm: () => {

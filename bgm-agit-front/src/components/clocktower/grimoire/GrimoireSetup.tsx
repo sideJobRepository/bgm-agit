@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { useRecoilValue } from 'recoil';
+import { userState } from '../../../recoil/state/userState.ts';
 import api from '../../../utils/axiosInstance.ts';
 import { toast } from '../../../utils/toast';
 import type { ClockTowerGame, GrimoireData, GrimoireSeat, GrimoireState, MemberOption } from '../../../types/clocktower.ts';
@@ -38,6 +40,8 @@ export default function GrimoireSetup({
   const [candidates, setCandidates] = useState<MemberOption[]>([]);
   const [starting, setStarting] = useState(false);
   const debounce = useRef<number | null>(null);
+  const user = useRecoilValue(userState);
+  const isAdmin = (user?.roles ?? []).some(r => r === 'ROLE_ADMIN' || r === 'ADMIN');
 
   useEffect(() => {
     api
@@ -54,7 +58,8 @@ export default function GrimoireSetup({
     }
     debounce.current = window.setTimeout(() => {
       api
-        .get<MemberOption[]>('/bgm-agit/all-members', { params: { keyword: keyword.trim() } })
+        // 시계탑 전용 검색: 메인 사이트로 가입한 회원(마작 이용 N)도 찾는다
+        .get<MemberOption[]>('/bgm-agit/clocktower-members', { params: { keyword: keyword.trim() } })
         .then(res => setCandidates(res.data))
         .catch(() => setCandidates([]));
     }, 250);
@@ -70,14 +75,6 @@ export default function GrimoireSetup({
     setKeyword('');
   };
 
-  // 회원이 아닌 손님은 이름만 적어 넣는다(기록 저장 때는 빠진다)
-  const addGuest = () => {
-    const name = keyword.trim();
-    if (!name) return;
-    setPlayers(prev => [...prev, { memberId: null, name }]);
-    setKeyword('');
-  };
-
   const move = (idx: number, dir: -1 | 1) =>
     setPlayers(prev => {
       const next = [...prev];
@@ -89,7 +86,7 @@ export default function GrimoireSetup({
 
   const remove = (idx: number) => setPlayers(prev => prev.filter((_, i) => i !== idx));
 
-  // 테스트·급할 때: 손님 자리를 n명이 될 때까지 "손님1, 손님2…" 로 채운다
+  // 관리자 테스트용: 손님 자리를 n명이 될 때까지 "손님1, 손님2…" 로 채운다(휴대폰 배정·기록에서 빠진다)
   const fillGuests = (total: number) =>
     setPlayers(prev => {
       const next = [...prev];
@@ -144,29 +141,31 @@ export default function GrimoireSetup({
 
       <SetupCard>
         <h3>2. 참가자 ({players.length}명)</h3>
-        <Hint>앉은 순서대로(시계 방향) 넣어 주세요. 회원이 아니면 이름을 적고 [손님 추가]를 누르면 됩니다.</Hint>
+        <Hint>
+          앉은 순서대로(시계 방향) 닉네임으로 찾아 넣어 주세요. 참가자는 모두 회원이어야 합니다. 가입하지 않은 손님은
+          사이트에서 회원가입 후 넣어 주세요(각자 휴대폰으로 로그인해 자기 캐릭터를 봅니다).
+        </Hint>
         <Row style={{ marginTop: 8 }}>
           <TextInput
             value={keyword}
-            placeholder="닉네임 검색 또는 손님 이름"
+            placeholder="닉네임 검색"
             onChange={e => setKeyword(e.target.value)}
             onKeyDown={e => {
               if (e.key !== 'Enter') return;
               if (candidates.length === 1) addMember(candidates[0]);
             }}
           />
-          <Btn type="button" onClick={addGuest} disabled={!keyword.trim()}>
-            손님 추가
-          </Btn>
         </Row>
-        <Row style={{ marginTop: 8 }}>
-          <Hint>손님 자리 한 번에 채우기:</Hint>
-          {[5, 7, 10, 12, 15].map(n => (
-            <Btn key={n} type="button" onClick={() => fillGuests(n)} disabled={players.length >= n}>
-              {n}명까지
-            </Btn>
-          ))}
-        </Row>
+        {isAdmin && (
+          <Row style={{ marginTop: 8 }}>
+            <Hint>테스트용(손님) 자리 채우기:</Hint>
+            {[5, 7, 10, 12, 15].map(n => (
+              <Btn key={n} type="button" onClick={() => fillGuests(n)} disabled={players.length >= n}>
+                {n}명까지 채우기
+              </Btn>
+            ))}
+          </Row>
+        )}
         {players.length > 0 && players.length < 5 && (
           <Hint style={{ marginTop: 6 }}>공식 규칙은 5명 이상입니다. 그보다 적으면 셋업 점검·무작위 배정이 동작하지 않습니다.</Hint>
         )}
@@ -186,7 +185,7 @@ export default function GrimoireSetup({
               <PlayerItem key={`${p.memberId ?? 'g'}-${p.name}-${i}`}>
                 <small>{i + 1}</small>
                 <span>
-                  {p.name} {p.memberId == null && <small>(손님)</small>}
+                  {p.name} {p.memberId == null && <small>(테스트 손님)</small>}
                 </span>
                 <button type="button" onClick={() => move(i, -1)} aria-label="위로">
                   ▲
@@ -207,8 +206,8 @@ export default function GrimoireSetup({
         {starting ? '불러오는 중…' : '진행판 시작'}
       </Btn>
       <Hint>
-        진행 상태는 이 기기에만 저장됩니다. 새로고침하거나 화면이 꺼져도 이어서 할 수 있고, 다른 사람이 서버에서 볼 수
-        없습니다.
+        진행 상태는 이 기기에만 저장됩니다. 새로고침하거나 화면이 꺼져도 이어서 할 수 있습니다. 서버에는 [휴대폰으로
+        배정 보내기]를 누를 때 각자에게 보여줄 캐릭터만 올라갑니다.
       </Hint>
     </SetupBox>
   );

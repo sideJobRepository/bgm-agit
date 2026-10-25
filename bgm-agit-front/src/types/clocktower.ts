@@ -317,4 +317,59 @@ export interface GrimoireState {
   settings: GrimoireSettings;
   // 게임 도중 캐릭터·선악이 바뀌어 본인에게 알려야 할 좌석(다음 밤 맨 앞에 뜬다)
   pendingNotices: { seatId: string; kind: GrimoireNoticeKind; createdDay: number }[];
+  // 플레이어 휴대폰으로 보낸 배정(서버 세션). 같은 v2 안에서 늘어난 필드라 옛 저장본엔 없다
+  clocktowerSession?: GrimoirePhoneSession | null;
 }
+
+/** 플레이어 휴대폰에 함께 보여줄 정보(첫날 밤 악 팀 정보 등) */
+export interface GrimoireSeatInfo {
+  title: string;
+  lines: string[];
+}
+
+/** 서버로 보내는 좌석 한 줄 — 그 플레이어에게 보여줄 것만 담는다(주정뱅이 등은 믿는 캐릭터) */
+export interface PhoneSeatPayload {
+  memberId: number;
+  seatNo: number;
+  roleKey: string | null;
+  evil: boolean | null;
+  info: GrimoireSeatInfo | null;
+}
+
+export interface GrimoirePhoneSession {
+  sessionId: number;
+  sentAt: string;
+  // 회원 id → 마지막으로 보낸 좌석 내용(JSON). 바뀐 좌석만 다시 보내려고 비교한다
+  sent: Record<string, string>;
+  // 회원 id → 함께 보여줄 정보(악 팀 정보). 다시 보낼 때도 유지한다
+  infos: Record<string, GrimoireSeatInfo>;
+}
+
+export interface PhoneSessionStatus {
+  sessionId: number;
+  status: 'ACTIVE' | 'CLOSED';
+  seats: { memberId: number; seatNo: number; version: number; viewedVersion: number; viewedAt: string | null }[];
+}
+
+/** 플레이어 화면(/clocktower-my) — 내 줄만 내려온다 */
+export type MyClocktowerSeat =
+  | { active: false }
+  | {
+      active: true;
+      sessionId: number;
+      gameId: number;
+      gameName: string | null; // 게임이 지워졌으면 null
+      seatNo: number;
+      version: number;
+      viewedVersion: number;
+      role: {
+        key: string;
+        name: string;
+        team: ClockTowerCharacterType | null;
+        teamName: string | null;
+        ability: string | null;
+        image: string | null;
+      } | null;
+      evil: boolean | null;
+      info: GrimoireSeatInfo | null;
+    };

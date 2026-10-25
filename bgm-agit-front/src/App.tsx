@@ -53,6 +53,7 @@ const ClockTowerHistory = lazy(() => import('./pages/ClockTowerHistory.tsx'));
 const ClockTowerStats = lazy(() => import('./pages/ClockTowerStats.tsx'));
 const ClockTowerRoles = lazy(() => import('./pages/ClockTowerRoles.tsx'));
 const ClockTowerGrimoire = lazy(() => import('./pages/ClockTowerGrimoire.tsx'));
+const ClockTowerMy = lazy(() => import('./pages/ClockTowerMy.tsx'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess.tsx'));
 const PaymentFail = lazy(() => import('./pages/PaymentFail.tsx'));
 const NotFound = lazy(() => import('./pages/NotFound.tsx'));
@@ -113,6 +114,7 @@ function App() {
                   <Route path="clocktower-stats" element={<ClockTowerStats />} />
                   <Route path="clocktower-roles" element={<ClockTowerRoles />} />
                   <Route path="clocktower-grimoire" element={<ClockTowerGrimoire />} />
+                  <Route path="clocktower-my" element={<ClockTowerMy />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>
