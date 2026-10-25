@@ -9,4 +9,8 @@ public class ClockTowerParticipantInput {
     private Long memberId;
     private Long characterId;
     private boolean storyteller;
+    // 최종 선악(진행판에서 진영이 바뀐 경우·여행자). null 이면 캐릭터 진영대로
+    private Boolean evil;
+    // 캐릭터 사전 키. 게임 수정·공식 데이터 재가져오기로 characterId 가 바뀌어도 (게임, roleKey) 로 다시 찾는다
+    private String roleKey;
 }

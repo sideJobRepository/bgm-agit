@@ -100,6 +100,7 @@
 ### 시계탑 기록 = 자체로그인 전용 (조회는 누구나)
 - `BgmAgitClockTowerRecordServiceImpl`: `createRecord`는 writer가 MAHJONG 아니면 403. `modify/deleteRecord`는 `requireClockTowerWriter(memberId, roles)` — 비MAHJONG 403, **관리자는 모더레이션 위해 예외 허용**
 - 프론트 가드: `canWrite = isSelfLogin || isAdmin` (`ClockTowerRecords` 기록하기 버튼, `ClockTowerRecordDetail` 수정/삭제·`onSubmit`)
+- **시계탑 사전·스크립트·이야기꾼 진행판·SQL 은 전용 문서** `bgm-agit-api/src/main/java/com/bgmagitapi/origin/clocktower/CLAUDE.md`(프론트 `src/components/clocktower/CLAUDE.md` 가 불러온다)
 
 ### 마이페이지
 노출 항목: 가입일자/이름/닉네임/휴대폰번호 + `mahjongUseStatus` + 알림톡 ON/OFF. (EMAIL은 제거됨)

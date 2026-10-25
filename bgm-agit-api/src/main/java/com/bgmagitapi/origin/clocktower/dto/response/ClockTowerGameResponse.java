@@ -16,6 +16,8 @@ public class ClockTowerGameResponse {
     private Integer maxPlayers;
     private Integer playMinutes;
     private String imageUrl;
+    private String source;     // MANUAL / OFFICIAL / CUSTOM
+    private String author;
 
     // 상세 조회 시에만 채움 (목록/simple 에서는 null)
     private List<ClockTowerCharacterResponse> characters;
@@ -28,6 +30,8 @@ public class ClockTowerGameResponse {
                 .maxPlayers(g.getMaxPlayers())
                 .playMinutes(g.getPlayMinutes())
                 .imageUrl(g.getImageUrl())
+                .source(g.getSource())
+                .author(g.getAuthor())
                 .build();
     }
 
@@ -39,6 +43,8 @@ public class ClockTowerGameResponse {
                 .maxPlayers(g.getMaxPlayers())
                 .playMinutes(g.getPlayMinutes())
                 .imageUrl(g.getImageUrl())
+                .source(g.getSource())
+                .author(g.getAuthor())
                 .characters(characters)
                 .build();
     }

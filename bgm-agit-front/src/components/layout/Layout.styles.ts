@@ -37,9 +37,9 @@ export const NavArea = styled.nav<WithTheme & { $home: boolean }>`
   overflow: hidden;
 `;
 
-export const MainArea = styled.main<WithTheme>`
+export const MainArea = styled.main<WithTheme & { $immersive?: boolean }>`
   flex: 1;
-  padding: 20px;
+  padding: ${({ $immersive }) => ($immersive ? '0' : '20px')};
   display: flex;
   height: 100%;
   overflow-y: auto;
@@ -47,7 +47,7 @@ export const MainArea = styled.main<WithTheme>`
   background-color: ${({ theme }) => theme.colors.white};
 
   @media ${({ theme }) => theme.device.tablet} {
-    padding: 20px 16px;
+    padding: ${({ $immersive }) => ($immersive ? '0' : '20px 16px')};
   }
 `;
 

@@ -1,5 +1,9 @@
 package com.bgmagitapi.origin.clocktower.service.impl;
 
+import org.springframework.util.StringUtils;
+
+import com.bgmagitapi.origin.advice.exception.ValidException;
+
 import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.origin.clocktower.dto.request.ClockTowerParticipantInput;
 import com.bgmagitapi.origin.clocktower.dto.request.ClockTowerRecordCreateRequest;
@@ -223,15 +227,37 @@ public class BgmAgitClockTowerRecordServiceImpl implements BgmAgitClockTowerReco
             ClockTowerCharacterType characterType = null;
             if (in.isStoryteller()) {
                 characterName = STORYTELLER_NAME;
-            } else if (in.getCharacterId() != null) {
-                BgmAgitClockTowerCharacter ch = characterRepository.findById(in.getCharacterId()).orElse(null);
+            } else {
+                BgmAgitClockTowerCharacter ch = resolveCharacter(record, in);
                 if (ch != null) {
                     characterName = ch.getName();
                     characterType = ch.getCharacterType();
                 }
             }
-            participantRepository.save(new BgmAgitClockTowerParticipant(record, member, characterName, characterType));
+            Boolean evil = in.isStoryteller() ? null : in.getEvil();
+            participantRepository.save(new BgmAgitClockTowerParticipant(record, member, characterName, characterType, evil));
         }
+    }
+
+    /**
+     * 참가자 캐릭터 찾기. 이 게임 소속 characterId 가 우선이고, 없거나 다른 게임 것이면 (게임, roleKey) 로 다시 찾는다.
+     * 게임 수정·공식 데이터 재가져오기는 캐릭터 행을 새로 만들어서, 진행판이 들고 있던 characterId 가 끊길 수 있다.
+     * 둘 다 주었는데 못 찾으면 조용히 빈칸으로 두지 않고 400.
+     */
+    private BgmAgitClockTowerCharacter resolveCharacter(BgmAgitClockTowerRecord record, ClockTowerParticipantInput in) {
+        Long gameId = record.getGame() != null ? record.getGame().getId() : null;
+        if (in.getCharacterId() != null) {
+            BgmAgitClockTowerCharacter ch = characterRepository.findById(in.getCharacterId()).orElse(null);
+            if (ch != null && ch.getGame() != null && ch.getGame().getId().equals(gameId)) return ch;
+        }
+        if (StringUtils.hasText(in.getRoleKey()) && gameId != null) {
+            return characterRepository.findInGameByRoleKey(gameId, in.getRoleKey().trim())
+                    .orElseThrow(() -> new ValidException("이 게임에 없는 캐릭터가 있습니다(" + in.getRoleKey() + "). 스크립트가 바뀌었는지 확인해 주세요."));
+        }
+        if (in.getCharacterId() != null) {
+            throw new ValidException("이 게임에 없는 캐릭터가 있습니다. 화면을 새로고침한 뒤 다시 골라 주세요.");
+        }
+        return null;
     }
 
     /** 완료 저장은 결과 필수, 임시저장은 결과 비워도 허용(null). */

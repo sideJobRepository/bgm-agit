@@ -7,7 +7,10 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -92,6 +95,42 @@ public class S3FileUtils {
                 .getUrl(b -> b.bucket(bucketName).key(storeFileName))
                 .toExternalForm();
         return new UploadResult(url, uuid, uuid + "." + ext);
+    }
+
+    /**
+     * 정해진 키에 올린다(같은 키면 덮어쓴다). 시계탑 캐릭터 이미지처럼 키가 곧 주소라 다시 올려도 주소가 안 바뀌어야 할 때.
+     * storeBytes 는 UUID 키라 같은 파일을 두 번 올리면 두 개가 된다.
+     */
+    public String putAt(String key, byte[] bytes, String contentType, String cacheControl) {
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .contentType(contentType)
+                .cacheControl(cacheControl)
+                .contentDisposition("inline")
+                .build();
+        s3Client.putObject(putObjectRequest, RequestBody.fromBytes(bytes));
+        return urlOf(key);
+    }
+
+    /** 키의 공개 주소(올리지 않고 주소만 만든다) */
+    public String urlOf(String key) {
+        return s3Client.utilities()
+                .getUrl(b -> b.bucket(bucketName).key(key))
+                .toExternalForm();
+    }
+
+    /** 객체가 있는지(headObject). 404 만 false 이고 그 밖의 오류는 그대로 던진다 */
+    public boolean exists(String key) {
+        try {
+            s3Client.headObject(HeadObjectRequest.builder().bucket(bucketName).key(key).build());
+            return true;
+        } catch (NoSuchKeyException e) {
+            return false;
+        } catch (S3Exception e) {
+            if (e.statusCode() == 404) return false;
+            throw e;
+        }
     }
 
     public void deleteFile(String fileUrl) {

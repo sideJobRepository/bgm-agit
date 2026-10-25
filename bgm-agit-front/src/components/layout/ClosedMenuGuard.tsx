@@ -16,6 +16,8 @@ const PARENT_LINK: Record<string, string> = {
   '/playRecordDetail': '/play-records',
   '/play-history': '/play-records',
   '/clockTowerGameDetail': '/clocktower-games',
+  '/clocktower-roles': '/clocktower-games',
+  '/clocktower-grimoire': '/clocktower-games',
   '/clockTowerRecordDetail': '/clocktower-records',
   '/clocktower-history': '/clocktower-records',
   '/freeDetail': '/free',
