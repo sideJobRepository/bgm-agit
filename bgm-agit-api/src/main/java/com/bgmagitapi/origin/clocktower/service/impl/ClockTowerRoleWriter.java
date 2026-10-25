@@ -144,8 +144,8 @@ public class ClockTowerRoleWriter {
                 .ifPresent(r -> r.applySyncedImage(variant, url, LocalDateTime.now()));
     }
 
-    // 리마인더 컬럼은 varchar(1000). 커뮤니티 자작 캐릭터가 길게 넣으면 스크립트 등록 전체가 DB 오류로 실패하므로 넘치는 항목은 버린다
-    private static final int REMINDERS_MAX = 1000;
+    // 리마인더 컬럼은 TEXT 지만 터무니없이 긴 자작 캐릭터 JSON 은 넘치는 항목을 버린다(문구 컬럼 varchar(4000) 와 같은 상한)
+    private static final int REMINDERS_MAX = 4000;
 
     private String reminderJson(JsonNode node) {
         List<String> values = new ArrayList<>();

@@ -25,4 +25,8 @@ public class ClockTowerRoleResponse {
     private List<String> remindersGlobal;
     private boolean setup;
     private boolean customEdited;
+    // S3 복사본 주소(복사 전이면 null). 무진영(여행자·전설·로릭)·선·악
+    private String image;
+    private String imageGood;
+    private String imageEvil;
 }

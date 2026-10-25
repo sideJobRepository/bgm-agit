@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import { toast } from '../utils/toast';
+import api from '../utils/axiosInstance.ts';
 import { clockTowerGameDetailState } from '../recoil/state/clocktowerState.ts';
 import { useClockTowerGameDetailFetch } from '../recoil/clocktowerFetch.ts';
 import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts';
@@ -47,6 +48,9 @@ export default function ClockTowerGameDetail() {
   const [preview, setPreview] = useState<string | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
   const [chars, setChars] = useState<CharRow[]>([]);
+  // 커스텀 시계탑(botc.vnamu.com) 시트 주소로 바로 등록(캐릭터 사전과 연결되는 스크립트 등록 경로를 탄다)
+  const [sheetUrl, setSheetUrl] = useState('');
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     if (id) fetchDetail(Number(id));
@@ -203,11 +207,66 @@ export default function ClockTowerGameDetail() {
     );
   }
 
+  // 시트 주소 → 제목·스크립트 JSON 받기 → 스크립트로 등록. 직접 입력한 게임명·인원이 있으면 그 값을 쓴다
+  const importSheet = async () => {
+    if (!sheetUrl.trim()) {
+      toast.error('시트 주소를 입력해 주세요.');
+      return;
+    }
+    setImporting(true);
+    try {
+      const { data: sheet } = await api.get<{ name: string | null; json: string }>(
+        '/bgm-agit/clocktower-games/script/fetch',
+        { params: { url: sheetUrl.trim() } }
+      );
+      const { data } = await api.post<{ success?: boolean; message?: string }>('/bgm-agit/clocktower-games/script', {
+        json: sheet.json,
+        name: name.trim() || sheet.name,
+        minPlayers: minPlayers ? Number(minPlayers) : null,
+        maxPlayers: maxPlayers ? Number(maxPlayers) : null,
+      });
+      if (data?.success === false) {
+        toast.error(data.message ?? '등록하지 못했습니다.');
+        return;
+      }
+      toast.success(data?.message ?? '스크립트가 등록되었습니다.');
+      navigate('/clocktower-games');
+    } catch (e) {
+      const message = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(message ?? '시트를 불러오지 못했습니다.');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   // ---------- 등록 / 수정 ----------
   return (
     <Wrapper>
       <Box>
         <FormTitle>{id ? '게임 수정' : '게임 등록'}</FormTitle>
+
+        {!id && (
+          <Field>
+            <label>커스텀 시계탑 시트 주소로 등록 (botc.vnamu.com)</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                type="text"
+                value={sheetUrl}
+                onChange={e => setSheetUrl(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && importSheet()}
+                placeholder="https://botc.vnamu.com/sheets/12"
+                style={{ flex: 1 }}
+              />
+              <Button $variant="primary" color="#4A2C82" onClick={importSheet} disabled={importing}>
+                {importing ? '등록 중…' : '주소로 등록'}
+              </Button>
+            </div>
+            <p style={{ marginTop: 6, fontSize: 13, lineHeight: 1.6, color: '#8a8398' }}>
+              제목과 캐릭터를 가져와 바로 등록합니다(캐릭터 사전과 연결돼 진행판에서 밤 순서·그림이 나옵니다). 아래 게임명·인원을
+              적어 두면 그 값을 씁니다. 사전이 비어 있으면 [캐릭터 사전·스크립트 등록]에서 공식 데이터를 먼저 가져오세요.
+            </p>
+          </Field>
+        )}
 
         <Field>
           <label>게임명 *</label>

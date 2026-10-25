@@ -235,7 +235,7 @@
 - **2026-10 부터** 센다(`RANKING_FROM`, 서버·프론트 같은 값, 사장님 요청). 10월은 예약금 1만원 결제로 확정된 예약이 들어간다
 - **지금은 관리자만 본다**(URL·메뉴 권한 관리자(1), 2026-10-20 사장님 결정). 회원에게 열 수도 있어 코드는 회원 공개를 전제로 짜 두었다 — **열 때는 DB 권한만 유저(2)로 바꾸면 된다**(`reservation-ranking-public-2026-11.sql`, 운영은 앱 재시작 필요)
 - 관리자에게는 이름·연락처·닉네임 원문·회원 번호를 내리고, **회원에게는 이름·연락처·회원 번호 없이 서버가 가린 닉네임만 보낸다**(`util/NicknameMasker`: 2글자 `홍x`, 3글자 이상 첫·끝만 남기고 가운데 x — `홍x동`, `홍xx이`). 프론트에서 가리면 응답에 원문이 남으므로 서버에서 가린다. `memberId` 도 관리자일 때만
-- 메뉴는 **최상위 "예약 랭킹"(서비스 요청 다음)** 아래. DB 는 `reservation-ranking-2026-11.sql` → `reservation-ranking-menu-2026-11.sql` → `reservation-ranking-public-2026-11.sql` 순서(운영·스테이징 적용 완료). 운영 nginx `$bgm_spa_route` 에 `/reservation-ranking` 추가 필요(없어도 화면은 뜨고 상태코드만 404)
+- 메뉴는 **최상위 "예약 랭킹"(서비스 요청 다음)** 아래. DB 는 `reservation-ranking-2026-11.sql` → `reservation-ranking-menu-2026-11.sql` → `reservation-ranking-public-2026-11.sql` 순서(운영·스테이징 적용 완료). 운영 nginx `$bgm_spa_route` 에 `/reservation-ranking` 추가 완료(2026-10-25)
 
 ### 함정: `toISOString()` 날짜 밀림
 `Date.toISOString()`은 UTC 변환이라 **KST 자정 Date가 하루 앞으로 밀린다**(`ReservationList` 검색이 실제로 이 버그였음). 서버로 보내는 날짜는 항상 `src/utils/date.ts`의 `toLocalYmd()`(`toLocaleDateString('sv-SE')` 기반) 사용. 같은 파일에 `todayYmd`/`addDaysYmd`/`formatYmdWithWeekday`.
@@ -349,7 +349,7 @@ SDK 에러코드 → 문구 매핑은 `src/config/paymentErrors.ts`. `USER_CANCE
 - **전 엔드포인트 컨트롤러 `requireAdmin`**(403) + URL_RESOURCES ADMIN 매핑. 1:1 문의는 상세·수정·삭제에 권한 검사가 없으니 그쪽을 다시 복제하지 말 것
 - 관리자끼리 쓰는 글이라 목록 전체 공개·누구나 수정/삭제, 답변자명은 실제 이름. 답변만 지우면 원글이 다시 처리대기. 알림톡 없음
 - DB는 `service-request.sql`(테이블·URL 매핑·메뉴) → `service-request-menu.sql`(마이페이지 하위에서 **최상위 메뉴 "서비스 요청"(관리자만)** 으로 분리) 순서. 둘 다 2026-10-04 작성
-- 운영 nginx `$bgm_spa_route` 에 `/service-request`, `/serviceRequestDetail` 추가 필요
+- 운영 nginx `$bgm_spa_route` 에 `/service-request`, `/serviceRequestDetail` 추가 완료(2026-10-25)
 
 ---
 
@@ -534,7 +534,7 @@ kml:
 - **자동 채우기** — 목록(`MurderGames.tsx`) 관리자 버튼. 표지 없는 게임마다 `POST /murder-games/{id}/auto-cover` 를 **프론트가 한 건씩** 부른다(서버 일괄은 nginx 타임아웃). **전체 이름 검색 결과만** 보고(줄인 검색어 결과는 사람이 고른다) `pickSameGame`(테스트 있음) — ① 이름이 정확히 같은 후보 1개 + 후보 전체 3개 이하 ② 후보 1개이고 그 이름에 우리 이름이 통째로 들어 있음("햇살고아원" → "햇살고아원: 여섯 아이의 탈출극"). 띄어쓰기·문장부호·대소문자만 무시. 161개 중 58개가 자동으로 들어갔다
 - **표지 정리 화면** `/murderCoverBoard`(`pages/MurderCoverBoard.tsx`, 목록의 "표지 정리" 버튼) — 표지 없는 게임을 한 화면에 늘어놓고 줄마다 후보를 보여준다(보이는 줄만, 동시 2건). **후보를 누르면 확인 없이 바로 저장**되고 줄이 사라진다. 고른 줄에 이미지·주소 Ctrl+V, 드래그, 주소 입력 후 Enter 도 받는다. "이름도 그 제목으로 바꾸기"를 켜면 게임명을 머미로그 제목으로 바꾸고 인원·시간은 **빈 칸만** 채운다
   - 저장 `PUT /murder-games/{id}/cover`(multipart `image` 또는 `imageSourceUrl`, 선택 `name`/`minPlayers`/`maxPlayers`/`playMinutes`) → `MurderCoverAutoFillService.applyCover`
-  - 운영 nginx `$bgm_spa_route` 에 `/murderCoverBoard` 추가 필요
+  - 운영 nginx `$bgm_spa_route` 에 `/murderCoverBoard` 추가 완료(2026-10-25)
 - **게임 상세에서 바로 넣기**(관리자) — 표지 없는 게임은 상세에 들어가면 후보가 바로 뜨고, 누르거나 Ctrl+V·표지 칸에 끌어놓으면 확인 없이 저장된다(`PUT /cover`). **수정 폼에는 표지가 없다**(이름·인원·시간만). 표지 지우기는 상세의 [표지 지우기]. 등록 폼만 표지를 같이 받는다(아직 게임이 없어서). 공용 함수 `utils/murderCover.ts`
 - **저장 전 크기 맞추기** — 표지는 전부 `murder/util/MurderCoverStorage` 를 거쳐 S3 에 올라간다. `CoverImageNormalizer` 가 둘레 여백(네 모서리 색 기준, 투명은 흰색으로)을 걷고 3:4 가운데 자르기 → 600×800 JPG. 흰 여백이 넓은 상품 사진·정사각형 그림이 섞여 카드 크기가 들쭉날쭉했다. webp 읽기는 TwelveMonkeys `imageio-webp`. 못 읽는 형식은 원본 그대로 올린다. **표지를 올리는 새 경로를 만들면 반드시 이걸 거칠 것**
 - 네이버 검색 API 는 신규 등록에 제휴 신청이 필요했다. 카카오(다음) 이미지 검색은 결과가 뉴스·블로그, 웹 검색은 텀블벅 페이지가 안 잡혀 쓰지 않았다
@@ -545,7 +545,7 @@ kml:
 `/main-menu/options`, `POST/PUT/DELETE /main-menu` 는 URL_RESOURCES 매핑이 없어 **로그인 없이도 메뉴를 만들고 지울 수 있었다**(2026-10-02 발견). 컨트롤러 `requireAdmin` 으로 막고 비관리자는 `ForbiddenException`(403)
 
 ### 운영 nginx (`/etc/nginx/conf.d/default.conf`, 2026-10-02 수정)
-- **맨 위 `map $uri $bgm_spa_route` 가 메인 프론트 라우트 목록이다. 여기 없는 주소는 404**(본문은 index.html 이라 화면은 앱이 그림). `App.tsx` 에 라우트를 추가하면 여기도 추가할 것 — 빠뜨리면 화면은 멀쩡한데 상태코드가 404 라 색인이 안 된다
+- **맨 위 `map $uri $bgm_spa_route` 가 메인 프론트 라우트 목록이다. 여기 없는 주소는 404**(본문은 index.html 이라 화면은 앱이 그림). `App.tsx` 에 라우트를 추가하면 여기도 추가할 것 — 빠뜨리면 화면은 멀쩡한데 상태코드가 404 라 색인이 안 된다. 2026-10-25 에 `holiday`·`reservation-ranking`·`service-request`·`serviceRequestDetail`·`murderCoverBoard`·`clocktower-roles`·`clocktower-grimoire` 를 한꺼번에 넣었다(백업 `default.conf.bak-20261025-095018`)
 - `try_files $uri $uri/index.html @spa` — prerender 가 만든 페이지별 html 을 찾는다
 - `/assets/` 는 1년 immutable 캐시 + 없으면 404, 나머지는 `no-cache`. gzip 켬(예전엔 꺼져 있어 JS 2.5MB 가 그대로 나갔다)
 - 머더 프록시는 `= /murder` + `/murder/` — `location /murder` 로 두면 메인의 `/murder-games` 까지 3002 로 가서 502 가 났다

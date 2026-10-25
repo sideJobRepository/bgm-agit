@@ -7,7 +7,9 @@ import { Fragment, type ReactNode } from 'react';
  */
 export function renderNightText(text?: string | null): ReactNode {
   if (!text) return null;
-  return text.split(':reminder:').map((part, i) => (
+  // 문구 끝에 붙은 :reminder: 처럼 뒤에 내용이 없는 조각은 빈 "▸" 줄만 남기므로 뺀다
+  const parts = text.split(':reminder:').filter((part, i) => i === 0 || part.trim() !== '');
+  return parts.map((part, i) => (
     <Fragment key={i}>
       {i > 0 && (
         <>

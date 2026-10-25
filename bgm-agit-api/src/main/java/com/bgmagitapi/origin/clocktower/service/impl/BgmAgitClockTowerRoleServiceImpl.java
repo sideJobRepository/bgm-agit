@@ -250,6 +250,9 @@ public class BgmAgitClockTowerRoleServiceImpl implements BgmAgitClockTowerRoleSe
                 .remindersGlobal(readList(r.getRemindersGlobal()))
                 .setup("Y".equals(r.getSetup()))
                 .customEdited(r.isCustomEdited())
+                .image(imagesEnabled ? r.getImageUrl() : null)
+                .imageGood(imagesEnabled ? r.getImageGoodUrl() : null)
+                .imageEvil(imagesEnabled ? r.getImageEvilUrl() : null)
                 .build();
     }
 
