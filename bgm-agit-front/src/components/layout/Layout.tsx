@@ -10,6 +10,7 @@ import { useEffect, Suspense } from 'react';
 import { userState } from '../../recoil/state/userState.ts';
 import { getRefreshedUser, restoreAuthSession } from '../../utils/axiosInstance';
 import type { CustomUser } from '../../types/user.ts';
+import { layoutModeState } from '../../recoil/state/layoutState.ts';
 import { Wrapper, Inner, TopArea, NavArea, MainArea, FooterBox } from './Layout.styles.ts';
 
 export default function Layout() {
@@ -17,6 +18,10 @@ export default function Layout() {
   const home = location.pathname === '/';
 
   const isLoading = useRecoilValue(loadingState);
+  // 시계탑 진행판 몰입 모드: 머리·메뉴·푸터·설치 배너를 그리지 않는다(인증 복구는 그대로 여기서 돈다)
+  // 진행판 주소에서만 적용한다 — 정리(cleanup)가 빠져 상태가 남아도 다른 화면 머리가 사라지지 않게
+  const immersive =
+    useRecoilValue(layoutModeState) === 'immersive' && location.pathname.startsWith('/clocktower-grimoire');
 
   const setUser = useSetRecoilState(userState);
 
@@ -48,24 +53,30 @@ export default function Layout() {
   return (
     <Wrapper>
       <Inner>
-        <TopArea>
-          <TopHeader />
-        </TopArea>
-        <NavArea $home={home}>
-          <Nav />
-        </NavArea>
-        <MainArea>
+        {!immersive && (
+          <>
+            <TopArea>
+              <TopHeader />
+            </TopArea>
+            <NavArea $home={home}>
+              <Nav />
+            </NavArea>
+          </>
+        )}
+        <MainArea $immersive={immersive}>
           {isLoading && <Loading />}
           {/* 화면 조각을 받는 동안 머리·메뉴·푸터는 그대로 둔다 */}
           <Suspense fallback={<Loading />}>
             <Outlet />
           </Suspense>
         </MainArea>
-        <FooterBox>
-          <Footer />
-        </FooterBox>
+        {!immersive && (
+          <FooterBox>
+            <Footer />
+          </FooterBox>
+        )}
       </Inner>
-      <InstallBanner />
+      {!immersive && <InstallBanner />}
     </Wrapper>
   );
 }

@@ -7,7 +7,7 @@ import { useClockTowerGameListFetch } from '../recoil/clocktowerFetch.ts';
 import { userState } from '../recoil/state/userState.ts';
 import Pagination from '../components/Pagination.tsx';
 import type { ClockTowerGame } from '../types/clocktower.ts';
-import { Box, Header, TitleBox, CreateButton, SearchRow, CardList, Card, Cover, NoImage, CardBody, CardTitle, Meta, Empty, PaginationWrapper } from './ClockTowerGames.styles.ts';
+import { AdminButtons, Box, Header, TitleBox, CreateButton, SearchRow, CardList, Card, Cover, NoImage, CardBody, CardTitle, Meta, Empty, PaginationWrapper } from './ClockTowerGames.styles.ts';
 
 export function ctPlayersLabel(min?: number | null, max?: number | null) {
   if (!min && !max) return '인원 미정';
@@ -42,8 +42,16 @@ export default function ClockTowerGames() {
             <h2>시계탑 게임</h2>
             <p>보유 중인 시계탑(블러드 온 더 클락타워) 시나리오 목록입니다.</p>
           </TitleBox>
+          {user && (
+            <AdminButtons>
+              <CreateButton onClick={() => navigate('/clocktower-grimoire')}>이야기꾼 진행판</CreateButton>
+            </AdminButtons>
+          )}
           {user?.roles.includes('ROLE_ADMIN') && (
-            <CreateButton onClick={() => navigate('/clockTowerGameDetail')}>게임 등록</CreateButton>
+            <AdminButtons>
+              <CreateButton onClick={() => navigate('/clocktower-roles')}>캐릭터 사전·스크립트 등록</CreateButton>
+              <CreateButton onClick={() => navigate('/clockTowerGameDetail')}>게임 직접 등록</CreateButton>
+            </AdminButtons>
           )}
         </Header>
 

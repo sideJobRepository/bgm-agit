@@ -11,25 +11,19 @@ import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import { ctPlayersLabel } from './ClockTowerGames.tsx';
 import type { ClockTowerCharacterType } from '../types/clocktower.ts';
+import { CT_TYPE_COLOR as TYPE_COLOR, CT_TYPE_OPTIONS as TYPE_OPTIONS } from '../config/clocktower.ts';
 
-const TYPE_OPTIONS: { value: ClockTowerCharacterType; label: string }[] = [
-  { value: 'TOWNSFOLK', label: '마을주민' },
-  { value: 'OUTSIDER', label: '외부인' },
-  { value: 'MINION', label: '하수인' },
-  { value: 'DEMON', label: '악마' },
-];
-
-const TYPE_COLOR: Record<ClockTowerCharacterType, string> = {
-  TOWNSFOLK: '#1565C0',
-  OUTSIDER: '#0097A7',
-  MINION: '#C62828',
-  DEMON: '#6A1B9A',
+const SOURCE_LABEL: Record<string, string> = {
+  OFFICIAL: '공식 기본 스크립트',
+  CUSTOM: '커스텀 스크립트',
 };
 
 interface CharRow {
   name: string;
   type: ClockTowerCharacterType;
   description: string;
+  // 캐릭터 사전에서 온 캐릭터면 그 키. 저장 때 돌려보내야 사전 연결이 유지된다
+  roleKey?: string | null;
 }
 
 export default function ClockTowerGameDetail() {
@@ -72,6 +66,7 @@ export default function ClockTowerGameDetail() {
           name: c.name,
           type: c.type,
           description: c.description ?? '',
+          roleKey: c.roleKey ?? null,
         }))
       );
     }
@@ -99,7 +94,7 @@ export default function ClockTowerGameDetail() {
     }
     const cleanChars = chars
       .filter(c => c.name.trim())
-      .map(c => ({ name: c.name.trim(), type: c.type, description: c.description.trim() }));
+      .map(c => ({ name: c.name.trim(), type: c.type, description: c.description.trim(), roleKey: c.roleKey ?? null }));
 
     const form = new FormData();
     form.append('name', name.trim());
@@ -168,6 +163,11 @@ export default function ClockTowerGameDetail() {
                 <Button $variant="danger" color="#FF5E57" onClick={onDelete}>삭제</Button>
               </>
             )}
+            {user && (
+              <Button $variant="primary" color="#4A2C82" onClick={() => navigate(`/clocktower-grimoire?gameId=${id}`)}>
+                이 스크립트로 진행
+              </Button>
+            )}
             <Button $variant="secondary" color="#988271" onClick={() => navigate('/clocktower-games')}>목록</Button>
           </ButtonRow>
 
@@ -178,6 +178,8 @@ export default function ClockTowerGameDetail() {
           <DetailMeta>
             <span>{ctPlayersLabel(detail?.minPlayers, detail?.maxPlayers)}</span>
             {detail?.playMinutes ? <span>약 {detail.playMinutes}분</span> : null}
+            {detail?.source && SOURCE_LABEL[detail.source] ? <span>{SOURCE_LABEL[detail.source]}</span> : null}
+            {detail?.author ? <span>작성 {detail.author}</span> : null}
           </DetailMeta>
 
           <SectionTitle>캐릭터 ({detail?.characters?.length ?? 0})</SectionTitle>

@@ -1,6 +1,7 @@
 package com.bgmagitapi.origin.clocktower.dto.request;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -21,6 +22,8 @@ public class ClockTowerRecordModifyRequest {
 
     private List<ClockTowerParticipantInput> participants;
 
+    // 진행판의 이야기꾼 메모가 붙는다. 컬럼은 TEXT, 화면도 같은 상한을 둔다
+    @Size(max = 5000, message = "메모는 5000자까지 입력할 수 있습니다.")
     private String memo;
 
     // true 면 임시저장(DRAFT). 결과·캐릭터 미완성 허용, 랭킹·통계 제외.

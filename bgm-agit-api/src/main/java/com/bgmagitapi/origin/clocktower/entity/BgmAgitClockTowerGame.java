@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 /**
  * 시계탑 게임(시나리오) 카탈로그.
  * 캐릭터는 BgmAgitClockTowerCharacter 로 시나리오별 N개.
+ * SOURCE: MANUAL(관리자가 직접 입력) / OFFICIAL(공식 기본 스크립트, 가져오기가 관리) / CUSTOM(스크립트 JSON 으로 등록)
  */
 @Entity
 @Table(name = "BGM_AGIT_CLOCKTOWER_GAME")
@@ -40,6 +41,16 @@ public class BgmAgitClockTowerGame extends DateSuperClass {
     @Column(name = "BGM_AGIT_CLOCKTOWER_USE_STATUS")
     private String useStatus;
 
+    @Column(name = "BGM_AGIT_CLOCKTOWER_GAME_SOURCE")
+    private String source;
+
+    // 공식 기본 스크립트의 판본 키(tb/bmr/snv). 가져오기가 이 값으로 같은 게임을 찾아 갱신한다
+    @Column(name = "BGM_AGIT_CLOCKTOWER_GAME_SCRIPT_KEY")
+    private String scriptKey;
+
+    @Column(name = "BGM_AGIT_CLOCKTOWER_GAME_AUTHOR")
+    private String author;
+
     public BgmAgitClockTowerGame(String name,
                                  Integer minPlayers,
                                  Integer maxPlayers,
@@ -51,6 +62,17 @@ public class BgmAgitClockTowerGame extends DateSuperClass {
         this.playMinutes = playMinutes;
         this.imageUrl = imageUrl;
         this.useStatus = "Y";
+        this.source = "MANUAL";
+    }
+
+    /** 공식 기본 스크립트 / 스크립트 JSON 으로 만드는 게임 */
+    public static BgmAgitClockTowerGame ofScript(String name, String source, String scriptKey, String author,
+                                                 Integer minPlayers, Integer maxPlayers) {
+        BgmAgitClockTowerGame game = new BgmAgitClockTowerGame(name, minPlayers, maxPlayers, null, null);
+        game.source = source;
+        game.scriptKey = scriptKey;
+        game.author = author;
+        return game;
     }
 
     public void update(String name,
@@ -65,6 +87,14 @@ public class BgmAgitClockTowerGame extends DateSuperClass {
 
     public void changeImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public void rename(String name) {
+        this.name = name;
+    }
+
+    public void restore() {
+        this.useStatus = "Y";
     }
 
     public void softDelete() {

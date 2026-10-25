@@ -12,6 +12,7 @@ import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts'
 import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import GameSelect from '../components/GameSelect.tsx';
+import { CT_TYPE_COLOR as TYPE_COLOR, isSeatableType } from '../config/clocktower.ts';
 import type {
   ClockTowerCharacter,
   ClockTowerCharacterType,
@@ -29,14 +30,17 @@ function todayStr() {
   return `${d.getFullYear()}-${m}-${day}`;
 }
 
-const TYPE_COLOR: Record<ClockTowerCharacterType, string> = {
-  TOWNSFOLK: '#1565C0',
-  OUTSIDER: '#0097A7',
-  MINION: '#C62828',
-  DEMON: '#6A1B9A',
-};
-
 const STORYTELLER_NAME = '이야기꾼';
+/** 메모 상한(서버 @Size·DB TEXT 와 같은 값) */
+const MEMO_MAX = 5000;
+
+/** 참가자의 최종 선악. 진행판이 남긴 evil 이 우선이고, 없으면 캐릭터 진영(여행자·미정은 null) */
+function sideOf(p: { evil?: boolean | null }, type: ClockTowerCharacterType | null | undefined): boolean | null {
+  if (p.evil != null) return p.evil;
+  if (type === 'MINION' || type === 'DEMON') return true;
+  if (type === 'TOWNSFOLK' || type === 'OUTSIDER') return false;
+  return null;
+}
 
 /** 검색형 캐릭터 선택 (BML 입력처럼 검색 + 선택). value: 'ST'=이야기꾼, ''=미선택, 숫자=캐릭터 id */
 function CharacterSelect({
@@ -98,6 +102,7 @@ function CharacterSelect({
     { value: 'OUTSIDER', label: '외부인' },
     { value: 'MINION', label: '하수인' },
     { value: 'DEMON', label: '악마' },
+    { value: 'TRAVELLER', label: '여행자' },
   ];
 
   return (
@@ -161,6 +166,8 @@ interface PartRow {
   characterId: number | '';
   storyteller: boolean;
   characterName?: string | null; // 수정 진입 시 스냅샷 이름 (roster 도착 후 id 매칭용)
+  characterType?: ClockTowerCharacterType | null; // 스냅샷 진영(같은 이름 캐릭터가 여럿일 때 구분)
+  evil?: boolean | null; // 진행판이 남긴 최종 선악. 이 화면에선 고치지 않고 그대로 돌려보낸다
 }
 
 export default function ClockTowerRecordDetail() {
@@ -227,6 +234,8 @@ export default function ClockTowerRecordDetail() {
           characterId: '',
           storyteller: p.characterName === STORYTELLER_NAME,
           characterName: p.characterName,
+          characterType: p.type ?? null,
+          evil: p.evil ?? null,
         }))
       );
     }
@@ -252,17 +261,20 @@ export default function ClockTowerRecordDetail() {
     }
     api
       .get(`/bgm-agit/clocktower-games/${gameId}`)
-      .then(res => setRoster((res.data as ClockTowerGame).characters ?? []))
+      // 전설·로릭은 이야기꾼 규칙이라 참가자가 맡지 않는다
+      .then(res => setRoster(((res.data as ClockTowerGame).characters ?? []).filter(c => isSeatableType(c.type))))
       .catch(() => setRoster([]));
   }, [gameId]);
 
   // 로스터 도착 후, 수정 진입 스냅샷 이름 → characterId 매칭 (진행자 제외)
+  // 기록엔 캐릭터 id 가 없고 이름·진영 스냅샷만 남는다. 이름이 같은 캐릭터가 있으면 진영까지 맞는 것을 쓴다
   useEffect(() => {
     if (roster.length === 0) return;
     setParts(prev =>
       prev.map(p => {
         if (p.storyteller || p.characterId !== '' || !p.characterName) return p;
-        const found = roster.find(c => c.name === p.characterName);
+        const sameName = roster.filter(c => c.name === p.characterName);
+        const found = sameName.find(c => c.type === p.characterType) ?? sameName[0];
         return found ? { ...p, characterId: found.id } : p;
       })
     );
@@ -354,8 +366,9 @@ export default function ClockTowerRecordDetail() {
       prev.map(p =>
         p.memberId === memberId
           ? value === 'ST'
-            ? { ...p, storyteller: true, characterId: '' }
-            : { ...p, storyteller: false, characterId: value === '' ? '' : Number(value) }
+            ? { ...p, storyteller: true, characterId: '', evil: null }
+            : // 캐릭터를 바꾸면 진행판이 남긴 선악도 의미가 없어지므로 캐릭터 진영대로 돌린다
+              { ...p, storyteller: false, characterId: value === '' ? '' : Number(value), evil: null }
           : p
       )
     );
@@ -384,6 +397,7 @@ export default function ClockTowerRecordDetail() {
       toast.error('플레이 날짜를 선택해주세요.');
       return;
     }
+    let winnerWarning = '';
     // 완료 저장만 엄격 검증(임시저장은 미완성 허용)
     if (!draft) {
       if (!result) {
@@ -397,21 +411,18 @@ export default function ClockTowerRecordDetail() {
         toast.error(`${names}${more} 님의 캐릭터(또는 이야기꾼)를 선택해주세요.`);
         return;
       }
-      // 결과 ↔ 진영 정합성: 이긴 진영의 캐릭터가 최소 1명 있어야 함
-      const playerTypes = parts
+      // 결과 ↔ 진영 정합성은 경고만 한다. 기록엔 회원만 남아서(손님 제외) 악 진영이 모두 손님이면 정상 게임도 0명이 된다
+      const sides = parts
         .filter(p => !p.storyteller && p.characterId !== '')
-        .map(p => roster.find(c => c.id === p.characterId)?.type)
-        .filter((t): t is ClockTowerCharacterType => !!t);
-      const hasEvil = playerTypes.some(t => t === 'MINION' || t === 'DEMON');
-      const hasGood = playerTypes.some(t => t === 'TOWNSFOLK' || t === 'OUTSIDER');
-      if (result === 'EVIL_WIN' && !hasEvil) {
-        toast.error('악 진영(하수인/악마) 캐릭터가 한 명도 없어 악마승으로 저장할 수 없습니다.');
-        return;
+        .map(p => sideOf(p, roster.find(c => c.id === p.characterId)?.type));
+      const winnerEvil = result === 'EVIL_WIN';
+      if (!sides.some(e => e === winnerEvil)) {
+        winnerWarning = `기록에 ${winnerEvil ? '악' : '선'} 진영 회원이 한 명도 없습니다(손님만 있었거나 캐릭터를 잘못 고른 경우). `;
       }
-      if (result === 'GOOD_WIN' && !hasGood) {
-        toast.error('선 진영(마을주민/외부인) 캐릭터가 한 명도 없어 선인승으로 저장할 수 없습니다.');
-        return;
-      }
+    }
+    if (memo.length > MEMO_MAX) {
+      toast.error(`메모는 ${MEMO_MAX}자까지 입력할 수 있습니다.`);
+      return;
     }
 
     const body = {
@@ -424,11 +435,12 @@ export default function ClockTowerRecordDetail() {
         memberId: p.memberId,
         characterId: p.storyteller || p.characterId === '' ? null : Number(p.characterId),
         storyteller: p.storyteller,
+        evil: p.storyteller ? null : (p.evil ?? null),
       })),
     };
 
     showConfirmModal({
-      message: draft ? '임시저장하시겠습니까?' : '저장하시겠습니까?',
+      message: `${winnerWarning}${draft ? '임시저장하시겠습니까?' : '저장하시겠습니까?'}`,
       onConfirm: () => {
         if (id) {
           update({
@@ -659,7 +671,14 @@ export default function ClockTowerRecordDetail() {
 
         <Field>
           <label>메모 (선택)</label>
-          <textarea value={memo} onChange={e => setMemo(e.target.value)} rows={3} placeholder="간단한 메모" />
+          <textarea
+            value={memo}
+            onChange={e => setMemo(e.target.value)}
+            rows={3}
+            placeholder="간단한 메모"
+            maxLength={MEMO_MAX}
+          />
+          <Hint>{MEMO_MAX - memo.length}자 남음</Hint>
         </Field>
 
         <ButtonRow>

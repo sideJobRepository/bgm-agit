@@ -41,7 +41,8 @@ public class BgmAgitClockTowerRecord extends DateSuperClass {
     @Enumerated(EnumType.STRING)
     private ClockTowerResult result;
 
-    @Column(name = "BGM_AGIT_CLOCKTOWER_RECORD_MEMO")
+    // 진행판이 이야기꾼 메모를 붙여 보내 길어질 수 있다(예전 varchar(100) 은 저장 실패를 냈다)
+    @Column(name = "BGM_AGIT_CLOCKTOWER_RECORD_MEMO", columnDefinition = "TEXT")
     private String memo;
 
     // 임시저장 여부: TRUE=임시저장(랭킹·통계 제외), FALSE/NULL=완료

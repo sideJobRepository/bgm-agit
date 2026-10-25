@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
  * 시계탑 세션 참가자: 세션당 회원 1행.
  * 캐릭터명·역할군은 기록 시점의 스냅샷(시나리오 캐릭터 목록이 바뀌어도 과거 기록 불변).
  * 개인 승패 = 역할군 팀(선/악)이 세션 결과와 일치하면 승.
+ * EVIL(Y/N) 이 있으면 역할군보다 우선한다 — 게임 중 진영이 바뀐 경우(뱀 부리는 사람 등)·여행자.
  */
 @Entity
 @Table(name = "BGM_AGIT_CLOCKTOWER_PARTICIPANT")
@@ -39,13 +40,28 @@ public class BgmAgitClockTowerParticipant extends DateSuperClass {
     @Enumerated(EnumType.STRING)
     private ClockTowerCharacterType characterType;
 
+    // 최종 선악 Y/N. null 이면 역할군대로 판정
+    @Column(name = "BGM_AGIT_CLOCKTOWER_PARTICIPANT_EVIL")
+    private String evil;
+
     public BgmAgitClockTowerParticipant(BgmAgitClockTowerRecord record,
                                         BgmAgitMember bgmAgitMember,
                                         String characterName,
-                                        ClockTowerCharacterType characterType) {
+                                        ClockTowerCharacterType characterType,
+                                        Boolean evil) {
         this.record = record;
         this.bgmAgitMember = bgmAgitMember;
         this.characterName = characterName;
         this.characterType = characterType;
+        this.evil = evil == null ? null : (evil ? "Y" : "N");
+    }
+
+    /** 최종 선악. 직접 지정이 우선, 없으면 역할군(여행자·전설 등 선악이 정해지지 않은 역할군은 null) */
+    public Boolean resolveEvil() {
+        if (evil != null) return "Y".equals(evil);
+        if (characterType == null || characterType == ClockTowerCharacterType.TRAVELLER || !characterType.isSeatable()) {
+            return null;
+        }
+        return characterType.isEvil();
     }
 }

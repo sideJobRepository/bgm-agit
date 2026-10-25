@@ -11,6 +11,7 @@ import com.bgmagitapi.origin.clocktower.entity.BgmAgitClockTowerGame;
 import com.bgmagitapi.origin.clocktower.repository.BgmAgitClockTowerCharacterRepository;
 import com.bgmagitapi.origin.clocktower.repository.BgmAgitClockTowerGameRepository;
 import com.bgmagitapi.origin.clocktower.repository.BgmAgitClockTowerRecordRepository;
+import com.bgmagitapi.origin.clocktower.repository.BgmAgitClockTowerRoleRepository;
 import com.bgmagitapi.origin.clocktower.service.BgmAgitClockTowerGameService;
 import com.bgmagitapi.origin.config.S3FileUtils;
 import com.bgmagitapi.origin.config.UploadResult;
@@ -38,6 +39,7 @@ public class BgmAgitClockTowerGameServiceImpl implements BgmAgitClockTowerGameSe
     private final BgmAgitClockTowerGameRepository gameRepository;
     private final BgmAgitClockTowerCharacterRepository characterRepository;
     private final BgmAgitClockTowerRecordRepository recordRepository;
+    private final BgmAgitClockTowerRoleRepository roleRepository;
     private final S3FileUtils s3FileUtils;
     private final ObjectMapper objectMapper;
 
@@ -119,6 +121,7 @@ public class BgmAgitClockTowerGameServiceImpl implements BgmAgitClockTowerGameSe
             return new ApiResponse(200, true, "플레이 기록이 있어 목록에서만 숨겼습니다.");
         }
         characterRepository.deleteByGame_Id(id);
+        roleRepository.deleteByGameId(id); // 이 스크립트 전용 자작 캐릭터
         deleteImageIfPresent(game.getImageUrl());
         gameRepository.delete(game);
         return new ApiResponse(200, true, "게임이 삭제되었습니다.");
@@ -133,7 +136,8 @@ public class BgmAgitClockTowerGameServiceImpl implements BgmAgitClockTowerGameSe
             if (in == null || !StringUtils.hasText(in.getName())) continue;
             ClockTowerCharacterType type = parseType(in.getType());
             characterRepository.save(new BgmAgitClockTowerCharacter(
-                    game, in.getName().trim(), type, in.getDescription(), order++));
+                    game, in.getName().trim(), type, in.getDescription(), order++,
+                    StringUtils.hasText(in.getRoleKey()) ? in.getRoleKey().trim() : null));
         }
     }
 

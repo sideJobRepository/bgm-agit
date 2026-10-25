@@ -224,3 +224,13 @@ export const PaginationWrapper = styled.div`
   text-align: center;
   margin-top: ${theme.space.xl};
 `;
+
+export const AdminButtons = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${theme.space.sm};
+
+  @media ${theme.device.mobile} {
+    flex-direction: column;
+  }
+`;
