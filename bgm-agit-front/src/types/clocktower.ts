@@ -118,6 +118,9 @@ export interface ClockTowerRole {
   remindersGlobal: string[];
   setup: boolean;
   customEdited: boolean;
+  image?: string | null;
+  imageGood?: string | null;
+  imageEvil?: string | null;
 }
 
 export interface ClockTowerImportResult {

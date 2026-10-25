@@ -10,6 +10,7 @@ import api from '../utils/axiosInstance.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import { CT_TYPE_COLOR, CT_TYPE_OPTIONS } from '../config/clocktower.ts';
 import { renderNightText } from '../utils/clocktowerText.tsx';
+import RoleArt from '../components/clocktower/grimoire/RoleArt.tsx';
 import type {
   ClockTowerCharacterType,
   ClockTowerImageStatus,
@@ -493,6 +494,17 @@ export default function ClockTowerRoles() {
             {roles.map(r => (
               <Item key={r.id}>
                 <ItemHead type="button" onClick={() => openEdit(r)}>
+                  {/* 캐릭터 기본 진영 그림(악마·하수인은 악, 나머지는 선/무진영). 복사 전이면 안 그린다 */}
+                  <RoleArt
+                    urls={[
+                      ...(r.team === 'DEMON' || r.team === 'MINION' ? [r.imageEvil] : [r.imageGood]),
+                      r.image,
+                      r.imageGood,
+                      r.imageEvil,
+                    ].filter((u): u is string => !!u)}
+                    alt={r.name}
+                    size={40}
+                  />
                   {r.team && <TypeTag $color={CT_TYPE_COLOR[r.team]}>{r.teamName}</TypeTag>}
                   <ItemName>{r.name}</ItemName>
                   <ItemEn>{r.nameEn}</ItemEn>
