@@ -1,5 +1,5 @@
 import { Wrapper } from '../styles';
-import { CharImg, Box, ButtonRow, Button, Cover, NoImage, DetailTitle, DetailMeta, SectionTitle, CharViewList, CharViewItem, CharHead, CharName, TypeTag, CharDesc, FormTitle, Row, Field, FileRow, FileButton, FileName, PreviewBox, CheckLine, CharEditList, CharEditRow, CharLineTop, RemoveBtn, AddBtn, Empty } from './ClockTowerGameDetail.styles.ts';
+import { SheetSummary, DistTable, SheetTotal, TeamSection, TeamHeader, SheetGrid, SheetCard, SheetIcon, SheetBody, Box, ButtonRow, Button, Cover, NoImage, DetailTitle, DetailMeta, SectionTitle, FormTitle, Row, Field, FileRow, FileButton, FileName, PreviewBox, CheckLine, CharEditList, CharEditRow, CharLineTop, RemoveBtn, AddBtn, Empty } from './ClockTowerGameDetail.styles.ts';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
@@ -11,6 +11,7 @@ import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts'
 import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import { ctPlayersLabel } from './ClockTowerGames.tsx';
+import { BASE_TEAMS, MAX_BASE_PLAYERS, expectedCounts } from '../components/clocktower/grimoire/grimoireRules.ts';
 import type { ClockTowerCharacterType } from '../types/clocktower.ts';
 import { CT_TYPE_COLOR as TYPE_COLOR, CT_TYPE_OPTIONS as TYPE_OPTIONS } from '../config/clocktower.ts';
 
@@ -186,22 +187,79 @@ export default function ClockTowerGameDetail() {
             {detail?.author ? <span>작성 {detail.author}</span> : null}
           </DetailMeta>
 
-          <SectionTitle>캐릭터 ({detail?.characters?.length ?? 0})</SectionTitle>
+          <SectionTitle style={{ display: 'flex', alignItems: 'baseline' }}>
+            참여 캐릭터 <SheetTotal>총 {detail?.characters?.length ?? 0}명</SheetTotal>
+          </SectionTitle>
+          {(detail?.characters?.length ?? 0) > 0 && (
+            <>
+              {/* 이 스크립트에 든 진영별 캐릭터 수 */}
+              <SheetSummary>
+                {TYPE_OPTIONS.map(t => {
+                  const n = (detail?.characters ?? []).filter(ch => ch.type === t.value).length;
+                  return n ? (
+                    <span key={t.value} style={{ color: TYPE_COLOR[t.value] }}>
+                      {t.label} <b>{n}</b>
+                    </span>
+                  ) : null;
+                })}
+              </SheetSummary>
+              {/* 인원별 배정(공식 분배표). 게임 인원 범위만, 없으면 5~15명 */}
+              <DistTable>
+                <thead>
+                  <tr>
+                    <th>인원</th>
+                    {BASE_TEAMS.map(t => (
+                      <th key={t} style={{ color: TYPE_COLOR[t] }}>
+                        {TYPE_OPTIONS.find(o => o.value === t)?.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: MAX_BASE_PLAYERS - 4 }, (_, i) => i + 5)
+                    .filter(n => n >= Math.max(5, detail?.minPlayers ?? 5) && n <= Math.min(MAX_BASE_PLAYERS, detail?.maxPlayers ?? MAX_BASE_PLAYERS))
+                    .map(n => {
+                      const cnt = expectedCounts(n);
+                      return (
+                        <tr key={n}>
+                          <td>{n}명</td>
+                          {BASE_TEAMS.map(t => (
+                            <td key={t}>{cnt?.[t]}</td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </DistTable>
+            </>
+          )}
           {(detail?.characters?.length ?? 0) === 0 ? (
             <Empty>등록된 캐릭터가 없습니다.</Empty>
           ) : (
-            <CharViewList>
-              {detail?.characters?.map(c => (
-                <CharViewItem key={c.id}>
-                  <CharHead>
-                    {c.image && <CharImg src={c.image} alt="" loading="lazy" decoding="async" />}
-                    <CharName>{c.name}</CharName>
-                    <TypeTag color={TYPE_COLOR[c.type]}>{c.typeName}</TypeTag>
-                  </CharHead>
-                  {c.description && <CharDesc>{c.description}</CharDesc>}
-                </CharViewItem>
-              ))}
-            </CharViewList>
+            // 진영별로 묶어 여러 칸으로(진영 이름·색은 제목줄에 있어 카드에는 안 넣는다)
+            TYPE_OPTIONS.map(t => {
+              const list = (detail?.characters ?? []).filter(ch => ch.type === t.value);
+              if (list.length === 0) return null;
+              return (
+                <TeamSection key={t.value}>
+                  <TeamHeader color={TYPE_COLOR[t.value]}>
+                    {t.label}
+                    <small>{list.length}</small>
+                  </TeamHeader>
+                  <SheetGrid>
+                    {list.map(ch => (
+                      <SheetCard key={ch.id} color={TYPE_COLOR[ch.type]}>
+                        <SheetIcon>{ch.image && <img src={ch.image} alt="" loading="lazy" decoding="async" />}</SheetIcon>
+                        <SheetBody>
+                          <strong>{ch.name}</strong>
+                          {ch.description && <p>{ch.description}</p>}
+                        </SheetBody>
+                      </SheetCard>
+                    ))}
+                  </SheetGrid>
+                </TeamSection>
+              );
+            })
           )}
         </Box>
       </Wrapper>

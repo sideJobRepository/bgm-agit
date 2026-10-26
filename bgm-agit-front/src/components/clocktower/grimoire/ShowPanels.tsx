@@ -71,7 +71,7 @@ export function BluffPanel({
           </Btn>
         </SheetHead>
         <Hint>
-          게임에 없는 마을주민 2 + 외부인 1을 뽑습니다(외부인이 모자라면 마을주민). 캐릭터 배정을 끝낸 뒤에 뽑으세요.
+          게임에 없는 마을주민 2 + 외지인 1을 뽑습니다(외지인이 모자라면 마을주민). 캐릭터 배정을 끝낸 뒤에 뽑으세요.
         </Hint>
         {!evilInfo && (
           <Hint style={{ color: 'var(--ct-evil)' }}>

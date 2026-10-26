@@ -3,7 +3,7 @@ import type { ClockTowerCharacterType } from '../types/clocktower.ts';
 // 시계탑 진영 표시 규칙(이름·색·순서). 게임 상세·사전 관리·마도서가 같이 쓴다
 export const CT_TYPE_OPTIONS: { value: ClockTowerCharacterType; label: string }[] = [
   { value: 'TOWNSFOLK', label: '마을주민' },
-  { value: 'OUTSIDER', label: '외부인' },
+  { value: 'OUTSIDER', label: '외지인' },
   { value: 'MINION', label: '하수인' },
   { value: 'DEMON', label: '악마' },
   { value: 'TRAVELLER', label: '여행자' },

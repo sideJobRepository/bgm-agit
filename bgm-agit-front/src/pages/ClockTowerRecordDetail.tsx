@@ -102,7 +102,7 @@ function CharacterSelect({
   const TYPE_FILTERS: { value: ClockTowerCharacterType | 'ALL'; label: string }[] = [
     { value: 'ALL', label: '전체' },
     { value: 'TOWNSFOLK', label: '마을주민' },
-    { value: 'OUTSIDER', label: '외부인' },
+    { value: 'OUTSIDER', label: '외지인' },
     { value: 'MINION', label: '하수인' },
     { value: 'DEMON', label: '악마' },
     { value: 'TRAVELLER', label: '여행자' },

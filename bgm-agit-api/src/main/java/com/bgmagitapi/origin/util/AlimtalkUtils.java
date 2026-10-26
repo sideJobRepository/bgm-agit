@@ -399,7 +399,7 @@ public class AlimtalkUtils {
      * @param nickname 수신자 닉네임
      * @param gameName 게임(스크립트) 이름
      * @param roleName 보여줄 캐릭터 이름(주정뱅이 등은 믿는 캐릭터)
-     * @param teamName 그 캐릭터의 종류(마을주민·외부인·하수인·악마·여행자)
+     * @param teamName 그 캐릭터의 종류(마을주민·외지인·하수인·악마·여행자)
      */
     public static String buildClockTowerRoleMessage(String nickname, String gameName, String roleName, String teamName) {
         return new StringBuilder()

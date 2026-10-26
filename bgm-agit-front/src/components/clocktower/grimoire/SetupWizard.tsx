@@ -291,7 +291,7 @@ export default function SetupWizard({
             <Warn>
               셋업을 바꾸는 캐릭터가 있어 추천 수를 바꿨습니다
               {baseExpected && expected
-                ? ` (기본 마을주민 ${baseExpected.TOWNSFOLK}·외부인 ${baseExpected.OUTSIDER}·하수인 ${baseExpected.MINION} → ${expected.TOWNSFOLK}·${expected.OUTSIDER}·${expected.MINION})`
+                ? ` (기본 마을주민 ${baseExpected.TOWNSFOLK}·외지인 ${baseExpected.OUTSIDER}·하수인 ${baseExpected.MINION} → ${expected.TOWNSFOLK}·${expected.OUTSIDER}·${expected.MINION})`
                 : ''}
               . 분배표와 달라도 넘어갈 수 있습니다.
               {setupRoles.map(r => {
@@ -336,7 +336,7 @@ export default function SetupWizard({
         <Body>
           {needBluffs ? (
             <Hint>
-              악마에게 알려 줄, 게임에 없는 선한 캐릭터 {BLUFF_COUNT}개입니다(보통 마을주민 2 + 외부인 1). 주머니에 넣은 캐릭터와
+              악마에게 알려 줄, 게임에 없는 선한 캐릭터 {BLUFF_COUNT}개입니다(보통 마을주민 2 + 외지인 1). 주머니에 넣은 캐릭터와
               믿는 캐릭터는 고를 수 없습니다.
             </Hint>
           ) : (

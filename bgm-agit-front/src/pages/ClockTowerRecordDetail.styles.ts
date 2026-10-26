@@ -225,7 +225,7 @@ export const PartChar = styled.span<WithTheme>`
   color: ${c.navColor};
 `;
 
-// 캐릭터 타입색(마을주민·외부인·하수인·악마). 의미를 담은 색이라 tsx 값 그대로
+// 캐릭터 타입색(마을주민·외지인·하수인·악마). 의미를 담은 색이라 tsx 값 그대로
 export const TypeTag = styled.span.withConfig({ shouldForwardProp: p => p !== 'color' })<{ color: string }>`
   ${badgeStyle('primary')};
   padding: 1px 8px;

@@ -14,7 +14,7 @@ import type {
 } from '../../../types/clocktower.ts';
 import { newSeatId } from './useGrimoire.ts';
 
-/** 공식 인원별 진영 수(여행자 제외 인원 기준). [마을주민, 외부인, 하수인, 악마] */
+/** 공식 인원별 진영 수(여행자 제외 인원 기준). [마을주민, 외지인, 하수인, 악마] */
 const DISTRIBUTION: Record<number, [number, number, number, number]> = {
   5: [3, 0, 1, 1],
   6: [3, 1, 1, 1],

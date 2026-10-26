@@ -30,7 +30,7 @@ export function isDealt(state: GrimoireState, roles: Map<string, GrimoireRole>) 
 // 여기서는 믿는 캐릭터를 같이 정해 두므로 고를 수 있게 한다. 릴 몬스타는 좌석 캐릭터가 아니라 뺀다
 const BELIEVED_IN_BAG = new Set(['drunk', 'marionette']);
 
-/** 주머니에 넣을 수 있는 캐릭터(마을주민·외부인·하수인·악마) */
+/** 주머니에 넣을 수 있는 캐릭터(마을주민·외지인·하수인·악마) */
 export function bagChoices(data: GrimoireData): GrimoireRole[] {
   return data.roles.filter(r => isBaseTeam(r.team) && (!isBagDisabled(r) || BELIEVED_IN_BAG.has(r.key)));
 }
@@ -76,8 +76,8 @@ export function fillBelieved(bag: GrimoireBagEntry[], data: GrimoireData): Grimo
 }
 
 /**
- * 셋업을 바꾸는 캐릭터(남작 등)가 진영 수를 얼마나 바꾸는지. 늘어난 외부인·하수인만큼 마을주민이 준다.
- * 선택지가 여럿이면 이야기꾼이 고른다(대부는 외부인 +1 또는 -1 등). 근거: 각 캐릭터 능력 문구의 [괄호] 셋업 규칙
+ * 셋업을 바꾸는 캐릭터(남작 등)가 진영 수를 얼마나 바꾸는지. 늘어난 외지인·하수인만큼 마을주민이 준다.
+ * 선택지가 여럿이면 이야기꾼이 고른다(대부는 외지인 +1 또는 -1 등). 근거: 각 캐릭터 능력 문구의 [괄호] 셋업 규칙
  */
 export const SETUP_MODIFIERS: Record<string, { label: string; outsider: number; minion: number; demon?: number }[]> = {
   // 기본 3종(점철되는 혼란·피로 물든 달·화단에 꽃피운 이단)
@@ -134,7 +134,7 @@ export function adjustedCounts(players: number, bag: GrimoireBagEntry[]): { coun
 
 /**
  * 추천 수에서 모자란 진영만 무작위로 채운다. 이야기꾼이 이미 고른 캐릭터는 그대로 둔다.
- * 악마·하수인을 먼저 뽑는다 — 남작 같은 셋업 캐릭터가 뽑히면 외부인·마을주민 수가 바뀌기 때문이다.
+ * 악마·하수인을 먼저 뽑는다 — 남작 같은 셋업 캐릭터가 뽑히면 외지인·마을주민 수가 바뀌기 때문이다.
  */
 export function fillBagRandom(
   bag: GrimoireBagEntry[],
@@ -168,7 +168,7 @@ export function bagProblems(bag: GrimoireBagEntry[], targets: number, roles: Map
 }
 
 /**
- * 악마의 속임수: 게임에 없는 선한 캐릭터 3개. 마을주민 2 + 외부인 1(RB p.25 권장), 외부인이 모자라면 마을주민.
+ * 악마의 속임수: 게임에 없는 선한 캐릭터 3개. 마을주민 2 + 외지인 1(RB p.25 권장), 외지인이 모자라면 마을주민.
  * pickBluffs 와 같은 규칙인데 좌석이 아니라 주머니를 본다(아직 아무도 앉지 않았다).
  */
 export function pickBluffsFromBag(bag: GrimoireBagEntry[], data: GrimoireData): string[] {
@@ -179,7 +179,7 @@ export function pickBluffsFromBag(bag: GrimoireBagEntry[], data: GrimoireData): 
   return shuffle([...pool('TOWNSFOLK').slice(0, 3 - outsiders.length), ...outsiders]).map(r => r.key);
 }
 
-/** 악마의 속임수로 고를 수 있는 캐릭터(주머니에 없는 마을주민·외부인) */
+/** 악마의 속임수로 고를 수 있는 캐릭터(주머니에 없는 마을주민·외지인) */
 export function bluffChoices(bag: GrimoireBagEntry[], data: GrimoireData): GrimoireRole[] {
   const used = usedKeys(bag);
   return data.roles.filter(
