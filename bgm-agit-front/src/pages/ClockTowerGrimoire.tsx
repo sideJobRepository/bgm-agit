@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import { userState } from '../recoil/state/userState.ts';
@@ -183,11 +184,32 @@ function useElementWidth(el: HTMLElement | null) {
   return width;
 }
 
-function seatPosition(i: number, total: number) {
+/** 원형 기본 자리(원 안 %, 위에서 시계 방향) */
+function seatPoint(i: number, total: number) {
   const angle = (2 * Math.PI * i) / total;
   const radius = 41;
-  return { left: `${50 + radius * Math.sin(angle)}%`, top: `${50 - radius * Math.cos(angle)}%` };
+  return { x: 50 + radius * Math.sin(angle), y: 50 - radius * Math.cos(angle) };
 }
+
+// 이만큼 움직여야 끌기로 본다(태블릿에서 누르다 손가락이 조금 밀려도 좌석 메뉴가 열리게)
+const DRAG_THRESHOLD = 8;
+const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+type DragState =
+  | { kind: 'seat'; seatId: string; pointerId: number; sx: number; sy: number; ox: number; oy: number; moved: boolean; x: number; y: number }
+  | {
+      kind: 'reminder';
+      seatId: string;
+      reminderId: string;
+      pointerId: number;
+      sx: number;
+      sy: number;
+      ox: number;
+      oy: number;
+      moved: boolean;
+      x: number;
+      y: number;
+    };
 
 /**
  * 이야기꾼 마도서(그리모어). 좌석은 어디서나 원형이고, 세로·좁은 화면은 오른쪽 패널이 원 아래로 내려간다.
@@ -239,6 +261,8 @@ export default function ClockTowerGrimoire() {
   const [swapMode, setSwapMode] = useState(false);
   const [swapFrom, setSwapFrom] = useState<string | null>(null);
   const [circleEl, setCircleEl] = useState<HTMLDivElement | null>(null);
+  // 끌고 있는 토큰·리마인더(놓을 때 한 번만 저장한다 — 움직일 때마다 저장하면 되돌리기 기록이 넘친다)
+  const [drag, setDrag] = useState<DragState | null>(null);
   const circleWidth = useElementWidth(circleEl);
 
   useWakeLock(!!state);
@@ -352,7 +376,8 @@ export default function ClockTowerGrimoire() {
       const list = [...prev.seats];
       const i = list.findIndex(s => s.id === seatId);
       const to = (i + dir + list.length) % list.length;
-      [list[i], list[to]] = [list[to], list[i]];
+      const [pi, pt] = [list[i].pos ?? null, list[to].pos ?? null];
+      [list[i], list[to]] = [{ ...list[to], pos: pi }, { ...list[i], pos: pt }];
       return { ...prev, seats: list };
     });
 
@@ -363,7 +388,8 @@ export default function ClockTowerGrimoire() {
       const i = list.findIndex(s => s.id === a);
       const j = list.findIndex(s => s.id === b);
       if (i < 0 || j < 0) return prev;
-      [list[i], list[j]] = [list[j], list[i]];
+      const [pi, pj] = [list[i].pos ?? null, list[j].pos ?? null];
+      [list[i], list[j]] = [{ ...list[j], pos: pi }, { ...list[i], pos: pj }];
       return { ...prev, seats: list };
     });
 
@@ -711,6 +737,71 @@ export default function ClockTowerGrimoire() {
   };
 
   const tokenSize = seatTokenSize(circleWidth, seats.length);
+
+  /** 좌석이 지금 그려질 위치(끌고 있으면 끄는 위치, 옮겨 둔 위치, 기본 원형 순) */
+  const seatAt = (seat: GrimoireSeat, i: number) =>
+    drag?.kind === 'seat' && drag.seatId === seat.id && drag.moved
+      ? { x: drag.x, y: drag.y }
+      : (seat.pos ?? seatPoint(i, seats.length));
+
+  const startSeatDrag = (e: ReactPointerEvent, seat: GrimoireSeat, i: number) => {
+    // 낮 화면(플레이어가 보는 화면)·자리 바꾸기 중에는 끌지 않는다
+    if (dayView || swapping || e.button !== 0) return;
+    const p = seat.pos ?? seatPoint(i, seats.length);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDrag({ kind: 'seat', seatId: seat.id, pointerId: e.pointerId, sx: e.clientX, sy: e.clientY, ox: p.x, oy: p.y, moved: false, x: p.x, y: p.y });
+  };
+
+  const startReminderDrag = (e: ReactPointerEvent, seat: GrimoireSeat, reminderId: string, dx: number, dy: number) => {
+    if (dayView || e.button !== 0) return;
+    // 좌석 토큰 끌기로 번지지 않게
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDrag({ kind: 'reminder', seatId: seat.id, reminderId, pointerId: e.pointerId, sx: e.clientX, sy: e.clientY, ox: dx, oy: dy, moved: false, x: dx, y: dy });
+  };
+
+  const moveDrag = (e: ReactPointerEvent) => {
+    if (!drag || drag.pointerId !== e.pointerId) return;
+    const ddx = e.clientX - drag.sx;
+    const ddy = e.clientY - drag.sy;
+    if (!drag.moved && Math.hypot(ddx, ddy) < DRAG_THRESHOLD) return;
+    if (drag.kind === 'seat') {
+      const w = circleWidth || 1;
+      setDrag({ ...drag, moved: true, x: clamp(drag.ox + (ddx / w) * 100, 4, 96), y: clamp(drag.oy + (ddy / w) * 100, 4, 96) });
+    } else {
+      setDrag({ ...drag, moved: true, x: clamp(drag.ox + ddx / tokenSize, -2.5, 2.5), y: clamp(drag.oy + ddy / tokenSize, -2.5, 2.5) });
+    }
+  };
+
+  /** 놓을 때: 움직였으면 위치를 저장하고(되돌리기 가능), 안 움직였으면 누른 것으로 본다(좌석 메뉴) */
+  const endDrag = (e: ReactPointerEvent) => {
+    if (!drag || drag.pointerId !== e.pointerId) return;
+    const d = drag;
+    setDrag(null);
+    if (!d.moved) {
+      onSeatClick(d.seatId);
+      return;
+    }
+    if (d.kind === 'seat') {
+      update(prev => ({ ...prev, seats: prev.seats.map(s => (s.id === d.seatId ? { ...s, pos: { x: d.x, y: d.y } } : s)) }));
+    } else {
+      update(prev => ({
+        ...prev,
+        seats: prev.seats.map(s =>
+          s.id === d.seatId
+            ? { ...s, reminders: s.reminders.map(r => (r.id === d.reminderId ? { ...r, pos: { dx: d.x, dy: d.y } } : r)) }
+            : s
+        ),
+      }));
+    }
+  };
+
+  const hasCustomPositions = seats.some(s => s.pos || s.reminders.some(r => r.pos));
+  const resetPositions = () =>
+    update(prev => ({
+      ...prev,
+      seats: prev.seats.map(s => ({ ...s, pos: null, reminders: s.reminders.map(r => ({ ...r, pos: null })) })),
+    }));
   // 리마인더는 좌석 토큰보다 조금 작게(포켓 그리모어 비율)
   const reminderSize = Math.max(36, Math.round(tokenSize * 0.64));
 
@@ -728,27 +819,37 @@ export default function ClockTowerGrimoire() {
       ...seat.reminders.map(m => ({ id: m.id, text: m.text, role: reminderSourceRole(m.source, state.data) })),
     ];
     if (list.length === 0) return null;
-    // 좌석 각도(위에서 시계 방향) → 화면 좌표에서 원 중심을 향하는 각도
-    const a = (2 * Math.PI * i) / seats.length;
-    const toCenter = Math.atan2(Math.cos(a), -Math.sin(a));
-    const dist = tokenSize / 2 + reminderSize * 0.42;
+    // 토큰이 지금 있는 자리 → 원 중심을 향하는 각도(끌어 옮긴 토큰도 중심 쪽으로 붙는다)
+    const at = seatAt(seat, i);
+    const toCenter = Math.atan2(50 - at.y, 50 - at.x);
+    const dist = 0.5 + (reminderSize / tokenSize) * 0.42;
+    const saved = new Map(seat.reminders.map(m => [m.id, m.pos ?? null]));
     return list.map((r, k) => {
       // 0번 오른쪽 대각선, 1번 왼쪽 대각선, 2번은 오른쪽 한 칸 더 … 순서
       const side = k % 2 === 0 ? 1 : -1;
       const ang = toCenter + side * (0.85 + Math.floor(k / 2) * 0.8);
+      const auto = { dx: dist * Math.cos(ang), dy: dist * Math.sin(ang) };
+      const dragging = drag?.kind === 'reminder' && drag.reminderId === r.id && drag.moved;
+      const p = dragging ? { dx: drag.x, dy: drag.y } : (saved.get(r.id) ?? auto);
+      const draggable = r.id !== 'believed';
       return (
-        <ReminderToken
+        <span
           key={r.id}
-          text={r.text}
-          role={r.role}
-          size={reminderSize}
           style={{
             position: 'absolute',
-            left: tokenSize / 2 + dist * Math.cos(ang) - reminderSize / 2,
-            top: tokenSize / 2 + dist * Math.sin(ang) - reminderSize / 2,
-            zIndex: 3,
+            left: tokenSize / 2 + p.dx * tokenSize - reminderSize / 2,
+            top: tokenSize / 2 + p.dy * tokenSize - reminderSize / 2,
+            zIndex: dragging ? 6 : 3,
+            touchAction: 'none',
+            cursor: draggable ? 'grab' : undefined,
           }}
-        />
+          onPointerDown={draggable ? e => startReminderDrag(e, seat, r.id, p.dx, p.dy) : undefined}
+          onPointerMove={draggable ? moveDrag : undefined}
+          onPointerUp={draggable ? endDrag : undefined}
+          onPointerCancel={() => setDrag(null)}
+        >
+          <ReminderToken text={r.text} role={r.role} size={reminderSize} />
+        </span>
       );
     });
   };
@@ -933,6 +1034,11 @@ export default function ClockTowerGrimoire() {
                 <Btn type="button" onClick={addSeat}>
                   {isUnderway(state) ? '여행자 합류' : '자리 추가'}
                 </Btn>
+                {hasCustomPositions && (
+                  <Btn type="button" onClick={resetPositions}>
+                    토큰 위치 원래대로
+                  </Btn>
+                )}
                 {!immersive && (
                   <>
                     <MenuGroup>화면</MenuGroup>
@@ -1030,8 +1136,23 @@ export default function ClockTowerGrimoire() {
                   <SeatSpot
                     key={seat.id}
                     type="button"
-                    style={{ ...seatPosition(i, seats.length), width: tokenSize + 36 }}
-                    onClick={() => onSeatClick(seat.id)}
+                    style={{
+                      left: `${seatAt(seat, i).x}%`,
+                      top: `${seatAt(seat, i).y}%`,
+                      width: tokenSize + 36,
+                      // 끌 때 화면이 같이 스크롤되지 않게
+                      touchAction: dayView ? undefined : 'none',
+                      zIndex: drag?.kind === 'seat' && drag.seatId === seat.id ? 5 : undefined,
+                      cursor: dayView ? undefined : 'grab',
+                    }}
+                    onPointerDown={e => startSeatDrag(e, seat, i)}
+                    onPointerMove={moveDrag}
+                    onPointerUp={endDrag}
+                    onPointerCancel={() => setDrag(null)}
+                    // 키보드(Enter·Space)로 누른 경우만 여기서 처리한다. 손가락·마우스는 놓을 때(endDrag) 처리
+                    onClick={e => {
+                      if (e.detail === 0 || dayView || swapping) onSeatClick(seat.id);
+                    }}
                   >
                     <TokenWrap style={{ width: tokenSize, height: tokenSize }}>
                       <Token

@@ -201,6 +201,8 @@ export interface GrimoireReminder {
   id: string;
   text: string;
   source?: string | null; // 이 리마인더를 준 캐릭터 이름
+  // 끌어서 옮긴 위치. 토큰 중심에서의 거리를 토큰 지름 단위로(토큰을 옮기거나 크기가 바뀌어도 같이 따라간다). 없으면 자동 배치
+  pos?: { dx: number; dy: number } | null;
 }
 
 export type DeathCause = 'EXECUTION' | 'NIGHT' | 'EXILE' | 'ABILITY' | 'OTHER';
@@ -238,6 +240,8 @@ export interface GrimoireSeat {
   evil: boolean | null;
   left: boolean; // 떠난 여행자. 모든 인원 셈에서 빠진다
   reminders: GrimoireReminder[];
+  // 끌어서 옮긴 토큰 위치(원 안 %, 0~100). 없으면 좌석 순서대로 원형 배치. 보이는 위치일 뿐 이웃 판정은 좌석 순서를 따른다
+  pos?: { x: number; y: number } | null;
   roleHistory: RoleChange[];
 }
 
