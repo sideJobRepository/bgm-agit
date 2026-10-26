@@ -162,7 +162,7 @@ function seatPosition(i: number, total: number) {
 }
 
 /**
- * 이야기꾼 진행판(그리모어). 태블릿 가로 기준, 좁은 화면은 좌석 목록으로 보인다.
+ * 이야기꾼 진행판(그리모어). 좌석은 어디서나 원형이고, 세로·좁은 화면은 오른쪽 패널이 원 아래로 내려간다.
  * 진행 상태는 이 기기 localStorage 에만 둔다(서버에 두면 누가 악마인지 조회될 수 있다).
  */
 export default function ClockTowerGrimoire() {

@@ -9,7 +9,7 @@ const TEXT = 'var(--ct-text)';
 // 색을 채운 칩·버튼의 글자. 진영 색이 밝아서 흰 글자 대신 어두운 글자를 얹는다
 const INK = 'var(--ct-ink)';
 
-// 태블릿 가로를 기본으로 본다. 세로·휴대폰은 좌석을 목록으로 바꾼다
+// 태블릿 가로를 기본으로 본다. 세로·휴대폰은 오른쪽 패널을 원 아래로 내린다(좌석은 어디서나 원형 — 사용자 결정 2026-10-26)
 export const NARROW = '(max-width: 900px), (orientation: portrait) and (max-width: 1100px)';
 
 /**
@@ -182,8 +182,9 @@ export const Circle = styled.div`
     inset 0 0 80px rgba(242, 201, 76, 0.06),
     0 0 0 6px rgba(242, 201, 76, 0.04);
 
+  /* 세로·좁은 화면은 패널이 원 아래로 내려가 세로 스크롤이 생기므로 높이에 맞추지 않고 폭을 다 쓴다 */
   @media ${NARROW} {
-    display: none;
+    width: min(100%, 760px);
   }
 `;
 
@@ -211,6 +212,11 @@ export const CircleCenter = styled.div`
 export const SeatSpot = styled.button`
   position: absolute;
   transform: translate(-50%, -50%);
+
+  /* 휴대폰 폭의 원에서는 좌석끼리 겹치지 않게 줄인다 */
+  @media (max-width: 600px) {
+    transform: translate(-50%, -50%) scale(0.72);
+  }
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -336,14 +342,9 @@ export const Mark = styled.span<{ $tone?: 'evil' | 'good' | 'vote' | 'reminder' 
 
 // ---------- 좁은 화면: 좌석 목록 ----------
 
+// 예전 좁은 화면용 좌석 목록. 지금은 어디서나 원형이라 그리지 않는다(되돌릴 때 display 만 바꾸면 된다)
 export const SeatList = styled.div`
   display: none;
-
-  @media ${NARROW} {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
 `;
 
 export const SeatRow = styled.button<{ $dead: boolean }>`
