@@ -1,5 +1,5 @@
 import { Wrapper } from '../styles';
-import { Box, ButtonRow, Button, DetailHead, Thumb, NoImage, DetailTitle, DetailMeta, BigResult, DraftBadge, SectionTitle, PartViewList, PartViewItem, PartLeft, PartNick, PartChar, TypeTag, WinTag, Memo, FormTitle, ResultToggle, ToggleBtn, SearchBox, Dropdown, Option, EmptyOption, PartEditList, PartEditRow, PartNickEdit, MeTag, RemovePart, Hint, LabelRow, LoadButton, LoadPanel, LoadPanelHead, LoadClose, LoadItem, LoadItemTop, LoadItemNicks, LoadEmpty, PickerWrap, PickerControl, PickerDropdown, PickerSearch, FilterRow, FilterChip, PickerList, PickerOption, PickerEmpty, Field } from './ClockTowerRecordDetail.styles.ts';
+import { PartImg, Box, ButtonRow, Button, DetailHead, Thumb, NoImage, DetailTitle, DetailMeta, BigResult, DraftBadge, SectionTitle, PartViewList, PartViewItem, PartLeft, PartNick, PartChar, TypeTag, WinTag, Memo, FormTitle, ResultToggle, ToggleBtn, SearchBox, Dropdown, Option, EmptyOption, PartEditList, PartEditRow, PartNickEdit, MeTag, RemovePart, Hint, LabelRow, LoadButton, LoadPanel, LoadPanelHead, LoadClose, LoadItem, LoadItemTop, LoadItemNicks, LoadEmpty, PickerWrap, PickerControl, PickerDropdown, PickerSearch, FilterRow, FilterChip, PickerList, PickerOption, PickerEmpty, Field } from './ClockTowerRecordDetail.styles.ts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
@@ -543,6 +543,7 @@ export default function ClockTowerRecordDetail() {
           <PartViewList>
             {detail?.participants.map(p => (
               <PartViewItem key={p.memberId}>
+                {p.image && <PartImg src={p.image} alt="" loading="lazy" decoding="async" />}
                 <PartLeft>
                   <PartNick>{p.nickname}</PartNick>
                   {p.characterName && (

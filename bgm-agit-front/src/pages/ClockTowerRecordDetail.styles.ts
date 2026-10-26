@@ -193,9 +193,19 @@ export const PartViewItem = styled.div<WithTheme>`
   }
 `;
 
+/** 참가자 캐릭터 그림. 전역 img 규칙(max-width:100%)을 덮어 고정 크기로 */
+export const PartImg = styled.img`
+  flex: none;
+  width: 48px;
+  max-width: none;
+  height: 48px;
+  object-fit: contain;
+`;
+
 export const PartLeft = styled.div`
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 4px;
   min-width: 0;
 `;

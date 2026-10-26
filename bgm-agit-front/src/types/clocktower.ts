@@ -81,6 +81,7 @@ export interface ClockTowerRecordParticipant {
   typeName?: string | null;
   win?: boolean | null;
   evil?: boolean | null; // 직접 지정한 최종 선악(진영이 바뀐 경우·여행자). null 이면 캐릭터 진영대로
+  image?: string | null; // 캐릭터 그림(실제 선악에 맞는 쪽). 사전에 없으면 null
 }
 
 export interface ClockTowerRecordDetail {
