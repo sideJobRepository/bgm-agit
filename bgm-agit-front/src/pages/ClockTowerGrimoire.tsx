@@ -248,6 +248,10 @@ export default function ClockTowerGrimoire() {
   const [showContent, setShowContent] = useState<ShowContent | null>(null);
   // 정보 카드 창: null = 닫힘, 객체 = 미리 채울 문장·플레이어·캐릭터(빈 객체면 기본)
   const [infoOpen, setInfoOpen] = useState<InfoPreset | null>(null);
+  // 마도서 전체화면(포켓 그리모어처럼 툴바·패널·안내를 숨기고 원형 마도서만 크게). 좌석 메뉴는 그대로 쓴다
+  const [fullView, setFullView] = useState(false);
+  // 전체화면이 몰입 모드를 켰으면 끝낼 때 같이 끈다(원래 몰입 중이었으면 그대로 둔다)
+  const fullViewOwnsImmersive = useRef(false);
   // 악마 넘기기 창(악마가 죽으면 자동으로 열린다)
   const [demonSeatId, setDemonSeatId] = useState<string | null>(null);
   // 처형 결과 창을 연 좌석(사망/생존을 거기서 고른다)
@@ -641,6 +645,19 @@ export default function ClockTowerGrimoire() {
     }));
   };
 
+  const openFullView = () => {
+    setFullView(true);
+    fullViewOwnsImmersive.current = !immersive;
+    if (!immersive) enter();
+    else if (canFullscreen && !fullscreen) requestFullscreen();
+  };
+
+  const closeFullView = () => {
+    setFullView(false);
+    if (fullViewOwnsImmersive.current) exit();
+    fullViewOwnsImmersive.current = false;
+  };
+
   const newGame = () =>
     showConfirmModal({
       message: '진행 중인 게임을 지우고 새로 시작할까요? 되돌릴 수 없습니다.',
@@ -917,6 +934,20 @@ export default function ClockTowerGrimoire() {
   return (
     <GrimoireRoot $immersive={immersive}>
       <Page>
+        {fullView && (
+          <Toolbar $sticky={immersive}>
+            <ToolTitle>
+              <strong>{state.data.gameName}</strong>
+              <span>
+                {phaseLabel(state)} · 생존 {alive}/{total}
+              </span>
+            </ToolTitle>
+            <Btn type="button" $tone="primary" onClick={closeFullView}>
+              전체화면 끝내기
+            </Btn>
+          </Toolbar>
+        )}
+        {!fullView && (
         <Toolbar $sticky={immersive}>
           <ToolTitle>
             <strong>{state.data.gameName}</strong>
@@ -940,6 +971,9 @@ export default function ClockTowerGrimoire() {
           )}
           <Btn type="button" $active={dayView} onClick={() => setDayView(v => !v)}>
             {dayView ? '이야기꾼 화면' : '낮 화면(가리기)'}
+          </Btn>
+          <Btn type="button" onClick={openFullView}>
+            전체화면
           </Btn>
           {/* 낮 화면은 플레이어가 본다. 악마의 속임수·배정·되돌리기 같은 이야기꾼 버튼은 숨긴다 */}
           {!dayView && (
@@ -1026,6 +1060,9 @@ export default function ClockTowerGrimoire() {
                   </>
                 )}
                 <MenuGroup>게임</MenuGroup>
+                <Btn type="button" onClick={() => openFullView()}>
+                  마도서 전체화면
+                </Btn>
                 <Btn type="button" onClick={() => openEnd()}>
                   게임 종료(기록 남기기)
                 </Btn>
@@ -1036,6 +1073,7 @@ export default function ClockTowerGrimoire() {
             </>
           )}
         </Toolbar>
+        )}
 
         {externalChange && (
           <Warn>
@@ -1049,11 +1087,11 @@ export default function ClockTowerGrimoire() {
         )}
 
         {/* 판정 제안은 이야기꾼만 본다(낮 화면에서 숨김) */}
-        {!dayView && verdict && (
+        {!dayView && !fullView && verdict && (
           <WinBanner verdict={verdict} onEnd={openEnd} onContinue={() => setVerdict(null)} />
         )}
 
-        {swapping && !dayView && (
+        {swapping && !dayView && !fullView && (
           <Warn>
             {swapFrom
               ? `${seats.find(s => s.id === swapFrom)?.name ?? ''}님과 바꿀 자리를 누르세요. 같은 자리를 다시 누르면 취소됩니다.`
@@ -1061,7 +1099,7 @@ export default function ClockTowerGrimoire() {
           </Warn>
         )}
 
-        {showWizard && !dayView && (
+        {showWizard && !dayView && !fullView && (
           <SetupWizard
             state={state}
             roles={roles}
@@ -1080,7 +1118,7 @@ export default function ClockTowerGrimoire() {
         )}
 
         {/* 나눠 준 뒤 셋업이 끝나기 전: 휴대폰 확인 현황과 다음 할 일([첫날 밤 시작]) */}
-        {!showWizard && state.phase === 'SETUP' && !dayView && isDealt(state, roles) && (() => {
+        {!showWizard && !fullView && state.phase === 'SETUP' && !dayView && isDealt(state, roles) && (() => {
           const memberSeats = seats.filter(s => s.memberId != null && phone.viewStatusOf(s.memberId) != null);
           const unviewed = memberSeats.filter(s => phone.viewStatusOf(s.memberId) === 'unviewed');
           return (
@@ -1108,6 +1146,7 @@ export default function ClockTowerGrimoire() {
             <Circle
               ref={setCircleEl}
               style={{
+                ...(fullView ? { width: 'min(100%, calc(100dvh - 120px))' } : {}),
                 marginTop: Math.max(0, Math.round(tokenSize / 2 + 8 - circleWidth * 0.09)),
                 marginBottom: Math.max(0, Math.round(tokenSize / 2 + 64 - circleWidth * 0.09)),
               }}
@@ -1166,6 +1205,9 @@ export default function ClockTowerGrimoire() {
               })}
               <CircleCenter>
                 <strong>{dayView ? phaseLabel(state) : state.data.gameName}</strong>
+                {fullView && !dayView && (state.bluffs ?? []).length > 0 && (
+                  <span>악마의 속임수: {(state.bluffs ?? []).map(k => roles.get(k)?.name ?? k).join(', ')}</span>
+                )}
                 <span>
                   생존 {alive}명 · 처형 {needed}표
                 </span>
@@ -1215,7 +1257,7 @@ export default function ClockTowerGrimoire() {
             </SeatList>
           </div>
 
-          {!dayView && (
+          {!dayView && !fullView && (
             <Side>
               <Tabs>
                 {SIDE_TABS.map(t => (
