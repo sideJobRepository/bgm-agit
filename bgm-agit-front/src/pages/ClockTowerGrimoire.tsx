@@ -213,7 +213,8 @@ export default function ClockTowerGrimoire() {
 
   const [openSeatId, setOpenSeatId] = useState<string | null>(null);
   const [sideTab, setSideTab] = useState<SideTab>('night');
-  const [nightMode, setNightMode] = useState(false);
+  // 밤 진행 카드: null = 닫힘, '' = 안 한 첫 단계부터, 그 외 = 그 단계부터(밤 순서 줄을 눌렀을 때)
+  const [nightMode, setNightMode] = useState<string | null>(null);
   // 낮 화면: 플레이어에게 보여줄 때 캐릭터·리마인더를 가린다
   const [dayView, setDayView] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
@@ -224,7 +225,8 @@ export default function ClockTowerGrimoire() {
   const [bluffOpen, setBluffOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [showContent, setShowContent] = useState<ShowContent | null>(null);
-  const [infoOpen, setInfoOpen] = useState(false);
+  // 정보 카드 창: null = 닫힘, 문자열 = 미리 고를 문장('' 이면 기본)
+  const [infoOpen, setInfoOpen] = useState<string | null>(null);
   // 악마 넘기기 창(악마가 죽으면 자동으로 열린다)
   const [demonSeatId, setDemonSeatId] = useState<string | null>(null);
   // 처형 결과 창을 연 좌석(사망/생존을 거기서 고른다)
@@ -885,7 +887,7 @@ export default function ClockTowerGrimoire() {
               <Btn type="button" onClick={() => setBluffOpen(true)}>
                 악마의 속임수
               </Btn>
-              <Btn type="button" onClick={() => setInfoOpen(true)}>
+              <Btn type="button" onClick={() => setInfoOpen('')}>
                 정보 카드
               </Btn>
               <Btn type="button" onClick={() => setQrOpen(true)}>
@@ -1149,6 +1151,9 @@ export default function ClockTowerGrimoire() {
                 {sideTab === 'night' && (
                   <NightList
                     state={state}
+                    phase={state.phase}
+                    onStartNight={startNight}
+                    onEndNight={endNight}
                     onTab={tab => update(prev => ({ ...prev, nightTab: tab }))}
                     // 밤 체크는 되돌리기 기록에 넣지 않는다(30칸을 체크가 다 차지해 사망 같은 조작을 못 되돌리게 된다)
                     onToggle={key =>
@@ -1161,13 +1166,7 @@ export default function ClockTowerGrimoire() {
                         })
                       )
                     }
-                    onClear={() =>
-                      showConfirmModal({
-                        message: '밤 체크를 모두 비울까요?',
-                        onConfirm: () => updateSilently(prev => ({ ...prev, nightChecked: [] })),
-                      })
-                    }
-                    onOpenMode={() => setNightMode(true)}
+                    onOpenMode={key => setNightMode(key ?? '')}
                   />
                 )}
 
@@ -1431,24 +1430,31 @@ export default function ClockTowerGrimoire() {
           />
         )}
 
-        {nightMode && (
+        {nightMode != null && (
           <NightMode
+            key={nightMode}
             state={state}
+            phase={state.phase}
+            startKey={nightMode || null}
+            onOpenInfo={text => setInfoOpen(text ?? '')}
+            onEndNight={endNight}
             onCheck={key =>
               updateSilently(prev =>
                 leaveSetup({ ...prev, nightChecked: [...prev.nightChecked, key] })
               )
             }
-            onClose={() => setNightMode(false)}
+            onClose={() => setNightMode(null)}
             onShow={content => setShowContent(content)}
           />
         )}
 
-        {infoOpen && (
+        {infoOpen != null && (
           <InfoCardPanel
+            key={infoOpen}
             state={state}
+            initialText={infoOpen || undefined}
             onShow={content => setShowContent(content)}
-            onClose={() => setInfoOpen(false)}
+            onClose={() => setInfoOpen(null)}
           />
         )}
 

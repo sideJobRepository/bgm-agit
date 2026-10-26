@@ -385,6 +385,12 @@ export interface NightItem {
   text?: string | null;
   seats: GrimoireSeat[]; // 이 캐릭터를 가진 좌석(밤 특수 단계·전설이면 빈 배열)
   allDead: boolean;
+  // 오늘 밤에 죽은 좌석이 있다(까마귀지기처럼 죽은 밤에 깨우는 캐릭터가 있어 숨기지 않는다)
+  diedTonight: boolean;
+  // 그 외 밤에 전부 이전에 죽은 캐릭터 — 보통 깨우지 않아 기본으로 숨긴다
+  hiddenDead: boolean;
+  // 이번 판에 하지 않는 단계(7명 미만의 하수인·악마 정보). 숨기면 빠진 것처럼 보여 흐리게 남긴다
+  skippedReason?: string;
 }
 
 /** 지금 게임에 있는 캐릭터만 골라 밤 순서대로 */
@@ -397,8 +403,20 @@ export function nightItems(state: GrimoireState, tab: NightTab): NightItem[] {
   for (const step of state.data.nightSteps) {
     const order = orderOf(step);
     if (order == null) continue;
-    if (EVIL_INFO_KEYS.includes(step.key) && !runsEvilInfo(state, roles)) continue;
-    items.push({ key: `${tab}:${step.key}`, role: step, order, text: textOf(step), seats: [], allDead: false });
+    const skipped = EVIL_INFO_KEYS.includes(step.key) && !runsEvilInfo(state, roles);
+    items.push({
+      key: `${tab}:${step.key}`,
+      role: step,
+      order,
+      text: textOf(step),
+      seats: [],
+      allDead: false,
+      diedTonight: false,
+      hiddenDead: false,
+      ...(skipped
+        ? { skippedReason: `${evilInfoCount(state, roles)}명이라 이번 판은 하지 않습니다(${MIN_PLAYERS_FOR_EVIL_INFO}명 미만은 공식 규칙상 생략)` }
+        : {}),
+    });
   }
 
   // 떠난 여행자는 더 깨우지 않는다
@@ -411,13 +429,19 @@ export function nightItems(state: GrimoireState, tab: NightTab): NightItem[] {
     const order = orderOf(role);
     if (order == null) continue;
     const seats = present.filter(s => s.roleKey === key);
+    const allDead = seats.length > 0 && seats.every(s => s.dead);
+    const diedTonight = seats.some(
+      s => s.dead && s.death?.day === state.day && s.death?.phase === 'NIGHT' && state.phase === 'NIGHT'
+    );
     items.push({
       key: `${tab}:${key}`,
       role,
       order,
       text: textOf(role),
       seats,
-      allDead: seats.length > 0 && seats.every(s => s.dead),
+      allDead,
+      diedTonight,
+      hiddenDead: tab === 'other' && allDead && !diedTonight,
     });
   }
   return items.sort((a, b) => a.order - b.order);

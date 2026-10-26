@@ -11,6 +11,8 @@ export interface ShowContent {
   title: string;
   roles: GrimoireRole[];
   message?: string;
+  // 아주 크게 보여줄 한마디(숫자·예/아니오). 멀리 앉은 사람도 읽히게
+  big?: string;
 }
 
 /**
@@ -20,7 +22,8 @@ export interface ShowContent {
 export function ShowCard({ content, onClose }: { content: ShowContent; onClose: () => void }) {
   return (
     <FullScreen onClick={onClose}>
-      <ShowTitle>{content.title}</ShowTitle>
+      {content.title && <ShowTitle>{content.title}</ShowTitle>}
+      {content.big && <ShowBig>{content.big}</ShowBig>}
       <ShowRoles>
         {content.roles.map(r => (
           <ShowRole key={r.key} $color={r.team ? CT_TYPE_COLOR_DARK[r.team] : 'var(--ct-muted)'}>
@@ -148,6 +151,13 @@ const FullScreen = styled.div`
   color: var(--ct-text);
   text-align: center;
   cursor: pointer;
+`;
+
+const ShowBig = styled.div`
+  font-size: min(40vw, 40vh);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ct-accent);
 `;
 
 const ShowTitle = styled.div`

@@ -19,6 +19,7 @@ const CARDS: { text: string; roles?: boolean; players?: boolean }[] = [
   { text: '당신의 하수인들입니다', players: true },
   { text: '이 캐릭터들은 게임에 없습니다', roles: true },
   { text: '이 캐릭터가 당신을 선택했습니다', roles: true },
+  { text: '이 중 한 명이 이 캐릭터입니다', players: true, roles: true },
   { text: '이 플레이어의 캐릭터는', players: true, roles: true },
   { text: '당신은 선한 팀입니다' },
   { text: '당신은 악한 팀입니다' },
@@ -33,15 +34,17 @@ const TEAMS = ['TOWNSFOLK', 'OUTSIDER', 'MINION', 'DEMON', 'TRAVELLER', 'FABLED'
 
 export function InfoCardPanel({
   state,
+  initialText,
   onShow,
   onClose,
 }: {
   state: GrimoireState;
+  initialText?: string; // 밤 진행에서 캐릭터별로 열 때 미리 고를 문장
   onShow: (content: ShowContent) => void;
   onClose: () => void;
 }) {
   const roles = useMemo(() => roleMap(state.data), [state.data]);
-  const [text, setText] = useState(CARDS[0].text);
+  const [text, setText] = useState(initialText && CARDS.some(c => c.text === initialText) ? initialText : CARDS[0].text);
   const [custom, setCustom] = useState('');
   const [team, setTeam] = useState<(typeof TEAMS)[number]>('TOWNSFOLK');
   const [roleKeys, setRoleKeys] = useState<string[]>([]);
