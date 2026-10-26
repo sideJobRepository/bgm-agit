@@ -20,6 +20,8 @@ const CARDS: { text: string; roles?: boolean; players?: boolean }[] = [
   { text: '이 캐릭터들은 게임에 없습니다', roles: true },
   { text: '이 캐릭터가 당신을 선택했습니다', roles: true },
   { text: '이 중 한 명이 이 캐릭터입니다', players: true, roles: true },
+  { text: '오늘 처형된 사람의 캐릭터', roles: true },
+  { text: '이 사람이 당신의 손주입니다', players: true, roles: true },
   { text: '이 플레이어의 캐릭터는', players: true, roles: true },
   { text: '당신은 선한 팀입니다' },
   { text: '당신은 악한 팀입니다' },
@@ -32,23 +34,35 @@ const CARDS: { text: string; roles?: boolean; players?: boolean }[] = [
 
 const TEAMS = ['TOWNSFOLK', 'OUTSIDER', 'MINION', 'DEMON', 'TRAVELLER', 'FABLED'] as const;
 
+/** 정보 카드를 열 때 미리 채울 것(밤 진행 능력 도우미의 추천값을 고쳐서 보여줄 때) */
+export interface InfoPreset {
+  text?: string;
+  roleKeys?: string[];
+  seatIds?: string[];
+}
+
 export function InfoCardPanel({
   state,
-  initialText,
+  preset,
   onShow,
   onClose,
 }: {
   state: GrimoireState;
-  initialText?: string; // 밤 진행에서 캐릭터별로 열 때 미리 고를 문장
+  preset?: InfoPreset;
   onShow: (content: ShowContent) => void;
   onClose: () => void;
 }) {
+  const initialText = preset?.text;
   const roles = useMemo(() => roleMap(state.data), [state.data]);
   const [text, setText] = useState(initialText && CARDS.some(c => c.text === initialText) ? initialText : CARDS[0].text);
   const [custom, setCustom] = useState('');
-  const [team, setTeam] = useState<(typeof TEAMS)[number]>('TOWNSFOLK');
-  const [roleKeys, setRoleKeys] = useState<string[]>([]);
-  const [seatIds, setSeatIds] = useState<string[]>([]);
+  // 미리 고른 캐릭터가 있으면 그 진영 탭을 연다
+  const presetTeam = preset?.roleKeys?.length ? roles.get(preset.roleKeys[0])?.team : null;
+  const [team, setTeam] = useState<(typeof TEAMS)[number]>(
+    presetTeam && (TEAMS as readonly string[]).includes(presetTeam) ? (presetTeam as (typeof TEAMS)[number]) : 'TOWNSFOLK'
+  );
+  const [roleKeys, setRoleKeys] = useState<string[]>(preset?.roleKeys ?? []);
+  const [seatIds, setSeatIds] = useState<string[]>(preset?.seatIds ?? []);
   const card = CARDS.find(c => c.text === text);
   const wantsRoles = !card || !!card.roles;
   const wantsPlayers = !card || !!card.players;

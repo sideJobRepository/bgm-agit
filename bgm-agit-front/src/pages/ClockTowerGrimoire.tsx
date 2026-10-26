@@ -23,7 +23,7 @@ import { NightList, NightMode } from '../components/clocktower/grimoire/NightPan
 import WinBanner from '../components/clocktower/grimoire/WinBanner.tsx';
 import SetupWizard from '../components/clocktower/grimoire/SetupWizard.tsx';
 import ToolbarMenu, { MenuGroup } from '../components/clocktower/grimoire/ToolbarMenu.tsx';
-import { InfoCardPanel } from '../components/clocktower/grimoire/InfoCards.tsx';
+import { InfoCardPanel, type InfoPreset } from '../components/clocktower/grimoire/InfoCards.tsx';
 import ReminderToken, { CurvedText } from '../components/clocktower/grimoire/ReminderToken.tsx';
 import { dealBag, isDealt, usedKeys } from '../components/clocktower/grimoire/bagRules.ts';
 import RoleArt from '../components/clocktower/grimoire/RoleArt.tsx';
@@ -246,8 +246,8 @@ export default function ClockTowerGrimoire() {
   const [bluffOpen, setBluffOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [showContent, setShowContent] = useState<ShowContent | null>(null);
-  // 정보 카드 창: null = 닫힘, 문자열 = 미리 고를 문장('' 이면 기본)
-  const [infoOpen, setInfoOpen] = useState<string | null>(null);
+  // 정보 카드 창: null = 닫힘, 객체 = 미리 채울 문장·플레이어·캐릭터(빈 객체면 기본)
+  const [infoOpen, setInfoOpen] = useState<InfoPreset | null>(null);
   // 악마 넘기기 창(악마가 죽으면 자동으로 열린다)
   const [demonSeatId, setDemonSeatId] = useState<string | null>(null);
   // 처형 결과 창을 연 좌석(사망/생존을 거기서 고른다)
@@ -954,7 +954,7 @@ export default function ClockTowerGrimoire() {
               >
                 되돌리기
               </Btn>
-              <Btn type="button" onClick={() => setInfoOpen('')}>
+              <Btn type="button" onClick={() => setInfoOpen({})}>
                 정보 카드
               </Btn>
               {state.phase === 'NIGHT' ? (
@@ -1542,7 +1542,7 @@ export default function ClockTowerGrimoire() {
             state={state}
             phase={state.phase}
             startKey={nightMode || null}
-            onOpenInfo={text => setInfoOpen(text ?? '')}
+            onOpenInfo={preset => setInfoOpen(preset ?? {})}
             onEndNight={endNight}
             onCheck={key =>
               updateSilently(prev =>
@@ -1556,9 +1556,9 @@ export default function ClockTowerGrimoire() {
 
         {infoOpen != null && (
           <InfoCardPanel
-            key={infoOpen}
+            key={JSON.stringify(infoOpen)}
             state={state}
-            initialText={infoOpen || undefined}
+            preset={infoOpen}
             onShow={content => setShowContent(content)}
             onClose={() => setInfoOpen(null)}
           />

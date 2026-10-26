@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { GrimoirePhase, GrimoireRole, GrimoireState, NightTab } from '../../../types/clocktower.ts';
 import { renderNightText } from '../../../utils/clocktowerText.tsx';
-import { dayLogOf, isEvilSeat, nightItems, roleMap, type NightItem } from './grimoireRules.ts';
+import { dayLogOf, isEvilSeat, nightItems, roleMap, shuffle, type NightItem } from './grimoireRules.ts';
 import RoleArt from './RoleArt.tsx';
 import { tokenImageCandidates } from './tokenImage.ts';
 import type { ShowContent } from './ShowPanels.tsx';
+import type { InfoPreset } from './InfoCards.tsx';
 import {
   Btn,
   Chip,
@@ -197,23 +198,63 @@ function aliveNeighbours(state: GrimoireState, seatId: string) {
   return [pick(-1), pick(1)].filter((s, j, a): s is NonNullable<typeof s> => !!s && a.indexOf(s) === j);
 }
 
+type Tip = { label: string; content: ShowContent; preset?: InfoPreset };
+
 /**
- * 능력 도우미가 계산한 참고값. 실제 좌석의 선악만 보고 계산한다 —
- * 중독·취함, 은둔자·스파이의 오등록은 이야기꾼이 판단해야 해서 "참고"로만 보여준다.
+ * 능력 도우미가 계산한 참고값. 실제 좌석의 캐릭터·선악만 보고 만든다 —
+ * 취함·중독이면 틀린 정보를 줘야 하고, 은둔자·스파이는 다르게 등록될 수 있어 이야기꾼이 판단한다.
+ * 그래서 값마다 [바꿔서 보여주기](정보 카드에 미리 채워 열기)를 같이 둔다.
  */
-function suggestions(state: GrimoireState, item: NightItem): { label: string; content: ShowContent }[] {
+function suggestions(state: GrimoireState, item: NightItem): Tip[] {
   const roles = roleMap(state.data);
   const key = item.role.key;
-  const out: { label: string; content: ShowContent }[] = [];
+  const out: Tip[] = [];
+  const ring = state.seats.filter(s => !s.left);
+  const selfIds = new Set(item.seats.map(s => s.id));
+  const teamOf = (s: { roleKey: string | null }) => roles.get(s.roleKey ?? '')?.team;
+  const no = (id: string) => state.seats.findIndex(s => s.id === id) + 1;
+
+  // 세탁부·사서·조사관: 그 진영 캐릭터인 사람 1명 + 다른 사람 1명, 그리고 그 캐릭터
+  const pairOf = (team: 'TOWNSFOLK' | 'OUTSIDER' | 'MINION') => {
+    const target = shuffle(ring.filter(s => !selfIds.has(s.id) && teamOf(s) === team))[0];
+    if (!target) return null;
+    const decoy = shuffle(ring.filter(s => s.id !== target.id && !selfIds.has(s.id)))[0];
+    const role = roles.get(target.roleKey ?? '');
+    if (!role) return null;
+    const people = shuffle([target, ...(decoy ? [decoy] : [])]);
+    const title = '이 중 한 명이 이 캐릭터입니다';
+    return {
+      label: `${people.map(p => `${no(p.id)}.${p.name}`).join('·')} 중 ${role.name}`,
+      content: { title, roles: [role], message: people.map(p => `${no(p.id)}. ${p.name}`).join(', ') },
+      preset: { text: title, roleKeys: [role.key], seatIds: people.map(p => p.id) },
+    };
+  };
+  if (key === 'washerwoman' || key === 'librarian' || key === 'investigator') {
+    const team = key === 'washerwoman' ? 'TOWNSFOLK' : key === 'librarian' ? 'OUTSIDER' : 'MINION';
+    const tip = pairOf(team);
+    if (tip) out.push(tip);
+    else if (key === 'librarian') out.push({ label: '외지인 없음 → 0', content: { title: '외지인이 없습니다', roles: [], big: '0' } });
+  }
+  if (key === 'grandmother') {
+    const g = shuffle(ring.filter(s => !selfIds.has(s.id) && (teamOf(s) === 'TOWNSFOLK' || teamOf(s) === 'OUTSIDER')))[0];
+    const role = g ? roles.get(g.roleKey ?? '') : null;
+    if (g && role) {
+      const title = '이 사람이 당신의 손주입니다';
+      out.push({
+        label: `손주 ${no(g.id)}.${g.name} (${role.name})`,
+        content: { title, roles: [role], message: `${no(g.id)}. ${g.name}` },
+        preset: { text: title, roleKeys: [role.key], seatIds: [g.id] },
+      });
+    }
+  }
   if (key === 'undertaker') {
     // N번째 밤에 보는 것은 바로 전 낮(N-1일째)의 처형
     const exec = [...dayLogOf(state, state.day - 1).executions].reverse().find(e => e.died && e.characterAtExecution);
     const role = exec ? roles.get(exec.characterAtExecution ?? '') : null;
-    if (role)
-      out.push({
-        label: `처형된 사람의 캐릭터: ${role.name}`,
-        content: { title: '오늘 처형된 사람의 캐릭터', roles: [role] },
-      });
+    if (role) {
+      const title = '오늘 처형된 사람의 캐릭터';
+      out.push({ label: `처형된 사람의 캐릭터: ${role.name}`, content: { title, roles: [role] }, preset: { text: title, roleKeys: [role.key] } });
+    }
   }
   if (key === 'empath') {
     for (const seat of item.seats.filter(s => !s.dead)) {
@@ -222,7 +263,6 @@ function suggestions(state: GrimoireState, item: NightItem): { label: string; co
     }
   }
   if (key === 'chef') {
-    const ring = state.seats.filter(s => !s.left);
     let pairs = 0;
     ring.forEach((s, i) => {
       const next = ring[(i + 1) % ring.length];
@@ -230,17 +270,43 @@ function suggestions(state: GrimoireState, item: NightItem): { label: string; co
     });
     out.push({ label: `참고값 ${pairs}쌍`, content: { title: '', roles: [], big: String(pairs) } });
   }
+  if (key === 'clockmaker') {
+    // 악마에서 가장 가까운 하수인까지 몇 칸인지(시계 방향·반대 방향 중 짧은 쪽)
+    const di = ring.findIndex(s => teamOf(s) === 'DEMON');
+    const dists = ring
+      .map((s, i) => (teamOf(s) === 'MINION' ? Math.min(Math.abs(i - di), ring.length - Math.abs(i - di)) : null))
+      .filter((d): d is number => d != null);
+    if (di >= 0 && dists.length) {
+      const n = Math.min(...dists);
+      out.push({ label: `참고값 ${n}칸`, content: { title: '', roles: [], big: String(n) } });
+    }
+  }
   return out;
+}
+
+/** 깨우는 사람이 틀린 정보를 받을 수 있는 상태(주정뱅이로 깨움·중독·취함 리마인더) */
+function impairedNotes(state: GrimoireState, item: NightItem): string[] {
+  const roles = roleMap(state.data);
+  const notes: string[] = [];
+  for (const s of item.seats) {
+    if (s.believedRoleKey === item.role.key && s.roleKey !== item.role.key) {
+      notes.push(`${s.name}님은 실제 ${roles.get(s.roleKey ?? '')?.name ?? '?'}입니다`);
+    }
+    const hits = s.reminders.filter(r => /중독|취함|취한|취해/.test(r.text)).map(r => r.text);
+    if (hits.length) notes.push(`${s.name}님에게 '${hits.join("', '")}' 리마인더가 있습니다`);
+  }
+  return notes;
 }
 
 // 캐릭터별로 바로 여는 정보 카드 문장(포켓 그리모어의 캐릭터별 info token)
 const INFO_PRESET: Record<string, string> = {
+  undertaker: '오늘 처형된 사람의 캐릭터',
+  grandmother: '이 사람이 당신의 손주입니다',
   washerwoman: '이 중 한 명이 이 캐릭터입니다',
   librarian: '이 중 한 명이 이 캐릭터입니다',
   investigator: '이 중 한 명이 이 캐릭터입니다',
   ravenkeeper: '이 플레이어의 캐릭터는',
   dreamer: '이 플레이어의 캐릭터는',
-  grandmother: '이 플레이어의 캐릭터는',
 };
 
 /** 밤 진행 모드: 한 장씩 크게 보여주고 넘길 때마다 체크한다 */
@@ -260,7 +326,7 @@ export function NightMode({
   onCheck: (key: string) => void;
   onClose: () => void;
   onShow: (content: ShowContent) => void;
-  onOpenInfo: (initialText?: string) => void;
+  onOpenInfo: (preset?: InfoPreset) => void;
   onEndNight: () => void;
 }) {
   const items = useMemo(() => playableItems(state), [state]);
@@ -270,13 +336,23 @@ export function NightMode({
     startKey ? items.findIndex(i => i.key === startKey) : items.findIndex(i => !checked.has(i.key))
   );
   const [index, setIndex] = useState(firstOpen);
+  const tipCache = useRef(new Map<string, Tip[]>());
+  const tipsFor = (k: string, make: () => Tip[]) => {
+    const hit = tipCache.current.get(k);
+    if (hit) return hit;
+    const made = make();
+    tipCache.current.set(k, made);
+    return made;
+  };
   const item = items[Math.min(index, items.length - 1)];
 
   if (!item) return null;
   const last = index >= items.length - 1;
   const isCharacter = item.seats.length > 0;
   const evilCards = evilInfoCards(state, item.role.key);
-  const tips = suggestions(state, item);
+  // 같은 단계를 보는 동안 무작위로 고른 추천값이 바뀌지 않게 단계가 바뀔 때만 다시 계산한다
+  const tips = tipsFor(item.key, () => suggestions(state, item));
+  const impaired = impairedNotes(state, item);
 
   const next = () => {
     if (!checked.has(item.key)) onCheck(item.key);
@@ -327,19 +403,31 @@ export function NightMode({
               ))}
             </Row>
           )}
-          {tips.length > 0 && (
-            <Row>
-              {tips.map(t => (
-                <Btn key={t.label} type="button" onClick={() => onShow(t.content)}>
-                  보여주기: {t.label}
-                </Btn>
-              ))}
-            </Row>
+          {impaired.length > 0 && (
+            <Hint style={{ color: 'var(--ct-evil)', margin: 0 }}>
+              ⚠ {impaired.join(' · ')} — 틀린 정보를 줘도 됩니다. [바꿔서 보여주기]나 아래 숫자로 고르세요.
+            </Hint>
           )}
+          {tips.map(t => (
+            <Row key={t.label}>
+              <Btn type="button" onClick={() => onShow(t.content)}>
+                보여주기: {t.label}
+              </Btn>
+              {t.preset && (
+                <Btn type="button" onClick={() => onOpenInfo(t.preset)}>
+                  바꿔서 보여주기
+                </Btn>
+              )}
+            </Row>
+          ))}
           {item.role.key === 'undertaker' && tips.length === 0 && (
             <Hint>오늘 처형으로 죽은 사람이 없습니다(장의사는 아무것도 배우지 않습니다).</Hint>
           )}
-          {tips.length > 0 && <Hint>참고값은 실제 선악으로만 계산했습니다. 중독·취함, 은둔자·스파이는 직접 판단하세요.</Hint>}
+          {tips.length > 0 && (
+            <Hint>
+              참고값은 실제 캐릭터·선악으로만 계산했습니다. 취함·중독, 은둔자·스파이 오등록은 직접 판단하세요(숫자는 아래에서 다른 값을 고르면 됩니다).
+            </Hint>
+          )}
           {isCharacter && (
             <Row>
               <Hint style={{ margin: 0 }}>숫자</Hint>
@@ -354,7 +442,7 @@ export function NightMode({
               <Chip type="button" onClick={() => onShow({ title: '', roles: [], big: '아니오' })}>
                 아니오
               </Chip>
-              <Btn type="button" onClick={() => onOpenInfo(INFO_PRESET[item.role.key])}>
+              <Btn type="button" onClick={() => onOpenInfo({ text: INFO_PRESET[item.role.key] })}>
                 정보 카드…
               </Btn>
             </Row>
