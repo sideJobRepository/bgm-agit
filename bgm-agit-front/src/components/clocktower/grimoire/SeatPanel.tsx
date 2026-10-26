@@ -20,6 +20,7 @@ import {
   shownRole,
 } from './grimoireRules.ts';
 import { newSeatId } from './useGrimoire.ts';
+import DayAbility, { dayAbilityKey, type DayAct } from './DayAbility.tsx';
 import RoleArt from './RoleArt.tsx';
 import ReminderToken from './ReminderToken.tsx';
 import { tokenImageCandidates } from './tokenImage.ts';
@@ -61,6 +62,8 @@ interface Props {
   onExile: () => void;
   onToggleLeft: () => void;
   onTravellerAlignment: (evil: boolean) => void;
+  // 낮에 쓰는 능력(처단자·화가 등): 사망·리마인더·사용 표시·보여주기·정보 기록
+  onDayAbility: (act: DayAct) => void;
   onClose: () => void;
 }
 
@@ -82,6 +85,7 @@ export default function SeatPanel({
   onExile,
   onToggleLeft,
   onTravellerAlignment,
+  onDayAbility,
   onClose,
 }: Props) {
   const roles = useMemo(() => roleMap(state.data), [state.data]);
@@ -220,6 +224,8 @@ export default function SeatPanel({
             </>
           )}
         </SheetSection>
+
+        {dayAbilityKey(seat) && <DayAbility key={seat.id} state={state} seat={seat} onAct={onDayAbility} />}
 
         <SheetSection>
           <label>

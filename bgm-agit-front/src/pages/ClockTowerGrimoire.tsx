@@ -9,6 +9,7 @@ import { showConfirmModal, showInputModal } from '../components/confirmAlert.tsx
 import { CT_TYPE_COLOR_DARK, CT_TYPE_LABEL } from '../config/clocktower.ts';
 import { renderNightText } from '../utils/clocktowerText.tsx';
 import GrimoireSetup from '../components/clocktower/grimoire/GrimoireSetup.tsx';
+import { dayAbilityKey } from '../components/clocktower/grimoire/DayAbility.tsx';
 import SeatPanel from '../components/clocktower/grimoire/SeatPanel.tsx';
 import EndGamePanel from '../components/clocktower/grimoire/EndGamePanel.tsx';
 import DemonPassPanel from '../components/clocktower/grimoire/DemonPassPanel.tsx';
@@ -914,6 +915,8 @@ export default function ClockTowerGrimoire() {
           onPointerMove={draggable ? moveDrag : undefined}
           onPointerUp={draggable ? endDrag : undefined}
           onPointerCancel={() => setDrag(null)}
+          // 누름·끌기는 놓을 때(endDrag) 처리한다. 놓은 뒤 브라우저가 보내는 click 이 좌석까지 올라가 메뉴가 열리던 것을 막는다
+          onClick={draggable ? e => e.stopPropagation() : undefined}
         >
           <ReminderToken text={r.text} role={r.role} size={reminderSize} />
         </span>
@@ -1560,6 +1563,30 @@ export default function ClockTowerGrimoire() {
               setExecuteSeatId(openSeat.id);
             }}
             onDeath={cause => recordDeath(openSeat.id, cause)}
+            onDayAbility={act => {
+              // 출처는 능력을 쓴 캐릭터(믿는 캐릭터 포함). 게임당 한 번이면 사전 리마인더 '능력 없음'을 붙인다
+              const key = dayAbilityKey(openSeat);
+              const src = key ? roles.get(key) : undefined;
+              const usedText = src?.reminders.find(t => /능력 없음/.test(t)) ?? '능력 없음';
+              const adds = [
+                ...(act.reminders ?? []),
+                ...(act.markUsed ? [{ seatId: openSeat.id, text: usedText }] : []),
+              ];
+              if (adds.length)
+                update(prev => ({
+                  ...prev,
+                  seats: prev.seats.map(s => {
+                    const mine = adds.filter(x => x.seatId === s.id);
+                    return mine.length
+                      ? { ...s, reminders: [...s.reminders, ...mine.map(x => ({ id: newSeatId(), text: x.text, source: src?.name ?? null }))] }
+                      : s;
+                  }),
+                }));
+              addNote(act.note);
+              setOpenSeatId(null);
+              if (act.show) showInfo(act.show);
+              if (act.killId) recordDeath(act.killId, 'ABILITY');
+            }}
             onRevive={() =>
               updateSeat(openSeat.id, { dead: false, death: null, ghostVoteUsed: false })
             }

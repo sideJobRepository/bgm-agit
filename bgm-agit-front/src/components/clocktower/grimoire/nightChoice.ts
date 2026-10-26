@@ -141,7 +141,7 @@ export interface InfoAnswer {
 }
 
 /** 정보를 받는 사람이 거짓 정보를 받아도 되는 상태 */
-function freeInfo(state: GrimoireState, roles: Roles, actor: GrimoireSeat | null) {
+export function freeInfo(state: GrimoireState, roles: Roles, actor: GrimoireSeat | null) {
   const reasons: string[] = [];
   if (actor && isImpaired(state, roles, actor)) reasons.push('중독·취함(주정뱅이 포함)이라 아무 답이나 줘도 됩니다(#15, #19).');
   const vortox = state.seats.some(s => !s.dead && roles.get(s.roleKey ?? '')?.key === 'vortox');
@@ -180,4 +180,66 @@ export function ravenkeeperAnswer(state: GrimoireState, actor: GrimoireSeat | nu
 /** 이 단계의 깨우는 사람 중 실제로 이 캐릭터인 자리(믿는 사람 말고). 없으면 믿는 사람 */
 export function actingSeat(seats: GrimoireSeat[], roleKey: string) {
   return seats.find(s => s.roleKey === roleKey && !s.dead) ?? seats.find(s => !s.dead) ?? seats[0] ?? null;
+}
+
+/**
+ * 처단자(낮, 게임당 한 번): 고른 사람이 악마면 죽는다(#11).
+ * 주정뱅이(믿는 처단자)·중독·취함·이미 사용했으면 아무 일 없음(#16), 은둔자는 악마로 등록될 수 있다(#34).
+ */
+export function slayerResult(state: GrimoireState, shooter: GrimoireSeat, target: GrimoireSeat): AttackResult {
+  const roles = roleMap(state.data);
+  const slayer = roles.get('slayer');
+  if (shooter.roleKey !== 'slayer') {
+    const real = roles.get(shooter.roleKey ?? '')?.name ?? '?';
+    return { verdict: 'NONE', reasons: [`실제로는 ${real}이라 능력이 없습니다 — 아무 일도 일어나지 않습니다(#16).`] };
+  }
+  if (shooter.reminders.some(m => m.source === slayer?.name && /능력 없음|사용/.test(m.text))) {
+    return { verdict: 'NONE', reasons: ['이미 능력을 썼습니다(게임당 한 번).'] };
+  }
+  if (isImpaired(state, roles, shooter)) return { verdict: 'NONE', reasons: ['처단자가 중독·취함이라 능력이 작동하지 않습니다. 능력은 쓴 것으로 칩니다.'] };
+  if (target.dead) return { verdict: 'NONE', reasons: ['이미 죽은 사람입니다.'] };
+  const t = roles.get(target.roleKey ?? '');
+  const guards = protectedBy(state, roles, target).filter(g => nameKey(roles, g.source) !== 'monk' && nameKey(roles, g.source) !== 'innkeeper');
+  if (t?.team === 'DEMON') {
+    if (guards.length) return { verdict: 'SAFE', reasons: [`${guards.map(g => `${g.source ?? ''} '${g.text}'`.trim()).join(', ')} — 죽지 않습니다.`] };
+    return { verdict: 'DIES', reasons: ['악마라 죽습니다. 처형이 아니라 낮은 계속됩니다(#11, #34).'] };
+  }
+  if (t?.key === 'recluse' && !isImpaired(state, roles, target)) return { verdict: 'MAYBE', reasons: ['은둔자는 악마로 등록될 수 있어 죽일 수도 있습니다(#34).'] };
+  return { verdict: 'NONE', reasons: ['악마가 아니라 아무 일도 일어나지 않습니다.'] };
+}
+
+/** 낮에 고른 사람을 죽이는 능력(사이코패스·총잡이·갱단원 등). 보호(찻집 여인 등)·맑은 선원은 막는다. 수도사·여관 주인은 밤 보호라 낮엔 안 통한다 */
+export function dayKillResult(state: GrimoireState, roleKey: string, actor: GrimoireSeat, target: GrimoireSeat): AttackResult {
+  const roles = roleMap(state.data);
+  const role = roles.get(roleKey);
+  if (actor.roleKey !== roleKey) return { verdict: 'NONE', reasons: [`실제로는 ${roles.get(actor.roleKey ?? '')?.name ?? '?'}이라 능력이 없습니다.`] };
+  if (isImpaired(state, roles, actor)) return { verdict: 'NONE', reasons: [`${role?.name}이(가) 중독·취함이라 능력이 작동하지 않습니다.`] };
+  if (target.dead) return { verdict: 'NONE', reasons: ['이미 죽은 사람입니다.'] };
+  const guards = protectedBy(state, roles, target).filter(g => !['monk', 'innkeeper'].includes(nameKey(roles, g.source)));
+  if (guards.length) return { verdict: 'SAFE', reasons: [`${guards.map(g => `${g.source ?? ''} '${g.text}'`.trim()).join(', ')} — 죽지 않습니다.`] };
+  const t = roles.get(target.roleKey ?? '');
+  if (t?.key === 'sailor' && !isImpaired(state, roles, target)) return { verdict: 'SAFE', reasons: ['선원은 맑을 때 죽지 않습니다.'] };
+  if (t?.key === 'fool' && !isImpaired(state, roles, target) && !target.reminders.some(m => m.source === t.name)) {
+    return { verdict: 'SAFE', reasons: ['어릿광대는 처음 죽을 때 죽지 않습니다.'] };
+  }
+  if (t?.key === 'vizier') return { verdict: 'SAFE', reasons: ['재상은 낮에 죽지 않습니다.'] };
+  return { verdict: 'DIES', reasons: ['죽습니다. 처형이 아니라 낮은 계속됩니다.'] };
+}
+
+/** 달의 자손: 고른 사람이 선하면 오늘 밤 죽는다(#60). 얼뜨기: 고른 사람이 악하면 얼뜨기 팀이 진다(#112) */
+export function deathChoiceResult(state: GrimoireState, roleKey: string, actor: GrimoireSeat, target: GrimoireSeat): AttackResult {
+  const roles = roleMap(state.data);
+  const impaired = actor.roleKey !== roleKey || isImpaired(state, roles, actor);
+  const evil = isEvilSeat(target, roles) === true;
+  const mis = misregisters(state, target) ? ' 은둔자·첩자는 반대로 등록될 수 있습니다.' : '';
+  if (roleKey === 'moonchild') {
+    if (impaired) return { verdict: 'NONE', reasons: ['능력이 없는 상태(취함·중독 등)라 아무 일도 없습니다.'] };
+    return evil
+      ? { verdict: 'NONE', reasons: [`악한 사람이라 아무 일도 없습니다.${mis}`] }
+      : { verdict: 'DIES', reasons: [`선한 사람이라 오늘 밤 죽습니다 — '사망' 리마인더를 붙여 두고 밤에 처리하세요(#60).${mis}`] };
+  }
+  if (impaired) return { verdict: 'NONE', reasons: ['능력이 없는 상태(취함·중독 등)라 아무 일도 없습니다(#145).'] };
+  return evil
+    ? { verdict: 'DIES', reasons: [`악한 사람을 골랐습니다 — 얼뜨기 팀(선)이 즉시 패배합니다(#112).${mis}`] }
+    : { verdict: 'NONE', reasons: [`선한 사람이라 아무 일도 없습니다.${mis}`] };
 }

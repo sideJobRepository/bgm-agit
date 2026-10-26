@@ -35,9 +35,17 @@ export function reminderAutoOffset(seatIndex: number, total: number, k: number, 
   const at = seatPoint(seatIndex, total);
   const toCenter = Math.atan2(50 - at.y, 50 - at.x);
   const dist = 0.5 + (reminderSize / tokenSize) * 0.42;
-  const side = k % 2 === 0 ? 1 : -1;
-  const ang = toCenter + side * (0.85 + Math.floor(k / 2) * 0.8);
-  return { dx: dist * Math.cos(ang), dy: dist * Math.sin(ang) };
+  // 원 중심 쪽 좌우 대각선부터 번갈아 바깥으로 돈다. 토큰 바로 아래(플레이어 이름 자리)로 가는 방향은 건너뛴다 —
+  // 왼쪽·오른쪽 자리에서 중심 쪽 아래 대각선이 이름을 가렸다
+  const free: number[] = [];
+  for (let j = 0; free.length <= k && j < 16; j++) {
+    const ang = toCenter + (j % 2 === 0 ? 1 : -1) * (0.85 + Math.floor(j / 2) * 0.8);
+    if (Math.sin(ang) <= 0.45) free.push(ang);
+  }
+  // 자리가 모자라면(리마인더가 아주 많을 때) 한 바퀴 바깥에 겹쳐 둔다
+  const ang = free[k] ?? toCenter + (k % 2 === 0 ? 1 : -1) * (0.85 + Math.floor(k / 2) * 0.8);
+  const d = free[k] != null ? dist : dist + 0.55;
+  return { dx: d * Math.cos(ang), dy: d * Math.sin(ang) };
 }
 
 /** 위·아래 자리의 토큰·이름이 원 밖으로 나와 위아래 요소와 겹치지 않게 둘 여백 */

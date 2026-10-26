@@ -1,5 +1,5 @@
 import { Wrapper } from '../styles';
-import { PartImg, Box, ButtonRow, Button, DetailHead, Thumb, NoImage, DetailTitle, DetailMeta, BigResult, DraftBadge, SectionTitle, PartViewList, PartViewItem, PartLeft, PartNick, PartChar, TypeTag, WinTag, Memo, FormTitle, ResultToggle, ToggleBtn, SearchBox, Dropdown, Option, EmptyOption, PartEditList, PartEditRow, PartNickEdit, MeTag, RemovePart, Hint, LabelRow, LoadButton, LoadPanel, LoadPanelHead, LoadClose, LoadItem, LoadItemTop, LoadItemNicks, LoadEmpty, PickerWrap, PickerControl, PickerDropdown, PickerSearch, FilterRow, FilterChip, PickerList, PickerOption, PickerEmpty, Field } from './ClockTowerRecordDetail.styles.ts';
+import { Box, ButtonRow, Button, DetailHead, Thumb, NoImage, DetailTitle, DetailMeta, BigResult, DraftBadge, SectionTitle, WinTag, Memo, FormTitle, ResultToggle, ToggleBtn, SearchBox, Dropdown, Option, EmptyOption, PartEditList, PartEditRow, PartNickEdit, MeTag, RemovePart, Hint, LabelRow, LoadButton, LoadPanel, LoadPanelHead, LoadClose, LoadItem, LoadItemTop, LoadItemNicks, LoadEmpty, PickerWrap, PickerControl, PickerDropdown, PickerSearch, FilterRow, FilterChip, PickerList, PickerOption, PickerEmpty, Field } from './ClockTowerRecordDetail.styles.ts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
@@ -14,7 +14,8 @@ import { showConfirmModal } from '../components/confirmAlert.tsx';
 import GameSelect from '../components/GameSelect.tsx';
 import GrimoireViewer from '../components/clocktower/grimoire/GrimoireViewer.tsx';
 import { restoreSaved } from '../components/clocktower/grimoire/useGrimoire.ts';
-import { CT_TYPE_COLOR as TYPE_COLOR, isSeatableType } from '../config/clocktower.ts';
+import { CT_TYPE_COLOR as TYPE_COLOR, CT_TYPE_LABEL, isSeatableType } from '../config/clocktower.ts';
+import { TeamSection, TeamHeader, SheetGrid, SheetCard, SheetIcon, SheetBody } from './ClockTowerGameDetail.styles.ts';
 import type {
   ClockTowerCharacter,
   ClockTowerCharacterType,
@@ -172,6 +173,9 @@ interface PartRow {
   characterType?: ClockTowerCharacterType | null; // 스냅샷 진영(같은 이름 캐릭터가 여럿일 때 구분)
   evil?: boolean | null; // 마도서가 남긴 최종 선악. 이 화면에선 고치지 않고 그대로 돌려보낸다
 }
+
+// 기록 상세 참가자 묶음 순서(이야기꾼은 맨 앞에 따로)
+const PART_TEAMS = ['TOWNSFOLK', 'OUTSIDER', 'MINION', 'DEMON', 'TRAVELLER'] as const;
 
 export default function ClockTowerRecordDetail() {
   const navigate = useNavigate();
@@ -540,25 +544,39 @@ export default function ClockTowerRecordDetail() {
           </DetailHead>
 
           <SectionTitle>참가자 ({detail?.participants.length ?? 0}명)</SectionTitle>
-          <PartViewList>
-            {detail?.participants.map(p => (
-              <PartViewItem key={p.memberId}>
-                {p.image && <PartImg src={p.image} alt="" loading="lazy" decoding="async" />}
-                <PartLeft>
-                  <PartNick>{p.nickname}</PartNick>
-                  {p.characterName && (
-                    <PartChar>
-                      {p.characterName}
-                      {p.typeName && (
-                        <TypeTag color={p.type ? TYPE_COLOR[p.type] : '#888'}>{p.typeName}</TypeTag>
-                      )}
-                    </PartChar>
-                  )}
-                </PartLeft>
-                {p.win != null && <WinTag $win={p.win}>{p.win ? '승' : '패'}</WinTag>}
-              </PartViewItem>
-            ))}
-          </PartViewList>
+          {/* 캐릭터 시트처럼 이야기꾼 → 진영별 묶음 + 카드 격자 */}
+          {(() => {
+            const all = detail?.participants ?? [];
+            const tellers = all.filter(p => !p.type && p.characterName === '이야기꾼');
+            const groups = [
+              ...(tellers.length ? [{ key: 'ST', label: '이야기꾼', color: '#C9A227', list: tellers }] : []),
+              ...PART_TEAMS.map(t => ({ key: t, label: CT_TYPE_LABEL[t], color: TYPE_COLOR[t], list: all.filter(p => p.type === t) })),
+              { key: 'NONE', label: '캐릭터 미정', color: '#9E9E9E', list: all.filter(p => !p.type && !tellers.includes(p)) },
+            ].filter(g => g.list.length);
+            return groups.map(g => (
+              <TeamSection key={g.key}>
+                <TeamHeader color={g.color}>
+                  {g.label}
+                  <small>{g.list.length}</small>
+                </TeamHeader>
+                <SheetGrid>
+                  {g.list.map(p => (
+                    <SheetCard key={p.memberId} color={g.color}>
+                      {g.key !== 'ST' && <SheetIcon>{p.image && <img src={p.image} alt="" loading="lazy" decoding="async" />}</SheetIcon>}
+                      <SheetBody style={{ flex: 1 }}>
+                        <strong>{p.nickname}</strong>
+                        {g.key !== 'ST' && p.characterName && <p>{p.characterName}</p>}
+                        {p.evil != null && p.type && p.type !== 'TRAVELLER' && p.evil !== (p.type === 'MINION' || p.type === 'DEMON') && (
+                          <p style={{ fontWeight: 700 }}>최종 {p.evil ? '악' : '선'}</p>
+                        )}
+                      </SheetBody>
+                      {p.win != null && <WinTag $win={p.win}>{p.win ? '승' : '패'}</WinTag>}
+                    </SheetCard>
+                  ))}
+                </SheetGrid>
+              </TeamSection>
+            ));
+          })()}
 
           {detail?.memo && (
             <>

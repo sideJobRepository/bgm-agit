@@ -23,4 +23,6 @@ public class ClockTowerRecordListResponse {
     private String memo;
     private int participantCount;
     private List<String> participantNicknames;
+    // 참가자별 캐릭터·진영·최종 선악(이야기꾼은 characterName="이야기꾼", type=null). 목록 카드에서 진영별로 묶어 보여준다
+    private List<ClockTowerParticipantResponse> participants;
 }

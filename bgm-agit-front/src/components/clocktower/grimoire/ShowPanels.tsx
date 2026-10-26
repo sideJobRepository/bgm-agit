@@ -204,6 +204,7 @@ const ShowRole = styled.div<{ $color: string; $small?: boolean }>`
 
 const ShowMessage = styled.div`
   font-size: 22px;
+  white-space: pre-line;
 `;
 
 const ShowHint = styled.div`

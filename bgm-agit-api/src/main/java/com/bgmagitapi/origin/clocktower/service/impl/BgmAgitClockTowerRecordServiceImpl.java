@@ -70,10 +70,12 @@ public class BgmAgitClockTowerRecordServiceImpl implements BgmAgitClockTowerReco
 
         List<Long> ids = page.getContent().stream().map(BgmAgitClockTowerRecord::getId).toList();
         Map<Long, List<String>> nicknamesByRecord = new LinkedHashMap<>();
+        Map<Long, List<BgmAgitClockTowerParticipant>> rowsByRecord = new LinkedHashMap<>();
         for (BgmAgitClockTowerParticipant p : recordRepository.findParticipantsByRecordIds(ids)) {
             Long recordId = p.getRecord().getId();
             String nickname = p.getBgmAgitMember() != null ? p.getBgmAgitMember().getBgmAgitMemberNickname() : null;
             nicknamesByRecord.computeIfAbsent(recordId, k -> new ArrayList<>()).add(nickname);
+            rowsByRecord.computeIfAbsent(recordId, k -> new ArrayList<>()).add(p);
         }
 
         List<ClockTowerRecordListResponse> content = new ArrayList<>();
@@ -94,6 +96,9 @@ public class BgmAgitClockTowerRecordServiceImpl implements BgmAgitClockTowerReco
                     .memo(r.getMemo())
                     .participantCount(nicks.size())
                     .participantNicknames(nicks)
+                    .participants(rowsByRecord.getOrDefault(r.getId(), List.of()).stream()
+                            .map(p -> ClockTowerParticipantResponse.from(p, r.getResult()))
+                            .toList())
                     .build());
         }
         return new PageImpl<>(content, pageable, page.getTotalElements());
