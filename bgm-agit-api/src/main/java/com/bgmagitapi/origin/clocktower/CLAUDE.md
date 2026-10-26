@@ -129,7 +129,7 @@
 3. `clocktower-grimoire-v2-2026-11.sql` — 1) 메모 TEXT 2) 사전 이미지 컬럼 4개 3) `GET /clocktower-roles/**` 관리자 4) `GET /clocktower-games/script/fetch` 관리자(정확 경로) — **전부 스테이징·운영 적용**(2026-10-25). 2) 는 다시 돌리면 ADD COLUMN 오류가 나니 새 변경은 새 섹션·새 파일로
 4. `clocktower-text-length-2026-11.sql` — 사전·징크스 문구 varchar(1000)→4000, 리마인더 2개는 TEXT(**스테이징·운영 적용** 2026-10-25). 사전 표 varchar 다섯 개를 모두 4000 으로 하면 행 한도 65,535바이트(utf8mb4 글자당 4)를 넘어 ALTER 가 거부된다 — 새 긴 컬럼은 TEXT 로
 5. `clocktower-session-2026-11.sql` — 휴대폰 세션 테이블 2개 + `/clocktower-sessions`(POST·`/**` GET·POST·PUT)·`/clocktower-members` GET 유저(2) 매핑(**스테이징·운영 적용** 2026-10-25)
-6. `clocktower-grimoire-save-2026-11.sql` — 임시저장 표 + 기록 마도서 컬럼 + `/clocktower-grimoire-saves` 유저(2) 매핑(**스테이징 적용** 2026-10-26, 운영 미적용 — 백엔드 운영 배포 **전에** 돌릴 것. 엔티티가 새 컬럼을 읽어 없으면 기록 조회가 실패한다)
+6. `clocktower-grimoire-save-2026-11.sql` — 임시저장 표 + 기록 마도서 컬럼 + `/clocktower-grimoire-saves` 유저(2) 매핑(**스테이징·운영 적용** 2026-10-26. 엔티티가 새 컬럼을 읽어 없으면 기록 조회가 실패한다 — 운영 매핑은 앱 재시작 후 반영)
 - 엔티티가 이미지 컬럼을 읽으므로 이 파일 2) 없이 백엔드를 배포하면 사전 조회가 전부 실패한다(운영은 이미 적용됨)
 - 운영 매핑은 **앱 재시작 후** 반영된다(로딩이 @PostConstruct 1회)
 - 운영의 "시계탑에 흐른피" 상위 메뉴(id 37)는 켜져 있지만 **권한 4(멘토)** — 아직 만드는 중이라 멘토·관리자에게만 보이게 둔 것(사용자 결정 2026-10-26). 손님에게 열 때 `BGM_AGIT_MENU_ROLE` 을 3 으로 바꾸고, 그때 운영에도 "내 캐릭터"(`/clocktower-my`) 하위 메뉴를 넣는다(스테이징은 id 44 로 넣어 둠)
