@@ -36,6 +36,8 @@ import {
 } from '../components/clocktower/grimoire/circleLayout.ts';
 import ToolbarMenu, { MenuGroup } from '../components/clocktower/grimoire/ToolbarMenu.tsx';
 import { InfoCardPanel, type InfoPreset } from '../components/clocktower/grimoire/InfoCards.tsx';
+import NightLogList from '../components/clocktower/grimoire/NightLogList.tsx';
+import { makeLogEntry, shouldLog, type NightStepContext } from '../components/clocktower/grimoire/nightLog.ts';
 import ReminderToken, { CurvedText } from '../components/clocktower/grimoire/ReminderToken.tsx';
 import { dealBag, isDealt, usedKeys } from '../components/clocktower/grimoire/bagRules.ts';
 import RoleArt from '../components/clocktower/grimoire/RoleArt.tsx';
@@ -135,13 +137,14 @@ import type {
   GrimoireState,
 } from '../types/clocktower.ts';
 
-type SideTab = 'night' | 'setup' | 'jinx' | 'fabled' | 'notes';
+type SideTab = 'night' | 'setup' | 'jinx' | 'fabled' | 'log' | 'notes';
 
 const SIDE_TABS: { value: SideTab; label: string }[] = [
   { value: 'night', label: '밤 순서' },
   { value: 'setup', label: '셋업 점검' },
   { value: 'jinx', label: '징크스' },
   { value: 'fabled', label: '전설' },
+  { value: 'log', label: '정보 기록' },
   { value: 'notes', label: '메모' },
 ];
 
@@ -231,6 +234,8 @@ export default function ClockTowerGrimoire() {
   const [bluffOpen, setBluffOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [showContent, setShowContent] = useState<ShowContent | null>(null);
+  // 밤 진행 카드가 보고 있는 단계. 보여 준 정보를 그 단계로 묶어 기록한다
+  const nightStep = useRef<NightStepContext | null>(null);
   // 정보 카드 창: null = 닫힘, 객체 = 미리 채울 문장·플레이어·캐릭터(빈 객체면 기본)
   const [infoOpen, setInfoOpen] = useState<InfoPreset | null>(null);
   // 마도서 전체화면(포켓 그리모어처럼 툴바·패널·안내를 숨기고 원형 마도서만 크게). 좌석 메뉴는 그대로 쓴다
@@ -638,6 +643,15 @@ export default function ClockTowerGrimoire() {
     });
   };
 
+  // 플레이어에게 보여주기. 게임이 시작된 뒤 보여 준 것은 정보 기록에 남는다(밤 진행 중이면 그 단계로)
+  const showInfo = (content: ShowContent) => {
+    setShowContent(content);
+    const step = nightStep.current;
+    if (!shouldLog(state, step)) return;
+    const entry = makeLogEntry(state, content, step);
+    updateSilently(prev => ({ ...prev, nightLogs: [...(prev.nightLogs ?? []), entry] }));
+  };
+
   // 게임 도중 캐릭터가 바뀐 좌석·악한 여행자: 본인에게 보여주고 알림 목록에서 지운다
   const showNotice = (seatId: string, kind: GrimoireNoticeKind) => {
     const seat = seats.find(s => s.id === seatId);
@@ -649,7 +663,7 @@ export default function ClockTowerGrimoire() {
         toast.error('살아 있는 악마 자리가 없습니다. 좌석 캐릭터를 먼저 정해 주세요.');
         return;
       }
-      setShowContent({
+      showInfo({
         title: '이 사람이 악마입니다',
         roles: [],
         message: demons.map(d => d.name).join(', '),
@@ -662,7 +676,7 @@ export default function ClockTowerGrimoire() {
         );
         return;
       }
-      setShowContent({ title: '당신의 캐릭터', roles: [shown] });
+      showInfo({ title: '당신의 캐릭터', roles: [shown] });
     }
     updateSilently(prev => ({
       ...prev,
@@ -1477,6 +1491,18 @@ export default function ClockTowerGrimoire() {
                     })
                   ))}
 
+                {sideTab === 'log' && (
+                  <NightLogList
+                    logs={state.nightLogs ?? []}
+                    onDelete={id =>
+                      updateSilently(prev => ({
+                        ...prev,
+                        nightLogs: (prev.nightLogs ?? []).filter(e => e.id !== id),
+                      }))
+                    }
+                  />
+                )}
+
                 {sideTab === 'notes' && (
                   <NotesArea
                     value={state.notes}
@@ -1534,7 +1560,7 @@ export default function ClockTowerGrimoire() {
             }
             onMove={dir => moveSeat(openSeat.id, dir)}
             onRemove={() => removeSeat(openSeat)}
-            onShow={role => setShowContent({ title: '당신의 캐릭터', roles: [role] })}
+            onShow={role => showInfo({ title: '당신의 캐릭터', roles: [role] })}
             onPassDemon={() => {
               setDemonSeatId(openSeat.id);
               setOpenSeatId(null);
@@ -1583,7 +1609,7 @@ export default function ClockTowerGrimoire() {
           <BluffPanel
             state={state}
             onReroll={() => update(prev => ({ ...prev, bluffs: pickBluffs(prev) }))}
-            onShow={content => setShowContent(content)}
+            onShow={content => showInfo(content)}
             onClose={() => setBluffOpen(false)}
           />
         )}
@@ -1630,7 +1656,10 @@ export default function ClockTowerGrimoire() {
               )
             }
             onClose={() => setNightMode(null)}
-            onShow={content => setShowContent(content)}
+            onShow={content => showInfo(content)}
+            onStep={step => {
+              nightStep.current = step;
+            }}
           />
         )}
 
@@ -1639,7 +1668,7 @@ export default function ClockTowerGrimoire() {
             key={JSON.stringify(infoOpen)}
             state={state}
             preset={infoOpen}
-            onShow={content => setShowContent(content)}
+            onShow={content => showInfo(content)}
             onClose={() => setInfoOpen(null)}
           />
         )}

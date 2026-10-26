@@ -7,10 +7,13 @@ import {
   Circle,
   CircleCenter,
   Mark,
+  Overlay,
   SeatBadge,
   SeatMarks,
   SeatName,
   SeatSpot,
+  Sheet,
+  SheetHead,
   Token,
   TokenArt,
   TokenWrap,
@@ -20,6 +23,7 @@ import { aliveAll, isEvilSeat, phaseLabel, reminderSourceRole, roleMap, totalPla
 import { FILL_STYLE, reminderAutoOffset, reminderTokenSize, seatPoint, seatTokenSize, useElementSize } from './circleLayout.ts';
 import ReminderToken, { CurvedText } from './ReminderToken.tsx';
 import RoleArt from './RoleArt.tsx';
+import NightLogList from './NightLogList.tsx';
 import { tokenImageCandidates } from './tokenImage.ts';
 import { exitFullscreen, fullscreenElement, fullscreenSupported, requestFullscreen } from './useImmersiveMode.ts';
 
@@ -47,6 +51,8 @@ export default function GrimoireViewer({
   const reminderSize = reminderTokenSize(tokenSize);
   const inner = tokenSize - 6;
   const bluffs = (state.bluffs ?? []).map(k => roles.get(k)?.name ?? k);
+  const logs = state.nightLogs ?? [];
+  const [logOpen, setLogOpen] = useState(false);
 
   // 열 때 브라우저 전체 화면을 켜 주소창·탭 줄을 걷는다. 이 창이 켰으면 닫을 때 끈다
   const [isFull, setIsFull] = useState(() => !!fullscreenElement());
@@ -75,6 +81,12 @@ export default function GrimoireViewer({
             {phaseLabel(state)} · 생존 {aliveAll(seats)}/{totalPlayers(seats)}
           </span>
         </div>
+        {/* 밤마다 보여 준 정보(복기용). 기록 기능 전 저장본에는 없다 */}
+        {logs.length > 0 && (
+          <Btn type="button" onClick={() => setLogOpen(true)}>
+            정보 기록 {logs.length}
+          </Btn>
+        )}
         {fullscreenSupported() && !isFull && (
           <Btn
             type="button"
@@ -176,6 +188,19 @@ export default function GrimoireViewer({
           {bluffs.length > 0 && <span>악마의 속임수: {bluffs.join(', ')}</span>}
         </CircleCenter>
       </Circle>
+      {logOpen && (
+        <Overlay onClick={() => setLogOpen(false)}>
+          <Sheet onClick={e => e.stopPropagation()}>
+            <SheetHead>
+              <h3>정보 기록</h3>
+              <Btn type="button" onClick={() => setLogOpen(false)}>
+                닫기
+              </Btn>
+            </SheetHead>
+            <NightLogList logs={logs} />
+          </Sheet>
+        </Overlay>
+      )}
     </Root>
   );
 }

@@ -247,6 +247,8 @@ function mergeSilent(past: GrimoireState, now: GrimoireState): GrimoireState {
     ...past,
     notes: now.notes,
     nightChecked: now.nightChecked,
+    // 보여 준 정보는 이미 플레이어가 봤다 — 되돌려도 기록은 남긴다
+    nightLogs: now.nightLogs,
     // 휴대폰 세션은 서버에 이미 있는 것이라 되돌리지 않는다(되돌리면 보낸 기록이 어긋나 엉뚱한 좌석을 다시 보낸다)
     clocktowerSession: now.clocktowerSession ?? null,
     seats: past.seats.map(s => (names.has(s.id) ? { ...s, name: names.get(s.id) as string } : s)),
