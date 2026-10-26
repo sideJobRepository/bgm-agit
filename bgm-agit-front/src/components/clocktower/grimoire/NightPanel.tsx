@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { GrimoirePhase, GrimoireRole, GrimoireState, NightTab } from '../../../types/clocktower.ts';
 import { renderNightText } from '../../../utils/clocktowerText.tsx';
 import { dayLogOf, isEvilSeat, nightItems, roleMap, shuffle, type NightItem } from './grimoireRules.ts';
@@ -6,6 +6,7 @@ import RoleArt from './RoleArt.tsx';
 import { tokenImageCandidates } from './tokenImage.ts';
 import type { ShowContent } from './ShowPanels.tsx';
 import type { InfoPreset } from './InfoCards.tsx';
+import type { NightStepContext } from './nightLog.ts';
 import {
   Btn,
   Chip,
@@ -319,6 +320,7 @@ export function NightMode({
   onShow,
   onOpenInfo,
   onEndNight,
+  onStep,
 }: {
   state: GrimoireState;
   phase: GrimoirePhase;
@@ -328,6 +330,8 @@ export function NightMode({
   onShow: (content: ShowContent) => void;
   onOpenInfo: (preset?: InfoPreset) => void;
   onEndNight: () => void;
+  // 보고 있는 단계를 알린다(보여 준 정보를 그 단계로 기록). 닫히면 null
+  onStep?: (step: NightStepContext | null) => void;
 }) {
   const items = useMemo(() => playableItems(state), [state]);
   const checked = new Set(state.nightChecked);
@@ -345,6 +349,14 @@ export function NightMode({
     return made;
   };
   const item = items[Math.min(index, items.length - 1)];
+  const stepName = item?.role.name ?? null;
+  const stepWho = item ? whoLabel(item) || null : null;
+  const onStepRef = useRef(onStep);
+  onStepRef.current = onStep;
+  useEffect(() => {
+    onStepRef.current?.(stepName ? { step: stepName, who: stepWho } : null);
+  }, [stepName, stepWho]);
+  useEffect(() => () => onStepRef.current?.(null), []);
 
   if (!item) return null;
   const last = index >= items.length - 1;

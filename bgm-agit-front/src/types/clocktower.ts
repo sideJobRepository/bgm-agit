@@ -286,6 +286,24 @@ export interface Exile {
   survived?: boolean; // 추방됐지만 살아남음(이단아)
 }
 
+/**
+ * 플레이어에게 보여 준 정보 한 건(보여주기 카드를 띄울 때마다 자동으로 남는다).
+ * 진행 중 "어제 공감자한테 뭐라고 했지"를 다시 보고, 끝난 기록의 마도서 보기에서 밤별로 복기한다.
+ * 캐릭터는 이름으로 남긴다 — 저장본이 스크립트와 따로 돌아다녀도 읽히게.
+ */
+export interface NightLogEntry {
+  id: string;
+  day: number;
+  phase: GamePhase;
+  step: string | null; // 밤 진행 중이던 단계(캐릭터 이름). 밤 진행 밖에서 보여 준 것은 null
+  who: string | null; // 그 단계에 깨운 사람
+  title: string;
+  big?: string;
+  roles: string[];
+  message?: string;
+  at: string;
+}
+
 export interface DayLog {
   day: number;
   nominations: Nomination[];
@@ -331,6 +349,8 @@ export interface GrimoireState {
   clocktowerSession?: GrimoirePhoneSession | null;
   // 서버 임시저장 id. 다시 [임시저장]하면 이 저장을 덮어쓴다
   serverSaveId?: number | null;
+  // 보여 준 정보 기록. 같은 v2 안에서 늘어난 필드라 옛 저장본엔 없다
+  nightLogs?: NightLogEntry[];
 }
 
 /** 주머니 한 칸. 주정뱅이·꼭두각시·미치광이는 믿는 캐릭터를 같이 정해 둔다 */
