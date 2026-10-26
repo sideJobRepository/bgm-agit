@@ -403,12 +403,14 @@ public class AlimtalkUtils {
      */
     public static String buildClockTowerRoleMessage(String nickname, String gameName, String roleName, String teamName) {
         return new StringBuilder()
-                .append("[BGM 아지트 시계탑 캐릭터 안내]\n\n")
-                .append(nickname).append("님, 참여하신 시계탑 게임의 캐릭터가 배정되었습니다.\n\n")
+                .append("[BGM 아지트 시계탑 캐릭터 배정 안내]\n\n")
+                .append(nickname).append("님, BGM 아지트에서 참가 신청하신 시계탑 게임의 캐릭터가 이야기꾼에 의해 배정되었습니다.\n\n")
                 .append("게임: ").append(gameName).append("\n")
                 .append("캐릭터: ").append(roleName).append(" (").append(teamName).append(")\n\n")
                 .append("능력과 팀 정보는 아래 버튼에서 확인해 주세요.\n")
-                .append("게임이 끝날 때까지 다른 참가자에게 보여주지 마세요.")
+                .append("게임이 끝날 때까지 다른 참가자에게 보여주지 마세요.\n\n")
+                // 첫 검수 반려(2026-10-26): 수신자의 어떤 행동으로 받는 메시지인지 본문에 있어야 한다
+                .append("※ 이 메시지는 시계탑 게임 참가를 신청하신 회원님께 캐릭터 배정 시 발송됩니다.")
                 .toString();
     }
 
