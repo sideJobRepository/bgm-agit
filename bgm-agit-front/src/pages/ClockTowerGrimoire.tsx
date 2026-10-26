@@ -22,6 +22,17 @@ import {
 import { NightList, NightMode } from '../components/clocktower/grimoire/NightPanel.tsx';
 import WinBanner from '../components/clocktower/grimoire/WinBanner.tsx';
 import SetupWizard from '../components/clocktower/grimoire/SetupWizard.tsx';
+import GrimoireViewer from '../components/clocktower/grimoire/GrimoireViewer.tsx';
+import { SavedGrimoireList, SavedGrimoirePanel } from '../components/clocktower/grimoire/SavedGrimoires.tsx';
+import { saveGrimoireToServer } from '../components/clocktower/grimoire/grimoireSaves.ts';
+import {
+  circleMargins,
+  reminderAutoOffset,
+  reminderTokenSize,
+  seatPoint,
+  seatTokenSize,
+  useElementWidth,
+} from '../components/clocktower/grimoire/circleLayout.ts';
 import ToolbarMenu, { MenuGroup } from '../components/clocktower/grimoire/ToolbarMenu.tsx';
 import { InfoCardPanel, type InfoPreset } from '../components/clocktower/grimoire/InfoCards.tsx';
 import ReminderToken, { CurvedText } from '../components/clocktower/grimoire/ReminderToken.tsx';
@@ -86,6 +97,8 @@ import {
   TokenArt,
   TokenWrap,
   Muted,
+  Hint,
+  SetupCard,
   NightBody,
   NightRow,
   NotesArea,
@@ -162,36 +175,6 @@ function refreshCharacterIds(prev: GrimoireState, fresh: GrimoireData): Grimoire
   };
 }
 
-/** 원형 배치 좌표(%). 0번이 12시 방향, 시계 방향 */
-/**
- * 좌석 토큰 크기. 원 지름과 인원에 맞춘다 — 고정 76px 이면 태블릿처럼 원이 클 때 토큰이 작아 보였다.
- * 지름의 15% 를 넘지 않고, 이웃 좌석 간격(원둘레 / 인원)의 62% 안이라 서로 겹치지 않는다.
- */
-function seatTokenSize(circleWidth: number, total: number) {
-  if (!circleWidth) return 76;
-  const spacing = (2 * Math.PI * 0.41 * circleWidth) / Math.max(total, 1);
-  return Math.round(Math.max(52, Math.min(circleWidth * 0.15, spacing * 0.62, 140)));
-}
-
-/** 요소 폭을 따라간다(화면 회전·몰입 모드 전환 때 원 크기가 바뀐다) */
-function useElementWidth(el: HTMLElement | null) {
-  const [width, setWidth] = useState(0);
-  useEffect(() => {
-    if (!el) return;
-    const ro = new ResizeObserver(([entry]) => setWidth(Math.round(entry.contentRect.width)));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [el]);
-  return width;
-}
-
-/** 원형 기본 자리(원 안 %, 위에서 시계 방향) */
-function seatPoint(i: number, total: number) {
-  const angle = (2 * Math.PI * i) / total;
-  const radius = 41;
-  return { x: 50 + radius * Math.sin(angle), y: 50 - radius * Math.cos(angle) };
-}
-
 // 이만큼 움직여야 끌기로 본다(태블릿에서 누르다 손가락이 조금 밀려도 좌석 메뉴가 열리게)
 const DRAG_THRESHOLD = 8;
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -251,6 +234,10 @@ export default function ClockTowerGrimoire() {
   const [infoOpen, setInfoOpen] = useState<InfoPreset | null>(null);
   // 마도서 전체화면(포켓 그리모어처럼 툴바·패널·안내를 숨기고 원형 마도서만 크게). 좌석 메뉴는 그대로 쓴다
   const [fullView, setFullView] = useState(false);
+  // 임시저장 목록 창 / 읽기 전용으로 펼쳐 본 마도서
+  const [savedOpen, setSavedOpen] = useState(false);
+  const [viewer, setViewer] = useState<{ state: GrimoireState; title: string } | null>(null);
+  const [savingToServer, setSavingToServer] = useState(false);
   // 전체화면이 몰입 모드를 켰으면 끝낼 때 같이 끈다(원래 몰입 중이었으면 그대로 둔다)
   const fullViewOwnsImmersive = useRef(false);
   // 악마 넘기기 창(악마가 죽으면 자동으로 열린다)
@@ -357,7 +344,18 @@ export default function ClockTowerGrimoire() {
             ownerId={userId}
             onStart={start}
           />
+          {/* 임시저장한 판(다른 기기에서 저장했어도) 이어서 하기 */}
+          <SetupCard style={{ maxWidth: 720, width: '100%', margin: '16px auto 0' }}>
+            <h3>저장된 마도서</h3>
+            <SavedGrimoireList
+              inline
+              onView={(s, title) => setViewer({ state: s, title })}
+              onResume={s => start({ ...s, ownerId: userId })}
+            />
+            <Hint>마도서 [더보기] → [임시저장]으로 저장한 판이 여기에 나옵니다.</Hint>
+          </SetupCard>
         </Page>
+        {viewer && <GrimoireViewer state={viewer.state} title={viewer.title} onClose={() => setViewer(null)} />}
       </GrimoireRoot>
     );
   }
@@ -684,6 +682,27 @@ export default function ClockTowerGrimoire() {
     fullViewOwnsImmersive.current = false;
   };
 
+  // 지금 판을 서버에 임시저장(같은 판은 덮어쓴다)
+  const saveToServer = async () => {
+    setSavingToServer(true);
+    const id = await saveGrimoireToServer(state, `${state.data.gameName} · ${phaseLabel(state)}`);
+    setSavingToServer(false);
+    if (id == null) return;
+    updateSilently(prev => ({ ...prev, serverSaveId: id }));
+    toast.success('임시저장했습니다. [더보기] → [저장된 마도서]나 시작 화면에서 이어서 할 수 있습니다.');
+  };
+
+  // 저장된 판으로 바꾼다. 지금 판의 휴대폰 배정은 닫는다(다른 판의 캐릭터가 휴대폰에 남지 않게)
+  const resumeSaved = (saved: GrimoireState) =>
+    showConfirmModal({
+      message: '이 기기의 지금 판을 저장된 판으로 바꿀까요? 지금 판을 남기려면 먼저 [임시저장] 하세요.',
+      onConfirm: async () => {
+        await phone.close();
+        setSavedOpen(false);
+        start({ ...saved, ownerId: userId });
+      },
+    });
+
   const newGame = () =>
     showConfirmModal({
       message: '진행 중인 게임을 지우고 새로 시작할까요? 되돌릴 수 없습니다.',
@@ -819,7 +838,7 @@ export default function ClockTowerGrimoire() {
       seats: prev.seats.map(s => ({ ...s, reminders: s.reminders.map(r => ({ ...r, pos: null })) })),
     }));
   // 리마인더는 좌석 토큰보다 조금 작게(포켓 그리모어 비율)
-  const reminderSize = Math.max(36, Math.round(tokenSize * 0.64));
+  const reminderSize = reminderTokenSize(tokenSize);
 
   /**
    * 리마인더를 토큰 가장자리에 걸쳐 원 중심 쪽 좌우 대각선으로 번갈아 붙인다(포켓 그리모어처럼).
@@ -837,16 +856,9 @@ export default function ClockTowerGrimoire() {
       ...seat.reminders.map(m => ({ id: m.id, text: m.text, role: reminderSourceRole(m.source, state.data) })),
     ];
     if (list.length === 0) return null;
-    // 좌석 자리 → 원 중심을 향하는 각도
-    const at = seatPoint(i, seats.length);
-    const toCenter = Math.atan2(50 - at.y, 50 - at.x);
-    const dist = 0.5 + (reminderSize / tokenSize) * 0.42;
     const saved = new Map(seat.reminders.map(m => [m.id, m.pos ?? null]));
     return list.map((r, k) => {
-      // 0번 오른쪽 대각선, 1번 왼쪽 대각선, 2번은 오른쪽 한 칸 더 … 순서
-      const side = k % 2 === 0 ? 1 : -1;
-      const ang = toCenter + side * (0.85 + Math.floor(k / 2) * 0.8);
-      const auto = { dx: dist * Math.cos(ang), dy: dist * Math.sin(ang) };
+      const auto = reminderAutoOffset(i, seats.length, k, tokenSize, reminderSize);
       const dragging = drag?.reminderId === r.id && drag.moved;
       const p = dragging ? { dx: drag.x, dy: drag.y } : (saved.get(r.id) ?? auto);
       const draggable = r.id !== 'believed';
@@ -1079,6 +1091,12 @@ export default function ClockTowerGrimoire() {
                   </>
                 )}
                 <MenuGroup>게임</MenuGroup>
+                <Btn type="button" onClick={saveToServer} disabled={savingToServer}>
+                  {savingToServer ? '저장 중…' : state.serverSaveId ? '임시저장(덮어쓰기)' : '임시저장'}
+                </Btn>
+                <Btn type="button" onClick={() => setSavedOpen(true)}>
+                  저장된 마도서
+                </Btn>
                 <Btn type="button" onClick={() => openFullView()}>
                   마도서 전체화면
                 </Btn>
@@ -1166,8 +1184,7 @@ export default function ClockTowerGrimoire() {
               ref={setCircleEl}
               style={{
                 ...(fullView ? { width: 'min(100%, calc(100dvh - 120px))' } : {}),
-                marginTop: Math.max(0, Math.round(tokenSize / 2 + 8 - circleWidth * 0.09)),
-                marginBottom: Math.max(0, Math.round(tokenSize / 2 + 64 - circleWidth * 0.09)),
+                ...circleMargins(tokenSize, circleWidth),
               }}
             >
               {seats.map((seat, i) => {
@@ -1624,6 +1641,16 @@ export default function ClockTowerGrimoire() {
             onClose={() => setInfoOpen(null)}
           />
         )}
+
+        {savedOpen && (
+          <SavedGrimoirePanel
+            onView={(s, title) => setViewer({ state: s, title })}
+            onResume={resumeSaved}
+            onClose={() => setSavedOpen(false)}
+          />
+        )}
+
+        {viewer && <GrimoireViewer state={viewer.state} title={viewer.title} onClose={() => setViewer(null)} />}
 
         {/* 보여주기 카드는 밤 진행·정보 카드 창보다 위에 그린다(맨 뒤에 둔다) */}
         {showContent && <ShowCard content={showContent} onClose={() => setShowContent(null)} />}

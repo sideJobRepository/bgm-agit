@@ -96,6 +96,8 @@ export default function EndGamePanel({
           memo: fullMemo,
           draft: true,
           participants,
+          // 기록 상세에서 [마도서 보기]로 다시 본다. 휴대폰 세션은 빼고 올린다
+          grimoire: JSON.stringify({ ...state, clocktowerSession: null }),
         }
       );
       // ApiResponse 의 403 은 HTTP 200 으로 온다

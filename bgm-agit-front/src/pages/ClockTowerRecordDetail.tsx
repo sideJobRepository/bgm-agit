@@ -12,6 +12,8 @@ import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts'
 import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import GameSelect from '../components/GameSelect.tsx';
+import GrimoireViewer from '../components/clocktower/grimoire/GrimoireViewer.tsx';
+import { restoreSaved } from '../components/clocktower/grimoire/useGrimoire.ts';
 import { CT_TYPE_COLOR as TYPE_COLOR, isSeatableType } from '../config/clocktower.ts';
 import type {
   ClockTowerCharacter,
@@ -20,6 +22,7 @@ import type {
   ClockTowerRecordDetail as ClockTowerRecordDetailType,
   ClockTowerRecordListItem,
   ClockTowerResultType,
+  GrimoireState,
   MemberOption,
 } from '../types/clocktower.ts';
 
@@ -182,6 +185,19 @@ export default function ClockTowerRecordDetail() {
   const canWrite = isSelfLogin || isAdmin;
   const detail = useRecoilValue(clockTowerRecordDetailState);
   const fetchDetail = useClockTowerRecordDetailFetch();
+  // 이 기록에 붙은 마지막 마도서(읽기 전용으로 펼쳐 본다)
+  const [grimoire, setGrimoire] = useState<GrimoireState | null>(null);
+
+  const openGrimoire = async () => {
+    try {
+      const { data } = await api.get(`/bgm-agit/clocktower-records/${id}/grimoire`);
+      const state = restoreSaved(typeof data === 'string' ? data : JSON.stringify(data));
+      if (state) setGrimoire(state);
+      else toast.error('이 기록의 마도서를 읽지 못했습니다.');
+    } catch {
+      toast.error('이 기록의 마도서를 불러오지 못했습니다.');
+    }
+  };
   const { insert } = useInsertPost();
   const { update } = useUpdatePost();
   const { remove } = useDeletePost();
@@ -498,8 +514,14 @@ export default function ClockTowerRecordDetail() {
                 <Button $variant="danger" color="#FF5E57" onClick={onDelete}>삭제</Button>
               </>
             )}
+            {detail?.hasGrimoire && (
+              <Button $variant="primary" color="#4A2C82" onClick={openGrimoire}>마도서 보기</Button>
+            )}
             <Button $variant="secondary" color="#988271" onClick={() => navigate('/clocktower-records')}>목록</Button>
           </ButtonRow>
+          {grimoire && (
+            <GrimoireViewer state={grimoire} title={`${detail?.gameName ?? ''} · ${detail?.playDate ?? ''} 마도서`} onClose={() => setGrimoire(null)} />
+          )}
 
           <DetailHead>
             <Thumb>

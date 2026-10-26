@@ -117,7 +117,17 @@ public class BgmAgitClockTowerRecordServiceImpl implements BgmAgitClockTowerReco
                 .memo(r.getMemo())
                 .participants(participants)
                 .canManage(canManage(r, memberId, roles))
+                .hasGrimoire(StringUtils.hasText(r.getGrimoire()))
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getRecordGrimoire(Long id) {
+        return recordRepository.findById(id)
+                .map(BgmAgitClockTowerRecord::getGrimoire)
+                .filter(StringUtils::hasText)
+                .orElse(null);
     }
 
     @Override
@@ -135,6 +145,9 @@ public class BgmAgitClockTowerRecordServiceImpl implements BgmAgitClockTowerReco
 
         BgmAgitClockTowerRecord record = new BgmAgitClockTowerRecord(
                 game, writer, request.getPlayDate(), result, request.getMemo(), draft);
+        if (StringUtils.hasText(request.getGrimoire()) && request.getGrimoire().trim().startsWith("{")) {
+            record.attachGrimoire(request.getGrimoire());
+        }
         recordRepository.save(record);
 
         saveParticipants(record, memberId, request.getParticipants());

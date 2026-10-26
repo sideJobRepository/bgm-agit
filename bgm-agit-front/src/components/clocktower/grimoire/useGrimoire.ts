@@ -157,6 +157,16 @@ function migrateLegacy(userId: number): string | null {
   return raw;
 }
 
+/** 서버에 임시저장했거나 기록에 붙은 마도서 JSON 을 판으로 되살린다(이 기기 저장본과 같은 변환을 거친다) */
+export function restoreSaved(raw: string | null | undefined): GrimoireState | null {
+  if (!raw) return null;
+  try {
+    return parse(raw).state;
+  } catch {
+    return null;
+  }
+}
+
 function load(userId: number): Loaded {
   let raw: string | null = null;
   try {

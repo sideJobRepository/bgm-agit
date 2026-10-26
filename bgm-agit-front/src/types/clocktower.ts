@@ -99,6 +99,8 @@ export interface ClockTowerRecordDetail {
   memo?: string | null;
   participants: ClockTowerRecordParticipant[];
   canManage: boolean;
+  // 마도서에서 기록해 마지막 마도서가 함께 저장돼 있다([마도서 보기])
+  hasGrimoire?: boolean;
 }
 
 // 캐릭터 사전(관리자). 밤 특수 단계는 team 이 null
@@ -326,6 +328,8 @@ export interface GrimoireState {
   pendingNotices: { seatId: string; kind: GrimoireNoticeKind; createdDay: number }[];
   // 플레이어 휴대폰으로 보낸 배정(서버 세션). 같은 v2 안에서 늘어난 필드라 옛 저장본엔 없다
   clocktowerSession?: GrimoirePhoneSession | null;
+  // 서버 임시저장 id. 다시 [임시저장]하면 이 저장을 덮어쓴다
+  serverSaveId?: number | null;
 }
 
 /** 주머니 한 칸. 주정뱅이·꼭두각시·미치광이는 믿는 캐릭터를 같이 정해 둔다 */
