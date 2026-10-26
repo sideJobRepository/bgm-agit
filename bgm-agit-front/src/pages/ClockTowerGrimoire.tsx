@@ -100,6 +100,7 @@ import {
   SeatBadge,
   TokenArt,
   TokenWrap,
+  PickOrder,
   Muted,
   Hint,
   SetupCard,
@@ -225,6 +226,10 @@ export default function ClockTowerGrimoire() {
   const [sideTab, setSideTab] = useState<SideTab>('night');
   // 밤 진행 카드: null = 닫힘, '' = 안 한 첫 단계부터, 그 외 = 그 단계부터(밤 순서 줄을 눌렀을 때)
   const [nightMode, setNightMode] = useState<string | null>(null);
+  // 밤 진행 대상 고르기: 지금 단계가 고르는 단계면 원형 마도서 토큰을 누르는 것이 고르기다
+  const [nightPicks, setNightPicks] = useState<string[]>([]);
+  const [pickMode, setPickMode] = useState(false);
+  const togglePick = (seatId: string) => setNightPicks(v => (v.includes(seatId) ? v.filter(k => k !== seatId) : [...v, seatId]));
   // 낮 화면: 플레이어에게 보여줄 때 캐릭터·리마인더를 가린다
   const [dayView, setDayView] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
@@ -420,6 +425,10 @@ export default function ClockTowerGrimoire() {
 
   const onSeatClick = (seatId: string) => {
     if (dayView) return;
+    if (nightMode != null && pickMode) {
+      togglePick(seatId);
+      return;
+    }
     if (!swapping) {
       setOpenSeatId(seatId);
       return;
@@ -833,6 +842,7 @@ export default function ClockTowerGrimoire() {
   // 전체화면은 화면을 꽉 채운 타원이라 짧은 쪽 길이로 토큰 크기를 정한다
   const circleWidth = fullView ? Math.min(circleBox.width, circleBox.height) || circleBox.width : circleBox.width;
   const tokenSize = seatTokenSize(circleWidth, seats.length);
+  const picking = new Set(nightMode != null ? nightPicks : []);
 
   const startReminderDrag = (e: ReactPointerEvent, seat: GrimoireSeat, reminderId: string, dx: number, dy: number) => {
     if (dayView || e.button !== 0) return;
@@ -1010,7 +1020,8 @@ export default function ClockTowerGrimoire() {
   };
 
   return (
-    <GrimoireRoot $immersive={immersive}>
+    // 밤 진행 패널(오른쪽 고정)이 사이트 머리 메뉴를 덮지 않게 몰입 모드가 아니면 그 아래에서 시작한다
+    <GrimoireRoot $immersive={immersive} style={{ ['--ct-dock-top' as string]: immersive ? '12px' : '128px' }}>
       <Page>
         {fullView && (
           <Toolbar $sticky={immersive}>
@@ -1242,7 +1253,17 @@ export default function ClockTowerGrimoire() {
                     }}
                     onClick={() => onSeatClick(seat.id)}
                   >
-                    <TokenWrap style={{ width: tokenSize, height: tokenSize }}>
+                    <TokenWrap
+                      style={{
+                        width: tokenSize,
+                        height: tokenSize,
+                        borderRadius: '50%',
+                        // 밤 진행에서 고른 사람: 금색 고리 + 고른 순서(포의 공격 순서처럼 순서가 중요한 경우가 있다)
+                        boxShadow: picking.has(seat.id) ? '0 0 0 4px var(--ct-accent), 0 0 22px var(--ct-accent)' : undefined,
+                        cursor: pickMode && nightMode != null ? 'crosshair' : undefined,
+                      }}
+                    >
+                      {picking.has(seat.id) && <PickOrder>{nightPicks.indexOf(seat.id) + 1}</PickOrder>}
                       <Token
                         $color={dayView ? CT_TYPE_COLOR_DARK.TOWNSFOLK : color}
                         $shape={shape}
@@ -1298,6 +1319,7 @@ export default function ClockTowerGrimoire() {
                     type="button"
                     $dead={seat.dead}
                     onClick={() => onSeatClick(seat.id)}
+                    style={picking.has(seat.id) ? { boxShadow: 'inset 0 0 0 2px var(--ct-accent)' } : undefined}
                   >
                     <SeatNo>{i + 1}</SeatNo>
                     {!dayView && role && (
@@ -1692,8 +1714,13 @@ export default function ClockTowerGrimoire() {
             onClose={() => setNightMode(null)}
             onShow={content => showInfo(content)}
             onStep={step => {
+              // 단계가 바뀌면 고른 사람을 비운다
+              if (step?.step !== nightStep.current?.step) setNightPicks([]);
               nightStep.current = step;
             }}
+            picked={nightPicks}
+            onTogglePick={togglePick}
+            onPickMode={setPickMode}
             onReminder={moveReminder}
             onKill={seatId => recordDeath(seatId, 'NIGHT')}
             onNote={text => addNote(text)}

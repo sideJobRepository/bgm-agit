@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Execution, GrimoireState } from '../../../types/clocktower.ts';
 import {
+  dayLogOf,
   executionLimitWarning,
   executionSurvivalHints,
   exileNeeded,
@@ -40,6 +41,9 @@ export function ExecutionPanel({
   const limitWarning = executionLimitWarning(state, roles);
   const traveller = isTravellerSeat(seat, roles);
   const role = roles.get(seat.roleKey ?? '');
+  // 이 사람이 오늘 이미 처형된 기록. 이 창은 '새 처형'을 남기는 창이라 기본값(투표로)이 기존 기록처럼 보여 헷갈렸다 — 기존 것을 따로 보여준다
+  const earlier = dayLogOf(state).executions.filter(e => e.seatId === seat.id);
+  const routeLabel = (r: Execution['route']) => (r === 'VOTE' ? '투표로' : '투표 없이(능력)');
 
   return (
     <Overlay onClick={onClose}>
@@ -54,6 +58,15 @@ export function ExecutionPanel({
           </Btn>
         </SheetHead>
 
+        {earlier.length > 0 && (
+          <Hint style={{ margin: '0 0 8px' }}>
+            오늘 이미 기록된 처형:{' '}
+            {earlier
+              .map(e => `${routeLabel(e.route)} · ${e.wasAlreadyDead ? '이미 죽은 상태' : e.died ? '사망' : `생존${e.survivedReason ? `(${e.survivedReason})` : ''}`}`)
+              .join(' / ')}
+            . 아래는 <b>한 번 더</b> 처형을 남기는 칸입니다 — 잘못 누른 거면 [취소] 후 [되돌리기]로 고치세요.
+          </Hint>
+        )}
         {limitWarning && <Warn>{limitWarning}</Warn>}
         {traveller && (
           <Warn>여행자는 보통 처형이 아니라 추방 대상입니다. 희생양처럼 능력으로 처형되는 경우에만 기록하세요.</Warn>

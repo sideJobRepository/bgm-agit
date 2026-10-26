@@ -30,9 +30,8 @@ import {
   NightText,
   NightTitle,
   NightWho,
-  Overlay,
+  NightDock,
   Row,
-  Sheet,
   SheetHead,
   Tab,
 } from './grimoire.styles.ts';
@@ -258,12 +257,23 @@ function suggestions(state: GrimoireState, item: NightItem): Tip[] {
     }
   }
   if (key === 'undertaker') {
-    // N번째 밤에 보는 것은 바로 전 낮(N-1일째)의 처형
-    const exec = [...dayLogOf(state, state.day - 1).executions].reverse().find(e => e.died && e.characterAtExecution);
+    // N번째 밤에 보는 것은 바로 전 낮(N-1일째)에 처형으로 죽은 사람. 그 사람의 사망 기록이 그날 '낮'의 처형이어야 한다 —
+    // 처형 기록은 날짜만 있어 밤 중에 누른 처형(실수·테스트)이나 처형됐지만 산 사람까지 잡혔다
+    const prevDay = state.day - 1;
+    const exec = [...dayLogOf(state, prevDay).executions].reverse().find(e => {
+      if (!e.died || !e.characterAtExecution) return false;
+      const d = state.seats.find(s => s.id === e.seatId)?.death;
+      return !!d && d.cause === 'EXECUTION' && d.day === prevDay && d.phase === 'DAY';
+    });
     const role = exec ? roles.get(exec.characterAtExecution ?? '') : null;
     if (role) {
       const title = '오늘 처형된 사람의 캐릭터';
-      out.push({ label: `처형된 사람의 캐릭터: ${role.name}`, content: { title, roles: [role] }, preset: { text: title, roleKeys: [role.key] } });
+      const who = state.seats.find(s => s.id === exec?.seatId);
+      out.push({
+        label: `${prevDay}일째 낮 처형 ${who ? `${no(who.id)}.${who.name}` : ''}: ${role.name}`,
+        content: { title, roles: [role] },
+        preset: { text: title, roleKeys: [role.key] },
+      });
     }
   }
   if (key === 'empath') {
@@ -358,6 +368,8 @@ function ChoiceHelper({
   onShow,
   onOpenInfo,
   onNote,
+  picked,
+  onTogglePick,
 }: {
   state: GrimoireState;
   item: NightItem;
@@ -366,10 +378,12 @@ function ChoiceHelper({
   onShow: (content: ShowContent) => void;
   onOpenInfo: (preset?: InfoPreset) => void;
   onNote: (text: string) => void;
+  // 고른 사람은 페이지가 들고 있다 — 원형 마도서의 토큰을 눌러도 고를 수 있게
+  picked: string[];
+  onTogglePick: (seatId: string) => void;
 }) {
   const roles = roleMap(state.data);
   const role = item.role;
-  const [picked, setPicked] = useState<string[]>([]);
   const ring = state.seats.map((s, i) => ({ s, no: i + 1 })).filter(x => !x.s.left);
   const bySeat = new Map(ring.map(x => [x.s.id, x]));
   const targets = picked.map(id => bySeat.get(id)).filter((x): x is NonNullable<typeof x> => !!x);
@@ -378,7 +392,7 @@ function ChoiceHelper({
   const reminders = SETUP_REMINDER[role.key] ? [] : [...new Set(role.reminders)];
   const need = ANSWER_PICKS[role.key];
 
-  const toggle = (id: string) => setPicked(v => (v.includes(id) ? v.filter(k => k !== id) : [...v, id]));
+  const toggle = onTogglePick;
 
   const actor = actingSeat(item.seats, role.key);
   // 공격 판정(보호·군인·선원·어릿광대·구마사제·중독된 공격자 등, nightChoice.ts)
@@ -469,7 +483,7 @@ function ChoiceHelper({
         )}
       </Row>
       <Hint style={{ margin: 0 }}>
-        {NO_PLAYER_PICK.has(role.key) ? '리마인더를 붙일 자리' : `대상 고르기${need ? ` (${need}명)` : ''} — 플레이어가 가리킨 사람을 누르세요`}
+        {NO_PLAYER_PICK.has(role.key) ? '리마인더를 붙일 자리' : `대상 고르기${need ? ` (${need}명)` : ''} — 마도서의 토큰이나 아래 이름을 누르세요`}
       </Hint>
       <Row>
         {ring.map(({ s, no }) => (
@@ -583,6 +597,9 @@ export function NightMode({
   onReminder,
   onKill,
   onNote,
+  picked,
+  onTogglePick,
+  onPickMode,
 }: {
   state: GrimoireState;
   phase: GrimoirePhase;
@@ -598,6 +615,11 @@ export function NightMode({
   onEndNight: () => void;
   // 보고 있는 단계를 알린다(보여 준 정보를 그 단계로 기록). 닫히면 null
   onStep?: (step: NightStepContext | null) => void;
+  // 고른 사람(페이지가 들고 있다 — 원형 마도서 토큰을 눌러도 고른다)
+  picked: string[];
+  onTogglePick: (seatId: string) => void;
+  // 이 단계가 대상 고르기 단계인지 알린다. 켜져 있으면 토큰 누름 = 고르기
+  onPickMode: (active: boolean) => void;
 }) {
   const items = useMemo(() => playableItems(state), [state]);
   const checked = new Set(state.nightChecked);
@@ -623,8 +645,18 @@ export function NightMode({
     onStepRef.current?.(stepName ? { step: stepName, who: stepWho } : null);
   }, [stepName, stepWho]);
   useEffect(() => () => onStepRef.current?.(null), []);
+  const choosing = !!item && !sleepsDead(item) && wantsChoice(item);
+  const onPickModeRef = useRef(onPickMode);
+  onPickModeRef.current = onPickMode;
+  useEffect(() => {
+    onPickModeRef.current(choosing);
+  }, [choosing, item?.key]);
+  useEffect(() => () => onPickModeRef.current(false), []);
+  // 카드 안 탭: [정보](보여 줄 것·숫자) / [고르기](질문 카드·대상·처리). 고르는 단계는 [고르기]부터 연다
+  const [tabFor, setTabFor] = useState<{ key: string; tab: 'info' | 'pick' } | null>(null);
 
   if (!item) return null;
+  const tab = tabFor?.key === item.key ? tabFor.tab : choosing ? 'pick' : 'info';
   const last = index >= items.length - 1;
   const isCharacter = item.seats.length > 0;
   const evilCards = evilInfoCards(state, item.role.key);
@@ -641,8 +673,8 @@ export function NightMode({
   };
 
   return (
-    <Overlay>
-      <Sheet $wide>
+    // 마도서를 가리지 않는 옆(세로 화면은 아래) 패널 — 원형 마도서의 토큰을 눌러 대상을 고를 수 있다
+    <NightDock>
         <SheetHead>
           <h3>{state.nightTab === 'first' ? '첫날 밤' : `${state.day}번째 밤`}</h3>
           <Btn type="button" onClick={onClose}>
@@ -654,8 +686,8 @@ export function NightMode({
             {index + 1} / {items.length}
             {checked.has(item.key) ? ' · 완료' : ''}
           </NightStepNo>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <RoleArt urls={tokenImageCandidates(item.role, null)} alt="" size={110} dead={item.allDead} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <RoleArt urls={tokenImageCandidates(item.role, null)} alt="" size={64} dead={item.allDead} />
             <NightTitle>
               {item.role.name}
               {item.diedTonight && (
@@ -671,8 +703,20 @@ export function NightMode({
               {asleep ? ' — 죽어서 능력이 없습니다. 깨우지 말고 넘기세요' : ''}
             </NightWho>
           )}
-          <NightText>{renderNightText(item.text)}</NightText>
+          <NightText style={{ fontSize: 15 }}>{renderNightText(item.text)}</NightText>
 
+          {choosing && (
+            <Row>
+              <Tab type="button" $active={tab === 'pick'} onClick={() => setTabFor({ key: item.key, tab: 'pick' })}>
+                고르기 · 처리
+              </Tab>
+              <Tab type="button" $active={tab === 'info'} onClick={() => setTabFor({ key: item.key, tab: 'info' })}>
+                정보 · 숫자
+              </Tab>
+            </Row>
+          )}
+          {tab === 'info' && (
+            <>
           {/* 능력 도우미: 하수인·악마 정보, 장의사·초공감자·요리사 참고값, 숫자·예/아니오, 정보 카드 */}
           {evilCards.length > 0 && (
             <Row>
@@ -701,24 +745,12 @@ export function NightMode({
             </Row>
           ))}
           {item.role.key === 'undertaker' && !asleep && tips.length === 0 && (
-            <Hint>오늘 처형으로 죽은 사람이 없습니다(장의사는 아무것도 배우지 않습니다).</Hint>
+            <Hint>{state.day - 1}일째 낮에 처형으로 죽은 사람이 없습니다 — 장의사는 깨우지 않거나 아무것도 보여주지 않습니다.</Hint>
           )}
           {tips.length > 0 && (
             <Hint>
               참고값은 실제 캐릭터·선악으로만 계산했습니다. 취함·중독, 은둔자·스파이 오등록은 직접 판단하세요(숫자는 아래에서 다른 값을 고르면 됩니다).
             </Hint>
-          )}
-          {!asleep && wantsChoice(item) && (
-            <ChoiceHelper
-              key={item.key}
-              state={state}
-              item={item}
-              onReminder={onReminder}
-              onKill={onKill}
-              onShow={onShow}
-              onOpenInfo={onOpenInfo}
-              onNote={onNote}
-            />
           )}
           {isCharacter && !asleep && (
             <Row>
@@ -740,7 +772,28 @@ export function NightMode({
             </Row>
           )}
 
-          <NightNav>
+            </>
+          )}
+          {tab === 'pick' && (
+            <>
+          {!asleep && wantsChoice(item) && (
+            <ChoiceHelper
+              key={item.key}
+              state={state}
+              item={item}
+              onReminder={onReminder}
+              onKill={onKill}
+              onShow={onShow}
+              onOpenInfo={onOpenInfo}
+              onNote={onNote}
+              picked={picked}
+              onTogglePick={onTogglePick}
+            />
+          )}
+            </>
+          )}
+
+          <NightNav style={{ position: 'sticky', bottom: -16, margin: '0 -16px -16px', padding: '12px 16px', background: 'var(--ct-surface)', borderTop: '1px solid var(--ct-line)' }}>
             <Btn type="button" onClick={() => setIndex(Math.max(0, index - 1))} disabled={index === 0}>
               ◀ 이전
             </Btn>
@@ -763,7 +816,6 @@ export function NightMode({
             )}
           </NightNav>
         </NightCard>
-      </Sheet>
-    </Overlay>
+    </NightDock>
   );
 }
