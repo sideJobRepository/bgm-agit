@@ -31,7 +31,7 @@ function writePref(on: boolean) {
   }
 }
 
-function fullscreenElement() {
+export function fullscreenElement() {
   const d = document as FullscreenDoc;
   return d.fullscreenElement ?? d.webkitFullscreenElement ?? null;
 }
@@ -39,24 +39,28 @@ function fullscreenElement() {
 // iPhone 은 요소 전체 화면이 없다(iPadOS 는 있다). 버튼을 숨기고 홈 화면 추가 안내로 대신한다
 const IS_IPHONE = typeof navigator !== 'undefined' && /iPhone|iPod/.test(navigator.userAgent);
 
-function fullscreenSupported() {
+export function fullscreenSupported() {
   if (IS_IPHONE) return false;
   const d = document as FullscreenDoc;
   return !!(d.fullscreenEnabled || d.webkitFullscreenEnabled);
 }
 
 /** 클릭 핸들러 안에서 바로 불러야 한다(사용자 동작이 아니면 브라우저가 거절). 마도서 div 가 아니라 html 에 건다 — 모달이 그 밖에 있어도 보이게 */
-function requestFullscreen() {
+// quiet = 열면서 자동으로 시도할 때(사용자 동작이 끊겨 거절될 수 있다) — 실패해도 안내하지 않는다
+export function requestFullscreen(quiet = false) {
   const el = document.documentElement as FullscreenEl;
+  const fail = () => {
+    if (!quiet) toast.error('전체 화면을 열지 못했습니다. 브라우저 메뉴의 전체 화면을 써 주세요.');
+  };
   try {
     const r = el.requestFullscreen ? el.requestFullscreen() : el.webkitRequestFullscreen?.();
-    Promise.resolve(r).catch(() => toast.error('전체 화면을 열지 못했습니다. 브라우저 메뉴의 전체 화면을 써 주세요.'));
+    Promise.resolve(r).catch(fail);
   } catch {
-    toast.error('전체 화면을 열지 못했습니다. 브라우저 메뉴의 전체 화면을 써 주세요.');
+    fail();
   }
 }
 
-function exitFullscreen() {
+export function exitFullscreen() {
   if (!fullscreenElement()) return;
   const d = document as FullscreenDoc;
   try {

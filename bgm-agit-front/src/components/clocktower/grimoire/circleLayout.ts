@@ -48,14 +48,30 @@ export function circleMargins(tokenSize: number, circleWidth: number) {
   };
 }
 
-/** 요소 폭을 따라간다(화면 회전·몰입 모드 전환 때 원 크기가 바뀐다) */
-export function useElementWidth(el: HTMLElement | null) {
-  const [width, setWidth] = useState(0);
+/** 요소 크기를 따라간다(화면 회전·몰입 모드 전환 때 원 크기가 바뀐다) */
+export function useElementSize(el: HTMLElement | null) {
+  const [size, setSize] = useState({ width: 0, height: 0 });
   useEffect(() => {
     if (!el) return;
-    const ro = new ResizeObserver(([entry]) => setWidth(Math.round(entry.contentRect.width)));
+    const ro = new ResizeObserver(([entry]) =>
+      setSize({ width: Math.round(entry.contentRect.width), height: Math.round(entry.contentRect.height) })
+    );
     ro.observe(el);
     return () => ro.disconnect();
   }, [el]);
-  return width;
+  return size;
 }
+
+/**
+ * 화면을 꽉 채우는 배치(전체화면·마도서 보기). 원은 폭만큼만 커져 세로 화면에서 아래가 비었다 —
+ * 남는 높이까지 쓰는 타원으로 둔다(좌석 자리는 % 라 상자가 길쭉하면 저절로 타원이 된다).
+ * 토큰 크기는 짧은 쪽 길이로 정해 겹치지 않게 한다.
+ */
+export const FILL_STYLE = {
+  width: '100%',
+  maxWidth: 'none',
+  height: 'calc(100dvh - 150px)',
+  minHeight: 360,
+  aspectRatio: 'auto',
+  margin: '16px auto 0',
+} as const;

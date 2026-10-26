@@ -31,7 +31,8 @@ import {
   reminderTokenSize,
   seatPoint,
   seatTokenSize,
-  useElementWidth,
+  useElementSize,
+  FILL_STYLE,
 } from '../components/clocktower/grimoire/circleLayout.ts';
 import ToolbarMenu, { MenuGroup } from '../components/clocktower/grimoire/ToolbarMenu.tsx';
 import { InfoCardPanel, type InfoPreset } from '../components/clocktower/grimoire/InfoCards.tsx';
@@ -253,7 +254,7 @@ export default function ClockTowerGrimoire() {
   const [circleEl, setCircleEl] = useState<HTMLDivElement | null>(null);
   // 끌고 있는 리마인더(놓을 때 한 번만 저장한다 — 움직일 때마다 저장하면 되돌리기 기록이 넘친다)
   const [drag, setDrag] = useState<DragState | null>(null);
-  const circleWidth = useElementWidth(circleEl);
+  const circleBox = useElementSize(circleEl);
 
   useWakeLock(!!state);
   // 플레이어 휴대폰(/clocktower-my)으로 보낸 배정: 바뀐 좌석 자동 재전송 + 확인 여부
@@ -794,6 +795,8 @@ export default function ClockTowerGrimoire() {
       toast.success(`캐릭터를 나눠 주고 회원에게 보냈습니다.${guestNote}`);
   };
 
+  // 전체화면은 화면을 꽉 채운 타원이라 짧은 쪽 길이로 토큰 크기를 정한다
+  const circleWidth = fullView ? Math.min(circleBox.width, circleBox.height) || circleBox.width : circleBox.width;
   const tokenSize = seatTokenSize(circleWidth, seats.length);
 
   const startReminderDrag = (e: ReactPointerEvent, seat: GrimoireSeat, reminderId: string, dx: number, dy: number) => {
@@ -1183,8 +1186,7 @@ export default function ClockTowerGrimoire() {
             <Circle
               ref={setCircleEl}
               style={{
-                ...(fullView ? { width: 'min(100%, calc(100dvh - 120px))' } : {}),
-                ...circleMargins(tokenSize, circleWidth),
+                ...(fullView ? FILL_STYLE : circleMargins(tokenSize, circleWidth)),
               }}
             >
               {seats.map((seat, i) => {

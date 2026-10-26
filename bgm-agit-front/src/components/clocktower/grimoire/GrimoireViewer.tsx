@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import type { GrimoireRole, GrimoireState } from '../../../types/clocktower.ts';
 import { CT_TYPE_COLOR_DARK } from '../../../config/clocktower.ts';
@@ -17,10 +17,11 @@ import {
   type TokenShape,
 } from './grimoire.styles.ts';
 import { aliveAll, isEvilSeat, phaseLabel, reminderSourceRole, roleMap, totalPlayers } from './grimoireRules.ts';
-import { circleMargins, reminderAutoOffset, reminderTokenSize, seatPoint, seatTokenSize, useElementWidth } from './circleLayout.ts';
+import { FILL_STYLE, reminderAutoOffset, reminderTokenSize, seatPoint, seatTokenSize, useElementSize } from './circleLayout.ts';
 import ReminderToken, { CurvedText } from './ReminderToken.tsx';
 import RoleArt from './RoleArt.tsx';
 import { tokenImageCandidates } from './tokenImage.ts';
+import { exitFullscreen, fullscreenElement, fullscreenSupported, requestFullscreen } from './useImmersiveMode.ts';
 
 /**
  * 읽기 전용 마도서. 임시저장한 판을 펼쳐 보거나, 끝난 기록의 마지막 마도서를 다시 볼 때 쓴다.
@@ -38,12 +39,32 @@ export default function GrimoireViewer({
 }) {
   const roles = useMemo(() => roleMap(state.data), [state.data]);
   const [circleEl, setCircleEl] = useState<HTMLDivElement | null>(null);
-  const circleWidth = useElementWidth(circleEl);
+  const box = useElementSize(circleEl);
+  // 화면을 꽉 채운 타원이라 짧은 쪽 길이로 토큰 크기를 정한다
+  const circleWidth = Math.min(box.width, box.height) || box.width;
   const seats = state.seats;
   const tokenSize = seatTokenSize(circleWidth, seats.length);
   const reminderSize = reminderTokenSize(tokenSize);
   const inner = tokenSize - 6;
   const bluffs = (state.bluffs ?? []).map(k => roles.get(k)?.name ?? k);
+
+  // 열 때 브라우저 전체 화면을 켜 주소창·탭 줄을 걷는다. 이 창이 켰으면 닫을 때 끈다
+  const [isFull, setIsFull] = useState(() => !!fullscreenElement());
+  const enteredFull = useRef(false);
+  useEffect(() => {
+    const onChange = () => setIsFull(!!fullscreenElement());
+    document.addEventListener('fullscreenchange', onChange);
+    document.addEventListener('webkitfullscreenchange', onChange);
+    if (fullscreenSupported() && !fullscreenElement()) {
+      enteredFull.current = true;
+      requestFullscreen(true);
+    }
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange);
+      document.removeEventListener('webkitfullscreenchange', onChange);
+      if (enteredFull.current) exitFullscreen();
+    };
+  }, []);
 
   return (
     <Root role="dialog" aria-label="마도서 보기">
@@ -54,13 +75,24 @@ export default function GrimoireViewer({
             {phaseLabel(state)} · 생존 {aliveAll(seats)}/{totalPlayers(seats)}
           </span>
         </div>
+        {fullscreenSupported() && !isFull && (
+          <Btn
+            type="button"
+            onClick={() => {
+              enteredFull.current = true;
+              requestFullscreen();
+            }}
+          >
+            전체 화면
+          </Btn>
+        )}
         <Btn type="button" $tone="primary" onClick={onClose}>
           닫기
         </Btn>
       </Bar>
       <Circle
         ref={setCircleEl}
-        style={{ width: 'min(100%, 760px, calc(100dvh - 110px))', ...circleMargins(tokenSize, circleWidth) }}
+        style={FILL_STYLE}
       >
         {seats.map((seat, i) => {
           const role = roles.get(seat.roleKey ?? '');
