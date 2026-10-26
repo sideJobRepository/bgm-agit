@@ -161,9 +161,17 @@ export const Layout = styled.div`
     min-height: 0;
   }
 
+  /* 세로·좁은 화면은 원 아래로 패널이 쌓인다. 높이가 고정된 몰입 모드에서 min-height:0 이 남아 있으면
+     원 칸이 화면 높이에 맞춰 원보다 작게 줄어 패널이 원 위로 올라왔다 — 줄지 않게 하고 화면이 스크롤되게 한다 */
   @media ${NARROW} {
+    flex: none;
     grid-template-columns: 1fr;
     align-items: start;
+    min-height: auto;
+
+    > div:first-child {
+      min-height: auto;
+    }
   }
 `;
 

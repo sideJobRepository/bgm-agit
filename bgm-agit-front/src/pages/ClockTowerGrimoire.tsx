@@ -956,18 +956,11 @@ export default function ClockTowerGrimoire() {
             </span>
           </ToolTitle>
           <Stat>처형 {needed}표 이상</Stat>
-          {/* 몰입 종료는 낮 화면에서도 늘 보이게 둔다 */}
+          {/* 몰입 종료는 낮 화면에서도 늘 보이게 둔다. 브라우저 전체 화면은 [전체화면](마도서만 크게)이 같이 켠다 */}
           {immersive && (
-            <>
-              {canFullscreen && !fullscreen && (
-                <Btn type="button" onClick={requestFullscreen}>
-                  전체 화면
-                </Btn>
-              )}
-              <Btn type="button" onClick={exit}>
-                몰입 종료
-              </Btn>
-            </>
+            <Btn type="button" onClick={exit}>
+              몰입 종료
+            </Btn>
           )}
           <Btn type="button" $active={dayView} onClick={() => setDayView(v => !v)}>
             {dayView ? '이야기꾼 화면' : '낮 화면(가리기)'}
