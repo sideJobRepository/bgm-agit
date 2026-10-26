@@ -112,7 +112,7 @@
 5. `clocktower-session-2026-11.sql` — 휴대폰 세션 테이블 2개 + `/clocktower-sessions`(POST·`/**` GET·POST·PUT)·`/clocktower-members` GET 유저(2) 매핑(**스테이징·운영 적용** 2026-10-25)
 - 엔티티가 이미지 컬럼을 읽으므로 이 파일 2) 없이 백엔드를 배포하면 사전 조회가 전부 실패한다(운영은 이미 적용됨)
 - 운영 매핑은 **앱 재시작 후** 반영된다(로딩이 @PostConstruct 1회)
-- 운영의 "시계탑에 흐른피" 상위 메뉴는 꺼져 있어(USE_STATUS 0) 진행판·관리 화면이 메인으로 튕긴다 — 쓸 때 메뉴 관리에서 켠다
+- 운영의 "시계탑에 흐른피" 상위 메뉴(id 37)는 켜져 있지만 **권한 4(멘토)** — 아직 만드는 중이라 멘토·관리자에게만 보이게 둔 것(사용자 결정 2026-10-26). 손님에게 열 때 `BGM_AGIT_MENU_ROLE` 을 3 으로 바꾸고, 그때 운영에도 "내 캐릭터"(`/clocktower-my`) 하위 메뉴를 넣는다(스테이징은 id 44 로 넣어 둠)
 - 운영 nginx `$bgm_spa_route` 에 `/clocktower-roles`, `/clocktower-grimoire`, `/clocktower-my` 추가 완료(2026-10-25)
 - 스테이징 MCP DB 도구는 DDL 금지 설정이다. 스키마 변경은 `.env` 접속정보 + mysql 클라이언트(`C:/Program Files/MySQL/MySQL Workbench 8.0/mysql`)로, **포트 33070 + 컨테이너명 `1b4addd69ee9` 확인 후** 실행
 
