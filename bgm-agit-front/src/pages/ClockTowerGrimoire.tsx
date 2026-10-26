@@ -971,6 +971,7 @@ export default function ClockTowerGrimoire() {
               })
             }
             onBluffs={bluffs => update(prev => ({ ...prev, bluffs }))}
+            onPlayers={n => update(prev => ({ ...prev, setupPlayers: n }))}
             onDeal={dealAndSend}
           />
         )}

@@ -315,6 +315,8 @@ export interface GrimoireState {
   bluffs?: string[]; // 악마에게 보여줄 악마의 속임수(게임에 없는 선한 캐릭터) 키
   // 셋업 1단계에서 정한 캐릭터 주머니. 휴대폰으로 보낼 때 섞어서 좌석에 나눈다. 같은 v2 안에서 늘어난 필드
   bag?: GrimoireBagEntry[];
+  // 셋업 1단계에서 정한 인원(여행자 제외). 진영별 추천 수(공식 분배표)의 기준이다
+  setupPlayers?: number;
   dayLogs: DayLog[];
   settings: GrimoireSettings;
   // 게임 도중 캐릭터·선악이 바뀌어 본인에게 알려야 할 좌석(다음 밤 맨 앞에 뜬다)
