@@ -20,6 +20,7 @@ export interface ClockTowerCharacter {
   description?: string | null;
   orders?: number | null;
   roleKey?: string | null; // 캐릭터 사전 키. 직접 입력한 캐릭터는 null
+  image?: string | null; // 캐릭터 그림(게임 상세 조회 때만). 없으면 글자만
 }
 
 export interface ClockTowerGame {

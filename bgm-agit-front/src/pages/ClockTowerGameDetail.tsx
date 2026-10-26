@@ -1,5 +1,5 @@
 import { Wrapper } from '../styles';
-import { Box, ButtonRow, Button, Cover, NoImage, DetailTitle, DetailMeta, SectionTitle, CharViewList, CharViewItem, CharHead, CharName, TypeTag, CharDesc, FormTitle, Row, Field, FileRow, FileButton, FileName, PreviewBox, CheckLine, CharEditList, CharEditRow, CharLineTop, RemoveBtn, AddBtn, Empty } from './ClockTowerGameDetail.styles.ts';
+import { CharImg, Box, ButtonRow, Button, Cover, NoImage, DetailTitle, DetailMeta, SectionTitle, CharViewList, CharViewItem, CharHead, CharName, TypeTag, CharDesc, FormTitle, Row, Field, FileRow, FileButton, FileName, PreviewBox, CheckLine, CharEditList, CharEditRow, CharLineTop, RemoveBtn, AddBtn, Empty } from './ClockTowerGameDetail.styles.ts';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
@@ -194,6 +194,7 @@ export default function ClockTowerGameDetail() {
               {detail?.characters?.map(c => (
                 <CharViewItem key={c.id}>
                   <CharHead>
+                    {c.image && <CharImg src={c.image} alt="" loading="lazy" decoding="async" />}
                     <CharName>{c.name}</CharName>
                     <TypeTag color={TYPE_COLOR[c.type]}>{c.typeName}</TypeTag>
                   </CharHead>

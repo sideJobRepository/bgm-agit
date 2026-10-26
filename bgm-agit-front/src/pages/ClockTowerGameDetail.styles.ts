@@ -159,6 +159,15 @@ export const CharHead = styled.div`
   gap: ${theme.space.sm};
 `;
 
+/** 캐릭터 시트 그림. 전역 img 규칙(max-width:100%)을 덮어 고정 크기로 */
+export const CharImg = styled.img`
+  flex: none;
+  width: 52px;
+  max-width: none;
+  height: 52px;
+  object-fit: contain;
+`;
+
 export const CharName = styled.span<WithTheme>`
   color: ${c.subColor};
   font-size: 16px;

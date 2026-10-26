@@ -8,6 +8,8 @@ import com.bgmagitapi.origin.clocktower.dto.response.ClockTowerCharacterResponse
 import com.bgmagitapi.origin.clocktower.dto.response.ClockTowerGameResponse;
 import com.bgmagitapi.origin.clocktower.entity.BgmAgitClockTowerCharacter;
 import com.bgmagitapi.origin.clocktower.entity.BgmAgitClockTowerGame;
+import com.bgmagitapi.origin.clocktower.entity.BgmAgitClockTowerRole;
+import com.bgmagitapi.origin.clocktower.util.ClockTowerSessionRules;
 import com.bgmagitapi.origin.clocktower.repository.BgmAgitClockTowerCharacterRepository;
 import com.bgmagitapi.origin.clocktower.repository.BgmAgitClockTowerGameRepository;
 import com.bgmagitapi.origin.clocktower.repository.BgmAgitClockTowerRecordRepository;
@@ -19,6 +21,7 @@ import com.bgmagitapi.origin.entity.enumeration.ClockTowerCharacterType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,6 +31,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -42,6 +49,10 @@ public class BgmAgitClockTowerGameServiceImpl implements BgmAgitClockTowerGameSe
     private final BgmAgitClockTowerRoleRepository roleRepository;
     private final S3FileUtils s3FileUtils;
     private final ObjectMapper objectMapper;
+
+    // 캐릭터 이미지 끄기 스위치(BgmAgitClockTowerRoleServiceImpl 과 같은 설정)
+    @Value("${clocktower.images-enabled:true}")
+    private boolean imagesEnabled;
 
     @Override
     @Transactional(readOnly = true)
@@ -65,11 +76,24 @@ public class BgmAgitClockTowerGameServiceImpl implements BgmAgitClockTowerGameSe
     public ClockTowerGameResponse getGame(Long id) {
         BgmAgitClockTowerGame game = gameRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게임입니다."));
-        List<ClockTowerCharacterResponse> characters = characterRepository.findByGame_IdOrderByOrdersAsc(id)
-                .stream()
-                .map(ClockTowerCharacterResponse::of)
+        List<BgmAgitClockTowerCharacter> rows = characterRepository.findByGame_IdOrderByOrdersAsc(id);
+        // 캐릭터 시트(게임 상세)에도 그림을 보여준다. 사전 키로 한 번에 찾는다
+        Map<String, BgmAgitClockTowerRole> dict = imagesEnabled
+                ? roleRepository.findByRoleKeys(rows.stream().map(BgmAgitClockTowerCharacter::getRoleKey).filter(Objects::nonNull).toList())
+                        .stream()
+                        .collect(Collectors.toMap(BgmAgitClockTowerRole::getRoleKey, Function.identity(), (a, b) -> a))
+                : Map.of();
+        List<ClockTowerCharacterResponse> characters = rows.stream()
+                .map(c -> ClockTowerCharacterResponse.of(c, imageOf(c, dict.get(c.getRoleKey()))))
                 .toList();
         return ClockTowerGameResponse.of(game, characters);
+    }
+
+    /** 캐릭터 기본 진영 그림(주민·외지인 = 선, 하수인·악마 = 악, 여행자·전설 = 무진영) */
+    private String imageOf(BgmAgitClockTowerCharacter c, BgmAgitClockTowerRole r) {
+        if (r == null) return null;
+        Boolean evil = ClockTowerSessionRules.displayEvil(null, c.getCharacterType());
+        return ClockTowerSessionRules.pickImage(evil, r.getImageUrl(), r.getImageGoodUrl(), r.getImageEvilUrl());
     }
 
     @Override
