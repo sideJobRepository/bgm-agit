@@ -23,7 +23,6 @@ import { NightList, NightMode } from '../components/clocktower/grimoire/NightPan
 import WinBanner from '../components/clocktower/grimoire/WinBanner.tsx';
 import SetupWizard from '../components/clocktower/grimoire/SetupWizard.tsx';
 import ToolbarMenu, { MenuGroup } from '../components/clocktower/grimoire/ToolbarMenu.tsx';
-import { useDayTimer } from '../components/clocktower/grimoire/useDayTimer.ts';
 import { InfoCardPanel } from '../components/clocktower/grimoire/InfoCards.tsx';
 import ReminderToken, { CurvedText } from '../components/clocktower/grimoire/ReminderToken.tsx';
 import { dealBag, isDealt, usedKeys } from '../components/clocktower/grimoire/bagRules.ts';
@@ -77,7 +76,6 @@ import {
   Chip,
   Circle,
   CircleCenter,
-  CenterTimer,
   CountTable,
   GrimoireRoot,
   Layout,
@@ -197,21 +195,19 @@ function seatPoint(i: number, total: number) {
 const DRAG_THRESHOLD = 8;
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
-type DragState =
-  | { kind: 'seat'; seatId: string; pointerId: number; sx: number; sy: number; ox: number; oy: number; moved: boolean; x: number; y: number }
-  | {
-      kind: 'reminder';
-      seatId: string;
-      reminderId: string;
-      pointerId: number;
-      sx: number;
-      sy: number;
-      ox: number;
-      oy: number;
-      moved: boolean;
-      x: number;
-      y: number;
-    };
+// 리마인더 끌기. 좌석 토큰은 끌지 않는다 — 자리는 [자리 바꾸기]로 바꾸는 쪽이 낫다(사용자 결정 2026-10-26)
+type DragState = {
+  seatId: string;
+  reminderId: string;
+  pointerId: number;
+  sx: number;
+  sy: number;
+  ox: number;
+  oy: number;
+  moved: boolean;
+  x: number;
+  y: number;
+};
 
 /**
  * 이야기꾼 마도서(그리모어). 좌석은 어디서나 원형이고, 세로·좁은 화면은 오른쪽 패널이 원 아래로 내려간다.
@@ -263,15 +259,13 @@ export default function ClockTowerGrimoire() {
   const [swapMode, setSwapMode] = useState(false);
   const [swapFrom, setSwapFrom] = useState<string | null>(null);
   const [circleEl, setCircleEl] = useState<HTMLDivElement | null>(null);
-  // 끌고 있는 토큰·리마인더(놓을 때 한 번만 저장한다 — 움직일 때마다 저장하면 되돌리기 기록이 넘친다)
+  // 끌고 있는 리마인더(놓을 때 한 번만 저장한다 — 움직일 때마다 저장하면 되돌리기 기록이 넘친다)
   const [drag, setDrag] = useState<DragState | null>(null);
   const circleWidth = useElementWidth(circleEl);
 
   useWakeLock(!!state);
   // 플레이어 휴대폰(/clocktower-my)으로 보낸 배정: 바뀐 좌석 자동 재전송 + 확인 여부
   const phone = usePhoneSession(state, updateSilently);
-  // 낮 토론 타이머(이 기기 화면에만)
-  const timer = useDayTimer();
   // 몰입 모드(사이트 머리·푸터 숨김 + 전체 화면)는 진행 중인 판에서만
   const { immersive, fullscreen, canFullscreen, enter, exit, requestFullscreen } = useImmersiveMode(
     !!user && !!state
@@ -380,8 +374,7 @@ export default function ClockTowerGrimoire() {
       const list = [...prev.seats];
       const i = list.findIndex(s => s.id === seatId);
       const to = (i + dir + list.length) % list.length;
-      const [pi, pt] = [list[i].pos ?? null, list[to].pos ?? null];
-      [list[i], list[to]] = [{ ...list[to], pos: pi }, { ...list[i], pos: pt }];
+      [list[i], list[to]] = [list[to], list[i]];
       return { ...prev, seats: list };
     });
 
@@ -392,8 +385,7 @@ export default function ClockTowerGrimoire() {
       const i = list.findIndex(s => s.id === a);
       const j = list.findIndex(s => s.id === b);
       if (i < 0 || j < 0) return prev;
-      const [pi, pj] = [list[i].pos ?? null, list[j].pos ?? null];
-      [list[i], list[j]] = [{ ...list[j], pos: pi }, { ...list[i], pos: pj }];
+      [list[i], list[j]] = [list[j], list[i]];
       return { ...prev, seats: list };
     });
 
@@ -742,26 +734,12 @@ export default function ClockTowerGrimoire() {
 
   const tokenSize = seatTokenSize(circleWidth, seats.length);
 
-  /** 좌석이 지금 그려질 위치(끌고 있으면 끄는 위치, 옮겨 둔 위치, 기본 원형 순) */
-  const seatAt = (seat: GrimoireSeat, i: number) =>
-    drag?.kind === 'seat' && drag.seatId === seat.id && drag.moved
-      ? { x: drag.x, y: drag.y }
-      : (seat.pos ?? seatPoint(i, seats.length));
-
-  const startSeatDrag = (e: ReactPointerEvent, seat: GrimoireSeat, i: number) => {
-    // 낮 화면(플레이어가 보는 화면)·자리 바꾸기 중에는 끌지 않는다
-    if (dayView || swapping || e.button !== 0) return;
-    const p = seat.pos ?? seatPoint(i, seats.length);
-    e.currentTarget.setPointerCapture(e.pointerId);
-    setDrag({ kind: 'seat', seatId: seat.id, pointerId: e.pointerId, sx: e.clientX, sy: e.clientY, ox: p.x, oy: p.y, moved: false, x: p.x, y: p.y });
-  };
-
   const startReminderDrag = (e: ReactPointerEvent, seat: GrimoireSeat, reminderId: string, dx: number, dy: number) => {
     if (dayView || e.button !== 0) return;
     // 좌석 토큰 끌기로 번지지 않게
     e.stopPropagation();
     e.currentTarget.setPointerCapture(e.pointerId);
-    setDrag({ kind: 'reminder', seatId: seat.id, reminderId, pointerId: e.pointerId, sx: e.clientX, sy: e.clientY, ox: dx, oy: dy, moved: false, x: dx, y: dy });
+    setDrag({ seatId: seat.id, reminderId, pointerId: e.pointerId, sx: e.clientX, sy: e.clientY, ox: dx, oy: dy, moved: false, x: dx, y: dy });
   };
 
   const moveDrag = (e: ReactPointerEvent) => {
@@ -769,15 +747,10 @@ export default function ClockTowerGrimoire() {
     const ddx = e.clientX - drag.sx;
     const ddy = e.clientY - drag.sy;
     if (!drag.moved && Math.hypot(ddx, ddy) < DRAG_THRESHOLD) return;
-    if (drag.kind === 'seat') {
-      const w = circleWidth || 1;
-      setDrag({ ...drag, moved: true, x: clamp(drag.ox + (ddx / w) * 100, 4, 96), y: clamp(drag.oy + (ddy / w) * 100, 4, 96) });
-    } else {
-      setDrag({ ...drag, moved: true, x: clamp(drag.ox + ddx / tokenSize, -2.5, 2.5), y: clamp(drag.oy + ddy / tokenSize, -2.5, 2.5) });
-    }
+    setDrag({ ...drag, moved: true, x: clamp(drag.ox + ddx / tokenSize, -2.5, 2.5), y: clamp(drag.oy + ddy / tokenSize, -2.5, 2.5) });
   };
 
-  /** 놓을 때: 움직였으면 위치를 저장하고(되돌리기 가능), 안 움직였으면 누른 것으로 본다(좌석 메뉴) */
+  /** 놓을 때: 움직였으면 위치를 저장하고(되돌리기 가능), 안 움직였으면 누른 것으로 본다(그 자리 좌석 메뉴) */
   const endDrag = (e: ReactPointerEvent) => {
     if (!drag || drag.pointerId !== e.pointerId) return;
     const d = drag;
@@ -786,25 +759,21 @@ export default function ClockTowerGrimoire() {
       onSeatClick(d.seatId);
       return;
     }
-    if (d.kind === 'seat') {
-      update(prev => ({ ...prev, seats: prev.seats.map(s => (s.id === d.seatId ? { ...s, pos: { x: d.x, y: d.y } } : s)) }));
-    } else {
-      update(prev => ({
-        ...prev,
-        seats: prev.seats.map(s =>
-          s.id === d.seatId
-            ? { ...s, reminders: s.reminders.map(r => (r.id === d.reminderId ? { ...r, pos: { dx: d.x, dy: d.y } } : r)) }
-            : s
-        ),
-      }));
-    }
+    update(prev => ({
+      ...prev,
+      seats: prev.seats.map(s =>
+        s.id === d.seatId
+          ? { ...s, reminders: s.reminders.map(r => (r.id === d.reminderId ? { ...r, pos: { dx: d.x, dy: d.y } } : r)) }
+          : s
+      ),
+    }));
   };
 
-  const hasCustomPositions = seats.some(s => s.pos || s.reminders.some(r => r.pos));
+  const hasCustomPositions = seats.some(s => s.reminders.some(r => r.pos));
   const resetPositions = () =>
     update(prev => ({
       ...prev,
-      seats: prev.seats.map(s => ({ ...s, pos: null, reminders: s.reminders.map(r => ({ ...r, pos: null })) })),
+      seats: prev.seats.map(s => ({ ...s, reminders: s.reminders.map(r => ({ ...r, pos: null })) })),
     }));
   // 리마인더는 좌석 토큰보다 조금 작게(포켓 그리모어 비율)
   const reminderSize = Math.max(36, Math.round(tokenSize * 0.64));
@@ -823,8 +792,8 @@ export default function ClockTowerGrimoire() {
       ...seat.reminders.map(m => ({ id: m.id, text: m.text, role: reminderSourceRole(m.source, state.data) })),
     ];
     if (list.length === 0) return null;
-    // 토큰이 지금 있는 자리 → 원 중심을 향하는 각도(끌어 옮긴 토큰도 중심 쪽으로 붙는다)
-    const at = seatAt(seat, i);
+    // 좌석 자리 → 원 중심을 향하는 각도
+    const at = seatPoint(i, seats.length);
     const toCenter = Math.atan2(50 - at.y, 50 - at.x);
     const dist = 0.5 + (reminderSize / tokenSize) * 0.42;
     const saved = new Map(seat.reminders.map(m => [m.id, m.pos ?? null]));
@@ -833,7 +802,7 @@ export default function ClockTowerGrimoire() {
       const side = k % 2 === 0 ? 1 : -1;
       const ang = toCenter + side * (0.85 + Math.floor(k / 2) * 0.8);
       const auto = { dx: dist * Math.cos(ang), dy: dist * Math.sin(ang) };
-      const dragging = drag?.kind === 'reminder' && drag.reminderId === r.id && drag.moved;
+      const dragging = drag?.reminderId === r.id && drag.moved;
       const p = dragging ? { dx: drag.x, dy: drag.y } : (saved.get(r.id) ?? auto);
       const draggable = r.id !== 'believed';
       return (
@@ -967,25 +936,6 @@ export default function ClockTowerGrimoire() {
           <Btn type="button" $active={dayView} onClick={() => setDayView(v => !v)}>
             {dayView ? '이야기꾼 화면' : '낮 화면(가리기)'}
           </Btn>
-          {/* 낮 화면에서도 쓴다(토론 시간은 플레이어 앞에서 재기 때문) */}
-          <ToolbarMenu label={timer.running ? `⏱ ${timer.label}` : timer.finished ? '⏱ 시간 종료' : '⏱ 타이머'} active={timer.running || timer.finished}>
-            <MenuGroup>토론 시간</MenuGroup>
-            {[1, 3, 5, 8, 10].map(m => (
-              <Btn key={m} type="button" onClick={() => timer.start(m)}>
-                {m}분
-              </Btn>
-            ))}
-            {(timer.running || timer.finished) && (
-              <>
-                <Btn type="button" onClick={timer.addMinute}>
-                  +1분
-                </Btn>
-                <Btn type="button" $tone="danger" onClick={timer.stop}>
-                  타이머 끄기
-                </Btn>
-              </>
-            )}
-          </ToolbarMenu>
           {/* 낮 화면은 플레이어가 본다. 악마의 속임수·배정·되돌리기 같은 이야기꾼 버튼은 숨긴다 */}
           {!dayView && (
             <>
@@ -1059,7 +1009,7 @@ export default function ClockTowerGrimoire() {
                 </Btn>
                 {hasCustomPositions && (
                   <Btn type="button" onClick={resetPositions}>
-                    토큰 위치 원래대로
+                    리마인더 위치 원래대로
                   </Btn>
                 )}
                 {!immersive && (
@@ -1160,22 +1110,11 @@ export default function ClockTowerGrimoire() {
                     key={seat.id}
                     type="button"
                     style={{
-                      left: `${seatAt(seat, i).x}%`,
-                      top: `${seatAt(seat, i).y}%`,
+                      left: `${seatPoint(i, seats.length).x}%`,
+                      top: `${seatPoint(i, seats.length).y}%`,
                       width: tokenSize + 36,
-                      // 끌 때 화면이 같이 스크롤되지 않게
-                      touchAction: dayView ? undefined : 'none',
-                      zIndex: drag?.kind === 'seat' && drag.seatId === seat.id ? 5 : undefined,
-                      cursor: dayView ? undefined : 'grab',
                     }}
-                    onPointerDown={e => startSeatDrag(e, seat, i)}
-                    onPointerMove={moveDrag}
-                    onPointerUp={endDrag}
-                    onPointerCancel={() => setDrag(null)}
-                    // 키보드(Enter·Space)로 누른 경우만 여기서 처리한다. 손가락·마우스는 놓을 때(endDrag) 처리
-                    onClick={e => {
-                      if (e.detail === 0 || dayView || swapping) onSeatClick(seat.id);
-                    }}
+                    onClick={() => onSeatClick(seat.id)}
                   >
                     <TokenWrap style={{ width: tokenSize, height: tokenSize }}>
                       <Token
@@ -1215,9 +1154,6 @@ export default function ClockTowerGrimoire() {
               })}
               <CircleCenter>
                 <strong>{dayView ? phaseLabel(state) : state.data.gameName}</strong>
-                {(timer.running || timer.finished) && (
-                  <CenterTimer $done={timer.finished}>{timer.finished ? '시간 종료' : timer.label}</CenterTimer>
-                )}
                 <span>
                   생존 {alive}명 · 처형 {needed}표
                 </span>

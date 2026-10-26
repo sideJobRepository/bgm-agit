@@ -240,8 +240,6 @@ export interface GrimoireSeat {
   evil: boolean | null;
   left: boolean; // 떠난 여행자. 모든 인원 셈에서 빠진다
   reminders: GrimoireReminder[];
-  // 끌어서 옮긴 토큰 위치(원 안 %, 0~100). 없으면 좌석 순서대로 원형 배치. 보이는 위치일 뿐 이웃 판정은 좌석 순서를 따른다
-  pos?: { x: number; y: number } | null;
   roleHistory: RoleChange[];
 }
 
