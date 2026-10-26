@@ -312,13 +312,21 @@ export interface GrimoireState {
   phase: GrimoirePhase;
   notes: string;
   startedAt: string;
-  bluffs?: string[]; // 악마에게 보여줄 블러프(게임에 없는 선한 캐릭터) 키
+  bluffs?: string[]; // 악마에게 보여줄 악마의 속임수(게임에 없는 선한 캐릭터) 키
+  // 셋업 1단계에서 정한 캐릭터 주머니. 휴대폰으로 보낼 때 섞어서 좌석에 나눈다. 같은 v2 안에서 늘어난 필드
+  bag?: GrimoireBagEntry[];
   dayLogs: DayLog[];
   settings: GrimoireSettings;
   // 게임 도중 캐릭터·선악이 바뀌어 본인에게 알려야 할 좌석(다음 밤 맨 앞에 뜬다)
   pendingNotices: { seatId: string; kind: GrimoireNoticeKind; createdDay: number }[];
   // 플레이어 휴대폰으로 보낸 배정(서버 세션). 같은 v2 안에서 늘어난 필드라 옛 저장본엔 없다
   clocktowerSession?: GrimoirePhoneSession | null;
+}
+
+/** 주머니 한 칸. 주정뱅이·꼭두각시·미치광이는 믿는 캐릭터를 같이 정해 둔다 */
+export interface GrimoireBagEntry {
+  key: string;
+  believedKey: string | null;
 }
 
 /** 플레이어 휴대폰에 함께 보여줄 정보(첫날 밤 악 팀 정보 등) */

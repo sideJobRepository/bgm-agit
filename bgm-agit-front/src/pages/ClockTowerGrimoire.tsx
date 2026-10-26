@@ -20,6 +20,8 @@ import {
 } from '../components/clocktower/grimoire/ShowPanels.tsx';
 import { NightList, NightMode } from '../components/clocktower/grimoire/NightPanel.tsx';
 import WinBanner from '../components/clocktower/grimoire/WinBanner.tsx';
+import SetupWizard from '../components/clocktower/grimoire/SetupWizard.tsx';
+import { dealBag, isDealt, usedKeys } from '../components/clocktower/grimoire/bagRules.ts';
 import RoleArt from '../components/clocktower/grimoire/RoleArt.tsx';
 import { preloadGrimoireImages, tokenImageCandidates } from '../components/clocktower/grimoire/tokenImage.ts';
 import { useImmersiveMode } from '../components/clocktower/grimoire/useImmersiveMode.ts';
@@ -177,7 +179,6 @@ export default function ClockTowerGrimoire() {
     start,
     reset,
     reload,
-    blockedByOtherOwner,
     loadNotice,
     externalChange,
   } = useGrimoire(userId);
@@ -208,7 +209,7 @@ export default function ClockTowerGrimoire() {
   const phone = usePhoneSession(state, updateSilently);
   // 몰입 모드(사이트 머리·푸터 숨김 + 전체 화면)는 진행 중인 판에서만
   const { immersive, fullscreen, canFullscreen, enter, exit, requestFullscreen } = useImmersiveMode(
-    !!user && !blockedByOtherOwner && !!state
+    !!user && !!state
   );
 
   const roles = useMemo(
@@ -253,36 +254,6 @@ export default function ClockTowerGrimoire() {
     return (
       <GrimoireRoot $immersive={false}>
         <Muted>로그인 후 사용할 수 있습니다.</Muted>
-      </GrimoireRoot>
-    );
-  }
-
-  if (blockedByOtherOwner) {
-    return (
-      <GrimoireRoot $immersive={false}>
-        <Page>
-          <Warn>
-            이 기기에 다른 회원이 진행하던 진행판이 있습니다. 그 회원으로 로그인하면 이어서 할 수
-            있습니다.
-            <Row style={{ marginTop: 8 }}>
-              <Btn
-                type="button"
-                $tone="danger"
-                onClick={() =>
-                  showConfirmModal({
-                    message: '다른 회원의 진행판을 이 기기에서 지울까요? 되돌릴 수 없습니다.',
-                    onConfirm: reset,
-                  })
-                }
-              >
-                이 기기 판 지우기
-              </Btn>
-              <Btn type="button" onClick={() => navigate('/clocktower-games')}>
-                게임 목록
-              </Btn>
-            </Row>
-          </Warn>
-        </Page>
       </GrimoireRoot>
     );
   }
@@ -618,7 +589,7 @@ export default function ClockTowerGrimoire() {
     else go();
   };
 
-  // 첫날 밤 악 팀 정보(악마: 하수인+블러프, 하수인: 악마+다른 하수인)를 해당 좌석 휴대폰으로
+  // 첫날 밤 악 팀 정보(악마: 하수인+악마의 속임수, 하수인: 악마+다른 하수인)를 해당 좌석 휴대폰으로
   const sendEvilInfo = () => {
     const result = buildEvilInfo(state);
     if (!result.ok) {
@@ -635,6 +606,39 @@ export default function ClockTowerGrimoire() {
     result.warnings.forEach(w => toast.error(w));
   };
   const evilInfoAvailable = runsEvilInfo(state, roles);
+
+  // 셋업 단계 안내(주머니 → 악마의 속임수 → 나눠 앉히기). 아직 아무도 앉지 않았을 때만
+  const showWizard = state.phase === 'SETUP' && !isDealt(state, roles);
+
+  // 셋업 3단계: 주머니를 섞어 나눠 앉히고, 회원 자리에는 캐릭터 + 악 팀 정보를 한 번에 보낸다
+  const dealAndSend = async () => {
+    const dealt = dealBag(state, roles);
+    if (!dealt.ok) {
+      toast.error(dealt.message);
+      return;
+    }
+    const next = update(() => dealt.state);
+    if (!next) return;
+    dealt.warnings.forEach(w => toast.error(w));
+    const guests = next.seats.filter(s => s.memberId == null && s.roleKey);
+    const guestNote = guests.length
+      ? ` 손님 ${guests.length}자리(${guests.map(s => s.name).join(', ')})는 좌석 메뉴의 [본인에게 보여주기]로 알려 주세요.`
+      : '';
+    if (!next.seats.some(s => s.memberId != null)) {
+      toast.success(`나눠 앉혔습니다.${guestNote}`);
+      return;
+    }
+    let infos = {};
+    if (runsEvilInfo(next, roles)) {
+      const evil = buildEvilInfo(next);
+      if (evil.ok) {
+        infos = evil.infos;
+        evil.warnings.forEach(w => toast.error(w));
+      } else toast.error(evil.message);
+    }
+    if (await phone.send({ state: next, infos }))
+      toast.success(`나눠 앉히고 회원에게 보냈습니다.${guestNote}`);
+  };
 
   const tokenOf = (seat: GrimoireSeat, i: number) => {
     const role = roles.get(seat.roleKey ?? '');
@@ -730,7 +734,7 @@ export default function ClockTowerGrimoire() {
           <Btn type="button" $active={dayView} onClick={() => setDayView(v => !v)}>
             {dayView ? '이야기꾼 화면' : '낮 화면(가리기)'}
           </Btn>
-          {/* 낮 화면은 플레이어가 본다. 블러프·배정·되돌리기 같은 이야기꾼 버튼은 숨긴다 */}
+          {/* 낮 화면은 플레이어가 본다. 악마의 속임수·배정·되돌리기 같은 이야기꾼 버튼은 숨긴다 */}
           {!dayView && (
             <>
               <Btn
@@ -743,18 +747,23 @@ export default function ClockTowerGrimoire() {
               >
                 되돌리기
               </Btn>
-              <Btn type="button" onClick={runRandom}>
-                무작위 배정
-              </Btn>
+              {/* 셋업 안내가 떠 있는 동안은 안내의 3단계가 배정·보내기를 맡는다 */}
+              {!showWizard && (
+                <Btn type="button" onClick={runRandom}>
+                  무작위 배정
+                </Btn>
+              )}
               <Btn type="button" onClick={() => setBluffOpen(true)}>
-                블러프
+                악마의 속임수
               </Btn>
               <Btn type="button" onClick={() => setQrOpen(true)}>
                 스크립트 QR
               </Btn>
-              <Btn type="button" $active={!!phone.session} onClick={sendToPhones} disabled={phone.sending}>
-                {phone.sending ? '보내는 중…' : phone.session ? '휴대폰으로 다시 보내기' : '휴대폰으로 배정 보내기'}
-              </Btn>
+              {!showWizard && (
+                <Btn type="button" $active={!!phone.session} onClick={sendToPhones} disabled={phone.sending}>
+                  {phone.sending ? '보내는 중…' : phone.session ? '휴대폰으로 다시 보내기' : '휴대폰으로 배정 보내기'}
+                </Btn>
+              )}
               {phone.session && state.day === 1 && state.phase !== 'DAY' && (
                 <Btn
                   type="button"
@@ -808,6 +817,23 @@ export default function ClockTowerGrimoire() {
         {/* 판정 제안은 이야기꾼만 본다(낮 화면에서 숨김) */}
         {!dayView && verdict && (
           <WinBanner verdict={verdict} onEnd={openEnd} onContinue={() => setVerdict(null)} />
+        )}
+
+        {showWizard && !dayView && (
+          <SetupWizard
+            state={state}
+            roles={roles}
+            sending={phone.sending}
+            onBag={bag =>
+              update(prev => {
+                // 주머니에 들어간 캐릭터는 악마의 속임수가 될 수 없다
+                const used = usedKeys(bag);
+                return { ...prev, bag, bluffs: (prev.bluffs ?? []).filter(k => !used.has(k)) };
+              })
+            }
+            onBluffs={bluffs => update(prev => ({ ...prev, bluffs }))}
+            onDeal={dealAndSend}
+          />
         )}
 
         <Layout>

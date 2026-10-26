@@ -279,7 +279,7 @@ export default function SeatPanel({
               <label>선악 (여행자는 꼭 정하세요)</label>
               {seat.evil == null && (
                 <Hint style={{ color: 'var(--ct-evil)', margin: '4px 0' }}>
-                  아직 선악을 정하지 않았습니다. 악으로 정하면 악마가 누구인지 알려 줍니다(하수인은 알려 주지 않고 블러프도
+                  아직 선악을 정하지 않았습니다. 악으로 정하면 악마가 누구인지 알려 줍니다(하수인은 알려 주지 않고 악마의 속임수도
                   없습니다).
                 </Hint>
               )}

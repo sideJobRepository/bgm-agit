@@ -80,7 +80,7 @@ export function evilInfoCount(state: GrimoireState, roles: Map<string, GrimoireR
   return state.settings.countTravellersForEvilInfo ? totalPlayers(state.seats) : baseSeatCount(state.seats, roles);
 }
 
-/** 첫날 밤 하수인·악마 정보(블러프 포함)를 줄 인원인지 */
+/** 첫날 밤 하수인·악마 정보(악마의 속임수 포함)를 줄 인원인지 */
 export function runsEvilInfo(state: GrimoireState, roles: Map<string, GrimoireRole>) {
   return evilInfoCount(state, roles) >= MIN_PLAYERS_FOR_EVIL_INFO;
 }
@@ -353,7 +353,7 @@ export function applyExile(
 }
 
 /**
- * 여행자 선악 지정. 악으로 정하면 그 자리에서 악마가 누구인지 알려 줘야 한다(하수인은 안 알림, 블러프 없음 — RB p.18).
+ * 여행자 선악 지정. 악으로 정하면 그 자리에서 악마가 누구인지 알려 줘야 한다(하수인은 안 알림, 악마의 속임수 없음 — RB p.18).
  */
 export function setTravellerAlignment(state: GrimoireState, seatId: string, evil: boolean): GrimoireState {
   const seat = state.seats.find(s => s.id === seatId);
@@ -451,7 +451,7 @@ export function reminderOptions(state: GrimoireState) {
   return options;
 }
 
-function shuffle<T>(list: T[]): T[] {
+export function shuffle<T>(list: T[]): T[] {
   const a = [...list];
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -541,8 +541,8 @@ export function demonDeathCheck(state: GrimoireState, demonSeatId: string): Demo
 }
 
 /**
- * 블러프: 게임에 없는 선한 캐릭터. 기본은 주민 2 + 외지인 1(RB p.25 권장), 외지인이 모자라면 주민으로 채운다.
- * 주정뱅이·꼭두각시가 믿는 캐릭터도 "게임에 있다"고 본다 — 블러프로 주면 그 사람과 겹친다.
+ * 악마의 속임수: 게임에 없는 선한 캐릭터. 기본은 주민 2 + 외지인 1(RB p.25 권장), 외지인이 모자라면 주민으로 채운다.
+ * 주정뱅이·꼭두각시가 믿는 캐릭터도 "게임에 있다"고 본다 — 악마의 속임수로 주면 그 사람과 겹친다.
  * 주머니에 넣지 않는 캐릭터(주정뱅이)는 자기라고 주장할 수 없는 캐릭터라 뺀다.
  */
 export function pickBluffs(state: GrimoireState): string[] {

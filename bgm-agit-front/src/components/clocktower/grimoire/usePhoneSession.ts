@@ -74,7 +74,7 @@ export type EvilInfoResult =
   | { ok: false; message: string };
 
 /**
- * 첫날 밤 악 팀 정보. 악마는 하수인 + 블러프, 하수인은 악마 + 다른 하수인을 받는다.
+ * 첫날 밤 악 팀 정보. 악마는 하수인 + 악마의 속임수, 하수인은 악마 + 다른 하수인을 받는다.
  * 꼭두각시는 자기가 하수인인 줄 모르므로 받지 않고 다른 하수인 목록에도 넣지 않는다(악마는 꼭두각시를 안다).
  */
 export function buildEvilInfo(state: GrimoireState): EvilInfoResult {
@@ -91,7 +91,7 @@ export function buildEvilInfo(state: GrimoireState): EvilInfoResult {
   const minions = present.filter(x => teamOf(x.seat.roleKey) === 'MINION');
   if (demons.length === 0) return { ok: false, message: '악마 자리가 없습니다. 캐릭터를 먼저 정해 주세요.' };
   const bluffs = (state.bluffs ?? []).map(k => roles.get(k)?.name).filter((n): n is string => !!n);
-  if (bluffs.length === 0) return { ok: false, message: '블러프를 먼저 뽑아 주세요.' };
+  if (bluffs.length === 0) return { ok: false, message: '악마의 속임수를 먼저 뽑아 주세요.' };
 
   const label = (x: { seat: { name: string }; no: number }) => `${x.seat.name}(${x.no})`;
   const infos: Record<string, GrimoireSeatInfo> = {};
@@ -105,7 +105,7 @@ export function buildEvilInfo(state: GrimoireState): EvilInfoResult {
           ? minions.map(m => (m.seat.roleKey === 'marionette' ? `${label(m)} — 꼭두각시` : label(m))).join(', ')
           : '없음'
       }`,
-      `블러프: ${bluffs.join(', ')}`,
+      `악마의 속임수: ${bluffs.join(', ')}`,
     ];
     if (d.seat.memberId == null) noPhone.push(d.seat.name);
     else infos[String(d.seat.memberId)] = { title: '악 팀 정보', lines };
@@ -120,7 +120,7 @@ export function buildEvilInfo(state: GrimoireState): EvilInfoResult {
   }
   if (noPhone.length) warnings.push(`${noPhone.join(', ')}님은 회원 자리가 아니라 휴대폰으로 받을 수 없습니다. 직접 알려 주세요.`);
   if (present.some(x => x.seat.roleKey === 'lunatic'))
-    warnings.push('미치광이에게는 가짜 하수인·블러프를 직접 알려 주세요(휴대폰으로 보내지 않았습니다).');
+    warnings.push('미치광이에게는 가짜 하수인·악마의 속임수를 직접 알려 주세요(휴대폰으로 보내지 않았습니다).');
   return { ok: true, infos, warnings };
 }
 
@@ -243,18 +243,23 @@ export function usePhoneSession(state: GrimoireState | null, updateSilently: Upd
     []
   );
 
-  /** 회원 좌석 전부를 새 세션으로 보낸다(같은 이야기꾼의 이전 세션은 서버가 닫는다) */
-  const send = useCallback(async () => {
-    if (!state) return false;
-    const infos = state.clocktowerSession?.infos ?? {};
-    const seats = phoneSeats({ ...state, clocktowerSession: { sessionId: 0, sentAt: '', sent: {}, infos } }, roles);
+  /**
+   * 회원 좌석 전부를 새 세션으로 보낸다(같은 이야기꾼의 이전 세션은 서버가 닫는다).
+   * 셋업 3단계는 방금 나눠 앉힌 상태를 넘긴다 — 화면이 다시 그려지기 전이라 훅이 든 state 는 나누기 전 것이다.
+   * infos 를 넘기면 이전 정보 대신 그것으로 보낸다(새 배정에 지난 판 악 팀 정보가 붙지 않게).
+   */
+  const send = useCallback(async (opts?: { state?: GrimoireState; infos?: Record<string, GrimoireSeatInfo> }) => {
+    const base = opts?.state ?? state;
+    if (!base) return false;
+    const infos = opts?.infos ?? base.clocktowerSession?.infos ?? {};
+    const seats = phoneSeats({ ...base, clocktowerSession: { sessionId: 0, sentAt: '', sent: {}, infos } }, roleMap(base.data));
     if (seats.length === 0) {
       toast.error('회원 자리가 없어 보낼 곳이 없습니다.');
       return false;
     }
     setSending(true);
     try {
-      const { data } = await api.post<{ sessionId: number }>(BASE, { gameId: state.data.gameId, seats });
+      const { data } = await api.post<{ sessionId: number }>(BASE, { gameId: base.data.gameId, seats });
       const session: GrimoirePhoneSession = {
         sessionId: data.sessionId,
         sentAt: new Date().toISOString(),
@@ -269,7 +274,7 @@ export function usePhoneSession(state: GrimoireState | null, updateSilently: Upd
     } finally {
       setSending(false);
     }
-  }, [state, roles, updateSilently]);
+  }, [state, updateSilently]);
 
   /** 악 팀 정보 등 좌석별 정보를 넣는다. 자동 동기화가 바뀐 좌석만 보낸다 */
   const setInfos = useCallback(
