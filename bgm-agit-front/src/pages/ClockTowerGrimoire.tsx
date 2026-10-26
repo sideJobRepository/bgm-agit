@@ -203,6 +203,9 @@ export default function ClockTowerGrimoire() {
   const [exileSeatId, setExileSeatId] = useState<string | null>(null);
   // 진행 중 합류한 자리. 좌석 메뉴를 여행자 탭으로 연다
   const [joinedSeatId, setJoinedSeatId] = useState<string | null>(null);
+  // 자리 바꾸기: 켜 두고 두 자리를 차례로 누르면 맞바꾼다(좌석 메뉴의 한 칸 이동보다 빠르다)
+  const [swapMode, setSwapMode] = useState(false);
+  const [swapFrom, setSwapFrom] = useState<string | null>(null);
 
   useWakeLock(!!state);
   // 플레이어 휴대폰(/clocktower-my)으로 보낸 배정: 바뀐 좌석 자동 재전송 + 확인 여부
@@ -318,6 +321,39 @@ export default function ClockTowerGrimoire() {
       [list[i], list[to]] = [list[to], list[i]];
       return { ...prev, seats: list };
     });
+
+  // 자리(사람)를 통째로 맞바꾼다. 캐릭터·사망·리마인더도 그 사람을 따라간다
+  const swapSeats = (a: string, b: string) =>
+    update(prev => {
+      const list = [...prev.seats];
+      const i = list.findIndex(s => s.id === a);
+      const j = list.findIndex(s => s.id === b);
+      if (i < 0 || j < 0) return prev;
+      [list[i], list[j]] = [list[j], list[i]];
+      return { ...prev, seats: list };
+    });
+
+  // 셋업 중에만 동작한다. 첫날 밤을 시작하면 버튼이 사라지므로 켜 둔 채 남지 않게 여기서도 막는다
+  const swapping = swapMode && state.phase === 'SETUP';
+
+  const onSeatClick = (seatId: string) => {
+    if (dayView) return;
+    if (!swapping) {
+      setOpenSeatId(seatId);
+      return;
+    }
+    if (!swapFrom) setSwapFrom(seatId);
+    else if (swapFrom === seatId) setSwapFrom(null);
+    else {
+      swapSeats(swapFrom, seatId);
+      setSwapFrom(null);
+    }
+  };
+
+  const toggleSwapMode = () => {
+    setSwapMode(v => !v);
+    setSwapFrom(null);
+  };
 
   const removeSeat = (seat: GrimoireSeat) =>
     showConfirmModal({
@@ -607,10 +643,10 @@ export default function ClockTowerGrimoire() {
   };
   const evilInfoAvailable = runsEvilInfo(state, roles);
 
-  // 셋업 단계 안내(주머니 → 악마의 속임수 → 나눠 앉히기). 아직 아무도 앉지 않았을 때만
+  // 셋업 단계 안내(주머니 → 악마의 속임수 → 캐릭터 나눠 주기). 아직 아무도 앉지 않았을 때만
   const showWizard = state.phase === 'SETUP' && !isDealt(state, roles);
 
-  // 셋업 3단계: 주머니를 섞어 나눠 앉히고, 회원 자리에는 캐릭터 + 악 팀 정보를 한 번에 보낸다
+  // 셋업 3단계: 자리는 그대로 두고 주머니 캐릭터를 무작위로 나눠 주고, 회원 자리에는 캐릭터 + 악 팀 정보를 한 번에 보낸다
   const dealAndSend = async () => {
     const dealt = dealBag(state, roles);
     if (!dealt.ok) {
@@ -625,7 +661,7 @@ export default function ClockTowerGrimoire() {
       ? ` 손님 ${guests.length}자리(${guests.map(s => s.name).join(', ')})는 좌석 메뉴의 [본인에게 보여주기]로 알려 주세요.`
       : '';
     if (!next.seats.some(s => s.memberId != null)) {
-      toast.success(`나눠 앉혔습니다.${guestNote}`);
+      toast.success(`캐릭터를 나눠 줬습니다.${guestNote}`);
       return;
     }
     let infos = {};
@@ -637,7 +673,7 @@ export default function ClockTowerGrimoire() {
       } else toast.error(evil.message);
     }
     if (await phone.send({ state: next, infos }))
-      toast.success(`나눠 앉히고 회원에게 보냈습니다.${guestNote}`);
+      toast.success(`캐릭터를 나눠 주고 회원에게 보냈습니다.${guestNote}`);
   };
 
   const tokenOf = (seat: GrimoireSeat, i: number) => {
@@ -668,6 +704,12 @@ export default function ClockTowerGrimoire() {
     const role = roles.get(seat.roleKey ?? '');
     const believed = roles.get(seat.believedRoleKey ?? '');
     const marks = [];
+    if (swapping && swapFrom === seat.id)
+      marks.push(
+        <Mark key="swap" $tone="vote">
+          바꿀 자리
+        </Mark>
+      );
     if (seat.left) marks.push(<Mark key="l">떠남</Mark>);
     if (travellerNeedsAlignment(seat, roles))
       marks.push(
@@ -780,6 +822,11 @@ export default function ClockTowerGrimoire() {
                     : `악 팀 정보 없음(${MIN_PLAYERS_FOR_EVIL_INFO}명 미만)`}
                 </Btn>
               )}
+              {state.phase === 'SETUP' && (
+                <Btn type="button" $active={swapping} onClick={toggleSwapMode}>
+                  {swapping ? '자리 바꾸기 끝' : '자리 바꾸기'}
+                </Btn>
+              )}
               <Btn type="button" onClick={addSeat}>
                 {isUnderway(state) ? '여행자 합류' : '자리 추가'}
               </Btn>
@@ -819,6 +866,14 @@ export default function ClockTowerGrimoire() {
           <WinBanner verdict={verdict} onEnd={openEnd} onContinue={() => setVerdict(null)} />
         )}
 
+        {swapping && !dayView && (
+          <Warn>
+            {swapFrom
+              ? `${seats.find(s => s.id === swapFrom)?.name ?? ''}님과 바꿀 자리를 누르세요. 같은 자리를 다시 누르면 취소됩니다.`
+              : '바꿀 두 자리를 차례로 누르세요. 사람이 통째로 맞바뀝니다(캐릭터를 나눠 준 뒤라면 캐릭터도 같이 움직입니다).'}
+          </Warn>
+        )}
+
         {showWizard && !dayView && (
           <SetupWizard
             state={state}
@@ -847,7 +902,7 @@ export default function ClockTowerGrimoire() {
                     key={seat.id}
                     type="button"
                     style={seatPosition(i, seats.length)}
-                    onClick={() => !dayView && setOpenSeatId(seat.id)}
+                    onClick={() => onSeatClick(seat.id)}
                   >
                     <Token
                       $color={dayView ? CT_TYPE_COLOR_DARK.TOWNSFOLK : color}
@@ -890,7 +945,7 @@ export default function ClockTowerGrimoire() {
                     key={seat.id}
                     type="button"
                     $dead={seat.dead}
-                    onClick={() => !dayView && setOpenSeatId(seat.id)}
+                    onClick={() => onSeatClick(seat.id)}
                   >
                     <SeatNo>{i + 1}</SeatNo>
                     <SeatRowBody>

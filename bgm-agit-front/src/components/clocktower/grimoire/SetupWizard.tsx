@@ -22,7 +22,7 @@ type Step = 1 | 2 | 3;
 type StepState = 'done' | 'current' | 'locked';
 
 /**
- * 셋업 단계 안내: 1 캐릭터 주머니 → 2 악마의 속임수 → 3 섞어서 나눠 앉히고 휴대폰으로 보내기.
+ * 셋업 단계 안내: 1 캐릭터 주머니 → 2 악마의 속임수 → 3 캐릭터를 무작위로 나눠 주고 휴대폰으로 보내기(자리는 그대로).
  * 이야기꾼이 지금 무엇을 할 차례인지 보이게 단계마다 완료·지금·잠김을 붙이고, 앞 단계가 끝나야 다음 단계를 연다.
  * 아직 아무도 앉지 않았을 때만 뜬다(나눈 뒤에는 기존 진행판 그대로).
  */
@@ -93,7 +93,7 @@ export default function SetupWizard({
           <StepPill key={n} type="button" $state={stepState(n)} $open={shown === n}
             disabled={stepState(n) === 'locked'} onClick={() => setOpen(n)}>
             <b>{stepState(n) === 'done' ? '✓' : n}</b>
-            {n === 1 ? '캐릭터 주머니' : n === 2 ? '악마의 속임수' : '나눠 앉히기·보내기'}
+            {n === 1 ? '캐릭터 주머니' : n === 2 ? '악마의 속임수' : '캐릭터 나눠 주기'}
           </StepPill>
         ))}
       </Steps>
@@ -102,7 +102,7 @@ export default function SetupWizard({
         <Body>
           <Hint>
             여행자를 뺀 {targets.length}자리에 나눌 캐릭터를 고릅니다. 아직 누구에게 갈지는 정해지지 않습니다 —
-            3단계에서 섞어서 나눕니다. 직접 고르거나 [무작위로 채우기]로 모자란 만큼 채우세요.
+            3단계에서 무작위로 나눠 줍니다. 직접 고르거나 [무작위로 채우기]로 모자란 만큼 채우세요.
           </Hint>
           <Row style={{ margin: '8px 0' }}>
             {BASE_TEAMS.map(t => (
@@ -218,7 +218,7 @@ export default function SetupWizard({
               이전
             </Btn>
             <Btn type="button" $tone="primary" disabled={!step2Done} onClick={() => setOpen(3)}>
-              다음: 나눠 앉히기
+              다음: 캐릭터 나눠 주기
             </Btn>
           </Next>
         </Body>
@@ -226,7 +226,7 @@ export default function SetupWizard({
 
       {shown === 3 && (
         <Body>
-          <Hint>누르는 순간 주머니를 섞어 자리마다 하나씩 나눕니다. 그때 처음으로 누가 무엇인지 정해집니다.</Hint>
+          <Hint>자리는 지금 순서 그대로 두고, 누르는 순간 주머니의 캐릭터를 무작위로 한 자리에 하나씩 나눠 줍니다. 그때 처음으로 누가 무엇인지 정해집니다.</Hint>
           <Summary>
             <li>
               주머니: {names(bag.map(e => e.key))}
@@ -240,7 +240,7 @@ export default function SetupWizard({
             </li>
             {guests.length > 0 && (
               <li>
-                손님 {guests.length}자리({guests.map(s => s.name).join(', ')})는 나눈 뒤 좌석 메뉴의 [본인에게 보여주기]로 알려
+                손님 {guests.length}자리({guests.map(s => s.name).join(', ')})는 나눠 준 뒤 좌석 메뉴의 [본인에게 보여주기]로 알려
                 주세요.
               </li>
             )}
@@ -253,8 +253,8 @@ export default function SetupWizard({
               {sending
                 ? '보내는 중…'
                 : members.length > 0
-                  ? '섞어서 나눠 앉히고 휴대폰으로 보내기'
-                  : '섞어서 나눠 앉히기'}
+                  ? '캐릭터 무작위로 나눠 주고 휴대폰으로 보내기'
+                  : '캐릭터 무작위로 나눠 주기'}
             </Btn>
           </Next>
         </Body>

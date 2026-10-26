@@ -12,7 +12,7 @@ import {
 } from './grimoireRules.ts';
 
 /**
- * 셋업 = 캐릭터 주머니 → 악마의 속임수 → 섞어서 나눠 앉히기.
+ * 셋업 = 캐릭터 주머니 → 악마의 속임수 → 캐릭터를 무작위로 나눠 주기(자리는 그대로).
  * 실제 보드게임에서 이야기꾼이 주머니를 만들고 플레이어가 토큰을 뽑는 순서를 그대로 옮겼다.
  * 주머니를 먼저 정해야 악마의 속임수(게임에 없는 캐릭터)를 고를 수 있고, 누가 무엇인지는 나눌 때 정해진다.
  */
@@ -22,7 +22,7 @@ export function bagTargets(seats: GrimoireSeat[], roles: Map<string, GrimoireRol
   return seats.filter(s => !s.left && !isTravellerSeat(s, roles));
 }
 
-/** 이미 나눠 앉혔는지(직접 배정·[무작위 배정]으로 정한 경우 포함). 그러면 셋업 단계 안내를 닫는다 */
+/** 이미 캐릭터를 나눠 줬는지(직접 배정·[무작위 배정]으로 정한 경우 포함). 그러면 셋업 단계 안내를 닫는다 */
 export function isDealt(state: GrimoireState, roles: Map<string, GrimoireRole>) {
   return bagTargets(state.seats, roles).some(s => !!s.roleKey);
 }
@@ -131,7 +131,7 @@ export function bluffChoices(bag: GrimoireBagEntry[], data: GrimoireData): Grimo
 export const BLUFF_COUNT = 3;
 
 /**
- * 주머니를 섞어 받을 자리에 나눈다. 선악은 캐릭터 진영대로(null) 둔다.
+ * 주머니를 섞어 받을 자리에 하나씩 나눠 준다. 자리(좌석 순서)는 움직이지 않는다. 선악은 캐릭터 진영대로(null) 둔다.
  * 꼭두각시는 악마 옆자리여야 해서(W/Marionette "neighbours the Demon") 섞은 뒤 악마 옆 자리와 맞바꾼다.
  */
 export function dealBag(
