@@ -28,6 +28,7 @@
   - 경로 규칙은 `util/ClockTowerImagePaths` 한 곳(주민·외지인·하수인·악마 `_g`+`_e`, 여행자 무접미+`_g`+`_e`, 전설·로릭 무접미, generic 22장). S3 키 `clocktower/characters/{같은 경로}`, `S3FileUtils.putAt`(고정 키라 다시 올려도 주소가 같다)
   - `ClockTowerImageSyncService`: 상태 `GET /clocktower-roles/images/status` → `{total, done, missing, paths}`, 복사 `POST .../images/sync {paths≤30, force}`. 원본 호스트 고정 + 경로 정규식 + 상태 목록 화이트리스트(SSRF 방지), 장당 재시도 2회, `image/webp` 만, 요청당 20초 예산(넘으면 NOT_RUN → 화면이 다음 묶음에 다시 넣는다). 원본 404 는 SKIPPED
   - 사전 컬럼 `IMAGE_URL/IMAGE_GOOD_URL/IMAGE_EVIL_URL/IMAGE_SYNCED_AT` — 공식 데이터 가져오기(`applyOfficial`)는 안 건드린다. 자작 캐릭터는 스크립트 JSON `image` 원본 주소 그대로(http(s)·500자·svg 거부, 배열은 [기본 진영, 뒤집힌 진영], 여행자 [무진영, 선, 악])
+  - **리마인더·믿는 캐릭터는 그림 토큰**(`grimoire/ReminderToken.tsx`, 포켓 그리모어식 — 밝은 원 + 출처 캐릭터 그림 + 아래 테두리를 따라 휜 문구 `CurvedText`). 글자 띠만 있을 때 "주정뱅이입니다"·"중독"이 묻혔다. 리마인더 출처는 캐릭터 **이름**으로 저장돼 있어 `reminderSourceRole` 이 이름으로 찾는다. 좌석 토큰 이름도 같은 `CurvedText`. 밤 순서·밤 진행 카드·셋업 고르기·징크스·전설 탭·좌석 목록에도 캐릭터 그림을 붙였다
   - 진행판 토큰은 `grimoire/tokenImage.ts` — 좌석의 **실제 선악**으로 `_g/_e`, 안 뜨면 generic → 글자 토큰. 낮 화면엔 그림 없음, 사망은 흑백. 끄기: 프론트 `CT_IMAGES_ENABLED`, 서버 `clocktower.images-enabled=false`(앱 재시작)
 
 ## 데이터 모델

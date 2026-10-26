@@ -20,13 +20,13 @@ import {
 } from './grimoireRules.ts';
 import { newSeatId } from './useGrimoire.ts';
 import RoleArt from './RoleArt.tsx';
+import ReminderToken, { reminderSourceRole } from './ReminderToken.tsx';
 import { tokenImageCandidates } from './tokenImage.ts';
 import {
   Ability,
   Btn,
   Chip,
   Hint,
-  Mark,
   Overlay,
   PickGrid,
   PickItem,
@@ -320,29 +320,27 @@ export default function SeatPanel({
           {seat.reminders.length > 0 && (
             <Row style={{ marginBottom: 8 }}>
               {seat.reminders.map(m => (
-                <Chip
+                <ReminderToken
                   key={m.id}
-                  type="button"
-                  onClick={() => onPatch({ reminders: seat.reminders.filter(x => x.id !== m.id) })}
+                  text={m.text}
+                  role={reminderSourceRole(m.source, state.data)}
+                  size={60}
+                  removable
                   title="눌러서 떼기"
-                >
-                  {m.text}
-                  {m.source ? ` · ${m.source}` : ''} ✕
-                </Chip>
+                  onClick={() => onPatch({ reminders: seat.reminders.filter(x => x.id !== m.id) })}
+                />
               ))}
             </Row>
           )}
           <Row>
             {options.map(o => (
-              <Mark
+              <ReminderToken
                 key={`${o.source}|${o.text}`}
-                as="button"
-                type="button"
-                style={{ cursor: 'pointer', fontSize: 13, padding: '4px 10px' }}
+                text={o.text}
+                role={reminderSourceRole(o.source, state.data)}
+                size={60}
                 onClick={() => addReminder(o.text, o.source)}
-              >
-                {o.text} · {o.source}
-              </Mark>
+              />
             ))}
           </Row>
           <Row style={{ marginTop: 8 }}>

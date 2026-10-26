@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import type { GrimoireState, NightTab } from '../../../types/clocktower.ts';
 import { renderNightText } from '../../../utils/clocktowerText.tsx';
 import { nightItems, type NightItem } from './grimoireRules.ts';
+import RoleArt from './RoleArt.tsx';
+import { tokenImageCandidates } from './tokenImage.ts';
 import {
   Btn,
   Muted,
@@ -64,6 +66,10 @@ export function NightList({
         items.map(item => (
           <NightRow key={item.key} $done={checked.has(item.key)} $muted={item.allDead}>
             <input type="checkbox" checked={checked.has(item.key)} onChange={() => onToggle(item.key)} />
+            {/* 해 질 녘·하수인 정보 같은 단계는 그림이 없다 — 자리를 맞추려고 빈 칸을 둔다 */}
+            <span style={{ flex: 'none', width: 40 }}>
+              <RoleArt urls={tokenImageCandidates(item.role, null)} alt="" size={40} dead={item.allDead} />
+            </span>
             <NightBody>
               <b>{item.role.name}</b>
               {item.seats.length > 0 && <small>{whoLabel(item)}</small>}
@@ -117,7 +123,10 @@ export function NightMode({
             {index + 1} / {items.length}
             {checked.has(item.key) ? ' · 완료' : ''}
           </NightStepNo>
-          <NightTitle>{item.role.name}</NightTitle>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <RoleArt urls={tokenImageCandidates(item.role, null)} alt="" size={110} dead={item.allDead} />
+            <NightTitle>{item.role.name}</NightTitle>
+          </div>
           {item.seats.length > 0 && (
             <NightWho>
               {whoLabel(item)}

@@ -3,7 +3,9 @@ import styled from 'styled-components';
 import type { GrimoireBagEntry, GrimoireRole, GrimoireState } from '../../../types/clocktower.ts';
 import { CT_TYPE_COLOR_DARK, CT_TYPE_LABEL } from '../../../config/clocktower.ts';
 import { toast } from '../../../utils/toast';
-import { Btn, Chip, Hint, Row, SelectBox, Warn } from './grimoire.styles.ts';
+import { Btn, Hint, PickGrid, PickItem, Row, SelectBox, Warn } from './grimoire.styles.ts';
+import RoleArt from './RoleArt.tsx';
+import { tokenImageCandidates } from './tokenImage.ts';
 import { BASE_TEAMS, PERCEPTION, expectedCounts, runsEvilInfo } from './grimoireRules.ts';
 import {
   BLUFF_COUNT,
@@ -126,20 +128,21 @@ export default function SetupWizard({
             return (
               <TeamBlock key={t}>
                 <TeamName style={{ color: CT_TYPE_COLOR_DARK[t] }}>{CT_TYPE_LABEL[t]}</TeamName>
-                <Row>
+                <PickGrid style={{ maxHeight: 'none' }}>
                   {list.map(r => {
                     const inBag = bag.some(e => e.key === r.key);
                     // 다른 칸이 믿는 캐릭터로 쓰는 중이면 넣을 수 없다(겹치면 정체가 드러난다)
                     const takenAsBelief = !inBag && used.has(r.key);
                     return (
-                      <Chip key={r.key} type="button" $color={CT_TYPE_COLOR_DARK[t]} $active={inBag}
+                      <PickItem key={r.key} type="button" $color={CT_TYPE_COLOR_DARK[t]} $active={inBag} $taken={takenAsBelief}
                         disabled={takenAsBelief} title={takenAsBelief ? '다른 캐릭터가 믿는 캐릭터로 쓰고 있습니다' : (r.ability ?? undefined)}
                         onClick={() => toggleRole(r)}>
+                        <RoleArt urls={tokenImageCandidates(r, null)} alt="" size={30} />
                         {r.name}
-                      </Chip>
+                      </PickItem>
                     );
                   })}
-                </Row>
+                </PickGrid>
               </TeamBlock>
             );
           })}
@@ -205,14 +208,15 @@ export default function SetupWizard({
               무작위로 뽑기
             </Btn>
           </Row>
-          <Row>
+          <PickGrid style={{ maxHeight: 'none' }}>
             {bluffChoices(bag, state.data).map(r => (
-              <Chip key={r.key} type="button" $color={r.team ? CT_TYPE_COLOR_DARK[r.team] : undefined}
-                $active={bluffs.includes(r.key)} title={r.ability ?? undefined} onClick={() => toggleBluff(r.key)}>
+              <PickItem key={r.key} type="button" $color={r.team ? CT_TYPE_COLOR_DARK[r.team] : 'var(--ct-muted)'}
+                $active={bluffs.includes(r.key)} $taken={false} title={r.ability ?? undefined} onClick={() => toggleBluff(r.key)}>
+                <RoleArt urls={tokenImageCandidates(r, null)} alt="" size={30} />
                 {r.name}
-              </Chip>
+              </PickItem>
             ))}
-          </Row>
+          </PickGrid>
           <Next>
             <Btn type="button" onClick={() => setOpen(1)}>
               이전

@@ -21,6 +21,7 @@ import {
 import { NightList, NightMode } from '../components/clocktower/grimoire/NightPanel.tsx';
 import WinBanner from '../components/clocktower/grimoire/WinBanner.tsx';
 import SetupWizard from '../components/clocktower/grimoire/SetupWizard.tsx';
+import ReminderToken, { CurvedText, reminderSourceRole } from '../components/clocktower/grimoire/ReminderToken.tsx';
 import { dealBag, isDealt, usedKeys } from '../components/clocktower/grimoire/bagRules.ts';
 import RoleArt from '../components/clocktower/grimoire/RoleArt.tsx';
 import { preloadGrimoireImages, tokenImageCandidates } from '../components/clocktower/grimoire/tokenImage.ts';
@@ -75,6 +76,7 @@ import {
   GrimoireRoot,
   Layout,
   Mark,
+  ReminderRow,
   Muted,
   NightBody,
   NightRow,
@@ -95,7 +97,6 @@ import {
   Tab,
   Tabs,
   Token,
-  TokenCaption,
   ToolTitle,
   Toolbar,
   Warn,
@@ -702,7 +703,6 @@ export default function ClockTowerGrimoire() {
     }
     const evil = isEvilSeat(seat, roles);
     const role = roles.get(seat.roleKey ?? '');
-    const believed = roles.get(seat.believedRoleKey ?? '');
     const marks = [];
     if (swapping && swapFrom === seat.id)
       marks.push(
@@ -717,7 +717,6 @@ export default function ClockTowerGrimoire() {
           선악 미정
         </Mark>
       );
-    if (believed) marks.push(<Mark key="b">믿음 {believed.name}</Mark>);
     // 진영이 캐릭터와 다르게 바뀐 경우(또는 여행자)에만 선악 표시
     if (seat.evil != null || role?.team === 'TRAVELLER') {
       if (evil != null)
@@ -741,8 +740,23 @@ export default function ClockTowerGrimoire() {
           {viewed === 'viewed' ? '✓ 확인' : '미확인'}
         </Mark>
       );
-    seat.reminders.forEach(m => marks.push(<Mark key={m.id}>{m.text}</Mark>));
     return marks;
+  };
+
+  // 리마인더는 글자 띠가 아니라 그림 토큰으로(낮 화면에는 안 보인다)
+  // 주정뱅이 등이 믿는 캐릭터도 같은 모양의 토큰으로 맨 앞에 둔다
+  const remindersOf = (seat: GrimoireSeat, size: number) => {
+    if (dayView) return null;
+    const believed = roles.get(seat.believedRoleKey ?? '');
+    if (!believed && seat.reminders.length === 0) return null;
+    return (
+      <ReminderRow>
+        {believed && <ReminderToken text="믿는 캐릭터" role={believed} size={size} />}
+        {seat.reminders.map(m => (
+          <ReminderToken key={m.id} text={m.text} role={reminderSourceRole(m.source, state.data)} size={size} />
+        ))}
+      </ReminderRow>
+    );
   };
 
   return (
@@ -918,7 +932,7 @@ export default function ClockTowerGrimoire() {
                           size={70}
                           dead={dead}
                           fallback={label}
-                          overlay={<TokenCaption>{label}</TokenCaption>}
+                          overlay={<CurvedText text={label} size={70} color="#ffffff" outline="rgba(10, 8, 14, 0.92)" fontScale={0.16} />}
                         />
                       ) : (
                         label
@@ -926,6 +940,7 @@ export default function ClockTowerGrimoire() {
                     </Token>
                     <SeatName $dead={seat.dead}>{seat.name}</SeatName>
                     <SeatMarks>{marksOf(seat)}</SeatMarks>
+                    {remindersOf(seat, 42)}
                   </SeatSpot>
                 );
               })}
@@ -948,6 +963,14 @@ export default function ClockTowerGrimoire() {
                     onClick={() => onSeatClick(seat.id)}
                   >
                     <SeatNo>{i + 1}</SeatNo>
+                    {!dayView && role && (
+                      <RoleArt
+                        urls={tokenImageCandidates(role, isEvilSeat(seat, roles), state.data.genericImages)}
+                        alt=""
+                        size={44}
+                        dead={seat.dead || seat.left}
+                      />
+                    )}
                     <SeatRowBody>
                       <SeatName $dead={seat.dead}>{seat.name}</SeatName>
                       {!dayView && (
@@ -964,6 +987,7 @@ export default function ClockTowerGrimoire() {
                       <SeatMarks style={{ justifyContent: 'flex-start', maxWidth: 'none' }}>
                         {marksOf(seat)}
                       </SeatMarks>
+                      {remindersOf(seat, 46)}
                     </SeatRowBody>
                   </SeatRow>
                 );
@@ -1109,9 +1133,12 @@ export default function ClockTowerGrimoire() {
                     jinxes.map(j => (
                       <NightRow key={`${j.roleA}-${j.roleB}`} $done={false} $muted={false}>
                         <NightBody>
-                          <b>
-                            {roles.get(j.roleA)?.name} × {roles.get(j.roleB)?.name}
-                          </b>
+                          <Row style={{ gap: 6 }}>
+                            <RoleArt urls={tokenImageCandidates(roles.get(j.roleA), null)} alt="" size={36} />
+                            <b>{roles.get(j.roleA)?.name}</b>×
+                            <RoleArt urls={tokenImageCandidates(roles.get(j.roleB), null)} alt="" size={36} />
+                            <b>{roles.get(j.roleB)?.name}</b>
+                          </Row>
                           <div>{renderNightText(j.reason)}</div>
                         </NightBody>
                       </NightRow>
@@ -1128,6 +1155,7 @@ export default function ClockTowerGrimoire() {
                         <NightRow key={r.key} $done={false} $muted={!on}>
                           <NightBody>
                             <Row>
+                              <RoleArt urls={tokenImageCandidates(r, null)} alt="" size={40} />
                               <b>{r.name}</b>
                               <Chip
                                 type="button"

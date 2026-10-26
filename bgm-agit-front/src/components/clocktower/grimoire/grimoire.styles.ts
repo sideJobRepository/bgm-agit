@@ -270,23 +270,6 @@ export const Token = styled.div<{
 `;
 
 // 그림 토큰 아래쪽에 겹쳐 그리는 캐릭터 이름 띠
-export const TokenCaption = styled.span`
-  position: absolute;
-  left: 50%;
-  bottom: -4px;
-  transform: translateX(-50%);
-  max-width: 92px;
-  padding: 0 6px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(20, 16, 28, 0.88);
-  color: ${TEXT};
-  font-size: 11px;
-  line-height: 1.5;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-`;
-
 export const SeatName = styled.span<{ $dead?: boolean }>`
   max-width: 104px;
   overflow: hidden;
@@ -304,6 +287,20 @@ export const SeatMarks = styled.div`
   justify-content: center;
   gap: 2px;
   max-width: 120px;
+`;
+
+/** 좌석 아래 리마인더 토큰 줄 */
+export const ReminderRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3px;
+  max-width: 136px;
+
+  @media ${NARROW} {
+    justify-content: flex-start;
+    max-width: none;
+  }
 `;
 
 export const Mark = styled.span<{ $tone?: 'evil' | 'good' | 'vote' | 'reminder' }>`
