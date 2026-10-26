@@ -1,11 +1,12 @@
-import { useId } from 'react';
+import { useId, type CSSProperties } from 'react';
 import styled from 'styled-components';
 import type { GrimoireData, GrimoireRole } from '../../../types/clocktower.ts';
 import RoleArt from './RoleArt.tsx';
 import { tokenImageCandidates } from './tokenImage.ts';
 
 /**
- * 토큰 아래 테두리를 따라 휘어 쓰는 글자(포켓 그리모어·실물 토큰처럼).
+ * 토큰 테두리를 따라 휘어 쓰는 글자(포켓 그리모어·실물 토큰처럼).
+ * bottom = 아래 테두리(캐릭터 이름·리마인더 문구), top = 위 테두리(리마인더의 캐릭터 이름).
  * 호 길이보다 길면 글자 폭을 줄여 호 안에 맞춘다 — 잘리거나 토큰 밖으로 나가지 않게.
  */
 export function CurvedText({
@@ -14,25 +15,31 @@ export function CurvedText({
   color,
   outline,
   fontScale = 0.17,
+  edge = 'bottom',
 }: {
   text: string;
   size: number;
   color: string;
   outline?: string; // 그림 위에 쓸 때 읽히게 글자 테두리
   fontScale?: number;
+  edge?: 'top' | 'bottom';
 }) {
   const id = useId().replace(/:/g, '');
   const font = Math.max(9, Math.round(size * fontScale));
-  // 글자를 테두리 쪽에 붙여 가운데 그림과 덜 겹치게 한다(2 = 테두리 두께)
-  const r = size / 2 - font * 0.55 - 2;
   const c = size / 2;
-  const arc = Math.PI * r * 0.85; // 아래쪽 호에서 양 끝은 조금 비워 둔다
+  // 아래 호는 글자가 안쪽으로 서고, 위 호는 바깥쪽으로 선다. 둘 다 토큰 안에 들어오게 반지름을 다르게 잡는다(2 = 테두리)
+  const r = edge === 'bottom' ? size / 2 - font * 0.55 - 2 : size / 2 - font * 1.1 - 2;
+  const arc = Math.PI * r * (edge === 'bottom' ? 0.85 : 0.75);
   // 한글은 글자 폭이 글자 크기와 거의 같다. 넘치면 호 길이에 맞춰 줄인다
   const fits = text.length * font * 0.95 <= arc;
+  // 아래 호: 왼쪽 → 아래 → 오른쪽(sweep 0), 위 호: 왼쪽 → 위 → 오른쪽(sweep 1). 둘 다 글자가 바로 선다
+  const d =
+    edge === 'bottom'
+      ? `M ${c - r} ${c} A ${r} ${r} 0 0 0 ${c + r} ${c}`
+      : `M ${c - r} ${c} A ${r} ${r} 0 0 1 ${c + r} ${c}`;
   return (
     <CurveSvg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} aria-hidden>
-      {/* 왼쪽에서 아래를 지나 오른쪽으로 가는 호(sweep 0) — 글자가 바로 선 채 아래에 놓인다 */}
-      <path id={id} d={`M ${c - r} ${c} A ${r} ${r} 0 0 0 ${c + r} ${c}`} fill="none" />
+      <path id={id} d={d} fill="none" />
       <text
         fill={color}
         fontSize={font}
@@ -56,7 +63,7 @@ export function CurvedText({
 }
 
 /**
- * 리마인더 토큰. 포켓 그리모어·실물처럼 밝은 원 안에 리마인더를 준 캐릭터 그림을 넣고 문구는 아래 테두리를 따라 쓴다.
+ * 리마인더 토큰(포켓 그리모어식). 남색 원 위쪽에 준 캐릭터 이름, 가운데 그림, 아래쪽에 리마인더 문구.
  * 글자 띠(Mark)만 있을 때는 "주정뱅이입니다"·"중독"이 좌석 표시에 묻혀 눈에 안 띄었다.
  * 출처 캐릭터가 없는 것(처형 기록·직접 적은 문구)은 글자만 가운데에 넣는다.
  */
@@ -67,6 +74,7 @@ export default function ReminderToken({
   onClick,
   title,
   removable,
+  style,
 }: {
   text: string;
   role: GrimoireRole | null;
@@ -74,6 +82,7 @@ export default function ReminderToken({
   onClick?: () => void;
   title?: string;
   removable?: boolean;
+  style?: CSSProperties;
 }) {
   const urls = tokenImageCandidates(role, null);
   const plain = urls.length === 0;
@@ -84,15 +93,17 @@ export default function ReminderToken({
       onClick={onClick}
       title={title ?? (role ? `${text} · ${role.name}` : text)}
       $size={size}
+      style={style}
     >
       {plain ? (
         <Plain $size={size}>{text}</Plain>
       ) : (
         <>
-          <Art $size={size}>
-            <RoleArt urls={urls} alt="" size={Math.round(size * 0.5)} />
+          <Art>
+            <RoleArt urls={urls} alt="" size={Math.round(size * 0.55)} />
           </Art>
-          <CurvedText text={text} size={size} color="#2b2118" fontScale={0.21} />
+          {role && <CurvedText text={role.name} size={size} color="#ffffff" fontScale={0.15} edge="top" />}
+          <CurvedText text={text} size={size} color="#ffffff" fontScale={0.16} />
         </>
       )}
       {removable && <Remove>✕</Remove>}
@@ -116,20 +127,20 @@ const Disc = styled.span<{ $size: number }>`
   height: ${({ $size }) => $size}px;
   padding: 0;
   overflow: hidden;
-  border: 2px solid #b9a77f;
+  border: 2px solid rgba(201, 178, 122, 0.85);
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 35%, #fbf6ea 0%, #ece0c4 100%);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
-  color: #2b2118;
+  background: radial-gradient(circle at 50% 40%, #232a4d 0%, #10142a 100%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  color: #ffffff;
   cursor: ${({ as }) => (as === 'button' ? 'pointer' : 'default')};
 `;
 
-// 그림은 위로 조금 올려 아래 글자 자리를 비운다
-const Art = styled.span<{ $size: number }>`
+// 그림은 가운데. 위·아래 테두리에 글자가 들어간다
+const Art = styled.span`
   position: absolute;
-  top: ${({ $size }) => Math.round($size * 0.08)}px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   line-height: 0;
 `;
 
@@ -139,7 +150,7 @@ const Plain = styled.span<{ $size: number }>`
   -webkit-box-orient: vertical;
   overflow: hidden;
   padding: 0 3px;
-  font-size: ${({ $size }) => Math.max(8, Math.round($size * 0.2))}px;
+  font-size: ${({ $size }) => Math.max(9, Math.round($size * 0.2))}px;
   font-weight: 700;
   line-height: 1.1;
   text-align: center;
@@ -155,10 +166,13 @@ const CurveSvg = styled.svg`
 
 const Remove = styled.span`
   position: absolute;
-  top: 2px;
-  right: 50%;
-  transform: translateX(50%);
-  font-size: 10px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0 4px;
+  border-radius: 6px;
+  background: rgba(139, 29, 29, 0.85);
+  font-size: 11px;
   font-weight: 700;
-  color: #8b1d1d;
+  color: #ffffff;
 `;

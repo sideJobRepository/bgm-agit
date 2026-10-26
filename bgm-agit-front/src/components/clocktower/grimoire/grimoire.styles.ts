@@ -245,7 +245,15 @@ export const Token = styled.div<{
   border-radius: 50%;
   border: ${({ $shape }) => ($shape === 'double' ? '5px double' : $shape === 'dashed' ? '3px dashed' : '3px solid')}
     ${({ $color, $empty }) => ($empty ? LINE : $color)};
-  background: ${({ $dead }) => ($dead ? '#221c2b' : 'var(--ct-surface)')};
+  /* 그림이 있는 토큰은 실물·포켓 그리모어처럼 양피지색. 그림이 없으면(미정·글자 토큰) 어두운 바탕 */
+  background: ${({ $dead, $art }) =>
+    $art
+      ? $dead
+        ? 'radial-gradient(circle at 50% 40%, #9b9588 0%, #6e695f 100%)'
+        : 'radial-gradient(circle at 50% 40%, #fbf6ea 0%, #e8d9b6 100%)'
+      : $dead
+        ? '#221c2b'
+        : 'var(--ct-surface)'};
   color: ${({ $color, $dead, $empty }) => ($empty || $dead ? DIM : $color)};
   font-size: 13px;
   font-weight: 700;
@@ -273,6 +281,40 @@ export const Token = styled.div<{
 `;
 
 // 그림 토큰 아래쪽에 겹쳐 그리는 캐릭터 이름 띠
+/** 토큰 + 그 위에 겹치는 리마인더·자리 번호의 기준 상자 */
+export const TokenWrap = styled.div`
+  position: relative;
+  flex: none;
+`;
+
+/** 토큰 그림. 아래 휜 이름 자리를 비우려고 조금 위로 올린다 */
+export const TokenArt = styled.span`
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  line-height: 0;
+`;
+
+/** 자리 번호 배지(토큰 왼쪽 위) */
+export const SeatBadge = styled.span<{ $size: number }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: ${({ $size }) => $size}px;
+  height: ${({ $size }) => $size}px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: #1a237e;
+  color: #ffffff;
+  font-size: ${({ $size }) => Math.round($size * 0.55)}px;
+  font-weight: 800;
+`;
+
 export const SeatName = styled.span<{ $dead?: boolean }>`
   max-width: 104px;
   overflow: hidden;

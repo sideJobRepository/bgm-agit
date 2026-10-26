@@ -77,6 +77,9 @@ import {
   Layout,
   Mark,
   ReminderRow,
+  SeatBadge,
+  TokenArt,
+  TokenWrap,
   Muted,
   NightBody,
   NightRow,
@@ -702,8 +705,47 @@ export default function ClockTowerGrimoire() {
   };
 
   const tokenSize = seatTokenSize(circleWidth, seats.length);
-  // 리마인더는 좌석 토큰의 절반쯤(공식 앱도 리마인더가 캐릭터 토큰보다 작다)
-  const reminderSize = Math.max(36, Math.round(tokenSize * 0.5));
+  // 리마인더는 좌석 토큰보다 조금 작게(포켓 그리모어 비율)
+  const reminderSize = Math.max(36, Math.round(tokenSize * 0.64));
+
+  /**
+   * 리마인더를 토큰 가장자리에 걸쳐 원 중심 쪽 좌우 대각선으로 번갈아 붙인다(포켓 그리모어처럼).
+   * 이름 아래 한 줄로 늘어놓으면 토큰과 떨어져 어느 자리 것인지 한눈에 안 보였다.
+   * 중심 정면에 붙이면 위쪽 자리에서 캐릭터 이름·플레이어 이름을 가려서 정면은 비워 둔다.
+   * 믿는 캐릭터(주정뱅이 등)도 같은 모양으로 맨 앞에 둔다.
+   */
+  const orbitReminders = (seat: GrimoireSeat, i: number) => {
+    if (dayView) return null;
+    const believed = roles.get(seat.believedRoleKey ?? '');
+    const list = [
+      ...(believed ? [{ id: 'believed', text: '믿는 캐릭터', role: believed as GrimoireRole | null }] : []),
+      ...seat.reminders.map(m => ({ id: m.id, text: m.text, role: reminderSourceRole(m.source, state.data) })),
+    ];
+    if (list.length === 0) return null;
+    // 좌석 각도(위에서 시계 방향) → 화면 좌표에서 원 중심을 향하는 각도
+    const a = (2 * Math.PI * i) / seats.length;
+    const toCenter = Math.atan2(Math.cos(a), -Math.sin(a));
+    const dist = tokenSize / 2 + reminderSize * 0.42;
+    return list.map((r, k) => {
+      // 0번 오른쪽 대각선, 1번 왼쪽 대각선, 2번은 오른쪽 한 칸 더 … 순서
+      const side = k % 2 === 0 ? 1 : -1;
+      const ang = toCenter + side * (0.85 + Math.floor(k / 2) * 0.8);
+      return (
+        <ReminderToken
+          key={r.id}
+          text={r.text}
+          role={r.role}
+          size={reminderSize}
+          style={{
+            position: 'absolute',
+            left: tokenSize / 2 + dist * Math.cos(ang) - reminderSize / 2,
+            top: tokenSize / 2 + dist * Math.sin(ang) - reminderSize / 2,
+            zIndex: 3,
+          }}
+        />
+      );
+    });
+  };
 
   const tokenOf = (seat: GrimoireSeat, i: number) => {
     const role = roles.get(seat.roleKey ?? '');
@@ -948,28 +990,32 @@ export default function ClockTowerGrimoire() {
                     style={{ ...seatPosition(i, seats.length), width: tokenSize + 36 }}
                     onClick={() => onSeatClick(seat.id)}
                   >
-                    <Token
-                      $color={dayView ? CT_TYPE_COLOR_DARK.TOWNSFOLK : color}
-                      $shape={shape}
-                      $dead={dead}
-                      $empty={!dayView && !role}
-                      $art={images.length > 0}
-                      $size={tokenSize}
-                      style={{ fontSize: Math.max(12, Math.round(tokenSize * 0.17)) }}
-                    >
-                      {images.length > 0 ? (
-                        <RoleArt
-                          urls={images}
-                          alt=""
-                          size={inner}
-                          dead={dead}
-                          fallback={label}
-                          overlay={<CurvedText text={label} size={inner} color="#ffffff" outline="rgba(10, 8, 14, 0.92)" fontScale={0.16} />}
-                        />
-                      ) : (
-                        label
-                      )}
-                    </Token>
+                    <TokenWrap style={{ width: tokenSize, height: tokenSize }}>
+                      <Token
+                        $color={dayView ? CT_TYPE_COLOR_DARK.TOWNSFOLK : color}
+                        $shape={shape}
+                        $dead={dead}
+                        $empty={!dayView && !role}
+                        $art={images.length > 0}
+                        $size={tokenSize}
+                        style={{ fontSize: Math.max(12, Math.round(tokenSize * 0.17)) }}
+                      >
+                        {images.length > 0 ? (
+                          // 포켓 그리모어처럼 양피지 위 그림 + 아래 테두리를 따라 휜 이름
+                          <>
+                            <TokenArt>
+                              <RoleArt urls={images} alt="" size={Math.round(inner * 0.74)} dead={dead} />
+                            </TokenArt>
+                            <CurvedText text={label} size={inner} color={dead ? '#2e2a24' : '#2b2118'} fontScale={0.15} />
+                          </>
+                        ) : (
+                          label
+                        )}
+                      </Token>
+                      {/* 낮 화면은 토큰 글자가 이미 자리 번호다 */}
+                      {!dayView && <SeatBadge $size={Math.max(18, Math.round(tokenSize * 0.24))}>{i + 1}</SeatBadge>}
+                      {orbitReminders(seat, i)}
+                    </TokenWrap>
                     <SeatName
                       $dead={seat.dead}
                       style={{ maxWidth: tokenSize + 36, fontSize: Math.max(13, Math.round(tokenSize * 0.15)) }}
@@ -977,7 +1023,6 @@ export default function ClockTowerGrimoire() {
                       {seat.name}
                     </SeatName>
                     <SeatMarks>{marksOf(seat)}</SeatMarks>
-                    {remindersOf(seat, reminderSize, tokenSize + 36)}
                   </SeatSpot>
                 );
               })}
