@@ -652,6 +652,26 @@ export default function ClockTowerGrimoire() {
     updateSilently(prev => ({ ...prev, nightLogs: [...(prev.nightLogs ?? []), entry] }));
   };
 
+  // 밤 진행 대상 고르기: 고른 자리에 리마인더를 옮겨 붙인다(같은 캐릭터가 붙인 같은 리마인더는 다른 자리에서 뗀다)
+  // keepIds(지금 고른 사람들)에 붙은 것은 그대로 둔다 — 여관 주인처럼 두 사람에게 따로 붙일 때 앞 사람 것이 떨어지지 않게
+  const moveReminder = (seatIds: string[], text: string, source: string, keepIds: string[]) =>
+    update(prev => ({
+      ...leaveSetup(prev),
+      seats: prev.seats.map(s => {
+        if (!seatIds.includes(s.id) && keepIds.includes(s.id)) return s;
+        const rest = s.reminders.filter(r => !(r.text === text && r.source === source));
+        if (!seatIds.includes(s.id)) return rest.length === s.reminders.length ? s : { ...s, reminders: rest };
+        const kept = s.reminders.find(r => r.text === text && r.source === source);
+        return { ...s, reminders: [...rest, kept ?? { id: newSeatId(), text, source }] };
+      }),
+    }));
+
+  // 플레이어에게 보여 주지 않은 진행(대상 선택·사망)을 정보 기록에 한 줄 남긴다
+  const addNote = (text: string) => {
+    const entry = makeLogEntry(state, { title: text, roles: [] }, nightStep.current);
+    updateSilently(prev => ({ ...prev, nightLogs: [...(prev.nightLogs ?? []), entry] }));
+  };
+
   // 게임 도중 캐릭터가 바뀐 좌석·악한 여행자: 본인에게 보여주고 알림 목록에서 지운다
   const showNotice = (seatId: string, kind: GrimoireNoticeKind) => {
     const seat = seats.find(s => s.id === seatId);
@@ -1592,19 +1612,6 @@ export default function ClockTowerGrimoire() {
           />
         )}
 
-        {demonSeatId && (
-          <DemonPassPanel
-            state={state}
-            demonSeatId={demonSeatId}
-            onPass={(to, cause) => passDemon(demonSeatId, to, cause)}
-            onEndGame={winner => {
-              setDemonSeatId(null);
-              openEnd(winner);
-            }}
-            onClose={() => setDemonSeatId(null)}
-          />
-        )}
-
         {bluffOpen && (
           <BluffPanel
             state={state}
@@ -1660,6 +1667,23 @@ export default function ClockTowerGrimoire() {
             onStep={step => {
               nightStep.current = step;
             }}
+            onReminder={moveReminder}
+            onKill={seatId => recordDeath(seatId, 'NIGHT')}
+            onNote={text => addNote(text)}
+          />
+        )}
+
+        {/* 밤 진행 중 악마가 자결하면 그 위에 뜨도록 밤 진행 카드 뒤에 그린다 */}
+        {demonSeatId && (
+          <DemonPassPanel
+            state={state}
+            demonSeatId={demonSeatId}
+            onPass={(to, cause) => passDemon(demonSeatId, to, cause)}
+            onEndGame={winner => {
+              setDemonSeatId(null);
+              openEnd(winner);
+            }}
+            onClose={() => setDemonSeatId(null)}
           />
         )}
 

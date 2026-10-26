@@ -393,6 +393,14 @@ export interface NightItem {
   skippedReason?: string;
 }
 
+/** 죽은 그 밤에도 깨우는 캐릭터(죽음으로 능력이 발동한다). 나머지는 죽으면 능력이 없어 깨우지 않는다 */
+export const ACTS_WHEN_DEAD = new Set(['ravenkeeper', 'sage', 'farmer', 'moonchild', 'banshee']);
+
+/** 이 단계를 깨우지 않아야 하는지 — 그 캐릭터 자리가 전부 죽었고 죽음으로 발동하는 캐릭터가 아니다 */
+export function sleepsDead(item: NightItem) {
+  return item.allDead && !ACTS_WHEN_DEAD.has(item.role.key);
+}
+
 /** 지금 게임에 있는 캐릭터만 골라 밤 순서대로 */
 export function nightItems(state: GrimoireState, tab: NightTab): NightItem[] {
   const roles = roleMap(state.data);

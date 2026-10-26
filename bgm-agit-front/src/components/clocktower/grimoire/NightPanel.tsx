@@ -1,12 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { GrimoirePhase, GrimoireRole, GrimoireState, NightTab } from '../../../types/clocktower.ts';
 import { renderNightText } from '../../../utils/clocktowerText.tsx';
-import { dayLogOf, isEvilSeat, nightItems, roleMap, shuffle, type NightItem } from './grimoireRules.ts';
+import { dayLogOf, isEvilSeat, nightItems, roleMap, shuffle, sleepsDead, type NightItem } from './grimoireRules.ts';
 import RoleArt from './RoleArt.tsx';
 import { tokenImageCandidates } from './tokenImage.ts';
 import type { ShowContent } from './ShowPanels.tsx';
 import type { InfoPreset } from './InfoCards.tsx';
 import type { NightStepContext } from './nightLog.ts';
+import {
+  actingSeat,
+  attackResult,
+  fortuneTellerAnswer,
+  ravenkeeperAnswer,
+  seamstressAnswer,
+  type InfoAnswer,
+  type Verdict,
+} from './nightChoice.ts';
 import {
   Btn,
   Chip,
@@ -124,7 +133,7 @@ export function NightList({
                 <b>{item.role.name}</b>{' '}
                 {item.diedTonight && (
                   <Mark $tone="evil" style={{ marginLeft: 4 }}>
-                    오늘 밤 사망
+                    {sleepsDead(item) ? '오늘 밤 사망 — 깨우지 않음' : '오늘 밤 사망'}
                   </Mark>
                 )}
                 {item.hiddenDead && <Mark style={{ marginLeft: 4 }}>사망 — 보통 깨우지 않음</Mark>}
@@ -299,6 +308,256 @@ function impairedNotes(state: GrimoireState, item: NightItem): string[] {
   return notes;
 }
 
+// 밤에 사람을 죽이는 캐릭터(악마는 진영으로 따로 본다) — 대상 고르기에 [사망 처리]를 둔다
+const KILLERS = new Set(['assassin', 'godfather', 'gambler']);
+// 대상을 정확히 몇 명 고르면 참고 답을 내는 정보 캐릭터
+const ANSWER_PICKS: Record<string, number> = { fortuneteller: 2, seamstress: 2, ravenkeeper: 1, dreamer: 1 };
+// 대상을 고르는 리마인더가 아닌 것(셋업 때 한 번 정하는 것) — 대상 고르기 버튼에서 뺀다
+const SETUP_REMINDER: Record<string, true> = { fortuneteller: true };
+const VERDICT_LABEL: Record<Verdict, string> = { DIES: '죽습니다', SAFE: '죽지 않습니다', MAYBE: '이야기꾼 판단', NONE: '아무 일 없음' };
+// 고르지 않아도 되는 캐릭터(한 번만 쓰는 능력·고를지 말지 정하는 능력) — [능력을 사용하시겠습니까?]부터 보여준다
+const ASK_USE = new Set([
+  'po', 'professor', 'seamstress', 'courtier', 'huntsman', 'nightwatchman', 'engineer', 'assassin', 'philosopher', 'harlot',
+]);
+// 캐릭터를 고르는 능력 — [캐릭터를 고르세요] 카드
+const CHOOSE_CHARACTER = new Set(['courtier', 'pithag', 'philosopher', 'cerenovus', 'ojo', 'engineer', 'huntsman', 'wizard', 'xaan']);
+// 플레이어를 고르지 않는 캐릭터 — [플레이어를 고르세요]를 빼고 대상 칩은 리마인더 붙일 자리용으로만
+const NO_PLAYER_PICK = new Set(['philosopher', 'engineer', 'ojo', 'courtier']);
+// 대상 고르기를 띄우지 않는 단계(위의 자동 참고값으로 충분한 정보 캐릭터)
+const INFO_ONLY = new Set(['washerwoman', 'librarian', 'investigator', 'empath', 'chef', 'clockmaker', 'undertaker', 'grandmother']);
+// 캐릭터별 짧은 진행 메모(밤 문구에 없는 처리 순서)
+const ROLE_NOTES: Record<string, string> = {
+  po: '아무도 고르지 않으면 다음 밤에 3명까지 죽입니다 — [사용 안 함] 뒤 포에게 충전 리마인더를 붙이세요.',
+  shabaloth: '2명까지 죽입니다. 전날 밤 죽은 사람 중 1명을 되살릴 수 있습니다(되살리기는 좌석 메뉴).',
+  zombuul: '오늘 낮에 아무도 죽지 않았을 때만 깨웁니다.',
+  professor: '죽은 마을주민을 되살립니다 — 되살리기는 좌석 메뉴에서.',
+  pithag: '고른 사람의 캐릭터 바꾸기는 좌석 메뉴의 [캐릭터 바꾸기]에서. 악마가 새로 생기면 오늘 밤 사망은 이야기꾼 마음입니다.',
+  courtier: '고른 캐릭터가 게임에 있으면 그 사람에게 취함 리마인더를 3밤 동안 붙이세요.',
+  philosopher: '고른 캐릭터를 얻습니다. 그 캐릭터가 게임에 있으면 그 사람은 취합니다.',
+  gambler: '틀리면 도박꾼이 죽습니다.',
+  godfather: '오늘 외지인이 죽었을 때만 깨웁니다.',
+  assassin: '보호를 무시하고 죽입니다(게임당 한 번).',
+  witch: '저주받은 사람이 내일 지명하면 죽습니다 — 리마인더를 붙이세요.',
+  cerenovus: '고른 사람에게 "미친 척해야 하는 캐릭터"를 보여주세요(정보 카드).',
+  pukka: '고른 사람은 중독되고, 전날 중독된 사람이 죽습니다.',
+  nodashii: '이웃한 마을주민 2명은 중독됩니다.',
+  vigormortis: '죽인 하수인은 능력을 유지하고, 그 이웃 마을주민 1명이 중독됩니다.',
+  fanggu: '외지인을 죽이면 그 사람이 팡 구가 되고 악이 됩니다(한 번) — 좌석 메뉴로 캐릭터를 바꾸세요.',
+};
+
+/**
+ * 대상 고르기(임프·독살자·수도승처럼 밤에 사람을 고르는 캐릭터).
+ * 플레이어가 고른 사람을 누르면 → 그 캐릭터의 리마인더 붙이기, 악마·암살자 등은 [사망 처리],
+ * 점쟁이·재봉사·까마귀지기·몽상가는 참고 답을 만든다. 실제 캐릭터·선악 기준이라 취함·중독·오등록은 이야기꾼 판단.
+ */
+function ChoiceHelper({
+  state,
+  item,
+  onReminder,
+  onKill,
+  onShow,
+  onOpenInfo,
+  onNote,
+}: {
+  state: GrimoireState;
+  item: NightItem;
+  onReminder: (seatIds: string[], text: string, source: string, keepIds: string[]) => void;
+  onKill: (seatId: string) => void;
+  onShow: (content: ShowContent) => void;
+  onOpenInfo: (preset?: InfoPreset) => void;
+  onNote: (text: string) => void;
+}) {
+  const roles = roleMap(state.data);
+  const role = item.role;
+  const [picked, setPicked] = useState<string[]>([]);
+  const ring = state.seats.map((s, i) => ({ s, no: i + 1 })).filter(x => !x.s.left);
+  const bySeat = new Map(ring.map(x => [x.s.id, x]));
+  const targets = picked.map(id => bySeat.get(id)).filter((x): x is NonNullable<typeof x> => !!x);
+  const names = targets.map(x => `${x.no}. ${x.s.name}`).join(', ');
+  const kills = role.team === 'DEMON' || KILLERS.has(role.key);
+  const reminders = SETUP_REMINDER[role.key] ? [] : [...new Set(role.reminders)];
+  const need = ANSWER_PICKS[role.key];
+
+  const toggle = (id: string) => setPicked(v => (v.includes(id) ? v.filter(k => k !== id) : [...v, id]));
+
+  const actor = actingSeat(item.seats, role.key);
+  // 공격 판정(보호·군인·선원·어릿광대·구마사제·중독된 공격자 등, nightChoice.ts)
+  const attacks = kills ? targets.map(x => ({ ...x, result: attackResult(state, role, actor, x.s) })) : [];
+  const warnings: string[] = targets.filter(x => x.s.dead && !kills).map(x => `${x.no}번은 이미 죽었습니다`);
+
+  // 참고 답(정확히 그 수만큼 골랐을 때)
+  let answer: { label: string; content: ShowContent; preset?: InfoPreset; reasons?: string[] } | null = null;
+  if (need && targets.length === need) {
+    const picks = targets.map(x => x.s);
+    const yesNo = (a: InfoAnswer) => ({
+      label: `참고 답: ${a.answer}${a.free ? ' (아무 답이나 가능)' : ''}`,
+      content: { title: '', roles: [], big: a.answer },
+      reasons: a.reasons,
+    });
+    if (role.key === 'fortuneteller') answer = yesNo(fortuneTellerAnswer(state, role, actor, picks));
+    else if (role.key === 'seamstress') answer = yesNo(seamstressAnswer(state, actor, picks));
+    else if (role.key === 'ravenkeeper') {
+      const r = roles.get(picks[0].roleKey ?? '');
+      const a = ravenkeeperAnswer(state, actor, picks[0]);
+      const title = '이 플레이어의 캐릭터는';
+      if (r)
+        answer = {
+          label: `참고 답: ${a.answer}${a.free ? ' (다른 캐릭터도 가능)' : ''}`,
+          content: { title, roles: [r], message: names },
+          preset: { text: title, roleKeys: [r.key], seatIds: picked },
+          reasons: a.reasons,
+        };
+    } else if (role.key === 'dreamer') {
+      const r = roles.get(picks[0].roleKey ?? '');
+      const evil = isEvilSeat(picks[0], roles) === true;
+      const other = shuffle(
+        state.data.roles.filter(x => x.key !== r?.key && (evil ? x.team === 'TOWNSFOLK' || x.team === 'OUTSIDER' : x.team === 'MINION' || x.team === 'DEMON'))
+      )[0];
+      const title = '이 플레이어의 캐릭터는';
+      if (r && other) {
+        const two = shuffle([r, other]);
+        answer = {
+          label: `참고 답: ${two.map(x => x.name).join(' / ')} (진짜 ${r.name})`,
+          content: { title, roles: two, message: names },
+          preset: { text: title, roleKeys: two.map(x => x.key), seatIds: picked },
+        };
+      }
+    }
+  }
+
+  // 리마인더 붙이기. 같은 문구가 여러 장인 캐릭터(여관 주인 안전함×2, 포 사망×3)는 한 버튼으로 고른 사람 모두에게,
+  // 장 수보다 많이 골랐을 때는 사람마다 따로(여관 주인 '취함'은 둘 중 한 명) 붙인다
+  const attach = (text: string, ids: string[]) => {
+    onReminder(ids, text, role.name, picked);
+    const who = targets.filter(x => ids.includes(x.s.id)).map(x => `${x.no}. ${x.s.name}`).join(', ');
+    onNote(`${role.name} → ${who}: '${text}' 붙임`);
+  };
+  const copies = (text: string) => role.reminders.filter(t => t === text).length;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, borderTop: '1px solid var(--ct-line)', paddingTop: 10 }}>
+      {ROLE_NOTES[role.key] && <Hint style={{ margin: 0 }}>💡 {ROLE_NOTES[role.key]}</Hint>}
+      {/* 깨운 사람에게 먼저 보여 줄 질문 카드 */}
+      <Row>
+        {ASK_USE.has(role.key) && (
+          <>
+            <Btn type="button" onClick={() => onShow({ title: '능력을 사용하시겠습니까?', roles: [] })}>
+              보여주기: 능력을 사용하시겠습니까?
+            </Btn>
+            <Btn
+              type="button"
+              onClick={() => {
+                onNote(`${role.name}: 능력 사용 안 함`);
+                // 포는 다음 밤 3명을 공격한다(퀴즈 #70) — 포 자리에 '공격 3번'을 붙인다
+                const charge = role.reminders.find(t => /3/.test(t) && /공격/.test(t));
+                if (role.key === 'po' && charge && actor) onReminder([actor.id], charge, role.name, [actor.id]);
+              }}
+            >
+              사용 안 함
+            </Btn>
+          </>
+        )}
+        {!NO_PLAYER_PICK.has(role.key) && (
+          <Btn type="button" onClick={() => onShow({ title: '플레이어를 고르세요', roles: [] })}>
+            보여주기: 플레이어를 고르세요
+          </Btn>
+        )}
+        {CHOOSE_CHARACTER.has(role.key) && (
+          <Btn type="button" onClick={() => onShow({ title: '캐릭터를 고르세요', roles: [] })}>
+            보여주기: 캐릭터를 고르세요
+          </Btn>
+        )}
+      </Row>
+      <Hint style={{ margin: 0 }}>
+        {NO_PLAYER_PICK.has(role.key) ? '리마인더를 붙일 자리' : `대상 고르기${need ? ` (${need}명)` : ''} — 플레이어가 가리킨 사람을 누르세요`}
+      </Hint>
+      <Row>
+        {ring.map(({ s, no }) => (
+          <Chip key={s.id} type="button" $active={picked.includes(s.id)} onClick={() => toggle(s.id)} style={{ opacity: s.dead ? 0.55 : 1 }}>
+            {no}. {s.name}
+            {s.dead ? ' †' : ''}
+          </Chip>
+        ))}
+      </Row>
+      {targets.length > 0 && (
+        <>
+          {warnings.length > 0 && <Hint style={{ color: 'var(--ct-evil)', margin: 0 }}>⚠ {warnings.join(' · ')}</Hint>}
+          {attacks.map(({ s, no, result }) => (
+            <div key={s.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <Hint style={{ margin: 0, color: result.verdict === 'DIES' ? 'var(--ct-evil)' : undefined }}>
+                {no}. {s.name}: <b>{VERDICT_LABEL[result.verdict]}</b>
+                {result.reasons.length > 0 && ` — ${result.reasons.join(' ')}`}
+              </Hint>
+              <Row>
+                <Btn
+                  type="button"
+                  $tone={result.verdict === 'DIES' ? 'danger' : undefined}
+                  disabled={s.dead}
+                  onClick={() => {
+                    onNote(`${role.name} → ${no}. ${s.name} 사망`);
+                    onKill(s.id);
+                  }}
+                >
+                  {no}. {s.name} {result.verdict === 'DIES' ? '사망 처리' : '그래도 사망 처리'}
+                </Btn>
+              </Row>
+            </div>
+          ))}
+          <Row>
+            {reminders.map(text =>
+              targets.length > 1 && copies(text) < targets.length ? (
+                targets.map(x => (
+                  <Btn key={`${text}-${x.s.id}`} type="button" onClick={() => attach(text, [x.s.id])}>
+                    '{text}' → {x.no}. {x.s.name}
+                  </Btn>
+                ))
+              ) : (
+                <Btn key={text} type="button" onClick={() => attach(text, picked)}>
+                  '{text}' 붙이기{targets.length > 1 ? ' (모두)' : ''}
+                </Btn>
+              )
+            )}
+            {!reminders.length && !kills && !answer && (
+              <Btn type="button" onClick={() => onNote(`${role.name} → ${names} 선택`)}>
+                고른 대상 기록
+              </Btn>
+            )}
+          </Row>
+          {answer && (
+            <Row>
+              <Btn type="button" onClick={() => onShow(answer.content)}>
+                보여주기: {answer.label}
+              </Btn>
+              {answer.preset && (
+                <Btn type="button" onClick={() => onOpenInfo(answer.preset)}>
+                  바꿔서 보여주기
+                </Btn>
+              )}
+            </Row>
+          )}
+          {answer?.reasons && answer.reasons.length > 0 && <Hint style={{ margin: 0 }}>{answer.reasons.join(' ')}</Hint>}
+          {reminders.length > 0 && <Hint style={{ margin: 0 }}>리마인더는 옮겨 붙입니다(지금 고르지 않은 자리에 있던 같은 리마인더는 뗍니다).</Hint>}
+        </>
+      )}
+    </div>
+  );
+}
+
+/** 이 단계에 대상 고르기를 띄울지(사람·캐릭터를 고르거나 리마인더를 붙이는 캐릭터) */
+function wantsChoice(item: NightItem) {
+  const k = item.role.key;
+  if (item.seats.length === 0 || INFO_ONLY.has(k)) return false;
+  return (
+    item.role.team === 'DEMON' ||
+    KILLERS.has(k) ||
+    k in ANSWER_PICKS ||
+    ASK_USE.has(k) ||
+    CHOOSE_CHARACTER.has(k) ||
+    item.role.reminders.length > 0 ||
+    /고르|고릅|골라|선택/.test(item.text ?? '')
+  );
+}
+
 // 캐릭터별로 바로 여는 정보 카드 문장(포켓 그리모어의 캐릭터별 info token)
 const INFO_PRESET: Record<string, string> = {
   undertaker: '오늘 처형된 사람의 캐릭터',
@@ -321,10 +580,17 @@ export function NightMode({
   onOpenInfo,
   onEndNight,
   onStep,
+  onReminder,
+  onKill,
+  onNote,
 }: {
   state: GrimoireState;
   phase: GrimoirePhase;
   startKey?: string | null;
+  // 대상 고르기: 리마인더 옮겨 붙이기 / 밤 사망 처리 / 정보 기록에 한 줄 남기기
+  onReminder: (seatIds: string[], text: string, source: string, keepIds: string[]) => void;
+  onKill: (seatId: string) => void;
+  onNote: (text: string) => void;
   onCheck: (key: string) => void;
   onClose: () => void;
   onShow: (content: ShowContent) => void;
@@ -362,8 +628,10 @@ export function NightMode({
   const last = index >= items.length - 1;
   const isCharacter = item.seats.length > 0;
   const evilCards = evilInfoCards(state, item.role.key);
+  // 죽은 캐릭터(오늘 밤 악마에게 죽은 점쟁이 등)는 능력이 없다 — 도우미를 다 감춘다
+  const asleep = sleepsDead(item);
   // 같은 단계를 보는 동안 무작위로 고른 추천값이 바뀌지 않게 단계가 바뀔 때만 다시 계산한다
-  const tips = tipsFor(item.key, () => suggestions(state, item));
+  const tips = asleep ? [] : tipsFor(item.key, () => suggestions(state, item));
   const impaired = impairedNotes(state, item);
 
   const next = () => {
@@ -400,7 +668,7 @@ export function NightMode({
           {item.seats.length > 0 && (
             <NightWho>
               {whoLabel(item, roleMap(state.data))}
-              {item.allDead && !item.diedTonight ? ' — 죽은 캐릭터는 보통 깨우지 않습니다' : ''}
+              {asleep ? ' — 죽어서 능력이 없습니다. 깨우지 말고 넘기세요' : ''}
             </NightWho>
           )}
           <NightText>{renderNightText(item.text)}</NightText>
@@ -432,7 +700,7 @@ export function NightMode({
               )}
             </Row>
           ))}
-          {item.role.key === 'undertaker' && tips.length === 0 && (
+          {item.role.key === 'undertaker' && !asleep && tips.length === 0 && (
             <Hint>오늘 처형으로 죽은 사람이 없습니다(장의사는 아무것도 배우지 않습니다).</Hint>
           )}
           {tips.length > 0 && (
@@ -440,7 +708,19 @@ export function NightMode({
               참고값은 실제 캐릭터·선악으로만 계산했습니다. 취함·중독, 은둔자·스파이 오등록은 직접 판단하세요(숫자는 아래에서 다른 값을 고르면 됩니다).
             </Hint>
           )}
-          {isCharacter && (
+          {!asleep && wantsChoice(item) && (
+            <ChoiceHelper
+              key={item.key}
+              state={state}
+              item={item}
+              onReminder={onReminder}
+              onKill={onKill}
+              onShow={onShow}
+              onOpenInfo={onOpenInfo}
+              onNote={onNote}
+            />
+          )}
+          {isCharacter && !asleep && (
             <Row>
               <Hint style={{ margin: 0 }}>숫자</Hint>
               {[0, 1, 2, 3, 4, 5].map(n => (
