@@ -15,6 +15,13 @@
 
 진영 표시 규칙(이름·색·좌석 여부)은 프론트 `config/clocktower.ts` 한 곳, 서버는 `entity/enumeration/ClockTowerCharacterType`(`isEvil`·`isSeatable`·`fromTeam`).
 
+## 게임 목록·캐릭터 시트 (2026-10-26)
+
+- 게임(스크립트) **대표 이미지는 쓰지 않는다**(사용자 결정 — 대부분 비어 NO IMAGE 만 컸다). 목록 카드·상세·등록 폼에서 뺐다. 서버 컬럼·API 는 그대로
+- 목록에 **[전체]·[공식]·[커스텀]** 필터(`GET /clocktower-games?source=OFFICIAL|CUSTOM`, 커스텀 = 공식이 아닌 것 — 직접 등록·출처 없는 옛 게임 포함)와 카드 배지
+- 캐릭터 시트(게임 상세)는 진영별 묶음 + 3/2/1칸 카드(진영 색 띠·그림·이름·능력 전문), 위에 스크립트 구성(진영별 수)과 인원별 배정표(게임 인원 범위의 공식 분배표)
+- 진영 이름은 **외지인**(공식 번역). 예전 "외부인" 표기는 전부 바꿨다
+
 ## 공식 데이터 (손으로 넣지 않는다)
 
 - 캐릭터 `https://release.botc.app/resources/data/roles.json`(181개), 밤 순서 `nightsheet.json`, 징크스 `jinxes.json`, 공식 한국어 `ThePandemoniumInstitute/botc-translations` 의 `game/ko.json`

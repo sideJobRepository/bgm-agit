@@ -138,31 +138,35 @@ export const Card = styled.div<WithTheme>`
   }
 `;
 
-export const Cover = styled.div`
-  width: 100%;
-  aspect-ratio: 3 / 4;
-  background: ${c.basicColor};
-  border-radius: ${theme.radius.md};
-  overflow: hidden;
-
-  img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
+/** 목록 필터: 전체 / 공식 / 커스텀 */
+export const SourceTabs = styled.div`
+  display: flex;
+  gap: 6px;
+  margin: 0 0 ${theme.space.md};
 `;
 
-export const NoImage = styled.div<WithTheme>`
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: ${c.navColor};
-  font-size: 13px;
+export const SourceTab = styled.button<{ $active: boolean } & WithTheme>`
+  min-height: 38px;
+  padding: 0 16px;
+  border: 1px solid ${({ $active }) => ($active ? CT_PURPLE : c.lineColor)};
+  border-radius: ${theme.radius.pill};
+  background: ${({ $active }) => ($active ? CT_PURPLE : c.white)};
+  color: ${({ $active }) => ($active ? c.white : c.subColor)};
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  cursor: pointer;
+`;
+
+/** 카드 위 공식/커스텀 배지 */
+export const SourceBadge = styled.span<{ $official: boolean }>`
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 2px 10px;
+  border-radius: ${theme.radius.pill};
+  background: ${({ $official }) => ($official ? CT_PURPLE : '#ece8f3')};
+  color: ${({ $official }) => ($official ? '#fff' : CT_PURPLE)};
+  font-size: 12px;
+  font-weight: 800;
 `;
 
 export const CardBody = styled.div`

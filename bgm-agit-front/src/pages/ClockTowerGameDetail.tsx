@@ -1,5 +1,5 @@
 import { Wrapper } from '../styles';
-import { SheetSummary, DistTable, SheetTotal, TeamSection, TeamHeader, SheetGrid, SheetCard, SheetIcon, SheetBody, Box, ButtonRow, Button, Cover, NoImage, DetailTitle, DetailMeta, SectionTitle, FormTitle, Row, Field, FileRow, FileButton, FileName, PreviewBox, CheckLine, CharEditList, CharEditRow, CharLineTop, RemoveBtn, AddBtn, Empty } from './ClockTowerGameDetail.styles.ts';
+import { SheetSummary, DistTable, SheetTotal, TeamSection, TeamHeader, SheetGrid, SheetCard, SheetIcon, SheetBody, Box, ButtonRow, Button, DetailTitle, DetailMeta, SectionTitle, FormTitle, Row, Field, CharEditList, CharEditRow, CharLineTop, RemoveBtn, AddBtn, Empty } from './ClockTowerGameDetail.styles.ts';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
@@ -45,9 +45,6 @@ export default function ClockTowerGameDetail() {
   const [minPlayers, setMinPlayers] = useState('');
   const [maxPlayers, setMaxPlayers] = useState('');
   const [playMinutes, setPlayMinutes] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [removeImage, setRemoveImage] = useState(false);
   const [chars, setChars] = useState<CharRow[]>([]);
   // 커스텀 시계탑(botc.vnamu.com) 시트 주소로 바로 등록(캐릭터 사전과 연결되는 스크립트 등록 경로를 탄다)
   const [sheetUrl, setSheetUrl] = useState('');
@@ -63,9 +60,6 @@ export default function ClockTowerGameDetail() {
       setMinPlayers(detail.minPlayers != null ? String(detail.minPlayers) : '');
       setMaxPlayers(detail.maxPlayers != null ? String(detail.maxPlayers) : '');
       setPlayMinutes(detail.playMinutes != null ? String(detail.playMinutes) : '');
-      setPreview(detail.imageUrl ?? null);
-      setRemoveImage(false);
-      setImageFile(null);
       setChars(
         (detail.characters ?? []).map(c => ({
           name: c.name,
@@ -76,12 +70,6 @@ export default function ClockTowerGameDetail() {
       );
     }
   }, [detail, id]);
-
-  const onPickImage = (file: File | null) => {
-    setImageFile(file);
-    setRemoveImage(false);
-    if (file) setPreview(URL.createObjectURL(file));
-  };
 
   const addChar = () => setChars(prev => [...prev, { name: '', type: 'TOWNSFOLK', description: '' }]);
   const updateChar = (idx: number, patch: Partial<CharRow>) =>
@@ -106,14 +94,12 @@ export default function ClockTowerGameDetail() {
     if (minPlayers) form.append('minPlayers', minPlayers);
     if (maxPlayers) form.append('maxPlayers', maxPlayers);
     if (playMinutes) form.append('playMinutes', playMinutes);
-    if (imageFile) form.append('image', imageFile);
     form.append('characters', JSON.stringify(cleanChars));
 
     showConfirmModal({
       message: '저장하시겠습니까?',
       onConfirm: () => {
         if (id) {
-          form.append('removeImage', String(removeImage));
           update({
             url: `/bgm-agit/clocktower-games/${id}`,
             body: form,
@@ -176,9 +162,7 @@ export default function ClockTowerGameDetail() {
             <Button $variant="secondary" color="#988271" onClick={() => navigate('/clocktower-games')}>목록</Button>
           </ButtonRow>
 
-          <Cover>
-            {detail?.imageUrl ? <img src={detail.imageUrl} alt={detail.name} /> : <NoImage>NO IMAGE</NoImage>}
-          </Cover>
+          {/* 스크립트 대표 이미지는 쓰지 않는다(사용자 결정 2026-10-26). 공식/커스텀은 아래 출처로 보인다 */}
           <DetailTitle>{detail?.name}</DetailTitle>
           <DetailMeta>
             <span>{ctPlayersLabel(detail?.minPlayers, detail?.maxPlayers)}</span>
@@ -346,47 +330,6 @@ export default function ClockTowerGameDetail() {
             <input type="number" value={playMinutes} onChange={e => setPlayMinutes(e.target.value)} placeholder="예: 60" />
           </Field>
         </Row>
-
-        <Field>
-          <label>커버 이미지 (선택)</label>
-          <FileRow>
-            <FileButton>
-              {preview && !removeImage ? '이미지 변경' : '이미지 선택'}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={e => onPickImage(e.target.files?.[0] ?? null)}
-                hidden
-              />
-            </FileButton>
-            <FileName>
-              {imageFile ? imageFile.name : preview && !removeImage ? '기존 이미지' : '선택된 파일 없음'}
-            </FileName>
-          </FileRow>
-          {preview && !removeImage && (
-            <PreviewBox>
-              <img src={preview} alt="미리보기" />
-            </PreviewBox>
-          )}
-          {id && detail?.imageUrl && (
-            <CheckLine>
-              <input
-                type="checkbox"
-                checked={removeImage}
-                onChange={e => {
-                  setRemoveImage(e.target.checked);
-                  if (e.target.checked) {
-                    setImageFile(null);
-                    setPreview(null);
-                  } else {
-                    setPreview(detail.imageUrl ?? null);
-                  }
-                }}
-              />
-              기존 이미지 삭제
-            </CheckLine>
-          )}
-        </Field>
 
         <Field>
           <label>캐릭터 목록</label>

@@ -15,12 +15,13 @@ export function useClockTowerGameListFetch() {
   const { request } = useRequest();
   const setList = useSetRecoilState(clockTowerGameListState);
 
-  return (page: number, keyword?: string) => {
+  // source: OFFICIAL = 공식 스크립트만, CUSTOM = 커스텀(직접 등록 포함), 없으면 전체
+  return (page: number, keyword?: string, source?: 'OFFICIAL' | 'CUSTOM') => {
     request(
       () =>
         api
           .get('/bgm-agit/clocktower-games', {
-            params: { page, ...(keyword ? { keyword } : null) },
+            params: { page, ...(keyword ? { keyword } : null), ...(source ? { source } : null) },
           })
           .then(res => res.data),
       setList

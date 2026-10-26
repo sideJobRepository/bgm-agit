@@ -56,10 +56,14 @@ public class BgmAgitClockTowerGameServiceImpl implements BgmAgitClockTowerGameSe
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ClockTowerGameResponse> getGames(Pageable pageable, String keyword) {
+    public Page<ClockTowerGameResponse> getGames(Pageable pageable, String keyword, String source) {
         String kw = keyword == null ? "" : keyword.trim();
-        return gameRepository.findByUseStatusAndNameContaining("Y", kw, pageable)
-                .map(ClockTowerGameResponse::of);
+        Page<BgmAgitClockTowerGame> page = "OFFICIAL".equals(source)
+                ? gameRepository.findByUseStatusAndSourceAndNameContaining("Y", "OFFICIAL", kw, pageable)
+                : "CUSTOM".equals(source)
+                        ? gameRepository.findNonOfficial("Y", kw, pageable)
+                        : gameRepository.findByUseStatusAndNameContaining("Y", kw, pageable);
+        return page.map(ClockTowerGameResponse::of);
     }
 
     @Override
