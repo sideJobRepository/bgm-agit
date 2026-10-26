@@ -16,6 +16,7 @@ const HIDDEN_PATHS = ['/clocktower-my', '/clocktower-grimoire'];
  * 시계탑 게임에 배정된 회원에게 사이트 어디서든 [내 캐릭터 확인]을 띄운다.
  * QR 을 찍게 하는 것보다 사이트(홈 화면 앱)를 열기만 하면 보이는 쪽이 손님에게 쉽다(사용자 결정 2026-10-26).
  * 캐릭터는 여기서 보여주지 않는다 — 누구나 볼 수 있는 화면 구석이라 정체가 드러난다. 누르면 /clocktower-my 로 간다.
+ * 아직 안 본 캐릭터(새 배정·바뀐 캐릭터)가 있을 때만 띄운다. 확인한 뒤에도 게임 내내 떠 있으니 거슬렸다(사용자 요청 2026-10-26).
  */
 export default function ClockTowerSeatNotice() {
   const user = useRecoilValue(userState);
@@ -46,6 +47,7 @@ export default function ClockTowerSeatNotice() {
 
   if (!user || hidden || !mine || !mine.active) return null;
   const fresh = mine.version > mine.viewedVersion;
+  if (!fresh) return null;
 
   return (
     <Bar to="/clocktower-my" $fresh={fresh} aria-label="시계탑 내 캐릭터 확인">
