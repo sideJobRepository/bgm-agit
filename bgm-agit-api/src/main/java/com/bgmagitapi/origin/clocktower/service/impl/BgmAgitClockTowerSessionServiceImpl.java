@@ -21,11 +21,13 @@ import com.bgmagitapi.origin.clocktower.repository.BgmAgitClockTowerSessionSeatR
 import com.bgmagitapi.origin.clocktower.service.BgmAgitClockTowerSessionService;
 import com.bgmagitapi.origin.clocktower.util.ClockTowerSessionRules;
 import com.bgmagitapi.origin.entity.enumeration.ClockTowerCharacterType;
+import com.bgmagitapi.origin.event.dto.ClockTowerRoleTalkEvent;
 import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -33,6 +35,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -54,6 +57,7 @@ public class BgmAgitClockTowerSessionServiceImpl implements BgmAgitClockTowerSes
     private final BgmAgitClockTowerRoleRepository roleRepository;
     private final BgmAgitMemberRepository memberRepository;
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     // 캐릭터 이미지 끄기 스위치(BgmAgitClockTowerRoleServiceImpl 과 같은 설정)
     @Value("${clocktower.images-enabled:true}")
@@ -79,6 +83,7 @@ public class BgmAgitClockTowerSessionServiceImpl implements BgmAgitClockTowerSes
             seatRepository.save(new BgmAgitClockTowerSessionSeat(
                     session.getId(), s.memberId(), s.seatNo(), s.roleKey(), s.evil(), s.info()));
         }
+        publishRoleTalk(session.getId(), game, seats);
         return session.getId();
     }
 
@@ -101,15 +106,26 @@ public class BgmAgitClockTowerSessionServiceImpl implements BgmAgitClockTowerSes
         validateRoleKeys(seats, GameCatalog.of(characterRepository.findByGame_IdOrderByOrdersAsc(session.getGameId())));
 
         int updated = 0;
+        // 알림톡은 캐릭터가 바뀐 자리에만. 정보·좌석 번호만 바뀐 건 본문이 같아 다시 보내지 않는다
+        List<NormalizedSeat> roleChanged = new ArrayList<>();
         for (NormalizedSeat s : seats) {
             BgmAgitClockTowerSessionSeat seat = existing.get(s.memberId());
             if (seat == null) {
                 seatRepository.save(new BgmAgitClockTowerSessionSeat(
                         sessionId, s.memberId(), s.seatNo(), s.roleKey(), s.evil(), s.info()));
+                roleChanged.add(s);
                 updated++;
-            } else if (seat.apply(s.seatNo(), s.roleKey(), s.evil(), s.info())) {
-                updated++;
+            } else {
+                String before = seat.getRoleKey();
+                if (seat.apply(s.seatNo(), s.roleKey(), s.evil(), s.info())) {
+                    updated++;
+                    if (!Objects.equals(before, s.roleKey())) roleChanged.add(s);
+                }
             }
+        }
+        if (!roleChanged.isEmpty()) {
+            gameRepository.findById(session.getGameId())
+                    .ifPresent(game -> publishRoleTalk(sessionId, game, roleChanged));
         }
         return updated;
     }
@@ -185,6 +201,24 @@ public class BgmAgitClockTowerSessionServiceImpl implements BgmAgitClockTowerSes
     }
 
     // =========================== helpers ===========================
+
+    /**
+     * 캐릭터 안내 알림톡 이벤트. 캐릭터가 정해진 자리만 담고, 이름·종류는 휴대폰 화면과 같은 resolveRole 로 푼다.
+     * 수신 여부(알림톡 동의·번호)와 발송 스위치는 발송 쪽에서 본다.
+     */
+    private void publishRoleTalk(Long sessionId, BgmAgitClockTowerGame game, List<NormalizedSeat> seats) {
+        List<ClockTowerRoleTalkEvent.Target> targets = new ArrayList<>();
+        for (NormalizedSeat s : seats) {
+            if (s.roleKey() == null) continue;
+            ClockTowerMySeatResponse.Role role = resolveRole(game.getId(), s.roleKey(), ClockTowerSessionRules.parseEvil(s.evil()));
+            if (role == null || !StringUtils.hasText(role.getName())) continue;
+            targets.add(new ClockTowerRoleTalkEvent.Target(s.memberId(), game.getName(), role.getName(),
+                    StringUtils.hasText(role.getTeamName()) ? role.getTeamName() : "-"));
+        }
+        if (!targets.isEmpty()) {
+            eventPublisher.publishEvent(new ClockTowerRoleTalkEvent(sessionId, targets));
+        }
+    }
 
     private BgmAgitClockTowerSession loadOwnedSession(Long sessionId, Long memberId, boolean admin) {
         BgmAgitClockTowerSession session = sessionRepository.findById(sessionId)

@@ -33,4 +33,7 @@ public interface AlimtalkTemplate {
     // 매일 09:00(KST) 관리자에게 당일 예약 현황 발송. 하이픈 2개는 카카오에 등록된 코드 그대로임(오타 아님)
     String BGMAGIT_ADMIN_RESERVATION_REMIND = "bgmagit-admin--reservation-rem";
 
+    // 시계탑 진행판 [휴대폰으로 배정 보내기] 때 참가자에게 캐릭터 안내
+    String BGMAGIT_CT_ROLE = "bgmagit-ct-role";
+
 }

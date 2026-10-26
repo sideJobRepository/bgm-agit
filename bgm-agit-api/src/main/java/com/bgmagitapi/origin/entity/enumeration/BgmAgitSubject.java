@@ -12,7 +12,8 @@ public enum BgmAgitSubject {
     LECTURE("마작강의"),
     REVIEW("마작강의리뷰"),
     MATCH_RECORD("대국기록"),
-    ADMIN_RESERVATION_NOTICE("관리자 당일 예약 알림");
+    ADMIN_RESERVATION_NOTICE("관리자 당일 예약 알림"),
+    CLOCKTOWER_ROLE("시계탑 캐릭터");
     
     private final String value;
     

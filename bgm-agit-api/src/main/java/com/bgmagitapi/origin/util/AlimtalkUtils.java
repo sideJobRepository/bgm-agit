@@ -389,6 +389,30 @@ public class AlimtalkUtils {
     }
 
     /**
+     * 시계탑 캐릭터 안내
+     * 템플릿코드: bgmagit-ct-role
+     *
+     * 능력·악 팀 정보는 길고 게임 중 바뀌어서 본문에 넣지 않고 버튼(내 캐릭터 보기)으로 보낸다.
+     * 자유 문장 변수가 크면 카카오 검수에서 반려되기 쉽다는 이유도 있다.
+     * 선악은 넣지 않는다 — 휴대폰 화면과 같은 이유(주민 + 악이면 정체가 드러난다).
+     *
+     * @param nickname 수신자 닉네임
+     * @param gameName 게임(스크립트) 이름
+     * @param roleName 보여줄 캐릭터 이름(주정뱅이 등은 믿는 캐릭터)
+     * @param teamName 그 캐릭터의 종류(마을주민·외부인·하수인·악마·여행자)
+     */
+    public static String buildClockTowerRoleMessage(String nickname, String gameName, String roleName, String teamName) {
+        return new StringBuilder()
+                .append("[BGM 아지트 시계탑 캐릭터 안내]\n\n")
+                .append(nickname).append("님, 참여하신 시계탑 게임의 캐릭터가 배정되었습니다.\n\n")
+                .append("게임: ").append(gameName).append("\n")
+                .append("캐릭터: ").append(roleName).append(" (").append(teamName).append(")\n\n")
+                .append("능력과 팀 정보는 아래 버튼에서 확인해 주세요.\n")
+                .append("게임이 끝날 때까지 다른 참가자에게 보여주지 마세요.")
+                .toString();
+    }
+
+    /**
      * BGM 아지트 BML 대국 기록 안내
      * 템플릿코드: bgmagit-bml-match
      *
