@@ -9,6 +9,8 @@ import { tokenImageCandidates } from './tokenImage.ts';
 import { BASE_TEAMS, MAX_BASE_PLAYERS, PERCEPTION, expectedCounts, runsEvilInfo } from './grimoireRules.ts';
 import {
   BLUFF_COUNT,
+  SETUP_MODIFIERS,
+  adjustedCounts,
   bagChoices,
   bagCounts,
   bagProblems,
@@ -68,7 +70,9 @@ export default function SetupWizard({
     () => players ?? Math.min(MAX_BASE_PLAYERS, Math.max(MIN_PLAYERS, targets.length))
   );
   const draftCounts = expectedCounts(draft);
-  const expected = players != null ? expectedCounts(players) : null;
+  // 남작 등 셋업 캐릭터가 주머니에 있으면 그만큼 바뀐 추천 수
+  const expected = players != null ? (adjustedCounts(players, bag)?.counts ?? null) : null;
+  const baseExpected = players != null ? expectedCounts(players) : null;
   const counts = bagCounts(bag, roles);
   const problems = players != null ? bagProblems(bag, players, roles) : [];
   // 나눠 주려면 자리 수가 인원과 같아야 한다
@@ -285,12 +289,35 @@ export default function SetupWizard({
 
           {setupRoles.length > 0 && (
             <Warn>
-              셋업을 바꾸는 캐릭터가 있습니다. 능력대로 진영 수를 직접 조정하세요(분배표와 달라도 넘어갈 수 있습니다).
-              {setupRoles.map(r => (
-                <div key={r.key}>
-                  <b>{r.name}</b> — {r.ability}
-                </div>
-              ))}
+              셋업을 바꾸는 캐릭터가 있어 추천 수를 바꿨습니다
+              {baseExpected && expected
+                ? ` (기본 마을주민 ${baseExpected.TOWNSFOLK}·외부인 ${baseExpected.OUTSIDER}·하수인 ${baseExpected.MINION} → ${expected.TOWNSFOLK}·${expected.OUTSIDER}·${expected.MINION})`
+                : ''}
+              . 분배표와 달라도 넘어갈 수 있습니다.
+              {setupRoles.map(r => {
+                const options = SETUP_MODIFIERS[r.key];
+                const entry = bag.find(e => e.key === r.key);
+                return (
+                  <div key={r.key} style={{ marginTop: 6 }}>
+                    <b>{r.name}</b> — {r.ability}
+                    {options && options.length > 1 && entry && (
+                      <Row style={{ marginTop: 4 }}>
+                        {options.map((o, idx) => (
+                          <Btn
+                            key={o.label}
+                            type="button"
+                            $active={(entry.setupChoice ?? 0) === idx}
+                            onClick={() => onBag(bag.map(x => (x === entry ? { ...x, setupChoice: idx } : x)))}
+                          >
+                            {o.label}
+                          </Btn>
+                        ))}
+                      </Row>
+                    )}
+                    {!options && <div>자동으로 반영하지 못하는 캐릭터입니다. 진영 수를 직접 맞춰 주세요.</div>}
+                  </div>
+                );
+              })}
             </Warn>
           )}
           {problems.length > 0 && <Warn>{problems.map(p => <div key={p}>{p}</div>)}</Warn>}

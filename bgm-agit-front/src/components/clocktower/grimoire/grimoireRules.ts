@@ -421,14 +421,19 @@ export function nightItems(state: GrimoireState, tab: NightTab): NightItem[] {
 
   // 떠난 여행자는 더 깨우지 않는다
   const present = state.seats.filter(s => !s.left);
-  const inPlay = new Set<string>([...present.map(s => s.roleKey ?? ''), ...state.fabled]);
+  // 주정뱅이·꼭두각시·미치광이는 믿는 캐릭터 차례에 깨운다(본인은 그 캐릭터인 줄 안다)
+  const inPlay = new Set<string>([
+    ...present.map(s => s.roleKey ?? ''),
+    ...present.map(s => s.believedRoleKey ?? ''),
+    ...state.fabled,
+  ]);
   inPlay.delete('');
   for (const key of inPlay) {
     const role = roles.get(key);
     if (!role) continue;
     const order = orderOf(role);
     if (order == null) continue;
-    const seats = present.filter(s => s.roleKey === key);
+    const seats = present.filter(s => s.roleKey === key || s.believedRoleKey === key);
     const allDead = seats.length > 0 && seats.every(s => s.dead);
     const diedTonight = seats.some(
       s => s.dead && s.death?.day === state.day && s.death?.phase === 'NIGHT' && state.phase === 'NIGHT'

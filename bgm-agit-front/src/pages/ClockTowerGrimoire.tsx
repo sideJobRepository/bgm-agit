@@ -786,9 +786,11 @@ export default function ClockTowerGrimoire() {
    */
   const orbitReminders = (seat: GrimoireSeat, i: number) => {
     if (dayView) return null;
+    // 믿는 캐릭터가 토큰에 그려지는 자리는 진짜 캐릭터를 "주정뱅이입니다" 리마인더로 붙인다
     const believed = roles.get(seat.believedRoleKey ?? '');
+    const real = roles.get(seat.roleKey ?? '');
     const list = [
-      ...(believed ? [{ id: 'believed', text: '믿는 캐릭터', role: believed as GrimoireRole | null }] : []),
+      ...(believed && real ? [{ id: 'believed', text: `${real.name}입니다`, role: real as GrimoireRole | null }] : []),
       ...seat.reminders.map(m => ({ id: m.id, text: m.text, role: reminderSourceRole(m.source, state.data) })),
     ];
     if (list.length === 0) return null;
@@ -829,13 +831,16 @@ export default function ClockTowerGrimoire() {
 
   const tokenOf = (seat: GrimoireSeat, i: number) => {
     const role = roles.get(seat.roleKey ?? '');
+    // 주정뱅이·꼭두각시·미치광이는 포켓 그리모어처럼 본인이 믿는 캐릭터를 토큰에 그리고, 진짜 캐릭터는 리마인더로 붙인다
+    const shownRole = roles.get(seat.believedRoleKey ?? '') ?? role;
+    // 테두리 색·모양은 진짜 진영(이야기꾼이 테두리로도 정체를 알 수 있게)
     const color = role?.team ? CT_TYPE_COLOR_DARK[role.team] : EMPTY_COLOR;
     // 진영을 색만으로 가르지 않게 테두리 모양도 다르게(낮 화면은 진영을 드러내지 않는다)
     const shape: TokenShape | undefined =
       dayView ? undefined : role?.team === 'DEMON' ? 'double' : role?.team === 'MINION' ? 'dashed' : undefined;
-    const label = dayView ? `${i + 1}` : (role?.name ?? '미정');
+    const label = dayView ? `${i + 1}` : (shownRole?.name ?? '미정');
     // 낮 화면(플레이어가 보는 화면)에는 그림을 그리지 않는다
-    const images = dayView ? [] : tokenImageCandidates(role, isEvilSeat(seat, roles), state.data.genericImages);
+    const images = dayView ? [] : tokenImageCandidates(shownRole, isEvilSeat(seat, roles), state.data.genericImages);
     return { role, color, shape, label, images };
   };
 
@@ -1099,7 +1104,14 @@ export default function ClockTowerGrimoire() {
 
         <Layout>
           <div>
-            <Circle ref={setCircleEl}>
+            {/* 위·아래 자리의 토큰·이름이 원 밖으로 나와 툴바·아래 패널과 겹치지 않게 그만큼 여백을 둔다 */}
+            <Circle
+              ref={setCircleEl}
+              style={{
+                marginTop: Math.max(0, Math.round(tokenSize / 2 + 8 - circleWidth * 0.09)),
+                marginBottom: Math.max(0, Math.round(tokenSize / 2 + 64 - circleWidth * 0.09)),
+              }}
+            >
               {seats.map((seat, i) => {
                 const { color, shape, label, role, images } = tokenOf(seat, i);
                 const dead = seat.dead || seat.left;

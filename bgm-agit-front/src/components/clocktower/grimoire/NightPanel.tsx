@@ -26,9 +26,15 @@ import {
   Tab,
 } from './grimoire.styles.ts';
 
-function whoLabel(item: NightItem) {
+/** 깨울 사람. 믿는 캐릭터로 깨우는 자리는 진짜 캐릭터를 붙인다(이야기꾼만 보는 화면) */
+function whoLabel(item: NightItem, roles?: Map<string, GrimoireRole>) {
   if (item.seats.length === 0) return '';
-  return item.seats.map(s => `${s.name}${s.dead ? '(사망)' : ''}`).join(', ');
+  return item.seats
+    .map(s => {
+      const real = s.believedRoleKey === item.role.key && s.roleKey !== item.role.key ? roles?.get(s.roleKey ?? '')?.name : null;
+      return `${s.name}${real ? `(실제 ${real})` : ''}${s.dead ? '(사망)' : ''}`;
+    })
+    .join(', ');
 }
 
 /** 이 밤에 실제로 깨울 단계(그 외 밤에 이전에 죽은 캐릭터·건너뛰는 단계 제외) */
@@ -120,7 +126,7 @@ export function NightList({
                   </Mark>
                 )}
                 {item.hiddenDead && <Mark style={{ marginLeft: 4 }}>사망 — 보통 깨우지 않음</Mark>}
-                {item.seats.length > 0 && <small>{whoLabel(item)}</small>}
+                {item.seats.length > 0 && <small>{whoLabel(item, roleMap(state.data))}</small>}
                 {item.text && <div>{renderNightText(item.text)}</div>}
               </NightBody>
             </NightRow>
@@ -305,7 +311,7 @@ export function NightMode({
           </div>
           {item.seats.length > 0 && (
             <NightWho>
-              {whoLabel(item)}
+              {whoLabel(item, roleMap(state.data))}
               {item.allDead && !item.diedTonight ? ' — 죽은 캐릭터는 보통 깨우지 않습니다' : ''}
             </NightWho>
           )}

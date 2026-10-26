@@ -1,6 +1,5 @@
 import type { GrimoireBagEntry, GrimoireData, GrimoireRole, GrimoireSeat, GrimoireState } from '../../../types/clocktower.ts';
 import {
-  BASE_TEAMS,
   PERCEPTION,
   believedCandidates,
   expectedCounts,
@@ -76,21 +75,81 @@ export function fillBelieved(bag: GrimoireBagEntry[], data: GrimoireData): Grimo
   return next;
 }
 
-/** 공식 분배표에서 모자란 진영만 무작위로 채운다. 이야기꾼이 이미 고른 캐릭터는 그대로 둔다 */
+/**
+ * 셋업을 바꾸는 캐릭터(남작 등)가 진영 수를 얼마나 바꾸는지. 늘어난 외부인·하수인만큼 마을주민이 준다.
+ * 선택지가 여럿이면 이야기꾼이 고른다(대부는 외부인 +1 또는 -1 등). 근거: 각 캐릭터 능력 문구의 [괄호] 셋업 규칙
+ */
+export const SETUP_MODIFIERS: Record<string, { label: string; outsider: number; minion: number; demon?: number }[]> = {
+  // 기본 3종(점철되는 혼란·피로 물든 달·화단에 꽃피운 이단)
+  baron: [{ label: '외지인 +2', outsider: 2, minion: 0 }],
+  godfather: [
+    { label: '외지인 +1', outsider: 1, minion: 0 },
+    { label: '외지인 -1', outsider: -1, minion: 0 },
+  ],
+  fanggu: [{ label: '외지인 +1', outsider: 1, minion: 0 }],
+  vigormortis: [{ label: '외지인 -1', outsider: -1, minion: 0 }],
+  // 확장 캐릭터
+  balloonist: [
+    { label: '외지인 +1', outsider: 1, minion: 0 },
+    { label: '그대로', outsider: 0, minion: 0 },
+  ],
+  hermit: [
+    { label: '외지인 -1', outsider: -1, minion: 0 },
+    { label: '그대로', outsider: 0, minion: 0 },
+  ],
+  kazali: [
+    { label: '그대로', outsider: 0, minion: 0 },
+    { label: '외지인 +1', outsider: 1, minion: 0 },
+    { label: '외지인 -1', outsider: -1, minion: 0 },
+  ],
+  lilmonsta: [{ label: '하수인 +1', outsider: 0, minion: 1 }],
+  lordoftyphon: [
+    { label: '하수인 +1', outsider: 0, minion: 1 },
+    { label: '하수인 +1·외지인 +1', outsider: 1, minion: 1 },
+    { label: '하수인 +1·외지인 -1', outsider: -1, minion: 1 },
+  ],
+  // 무신론자: 악한 캐릭터 없음 / 소환사: 악마 없음(세 번째 밤에 만든다). 빈 자리는 마을주민
+  atheist: [{ label: '악한 캐릭터 없음', outsider: 0, minion: -99, demon: -1 }],
+  summoner: [{ label: '악마 없음', outsider: 0, minion: 0, demon: -1 }],
+};
+
+/** 주머니에 든 셋업 캐릭터를 반영한 진영별 추천 수. 마을주민이 나머지를 맡는다 */
+export function adjustedCounts(players: number, bag: GrimoireBagEntry[]): { counts: TeamCounts; notes: string[] } | null {
+  const base = expectedCounts(players);
+  if (!base) return null;
+  const counts = { ...base };
+  const notes: string[] = [];
+  for (const e of bag) {
+    const options = SETUP_MODIFIERS[e.key];
+    if (!options) continue;
+    const pick = options[e.setupChoice ?? 0] ?? options[0];
+    counts.OUTSIDER = Math.max(0, counts.OUTSIDER + pick.outsider);
+    counts.MINION = Math.max(0, counts.MINION + pick.minion);
+    counts.DEMON = Math.max(0, counts.DEMON + (pick.demon ?? 0));
+    notes.push(`${e.key}:${pick.label}`);
+  }
+  counts.TOWNSFOLK = Math.max(0, players - counts.OUTSIDER - counts.MINION - counts.DEMON);
+  return { counts, notes };
+}
+
+/**
+ * 추천 수에서 모자란 진영만 무작위로 채운다. 이야기꾼이 이미 고른 캐릭터는 그대로 둔다.
+ * 악마·하수인을 먼저 뽑는다 — 남작 같은 셋업 캐릭터가 뽑히면 외부인·마을주민 수가 바뀌기 때문이다.
+ */
 export function fillBagRandom(
   bag: GrimoireBagEntry[],
   data: GrimoireData,
   roles: Map<string, GrimoireRole>,
   players: number
 ): { ok: true; bag: GrimoireBagEntry[] } | { ok: false; message: string } {
-  const counts = expectedCounts(players);
-  if (!counts) return { ok: false, message: '주머니를 받을 인원이 5~15명이어야 무작위로 채울 수 있습니다.' };
-  const have = bagCounts(bag, roles);
-  const used = usedKeys(bag);
+  if (!expectedCounts(players)) return { ok: false, message: '주머니를 받을 인원이 5~15명이어야 무작위로 채울 수 있습니다.' };
   const next = [...bag];
-  for (const team of BASE_TEAMS) {
-    const need = counts[team] - have[team];
+  for (const team of ['DEMON', 'MINION', 'OUTSIDER', 'TOWNSFOLK'] as const) {
+    const counts = adjustedCounts(players, next)?.counts;
+    if (!counts) break;
+    const need = counts[team] - bagCounts(next, roles)[team];
     if (need <= 0) continue;
+    const used = usedKeys(next);
     // 무작위로는 주정뱅이·꼭두각시를 넣지 않는다(기존 [무작위 배정]과 같은 규칙). 넣고 싶으면 직접 고른다
     const pool = shuffle(data.roles.filter(r => r.team === team && !isBagDisabled(r) && !used.has(r.key)));
     if (pool.length < need) return { ok: false, message: '스크립트에 진영별 캐릭터가 모자랍니다.' };

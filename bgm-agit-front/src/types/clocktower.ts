@@ -331,6 +331,8 @@ export interface GrimoireState {
 export interface GrimoireBagEntry {
   key: string;
   believedKey: string | null;
+  // 셋업을 바꾸는 캐릭터 중 이야기꾼이 고르는 것(대부 ±1 등)의 선택 번호. 없으면 첫 번째 선택
+  setupChoice?: number;
 }
 
 /** 플레이어 휴대폰에 함께 보여줄 정보(첫날 밤 악 팀 정보 등) */
