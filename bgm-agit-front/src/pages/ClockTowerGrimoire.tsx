@@ -21,7 +21,8 @@ import {
 import { NightList, NightMode } from '../components/clocktower/grimoire/NightPanel.tsx';
 import WinBanner from '../components/clocktower/grimoire/WinBanner.tsx';
 import SetupWizard from '../components/clocktower/grimoire/SetupWizard.tsx';
-import ReminderToken, { CurvedText, reminderSourceRole } from '../components/clocktower/grimoire/ReminderToken.tsx';
+import { InfoCardPanel } from '../components/clocktower/grimoire/InfoCards.tsx';
+import ReminderToken, { CurvedText } from '../components/clocktower/grimoire/ReminderToken.tsx';
 import { dealBag, isDealt, usedKeys } from '../components/clocktower/grimoire/bagRules.ts';
 import RoleArt from '../components/clocktower/grimoire/RoleArt.tsx';
 import { preloadGrimoireImages, tokenImageCandidates } from '../components/clocktower/grimoire/tokenImage.ts';
@@ -59,6 +60,7 @@ import {
   phaseLabel,
   pickBluffs,
   randomAssignment,
+  reminderSourceRole,
   roleMap,
   runsEvilInfo,
   setTravellerAlignment,
@@ -222,6 +224,7 @@ export default function ClockTowerGrimoire() {
   const [bluffOpen, setBluffOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [showContent, setShowContent] = useState<ShowContent | null>(null);
+  const [infoOpen, setInfoOpen] = useState(false);
   // 악마 넘기기 창(악마가 죽으면 자동으로 열린다)
   const [demonSeatId, setDemonSeatId] = useState<string | null>(null);
   // 처형 결과 창을 연 좌석(사망/생존을 거기서 고른다)
@@ -882,6 +885,9 @@ export default function ClockTowerGrimoire() {
               <Btn type="button" onClick={() => setBluffOpen(true)}>
                 악마의 속임수
               </Btn>
+              <Btn type="button" onClick={() => setInfoOpen(true)}>
+                정보 카드
+              </Btn>
               <Btn type="button" onClick={() => setQrOpen(true)}>
                 스크립트 QR
               </Btn>
@@ -975,6 +981,29 @@ export default function ClockTowerGrimoire() {
             onDeal={dealAndSend}
           />
         )}
+
+        {/* 나눠 준 뒤 셋업이 끝나기 전: 휴대폰 확인 현황과 다음 할 일([첫날 밤 시작]) */}
+        {!showWizard && state.phase === 'SETUP' && !dayView && isDealt(state, roles) && (() => {
+          const memberSeats = seats.filter(s => s.memberId != null && phone.viewStatusOf(s.memberId) != null);
+          const unviewed = memberSeats.filter(s => phone.viewStatusOf(s.memberId) === 'unviewed');
+          return (
+            <Warn style={{ marginBottom: 12 }}>
+              <Row style={{ gap: 10 }}>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  캐릭터를 나눠 줬습니다.
+                  {memberSeats.length > 0 &&
+                    ` 휴대폰 확인 ${memberSeats.length - unviewed.length}/${memberSeats.length}명${
+                      unviewed.length ? ` — 아직: ${unviewed.map(s => s.name).join(', ')}` : ' — 모두 확인했습니다'
+                    }.`}{' '}
+                  준비되면 첫날 밤을 시작하세요.
+                </span>
+                <Btn type="button" $tone="primary" onClick={startNight}>
+                  첫날 밤 시작
+                </Btn>
+              </Row>
+            </Warn>
+          );
+        })()}
 
         <Layout>
           <div>
@@ -1376,7 +1405,6 @@ export default function ClockTowerGrimoire() {
 
         {qrOpen && <ScriptQrPanel state={state} onClose={() => setQrOpen(false)} />}
 
-        {showContent && <ShowCard content={showContent} onClose={() => setShowContent(null)} />}
 
         {endOpen && (
           <EndGamePanel
@@ -1412,8 +1440,20 @@ export default function ClockTowerGrimoire() {
               )
             }
             onClose={() => setNightMode(false)}
+            onShow={content => setShowContent(content)}
           />
         )}
+
+        {infoOpen && (
+          <InfoCardPanel
+            state={state}
+            onShow={content => setShowContent(content)}
+            onClose={() => setInfoOpen(false)}
+          />
+        )}
+
+        {/* 보여주기 카드는 밤 진행·정보 카드 창보다 위에 그린다(맨 뒤에 둔다) */}
+        {showContent && <ShowCard content={showContent} onClose={() => setShowContent(null)} />}
       </Page>
     </GrimoireRoot>
   );

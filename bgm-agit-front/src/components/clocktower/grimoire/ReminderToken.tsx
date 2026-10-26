@@ -1,6 +1,6 @@
 import { useId, type CSSProperties } from 'react';
 import styled from 'styled-components';
-import type { GrimoireData, GrimoireRole } from '../../../types/clocktower.ts';
+import type { GrimoireRole } from '../../../types/clocktower.ts';
 import RoleArt from './RoleArt.tsx';
 import { tokenImageCandidates } from './tokenImage.ts';
 
@@ -109,12 +109,6 @@ export default function ReminderToken({
       {removable && <Remove>✕</Remove>}
     </Disc>
   );
-}
-
-/** 리마인더의 source 는 캐릭터 이름으로 저장돼 있다(예전 판 호환). 이름으로 스크립트 캐릭터를 찾는다 */
-export function reminderSourceRole(source: string | null | undefined, data: GrimoireData): GrimoireRole | null {
-  if (!source) return null;
-  return data.roles.find(r => r.name === source) ?? null;
 }
 
 const Disc = styled.span<{ $size: number }>`

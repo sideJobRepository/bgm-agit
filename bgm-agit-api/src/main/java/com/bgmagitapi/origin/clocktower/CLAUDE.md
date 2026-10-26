@@ -68,6 +68,7 @@
 - **진행판만 어두운 테마**(루트 CSS 변수 `--ct-*`, 진영 색은 대비 통과 `CT_TYPE_COLOR_DARK`) + [몰입 모드](Layout 헤더·푸터 숨김 + 전체화면). 다른 시계탑 화면은 사이트 색 그대로
   - 루트는 `grimoire.styles.ts` 의 `GrimoireRoot`(색 변수·전체 폭·dvh). 진행판 하위 컴포넌트에 색을 새로 쓸 때는 hex 대신 `var(--ct-*)`. 모달은 portal 이 아니라 루트 안에 그려서 변수가 그대로 먹는다
   - 몰입 모드는 recoil `layoutModeState`('normal'|'immersive', `recoil/state/layoutState.ts`) — `Layout` 이 immersive 면 머리·메뉴·푸터·설치 배너를 안 그린다. 켜고 끄기·전체화면·html 배경/theme-color 는 `grimoire/useImmersiveMode.ts` 한 곳이고, **언마운트 때 normal 복구 + 전체화면 종료**. 전체화면은 클릭 핸들러에서 바로 `document.documentElement` 에 요청(iPhone 은 지원 안 해 버튼 숨김). 마지막 선택은 localStorage `clocktowerGrimoireImmersive`
+- **포켓 그리모어에서 가져온 것**(2026-10-26): ① [정보 카드](`InfoCards.tsx`) — 공식 정보 토큰 문장(이 사람이 악마입니다·당신의 하수인들입니다·이 캐릭터들은 게임에 없습니다·능력을 사용하시겠습니까? 등) + 캐릭터·플레이어를 전체 화면으로 ② 밤 진행의 하수인·악마 정보 단계에 [보여주기] 단축 버튼(`evilInfoCards`) ③ 사망 수의(토큰 위 검은 띠) ④ 플레이어 휴대폰 진동(새 캐릭터 도착) ⑤ 시작 화면 [지난 판 참가자 그대로 넣기]·최근 함께한 사람(이 기기·이야기꾼별 localStorage `clocktowerRecentPlayers_m{id}`, 회원만) ⑥ 나눠 준 뒤 셋업 중이면 "휴대폰 확인 n/m명 — 아직: …" + [첫날 밤 시작] 안내줄. 보여주기 카드(`ShowCard`)는 다른 창 위에 오도록 맨 뒤에 그린다
 - 낮 화면(플레이어에게 보이는 화면)에는 캐릭터·리마인더·선악·악마의 속임수·판정 제안을 절대 노출하지 않는다
 
 ### 규칙 처리 원칙

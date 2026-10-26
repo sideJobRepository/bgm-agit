@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import type { GrimoireState, NightTab } from '../../../types/clocktower.ts';
 import { renderNightText } from '../../../utils/clocktowerText.tsx';
-import { nightItems, type NightItem } from './grimoireRules.ts';
+import { nightItems, roleMap, type NightItem } from './grimoireRules.ts';
+import type { ShowContent } from './ShowPanels.tsx';
 import RoleArt from './RoleArt.tsx';
 import { tokenImageCandidates } from './tokenImage.ts';
 import {
@@ -83,14 +84,41 @@ export function NightList({
 }
 
 /** 밤 진행 모드: 한 장씩 크게 보여주고 넘길 때마다 체크한다 */
+/**
+ * 하수인·악마 정보 단계에서 바로 띄울 정보 카드(포켓 그리모어처럼 밤 순서에서 바로 보여준다).
+ * 하수인 정보: 하수인에게 "이 사람이 악마입니다". 악마 정보: 악마에게 하수인들 + 게임에 없는 캐릭터(악마의 속임수).
+ * 꼭두각시는 자기가 하수인인 줄 모르므로 하수인 목록에서 빼지 않는다 — 악마는 꼭두각시를 안다(W/Marionette).
+ */
+function evilInfoCards(state: GrimoireState, stepKey: string): ShowContent[] {
+  const roles = roleMap(state.data);
+  const present = state.seats.map((s, i) => ({ s, no: i + 1 })).filter(x => !x.s.left);
+  const teamOf = (k: string | null) => roles.get(k ?? '')?.team;
+  const label = (x: { s: { name: string }; no: number }) => `${x.no}. ${x.s.name}`;
+  const demons = present.filter(x => teamOf(x.s.roleKey) === 'DEMON');
+  const minions = present.filter(x => teamOf(x.s.roleKey) === 'MINION');
+  if (stepKey === 'minioninfo') {
+    return [{ title: '이 사람이 악마입니다', roles: [], message: demons.map(label).join(', ') || '(악마 자리가 없습니다)' }];
+  }
+  if (stepKey === 'demoninfo') {
+    const bluffs = (state.bluffs ?? []).map(k => roles.get(k)).filter((r): r is NonNullable<typeof r> => !!r);
+    return [
+      { title: '당신의 하수인들입니다', roles: [], message: minions.map(label).join(', ') || '(하수인이 없습니다)' },
+      { title: '이 캐릭터들은 게임에 없습니다', roles: bluffs, message: bluffs.length ? undefined : '(악마의 속임수를 아직 정하지 않았습니다)' },
+    ];
+  }
+  return [];
+}
+
 export function NightMode({
   state,
   onCheck,
   onClose,
+  onShow,
 }: {
   state: GrimoireState;
   onCheck: (key: string) => void;
   onClose: () => void;
+  onShow?: (content: ShowContent) => void;
 }) {
   const items = useMemo(() => nightItems(state, state.nightTab), [state]);
   const checked = new Set(state.nightChecked);
@@ -134,6 +162,15 @@ export function NightMode({
             </NightWho>
           )}
           <NightText>{renderNightText(item.text)}</NightText>
+          {onShow && evilInfoCards(state, item.role.key).length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {evilInfoCards(state, item.role.key).map(c => (
+                <Btn key={c.title} type="button" onClick={() => onShow(c)}>
+                  보여주기: {c.title}
+                </Btn>
+              ))}
+            </div>
+          )}
           <NightNav>
             <Btn type="button" onClick={() => setIndex(Math.max(0, index - 1))} disabled={index === 0}>
               ◀ 이전

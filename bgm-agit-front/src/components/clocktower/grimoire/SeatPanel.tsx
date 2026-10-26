@@ -15,12 +15,13 @@ import {
   exiledToday,
   isEvilSeat,
   reminderOptions,
+  reminderSourceRole,
   roleMap,
   shownRole,
 } from './grimoireRules.ts';
 import { newSeatId } from './useGrimoire.ts';
 import RoleArt from './RoleArt.tsx';
-import ReminderToken, { reminderSourceRole } from './ReminderToken.tsx';
+import ReminderToken from './ReminderToken.tsx';
 import { tokenImageCandidates } from './tokenImage.ts';
 import {
   Ability,

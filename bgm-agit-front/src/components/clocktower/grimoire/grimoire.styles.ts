@@ -269,13 +269,26 @@ export const Token = styled.div<{
   ${({ $dead }) =>
     $dead &&
     css`
+      /* 사망 수의(포켓 그리모어처럼 토큰 위에 검은 띠를 덮는다). 흑백 그림만으로는 멀리서 구분이 잘 안 됐다 */
       &::after {
         content: '✝';
         position: absolute;
-        top: -6px;
-        right: -2px;
+        top: -3px;
+        left: 50%;
+        z-index: 1;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        width: 40%;
+        height: 58%;
+        padding-top: 6%;
+        transform: translateX(-50%);
+        clip-path: polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%);
+        background: linear-gradient(180deg, #2b2533 0%, #0d0b12 100%);
+        color: #d8d0e2;
         font-size: 18px;
-        color: ${TEXT};
+        line-height: 1;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
       }
     `}
 `;

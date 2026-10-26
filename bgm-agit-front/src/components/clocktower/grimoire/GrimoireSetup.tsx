@@ -23,6 +23,35 @@ interface Player {
   name: string;
 }
 
+// 최근 참가자(이 기기·이야기꾼별). 매장 단골은 판마다 같은 사람이라 닉네임을 다시 검색하지 않게 한다
+const RECENT_LIMIT = 30;
+type RecentStore = { last: Player[]; recent: Player[] };
+const recentKey = (ownerId: number) => `clocktowerRecentPlayers_m${ownerId}`;
+
+function loadRecent(ownerId: number | null): RecentStore {
+  if (ownerId == null) return { last: [], recent: [] };
+  try {
+    const raw = localStorage.getItem(recentKey(ownerId));
+    const parsed = raw ? (JSON.parse(raw) as Partial<RecentStore>) : {};
+    return { last: parsed.last ?? [], recent: parsed.recent ?? [] };
+  } catch {
+    return { last: [], recent: [] };
+  }
+}
+
+/** 시작할 때 회원 참가자만 남긴다(테스트 손님은 다음 판에 의미가 없다). 최근 목록은 이번 판 사람이 앞으로 온다 */
+function saveRecent(ownerId: number | null, players: Player[]) {
+  if (ownerId == null) return;
+  const members = players.filter(p => p.memberId != null);
+  if (members.length === 0) return;
+  const prev = loadRecent(ownerId).recent.filter(p => !members.some(m => m.memberId === p.memberId));
+  try {
+    localStorage.setItem(recentKey(ownerId), JSON.stringify({ last: members, recent: [...members, ...prev].slice(0, RECENT_LIMIT) }));
+  } catch {
+    // 저장이 안 되는 브라우저(개인 정보 보호 모드)는 그냥 넘어간다
+  }
+}
+
 /** 진행판 시작: 스크립트 고르기 → 참가자(앉은 순서대로) 등록 → 시작 */
 export default function GrimoireSetup({
   initialGameId,
@@ -40,6 +69,7 @@ export default function GrimoireSetup({
   const [candidates, setCandidates] = useState<MemberOption[]>([]);
   const [starting, setStarting] = useState(false);
   const debounce = useRef<number | null>(null);
+  const [recentStore] = useState<RecentStore>(() => loadRecent(ownerId));
   const user = useRecoilValue(userState);
   const isAdmin = (user?.roles ?? []).some(r => r === 'ROLE_ADMIN' || r === 'ADMIN');
 
@@ -116,6 +146,7 @@ export default function GrimoireSetup({
         return;
       }
       const seats: GrimoireSeat[] = players.map(p => createSeat(p.memberId, p.name));
+      saveRecent(ownerId, players);
       onStart(createState(data, seats, ownerId));
     } catch (e) {
       const message = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -156,6 +187,35 @@ export default function GrimoireSetup({
             }}
           />
         </Row>
+        {recentStore.last.length > 0 && (
+          <Row style={{ marginTop: 8 }}>
+            <Btn
+              type="button"
+              onClick={() =>
+                setPlayers(prev => [
+                  ...prev,
+                  ...recentStore.last.filter(p => !prev.some(x => x.memberId === p.memberId)),
+                ])
+              }
+            >
+              지난 판 참가자 그대로 넣기 ({recentStore.last.length}명)
+            </Btn>
+          </Row>
+        )}
+        {recentStore.recent.some(p => !players.some(x => x.memberId === p.memberId)) && (
+          <div style={{ marginTop: 8 }}>
+            <Hint>최근 함께한 사람 — 누르면 다음 자리에 넣습니다</Hint>
+            <Row style={{ marginTop: 4 }}>
+              {recentStore.recent
+                .filter(p => !players.some(x => x.memberId === p.memberId))
+                .map(p => (
+                  <Btn key={p.memberId} type="button" onClick={() => setPlayers(prev => [...prev, p])} style={{ minHeight: 36 }}>
+                    + {p.name}
+                  </Btn>
+                ))}
+            </Row>
+          </div>
+        )}
         {isAdmin && (
           <Row style={{ marginTop: 8 }}>
             <Hint>테스트용(손님) 자리 채우기:</Hint>

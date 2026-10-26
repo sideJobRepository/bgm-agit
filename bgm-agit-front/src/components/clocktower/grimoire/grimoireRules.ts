@@ -593,3 +593,9 @@ export function shownRole(seat: GrimoireSeat, roles: Map<string, GrimoireRole>):
 export function isBaseTeam(team: ClockTowerCharacterType | null | undefined): team is BaseTeam {
   return !!team && (BASE_TEAMS as readonly string[]).includes(team);
 }
+
+/** 리마인더의 source 는 캐릭터 이름으로 저장돼 있다(예전 판 호환). 이름으로 스크립트 캐릭터를 찾는다 */
+export function reminderSourceRole(source: string | null | undefined, data: GrimoireData): GrimoireRole | null {
+  if (!source) return null;
+  return data.roles.find(r => r.name === source) ?? null;
+}

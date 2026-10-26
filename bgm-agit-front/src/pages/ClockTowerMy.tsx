@@ -64,6 +64,15 @@ export default function ClockTowerMy() {
 
   const active = mine && mine.active ? (mine as Active) : null;
 
+  // 새로 배정되거나 바뀌면 한 번 진동한다(화면을 켜 두고 기다리는 플레이어가 알아채게). 아이폰 사파리는 지원하지 않는다
+  const freshKey = active && active.version > active.viewedVersion ? `${active.sessionId}:${active.version}` : null;
+  const buzzed = useRef<string | null>(null);
+  useEffect(() => {
+    if (!freshKey || buzzed.current === freshKey) return;
+    buzzed.current = freshKey;
+    navigator.vibrate?.([120, 80, 120]);
+  }, [freshKey]);
+
   const show = () => {
     setRevealed(true);
     if (!active || active.version <= active.viewedVersion) return;
