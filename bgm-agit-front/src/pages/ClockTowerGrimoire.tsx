@@ -9,6 +9,7 @@ import { showConfirmModal, showInputModal } from '../components/confirmAlert.tsx
 import { CT_TYPE_COLOR_DARK, CT_TYPE_LABEL } from '../config/clocktower.ts';
 import { renderNightText } from '../utils/clocktowerText.tsx';
 import GrimoireSetup from '../components/clocktower/grimoire/GrimoireSetup.tsx';
+import { dayAbilityKey } from '../components/clocktower/grimoire/DayAbility.tsx';
 import SeatPanel from '../components/clocktower/grimoire/SeatPanel.tsx';
 import EndGamePanel from '../components/clocktower/grimoire/EndGamePanel.tsx';
 import DemonPassPanel from '../components/clocktower/grimoire/DemonPassPanel.tsx';
@@ -99,6 +100,7 @@ import {
   SeatBadge,
   TokenArt,
   TokenWrap,
+  PickOrder,
   Muted,
   Hint,
   SetupCard,
@@ -224,6 +226,10 @@ export default function ClockTowerGrimoire() {
   const [sideTab, setSideTab] = useState<SideTab>('night');
   // 밤 진행 카드: null = 닫힘, '' = 안 한 첫 단계부터, 그 외 = 그 단계부터(밤 순서 줄을 눌렀을 때)
   const [nightMode, setNightMode] = useState<string | null>(null);
+  // 밤 진행 대상 고르기: 지금 단계가 고르는 단계면 원형 마도서 토큰을 누르는 것이 고르기다
+  const [nightPicks, setNightPicks] = useState<string[]>([]);
+  const [pickMode, setPickMode] = useState(false);
+  const togglePick = (seatId: string) => setNightPicks(v => (v.includes(seatId) ? v.filter(k => k !== seatId) : [...v, seatId]));
   // 낮 화면: 플레이어에게 보여줄 때 캐릭터·리마인더를 가린다
   const [dayView, setDayView] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
@@ -419,6 +425,10 @@ export default function ClockTowerGrimoire() {
 
   const onSeatClick = (seatId: string) => {
     if (dayView) return;
+    if (nightMode != null && pickMode) {
+      togglePick(seatId);
+      return;
+    }
     if (!swapping) {
       setOpenSeatId(seatId);
       return;
@@ -652,6 +662,26 @@ export default function ClockTowerGrimoire() {
     updateSilently(prev => ({ ...prev, nightLogs: [...(prev.nightLogs ?? []), entry] }));
   };
 
+  // 밤 진행 대상 고르기: 고른 자리에 리마인더를 옮겨 붙인다(같은 캐릭터가 붙인 같은 리마인더는 다른 자리에서 뗀다)
+  // keepIds(지금 고른 사람들)에 붙은 것은 그대로 둔다 — 여관 주인처럼 두 사람에게 따로 붙일 때 앞 사람 것이 떨어지지 않게
+  const moveReminder = (seatIds: string[], text: string, source: string, keepIds: string[]) =>
+    update(prev => ({
+      ...leaveSetup(prev),
+      seats: prev.seats.map(s => {
+        if (!seatIds.includes(s.id) && keepIds.includes(s.id)) return s;
+        const rest = s.reminders.filter(r => !(r.text === text && r.source === source));
+        if (!seatIds.includes(s.id)) return rest.length === s.reminders.length ? s : { ...s, reminders: rest };
+        const kept = s.reminders.find(r => r.text === text && r.source === source);
+        return { ...s, reminders: [...rest, kept ?? { id: newSeatId(), text, source }] };
+      }),
+    }));
+
+  // 플레이어에게 보여 주지 않은 진행(대상 선택·사망)을 정보 기록에 한 줄 남긴다
+  const addNote = (text: string) => {
+    const entry = makeLogEntry(state, { title: text, roles: [] }, nightStep.current);
+    updateSilently(prev => ({ ...prev, nightLogs: [...(prev.nightLogs ?? []), entry] }));
+  };
+
   // 게임 도중 캐릭터가 바뀐 좌석·악한 여행자: 본인에게 보여주고 알림 목록에서 지운다
   const showNotice = (seatId: string, kind: GrimoireNoticeKind) => {
     const seat = seats.find(s => s.id === seatId);
@@ -812,6 +842,7 @@ export default function ClockTowerGrimoire() {
   // 전체화면은 화면을 꽉 채운 타원이라 짧은 쪽 길이로 토큰 크기를 정한다
   const circleWidth = fullView ? Math.min(circleBox.width, circleBox.height) || circleBox.width : circleBox.width;
   const tokenSize = seatTokenSize(circleWidth, seats.length);
+  const picking = new Set(nightMode != null ? nightPicks : []);
 
   const startReminderDrag = (e: ReactPointerEvent, seat: GrimoireSeat, reminderId: string, dx: number, dy: number) => {
     if (dayView || e.button !== 0) return;
@@ -894,6 +925,8 @@ export default function ClockTowerGrimoire() {
           onPointerMove={draggable ? moveDrag : undefined}
           onPointerUp={draggable ? endDrag : undefined}
           onPointerCancel={() => setDrag(null)}
+          // 누름·끌기는 놓을 때(endDrag) 처리한다. 놓은 뒤 브라우저가 보내는 click 이 좌석까지 올라가 메뉴가 열리던 것을 막는다
+          onClick={draggable ? e => e.stopPropagation() : undefined}
         >
           <ReminderToken text={r.text} role={r.role} size={reminderSize} />
         </span>
@@ -987,7 +1020,8 @@ export default function ClockTowerGrimoire() {
   };
 
   return (
-    <GrimoireRoot $immersive={immersive}>
+    // 밤 진행 패널(오른쪽 고정)이 사이트 머리 메뉴를 덮지 않게 몰입 모드가 아니면 그 아래에서 시작한다
+    <GrimoireRoot $immersive={immersive} style={{ ['--ct-dock-top' as string]: immersive ? '12px' : '128px' }}>
       <Page>
         {fullView && (
           <Toolbar $sticky={immersive}>
@@ -1219,7 +1253,17 @@ export default function ClockTowerGrimoire() {
                     }}
                     onClick={() => onSeatClick(seat.id)}
                   >
-                    <TokenWrap style={{ width: tokenSize, height: tokenSize }}>
+                    <TokenWrap
+                      style={{
+                        width: tokenSize,
+                        height: tokenSize,
+                        borderRadius: '50%',
+                        // 밤 진행에서 고른 사람: 금색 고리 + 고른 순서(포의 공격 순서처럼 순서가 중요한 경우가 있다)
+                        boxShadow: picking.has(seat.id) ? '0 0 0 4px var(--ct-accent), 0 0 22px var(--ct-accent)' : undefined,
+                        cursor: pickMode && nightMode != null ? 'crosshair' : undefined,
+                      }}
+                    >
+                      {picking.has(seat.id) && <PickOrder>{nightPicks.indexOf(seat.id) + 1}</PickOrder>}
                       <Token
                         $color={dayView ? CT_TYPE_COLOR_DARK.TOWNSFOLK : color}
                         $shape={shape}
@@ -1275,6 +1319,7 @@ export default function ClockTowerGrimoire() {
                     type="button"
                     $dead={seat.dead}
                     onClick={() => onSeatClick(seat.id)}
+                    style={picking.has(seat.id) ? { boxShadow: 'inset 0 0 0 2px var(--ct-accent)' } : undefined}
                   >
                     <SeatNo>{i + 1}</SeatNo>
                     {!dayView && role && (
@@ -1540,6 +1585,30 @@ export default function ClockTowerGrimoire() {
               setExecuteSeatId(openSeat.id);
             }}
             onDeath={cause => recordDeath(openSeat.id, cause)}
+            onDayAbility={act => {
+              // 출처는 능력을 쓴 캐릭터(믿는 캐릭터 포함). 게임당 한 번이면 사전 리마인더 '능력 없음'을 붙인다
+              const key = dayAbilityKey(openSeat);
+              const src = key ? roles.get(key) : undefined;
+              const usedText = src?.reminders.find(t => /능력 없음/.test(t)) ?? '능력 없음';
+              const adds = [
+                ...(act.reminders ?? []),
+                ...(act.markUsed ? [{ seatId: openSeat.id, text: usedText }] : []),
+              ];
+              if (adds.length)
+                update(prev => ({
+                  ...prev,
+                  seats: prev.seats.map(s => {
+                    const mine = adds.filter(x => x.seatId === s.id);
+                    return mine.length
+                      ? { ...s, reminders: [...s.reminders, ...mine.map(x => ({ id: newSeatId(), text: x.text, source: src?.name ?? null }))] }
+                      : s;
+                  }),
+                }));
+              addNote(act.note);
+              setOpenSeatId(null);
+              if (act.show) showInfo(act.show);
+              if (act.killId) recordDeath(act.killId, 'ABILITY');
+            }}
             onRevive={() =>
               updateSeat(openSeat.id, { dead: false, death: null, ghostVoteUsed: false })
             }
@@ -1589,19 +1658,6 @@ export default function ClockTowerGrimoire() {
             seatId={exileSeatId}
             onConfirm={confirmExile}
             onClose={() => setExileSeatId(null)}
-          />
-        )}
-
-        {demonSeatId && (
-          <DemonPassPanel
-            state={state}
-            demonSeatId={demonSeatId}
-            onPass={(to, cause) => passDemon(demonSeatId, to, cause)}
-            onEndGame={winner => {
-              setDemonSeatId(null);
-              openEnd(winner);
-            }}
-            onClose={() => setDemonSeatId(null)}
           />
         )}
 
@@ -1658,8 +1714,32 @@ export default function ClockTowerGrimoire() {
             onClose={() => setNightMode(null)}
             onShow={content => showInfo(content)}
             onStep={step => {
+              // 단계가 바뀌면 고른 사람을 비운다
+              if (step?.step !== nightStep.current?.step) setNightPicks([]);
               nightStep.current = step;
             }}
+            picked={nightPicks}
+            onTogglePick={togglePick}
+            onPickMode={setPickMode}
+            onReminder={moveReminder}
+            onKill={seatId => recordDeath(seatId, 'NIGHT')}
+            // 교수·샤발로스 되살리기 — 좌석 메뉴 [되살리기]와 같은 동작
+            onRevive={seatId => updateSeat(seatId, { dead: false, death: null, ghostVoteUsed: false })}
+            onNote={text => addNote(text)}
+          />
+        )}
+
+        {/* 밤 진행 중 악마가 자결하면 그 위에 뜨도록 밤 진행 카드 뒤에 그린다 */}
+        {demonSeatId && (
+          <DemonPassPanel
+            state={state}
+            demonSeatId={demonSeatId}
+            onPass={(to, cause) => passDemon(demonSeatId, to, cause)}
+            onEndGame={winner => {
+              setDemonSeatId(null);
+              openEnd(winner);
+            }}
+            onClose={() => setDemonSeatId(null)}
           />
         )}
 

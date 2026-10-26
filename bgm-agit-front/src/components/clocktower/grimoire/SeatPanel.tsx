@@ -20,6 +20,7 @@ import {
   shownRole,
 } from './grimoireRules.ts';
 import { newSeatId } from './useGrimoire.ts';
+import DayAbility, { dayAbilityKey, type DayAct } from './DayAbility.tsx';
 import RoleArt from './RoleArt.tsx';
 import ReminderToken from './ReminderToken.tsx';
 import { tokenImageCandidates } from './tokenImage.ts';
@@ -37,6 +38,12 @@ import {
   SheetSection,
   TextInput,
 } from './grimoire.styles.ts';
+
+// 처형·악마 공격이 아닌 능력으로 사람을 죽이는 캐릭터(처단자·사이코패스 등 낮 능력, 땜장이·마녀·암살자 등)
+const ABILITY_KILLERS = new Set([
+  'slayer', 'psychopath', 'gunslinger', 'gangster', 'witch', 'tinker', 'assassin', 'godfather', 'gossip',
+  'moonchild', 'gambler', 'harlot', 'golem', 'lycanthrope', 'cannibal', 'doomsayer',
+]);
 
 const SEAT_TEAMS: ClockTowerCharacterType[] = ['TOWNSFOLK', 'OUTSIDER', 'MINION', 'DEMON', 'TRAVELLER'];
 
@@ -61,6 +68,8 @@ interface Props {
   onExile: () => void;
   onToggleLeft: () => void;
   onTravellerAlignment: (evil: boolean) => void;
+  // 낮에 쓰는 능력(처단자·화가 등): 사망·리마인더·사용 표시·보여주기·정보 기록
+  onDayAbility: (act: DayAct) => void;
   onClose: () => void;
 }
 
@@ -82,6 +91,7 @@ export default function SeatPanel({
   onExile,
   onToggleLeft,
   onTravellerAlignment,
+  onDayAbility,
   onClose,
 }: Props) {
   const roles = useMemo(() => roleMap(state.data), [state.data]);
@@ -91,6 +101,16 @@ export default function SeatPanel({
   );
   const [picking, setPicking] = useState(!seat.roleKey);
   const [custom, setCustom] = useState('');
+  const [moreDeaths, setMoreDeaths] = useState(false);
+  const isDay = state.phase === 'DAY';
+  // 능력으로 사람을 죽이는 캐릭터가 게임에 살아 있을 때만 [능력으로 사망]을 바로 보인다
+  const abilityKillers = useMemo(
+    () =>
+      [...new Set(state.seats.filter(s => !s.dead && !s.left && ABILITY_KILLERS.has(s.roleKey ?? '')).map(s => roles.get(s.roleKey ?? '')?.name ?? ''))].filter(
+        Boolean
+      ),
+    [state.seats, roles]
+  );
 
   const taken = useMemo(
     () => new Set(state.seats.filter(s => s.id !== seat.id).map(s => s.roleKey ?? '')),
@@ -221,25 +241,41 @@ export default function SeatPanel({
           )}
         </SheetSection>
 
+        {dayAbilityKey(seat) && <DayAbility key={seat.id} state={state} seat={seat} onAct={onDayAbility} />}
+
         <SheetSection>
           <label>
             상태 · {seat.left ? '떠남' : seat.dead ? (seat.death ? deathLabel(seat.death) : '사망') : '생존'}
           </label>
           {!seat.dead ? (
             <Row>
-              {/* 처형은 결과 창에서 사망/생존을 고른다(처형돼도 살아남는 경우가 있다) */}
-              <Btn type="button" $tone="danger" onClick={onExecute}>
-                처형
-              </Btn>
-              <Btn type="button" onClick={() => onDeath('NIGHT')}>
-                밤에 사망
-              </Btn>
-              <Btn type="button" onClick={() => onDeath('ABILITY')}>
-                능력으로 사망
-              </Btn>
-              <Btn type="button" onClick={() => onDeath('OTHER')}>
-                기타 사망
-              </Btn>
+              {/* 지금 상황에 맞는 것만: 낮 = 처형, 밤 = 밤에 사망, 능력으로 죽이는 캐릭터가 게임에 있으면 능력으로 사망.
+                  나머지는 [그 밖의 사망…]에 접어 둔다(버튼 4개가 늘 다 떠 있어 헷갈렸다) */}
+              {(isDay || moreDeaths) && (
+                // 처형은 결과 창에서 사망/생존을 고른다(처형돼도 살아남는 경우가 있다)
+                <Btn type="button" $tone="danger" onClick={onExecute}>
+                  처형
+                </Btn>
+              )}
+              {(!isDay || moreDeaths) && (
+                <Btn type="button" $tone={isDay ? undefined : 'danger'} onClick={() => onDeath('NIGHT')}>
+                  밤에 사망
+                </Btn>
+              )}
+              {(abilityKillers.length > 0 || moreDeaths) && (
+                <Btn type="button" onClick={() => onDeath('ABILITY')} title={abilityKillers.join(', ')}>
+                  능력으로 사망{abilityKillers.length > 0 && !moreDeaths ? ` (${abilityKillers.join('·')})` : ''}
+                </Btn>
+              )}
+              {moreDeaths ? (
+                <Btn type="button" onClick={() => onDeath('OTHER')}>
+                  기타 사망
+                </Btn>
+              ) : (
+                <Chip type="button" onClick={() => setMoreDeaths(true)}>
+                  그 밖의 사망…
+                </Chip>
+              )}
             </Row>
           ) : (
             <Row>
@@ -253,7 +289,7 @@ export default function SeatPanel({
               </Chip>
               {/* 죽은 사람도 처형될 수 있고 그날의 처형 1회로 센다(RB p.16) */}
               <Btn type="button" onClick={onExecute}>
-                처형 기록
+                다시 처형하기
               </Btn>
               <Btn type="button" onClick={onRevive}>
                 되살리기

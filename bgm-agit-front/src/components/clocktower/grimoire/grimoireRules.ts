@@ -393,6 +393,14 @@ export interface NightItem {
   skippedReason?: string;
 }
 
+/** 죽은 그 밤에도 깨우는 캐릭터(죽음으로 능력이 발동한다). 나머지는 죽으면 능력이 없어 깨우지 않는다 */
+export const ACTS_WHEN_DEAD = new Set(['ravenkeeper', 'sage', 'farmer', 'moonchild', 'banshee', 'barber', 'sweetheart', 'hatter', 'plaguedoctor']);
+
+/** 이 단계를 깨우지 않아야 하는지 — 그 캐릭터 자리가 전부 죽었고 죽음으로 발동하는 캐릭터가 아니다 */
+export function sleepsDead(item: NightItem) {
+  return item.allDead && !ACTS_WHEN_DEAD.has(item.role.key);
+}
+
 /** 지금 게임에 있는 캐릭터만 골라 밤 순서대로 */
 export function nightItems(state: GrimoireState, tab: NightTab): NightItem[] {
   const roles = roleMap(state.data);
@@ -446,7 +454,12 @@ export function nightItems(state: GrimoireState, tab: NightTab): NightItem[] {
       seats,
       allDead,
       diedTonight,
-      hiddenDead: tab === 'other' && allDead && !diedTonight,
+      // 죽은 그 밤에도 깨우는 캐릭터(달의 자손·이발사 등)는 바로 전 낮에 죽었어도 오늘 밤 차례를 남긴다
+      hiddenDead:
+        tab === 'other' &&
+        allDead &&
+        !diedTonight &&
+        !(ACTS_WHEN_DEAD.has(key) && seats.some(s => s.dead && s.death?.day === state.day - 1 && s.death?.phase === 'DAY')),
     });
   }
   return items.sort((a, b) => a.order - b.order);

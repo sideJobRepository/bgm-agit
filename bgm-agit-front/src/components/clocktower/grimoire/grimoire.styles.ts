@@ -303,6 +303,25 @@ export const Token = styled.div<{
 
 // 그림 토큰 아래쪽에 겹쳐 그리는 캐릭터 이름 띠
 /** 토큰 + 그 위에 겹치는 리마인더·자리 번호의 기준 상자 */
+/** 밤 진행에서 고른 순서 배지(토큰 오른쪽 위) */
+export const PickOrder = styled.span`
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 12px;
+  background: var(--ct-accent);
+  color: #1a1420;
+  font-size: 13px;
+  font-weight: 900;
+`;
+
 export const TokenWrap = styled.div`
   position: relative;
   flex: none;
@@ -596,6 +615,37 @@ export const Sheet = styled.div<WithTheme & { $wide?: boolean }>`
   background: var(--ct-surface);
   color: ${TEXT};
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+`;
+
+/**
+ * 밤 진행 패널. 가림막 없이 오른쪽(세로·좁은 화면은 아래 절반)에 붙어 원형 마도서가 보이고 눌린다 —
+ * 대상 고르기를 토큰으로 한다(포켓 그리모어처럼).
+ */
+export const NightDock = styled.aside`
+  position: fixed;
+  top: var(--ct-dock-top, 12px);
+  right: 12px;
+  bottom: 12px;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  width: min(440px, 42vw);
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid ${LINE};
+  border-radius: 16px;
+  background: var(--ct-surface);
+  color: ${TEXT};
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+
+  @media ${NARROW} {
+    top: auto;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    width: auto;
+    max-height: 52dvh;
+  }
 `;
 
 export const SheetHead = styled.div`

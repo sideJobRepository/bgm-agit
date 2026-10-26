@@ -33,9 +33,9 @@ interface Props {
 }
 
 /**
- * 게임 종료 → 시계탑 플레이 기록을 임시저장으로 만든다.
+ * 게임 종료 → 시계탑 플레이 기록을 바로 저장한다(완료 저장 — 사용자 결정 2026-10-26, 예전엔 임시저장).
  * 참가자·캐릭터·최종 선악·승패를 마도서 그대로 넘기고, 이야기꾼(작성자)은 진행자로 들어간다.
- * 임시저장이라 랭킹·통계에는 아직 안 잡힌다. 기록 화면에서 확인하고 완료 저장한다.
+ * 승패는 저장 전에 고르게 막아 두었다(서버도 완료 저장은 결과 필수). 고칠 게 있으면 기록 화면에서 수정한다.
  */
 export default function EndGamePanel({
   state,
@@ -94,7 +94,7 @@ export default function EndGamePanel({
           playDate,
           result,
           memo: fullMemo,
-          draft: true,
+          draft: false,
           participants,
           // 기록 상세에서 [마도서 보기]로 다시 본다. 휴대폰 세션은 빼고 올린다
           grimoire: JSON.stringify({ ...state, clocktowerSession: null }),
@@ -105,7 +105,7 @@ export default function EndGamePanel({
         toast.error(data.message ?? '기록을 저장하지 못했습니다.');
         return;
       }
-      toast.success('기록을 임시저장했습니다. 기록 화면에서 확인 후 완료 저장해 주세요.');
+      toast.success('기록을 저장했습니다.');
       onSaved();
     } catch (e) {
       const message = (e as { response?: { data?: { message?: string } } })?.response?.data
@@ -200,7 +200,7 @@ export default function EndGamePanel({
               disabled={saving}
               style={{ minHeight: 52, marginTop: 8 }}
             >
-              {saving ? '저장 중…' : '임시저장으로 기록 남기기'}
+              {saving ? '저장 중…' : '기록 저장'}
             </Btn>
           </>
         )}

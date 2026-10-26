@@ -60,6 +60,7 @@ export interface ClockTowerRecordListItem {
   memo?: string | null;
   participantCount: number;
   participantNicknames: string[];
+  participants?: ClockTowerRecordParticipant[]; // 진영별 묶음 표시용(이야기꾼은 characterName '이야기꾼', type 없음)
 }
 
 export interface PagedClockTowerRecord {

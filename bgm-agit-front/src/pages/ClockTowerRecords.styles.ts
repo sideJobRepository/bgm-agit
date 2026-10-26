@@ -235,3 +235,63 @@ export const PaginationWrapper = styled.div`
   text-align: center;
   margin-top: ${theme.space.xl};
 `;
+
+// 진영별 참가자 줄: 왼쪽 진영 이름(진영 색), 오른쪽 "닉네임 캐릭터" 칩
+export const TeamRows = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+`;
+
+export const TeamRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+`;
+
+export const TeamLabel = styled.span<{ $color: string }>`
+  flex: 0 0 52px;
+  padding: 3px 0;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: ${c.white};
+  background: ${({ $color }) => $color};
+`;
+
+export const TeamPeople = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  min-width: 0;
+`;
+
+// 이긴 사람은 진영 색 테두리를 진하게
+export const PersonChip = styled.span<{ $color: string; $win: boolean }>`
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid ${({ $color, $win }) => ($win ? $color : `${$color}55`)};
+  background: ${({ $color }) => `${$color}12`};
+  font-size: 13px;
+  color: ${c.subColor};
+
+  b {
+    font-weight: 700;
+  }
+  span {
+    color: ${({ $color }) => $color};
+    font-weight: 600;
+  }
+  em {
+    font-style: normal;
+    font-size: 11px;
+    font-weight: 800;
+    color: ${EVIL_COLOR};
+  }
+`;
