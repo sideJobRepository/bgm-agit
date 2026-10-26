@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Footer from './Footer.tsx';
 import Nav from './Nav.tsx';
 import InstallBanner from './InstallBanner.tsx';
+import ClockTowerSeatNotice from './ClockTowerSeatNotice.tsx';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { loadingState } from '../../recoil';
 import Loading from '../Loading.tsx';
@@ -77,6 +78,8 @@ export default function Layout() {
         )}
       </Inner>
       {!immersive && <InstallBanner />}
+      {/* 시계탑 게임에 배정된 회원에게 어느 화면에서든 [내 캐릭터 확인] */}
+      {!immersive && <ClockTowerSeatNotice />}
     </Wrapper>
   );
 }
