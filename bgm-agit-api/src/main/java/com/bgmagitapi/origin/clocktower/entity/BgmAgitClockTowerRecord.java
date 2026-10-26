@@ -49,6 +49,10 @@ public class BgmAgitClockTowerRecord extends DateSuperClass {
     @Column(name = "BGM_AGIT_CLOCKTOWER_RECORD_DRAFT_STATUS")
     private Boolean draft;
 
+    // 게임이 끝났을 때의 마도서(JSON). 기록 상세의 [마도서 보기]가 그대로 그린다. 직접 등록한 기록은 null
+    @Column(name = "BGM_AGIT_CLOCKTOWER_RECORD_GRIMOIRE", columnDefinition = "LONGTEXT")
+    private String grimoire;
+
     public BgmAgitClockTowerRecord(BgmAgitClockTowerGame game,
                                    BgmAgitMember bgmAgitMember,
                                    LocalDate playDate,
@@ -61,6 +65,11 @@ public class BgmAgitClockTowerRecord extends DateSuperClass {
         this.result = result;
         this.memo = memo;
         this.draft = draft;
+    }
+
+    /** 마도서가 기록을 남길 때 마지막 마도서를 같이 붙인다 */
+    public void attachGrimoire(String grimoire) {
+        this.grimoire = grimoire;
     }
 
     public void update(BgmAgitClockTowerGame game, LocalDate playDate, ClockTowerResult result, String memo, boolean draft) {

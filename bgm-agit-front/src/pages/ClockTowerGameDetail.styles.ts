@@ -159,6 +159,15 @@ export const CharHead = styled.div`
   gap: ${theme.space.sm};
 `;
 
+/** 캐릭터 시트 그림. 전역 img 규칙(max-width:100%)을 덮어 고정 크기로 */
+export const CharImg = styled.img`
+  flex: none;
+  width: 52px;
+  max-width: none;
+  height: 52px;
+  object-fit: contain;
+`;
+
 export const CharName = styled.span<WithTheme>`
   color: ${c.subColor};
   font-size: 16px;
@@ -184,6 +193,153 @@ export const CharDesc = styled.div<WithTheme>`
   font-size: 14px;
   line-height: 1.6;
   white-space: pre-line;
+`;
+
+// ---------- 캐릭터 시트(보기) — 진영별 묶음 + 여러 칸 격자 ----------
+// 카드 한 장이 한 줄을 다 쓰던 목록은 24명이면 한참 내려야 했고 진영도 한눈에 안 보였다
+
+/** 스크립트 구성(진영별 캐릭터 수) */
+export const SheetSummary = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 700;
+
+  b {
+    font-size: 17px;
+  }
+`;
+
+/** 인원별 진영 수(공식 분배표) */
+export const DistTable = styled.table<WithTheme>`
+  width: 100%;
+  margin-bottom: 18px;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: center;
+
+  th,
+  td {
+    padding: 6px 4px;
+    border-bottom: 1px solid ${c.lineColor};
+  }
+  th {
+    font-weight: 800;
+  }
+  td:first-child,
+  th:first-child {
+    color: ${c.subColor};
+    font-weight: 700;
+  }
+`;
+
+export const SheetTotal = styled.span<WithTheme>`
+  margin-left: auto;
+  color: ${c.navColor};
+  font-size: 13px;
+  font-weight: 500;
+`;
+
+export const TeamSection = styled.section`
+  & + & {
+    margin-top: 18px;
+  }
+`;
+
+export const TeamHeader = styled.div.withConfig({ shouldForwardProp: p => p !== 'color' })<{ color: string }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: ${({ color }) => color};
+  font-size: 15px;
+  font-weight: 800;
+
+  &::before {
+    content: '';
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: ${({ color }) => color};
+  }
+
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: ${c.lineColor};
+  }
+
+  small {
+    order: 3;
+    color: ${c.navColor};
+    font-size: 13px;
+    font-weight: 600;
+  }
+`;
+
+export const SheetGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+
+  @media ${theme.device.tablet} {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media ${theme.device.mobile} {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const SheetCard = styled.div.withConfig({ shouldForwardProp: p => p !== 'color' })<{ color: string }>`
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid ${c.lineColor};
+  border-left: 4px solid ${({ color }) => color};
+  border-radius: ${theme.radius.md};
+  background: ${c.white};
+`;
+
+export const SheetIcon = styled.div`
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #f4f1ec;
+
+  img {
+    width: 44px;
+    max-width: none;
+    height: 44px;
+    object-fit: contain;
+  }
+`;
+
+export const SheetBody = styled.div<WithTheme>`
+  min-width: 0;
+
+  strong {
+    display: block;
+    color: ${c.subColor};
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.3;
+  }
+  p {
+    margin-top: 3px;
+    color: ${c.navColor};
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre-line;
+    word-break: keep-all;
+  }
 `;
 
 export const FormTitle = styled.h2<WithTheme>`

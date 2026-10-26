@@ -193,9 +193,19 @@ export const PartViewItem = styled.div<WithTheme>`
   }
 `;
 
+/** 참가자 캐릭터 그림. 전역 img 규칙(max-width:100%)을 덮어 고정 크기로 */
+export const PartImg = styled.img`
+  flex: none;
+  width: 48px;
+  max-width: none;
+  height: 48px;
+  object-fit: contain;
+`;
+
 export const PartLeft = styled.div`
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 4px;
   min-width: 0;
 `;
@@ -215,7 +225,7 @@ export const PartChar = styled.span<WithTheme>`
   color: ${c.navColor};
 `;
 
-// 캐릭터 타입색(마을주민·외부인·하수인·악마). 의미를 담은 색이라 tsx 값 그대로
+// 캐릭터 타입색(마을주민·외지인·하수인·악마). 의미를 담은 색이라 tsx 값 그대로
 export const TypeTag = styled.span.withConfig({ shouldForwardProp: p => p !== 'color' })<{ color: string }>`
   ${badgeStyle('primary')};
   padding: 1px 8px;

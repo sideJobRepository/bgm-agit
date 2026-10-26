@@ -1,7 +1,7 @@
 import styled, { css } from 'styled-components';
 import type { WithTheme } from '../../../styles/styled-props.ts';
 
-// 진행판 색은 전부 GrimoireRoot 의 CSS 변수(--ct-*)로 쓴다. 다른 시계탑 화면(게임 목록·기록·사전)은 사이트 색 그대로다
+// 마도서 색은 전부 GrimoireRoot 의 CSS 변수(--ct-*)로 쓴다. 다른 시계탑 화면(게임 목록·기록·사전)은 사이트 색 그대로다
 const ACCENT = 'var(--ct-accent)';
 const LINE = 'var(--ct-line)';
 const DIM = 'var(--ct-muted)';
@@ -9,11 +9,11 @@ const TEXT = 'var(--ct-text)';
 // 색을 채운 칩·버튼의 글자. 진영 색이 밝아서 흰 글자 대신 어두운 글자를 얹는다
 const INK = 'var(--ct-ink)';
 
-// 태블릿 가로를 기본으로 본다. 세로·휴대폰은 좌석을 목록으로 바꾼다
+// 태블릿 가로를 기본으로 본다. 세로·휴대폰은 오른쪽 패널을 원 아래로 내린다(좌석은 어디서나 원형 — 사용자 결정 2026-10-26)
 export const NARROW = '(max-width: 900px), (orientation: portrait) and (max-width: 1100px)';
 
 /**
- * 진행판 루트. 공통 Wrapper(데스크톱 min-width 1280px)를 쓰면 iPad 가로(1133·1180)에서 가로 스크롤이 생겨 자체 전체 폭으로 둔다.
+ * 마도서 루트. 공통 Wrapper(데스크톱 min-width 1280px)를 쓰면 iPad 가로(1133·1180)에서 가로 스크롤이 생겨 자체 전체 폭으로 둔다.
  * --ct-chrome = 루트 위에 남는 사이트 머리(헤더 80 + 메뉴 40). 몰입 모드면 0 이고 루트가 화면 높이(dvh)를 그대로 쓴다
  */
 export const GrimoireRoot = styled.div<WithTheme & { $immersive: boolean }>`
@@ -161,9 +161,17 @@ export const Layout = styled.div`
     min-height: 0;
   }
 
+  /* 세로·좁은 화면은 원 아래로 패널이 쌓인다. 높이가 고정된 몰입 모드에서 min-height:0 이 남아 있으면
+     원 칸이 화면 높이에 맞춰 원보다 작게 줄어 패널이 원 위로 올라왔다 — 줄지 않게 하고 화면이 스크롤되게 한다 */
   @media ${NARROW} {
+    flex: none;
     grid-template-columns: 1fr;
     align-items: start;
+    min-height: auto;
+
+    > div:first-child {
+      min-height: auto;
+    }
   }
 `;
 
@@ -182,8 +190,9 @@ export const Circle = styled.div`
     inset 0 0 80px rgba(242, 201, 76, 0.06),
     0 0 0 6px rgba(242, 201, 76, 0.04);
 
+  /* 세로·좁은 화면은 패널이 원 아래로 내려가 세로 스크롤이 생기므로 높이에 맞추지 않고 폭을 다 쓴다 */
   @media ${NARROW} {
-    display: none;
+    width: min(100%, 760px);
   }
 `;
 
@@ -231,18 +240,28 @@ export const Token = styled.div<{
   $empty: boolean;
   $art?: boolean;
   $shape?: TokenShape;
+  $size?: number;
 }>`
   position: relative;
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: center;
-  width: 76px;
-  height: 76px;
+  width: ${({ $size = 76 }) => $size}px;
+  height: ${({ $size = 76 }) => $size}px;
   padding: 6px;
   border-radius: 50%;
   border: ${({ $shape }) => ($shape === 'double' ? '5px double' : $shape === 'dashed' ? '3px dashed' : '3px solid')}
     ${({ $color, $empty }) => ($empty ? LINE : $color)};
-  background: ${({ $dead }) => ($dead ? '#221c2b' : 'var(--ct-surface)')};
+  /* 그림이 있는 토큰은 실물·포켓 그리모어처럼 양피지색. 그림이 없으면(미정·글자 토큰) 어두운 바탕 */
+  background: ${({ $dead, $art }) =>
+    $art
+      ? $dead
+        ? 'radial-gradient(circle at 50% 40%, #9b9588 0%, #6e695f 100%)'
+        : 'radial-gradient(circle at 50% 40%, #fbf6ea 0%, #e8d9b6 100%)'
+      : $dead
+        ? '#221c2b'
+        : 'var(--ct-surface)'};
   color: ${({ $color, $dead, $empty }) => ($empty || $dead ? DIM : $color)};
   font-size: 13px;
   font-weight: 700;
@@ -258,33 +277,63 @@ export const Token = styled.div<{
   ${({ $dead }) =>
     $dead &&
     css`
+      /* 사망 수의(포켓 그리모어처럼 토큰 위에 검은 띠를 덮는다). 흑백 그림만으로는 멀리서 구분이 잘 안 됐다 */
       &::after {
         content: '✝';
         position: absolute;
-        top: -6px;
-        right: -2px;
+        top: -3px;
+        left: 50%;
+        z-index: 1;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        width: 40%;
+        height: 58%;
+        padding-top: 6%;
+        transform: translateX(-50%);
+        clip-path: polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%);
+        background: linear-gradient(180deg, #2b2533 0%, #0d0b12 100%);
+        color: #d8d0e2;
         font-size: 18px;
-        color: ${TEXT};
+        line-height: 1;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
       }
     `}
 `;
 
 // 그림 토큰 아래쪽에 겹쳐 그리는 캐릭터 이름 띠
-export const TokenCaption = styled.span`
+/** 토큰 + 그 위에 겹치는 리마인더·자리 번호의 기준 상자 */
+export const TokenWrap = styled.div`
+  position: relative;
+  flex: none;
+`;
+
+/** 토큰 그림. 아래 휜 이름 자리를 비우려고 조금 위로 올린다 */
+export const TokenArt = styled.span`
   position: absolute;
+  top: 44%;
   left: 50%;
-  bottom: -4px;
-  transform: translateX(-50%);
-  max-width: 92px;
-  padding: 0 6px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(20, 16, 28, 0.88);
-  color: ${TEXT};
-  font-size: 11px;
-  line-height: 1.5;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  transform: translate(-50%, -50%);
+  line-height: 0;
+`;
+
+/** 자리 번호 배지(토큰 왼쪽 위) */
+export const SeatBadge = styled.span<{ $size: number }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: ${({ $size }) => $size}px;
+  height: ${({ $size }) => $size}px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: #1a237e;
+  color: #ffffff;
+  font-size: ${({ $size }) => Math.round($size * 0.55)}px;
+  font-weight: 800;
 `;
 
 export const SeatName = styled.span<{ $dead?: boolean }>`
@@ -304,6 +353,20 @@ export const SeatMarks = styled.div`
   justify-content: center;
   gap: 2px;
   max-width: 120px;
+`;
+
+/** 좌석 아래 리마인더 토큰 줄 */
+export const ReminderRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3px;
+  max-width: 136px;
+
+  @media ${NARROW} {
+    justify-content: flex-start;
+    max-width: none;
+  }
 `;
 
 export const Mark = styled.span<{ $tone?: 'evil' | 'good' | 'vote' | 'reminder' }>`
@@ -339,14 +402,9 @@ export const Mark = styled.span<{ $tone?: 'evil' | 'good' | 'vote' | 'reminder' 
 
 // ---------- 좁은 화면: 좌석 목록 ----------
 
+// 예전 좁은 화면용 좌석 목록. 지금은 어디서나 원형이라 그리지 않는다(되돌릴 때 display 만 바꾸면 된다)
 export const SeatList = styled.div`
   display: none;
-
-  @media ${NARROW} {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
 `;
 
 export const SeatRow = styled.button<{ $dead: boolean }>`

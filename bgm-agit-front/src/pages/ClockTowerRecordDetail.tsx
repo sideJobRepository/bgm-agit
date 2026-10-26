@@ -1,5 +1,5 @@
 import { Wrapper } from '../styles';
-import { Box, ButtonRow, Button, DetailHead, Thumb, NoImage, DetailTitle, DetailMeta, BigResult, DraftBadge, SectionTitle, PartViewList, PartViewItem, PartLeft, PartNick, PartChar, TypeTag, WinTag, Memo, FormTitle, ResultToggle, ToggleBtn, SearchBox, Dropdown, Option, EmptyOption, PartEditList, PartEditRow, PartNickEdit, MeTag, RemovePart, Hint, LabelRow, LoadButton, LoadPanel, LoadPanelHead, LoadClose, LoadItem, LoadItemTop, LoadItemNicks, LoadEmpty, PickerWrap, PickerControl, PickerDropdown, PickerSearch, FilterRow, FilterChip, PickerList, PickerOption, PickerEmpty, Field } from './ClockTowerRecordDetail.styles.ts';
+import { PartImg, Box, ButtonRow, Button, DetailHead, Thumb, NoImage, DetailTitle, DetailMeta, BigResult, DraftBadge, SectionTitle, PartViewList, PartViewItem, PartLeft, PartNick, PartChar, TypeTag, WinTag, Memo, FormTitle, ResultToggle, ToggleBtn, SearchBox, Dropdown, Option, EmptyOption, PartEditList, PartEditRow, PartNickEdit, MeTag, RemovePart, Hint, LabelRow, LoadButton, LoadPanel, LoadPanelHead, LoadClose, LoadItem, LoadItemTop, LoadItemNicks, LoadEmpty, PickerWrap, PickerControl, PickerDropdown, PickerSearch, FilterRow, FilterChip, PickerList, PickerOption, PickerEmpty, Field } from './ClockTowerRecordDetail.styles.ts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
@@ -12,6 +12,8 @@ import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts'
 import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import GameSelect from '../components/GameSelect.tsx';
+import GrimoireViewer from '../components/clocktower/grimoire/GrimoireViewer.tsx';
+import { restoreSaved } from '../components/clocktower/grimoire/useGrimoire.ts';
 import { CT_TYPE_COLOR as TYPE_COLOR, isSeatableType } from '../config/clocktower.ts';
 import type {
   ClockTowerCharacter,
@@ -20,6 +22,7 @@ import type {
   ClockTowerRecordDetail as ClockTowerRecordDetailType,
   ClockTowerRecordListItem,
   ClockTowerResultType,
+  GrimoireState,
   MemberOption,
 } from '../types/clocktower.ts';
 
@@ -34,7 +37,7 @@ const STORYTELLER_NAME = '이야기꾼';
 /** 메모 상한(서버 @Size·DB TEXT 와 같은 값) */
 const MEMO_MAX = 5000;
 
-/** 참가자의 최종 선악. 진행판이 남긴 evil 이 우선이고, 없으면 캐릭터 진영(여행자·미정은 null) */
+/** 참가자의 최종 선악. 마도서가 남긴 evil 이 우선이고, 없으면 캐릭터 진영(여행자·미정은 null) */
 function sideOf(p: { evil?: boolean | null }, type: ClockTowerCharacterType | null | undefined): boolean | null {
   if (p.evil != null) return p.evil;
   if (type === 'MINION' || type === 'DEMON') return true;
@@ -99,7 +102,7 @@ function CharacterSelect({
   const TYPE_FILTERS: { value: ClockTowerCharacterType | 'ALL'; label: string }[] = [
     { value: 'ALL', label: '전체' },
     { value: 'TOWNSFOLK', label: '마을주민' },
-    { value: 'OUTSIDER', label: '외부인' },
+    { value: 'OUTSIDER', label: '외지인' },
     { value: 'MINION', label: '하수인' },
     { value: 'DEMON', label: '악마' },
     { value: 'TRAVELLER', label: '여행자' },
@@ -167,7 +170,7 @@ interface PartRow {
   storyteller: boolean;
   characterName?: string | null; // 수정 진입 시 스냅샷 이름 (roster 도착 후 id 매칭용)
   characterType?: ClockTowerCharacterType | null; // 스냅샷 진영(같은 이름 캐릭터가 여럿일 때 구분)
-  evil?: boolean | null; // 진행판이 남긴 최종 선악. 이 화면에선 고치지 않고 그대로 돌려보낸다
+  evil?: boolean | null; // 마도서가 남긴 최종 선악. 이 화면에선 고치지 않고 그대로 돌려보낸다
 }
 
 export default function ClockTowerRecordDetail() {
@@ -182,6 +185,19 @@ export default function ClockTowerRecordDetail() {
   const canWrite = isSelfLogin || isAdmin;
   const detail = useRecoilValue(clockTowerRecordDetailState);
   const fetchDetail = useClockTowerRecordDetailFetch();
+  // 이 기록에 붙은 마지막 마도서(읽기 전용으로 펼쳐 본다)
+  const [grimoire, setGrimoire] = useState<GrimoireState | null>(null);
+
+  const openGrimoire = async () => {
+    try {
+      const { data } = await api.get(`/bgm-agit/clocktower-records/${id}/grimoire`);
+      const state = restoreSaved(typeof data === 'string' ? data : JSON.stringify(data));
+      if (state) setGrimoire(state);
+      else toast.error('이 기록의 마도서를 읽지 못했습니다.');
+    } catch {
+      toast.error('이 기록의 마도서를 불러오지 못했습니다.');
+    }
+  };
   const { insert } = useInsertPost();
   const { update } = useUpdatePost();
   const { remove } = useDeletePost();
@@ -368,7 +384,7 @@ export default function ClockTowerRecordDetail() {
         p.memberId === memberId
           ? value === 'ST'
             ? { ...p, storyteller: true, characterId: '', evil: null }
-            : // 캐릭터를 바꾸면 진행판이 남긴 선악도 의미가 없어지므로 캐릭터 진영대로 돌린다
+            : // 캐릭터를 바꾸면 마도서가 남긴 선악도 의미가 없어지므로 캐릭터 진영대로 돌린다
               { ...p, storyteller: false, characterId: value === '' ? '' : Number(value), evil: null }
           : p
       )
@@ -498,8 +514,14 @@ export default function ClockTowerRecordDetail() {
                 <Button $variant="danger" color="#FF5E57" onClick={onDelete}>삭제</Button>
               </>
             )}
+            {detail?.hasGrimoire && (
+              <Button $variant="primary" color="#4A2C82" onClick={openGrimoire}>마도서 보기</Button>
+            )}
             <Button $variant="secondary" color="#988271" onClick={() => navigate('/clocktower-records')}>목록</Button>
           </ButtonRow>
+          {grimoire && (
+            <GrimoireViewer state={grimoire} title={`${detail?.gameName ?? ''} · ${detail?.playDate ?? ''} 마도서`} onClose={() => setGrimoire(null)} />
+          )}
 
           <DetailHead>
             <Thumb>
@@ -521,6 +543,7 @@ export default function ClockTowerRecordDetail() {
           <PartViewList>
             {detail?.participants.map(p => (
               <PartViewItem key={p.memberId}>
+                {p.image && <PartImg src={p.image} alt="" loading="lazy" decoding="async" />}
                 <PartLeft>
                   <PartNick>{p.nickname}</PartNick>
                   {p.characterName && (

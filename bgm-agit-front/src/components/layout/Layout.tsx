@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Footer from './Footer.tsx';
 import Nav from './Nav.tsx';
 import InstallBanner from './InstallBanner.tsx';
+import ClockTowerSeatNotice from './ClockTowerSeatNotice.tsx';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { loadingState } from '../../recoil';
 import Loading from '../Loading.tsx';
@@ -18,8 +19,8 @@ export default function Layout() {
   const home = location.pathname === '/';
 
   const isLoading = useRecoilValue(loadingState);
-  // 시계탑 진행판 몰입 모드: 머리·메뉴·푸터·설치 배너를 그리지 않는다(인증 복구는 그대로 여기서 돈다)
-  // 진행판 주소에서만 적용한다 — 정리(cleanup)가 빠져 상태가 남아도 다른 화면 머리가 사라지지 않게
+  // 시계탑 마도서 몰입 모드: 머리·메뉴·푸터·설치 배너를 그리지 않는다(인증 복구는 그대로 여기서 돈다)
+  // 마도서 주소에서만 적용한다 — 정리(cleanup)가 빠져 상태가 남아도 다른 화면 머리가 사라지지 않게
   const immersive =
     useRecoilValue(layoutModeState) === 'immersive' && location.pathname.startsWith('/clocktower-grimoire');
 
@@ -77,6 +78,8 @@ export default function Layout() {
         )}
       </Inner>
       {!immersive && <InstallBanner />}
+      {/* 시계탑 게임에 배정된 회원에게 어느 화면에서든 [내 캐릭터 확인] */}
+      {!immersive && <ClockTowerSeatNotice />}
     </Wrapper>
   );
 }

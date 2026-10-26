@@ -47,6 +47,15 @@ public class BgmAgitClockTowerRecordController {
         return bgmAgitClockTowerRecordService.getMemberHistory(target);
     }
 
+    /** 끝난 게임의 마지막 마도서(공개 — 게임이 끝나 숨길 정체가 없다). 없으면 204 */
+    @GetMapping(value = "/clocktower-records/{id}/grimoire", produces = "application/json")
+    public org.springframework.http.ResponseEntity<String> getRecordGrimoire(@PathVariable Long id) {
+        String grimoire = bgmAgitClockTowerRecordService.getRecordGrimoire(id);
+        return grimoire == null
+                ? org.springframework.http.ResponseEntity.noContent().build()
+                : org.springframework.http.ResponseEntity.ok(grimoire);
+    }
+
     @GetMapping("/clocktower-records/{id}")
     public ClockTowerRecordDetailResponse getRecord(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
         return bgmAgitClockTowerRecordService.getRecord(id,

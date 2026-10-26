@@ -11,6 +11,8 @@ export interface ShowContent {
   title: string;
   roles: GrimoireRole[];
   message?: string;
+  // 아주 크게 보여줄 한마디(숫자·예/아니오). 멀리 앉은 사람도 읽히게
+  big?: string;
 }
 
 /**
@@ -20,7 +22,8 @@ export interface ShowContent {
 export function ShowCard({ content, onClose }: { content: ShowContent; onClose: () => void }) {
   return (
     <FullScreen onClick={onClose}>
-      <ShowTitle>{content.title}</ShowTitle>
+      {content.title && <ShowTitle>{content.title}</ShowTitle>}
+      {content.big && <ShowBig>{content.big}</ShowBig>}
       <ShowRoles>
         {content.roles.map(r => (
           <ShowRole key={r.key} $color={r.team ? CT_TYPE_COLOR_DARK[r.team] : 'var(--ct-muted)'}>
@@ -38,7 +41,7 @@ export function ShowCard({ content, onClose }: { content: ShowContent; onClose: 
   );
 }
 
-/** 블러프 3장: 게임에 없는 선한 캐릭터. 첫날 밤 악마에게 보여준다 */
+/** 악마의 속임수 3장: 게임에 없는 선한 캐릭터. 첫날 밤 악마에게 보여준다 */
 export function BluffPanel({
   state,
   onReroll,
@@ -55,25 +58,25 @@ export function BluffPanel({
   // 주정뱅이 등이 믿는 캐릭터도 게임에 있는 것으로 본다
   const inPlay = new Set(state.seats.flatMap(s => [s.roleKey ?? '', s.believedRoleKey ?? '']));
   const stale = bluffs.some(b => inPlay.has(b.key));
-  // 블러프는 첫날 밤 악마 정보 단계에서 준다. 그 단계를 건너뛰는 인원이면 줄 일이 없다
+  // 악마의 속임수는 첫날 밤 악마 정보 단계에서 준다. 그 단계를 건너뛰는 인원이면 줄 일이 없다
   const evilInfo = runsEvilInfo(state, roles);
 
   return (
     <Overlay onClick={onClose}>
       <Sheet onClick={e => e.stopPropagation()}>
         <SheetHead>
-          <h3>블러프 (악마에게 보여줄 캐릭터)</h3>
+          <h3>악마의 속임수 (악마에게 보여줄 캐릭터)</h3>
           <Btn type="button" onClick={onClose}>
             닫기
           </Btn>
         </SheetHead>
         <Hint>
-          게임에 없는 마을주민 2 + 외부인 1을 뽑습니다(외부인이 모자라면 마을주민). 캐릭터 배정을 끝낸 뒤에 뽑으세요.
+          게임에 없는 마을주민 2 + 외지인 1을 뽑습니다(외지인이 모자라면 마을주민). 캐릭터 배정을 끝낸 뒤에 뽑으세요.
         </Hint>
         {!evilInfo && (
           <Hint style={{ color: 'var(--ct-evil)' }}>
             {evilInfoCount(state, roles)}명이라 첫날 밤 하수인·악마 정보 단계가 없습니다({MIN_PLAYERS_FOR_EVIL_INFO}명 미만).
-            보통 악마에게 블러프를 주지 않습니다.
+            보통 악마에게 악마의 속임수를 주지 않습니다.
           </Hint>
         )}
         <Row style={{ margin: '12px 0' }}>
@@ -88,7 +91,7 @@ export function BluffPanel({
             ))
           )}
         </Row>
-        {stale && <Hint style={{ color: 'var(--ct-evil)' }}>블러프 중에 지금 게임에 있는 캐릭터가 있습니다. 다시 뽑으세요.</Hint>}
+        {stale && <Hint style={{ color: 'var(--ct-evil)' }}>악마의 속임수 중에 지금 게임에 있는 캐릭터가 있습니다. 다시 뽑으세요.</Hint>}
         <Row>
           <Btn type="button" onClick={onReroll}>
             {bluffs.length ? '다시 뽑기' : '뽑기'}
@@ -150,6 +153,13 @@ const FullScreen = styled.div`
   cursor: pointer;
 `;
 
+const ShowBig = styled.div`
+  font-size: min(40vw, 40vh);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ct-accent);
+`;
+
 const ShowTitle = styled.div`
   font-size: 32px;
   font-weight: 800;
@@ -181,7 +191,7 @@ const ShowRole = styled.div<{ $color: string; $small?: boolean }>`
 
   span {
     font-size: 18px;
-    /* 진행판 진영 색은 어두운 바탕 대비를 통과한 값이라 밝기 보정이 필요 없다 */
+    /* 마도서 진영 색은 어두운 바탕 대비를 통과한 값이라 밝기 보정이 필요 없다 */
     color: ${({ $color }) => $color};
   }
 

@@ -15,6 +15,9 @@ import com.bgmagitapi.origin.clocktower.entity.BgmAgitClockTowerCharacter;
 import com.bgmagitapi.origin.clocktower.entity.BgmAgitClockTowerGame;
 import com.bgmagitapi.origin.clocktower.entity.BgmAgitClockTowerParticipant;
 import com.bgmagitapi.origin.clocktower.entity.BgmAgitClockTowerRecord;
+import com.bgmagitapi.origin.clocktower.entity.BgmAgitClockTowerRole;
+import com.bgmagitapi.origin.clocktower.repository.BgmAgitClockTowerRoleRepository;
+import com.bgmagitapi.origin.clocktower.util.ClockTowerSessionRules;
 import com.bgmagitapi.origin.clocktower.repository.BgmAgitClockTowerCharacterRepository;
 import com.bgmagitapi.origin.clocktower.repository.BgmAgitClockTowerGameRepository;
 import com.bgmagitapi.origin.clocktower.repository.BgmAgitClockTowerParticipantRepository;
@@ -37,9 +40,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -51,6 +56,11 @@ public class BgmAgitClockTowerRecordServiceImpl implements BgmAgitClockTowerReco
     private final BgmAgitClockTowerGameRepository gameRepository;
     private final BgmAgitClockTowerCharacterRepository characterRepository;
     private final BgmAgitMemberRepository memberRepository;
+    private final BgmAgitClockTowerRoleRepository roleRepository;
+
+    // 캐릭터 이미지 끄기 스위치(BgmAgitClockTowerRoleServiceImpl 과 같은 설정)
+    @org.springframework.beans.factory.annotation.Value("${clocktower.images-enabled:true}")
+    private boolean imagesEnabled;
 
     @Override
     @Transactional(readOnly = true)
@@ -95,9 +105,10 @@ public class BgmAgitClockTowerRecordServiceImpl implements BgmAgitClockTowerReco
         BgmAgitClockTowerRecord r = recordRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 기록입니다."));
 
-        List<ClockTowerParticipantResponse> participants = recordRepository.findParticipantsByRecordIds(List.of(id))
-                .stream()
-                .map(p -> ClockTowerParticipantResponse.from(p, r.getResult()))
+        List<BgmAgitClockTowerParticipant> rows = recordRepository.findParticipantsByRecordIds(List.of(id));
+        Map<String, BgmAgitClockTowerRole> dict = participantRoles(r.getGame(), rows);
+        List<ClockTowerParticipantResponse> participants = rows.stream()
+                .map(p -> ClockTowerParticipantResponse.from(p, r.getResult(), participantImage(p, dict)))
                 .toList();
 
         BgmAgitClockTowerGame g = r.getGame();
@@ -117,7 +128,45 @@ public class BgmAgitClockTowerRecordServiceImpl implements BgmAgitClockTowerReco
                 .memo(r.getMemo())
                 .participants(participants)
                 .canManage(canManage(r, memberId, roles))
+                .hasGrimoire(StringUtils.hasText(r.getGrimoire()))
                 .build();
+    }
+
+    /**
+     * 참가자 캐릭터 그림용 사전. 참가자 행에는 캐릭터 이름만 있어 그 게임 캐릭터 목록에서 이름으로 사전 키를 찾는다.
+     * 이름 → 사전 캐릭터. 그림 끄기면 빈 맵
+     */
+    private Map<String, BgmAgitClockTowerRole> participantRoles(BgmAgitClockTowerGame game, List<BgmAgitClockTowerParticipant> rows) {
+        if (!imagesEnabled || game == null || rows.isEmpty()) return Map.of();
+        Map<String, String> keyByName = characterRepository.findByGame_IdOrderByOrdersAsc(game.getId()).stream()
+                .filter(c -> c.getName() != null && c.getRoleKey() != null)
+                .collect(Collectors.toMap(BgmAgitClockTowerCharacter::getName, BgmAgitClockTowerCharacter::getRoleKey, (a, b) -> a));
+        if (keyByName.isEmpty()) return Map.of();
+        Map<String, BgmAgitClockTowerRole> byKey = roleRepository.findByRoleKeys(keyByName.values()).stream()
+                .collect(Collectors.toMap(BgmAgitClockTowerRole::getRoleKey, x -> x, (a, b) -> a));
+        Map<String, BgmAgitClockTowerRole> byName = new HashMap<>();
+        keyByName.forEach((name, key) -> {
+            BgmAgitClockTowerRole role = byKey.get(key);
+            if (role != null) byName.put(name, role);
+        });
+        return byName;
+    }
+
+    /** 참가자의 실제 선악(진영이 바뀐 경우 포함)에 맞는 그림 */
+    private String participantImage(BgmAgitClockTowerParticipant p, Map<String, BgmAgitClockTowerRole> dict) {
+        BgmAgitClockTowerRole role = p.getCharacterName() == null ? null : dict.get(p.getCharacterName());
+        if (role == null) return null;
+        Boolean evil = ClockTowerSessionRules.displayEvil(p.resolveEvil(), p.getCharacterType());
+        return ClockTowerSessionRules.pickImage(evil, role.getImageUrl(), role.getImageGoodUrl(), role.getImageEvilUrl());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getRecordGrimoire(Long id) {
+        return recordRepository.findById(id)
+                .map(BgmAgitClockTowerRecord::getGrimoire)
+                .filter(StringUtils::hasText)
+                .orElse(null);
     }
 
     @Override
@@ -135,6 +184,9 @@ public class BgmAgitClockTowerRecordServiceImpl implements BgmAgitClockTowerReco
 
         BgmAgitClockTowerRecord record = new BgmAgitClockTowerRecord(
                 game, writer, request.getPlayDate(), result, request.getMemo(), draft);
+        if (StringUtils.hasText(request.getGrimoire()) && request.getGrimoire().trim().startsWith("{")) {
+            record.attachGrimoire(request.getGrimoire());
+        }
         recordRepository.save(record);
 
         saveParticipants(record, memberId, request.getParticipants());

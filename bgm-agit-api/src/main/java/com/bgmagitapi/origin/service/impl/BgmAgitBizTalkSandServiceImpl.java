@@ -7,6 +7,7 @@ import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
 import com.bgmagitapi.origin.entity.enumeration.BgmAgitSocialType;
 import com.bgmagitapi.origin.entity.enumeration.BgmAgitSubject;
+import com.bgmagitapi.origin.event.dto.ClockTowerRoleTalkEvent;
 import com.bgmagitapi.origin.event.dto.InquiryEvent;
 import com.bgmagitapi.origin.lecture.dto.event.LecturePostEvent;
 import com.bgmagitapi.kml.matchs.entity.Matchs;
@@ -17,6 +18,7 @@ import com.bgmagitapi.kml.record.enums.Wind;
 import com.bgmagitapi.kml.record.repository.RecordRepository;
 import com.bgmagitapi.kml.review.dto.events.ReviewPostEvents;
 import com.bgmagitapi.origin.repository.BgmAgitBiztalkSendHistoryRepository;
+import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.origin.service.BgmAgitBizTalkSandService;
 import com.bgmagitapi.origin.service.BgmAgitHolidayService;
@@ -67,6 +69,8 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
 
     // 월간패스 기간 — 고지 금액의 본인 1명분 할인 판정(결제 주문과 같은 판정)
     private final BgmAgitMonthlyPassRepository bgmAgitMonthlyPassRepository;
+
+    private final BgmAgitMemberRepository bgmAgitMemberRepository;
 
     private static final String PHONE1 = "010-5059-3499";
     private static final String PHONE2 = "010-5592-8832";
@@ -414,6 +418,44 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
         String template = AlimtalkTemplate.BGMAGIT_ADMIN_RESERVATION_REMIND;
         sendTalk(message, template, PHONE1, null, BgmAgitSubject.ADMIN_RESERVATION_NOTICE, "사이트 바로가기", "https://bgmagit.co.kr");
         sendTalk(message, template, PHONE2, null, BgmAgitSubject.ADMIN_RESERVATION_NOTICE, "사이트 바로가기", "https://bgmagit.co.kr");
+    }
+
+    /**
+     * 시계탑 캐릭터 안내.
+     * 리스너의 "실패하면 통째로 한 번 더" 방식은 여러 명에게 보낼 때 이미 받은 사람에게 또 간다.
+     * 그래서 받는 사람마다 한 번씩만 다시 시도한다.
+     */
+    @Override
+    public void sendClockTowerRole(ClockTowerRoleTalkEvent event) {
+        Map<Long, BgmAgitMember> members = bgmAgitMemberRepository.findAllById(
+                        event.getTargets().stream().map(ClockTowerRoleTalkEvent.Target::memberId).toList())
+                .stream()
+                .collect(Collectors.toMap(BgmAgitMember::getBgmAgitMemberId, m -> m, (a, b) -> a));
+
+        String template = AlimtalkTemplate.BGMAGIT_CT_ROLE;
+        for (ClockTowerRoleTalkEvent.Target t : event.getTargets()) {
+            BgmAgitMember member = members.get(t.memberId());
+            if (member == null) continue;
+            if (!"Y".equals(member.getBgmAgitMemberAlimtalkStatus())) continue;
+            if (!StringUtils.hasText(member.getBgmAgitMemberPhoneNo())) continue;
+
+            String nickname = StringUtils.hasText(member.getBgmAgitMemberNickname()) ? member.getBgmAgitMemberNickname() : "-";
+            String message = AlimtalkUtils.buildClockTowerRoleMessage(nickname, t.gameName(), t.roleName(), t.teamName());
+            try {
+                sendClockTowerRoleTalk(message, template, member.getBgmAgitMemberPhoneNo(), event.getSessionId());
+            } catch (Exception e) {
+                try {
+                    sendClockTowerRoleTalk(message, template, member.getBgmAgitMemberPhoneNo(), event.getSessionId());
+                } catch (Exception retry) {
+                    log.warn("[ALIMTALK] 시계탑 캐릭터 안내 실패 sessionId={} memberId={}", event.getSessionId(), t.memberId(), retry);
+                }
+            }
+        }
+    }
+
+    private void sendClockTowerRoleTalk(String message, String template, String phone, Long sessionId) {
+        sendTalk(message, template, phone, sessionId, BgmAgitSubject.CLOCKTOWER_ROLE,
+                "내 캐릭터 보기", "https://bgmagit.co.kr/clocktower-my");
     }
 
     private String nicknameOf(Record record) {

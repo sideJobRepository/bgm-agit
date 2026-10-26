@@ -20,6 +20,7 @@ export interface ClockTowerCharacter {
   description?: string | null;
   orders?: number | null;
   roleKey?: string | null; // 캐릭터 사전 키. 직접 입력한 캐릭터는 null
+  image?: string | null; // 캐릭터 그림(게임 상세 조회 때만). 없으면 글자만
 }
 
 export interface ClockTowerGame {
@@ -80,6 +81,7 @@ export interface ClockTowerRecordParticipant {
   typeName?: string | null;
   win?: boolean | null;
   evil?: boolean | null; // 직접 지정한 최종 선악(진영이 바뀐 경우·여행자). null 이면 캐릭터 진영대로
+  image?: string | null; // 캐릭터 그림(실제 선악에 맞는 쪽). 사전에 없으면 null
 }
 
 export interface ClockTowerRecordDetail {
@@ -98,6 +100,8 @@ export interface ClockTowerRecordDetail {
   memo?: string | null;
   participants: ClockTowerRecordParticipant[];
   canManage: boolean;
+  // 마도서에서 기록해 마지막 마도서가 함께 저장돼 있다([마도서 보기])
+  hasGrimoire?: boolean;
 }
 
 // 캐릭터 사전(관리자). 밤 특수 단계는 team 이 null
@@ -146,7 +150,7 @@ export interface ClockTowerImageSyncResult {
   message: string | null;
 }
 
-// ---------- 이야기꾼 진행판 ----------
+// ---------- 이야기꾼 마도서 ----------
 
 /** 공식 데이터 special 항목(예: {type:'selection', name:'bag-disabled'}, {type:'vote', name:'multiplier', value:3}) */
 export interface GrimoireSpecial {
@@ -201,6 +205,8 @@ export interface GrimoireReminder {
   id: string;
   text: string;
   source?: string | null; // 이 리마인더를 준 캐릭터 이름
+  // 끌어서 옮긴 위치. 토큰 중심에서의 거리를 토큰 지름 단위로(토큰을 옮기거나 크기가 바뀌어도 같이 따라간다). 없으면 자동 배치
+  pos?: { dx: number; dy: number } | null;
 }
 
 export type DeathCause = 'EXECUTION' | 'NIGHT' | 'EXILE' | 'ABILITY' | 'OTHER';
@@ -312,13 +318,27 @@ export interface GrimoireState {
   phase: GrimoirePhase;
   notes: string;
   startedAt: string;
-  bluffs?: string[]; // 악마에게 보여줄 블러프(게임에 없는 선한 캐릭터) 키
+  bluffs?: string[]; // 악마에게 보여줄 악마의 속임수(게임에 없는 선한 캐릭터) 키
+  // 셋업 1단계에서 정한 캐릭터 주머니. 휴대폰으로 보낼 때 섞어서 좌석에 나눈다. 같은 v2 안에서 늘어난 필드
+  bag?: GrimoireBagEntry[];
+  // 셋업 1단계에서 정한 인원(여행자 제외). 진영별 추천 수(공식 분배표)의 기준이다
+  setupPlayers?: number;
   dayLogs: DayLog[];
   settings: GrimoireSettings;
   // 게임 도중 캐릭터·선악이 바뀌어 본인에게 알려야 할 좌석(다음 밤 맨 앞에 뜬다)
   pendingNotices: { seatId: string; kind: GrimoireNoticeKind; createdDay: number }[];
   // 플레이어 휴대폰으로 보낸 배정(서버 세션). 같은 v2 안에서 늘어난 필드라 옛 저장본엔 없다
   clocktowerSession?: GrimoirePhoneSession | null;
+  // 서버 임시저장 id. 다시 [임시저장]하면 이 저장을 덮어쓴다
+  serverSaveId?: number | null;
+}
+
+/** 주머니 한 칸. 주정뱅이·꼭두각시·미치광이는 믿는 캐릭터를 같이 정해 둔다 */
+export interface GrimoireBagEntry {
+  key: string;
+  believedKey: string | null;
+  // 셋업을 바꾸는 캐릭터 중 이야기꾼이 고르는 것(대부 ±1 등)의 선택 번호. 없으면 첫 번째 선택
+  setupChoice?: number;
 }
 
 /** 플레이어 휴대폰에 함께 보여줄 정보(첫날 밤 악 팀 정보 등) */

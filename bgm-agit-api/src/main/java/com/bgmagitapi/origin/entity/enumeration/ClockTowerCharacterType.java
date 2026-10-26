@@ -4,14 +4,14 @@ import lombok.Getter;
 
 /**
  * 시계탑(Blood on the Clocktower) 역할군.
- * 선(시민) 팀 = 마을주민·외부인 / 악 팀 = 하수인·악마.
+ * 선(시민) 팀 = 마을주민·외지인 / 악 팀 = 하수인·악마.
  * 여행자는 이야기꾼이 선악을 정하고, 전설·로릭은 이야기꾼이 쓰는 규칙 캐릭터라 좌석에 앉지 않는다.
  */
 @Getter
 public enum ClockTowerCharacterType {
 
     TOWNSFOLK("마을주민"),
-    OUTSIDER("외부인"),
+    OUTSIDER("외지인"),
     MINION("하수인"),
     DEMON("악마"),
     TRAVELLER("여행자"),

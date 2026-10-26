@@ -27,8 +27,9 @@ public class BgmAgitClockTowerGameController {
     @GetMapping("/clocktower-games")
     public PageResponse<ClockTowerGameResponse> getGames(
             @PageableDefault(size = 12) Pageable pageable,
-            @RequestParam(name = "keyword", required = false) String keyword) {
-        return PageResponse.from(bgmAgitClockTowerGameService.getGames(pageable, keyword));
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "source", required = false) String source) {
+        return PageResponse.from(bgmAgitClockTowerGameService.getGames(pageable, keyword, source));
     }
 
     @GetMapping("/clocktower-games/simple")

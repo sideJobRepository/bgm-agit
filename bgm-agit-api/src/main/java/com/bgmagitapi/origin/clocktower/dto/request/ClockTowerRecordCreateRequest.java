@@ -15,6 +15,10 @@ import java.util.List;
 @Data
 public class ClockTowerRecordCreateRequest {
 
+    // 마도서에서 기록할 때 마지막 마도서(JSON). 기록 상세에서 다시 본다. 직접 등록은 비워 둔다
+    @Size(max = 3_000_000, message = "마도서가 너무 큽니다.")
+    private String grimoire;
+
     @NotNull(message = "게임을 선택해주세요.")
     private Long gameId;
 

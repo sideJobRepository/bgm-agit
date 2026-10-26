@@ -2,6 +2,7 @@ package com.bgmagitapi.origin.service;
 
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
+import com.bgmagitapi.origin.event.dto.ClockTowerRoleTalkEvent;
 import com.bgmagitapi.origin.event.dto.InquiryEvent;
 import com.bgmagitapi.origin.lecture.dto.event.LecturePostEvent;
 import com.bgmagitapi.origin.my.dto.events.MyAcademyApprovalEvent;
@@ -28,4 +29,7 @@ public interface BgmAgitBizTalkSandService {
 
     /** 관리자에게 해당 일자 예약 현황 발송. 예약이 0건이어도 "없음"으로 채워 매일 보낸다. */
     void sendAdminDailyReservation(LocalDate date);
+
+    /** 시계탑 캐릭터 배정·변경 안내. 알림톡 동의·번호가 있는 회원에게만, 받는 사람별로 실패를 따로 다룬다 */
+    void sendClockTowerRole(ClockTowerRoleTalkEvent event);
 }

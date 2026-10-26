@@ -11,6 +11,8 @@ import java.util.List;
 public class ClockTowerRecordDetailResponse {
 
     private Long id;
+    // 끝난 게임의 마도서가 함께 저장돼 있으면 true(내용은 /clocktower-records/{id}/grimoire 로 따로 받는다 — 크다)
+    private boolean hasGrimoire;
     private Long gameId;
     private String gameName;
     private String gameImageUrl;

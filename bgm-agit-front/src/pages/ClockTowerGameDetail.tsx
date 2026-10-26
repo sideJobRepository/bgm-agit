@@ -1,5 +1,5 @@
 import { Wrapper } from '../styles';
-import { Box, ButtonRow, Button, Cover, NoImage, DetailTitle, DetailMeta, SectionTitle, CharViewList, CharViewItem, CharHead, CharName, TypeTag, CharDesc, FormTitle, Row, Field, FileRow, FileButton, FileName, PreviewBox, CheckLine, CharEditList, CharEditRow, CharLineTop, RemoveBtn, AddBtn, Empty } from './ClockTowerGameDetail.styles.ts';
+import { SheetSummary, DistTable, SheetTotal, TeamSection, TeamHeader, SheetGrid, SheetCard, SheetIcon, SheetBody, Box, ButtonRow, Button, DetailTitle, DetailMeta, SectionTitle, FormTitle, Row, Field, CharEditList, CharEditRow, CharLineTop, RemoveBtn, AddBtn, Empty } from './ClockTowerGameDetail.styles.ts';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
@@ -11,6 +11,7 @@ import { useDeletePost, useInsertPost, useUpdatePost } from '../recoil/fetch.ts'
 import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import { ctPlayersLabel } from './ClockTowerGames.tsx';
+import { BASE_TEAMS, MAX_BASE_PLAYERS, expectedCounts } from '../components/clocktower/grimoire/grimoireRules.ts';
 import type { ClockTowerCharacterType } from '../types/clocktower.ts';
 import { CT_TYPE_COLOR as TYPE_COLOR, CT_TYPE_OPTIONS as TYPE_OPTIONS } from '../config/clocktower.ts';
 
@@ -44,9 +45,6 @@ export default function ClockTowerGameDetail() {
   const [minPlayers, setMinPlayers] = useState('');
   const [maxPlayers, setMaxPlayers] = useState('');
   const [playMinutes, setPlayMinutes] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [removeImage, setRemoveImage] = useState(false);
   const [chars, setChars] = useState<CharRow[]>([]);
   // 커스텀 시계탑(botc.vnamu.com) 시트 주소로 바로 등록(캐릭터 사전과 연결되는 스크립트 등록 경로를 탄다)
   const [sheetUrl, setSheetUrl] = useState('');
@@ -62,9 +60,6 @@ export default function ClockTowerGameDetail() {
       setMinPlayers(detail.minPlayers != null ? String(detail.minPlayers) : '');
       setMaxPlayers(detail.maxPlayers != null ? String(detail.maxPlayers) : '');
       setPlayMinutes(detail.playMinutes != null ? String(detail.playMinutes) : '');
-      setPreview(detail.imageUrl ?? null);
-      setRemoveImage(false);
-      setImageFile(null);
       setChars(
         (detail.characters ?? []).map(c => ({
           name: c.name,
@@ -75,12 +70,6 @@ export default function ClockTowerGameDetail() {
       );
     }
   }, [detail, id]);
-
-  const onPickImage = (file: File | null) => {
-    setImageFile(file);
-    setRemoveImage(false);
-    if (file) setPreview(URL.createObjectURL(file));
-  };
 
   const addChar = () => setChars(prev => [...prev, { name: '', type: 'TOWNSFOLK', description: '' }]);
   const updateChar = (idx: number, patch: Partial<CharRow>) =>
@@ -105,14 +94,12 @@ export default function ClockTowerGameDetail() {
     if (minPlayers) form.append('minPlayers', minPlayers);
     if (maxPlayers) form.append('maxPlayers', maxPlayers);
     if (playMinutes) form.append('playMinutes', playMinutes);
-    if (imageFile) form.append('image', imageFile);
     form.append('characters', JSON.stringify(cleanChars));
 
     showConfirmModal({
       message: '저장하시겠습니까?',
       onConfirm: () => {
         if (id) {
-          form.append('removeImage', String(removeImage));
           update({
             url: `/bgm-agit/clocktower-games/${id}`,
             body: form,
@@ -175,9 +162,7 @@ export default function ClockTowerGameDetail() {
             <Button $variant="secondary" color="#988271" onClick={() => navigate('/clocktower-games')}>목록</Button>
           </ButtonRow>
 
-          <Cover>
-            {detail?.imageUrl ? <img src={detail.imageUrl} alt={detail.name} /> : <NoImage>NO IMAGE</NoImage>}
-          </Cover>
+          {/* 스크립트 대표 이미지는 쓰지 않는다(사용자 결정 2026-10-26). 공식/커스텀은 아래 출처로 보인다 */}
           <DetailTitle>{detail?.name}</DetailTitle>
           <DetailMeta>
             <span>{ctPlayersLabel(detail?.minPlayers, detail?.maxPlayers)}</span>
@@ -186,21 +171,79 @@ export default function ClockTowerGameDetail() {
             {detail?.author ? <span>작성 {detail.author}</span> : null}
           </DetailMeta>
 
-          <SectionTitle>캐릭터 ({detail?.characters?.length ?? 0})</SectionTitle>
+          <SectionTitle style={{ display: 'flex', alignItems: 'baseline' }}>
+            참여 캐릭터 <SheetTotal>총 {detail?.characters?.length ?? 0}명</SheetTotal>
+          </SectionTitle>
+          {(detail?.characters?.length ?? 0) > 0 && (
+            <>
+              {/* 이 스크립트에 든 진영별 캐릭터 수 */}
+              <SheetSummary>
+                {TYPE_OPTIONS.map(t => {
+                  const n = (detail?.characters ?? []).filter(ch => ch.type === t.value).length;
+                  return n ? (
+                    <span key={t.value} style={{ color: TYPE_COLOR[t.value] }}>
+                      {t.label} <b>{n}</b>
+                    </span>
+                  ) : null;
+                })}
+              </SheetSummary>
+              {/* 인원별 배정(공식 분배표). 게임 인원 범위만, 없으면 5~15명 */}
+              <DistTable>
+                <thead>
+                  <tr>
+                    <th>인원</th>
+                    {BASE_TEAMS.map(t => (
+                      <th key={t} style={{ color: TYPE_COLOR[t] }}>
+                        {TYPE_OPTIONS.find(o => o.value === t)?.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: MAX_BASE_PLAYERS - 4 }, (_, i) => i + 5)
+                    .filter(n => n >= Math.max(5, detail?.minPlayers ?? 5) && n <= Math.min(MAX_BASE_PLAYERS, detail?.maxPlayers ?? MAX_BASE_PLAYERS))
+                    .map(n => {
+                      const cnt = expectedCounts(n);
+                      return (
+                        <tr key={n}>
+                          <td>{n}명</td>
+                          {BASE_TEAMS.map(t => (
+                            <td key={t}>{cnt?.[t]}</td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </DistTable>
+            </>
+          )}
           {(detail?.characters?.length ?? 0) === 0 ? (
             <Empty>등록된 캐릭터가 없습니다.</Empty>
           ) : (
-            <CharViewList>
-              {detail?.characters?.map(c => (
-                <CharViewItem key={c.id}>
-                  <CharHead>
-                    <CharName>{c.name}</CharName>
-                    <TypeTag color={TYPE_COLOR[c.type]}>{c.typeName}</TypeTag>
-                  </CharHead>
-                  {c.description && <CharDesc>{c.description}</CharDesc>}
-                </CharViewItem>
-              ))}
-            </CharViewList>
+            // 진영별로 묶어 여러 칸으로(진영 이름·색은 제목줄에 있어 카드에는 안 넣는다)
+            TYPE_OPTIONS.map(t => {
+              const list = (detail?.characters ?? []).filter(ch => ch.type === t.value);
+              if (list.length === 0) return null;
+              return (
+                <TeamSection key={t.value}>
+                  <TeamHeader color={TYPE_COLOR[t.value]}>
+                    {t.label}
+                    <small>{list.length}</small>
+                  </TeamHeader>
+                  <SheetGrid>
+                    {list.map(ch => (
+                      <SheetCard key={ch.id} color={TYPE_COLOR[ch.type]}>
+                        <SheetIcon>{ch.image && <img src={ch.image} alt="" loading="lazy" decoding="async" />}</SheetIcon>
+                        <SheetBody>
+                          <strong>{ch.name}</strong>
+                          {ch.description && <p>{ch.description}</p>}
+                        </SheetBody>
+                      </SheetCard>
+                    ))}
+                  </SheetGrid>
+                </TeamSection>
+              );
+            })
           )}
         </Box>
       </Wrapper>
@@ -262,7 +305,7 @@ export default function ClockTowerGameDetail() {
               </Button>
             </div>
             <p style={{ marginTop: 6, fontSize: 13, lineHeight: 1.6, color: '#8a8398' }}>
-              제목과 캐릭터를 가져와 바로 등록합니다(캐릭터 사전과 연결돼 진행판에서 밤 순서·그림이 나옵니다). 아래 게임명·인원을
+              제목과 캐릭터를 가져와 바로 등록합니다(캐릭터 사전과 연결돼 마도서에서 밤 순서·그림이 나옵니다). 아래 게임명·인원을
               적어 두면 그 값을 씁니다. 사전이 비어 있으면 [캐릭터 사전·스크립트 등록]에서 공식 데이터를 먼저 가져오세요.
             </p>
           </Field>
@@ -287,47 +330,6 @@ export default function ClockTowerGameDetail() {
             <input type="number" value={playMinutes} onChange={e => setPlayMinutes(e.target.value)} placeholder="예: 60" />
           </Field>
         </Row>
-
-        <Field>
-          <label>커버 이미지 (선택)</label>
-          <FileRow>
-            <FileButton>
-              {preview && !removeImage ? '이미지 변경' : '이미지 선택'}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={e => onPickImage(e.target.files?.[0] ?? null)}
-                hidden
-              />
-            </FileButton>
-            <FileName>
-              {imageFile ? imageFile.name : preview && !removeImage ? '기존 이미지' : '선택된 파일 없음'}
-            </FileName>
-          </FileRow>
-          {preview && !removeImage && (
-            <PreviewBox>
-              <img src={preview} alt="미리보기" />
-            </PreviewBox>
-          )}
-          {id && detail?.imageUrl && (
-            <CheckLine>
-              <input
-                type="checkbox"
-                checked={removeImage}
-                onChange={e => {
-                  setRemoveImage(e.target.checked);
-                  if (e.target.checked) {
-                    setImageFile(null);
-                    setPreview(null);
-                  } else {
-                    setPreview(detail.imageUrl ?? null);
-                  }
-                }}
-              />
-              기존 이미지 삭제
-            </CheckLine>
-          )}
-        </Field>
 
         <Field>
           <label>캐릭터 목록</label>

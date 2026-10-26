@@ -7,7 +7,14 @@ import { useClockTowerGameListFetch } from '../recoil/clocktowerFetch.ts';
 import { userState } from '../recoil/state/userState.ts';
 import Pagination from '../components/Pagination.tsx';
 import type { ClockTowerGame } from '../types/clocktower.ts';
-import { AdminButtons, Box, Header, TitleBox, CreateButton, SearchRow, CardList, Card, Cover, NoImage, CardBody, CardTitle, Meta, Empty, PaginationWrapper } from './ClockTowerGames.styles.ts';
+import { AdminButtons, Box, Header, TitleBox, CreateButton, SearchRow, CardList, Card, CardBody, CardTitle, Meta, Empty, PaginationWrapper, SourceTabs, SourceTab, SourceBadge } from './ClockTowerGames.styles.ts';
+
+type SourceFilter = 'ALL' | 'OFFICIAL' | 'CUSTOM';
+const SOURCE_TABS: { value: SourceFilter; label: string }[] = [
+  { value: 'ALL', label: '전체' },
+  { value: 'OFFICIAL', label: '공식' },
+  { value: 'CUSTOM', label: '커스텀' },
+];
 
 export function ctPlayersLabel(min?: number | null, max?: number | null) {
   if (!min && !max) return '인원 미정';
@@ -24,10 +31,11 @@ export default function ClockTowerGames() {
   const [page, setPage] = useState(0);
   const [keyword, setKeyword] = useState('');
   const [input, setInput] = useState('');
+  const [source, setSource] = useState<SourceFilter>('ALL');
 
   useEffect(() => {
-    fetchGames(page, keyword);
-  }, [page, keyword]);
+    fetchGames(page, keyword, source === 'ALL' ? undefined : source);
+  }, [page, keyword, source]);
 
   const onSearch = () => {
     setPage(0);
@@ -44,7 +52,7 @@ export default function ClockTowerGames() {
           </TitleBox>
           {user && (
             <AdminButtons>
-              <CreateButton onClick={() => navigate('/clocktower-grimoire')}>이야기꾼 진행판</CreateButton>
+              <CreateButton onClick={() => navigate('/clocktower-grimoire')}>이야기꾼 마도서</CreateButton>
             </AdminButtons>
           )}
           {user?.roles.includes('ROLE_ADMIN') && (
@@ -66,6 +74,23 @@ export default function ClockTowerGames() {
           <button type="button" onClick={onSearch}>검색</button>
         </SearchRow>
 
+        {/* 공식 스크립트(트러블 브루잉 등)와 커스텀 스크립트를 나눠 본다 */}
+        <SourceTabs>
+          {SOURCE_TABS.map(t => (
+            <SourceTab
+              key={t.value}
+              type="button"
+              $active={source === t.value}
+              onClick={() => {
+                setPage(0);
+                setSource(t.value);
+              }}
+            >
+              {t.label}
+            </SourceTab>
+          ))}
+        </SourceTabs>
+
         <CardList>
           {data.content.map(g => (
             <GameCard key={g.id} item={g} onClick={() => navigate(`/clockTowerGameDetail?id=${g.id}`)} />
@@ -83,11 +108,10 @@ export default function ClockTowerGames() {
 
 function GameCard({ item, onClick }: { item: ClockTowerGame; onClick: () => void }) {
   return (
+    // 스크립트 대표 이미지는 쓰지 않는다(대부분 비어 NO IMAGE 만 크게 보였다). 공식/커스텀 배지로 구분
     <Card onClick={onClick}>
-      <Cover>
-        {item.imageUrl ? <img src={item.imageUrl} alt={item.name} /> : <NoImage>NO IMAGE</NoImage>}
-      </Cover>
       <CardBody>
+        <SourceBadge $official={item.source === 'OFFICIAL'}>{item.source === 'OFFICIAL' ? '공식' : '커스텀'}</SourceBadge>
         <CardTitle>{item.name}</CardTitle>
         <Meta>
           <span>{ctPlayersLabel(item.minPlayers, item.maxPlayers)}</span>

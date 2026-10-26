@@ -367,7 +367,7 @@ export default function ClockTowerRoles() {
           </ButtonRow>
         </SectionHead>
         <NoticeBox>
-          진행판 토큰에 쓰는 공식 캐릭터 그림을 우리 저장소로 복사합니다. 공식 데이터를 가져온 뒤에 누르세요.
+          마도서 토큰에 쓰는 공식 캐릭터 그림을 우리 저장소로 복사합니다. 공식 데이터를 가져온 뒤에 누르세요.
           <br />
           새 캐릭터가 추가되면 빠진 것만 다시 복사하면 됩니다.
         </NoticeBox>

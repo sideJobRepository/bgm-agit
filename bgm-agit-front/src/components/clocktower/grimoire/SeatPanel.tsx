@@ -15,18 +15,19 @@ import {
   exiledToday,
   isEvilSeat,
   reminderOptions,
+  reminderSourceRole,
   roleMap,
   shownRole,
 } from './grimoireRules.ts';
 import { newSeatId } from './useGrimoire.ts';
 import RoleArt from './RoleArt.tsx';
+import ReminderToken from './ReminderToken.tsx';
 import { tokenImageCandidates } from './tokenImage.ts';
 import {
   Ability,
   Btn,
   Chip,
   Hint,
-  Mark,
   Overlay,
   PickGrid,
   PickItem,
@@ -279,7 +280,7 @@ export default function SeatPanel({
               <label>선악 (여행자는 꼭 정하세요)</label>
               {seat.evil == null && (
                 <Hint style={{ color: 'var(--ct-evil)', margin: '4px 0' }}>
-                  아직 선악을 정하지 않았습니다. 악으로 정하면 악마가 누구인지 알려 줍니다(하수인은 알려 주지 않고 블러프도
+                  아직 선악을 정하지 않았습니다. 악으로 정하면 악마가 누구인지 알려 줍니다(하수인은 알려 주지 않고 악마의 속임수도
                   없습니다).
                 </Hint>
               )}
@@ -320,29 +321,27 @@ export default function SeatPanel({
           {seat.reminders.length > 0 && (
             <Row style={{ marginBottom: 8 }}>
               {seat.reminders.map(m => (
-                <Chip
+                <ReminderToken
                   key={m.id}
-                  type="button"
-                  onClick={() => onPatch({ reminders: seat.reminders.filter(x => x.id !== m.id) })}
+                  text={m.text}
+                  role={reminderSourceRole(m.source, state.data)}
+                  size={60}
+                  removable
                   title="눌러서 떼기"
-                >
-                  {m.text}
-                  {m.source ? ` · ${m.source}` : ''} ✕
-                </Chip>
+                  onClick={() => onPatch({ reminders: seat.reminders.filter(x => x.id !== m.id) })}
+                />
               ))}
             </Row>
           )}
           <Row>
             {options.map(o => (
-              <Mark
+              <ReminderToken
                 key={`${o.source}|${o.text}`}
-                as="button"
-                type="button"
-                style={{ cursor: 'pointer', fontSize: 13, padding: '4px 10px' }}
+                text={o.text}
+                role={reminderSourceRole(o.source, state.data)}
+                size={60}
                 onClick={() => addReminder(o.text, o.source)}
-              >
-                {o.text} · {o.source}
-              </Mark>
+              />
             ))}
           </Row>
           <Row style={{ marginTop: 8 }}>

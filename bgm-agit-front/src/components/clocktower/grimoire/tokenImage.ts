@@ -42,7 +42,7 @@ export function tokenImageCandidates(
   return list.filter((u, i, arr): u is string => !!u && arr.indexOf(u) === i);
 }
 
-/** 진행판 진입 때 스크립트 이미지를 미리 받아 둔다(좌석을 바꿀 때마다 빈 칸이 깜빡이지 않게) */
+/** 마도서 진입 때 스크립트 이미지를 미리 받아 둔다(좌석을 바꿀 때마다 빈 칸이 깜빡이지 않게) */
 export function preloadGrimoireImages(data: GrimoireData) {
   if (!CT_IMAGES_ENABLED) return;
   const urls = new Set<string>();

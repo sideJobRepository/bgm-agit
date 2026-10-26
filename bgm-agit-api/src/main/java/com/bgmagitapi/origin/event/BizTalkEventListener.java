@@ -3,6 +3,7 @@ package com.bgmagitapi.origin.event;
 
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
+import com.bgmagitapi.origin.event.dto.ClockTowerRoleTalkEvent;
 import com.bgmagitapi.origin.event.dto.InquiryEvent;
 import com.bgmagitapi.origin.event.dto.MatchRecordRegisteredEvent;
 import com.bgmagitapi.origin.event.dto.MemberJoinedEvent;
@@ -155,5 +156,12 @@ public class BizTalkEventListener {
         } catch (Exception ex) {
             bgmAgitBizTalkSandService.sendMatchRecord(e.getMatchsId());
         }
+    }
+
+    /** 재시도는 받는 사람별로 발송 쪽에서 한다(통째로 다시 보내면 이미 받은 사람에게 또 간다) */
+    @Async("bizTalkExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onClockTowerRole(ClockTowerRoleTalkEvent e) {
+        bgmAgitBizTalkSandService.sendClockTowerRole(e);
     }
 }

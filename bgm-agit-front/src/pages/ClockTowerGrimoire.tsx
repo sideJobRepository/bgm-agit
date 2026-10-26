@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import { userState } from '../recoil/state/userState.ts';
@@ -20,6 +21,23 @@ import {
 } from '../components/clocktower/grimoire/ShowPanels.tsx';
 import { NightList, NightMode } from '../components/clocktower/grimoire/NightPanel.tsx';
 import WinBanner from '../components/clocktower/grimoire/WinBanner.tsx';
+import SetupWizard from '../components/clocktower/grimoire/SetupWizard.tsx';
+import GrimoireViewer from '../components/clocktower/grimoire/GrimoireViewer.tsx';
+import { SavedGrimoireList, SavedGrimoirePanel } from '../components/clocktower/grimoire/SavedGrimoires.tsx';
+import { saveGrimoireToServer } from '../components/clocktower/grimoire/grimoireSaves.ts';
+import {
+  circleMargins,
+  reminderAutoOffset,
+  reminderTokenSize,
+  seatPoint,
+  seatTokenSize,
+  useElementSize,
+  FILL_STYLE,
+} from '../components/clocktower/grimoire/circleLayout.ts';
+import ToolbarMenu, { MenuGroup } from '../components/clocktower/grimoire/ToolbarMenu.tsx';
+import { InfoCardPanel, type InfoPreset } from '../components/clocktower/grimoire/InfoCards.tsx';
+import ReminderToken, { CurvedText } from '../components/clocktower/grimoire/ReminderToken.tsx';
+import { dealBag, isDealt, usedKeys } from '../components/clocktower/grimoire/bagRules.ts';
 import RoleArt from '../components/clocktower/grimoire/RoleArt.tsx';
 import { preloadGrimoireImages, tokenImageCandidates } from '../components/clocktower/grimoire/tokenImage.ts';
 import { useImmersiveMode } from '../components/clocktower/grimoire/useImmersiveMode.ts';
@@ -52,10 +70,12 @@ import {
   expectedCounts,
   isEvilSeat,
   isUnderway,
+  nightItems,
   killSeat,
   phaseLabel,
   pickBluffs,
   randomAssignment,
+  reminderSourceRole,
   roleMap,
   runsEvilInfo,
   setTravellerAlignment,
@@ -73,7 +93,13 @@ import {
   GrimoireRoot,
   Layout,
   Mark,
+  ReminderRow,
+  SeatBadge,
+  TokenArt,
+  TokenWrap,
   Muted,
+  Hint,
+  SetupCard,
   NightBody,
   NightRow,
   NotesArea,
@@ -93,7 +119,6 @@ import {
   Tab,
   Tabs,
   Token,
-  TokenCaption,
   ToolTitle,
   Toolbar,
   Warn,
@@ -128,7 +153,7 @@ function leaveSetup(s: GrimoireState): GrimoireState {
 }
 
 /**
- * 진행판을 연 뒤 받은 최신 스크립트로 캐릭터 행 id 를 key 기준으로 맞춘다.
+ * 마도서를 연 뒤 받은 최신 스크립트로 캐릭터 행 id 를 key 기준으로 맞춘다.
  * 공식 데이터를 다시 가져오거나 게임을 수정하면 캐릭터 행이 새로 만들어져, 들고 있던 id 로는 기록이 빈칸이 된다.
  */
 function refreshCharacterIds(prev: GrimoireState, fresh: GrimoireData): GrimoireState {
@@ -151,15 +176,26 @@ function refreshCharacterIds(prev: GrimoireState, fresh: GrimoireData): Grimoire
   };
 }
 
-/** 원형 배치 좌표(%). 0번이 12시 방향, 시계 방향 */
-function seatPosition(i: number, total: number) {
-  const angle = (2 * Math.PI * i) / total;
-  const radius = 41;
-  return { left: `${50 + radius * Math.sin(angle)}%`, top: `${50 - radius * Math.cos(angle)}%` };
-}
+// 이만큼 움직여야 끌기로 본다(태블릿에서 누르다 손가락이 조금 밀려도 좌석 메뉴가 열리게)
+const DRAG_THRESHOLD = 8;
+const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+// 리마인더 끌기. 좌석 토큰은 끌지 않는다 — 자리는 [자리 바꾸기]로 바꾸는 쪽이 낫다(사용자 결정 2026-10-26)
+type DragState = {
+  seatId: string;
+  reminderId: string;
+  pointerId: number;
+  sx: number;
+  sy: number;
+  ox: number;
+  oy: number;
+  moved: boolean;
+  x: number;
+  y: number;
+};
 
 /**
- * 이야기꾼 진행판(그리모어). 태블릿 가로 기준, 좁은 화면은 좌석 목록으로 보인다.
+ * 이야기꾼 마도서(그리모어). 좌석은 어디서나 원형이고, 세로·좁은 화면은 오른쪽 패널이 원 아래로 내려간다.
  * 진행 상태는 이 기기 localStorage 에만 둔다(서버에 두면 누가 악마인지 조회될 수 있다).
  */
 export default function ClockTowerGrimoire() {
@@ -177,14 +213,14 @@ export default function ClockTowerGrimoire() {
     start,
     reset,
     reload,
-    blockedByOtherOwner,
     loadNotice,
     externalChange,
   } = useGrimoire(userId);
 
   const [openSeatId, setOpenSeatId] = useState<string | null>(null);
   const [sideTab, setSideTab] = useState<SideTab>('night');
-  const [nightMode, setNightMode] = useState(false);
+  // 밤 진행 카드: null = 닫힘, '' = 안 한 첫 단계부터, 그 외 = 그 단계부터(밤 순서 줄을 눌렀을 때)
+  const [nightMode, setNightMode] = useState<string | null>(null);
   // 낮 화면: 플레이어에게 보여줄 때 캐릭터·리마인더를 가린다
   const [dayView, setDayView] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
@@ -195,6 +231,16 @@ export default function ClockTowerGrimoire() {
   const [bluffOpen, setBluffOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [showContent, setShowContent] = useState<ShowContent | null>(null);
+  // 정보 카드 창: null = 닫힘, 객체 = 미리 채울 문장·플레이어·캐릭터(빈 객체면 기본)
+  const [infoOpen, setInfoOpen] = useState<InfoPreset | null>(null);
+  // 마도서 전체화면(포켓 그리모어처럼 툴바·패널·안내를 숨기고 원형 마도서만 크게). 좌석 메뉴는 그대로 쓴다
+  const [fullView, setFullView] = useState(false);
+  // 임시저장 목록 창 / 읽기 전용으로 펼쳐 본 마도서
+  const [savedOpen, setSavedOpen] = useState(false);
+  const [viewer, setViewer] = useState<{ state: GrimoireState; title: string } | null>(null);
+  const [savingToServer, setSavingToServer] = useState(false);
+  // 전체화면이 몰입 모드를 켰으면 끝낼 때 같이 끈다(원래 몰입 중이었으면 그대로 둔다)
+  const fullViewOwnsImmersive = useRef(false);
   // 악마 넘기기 창(악마가 죽으면 자동으로 열린다)
   const [demonSeatId, setDemonSeatId] = useState<string | null>(null);
   // 처형 결과 창을 연 좌석(사망/생존을 거기서 고른다)
@@ -202,13 +248,20 @@ export default function ClockTowerGrimoire() {
   const [exileSeatId, setExileSeatId] = useState<string | null>(null);
   // 진행 중 합류한 자리. 좌석 메뉴를 여행자 탭으로 연다
   const [joinedSeatId, setJoinedSeatId] = useState<string | null>(null);
+  // 자리 바꾸기: 켜 두고 두 자리를 차례로 누르면 맞바꾼다(좌석 메뉴의 한 칸 이동보다 빠르다)
+  const [swapMode, setSwapMode] = useState(false);
+  const [swapFrom, setSwapFrom] = useState<string | null>(null);
+  const [circleEl, setCircleEl] = useState<HTMLDivElement | null>(null);
+  // 끌고 있는 리마인더(놓을 때 한 번만 저장한다 — 움직일 때마다 저장하면 되돌리기 기록이 넘친다)
+  const [drag, setDrag] = useState<DragState | null>(null);
+  const circleBox = useElementSize(circleEl);
 
   useWakeLock(!!state);
   // 플레이어 휴대폰(/clocktower-my)으로 보낸 배정: 바뀐 좌석 자동 재전송 + 확인 여부
   const phone = usePhoneSession(state, updateSilently);
   // 몰입 모드(사이트 머리·푸터 숨김 + 전체 화면)는 진행 중인 판에서만
   const { immersive, fullscreen, canFullscreen, enter, exit, requestFullscreen } = useImmersiveMode(
-    !!user && !blockedByOtherOwner && !!state
+    !!user && !!state
   );
 
   const roles = useMemo(
@@ -249,40 +302,26 @@ export default function ClockTowerGrimoire() {
     if (loadNotice) toast.error(loadNotice);
   }, [loadNotice]);
 
+  // 밤 순서를 다 체크하면 아침으로 넘어갈지 한 번 묻는다(밤마다 한 번). endNight 는 아래(판이 있을 때)에서 정의돼 ref 로 부른다
+  const endNightRef = useRef<() => void>(() => {});
+  const askedNightEnd = useRef<string | null>(null);
+  useEffect(() => {
+    if (!state || state.phase !== 'NIGHT') return;
+    const items = nightItems(state, state.nightTab).filter(i => !i.hiddenDead && !i.skippedReason);
+    if (items.length === 0 || !items.every(i => state.nightChecked.includes(i.key))) return;
+    const key = `${state.day}:${state.nightTab}`;
+    if (askedNightEnd.current === key) return;
+    askedNightEnd.current = key;
+    showConfirmModal({
+      message: '밤 순서를 모두 마쳤습니다. 아침(낮)으로 넘어갈까요?',
+      onConfirm: () => endNightRef.current(),
+    });
+  }, [state]);
+
   if (!user) {
     return (
       <GrimoireRoot $immersive={false}>
         <Muted>로그인 후 사용할 수 있습니다.</Muted>
-      </GrimoireRoot>
-    );
-  }
-
-  if (blockedByOtherOwner) {
-    return (
-      <GrimoireRoot $immersive={false}>
-        <Page>
-          <Warn>
-            이 기기에 다른 회원이 진행하던 진행판이 있습니다. 그 회원으로 로그인하면 이어서 할 수
-            있습니다.
-            <Row style={{ marginTop: 8 }}>
-              <Btn
-                type="button"
-                $tone="danger"
-                onClick={() =>
-                  showConfirmModal({
-                    message: '다른 회원의 진행판을 이 기기에서 지울까요? 되돌릴 수 없습니다.',
-                    onConfirm: reset,
-                  })
-                }
-              >
-                이 기기 판 지우기
-              </Btn>
-              <Btn type="button" onClick={() => navigate('/clocktower-games')}>
-                게임 목록
-              </Btn>
-            </Row>
-          </Warn>
-        </Page>
       </GrimoireRoot>
     );
   }
@@ -294,7 +333,7 @@ export default function ClockTowerGrimoire() {
         <Page>
           <Toolbar>
             <ToolTitle>
-              <strong>이야기꾼 진행판</strong>
+              <strong>이야기꾼 마도서</strong>
               <span>스크립트와 참가자를 정하면 시작합니다.</span>
             </ToolTitle>
             <Btn type="button" onClick={() => navigate('/clocktower-games')}>
@@ -306,7 +345,18 @@ export default function ClockTowerGrimoire() {
             ownerId={userId}
             onStart={start}
           />
+          {/* 임시저장한 판(다른 기기에서 저장했어도) 이어서 하기 */}
+          <SetupCard style={{ maxWidth: 720, width: '100%', margin: '16px auto 0' }}>
+            <h3>저장된 마도서</h3>
+            <SavedGrimoireList
+              inline
+              onView={(s, title) => setViewer({ state: s, title })}
+              onResume={s => start({ ...s, ownerId: userId })}
+            />
+            <Hint>마도서 [더보기] → [임시저장]으로 저장한 판이 여기에 나옵니다.</Hint>
+          </SetupCard>
         </Page>
+        {viewer && <GrimoireViewer state={viewer.state} title={viewer.title} onClose={() => setViewer(null)} />}
       </GrimoireRoot>
     );
   }
@@ -347,6 +397,39 @@ export default function ClockTowerGrimoire() {
       [list[i], list[to]] = [list[to], list[i]];
       return { ...prev, seats: list };
     });
+
+  // 자리(사람)를 통째로 맞바꾼다. 캐릭터·사망·리마인더도 그 사람을 따라간다
+  const swapSeats = (a: string, b: string) =>
+    update(prev => {
+      const list = [...prev.seats];
+      const i = list.findIndex(s => s.id === a);
+      const j = list.findIndex(s => s.id === b);
+      if (i < 0 || j < 0) return prev;
+      [list[i], list[j]] = [list[j], list[i]];
+      return { ...prev, seats: list };
+    });
+
+  // 셋업 중에만 동작한다. 첫날 밤을 시작하면 버튼이 사라지므로 켜 둔 채 남지 않게 여기서도 막는다
+  const swapping = swapMode && state.phase === 'SETUP';
+
+  const onSeatClick = (seatId: string) => {
+    if (dayView) return;
+    if (!swapping) {
+      setOpenSeatId(seatId);
+      return;
+    }
+    if (!swapFrom) setSwapFrom(seatId);
+    else if (swapFrom === seatId) setSwapFrom(null);
+    else {
+      swapSeats(swapFrom, seatId);
+      setSwapFrom(null);
+    }
+  };
+
+  const toggleSwapMode = () => {
+    setSwapMode(v => !v);
+    setSwapFrom(null);
+  };
 
   const removeSeat = (seat: GrimoireSeat) =>
     showConfirmModal({
@@ -465,6 +548,8 @@ export default function ClockTowerGrimoire() {
       { kind: 'DAWN' }
     );
 
+  endNightRef.current = endNight;
+
   // 살아 있던 악마가 죽으면 넘기기 창을 띄운다(탕녀·임프 자결 등)
   const openDemonPassIfDemon = (seatId: string) => {
     const seat = seats.find(s => s.id === seatId);
@@ -488,10 +573,17 @@ export default function ClockTowerGrimoire() {
   }) => {
     const seatId = executeSeatId;
     if (!seatId) return;
+    const seat = seats.find(s => s.id === seatId);
+    const demonDied = opts.died && !!seat && !seat.dead && roles.get(seat.roleKey ?? '')?.team === 'DEMON';
     const next = update(prev => applyExecution(leaveSetup(prev), seatId, opts));
     setExecuteSeatId(null);
     suggest(next, { kind: 'EXECUTION', seatId });
     if (opts.died) openDemonPassIfDemon(seatId);
+    // 처형은 하루 한 번이라 끝나면 보통 밤이다. 악마가 죽었거나(넘기기 창) 게임이 끝나는 상황이면 묻지 않는다
+    const ends = !!next && next.settings.suggestionsEnabled && checkGameEnd(next, { kind: 'EXECUTION', seatId }).status !== 'CONTINUE';
+    if (next && next.phase === 'DAY' && !demonDied && !ends) {
+      showConfirmModal({ message: '처형을 마쳤습니다. 밤으로 넘어갈까요?', onConfirm: startNight });
+    }
   };
 
   const confirmExile = (opts: { supporters: number; survived: boolean }) => {
@@ -578,6 +670,40 @@ export default function ClockTowerGrimoire() {
     }));
   };
 
+  const openFullView = () => {
+    setFullView(true);
+    fullViewOwnsImmersive.current = !immersive;
+    if (!immersive) enter();
+    else if (canFullscreen && !fullscreen) requestFullscreen();
+  };
+
+  const closeFullView = () => {
+    setFullView(false);
+    if (fullViewOwnsImmersive.current) exit();
+    fullViewOwnsImmersive.current = false;
+  };
+
+  // 지금 판을 서버에 임시저장(같은 판은 덮어쓴다)
+  const saveToServer = async () => {
+    setSavingToServer(true);
+    const id = await saveGrimoireToServer(state, `${state.data.gameName} · ${phaseLabel(state)}`);
+    setSavingToServer(false);
+    if (id == null) return;
+    updateSilently(prev => ({ ...prev, serverSaveId: id }));
+    toast.success('임시저장했습니다. [더보기] → [저장된 마도서]나 시작 화면에서 이어서 할 수 있습니다.');
+  };
+
+  // 저장된 판으로 바꾼다. 지금 판의 휴대폰 배정은 닫는다(다른 판의 캐릭터가 휴대폰에 남지 않게)
+  const resumeSaved = (saved: GrimoireState) =>
+    showConfirmModal({
+      message: '이 기기의 지금 판을 저장된 판으로 바꿀까요? 지금 판을 남기려면 먼저 [임시저장] 하세요.',
+      onConfirm: async () => {
+        await phone.close();
+        setSavedOpen(false);
+        start({ ...saved, ownerId: userId });
+      },
+    });
+
   const newGame = () =>
     showConfirmModal({
       message: '진행 중인 게임을 지우고 새로 시작할까요? 되돌릴 수 없습니다.',
@@ -618,7 +744,7 @@ export default function ClockTowerGrimoire() {
     else go();
   };
 
-  // 첫날 밤 악 팀 정보(악마: 하수인+블러프, 하수인: 악마+다른 하수인)를 해당 좌석 휴대폰으로
+  // 첫날 밤 악 팀 정보(악마: 하수인+악마의 속임수, 하수인: 악마+다른 하수인)를 해당 좌석 휴대폰으로
   const sendEvilInfo = () => {
     const result = buildEvilInfo(state);
     if (!result.ok) {
@@ -636,15 +762,143 @@ export default function ClockTowerGrimoire() {
   };
   const evilInfoAvailable = runsEvilInfo(state, roles);
 
+  // 셋업 단계 안내(주머니 → 악마의 속임수 → 캐릭터 나눠 주기). 아직 아무도 앉지 않았을 때만
+  const showWizard = state.phase === 'SETUP' && !isDealt(state, roles);
+
+  // 셋업 3단계: 자리는 그대로 두고 주머니 캐릭터를 무작위로 나눠 주고, 회원 자리에는 캐릭터 + 악 팀 정보를 한 번에 보낸다
+  const dealAndSend = async () => {
+    const dealt = dealBag(state, roles);
+    if (!dealt.ok) {
+      toast.error(dealt.message);
+      return;
+    }
+    const next = update(() => dealt.state);
+    if (!next) return;
+    dealt.warnings.forEach(w => toast.error(w));
+    const guests = next.seats.filter(s => s.memberId == null && s.roleKey);
+    const guestNote = guests.length
+      ? ` 손님 ${guests.length}자리(${guests.map(s => s.name).join(', ')})는 좌석 메뉴의 [본인에게 보여주기]로 알려 주세요.`
+      : '';
+    if (!next.seats.some(s => s.memberId != null)) {
+      toast.success(`캐릭터를 나눠 줬습니다.${guestNote}`);
+      return;
+    }
+    let infos = {};
+    if (runsEvilInfo(next, roles)) {
+      const evil = buildEvilInfo(next);
+      if (evil.ok) {
+        infos = evil.infos;
+        evil.warnings.forEach(w => toast.error(w));
+      } else toast.error(evil.message);
+    }
+    if (await phone.send({ state: next, infos }))
+      toast.success(`캐릭터를 나눠 주고 회원에게 보냈습니다.${guestNote}`);
+  };
+
+  // 전체화면은 화면을 꽉 채운 타원이라 짧은 쪽 길이로 토큰 크기를 정한다
+  const circleWidth = fullView ? Math.min(circleBox.width, circleBox.height) || circleBox.width : circleBox.width;
+  const tokenSize = seatTokenSize(circleWidth, seats.length);
+
+  const startReminderDrag = (e: ReactPointerEvent, seat: GrimoireSeat, reminderId: string, dx: number, dy: number) => {
+    if (dayView || e.button !== 0) return;
+    // 좌석 토큰 끌기로 번지지 않게
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDrag({ seatId: seat.id, reminderId, pointerId: e.pointerId, sx: e.clientX, sy: e.clientY, ox: dx, oy: dy, moved: false, x: dx, y: dy });
+  };
+
+  const moveDrag = (e: ReactPointerEvent) => {
+    if (!drag || drag.pointerId !== e.pointerId) return;
+    const ddx = e.clientX - drag.sx;
+    const ddy = e.clientY - drag.sy;
+    if (!drag.moved && Math.hypot(ddx, ddy) < DRAG_THRESHOLD) return;
+    setDrag({ ...drag, moved: true, x: clamp(drag.ox + ddx / tokenSize, -2.5, 2.5), y: clamp(drag.oy + ddy / tokenSize, -2.5, 2.5) });
+  };
+
+  /** 놓을 때: 움직였으면 위치를 저장하고(되돌리기 가능), 안 움직였으면 누른 것으로 본다(그 자리 좌석 메뉴) */
+  const endDrag = (e: ReactPointerEvent) => {
+    if (!drag || drag.pointerId !== e.pointerId) return;
+    const d = drag;
+    setDrag(null);
+    if (!d.moved) {
+      onSeatClick(d.seatId);
+      return;
+    }
+    update(prev => ({
+      ...prev,
+      seats: prev.seats.map(s =>
+        s.id === d.seatId
+          ? { ...s, reminders: s.reminders.map(r => (r.id === d.reminderId ? { ...r, pos: { dx: d.x, dy: d.y } } : r)) }
+          : s
+      ),
+    }));
+  };
+
+  const hasCustomPositions = seats.some(s => s.reminders.some(r => r.pos));
+  const resetPositions = () =>
+    update(prev => ({
+      ...prev,
+      seats: prev.seats.map(s => ({ ...s, reminders: s.reminders.map(r => ({ ...r, pos: null })) })),
+    }));
+  // 리마인더는 좌석 토큰보다 조금 작게(포켓 그리모어 비율)
+  const reminderSize = reminderTokenSize(tokenSize);
+
+  /**
+   * 리마인더를 토큰 가장자리에 걸쳐 원 중심 쪽 좌우 대각선으로 번갈아 붙인다(포켓 그리모어처럼).
+   * 이름 아래 한 줄로 늘어놓으면 토큰과 떨어져 어느 자리 것인지 한눈에 안 보였다.
+   * 중심 정면에 붙이면 위쪽 자리에서 캐릭터 이름·플레이어 이름을 가려서 정면은 비워 둔다.
+   * 믿는 캐릭터(주정뱅이 등)도 같은 모양으로 맨 앞에 둔다.
+   */
+  const orbitReminders = (seat: GrimoireSeat, i: number) => {
+    if (dayView) return null;
+    // 믿는 캐릭터가 토큰에 그려지는 자리는 진짜 캐릭터를 "주정뱅이입니다" 리마인더로 붙인다
+    const believed = roles.get(seat.believedRoleKey ?? '');
+    const real = roles.get(seat.roleKey ?? '');
+    const list = [
+      ...(believed && real ? [{ id: 'believed', text: `${real.name}입니다`, role: real as GrimoireRole | null }] : []),
+      ...seat.reminders.map(m => ({ id: m.id, text: m.text, role: reminderSourceRole(m.source, state.data) })),
+    ];
+    if (list.length === 0) return null;
+    const saved = new Map(seat.reminders.map(m => [m.id, m.pos ?? null]));
+    return list.map((r, k) => {
+      const auto = reminderAutoOffset(i, seats.length, k, tokenSize, reminderSize);
+      const dragging = drag?.reminderId === r.id && drag.moved;
+      const p = dragging ? { dx: drag.x, dy: drag.y } : (saved.get(r.id) ?? auto);
+      const draggable = r.id !== 'believed';
+      return (
+        <span
+          key={r.id}
+          style={{
+            position: 'absolute',
+            left: tokenSize / 2 + p.dx * tokenSize - reminderSize / 2,
+            top: tokenSize / 2 + p.dy * tokenSize - reminderSize / 2,
+            zIndex: dragging ? 6 : 3,
+            touchAction: 'none',
+            cursor: draggable ? 'grab' : undefined,
+          }}
+          onPointerDown={draggable ? e => startReminderDrag(e, seat, r.id, p.dx, p.dy) : undefined}
+          onPointerMove={draggable ? moveDrag : undefined}
+          onPointerUp={draggable ? endDrag : undefined}
+          onPointerCancel={() => setDrag(null)}
+        >
+          <ReminderToken text={r.text} role={r.role} size={reminderSize} />
+        </span>
+      );
+    });
+  };
+
   const tokenOf = (seat: GrimoireSeat, i: number) => {
     const role = roles.get(seat.roleKey ?? '');
+    // 주정뱅이·꼭두각시·미치광이는 포켓 그리모어처럼 본인이 믿는 캐릭터를 토큰에 그리고, 진짜 캐릭터는 리마인더로 붙인다
+    const shownRole = roles.get(seat.believedRoleKey ?? '') ?? role;
+    // 테두리 색·모양은 진짜 진영(이야기꾼이 테두리로도 정체를 알 수 있게)
     const color = role?.team ? CT_TYPE_COLOR_DARK[role.team] : EMPTY_COLOR;
     // 진영을 색만으로 가르지 않게 테두리 모양도 다르게(낮 화면은 진영을 드러내지 않는다)
     const shape: TokenShape | undefined =
       dayView ? undefined : role?.team === 'DEMON' ? 'double' : role?.team === 'MINION' ? 'dashed' : undefined;
-    const label = dayView ? `${i + 1}` : (role?.name ?? '미정');
+    const label = dayView ? `${i + 1}` : (shownRole?.name ?? '미정');
     // 낮 화면(플레이어가 보는 화면)에는 그림을 그리지 않는다
-    const images = dayView ? [] : tokenImageCandidates(role, isEvilSeat(seat, roles), state.data.genericImages);
+    const images = dayView ? [] : tokenImageCandidates(shownRole, isEvilSeat(seat, roles), state.data.genericImages);
     return { role, color, shape, label, images };
   };
 
@@ -662,8 +916,13 @@ export default function ClockTowerGrimoire() {
     }
     const evil = isEvilSeat(seat, roles);
     const role = roles.get(seat.roleKey ?? '');
-    const believed = roles.get(seat.believedRoleKey ?? '');
     const marks = [];
+    if (swapping && swapFrom === seat.id)
+      marks.push(
+        <Mark key="swap" $tone="vote">
+          바꿀 자리
+        </Mark>
+      );
     if (seat.left) marks.push(<Mark key="l">떠남</Mark>);
     if (travellerNeedsAlignment(seat, roles))
       marks.push(
@@ -671,7 +930,6 @@ export default function ClockTowerGrimoire() {
           선악 미정
         </Mark>
       );
-    if (believed) marks.push(<Mark key="b">믿음 {believed.name}</Mark>);
     // 진영이 캐릭터와 다르게 바뀐 경우(또는 여행자)에만 선악 표시
     if (seat.evil != null || role?.team === 'TRAVELLER') {
       if (evil != null)
@@ -695,13 +953,42 @@ export default function ClockTowerGrimoire() {
           {viewed === 'viewed' ? '✓ 확인' : '미확인'}
         </Mark>
       );
-    seat.reminders.forEach(m => marks.push(<Mark key={m.id}>{m.text}</Mark>));
     return marks;
+  };
+
+  // 리마인더는 글자 띠가 아니라 그림 토큰으로(낮 화면에는 안 보인다)
+  // 주정뱅이 등이 믿는 캐릭터도 같은 모양의 토큰으로 맨 앞에 둔다
+  const remindersOf = (seat: GrimoireSeat, size: number, maxWidth?: number) => {
+    if (dayView) return null;
+    const believed = roles.get(seat.believedRoleKey ?? '');
+    if (!believed && seat.reminders.length === 0) return null;
+    return (
+      <ReminderRow style={maxWidth ? { maxWidth } : undefined}>
+        {believed && <ReminderToken text="믿는 캐릭터" role={believed} size={size} />}
+        {seat.reminders.map(m => (
+          <ReminderToken key={m.id} text={m.text} role={reminderSourceRole(m.source, state.data)} size={size} />
+        ))}
+      </ReminderRow>
+    );
   };
 
   return (
     <GrimoireRoot $immersive={immersive}>
       <Page>
+        {fullView && (
+          <Toolbar $sticky={immersive}>
+            <ToolTitle>
+              <strong>{state.data.gameName}</strong>
+              <span>
+                {phaseLabel(state)} · 생존 {alive}/{total}
+              </span>
+            </ToolTitle>
+            <Btn type="button" $tone="primary" onClick={closeFullView}>
+              전체화면 끝내기
+            </Btn>
+          </Toolbar>
+        )}
+        {!fullView && (
         <Toolbar $sticky={immersive}>
           <ToolTitle>
             <strong>{state.data.gameName}</strong>
@@ -710,27 +997,19 @@ export default function ClockTowerGrimoire() {
             </span>
           </ToolTitle>
           <Stat>처형 {needed}표 이상</Stat>
-          {/* 몰입 종료는 낮 화면에서도 늘 보이게 둔다 */}
-          {immersive ? (
-            <>
-              {canFullscreen && !fullscreen && (
-                <Btn type="button" onClick={requestFullscreen}>
-                  전체 화면
-                </Btn>
-              )}
-              <Btn type="button" onClick={exit}>
-                몰입 종료
-              </Btn>
-            </>
-          ) : (
-            <Btn type="button" onClick={enter}>
-              몰입 모드
+          {/* 몰입 종료는 낮 화면에서도 늘 보이게 둔다. 브라우저 전체 화면은 [전체화면](마도서만 크게)이 같이 켠다 */}
+          {immersive && (
+            <Btn type="button" onClick={exit}>
+              몰입 종료
             </Btn>
           )}
           <Btn type="button" $active={dayView} onClick={() => setDayView(v => !v)}>
             {dayView ? '이야기꾼 화면' : '낮 화면(가리기)'}
           </Btn>
-          {/* 낮 화면은 플레이어가 본다. 블러프·배정·되돌리기 같은 이야기꾼 버튼은 숨긴다 */}
+          <Btn type="button" onClick={openFullView}>
+            전체화면
+          </Btn>
+          {/* 낮 화면은 플레이어가 본다. 악마의 속임수·배정·되돌리기 같은 이야기꾼 버튼은 숨긴다 */}
           {!dayView && (
             <>
               <Btn
@@ -743,60 +1022,102 @@ export default function ClockTowerGrimoire() {
               >
                 되돌리기
               </Btn>
-              <Btn type="button" onClick={runRandom}>
-                무작위 배정
-              </Btn>
-              <Btn type="button" onClick={() => setBluffOpen(true)}>
-                블러프
-              </Btn>
-              <Btn type="button" onClick={() => setQrOpen(true)}>
-                스크립트 QR
-              </Btn>
-              <Btn type="button" $active={!!phone.session} onClick={sendToPhones} disabled={phone.sending}>
-                {phone.sending ? '보내는 중…' : phone.session ? '휴대폰으로 다시 보내기' : '휴대폰으로 배정 보내기'}
-              </Btn>
-              {phone.session && state.day === 1 && state.phase !== 'DAY' && (
-                <Btn
-                  type="button"
-                  onClick={sendEvilInfo}
-                  disabled={!evilInfoAvailable}
-                  title={
-                    evilInfoAvailable
-                      ? undefined
-                      : `${MIN_PLAYERS_FOR_EVIL_INFO}명 미만이라 첫날 밤 하수인·악마 정보 단계가 없습니다`
-                  }
-                >
-                  {evilInfoAvailable
-                    ? '첫날 밤 악 팀 정보 보내기'
-                    : `악 팀 정보 없음(${MIN_PLAYERS_FOR_EVIL_INFO}명 미만)`}
-                </Btn>
-              )}
-              <Btn type="button" onClick={addSeat}>
-                {isUnderway(state) ? '여행자 합류' : '자리 추가'}
+              <Btn type="button" onClick={() => setInfoOpen({})}>
+                정보 카드
               </Btn>
               {state.phase === 'NIGHT' ? (
-                <Btn type="button" onClick={endNight}>
+                <Btn type="button" $tone="primary" onClick={endNight}>
                   밤 끝내기
                 </Btn>
               ) : (
                 // 셋업이 끝나면 선악이 고정된다(밤 체크·사망으로도 자동 전환)
-                <Btn type="button" onClick={startNight}>
+                <Btn type="button" $tone="primary" onClick={startNight}>
                   {state.phase === 'SETUP' ? '첫날 밤 시작' : '밤 시작'}
                 </Btn>
               )}
-              <Btn type="button" $tone="primary" onClick={() => openEnd()}>
-                게임 종료
-              </Btn>
-              <Btn type="button" $tone="danger" onClick={newGame}>
-                새 게임
-              </Btn>
+              {/* 자주 쓰지 않는 것은 [더보기]로 묶는다(버튼이 두 줄로 늘어서 찾기 어려웠다) */}
+              <ToolbarMenu>
+                <MenuGroup>진행</MenuGroup>
+                <Btn type="button" onClick={() => setBluffOpen(true)}>
+                  악마의 속임수
+                </Btn>
+                <Btn type="button" onClick={() => setQrOpen(true)}>
+                  스크립트 QR
+                </Btn>
+                {/* 셋업 안내가 떠 있는 동안은 안내의 마지막 단계가 배정·보내기를 맡는다 */}
+                {!showWizard && (
+                  <Btn type="button" $active={!!phone.session} onClick={sendToPhones} disabled={phone.sending}>
+                    {phone.sending ? '보내는 중…' : phone.session ? '휴대폰으로 다시 보내기' : '휴대폰으로 배정 보내기'}
+                  </Btn>
+                )}
+                {phone.session && state.day === 1 && state.phase !== 'DAY' && (
+                  <Btn
+                    type="button"
+                    onClick={sendEvilInfo}
+                    disabled={!evilInfoAvailable}
+                    title={
+                      evilInfoAvailable
+                        ? undefined
+                        : `${MIN_PLAYERS_FOR_EVIL_INFO}명 미만이라 첫날 밤 하수인·악마 정보 단계가 없습니다`
+                    }
+                  >
+                    {evilInfoAvailable
+                      ? '악 팀 정보 다시 보내기'
+                      : `악 팀 정보 없음(${MIN_PLAYERS_FOR_EVIL_INFO}명 미만)`}
+                  </Btn>
+                )}
+                <MenuGroup>자리</MenuGroup>
+                {!showWizard && (
+                  <Btn type="button" onClick={runRandom}>
+                    무작위 배정
+                  </Btn>
+                )}
+                {state.phase === 'SETUP' && (
+                  <Btn type="button" $active={swapping} onClick={toggleSwapMode}>
+                    {swapping ? '자리 바꾸기 끝' : '자리 바꾸기'}
+                  </Btn>
+                )}
+                <Btn type="button" onClick={addSeat}>
+                  {isUnderway(state) ? '여행자 합류' : '자리 추가'}
+                </Btn>
+                {hasCustomPositions && (
+                  <Btn type="button" onClick={resetPositions}>
+                    리마인더 위치 원래대로
+                  </Btn>
+                )}
+                {!immersive && (
+                  <>
+                    <MenuGroup>화면</MenuGroup>
+                    <Btn type="button" onClick={enter}>
+                      몰입 모드
+                    </Btn>
+                  </>
+                )}
+                <MenuGroup>게임</MenuGroup>
+                <Btn type="button" onClick={saveToServer} disabled={savingToServer}>
+                  {savingToServer ? '저장 중…' : state.serverSaveId ? '임시저장(덮어쓰기)' : '임시저장'}
+                </Btn>
+                <Btn type="button" onClick={() => setSavedOpen(true)}>
+                  저장된 마도서
+                </Btn>
+                <Btn type="button" onClick={() => openFullView()}>
+                  마도서 전체화면
+                </Btn>
+                <Btn type="button" onClick={() => openEnd()}>
+                  게임 종료(기록 남기기)
+                </Btn>
+                <Btn type="button" $tone="danger" onClick={newGame}>
+                  새 게임
+                </Btn>
+              </ToolbarMenu>
             </>
           )}
         </Toolbar>
+        )}
 
         {externalChange && (
           <Warn>
-            다른 탭(창)에서 이 진행판이 저장되었습니다. 여기서 계속 진행하면 그쪽 내용을 덮어씁니다.
+            다른 탭(창)에서 이 마도서가 저장되었습니다. 여기서 계속 진행하면 그쪽 내용을 덮어씁니다.
             <Row style={{ marginTop: 8 }}>
               <Btn type="button" onClick={reload}>
                 그쪽 내용으로 다시 불러오기
@@ -806,50 +1127,125 @@ export default function ClockTowerGrimoire() {
         )}
 
         {/* 판정 제안은 이야기꾼만 본다(낮 화면에서 숨김) */}
-        {!dayView && verdict && (
+        {!dayView && !fullView && verdict && (
           <WinBanner verdict={verdict} onEnd={openEnd} onContinue={() => setVerdict(null)} />
         )}
 
+        {swapping && !dayView && !fullView && (
+          <Warn>
+            {swapFrom
+              ? `${seats.find(s => s.id === swapFrom)?.name ?? ''}님과 바꿀 자리를 누르세요. 같은 자리를 다시 누르면 취소됩니다.`
+              : '바꿀 두 자리를 차례로 누르세요. 사람이 통째로 맞바뀝니다(캐릭터를 나눠 준 뒤라면 캐릭터도 같이 움직입니다).'}
+          </Warn>
+        )}
+
+        {showWizard && !dayView && !fullView && (
+          <SetupWizard
+            state={state}
+            roles={roles}
+            sending={phone.sending}
+            onBag={bag =>
+              update(prev => {
+                // 주머니에 들어간 캐릭터는 악마의 속임수가 될 수 없다
+                const used = usedKeys(bag);
+                return { ...prev, bag, bluffs: (prev.bluffs ?? []).filter(k => !used.has(k)) };
+              })
+            }
+            onBluffs={bluffs => update(prev => ({ ...prev, bluffs }))}
+            onPlayers={n => update(prev => ({ ...prev, setupPlayers: n }))}
+            onDeal={dealAndSend}
+          />
+        )}
+
+        {/* 나눠 준 뒤 셋업이 끝나기 전: 휴대폰 확인 현황과 다음 할 일([첫날 밤 시작]) */}
+        {!showWizard && !fullView && state.phase === 'SETUP' && !dayView && isDealt(state, roles) && (() => {
+          const memberSeats = seats.filter(s => s.memberId != null && phone.viewStatusOf(s.memberId) != null);
+          const unviewed = memberSeats.filter(s => phone.viewStatusOf(s.memberId) === 'unviewed');
+          return (
+            <Warn style={{ marginBottom: 12 }}>
+              <Row style={{ gap: 10 }}>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  캐릭터를 나눠 줬습니다.
+                  {memberSeats.length > 0 &&
+                    ` 휴대폰 확인 ${memberSeats.length - unviewed.length}/${memberSeats.length}명${
+                      unviewed.length ? ` — 아직: ${unviewed.map(s => s.name).join(', ')}` : ' — 모두 확인했습니다'
+                    }.`}{' '}
+                  준비되면 첫날 밤을 시작하세요.
+                </span>
+                <Btn type="button" $tone="primary" onClick={startNight}>
+                  첫날 밤 시작
+                </Btn>
+              </Row>
+            </Warn>
+          );
+        })()}
+
         <Layout>
           <div>
-            <Circle>
+            {/* 위·아래 자리의 토큰·이름이 원 밖으로 나와 툴바·아래 패널과 겹치지 않게 그만큼 여백을 둔다 */}
+            <Circle
+              ref={setCircleEl}
+              style={{
+                ...(fullView ? FILL_STYLE : circleMargins(tokenSize, circleWidth)),
+              }}
+            >
               {seats.map((seat, i) => {
                 const { color, shape, label, role, images } = tokenOf(seat, i);
                 const dead = seat.dead || seat.left;
+                // 테두리 3px 양쪽을 뺀 안쪽에 그림·휜 이름을 그린다
+                const inner = tokenSize - 6;
                 return (
                   <SeatSpot
                     key={seat.id}
                     type="button"
-                    style={seatPosition(i, seats.length)}
-                    onClick={() => !dayView && setOpenSeatId(seat.id)}
+                    style={{
+                      left: `${seatPoint(i, seats.length).x}%`,
+                      top: `${seatPoint(i, seats.length).y}%`,
+                      width: tokenSize + 36,
+                    }}
+                    onClick={() => onSeatClick(seat.id)}
                   >
-                    <Token
-                      $color={dayView ? CT_TYPE_COLOR_DARK.TOWNSFOLK : color}
-                      $shape={shape}
-                      $dead={dead}
-                      $empty={!dayView && !role}
-                      $art={images.length > 0}
+                    <TokenWrap style={{ width: tokenSize, height: tokenSize }}>
+                      <Token
+                        $color={dayView ? CT_TYPE_COLOR_DARK.TOWNSFOLK : color}
+                        $shape={shape}
+                        $dead={dead}
+                        $empty={!dayView && !role}
+                        $art={images.length > 0}
+                        $size={tokenSize}
+                        style={{ fontSize: Math.max(12, Math.round(tokenSize * 0.17)) }}
+                      >
+                        {images.length > 0 ? (
+                          // 포켓 그리모어처럼 양피지 위 그림 + 아래 테두리를 따라 휜 이름
+                          <>
+                            <TokenArt>
+                              <RoleArt urls={images} alt="" size={Math.round(inner * 0.74)} dead={dead} />
+                            </TokenArt>
+                            <CurvedText text={label} size={inner} color={dead ? '#2e2a24' : '#2b2118'} fontScale={0.15} />
+                          </>
+                        ) : (
+                          label
+                        )}
+                      </Token>
+                      {/* 낮 화면은 토큰 글자가 이미 자리 번호다 */}
+                      {!dayView && <SeatBadge $size={Math.max(18, Math.round(tokenSize * 0.24))}>{i + 1}</SeatBadge>}
+                      {orbitReminders(seat, i)}
+                    </TokenWrap>
+                    <SeatName
+                      $dead={seat.dead}
+                      style={{ maxWidth: tokenSize + 36, fontSize: Math.max(13, Math.round(tokenSize * 0.15)) }}
                     >
-                      {images.length > 0 ? (
-                        <RoleArt
-                          urls={images}
-                          alt=""
-                          size={70}
-                          dead={dead}
-                          fallback={label}
-                          overlay={<TokenCaption>{label}</TokenCaption>}
-                        />
-                      ) : (
-                        label
-                      )}
-                    </Token>
-                    <SeatName $dead={seat.dead}>{seat.name}</SeatName>
+                      {seat.name}
+                    </SeatName>
                     <SeatMarks>{marksOf(seat)}</SeatMarks>
                   </SeatSpot>
                 );
               })}
               <CircleCenter>
                 <strong>{dayView ? phaseLabel(state) : state.data.gameName}</strong>
+                {fullView && !dayView && (state.bluffs ?? []).length > 0 && (
+                  <span>악마의 속임수: {(state.bluffs ?? []).map(k => roles.get(k)?.name ?? k).join(', ')}</span>
+                )}
                 <span>
                   생존 {alive}명 · 처형 {needed}표
                 </span>
@@ -864,9 +1260,17 @@ export default function ClockTowerGrimoire() {
                     key={seat.id}
                     type="button"
                     $dead={seat.dead}
-                    onClick={() => !dayView && setOpenSeatId(seat.id)}
+                    onClick={() => onSeatClick(seat.id)}
                   >
                     <SeatNo>{i + 1}</SeatNo>
+                    {!dayView && role && (
+                      <RoleArt
+                        urls={tokenImageCandidates(role, isEvilSeat(seat, roles), state.data.genericImages)}
+                        alt=""
+                        size={44}
+                        dead={seat.dead || seat.left}
+                      />
+                    )}
                     <SeatRowBody>
                       <SeatName $dead={seat.dead}>{seat.name}</SeatName>
                       {!dayView && (
@@ -883,6 +1287,7 @@ export default function ClockTowerGrimoire() {
                       <SeatMarks style={{ justifyContent: 'flex-start', maxWidth: 'none' }}>
                         {marksOf(seat)}
                       </SeatMarks>
+                      {remindersOf(seat, 46)}
                     </SeatRowBody>
                   </SeatRow>
                 );
@@ -890,7 +1295,7 @@ export default function ClockTowerGrimoire() {
             </SeatList>
           </div>
 
-          {!dayView && (
+          {!dayView && !fullView && (
             <Side>
               <Tabs>
                 {SIDE_TABS.map(t => (
@@ -932,6 +1337,9 @@ export default function ClockTowerGrimoire() {
                 {sideTab === 'night' && (
                   <NightList
                     state={state}
+                    phase={state.phase}
+                    onStartNight={startNight}
+                    onEndNight={endNight}
                     onTab={tab => update(prev => ({ ...prev, nightTab: tab }))}
                     // 밤 체크는 되돌리기 기록에 넣지 않는다(30칸을 체크가 다 차지해 사망 같은 조작을 못 되돌리게 된다)
                     onToggle={key =>
@@ -944,13 +1352,7 @@ export default function ClockTowerGrimoire() {
                         })
                       )
                     }
-                    onClear={() =>
-                      showConfirmModal({
-                        message: '밤 체크를 모두 비울까요?',
-                        onConfirm: () => updateSilently(prev => ({ ...prev, nightChecked: [] })),
-                      })
-                    }
-                    onOpenMode={() => setNightMode(true)}
+                    onOpenMode={key => setNightMode(key ?? '')}
                   />
                 )}
 
@@ -1028,9 +1430,12 @@ export default function ClockTowerGrimoire() {
                     jinxes.map(j => (
                       <NightRow key={`${j.roleA}-${j.roleB}`} $done={false} $muted={false}>
                         <NightBody>
-                          <b>
-                            {roles.get(j.roleA)?.name} × {roles.get(j.roleB)?.name}
-                          </b>
+                          <Row style={{ gap: 6 }}>
+                            <RoleArt urls={tokenImageCandidates(roles.get(j.roleA), null)} alt="" size={36} />
+                            <b>{roles.get(j.roleA)?.name}</b>×
+                            <RoleArt urls={tokenImageCandidates(roles.get(j.roleB), null)} alt="" size={36} />
+                            <b>{roles.get(j.roleB)?.name}</b>
+                          </Row>
                           <div>{renderNightText(j.reason)}</div>
                         </NightBody>
                       </NightRow>
@@ -1047,6 +1452,7 @@ export default function ClockTowerGrimoire() {
                         <NightRow key={r.key} $done={false} $muted={!on}>
                           <NightBody>
                             <Row>
+                              <RoleArt urls={tokenImageCandidates(r, null)} alt="" size={40} />
                               <b>{r.name}</b>
                               <Chip
                                 type="button"
@@ -1184,7 +1590,6 @@ export default function ClockTowerGrimoire() {
 
         {qrOpen && <ScriptQrPanel state={state} onClose={() => setQrOpen(false)} />}
 
-        {showContent && <ShowCard content={showContent} onClose={() => setShowContent(null)} />}
 
         {endOpen && (
           <EndGamePanel
@@ -1201,7 +1606,7 @@ export default function ClockTowerGrimoire() {
               // 게임이 끝났으니 플레이어 휴대폰 배정을 닫는다
               phone.close();
               showConfirmModal({
-                message: '기록을 남겼습니다. 진행판을 비우고 기록 목록으로 갈까요?',
+                message: '기록을 남겼습니다. 마도서를 비우고 기록 목록으로 갈까요?',
                 onConfirm: () => {
                   reset();
                   navigate('/clocktower-records');
@@ -1211,17 +1616,46 @@ export default function ClockTowerGrimoire() {
           />
         )}
 
-        {nightMode && (
+        {nightMode != null && (
           <NightMode
+            key={nightMode}
             state={state}
+            phase={state.phase}
+            startKey={nightMode || null}
+            onOpenInfo={preset => setInfoOpen(preset ?? {})}
+            onEndNight={endNight}
             onCheck={key =>
               updateSilently(prev =>
                 leaveSetup({ ...prev, nightChecked: [...prev.nightChecked, key] })
               )
             }
-            onClose={() => setNightMode(false)}
+            onClose={() => setNightMode(null)}
+            onShow={content => setShowContent(content)}
           />
         )}
+
+        {infoOpen != null && (
+          <InfoCardPanel
+            key={JSON.stringify(infoOpen)}
+            state={state}
+            preset={infoOpen}
+            onShow={content => setShowContent(content)}
+            onClose={() => setInfoOpen(null)}
+          />
+        )}
+
+        {savedOpen && (
+          <SavedGrimoirePanel
+            onView={(s, title) => setViewer({ state: s, title })}
+            onResume={resumeSaved}
+            onClose={() => setSavedOpen(false)}
+          />
+        )}
+
+        {viewer && <GrimoireViewer state={viewer.state} title={viewer.title} onClose={() => setViewer(null)} />}
+
+        {/* 보여주기 카드는 밤 진행·정보 카드 창보다 위에 그린다(맨 뒤에 둔다) */}
+        {showContent && <ShowCard content={showContent} onClose={() => setShowContent(null)} />}
       </Page>
     </GrimoireRoot>
   );

@@ -3,9 +3,9 @@ import { useSetRecoilState } from 'recoil';
 import { layoutModeState } from '../../../recoil/state/layoutState.ts';
 import { toast } from '../../../utils/toast';
 
-// 마지막 선택(몰입 켬/끔)만 기억한다. 진행 상태와 무관한 화면 취향이라 진행판 키와 따로 둔다
+// 마지막 선택(몰입 켬/끔)만 기억한다. 진행 상태와 무관한 화면 취향이라 마도서 키와 따로 둔다
 const PREF_KEY = 'clocktowerGrimoireImmersive';
-// 진행판 바탕색. 진행판에 있는 동안 html 배경·브라우저 상단 색(theme-color)을 맞춘다
+// 마도서 바탕색. 마도서에 있는 동안 html 배경·브라우저 상단 색(theme-color)을 맞춘다
 const DARK_BG = '#14101C';
 
 type FullscreenDoc = Document & {
@@ -31,7 +31,7 @@ function writePref(on: boolean) {
   }
 }
 
-function fullscreenElement() {
+export function fullscreenElement() {
   const d = document as FullscreenDoc;
   return d.fullscreenElement ?? d.webkitFullscreenElement ?? null;
 }
@@ -39,24 +39,28 @@ function fullscreenElement() {
 // iPhone 은 요소 전체 화면이 없다(iPadOS 는 있다). 버튼을 숨기고 홈 화면 추가 안내로 대신한다
 const IS_IPHONE = typeof navigator !== 'undefined' && /iPhone|iPod/.test(navigator.userAgent);
 
-function fullscreenSupported() {
+export function fullscreenSupported() {
   if (IS_IPHONE) return false;
   const d = document as FullscreenDoc;
   return !!(d.fullscreenEnabled || d.webkitFullscreenEnabled);
 }
 
-/** 클릭 핸들러 안에서 바로 불러야 한다(사용자 동작이 아니면 브라우저가 거절). 진행판 div 가 아니라 html 에 건다 — 모달이 그 밖에 있어도 보이게 */
-function requestFullscreen() {
+/** 클릭 핸들러 안에서 바로 불러야 한다(사용자 동작이 아니면 브라우저가 거절). 마도서 div 가 아니라 html 에 건다 — 모달이 그 밖에 있어도 보이게 */
+// quiet = 열면서 자동으로 시도할 때(사용자 동작이 끊겨 거절될 수 있다) — 실패해도 안내하지 않는다
+export function requestFullscreen(quiet = false) {
   const el = document.documentElement as FullscreenEl;
+  const fail = () => {
+    if (!quiet) toast.error('전체 화면을 열지 못했습니다. 브라우저 메뉴의 전체 화면을 써 주세요.');
+  };
   try {
     const r = el.requestFullscreen ? el.requestFullscreen() : el.webkitRequestFullscreen?.();
-    Promise.resolve(r).catch(() => toast.error('전체 화면을 열지 못했습니다. 브라우저 메뉴의 전체 화면을 써 주세요.'));
+    Promise.resolve(r).catch(fail);
   } catch {
-    toast.error('전체 화면을 열지 못했습니다. 브라우저 메뉴의 전체 화면을 써 주세요.');
+    fail();
   }
 }
 
-function exitFullscreen() {
+export function exitFullscreen() {
   if (!fullscreenElement()) return;
   const d = document as FullscreenDoc;
   try {
@@ -68,10 +72,10 @@ function exitFullscreen() {
 }
 
 /**
- * 진행판 몰입 모드(사이트 머리·메뉴·푸터 숨김) + 전체 화면.
+ * 마도서 몰입 모드(사이트 머리·메뉴·푸터 숨김) + 전체 화면.
  * - enabled 는 진행 중인 판을 보여 줄 때만 true(시작 화면·차단 화면은 사이트 틀 그대로)
- * - 진행판을 떠나면(언마운트) 반드시 normal 로 되돌리고 전체 화면도 끝낸다
- * - 진행판에 있는 동안 html 배경·theme-color 를 어둡게, 떠나면 원래 값으로
+ * - 마도서를 떠나면(언마운트) 반드시 normal 로 되돌리고 전체 화면도 끝낸다
+ * - 마도서에 있는 동안 html 배경·theme-color 를 어둡게, 떠나면 원래 값으로
  */
 export function useImmersiveMode(enabled: boolean) {
   const setLayoutMode = useSetRecoilState(layoutModeState);

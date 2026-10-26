@@ -10,8 +10,10 @@ import type {
 } from '../../../types/clocktower.ts';
 
 // 진행 상태는 이 기기에만 둔다. 서버에 두면 누가 악마인지 다른 사람이 조회할 수 있게 된다
-// 키는 v1 시절 그대로 두고 version 필드로 구분한다(키를 바꾸면 진행 중이던 판을 못 찾는다)
-const STORAGE_KEY = 'clocktowerGrimoire_v1';
+// 판은 회원별 키에 둔다. 예전엔 기기에 한 판뿐이라, 매장 태블릿에 다른 이야기꾼이 로그인하면
+// 앞 사람 판을 지워야만 시작할 수 있었다. 형식은 키가 아니라 상태 안 version 필드로 구분한다
+const LEGACY_KEY = 'clocktowerGrimoire_v1';
+const storageKey = (userId: number) => `${LEGACY_KEY}_m${userId}`;
 const BACKUP_PREFIX = 'clocktowerGrimoire_backup_';
 const UNDO_LIMIT = 30;
 
@@ -125,7 +127,7 @@ function parse(raw: string | null): Loaded {
     const key = backupUnknown(raw);
     return {
       state: null,
-      notice: `저장된 진행판을 읽지 못했습니다.${key ? ` 원본은 ${key} 에 보관했습니다.` : ''}`,
+      notice: `저장된 마도서를 읽지 못했습니다.${key ? ` 원본은 ${key} 에 보관했습니다.` : ''}`,
     };
   }
   const valid = !!parsed && !!parsed.data && Array.isArray(parsed.seats);
@@ -135,31 +137,55 @@ function parse(raw: string | null): Loaded {
   const key = backupUnknown(raw);
   return {
     state: null,
-    notice: `알 수 없는 형식(version ${String(parsed?.version)})의 진행판이 있었습니다.${
+    notice: `알 수 없는 형식(version ${String(parsed?.version)})의 마도서가 있었습니다.${
       key ? ` 지우지 않고 ${key} 에 보관했습니다.` : ''
     }`,
   };
 }
 
-function load(): Loaded {
+/**
+ * 예전 한 판짜리 키에 이 회원 판(또는 주인 없는 옛 판)이 있으면 회원별 키로 옮긴다.
+ * 다른 회원 판이면 손대지 않는다 — 그 회원이 로그인할 때 옮겨 간다.
+ */
+function migrateLegacy(userId: number): string | null {
+  const raw = localStorage.getItem(LEGACY_KEY);
+  if (!raw) return null;
+  const { state } = parse(raw);
+  if (!state || (state.ownerId != null && state.ownerId !== userId)) return null;
+  localStorage.setItem(storageKey(userId), raw);
+  localStorage.removeItem(LEGACY_KEY);
+  return raw;
+}
+
+/** 서버에 임시저장했거나 기록에 붙은 마도서 JSON 을 판으로 되살린다(이 기기 저장본과 같은 변환을 거친다) */
+export function restoreSaved(raw: string | null | undefined): GrimoireState | null {
+  if (!raw) return null;
+  try {
+    return parse(raw).state;
+  } catch {
+    return null;
+  }
+}
+
+function load(userId: number): Loaded {
   let raw: string | null = null;
   try {
-    raw = localStorage.getItem(STORAGE_KEY);
+    raw = localStorage.getItem(storageKey(userId)) ?? migrateLegacy(userId);
     return parse(raw);
   } catch {
     // 변환 중 예외(옛 판의 좌석 데이터가 이상한 경우 등). 그냥 null 을 돌려주면 새 게임이 원본을 덮어쓰므로 먼저 보관한다
     const key = raw ? backupUnknown(raw) : null;
     return {
       state: null,
-      notice: key ? `저장된 진행판을 열지 못했습니다. 원본은 ${key} 에 보관했습니다.` : null,
+      notice: key ? `저장된 마도서를 열지 못했습니다. 원본은 ${key} 에 보관했습니다.` : null,
     };
   }
 }
 
-function save(state: GrimoireState | null) {
+function save(userId: number, state: GrimoireState | null) {
   try {
-    if (state) localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    else localStorage.removeItem(STORAGE_KEY);
+    if (state) localStorage.setItem(storageKey(userId), JSON.stringify(state));
+    else localStorage.removeItem(storageKey(userId));
   } catch {
     // 사파리 개인 정보 보호 모드 등 저장 불가 — 진행은 계속된다(새로고침하면 사라짐)
   }
@@ -169,7 +195,7 @@ export function newSeatId() {
   return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 }
 
-/** 빈 좌석(진행판 시작·여행자 추가) */
+/** 빈 좌석(마도서 시작·여행자 추가) */
 export function createSeat(memberId: number | null, name: string): GrimoireSeat {
   return {
     id: newSeatId(),
@@ -228,12 +254,15 @@ function mergeSilent(past: GrimoireState, now: GrimoireState): GrimoireState {
 }
 
 /**
- * 진행판 상태 + 자동 저장 + 되돌리기.
+ * 마도서 상태 + 자동 저장 + 되돌리기.
  * update 로 바꾼 것만 되돌리기 대상이다(메모 입력·밤 체크처럼 자주 바뀌는 건 updateSilently).
- * userId 가 저장한 회원(ownerId)과 다르면 판을 열지 않는다 — 같은 태블릿에 다른 이야기꾼이 로그인한 경우.
+ * 판은 로그인한 회원별로 따로 저장한다. 같은 태블릿에 다른 이야기꾼이 로그인하면 그 사람 판(없으면 새 판)이 열린다.
  */
 export function useGrimoire(userId: number | null) {
-  const [loaded] = useState<Loaded>(() => load());
+  // 어느 회원 판을 읽었는지 같이 든다. 로그인이 바뀐 직후 한 번은 앞 회원 판이 남아 있으므로 맞을 때만 연다
+  const [loaded, setLoaded] = useState<{ userId: number | null } & Loaded>(() =>
+    userId != null ? { userId, ...load(userId) } : { userId: null, state: null, notice: null }
+  );
   const [stored, setStateRaw] = useState<GrimoireState | null>(loaded.state);
   // 갱신 함수 안에서 기록을 쌓으면 StrictMode 가 두 번 불러 두 번 쌓인다. 최신 상태를 ref 로 들고 바깥에서 계산한다
   const current = useRef<GrimoireState | null>(stored);
@@ -242,30 +271,46 @@ export function useGrimoire(userId: number | null) {
   // 다른 탭(창)이 같은 판을 저장했다. 이 화면에서 계속 저장하면 그쪽 내용을 덮어쓴다
   const [externalChange, setExternalChange] = useState(false);
 
-  const blocked = !!stored && stored.ownerId != null && userId != null && stored.ownerId !== userId;
-  // 로그인 정보가 오기 전에는 누구 판인지 판정할 수 없어 열지 않는다
-  const state = blocked || userId == null ? null : stored;
+  // 로그인 정보가 오기 전에는 누구 판인지 알 수 없어 열지 않는다
+  const ready = userId != null && loaded.userId === userId;
+  const state = ready ? stored : null;
+  const owner = useRef(userId);
+  owner.current = ready ? userId : null;
 
-  // 저장은 바꿀 때만 한다. 마운트·차단 상태에서 null 을 저장하면 남의 판을 지워 버린다
+  // 로그인한 회원이 바뀌면 그 회원 판을 읽는다. 되돌리기 기록도 그 회원 것이 아니므로 비운다
+  useEffect(() => {
+    if (userId == null || loaded.userId === userId) return;
+    const next = load(userId);
+    history.current = [];
+    setUndoCount(0);
+    setExternalChange(false);
+    current.current = next.state;
+    setStateRaw(next.state);
+    setLoaded({ userId, ...next });
+  }, [userId, loaded.userId]);
+
+  // 저장은 바꿀 때만, 읽어 온 회원 키에만 한다
   const setState = useCallback((next: GrimoireState | null) => {
+    const uid = owner.current;
+    if (uid == null) return;
     current.current = next;
     setStateRaw(next);
-    save(next);
+    save(uid, next);
   }, []);
 
   // 옛 판(마이그레이션)·로그인 전에 만든 판은 주인이 없다. 지금 로그인한 회원으로 채운다
   useEffect(() => {
-    if (stored && stored.ownerId == null && userId != null)
-      setState({ ...stored, ownerId: userId });
-  }, [stored, userId, setState]);
+    if (ready && stored && stored.ownerId == null) setState({ ...stored, ownerId: userId });
+  }, [ready, stored, userId, setState]);
 
   useEffect(() => {
+    if (userId == null) return;
     const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) setExternalChange(true);
+      if (e.key === storageKey(userId)) setExternalChange(true);
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
-  }, []);
+  }, [userId]);
 
   // 바뀐 상태를 돌려준다(승패 제안처럼 바뀐 결과로 판정할 때 쓴다)
   const update = useCallback(
@@ -317,7 +362,9 @@ export function useGrimoire(userId: number | null) {
 
   /** 다른 탭이 저장한 내용으로 이 화면을 다시 맞춘다 */
   const reload = useCallback(() => {
-    const next = load().state;
+    const uid = owner.current;
+    if (uid == null) return;
+    const next = load(uid).state;
     history.current = [];
     setUndoCount(0);
     setExternalChange(false);
@@ -344,9 +391,7 @@ export function useGrimoire(userId: number | null) {
     start,
     reset,
     reload,
-    // 다른 회원이 저장한 판이 이 기기에 있다(열지 않음)
-    blockedByOtherOwner: blocked,
-    loadNotice: loaded.notice,
+    loadNotice: ready ? loaded.notice : null,
     externalChange,
   };
 }

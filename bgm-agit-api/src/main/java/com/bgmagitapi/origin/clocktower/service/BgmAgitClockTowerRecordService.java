@@ -20,6 +20,9 @@ public interface BgmAgitClockTowerRecordService {
 
     ApiResponse createRecord(ClockTowerRecordCreateRequest request, Long memberId);
 
+    /** 기록에 붙은 마지막 마도서(JSON). 없으면 null */
+    String getRecordGrimoire(Long id);
+
     ApiResponse modifyRecord(Long id, ClockTowerRecordModifyRequest request, Long memberId, List<String> roles);
 
     ApiResponse deleteRecord(Long id, Long memberId, List<String> roles);

@@ -11,7 +11,8 @@ import java.util.List;
 
 public interface BgmAgitClockTowerGameService {
 
-    Page<ClockTowerGameResponse> getGames(Pageable pageable, String keyword);
+    /** source: OFFICIAL = 공식만, CUSTOM = 공식이 아닌 것, 그 외(null) = 전체 */
+    Page<ClockTowerGameResponse> getGames(Pageable pageable, String keyword, String source);
 
     List<ClockTowerGameResponse> getSimpleGames();
 
