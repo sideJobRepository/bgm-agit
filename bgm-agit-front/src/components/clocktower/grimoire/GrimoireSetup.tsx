@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { useRecoilValue } from 'recoil';
-import { userState } from '../../../recoil/state/userState.ts';
 import api from '../../../utils/axiosInstance.ts';
 import { toast } from '../../../utils/toast';
 import type { ClockTowerGame, GrimoireData, GrimoireSeat, GrimoireState, MemberOption } from '../../../types/clocktower.ts';
@@ -39,7 +37,7 @@ function loadRecent(ownerId: number | null): RecentStore {
   }
 }
 
-/** 시작할 때 회원 참가자만 남긴다(테스트 손님은 다음 판에 의미가 없다). 최근 목록은 이번 판 사람이 앞으로 온다 */
+/** 시작할 때 회원 참가자만 남긴다(예전 판의 손님 자리는 다음 판에 의미가 없다). 최근 목록은 이번 판 사람이 앞으로 온다 */
 function saveRecent(ownerId: number | null, players: Player[]) {
   if (ownerId == null) return;
   const members = players.filter(p => p.memberId != null);
@@ -70,8 +68,6 @@ export default function GrimoireSetup({
   const [starting, setStarting] = useState(false);
   const debounce = useRef<number | null>(null);
   const [recentStore] = useState<RecentStore>(() => loadRecent(ownerId));
-  const user = useRecoilValue(userState);
-  const isAdmin = (user?.roles ?? []).some(r => r === 'ROLE_ADMIN' || r === 'ADMIN');
 
   useEffect(() => {
     api
@@ -115,18 +111,6 @@ export default function GrimoireSetup({
     });
 
   const remove = (idx: number) => setPlayers(prev => prev.filter((_, i) => i !== idx));
-
-  // 관리자 테스트용: 손님 자리를 n명이 될 때까지 "손님1, 손님2…" 로 채운다(휴대폰 배정·기록에서 빠진다)
-  const fillGuests = (total: number) =>
-    setPlayers(prev => {
-      const next = [...prev];
-      let n = 1;
-      while (next.length < total) {
-        const name = `손님${n++}`;
-        if (!next.some(p => p.name === name)) next.push({ memberId: null, name });
-      }
-      return next;
-    });
 
   const start = async () => {
     if (!gameId) {
@@ -216,16 +200,6 @@ export default function GrimoireSetup({
             </Row>
           </div>
         )}
-        {isAdmin && (
-          <Row style={{ marginTop: 8 }}>
-            <Hint>테스트용(손님) 자리 채우기:</Hint>
-            {[5, 7, 10, 12, 15].map(n => (
-              <Btn key={n} type="button" onClick={() => fillGuests(n)} disabled={players.length >= n}>
-                {n}명까지 채우기
-              </Btn>
-            ))}
-          </Row>
-        )}
         {players.length > 0 && players.length < 5 && (
           <Hint style={{ marginTop: 6 }}>공식 규칙은 5명 이상입니다. 그보다 적으면 셋업 점검·무작위 배정이 동작하지 않습니다.</Hint>
         )}
@@ -245,7 +219,7 @@ export default function GrimoireSetup({
               <PlayerItem key={`${p.memberId ?? 'g'}-${p.name}-${i}`}>
                 <small>{i + 1}</small>
                 <span>
-                  {p.name} {p.memberId == null && <small>(테스트 손님)</small>}
+                  {p.name}
                 </span>
                 <button type="button" onClick={() => move(i, -1)} aria-label="위로">
                   ▲
