@@ -155,6 +155,28 @@ function refreshCharacterIds(prev: GrimoireState, fresh: GrimoireData): Grimoire
 }
 
 /** 원형 배치 좌표(%). 0번이 12시 방향, 시계 방향 */
+/**
+ * 좌석 토큰 크기. 원 지름과 인원에 맞춘다 — 고정 76px 이면 태블릿처럼 원이 클 때 토큰이 작아 보였다.
+ * 지름의 15% 를 넘지 않고, 이웃 좌석 간격(원둘레 / 인원)의 62% 안이라 서로 겹치지 않는다.
+ */
+function seatTokenSize(circleWidth: number, total: number) {
+  if (!circleWidth) return 76;
+  const spacing = (2 * Math.PI * 0.41 * circleWidth) / Math.max(total, 1);
+  return Math.round(Math.max(52, Math.min(circleWidth * 0.15, spacing * 0.62, 140)));
+}
+
+/** 요소 폭을 따라간다(화면 회전·몰입 모드 전환 때 원 크기가 바뀐다) */
+function useElementWidth(el: HTMLElement | null) {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => setWidth(Math.round(entry.contentRect.width)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [el]);
+  return width;
+}
+
 function seatPosition(i: number, total: number) {
   const angle = (2 * Math.PI * i) / total;
   const radius = 41;
@@ -207,6 +229,8 @@ export default function ClockTowerGrimoire() {
   // 자리 바꾸기: 켜 두고 두 자리를 차례로 누르면 맞바꾼다(좌석 메뉴의 한 칸 이동보다 빠르다)
   const [swapMode, setSwapMode] = useState(false);
   const [swapFrom, setSwapFrom] = useState<string | null>(null);
+  const [circleEl, setCircleEl] = useState<HTMLDivElement | null>(null);
+  const circleWidth = useElementWidth(circleEl);
 
   useWakeLock(!!state);
   // 플레이어 휴대폰(/clocktower-my)으로 보낸 배정: 바뀐 좌석 자동 재전송 + 확인 여부
@@ -677,6 +701,10 @@ export default function ClockTowerGrimoire() {
       toast.success(`캐릭터를 나눠 주고 회원에게 보냈습니다.${guestNote}`);
   };
 
+  const tokenSize = seatTokenSize(circleWidth, seats.length);
+  // 리마인더는 좌석 토큰의 절반쯤(공식 앱도 리마인더가 캐릭터 토큰보다 작다)
+  const reminderSize = Math.max(36, Math.round(tokenSize * 0.5));
+
   const tokenOf = (seat: GrimoireSeat, i: number) => {
     const role = roles.get(seat.roleKey ?? '');
     const color = role?.team ? CT_TYPE_COLOR_DARK[role.team] : EMPTY_COLOR;
@@ -745,12 +773,12 @@ export default function ClockTowerGrimoire() {
 
   // 리마인더는 글자 띠가 아니라 그림 토큰으로(낮 화면에는 안 보인다)
   // 주정뱅이 등이 믿는 캐릭터도 같은 모양의 토큰으로 맨 앞에 둔다
-  const remindersOf = (seat: GrimoireSeat, size: number) => {
+  const remindersOf = (seat: GrimoireSeat, size: number, maxWidth?: number) => {
     if (dayView) return null;
     const believed = roles.get(seat.believedRoleKey ?? '');
     if (!believed && seat.reminders.length === 0) return null;
     return (
-      <ReminderRow>
+      <ReminderRow style={maxWidth ? { maxWidth } : undefined}>
         {believed && <ReminderToken text="믿는 캐릭터" role={believed} size={size} />}
         {seat.reminders.map(m => (
           <ReminderToken key={m.id} text={m.text} role={reminderSourceRole(m.source, state.data)} size={size} />
@@ -907,15 +935,17 @@ export default function ClockTowerGrimoire() {
 
         <Layout>
           <div>
-            <Circle>
+            <Circle ref={setCircleEl}>
               {seats.map((seat, i) => {
                 const { color, shape, label, role, images } = tokenOf(seat, i);
                 const dead = seat.dead || seat.left;
+                // 테두리 3px 양쪽을 뺀 안쪽에 그림·휜 이름을 그린다
+                const inner = tokenSize - 6;
                 return (
                   <SeatSpot
                     key={seat.id}
                     type="button"
-                    style={seatPosition(i, seats.length)}
+                    style={{ ...seatPosition(i, seats.length), width: tokenSize + 36 }}
                     onClick={() => onSeatClick(seat.id)}
                   >
                     <Token
@@ -924,23 +954,30 @@ export default function ClockTowerGrimoire() {
                       $dead={dead}
                       $empty={!dayView && !role}
                       $art={images.length > 0}
+                      $size={tokenSize}
+                      style={{ fontSize: Math.max(12, Math.round(tokenSize * 0.17)) }}
                     >
                       {images.length > 0 ? (
                         <RoleArt
                           urls={images}
                           alt=""
-                          size={70}
+                          size={inner}
                           dead={dead}
                           fallback={label}
-                          overlay={<CurvedText text={label} size={70} color="#ffffff" outline="rgba(10, 8, 14, 0.92)" fontScale={0.16} />}
+                          overlay={<CurvedText text={label} size={inner} color="#ffffff" outline="rgba(10, 8, 14, 0.92)" fontScale={0.16} />}
                         />
                       ) : (
                         label
                       )}
                     </Token>
-                    <SeatName $dead={seat.dead}>{seat.name}</SeatName>
+                    <SeatName
+                      $dead={seat.dead}
+                      style={{ maxWidth: tokenSize + 36, fontSize: Math.max(13, Math.round(tokenSize * 0.15)) }}
+                    >
+                      {seat.name}
+                    </SeatName>
                     <SeatMarks>{marksOf(seat)}</SeatMarks>
-                    {remindersOf(seat, 42)}
+                    {remindersOf(seat, reminderSize, tokenSize + 36)}
                   </SeatSpot>
                 );
               })}

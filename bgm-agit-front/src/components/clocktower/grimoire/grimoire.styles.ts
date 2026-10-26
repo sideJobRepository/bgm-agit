@@ -212,11 +212,6 @@ export const CircleCenter = styled.div`
 export const SeatSpot = styled.button`
   position: absolute;
   transform: translate(-50%, -50%);
-
-  /* 휴대폰 폭의 원에서는 좌석끼리 겹치지 않게 줄인다 */
-  @media (max-width: 600px) {
-    transform: translate(-50%, -50%) scale(0.72);
-  }
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -237,13 +232,15 @@ export const Token = styled.div<{
   $empty: boolean;
   $art?: boolean;
   $shape?: TokenShape;
+  $size?: number;
 }>`
   position: relative;
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: center;
-  width: 76px;
-  height: 76px;
+  width: ${({ $size = 76 }) => $size}px;
+  height: ${({ $size = 76 }) => $size}px;
   padding: 6px;
   border-radius: 50%;
   border: ${({ $shape }) => ($shape === 'double' ? '5px double' : $shape === 'dashed' ? '3px dashed' : '3px solid')}
