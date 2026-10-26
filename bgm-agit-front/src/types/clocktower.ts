@@ -146,7 +146,7 @@ export interface ClockTowerImageSyncResult {
   message: string | null;
 }
 
-// ---------- 이야기꾼 진행판 ----------
+// ---------- 이야기꾼 마도서 ----------
 
 /** 공식 데이터 special 항목(예: {type:'selection', name:'bag-disabled'}, {type:'vote', name:'multiplier', value:3}) */
 export interface GrimoireSpecial {

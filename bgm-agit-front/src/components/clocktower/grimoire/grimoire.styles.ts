@@ -1,7 +1,7 @@
 import styled, { css } from 'styled-components';
 import type { WithTheme } from '../../../styles/styled-props.ts';
 
-// 진행판 색은 전부 GrimoireRoot 의 CSS 변수(--ct-*)로 쓴다. 다른 시계탑 화면(게임 목록·기록·사전)은 사이트 색 그대로다
+// 마도서 색은 전부 GrimoireRoot 의 CSS 변수(--ct-*)로 쓴다. 다른 시계탑 화면(게임 목록·기록·사전)은 사이트 색 그대로다
 const ACCENT = 'var(--ct-accent)';
 const LINE = 'var(--ct-line)';
 const DIM = 'var(--ct-muted)';
@@ -13,7 +13,7 @@ const INK = 'var(--ct-ink)';
 export const NARROW = '(max-width: 900px), (orientation: portrait) and (max-width: 1100px)';
 
 /**
- * 진행판 루트. 공통 Wrapper(데스크톱 min-width 1280px)를 쓰면 iPad 가로(1133·1180)에서 가로 스크롤이 생겨 자체 전체 폭으로 둔다.
+ * 마도서 루트. 공통 Wrapper(데스크톱 min-width 1280px)를 쓰면 iPad 가로(1133·1180)에서 가로 스크롤이 생겨 자체 전체 폭으로 둔다.
  * --ct-chrome = 루트 위에 남는 사이트 머리(헤더 80 + 메뉴 40). 몰입 모드면 0 이고 루트가 화면 높이(dvh)를 그대로 쓴다
  */
 export const GrimoireRoot = styled.div<WithTheme & { $immersive: boolean }>`

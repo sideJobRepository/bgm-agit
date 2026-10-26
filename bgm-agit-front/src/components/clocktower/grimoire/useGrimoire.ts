@@ -127,7 +127,7 @@ function parse(raw: string | null): Loaded {
     const key = backupUnknown(raw);
     return {
       state: null,
-      notice: `저장된 진행판을 읽지 못했습니다.${key ? ` 원본은 ${key} 에 보관했습니다.` : ''}`,
+      notice: `저장된 마도서를 읽지 못했습니다.${key ? ` 원본은 ${key} 에 보관했습니다.` : ''}`,
     };
   }
   const valid = !!parsed && !!parsed.data && Array.isArray(parsed.seats);
@@ -137,7 +137,7 @@ function parse(raw: string | null): Loaded {
   const key = backupUnknown(raw);
   return {
     state: null,
-    notice: `알 수 없는 형식(version ${String(parsed?.version)})의 진행판이 있었습니다.${
+    notice: `알 수 없는 형식(version ${String(parsed?.version)})의 마도서가 있었습니다.${
       key ? ` 지우지 않고 ${key} 에 보관했습니다.` : ''
     }`,
   };
@@ -167,7 +167,7 @@ function load(userId: number): Loaded {
     const key = raw ? backupUnknown(raw) : null;
     return {
       state: null,
-      notice: key ? `저장된 진행판을 열지 못했습니다. 원본은 ${key} 에 보관했습니다.` : null,
+      notice: key ? `저장된 마도서를 열지 못했습니다. 원본은 ${key} 에 보관했습니다.` : null,
     };
   }
 }
@@ -185,7 +185,7 @@ export function newSeatId() {
   return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 }
 
-/** 빈 좌석(진행판 시작·여행자 추가) */
+/** 빈 좌석(마도서 시작·여행자 추가) */
 export function createSeat(memberId: number | null, name: string): GrimoireSeat {
   return {
     id: newSeatId(),
@@ -244,7 +244,7 @@ function mergeSilent(past: GrimoireState, now: GrimoireState): GrimoireState {
 }
 
 /**
- * 진행판 상태 + 자동 저장 + 되돌리기.
+ * 마도서 상태 + 자동 저장 + 되돌리기.
  * update 로 바꾼 것만 되돌리기 대상이다(메모 입력·밤 체크처럼 자주 바뀌는 건 updateSilently).
  * 판은 로그인한 회원별로 따로 저장한다. 같은 태블릿에 다른 이야기꾼이 로그인하면 그 사람 판(없으면 새 판)이 열린다.
  */

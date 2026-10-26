@@ -44,7 +44,7 @@ export default function ClockTowerGames() {
           </TitleBox>
           {user && (
             <AdminButtons>
-              <CreateButton onClick={() => navigate('/clocktower-grimoire')}>이야기꾼 진행판</CreateButton>
+              <CreateButton onClick={() => navigate('/clocktower-grimoire')}>이야기꾼 마도서</CreateButton>
             </AdminButtons>
           )}
           {user?.roles.includes('ROLE_ADMIN') && (

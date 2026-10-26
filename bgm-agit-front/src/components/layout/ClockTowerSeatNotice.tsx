@@ -9,7 +9,7 @@ import type { WithTheme } from '../../styles/styled-props.ts';
 import { cardStyle } from '../../styles/mixins.ts';
 
 const POLL_MS = 30_000;
-// 이 화면들에서는 띄우지 않는다(내 캐릭터 화면 자체, 이야기꾼 진행판)
+// 이 화면들에서는 띄우지 않는다(내 캐릭터 화면 자체, 이야기꾼 마도서)
 const HIDDEN_PATHS = ['/clocktower-my', '/clocktower-grimoire'];
 
 /**

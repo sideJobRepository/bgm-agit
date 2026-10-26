@@ -19,8 +19,8 @@ export default function Layout() {
   const home = location.pathname === '/';
 
   const isLoading = useRecoilValue(loadingState);
-  // 시계탑 진행판 몰입 모드: 머리·메뉴·푸터·설치 배너를 그리지 않는다(인증 복구는 그대로 여기서 돈다)
-  // 진행판 주소에서만 적용한다 — 정리(cleanup)가 빠져 상태가 남아도 다른 화면 머리가 사라지지 않게
+  // 시계탑 마도서 몰입 모드: 머리·메뉴·푸터·설치 배너를 그리지 않는다(인증 복구는 그대로 여기서 돈다)
+  // 마도서 주소에서만 적용한다 — 정리(cleanup)가 빠져 상태가 남아도 다른 화면 머리가 사라지지 않게
   const immersive =
     useRecoilValue(layoutModeState) === 'immersive' && location.pathname.startsWith('/clocktower-grimoire');
 

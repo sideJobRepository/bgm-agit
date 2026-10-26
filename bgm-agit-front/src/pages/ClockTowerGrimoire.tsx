@@ -21,6 +21,7 @@ import {
 import { NightList, NightMode } from '../components/clocktower/grimoire/NightPanel.tsx';
 import WinBanner from '../components/clocktower/grimoire/WinBanner.tsx';
 import SetupWizard from '../components/clocktower/grimoire/SetupWizard.tsx';
+import ToolbarMenu, { MenuGroup } from '../components/clocktower/grimoire/ToolbarMenu.tsx';
 import { InfoCardPanel } from '../components/clocktower/grimoire/InfoCards.tsx';
 import ReminderToken, { CurvedText } from '../components/clocktower/grimoire/ReminderToken.tsx';
 import { dealBag, isDealt, usedKeys } from '../components/clocktower/grimoire/bagRules.ts';
@@ -136,7 +137,7 @@ function leaveSetup(s: GrimoireState): GrimoireState {
 }
 
 /**
- * 진행판을 연 뒤 받은 최신 스크립트로 캐릭터 행 id 를 key 기준으로 맞춘다.
+ * 마도서를 연 뒤 받은 최신 스크립트로 캐릭터 행 id 를 key 기준으로 맞춘다.
  * 공식 데이터를 다시 가져오거나 게임을 수정하면 캐릭터 행이 새로 만들어져, 들고 있던 id 로는 기록이 빈칸이 된다.
  */
 function refreshCharacterIds(prev: GrimoireState, fresh: GrimoireData): GrimoireState {
@@ -189,7 +190,7 @@ function seatPosition(i: number, total: number) {
 }
 
 /**
- * 이야기꾼 진행판(그리모어). 좌석은 어디서나 원형이고, 세로·좁은 화면은 오른쪽 패널이 원 아래로 내려간다.
+ * 이야기꾼 마도서(그리모어). 좌석은 어디서나 원형이고, 세로·좁은 화면은 오른쪽 패널이 원 아래로 내려간다.
  * 진행 상태는 이 기기 localStorage 에만 둔다(서버에 두면 누가 악마인지 조회될 수 있다).
  */
 export default function ClockTowerGrimoire() {
@@ -301,7 +302,7 @@ export default function ClockTowerGrimoire() {
         <Page>
           <Toolbar>
             <ToolTitle>
-              <strong>이야기꾼 진행판</strong>
+              <strong>이야기꾼 마도서</strong>
               <span>스크립트와 참가자를 정하면 시작합니다.</span>
             </ToolTitle>
             <Btn type="button" onClick={() => navigate('/clocktower-games')}>
@@ -846,7 +847,7 @@ export default function ClockTowerGrimoire() {
           </ToolTitle>
           <Stat>처형 {needed}표 이상</Stat>
           {/* 몰입 종료는 낮 화면에서도 늘 보이게 둔다 */}
-          {immersive ? (
+          {immersive && (
             <>
               {canFullscreen && !fullscreen && (
                 <Btn type="button" onClick={requestFullscreen}>
@@ -857,10 +858,6 @@ export default function ClockTowerGrimoire() {
                 몰입 종료
               </Btn>
             </>
-          ) : (
-            <Btn type="button" onClick={enter}>
-              몰입 모드
-            </Btn>
           )}
           <Btn type="button" $active={dayView} onClick={() => setDayView(v => !v)}>
             {dayView ? '이야기꾼 화면' : '낮 화면(가리기)'}
@@ -878,73 +875,87 @@ export default function ClockTowerGrimoire() {
               >
                 되돌리기
               </Btn>
-              {/* 셋업 안내가 떠 있는 동안은 안내의 3단계가 배정·보내기를 맡는다 */}
-              {!showWizard && (
-                <Btn type="button" onClick={runRandom}>
-                  무작위 배정
-                </Btn>
-              )}
-              <Btn type="button" onClick={() => setBluffOpen(true)}>
-                악마의 속임수
-              </Btn>
               <Btn type="button" onClick={() => setInfoOpen('')}>
                 정보 카드
               </Btn>
-              <Btn type="button" onClick={() => setQrOpen(true)}>
-                스크립트 QR
-              </Btn>
-              {!showWizard && (
-                <Btn type="button" $active={!!phone.session} onClick={sendToPhones} disabled={phone.sending}>
-                  {phone.sending ? '보내는 중…' : phone.session ? '휴대폰으로 다시 보내기' : '휴대폰으로 배정 보내기'}
-                </Btn>
-              )}
-              {phone.session && state.day === 1 && state.phase !== 'DAY' && (
-                <Btn
-                  type="button"
-                  onClick={sendEvilInfo}
-                  disabled={!evilInfoAvailable}
-                  title={
-                    evilInfoAvailable
-                      ? undefined
-                      : `${MIN_PLAYERS_FOR_EVIL_INFO}명 미만이라 첫날 밤 하수인·악마 정보 단계가 없습니다`
-                  }
-                >
-                  {evilInfoAvailable
-                    ? '첫날 밤 악 팀 정보 보내기'
-                    : `악 팀 정보 없음(${MIN_PLAYERS_FOR_EVIL_INFO}명 미만)`}
-                </Btn>
-              )}
-              {state.phase === 'SETUP' && (
-                <Btn type="button" $active={swapping} onClick={toggleSwapMode}>
-                  {swapping ? '자리 바꾸기 끝' : '자리 바꾸기'}
-                </Btn>
-              )}
-              <Btn type="button" onClick={addSeat}>
-                {isUnderway(state) ? '여행자 합류' : '자리 추가'}
-              </Btn>
               {state.phase === 'NIGHT' ? (
-                <Btn type="button" onClick={endNight}>
+                <Btn type="button" $tone="primary" onClick={endNight}>
                   밤 끝내기
                 </Btn>
               ) : (
                 // 셋업이 끝나면 선악이 고정된다(밤 체크·사망으로도 자동 전환)
-                <Btn type="button" onClick={startNight}>
+                <Btn type="button" $tone="primary" onClick={startNight}>
                   {state.phase === 'SETUP' ? '첫날 밤 시작' : '밤 시작'}
                 </Btn>
               )}
-              <Btn type="button" $tone="primary" onClick={() => openEnd()}>
-                게임 종료
-              </Btn>
-              <Btn type="button" $tone="danger" onClick={newGame}>
-                새 게임
-              </Btn>
+              {/* 자주 쓰지 않는 것은 [더보기]로 묶는다(버튼이 두 줄로 늘어서 찾기 어려웠다) */}
+              <ToolbarMenu>
+                <MenuGroup>진행</MenuGroup>
+                <Btn type="button" onClick={() => setBluffOpen(true)}>
+                  악마의 속임수
+                </Btn>
+                <Btn type="button" onClick={() => setQrOpen(true)}>
+                  스크립트 QR
+                </Btn>
+                {/* 셋업 안내가 떠 있는 동안은 안내의 마지막 단계가 배정·보내기를 맡는다 */}
+                {!showWizard && (
+                  <Btn type="button" $active={!!phone.session} onClick={sendToPhones} disabled={phone.sending}>
+                    {phone.sending ? '보내는 중…' : phone.session ? '휴대폰으로 다시 보내기' : '휴대폰으로 배정 보내기'}
+                  </Btn>
+                )}
+                {phone.session && state.day === 1 && state.phase !== 'DAY' && (
+                  <Btn
+                    type="button"
+                    onClick={sendEvilInfo}
+                    disabled={!evilInfoAvailable}
+                    title={
+                      evilInfoAvailable
+                        ? undefined
+                        : `${MIN_PLAYERS_FOR_EVIL_INFO}명 미만이라 첫날 밤 하수인·악마 정보 단계가 없습니다`
+                    }
+                  >
+                    {evilInfoAvailable
+                      ? '악 팀 정보 다시 보내기'
+                      : `악 팀 정보 없음(${MIN_PLAYERS_FOR_EVIL_INFO}명 미만)`}
+                  </Btn>
+                )}
+                <MenuGroup>자리</MenuGroup>
+                {!showWizard && (
+                  <Btn type="button" onClick={runRandom}>
+                    무작위 배정
+                  </Btn>
+                )}
+                {state.phase === 'SETUP' && (
+                  <Btn type="button" $active={swapping} onClick={toggleSwapMode}>
+                    {swapping ? '자리 바꾸기 끝' : '자리 바꾸기'}
+                  </Btn>
+                )}
+                <Btn type="button" onClick={addSeat}>
+                  {isUnderway(state) ? '여행자 합류' : '자리 추가'}
+                </Btn>
+                {!immersive && (
+                  <>
+                    <MenuGroup>화면</MenuGroup>
+                    <Btn type="button" onClick={enter}>
+                      몰입 모드
+                    </Btn>
+                  </>
+                )}
+                <MenuGroup>게임</MenuGroup>
+                <Btn type="button" onClick={() => openEnd()}>
+                  게임 종료(기록 남기기)
+                </Btn>
+                <Btn type="button" $tone="danger" onClick={newGame}>
+                  새 게임
+                </Btn>
+              </ToolbarMenu>
             </>
           )}
         </Toolbar>
 
         {externalChange && (
           <Warn>
-            다른 탭(창)에서 이 진행판이 저장되었습니다. 여기서 계속 진행하면 그쪽 내용을 덮어씁니다.
+            다른 탭(창)에서 이 마도서가 저장되었습니다. 여기서 계속 진행하면 그쪽 내용을 덮어씁니다.
             <Row style={{ marginTop: 8 }}>
               <Btn type="button" onClick={reload}>
                 그쪽 내용으로 다시 불러오기
@@ -1420,7 +1431,7 @@ export default function ClockTowerGrimoire() {
               // 게임이 끝났으니 플레이어 휴대폰 배정을 닫는다
               phone.close();
               showConfirmModal({
-                message: '기록을 남겼습니다. 진행판을 비우고 기록 목록으로 갈까요?',
+                message: '기록을 남겼습니다. 마도서를 비우고 기록 목록으로 갈까요?',
                 onConfirm: () => {
                   reset();
                   navigate('/clocktower-records');

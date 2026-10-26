@@ -191,7 +191,7 @@ const ShowRole = styled.div<{ $color: string; $small?: boolean }>`
 
   span {
     font-size: 18px;
-    /* 진행판 진영 색은 어두운 바탕 대비를 통과한 값이라 밝기 보정이 필요 없다 */
+    /* 마도서 진영 색은 어두운 바탕 대비를 통과한 값이라 밝기 보정이 필요 없다 */
     color: ${({ $color }) => $color};
   }
 

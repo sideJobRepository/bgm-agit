@@ -1,4 +1,4 @@
-# 시계탑(Blood on the Clocktower) — 캐릭터 사전 · 스크립트 · 이야기꾼 진행판 · 기록
+# 시계탑(Blood on the Clocktower) — 캐릭터 사전 · 스크립트 · 이야기꾼 마도서 · 기록
 
 > 매장에서 우리끼리 게임하고 기록하는 **비상업 내부 용도**다. 원작사 권리·이용약관 이야기는 꺼내지 않고, 고지 문구·CCC 로고도 넣지 않는다(사용자 결정 2026-10-25).
 > 프론트 `bgm-agit-front/src/components/clocktower/CLAUDE.md` 가 이 파일을 불러온다. 루트 `CLAUDE.md` 의 "시계탑 기록 = 자체로그인 전용" 절도 함께 볼 것.
@@ -10,7 +10,7 @@
 | 게임(=스크립트) 카탈로그 | `BgmAgitClockTowerGame*` | `pages/ClockTowerGames.tsx`, `ClockTowerGameDetail.tsx` |
 | 캐릭터 사전·공식 데이터 가져오기·스크립트 JSON 등록 | `BgmAgitClockTowerRole*`, `ClockTowerRoleWriter`, `util/ClockTowerOfficialData(Client)`, `util/ClockTowerScriptParser` | `pages/ClockTowerRoles.tsx`(관리자, `/clocktower-roles`) |
 | 커스텀 시계탑 시트 주소 불러오기 | `util/VnamuScriptFetcher`, `BgmAgitClockTowerScriptFetchController` | 사전 화면 스크립트 등록 칸 |
-| 이야기꾼 진행판(그리모어) | `GET /clocktower-games/{id}/grimoire`(묶음 조회만) | `pages/ClockTowerGrimoire.tsx`(`/clocktower-grimoire`), `components/clocktower/grimoire/*` |
+| 이야기꾼 마도서(그리모어) | `GET /clocktower-games/{id}/grimoire`(묶음 조회만) | `pages/ClockTowerGrimoire.tsx`(`/clocktower-grimoire`), `components/clocktower/grimoire/*` |
 | 플레이 기록·통계 | `BgmAgitClockTowerRecord*`, `Participant`, `Stats*` | `pages/ClockTowerRecord*.tsx`, `ClockTowerHistory/Stats.tsx` |
 
 진영 표시 규칙(이름·색·좌석 여부)은 프론트 `config/clocktower.ts` 한 곳, 서버는 `entity/enumeration/ClockTowerCharacterType`(`isEvil`·`isSeatable`·`fromTeam`).
@@ -29,7 +29,7 @@
   - `ClockTowerImageSyncService`: 상태 `GET /clocktower-roles/images/status` → `{total, done, missing, paths}`, 복사 `POST .../images/sync {paths≤30, force}`. 원본 호스트 고정 + 경로 정규식 + 상태 목록 화이트리스트(SSRF 방지), 장당 재시도 2회, `image/webp` 만, 요청당 20초 예산(넘으면 NOT_RUN → 화면이 다음 묶음에 다시 넣는다). 원본 404 는 SKIPPED
   - 사전 컬럼 `IMAGE_URL/IMAGE_GOOD_URL/IMAGE_EVIL_URL/IMAGE_SYNCED_AT` — 공식 데이터 가져오기(`applyOfficial`)는 안 건드린다. 자작 캐릭터는 스크립트 JSON `image` 원본 주소 그대로(http(s)·500자·svg 거부, 배열은 [기본 진영, 뒤집힌 진영], 여행자 [무진영, 선, 악])
   - **토큰 모양은 포켓 그리모어식**(2026-10-26 사용자 참고 이미지). 좌석 토큰 = 양피지색 원 + 그림 + 아래 테두리를 따라 휜 캐릭터 이름(`CurvedText`) + 왼쪽 위 자리 번호 배지. 리마인더·믿는 캐릭터(`ReminderToken`) = 남색 원 + 위쪽 휜 캐릭터 이름 + 그림 + 아래쪽 휜 문구, 토큰 가장자리에 걸쳐 원 중심 쪽 **좌우 대각선**으로 번갈아 붙는다(정면은 위쪽 자리의 이름을 가려서 비움). 크기는 원 지름·인원에 맞춘다(`seatTokenSize`, 리마인더 0.64배). 리마인더 출처는 캐릭터 **이름**으로 저장돼 있어 `reminderSourceRole` 이 이름으로 찾는다. 밤 순서·밤 진행 카드·셋업 고르기·징크스·전설 탭에도 캐릭터 그림
-  - 진행판 토큰은 `grimoire/tokenImage.ts` — 좌석의 **실제 선악**으로 `_g/_e`, 안 뜨면 generic → 글자 토큰. 낮 화면엔 그림 없음, 사망은 흑백. 끄기: 프론트 `CT_IMAGES_ENABLED`, 서버 `clocktower.images-enabled=false`(앱 재시작)
+  - 마도서 토큰은 `grimoire/tokenImage.ts` — 좌석의 **실제 선악**으로 `_g/_e`, 안 뜨면 generic → 글자 토큰. 낮 화면엔 그림 없음, 사망은 흑백. 끄기: 프론트 `CT_IMAGES_ENABLED`, 서버 `clocktower.images-enabled=false`(앱 재시작)
 
 ## 데이터 모델
 
@@ -37,10 +37,10 @@
 - `BGM_AGIT_CLOCKTOWER_JINX`(ROLE_A, ROLE_B UNIQUE)
 - `BGM_AGIT_CLOCKTOWER_GAME` + `SOURCE`(MANUAL/OFFICIAL/CUSTOM)·`SCRIPT_KEY`(tb/bmr/snv)·`AUTHOR`. 스크립트를 새 테이블로 만들지 않은 건 기록·통계가 이미 게임 id 를 보기 때문
 - `BGM_AGIT_CLOCKTOWER_CHARACTER` + `ROLE_KEY`(사전 연결, 직접 입력은 null). **게임 수정·재가져오기는 캐릭터 행을 지우고 새로 만든다 → characterId 가 바뀐다**
-  - 그래서 기록 저장은 참가자 `roleKey` 를 같이 받아 서버가 `(gameId, roleKey)` 로 다시 찾는다(`BgmAgitClockTowerRecordServiceImpl.resolveCharacter` — 이 게임 소속 characterId 우선, 못 찾으면 400). 진행판도 진입 때 grimoire 를 다시 받아 key 기준으로 characterId 를 갱신한다
+  - 그래서 기록 저장은 참가자 `roleKey` 를 같이 받아 서버가 `(gameId, roleKey)` 로 다시 찾는다(`BgmAgitClockTowerRecordServiceImpl.resolveCharacter` — 이 게임 소속 characterId 우선, 못 찾으면 400). 마도서도 진입 때 grimoire 를 다시 받아 key 기준으로 characterId 를 갱신한다
   - 게임 수정 폼은 `roleKey` 를 그대로 돌려보내야 사전 연결이 유지된다(`ClockTowerCharacterInput.roleKey`)
 - 참가자 `BGM_AGIT_CLOCKTOWER_PARTICIPANT_EVIL`(Y/N, null=캐릭터 진영대로) — 승패는 `Participant.resolveEvil()`(직접 지정 우선, 여행자·전설·로릭은 null=승패 없음). 승패 계산은 `ClockTowerParticipantResponse` 한 곳뿐이고 통계 쿼리는 승패를 안 쓴다
-- 기록 메모는 **TEXT**(예전 varchar(100) 이라 진행판 메모를 붙이면 저장이 통째로 실패했다). 서버 `@Size(5000)`, 화면 maxLength 5000
+- 기록 메모는 **TEXT**(예전 varchar(100) 이라 마도서 메모를 붙이면 저장이 통째로 실패했다). 서버 `@Size(5000)`, 화면 maxLength 5000
 - 진영 enum 에 `TRAVELLER/FABLED/LORIC`. 전설·로릭은 좌석 캐릭터가 아니라 기록 참가자 선택지에서 뺀다(`isSeatableType`)
 
 ## API·권한
@@ -58,15 +58,15 @@
 - 커스텀 시계탑 시트(`botc.vnamu.com`): `/sheets/{번호}`(페이지의 `/api/download-json/{slug}` 링크를 찾음) · `/sheet/{slug}` · 내려받기 주소를 받는다. 그 사이트만 허용하고 요청 주소는 slug 로 다시 만든다(SSRF 방지). 등록은 하지 않고 이름·JSON 을 돌려줘 화면이 입력칸을 채운다
 - 스크립트 JSON 파서: 문자열 id 와 `{"id":…}` 혼용, 표기 차이 정규화(`fortune_teller`=`fortuneteller`), `_meta`(이름·작성자), id 외 필드가 있는 객체 = 자작 캐릭터 후보. 사전에 없는 id 는 목록으로 400
 
-## 이야기꾼 진행판 (프론트)
+## 이야기꾼 마도서 (프론트)
 
 - **진행 상태는 이 기기 localStorage 에만**(키 `clocktowerGrimoire_v1`, 상태 안 `version` 으로 구분 — 지금 v2). 서버에 두면 누가 악마인지 조회될 수 있다. 버전을 올리면 마이그레이션하고 **절대 버리지 않는다**(모르는 버전은 백업 키로 복사)
 - **판은 회원별 키**(`clocktowerGrimoire_v1_m{회원id}`, 2026-10-26). 예전엔 기기에 한 판뿐이라 매장 태블릿에 다른 이야기꾼이 로그인하면 앞 판을 지워야 시작할 수 있었다. 옛 한 판짜리 키는 그 판 주인(또는 주인 없는 판)이 처음 열 때 회원 키로 옮긴다(`migrateLegacy`), 남의 판은 건드리지 않는다
-- **셋업 단계 안내**(`SetupWizard`, `bagRules.ts`) — 셋업 중이고 아직 아무도 앉지 않았으면 진행판 위에 뜬다. ① 인원(여행자 제외, 5~15) — 고르면 진영별 추천 수와 공식 분배표가 나온다. 나눠 주기 전까지 자리 수와 맞아야 한다(상태 `setupPlayers`) ② 캐릭터 주머니(직접 고르기·[무작위로 채우기]). **주정뱅이·꼭두각시·미치광이를 넣으면 이야기꾼에게 "받을 캐릭터를 고르세요"를 띄우고, 플레이어는 그 정상 캐릭터를 뽑은 것으로 받는다**(사용자 결정 — 주정뱅이는 외부인 칸을 차지하고 받는 마을주민은 주머니에 안 들어간다, 공식 규칙과 같음) ③ 악마의 속임수 3개(주머니·믿는 캐릭터와 안 겹치게, 7명 미만이면 건너뜀) ④ [캐릭터 무작위로 나눠 주고 휴대폰으로 보내기] — **자리(좌석 순서)는 그대로, 캐릭터만 무작위**(사용자 결정). 누르는 순간 처음으로 누가 무엇인지 정해지고 악 팀 정보까지 한 번에 보낸다. 꼭두각시는 나눈 뒤 악마 옆자리 사람과 캐릭터를 맞바꾼다. 주머니는 상태 `bag`(v2 안 선택 필드). 안내가 떠 있는 동안 툴바 [무작위 배정]·[휴대폰으로 배정 보내기]는 숨긴다(나눈 뒤 다시 보이고, 손님 위주 진행용으로 남겨 둠)
+- **셋업 단계 안내**(`SetupWizard`, `bagRules.ts`) — 셋업 중이고 아직 아무도 앉지 않았으면 마도서 위에 뜬다. ① 인원(여행자 제외, 5~15) — 고르면 진영별 추천 수와 공식 분배표가 나온다. 나눠 주기 전까지 자리 수와 맞아야 한다(상태 `setupPlayers`) ② 캐릭터 주머니(직접 고르기·[무작위로 채우기]). **주정뱅이·꼭두각시·미치광이를 넣으면 이야기꾼에게 "받을 캐릭터를 고르세요"를 띄우고, 플레이어는 그 정상 캐릭터를 뽑은 것으로 받는다**(사용자 결정 — 주정뱅이는 외부인 칸을 차지하고 받는 마을주민은 주머니에 안 들어간다, 공식 규칙과 같음) ③ 악마의 속임수 3개(주머니·믿는 캐릭터와 안 겹치게, 7명 미만이면 건너뜀) ④ [캐릭터 무작위로 나눠 주고 휴대폰으로 보내기] — **자리(좌석 순서)는 그대로, 캐릭터만 무작위**(사용자 결정). 누르는 순간 처음으로 누가 무엇인지 정해지고 악 팀 정보까지 한 번에 보낸다. 꼭두각시는 나눈 뒤 악마 옆자리 사람과 캐릭터를 맞바꾼다. 주머니는 상태 `bag`(v2 안 선택 필드). 안내가 떠 있는 동안 툴바 [무작위 배정]·[휴대폰으로 배정 보내기]는 숨긴다(나눈 뒤 다시 보이고, 손님 위주 진행용으로 남겨 둠)
 - 되돌리기(`useGrimoire.update`) 최근 30개. 메모·이름 입력·밤 체크처럼 자주 바뀌는 건 `updateSilently`(기록 안 남김). 갱신 함수 안에서 기록을 쌓으면 StrictMode 가 두 번 쌓으므로 ref 로 최신 상태를 들고 바깥에서 계산한다
-- 좌석은 **어디서나 원형**(사용자 결정 2026-10-26 — 예전엔 세로·휴대폰이 좌석 목록). 가로는 원 + 오른쪽 패널, 세로·좁은 화면(`NARROW`)은 패널이 원 아래로 내려가고 원은 폭을 다 쓴다. 600px 이하는 좌석을 0.72배로 줄인다. **공통 `Wrapper` 는 데스크톱 min-width 1280px 이라 iPad 가로(1180~1366)에서 가로 스크롤이 생긴다 → 진행판은 자체 전체 폭 컨테이너**
-- **진행판만 어두운 테마**(루트 CSS 변수 `--ct-*`, 진영 색은 대비 통과 `CT_TYPE_COLOR_DARK`) + [몰입 모드](Layout 헤더·푸터 숨김 + 전체화면). 다른 시계탑 화면은 사이트 색 그대로
-  - 루트는 `grimoire.styles.ts` 의 `GrimoireRoot`(색 변수·전체 폭·dvh). 진행판 하위 컴포넌트에 색을 새로 쓸 때는 hex 대신 `var(--ct-*)`. 모달은 portal 이 아니라 루트 안에 그려서 변수가 그대로 먹는다
+- 좌석은 **어디서나 원형**(사용자 결정 2026-10-26 — 예전엔 세로·휴대폰이 좌석 목록). 가로는 원 + 오른쪽 패널, 세로·좁은 화면(`NARROW`)은 패널이 원 아래로 내려가고 원은 폭을 다 쓴다. 600px 이하는 좌석을 0.72배로 줄인다. **공통 `Wrapper` 는 데스크톱 min-width 1280px 이라 iPad 가로(1180~1366)에서 가로 스크롤이 생긴다 → 마도서는 자체 전체 폭 컨테이너**
+- **마도서만 어두운 테마**(루트 CSS 변수 `--ct-*`, 진영 색은 대비 통과 `CT_TYPE_COLOR_DARK`) + [몰입 모드](Layout 헤더·푸터 숨김 + 전체화면). 다른 시계탑 화면은 사이트 색 그대로
+  - 루트는 `grimoire.styles.ts` 의 `GrimoireRoot`(색 변수·전체 폭·dvh). 마도서 하위 컴포넌트에 색을 새로 쓸 때는 hex 대신 `var(--ct-*)`. 모달은 portal 이 아니라 루트 안에 그려서 변수가 그대로 먹는다
   - 몰입 모드는 recoil `layoutModeState`('normal'|'immersive', `recoil/state/layoutState.ts`) — `Layout` 이 immersive 면 머리·메뉴·푸터·설치 배너를 안 그린다. 켜고 끄기·전체화면·html 배경/theme-color 는 `grimoire/useImmersiveMode.ts` 한 곳이고, **언마운트 때 normal 복구 + 전체화면 종료**. 전체화면은 클릭 핸들러에서 바로 `document.documentElement` 에 요청(iPhone 은 지원 안 해 버튼 숨김). 마지막 선택은 localStorage `clocktowerGrimoireImmersive`
 - **포켓 그리모어에서 가져온 것**(2026-10-26): ① [정보 카드](`InfoCards.tsx`) — 공식 정보 토큰 문장(이 사람이 악마입니다·당신의 하수인들입니다·이 캐릭터들은 게임에 없습니다·능력을 사용하시겠습니까? 등) + 캐릭터·플레이어를 전체 화면으로 ② 밤 진행의 하수인·악마 정보 단계에 [보여주기] 단축 버튼(`evilInfoCards`) ③ 사망 수의(토큰 위 검은 띠) ④ 플레이어 휴대폰 진동(새 캐릭터 도착) ⑤ 시작 화면 [지난 판 참가자 그대로 넣기]·최근 함께한 사람(이 기기·이야기꾼별 localStorage `clocktowerRecentPlayers_m{id}`, 회원만) ⑥ 나눠 준 뒤 셋업 중이면 "휴대폰 확인 n/m명 — 아직: …" + [첫날 밤 시작] 안내줄. 보여주기 카드(`ShowCard`)는 다른 창 위에 오도록 맨 뒤에 그린다
 - 낮 화면(플레이어에게 보이는 화면)에는 캐릭터·리마인더·선악·악마의 속임수·판정 제안을 절대 노출하지 않는다
@@ -92,10 +92,10 @@
 
 ## 플레이어 휴대폰 "내 캐릭터" (2026-10-25)
 
-- **참가자는 전원 회원**(사용자 결정 — 회원가입 강제). 진행판 시작 화면은 닉네임 검색으로만 넣는다. 관리자만 테스트용 [N명까지 채우기](손님 자리)가 있다
-- **참가자 검색은 `GET /clocktower-members?keyword=`**(시계탑 전용, 로그인 회원). 자체로그인(MAHJONG) 회원 **전체**를 **닉네임**으로만 찾고 응답은 `{id, nickname}` 뿐이다. 공용 `/all-members` 는 마작 이용 'Y' 만 나와 메인 사이트 가입자를 못 찾는다 — 진행판·시계탑 기록 화면 둘 다 이걸 쓴다. 카카오·네이버 로그인 회원은 나오지 않는다(자체로그인 가입 필요)
-- 흐름: 이야기꾼 [휴대폰으로 배정 보내기] → `POST /clocktower-sessions` → 플레이어는 스크립트 QR(`/clocktower-my?game=`)로 들어와 **누르고 있는 동안만** 자기 캐릭터를 본다 → 진행판 토큰에 ✓ 확인 / 미확인
-- 서버에는 **각자에게 보여줄 것만** 올린다(`BGM_AGIT_CLOCKTOWER_SESSION`, `_SESSION_SEAT`). 주정뱅이·꼭두각시·미치광이는 믿는 캐릭터만, **선악도 보내지 않는다**(진짜 기준 선악을 붙이면 "주민 + 악 배지"로 정체가 드러난다 — `usePhoneSession.phoneSeats`). 진행 상태 전체는 여전히 진행판 localStorage
+- **참가자는 전원 회원**(사용자 결정 — 회원가입 강제). 마도서 시작 화면은 닉네임 검색으로만 넣는다. 관리자만 테스트용 [N명까지 채우기](손님 자리)가 있다
+- **참가자 검색은 `GET /clocktower-members?keyword=`**(시계탑 전용, 로그인 회원). 자체로그인(MAHJONG) 회원 **전체**를 **닉네임**으로만 찾고 응답은 `{id, nickname}` 뿐이다. 공용 `/all-members` 는 마작 이용 'Y' 만 나와 메인 사이트 가입자를 못 찾는다 — 마도서·시계탑 기록 화면 둘 다 이걸 쓴다. 카카오·네이버 로그인 회원은 나오지 않는다(자체로그인 가입 필요)
+- 흐름: 이야기꾼 [휴대폰으로 배정 보내기] → `POST /clocktower-sessions` → 플레이어는 스크립트 QR(`/clocktower-my?game=`)로 들어와 **누르고 있는 동안만** 자기 캐릭터를 본다 → 마도서 토큰에 ✓ 확인 / 미확인
+- 서버에는 **각자에게 보여줄 것만** 올린다(`BGM_AGIT_CLOCKTOWER_SESSION`, `_SESSION_SEAT`). 주정뱅이·꼭두각시·미치광이는 믿는 캐릭터만, **선악도 보내지 않는다**(진짜 기준 선악을 붙이면 "주민 + 악 배지"로 정체가 드러난다 — `usePhoneSession.phoneSeats`). 진행 상태 전체는 여전히 마도서 localStorage
 - 게임 중 보여줄 캐릭터·선악·정보가 바뀌면 바뀐 좌석만 자동으로 `PUT /{id}/seats`(1.5초 디바운스). 플레이어 화면에 "바뀌었습니다"가 뜬다
 - [첫날 밤 악 팀 정보 보내기]: 악마=하수인+악마의 속임수, 하수인=악마+다른 하수인. 꼭두각시는 받지 않고 다른 하수인 목록에도 없다(악마만 안다). 정보는 **지금 실제로 악마·하수인인 자리에만** 붙어서 배정을 고치면 자동으로 빠진다. 미치광이 가짜 정보는 이야기꾼이 직접
 - **캐릭터 안내 알림톡 `bgmagit-ct-role`**(2026-10-26 템플릿 등록, 스위치 없이 바로 발송) — 세션 생성 때 전원, 좌석 갱신 때는 **캐릭터가 바뀐 자리만**(정보·좌석 번호만 바뀐 건 본문이 같아 안 보낸다). 본문은 닉네임·게임명·캐릭터·종류뿐이고 능력·악 팀 정보는 버튼(`/clocktower-my`)으로 — 자유 문장 변수는 검수 반려 위험. 캐릭터는 휴대폰 화면과 같은 `resolveRole`(믿는 캐릭터), 선악은 넣지 않는다. 알림톡 동의 Y + 번호 있는 회원만. 재시도는 받는 사람별 1회(`sendClockTowerRole`) — 리스너 통째 재시도는 이미 받은 사람에게 또 간다. 문구 고정 테스트 `AlimtalkClockTowerRoleMessageTest`

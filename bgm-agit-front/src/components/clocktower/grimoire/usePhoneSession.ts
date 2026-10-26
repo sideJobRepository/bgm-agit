@@ -40,7 +40,7 @@ function errorMessage(e: unknown, fallback: string) {
  * 회원 좌석마다 그 플레이어에게 보여줄 것만 만든다.
  * - 캐릭터는 shownRole(주정뱅이·꼭두각시·미치광이는 믿는 캐릭터, 믿는 캐릭터가 없으면 null) — 진짜 정체는 올리지 않는다
  * - 선악은 여행자이거나 이야기꾼이 직접 정한 경우만(나머지는 캐릭터 진영으로 알 수 있다)
- * - 자리 번호는 진행판 순서 1부터. 회원이 아닌 자리(테스트 손님)는 뺀다
+ * - 자리 번호는 마도서 순서 1부터. 회원이 아닌 자리(테스트 손님)는 뺀다
  */
 export function phoneSeats(state: GrimoireState, roles: Map<string, GrimoireRole>): PhoneSeatPayload[] {
   const infos = state.clocktowerSession?.infos ?? {};
@@ -125,9 +125,9 @@ export function buildEvilInfo(state: GrimoireState): EvilInfoResult {
 }
 
 /**
- * 진행판 ↔ 플레이어 휴대폰.
+ * 마도서 ↔ 플레이어 휴대폰.
  * 보낸 뒤에는 좌석의 보여줄 캐릭터·선악·정보가 바뀌면 바뀐 좌석만 자동으로 다시 보내고, 10초마다 확인 여부를 받는다.
- * 세션 id·마지막으로 보낸 내용은 진행판 상태(이 기기)에 둔다.
+ * 세션 id·마지막으로 보낸 내용은 마도서 상태(이 기기)에 둔다.
  */
 export function usePhoneSession(state: GrimoireState | null, updateSilently: Update) {
   const session = state?.clocktowerSession ?? null;
@@ -227,7 +227,7 @@ export function usePhoneSession(state: GrimoireState | null, updateSilently: Upd
     return () => window.clearTimeout(t);
   }, [sessionId, desiredSig, flush]);
 
-  // 진행판에 있는 동안 확인 여부를 받는다
+  // 마도서에 있는 동안 확인 여부를 받는다
   useEffect(() => {
     setStatuses({});
     if (sessionId == null) return;
@@ -288,7 +288,7 @@ export function usePhoneSession(state: GrimoireState | null, updateSilently: Upd
     [updateSilently]
   );
 
-  /** 게임을 끝낼 때 세션을 닫는다. 실패해도 진행판 쪽은 비운다(서버가 18시간 뒤 닫힌 것으로 본다) */
+  /** 게임을 끝낼 때 세션을 닫는다. 실패해도 마도서 쪽은 비운다(서버가 18시간 뒤 닫힌 것으로 본다) */
   const close = useCallback(async () => {
     const sid = latest.current.session?.sessionId;
     if (sid == null) return;

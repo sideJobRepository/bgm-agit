@@ -262,7 +262,7 @@ export default function ClockTowerGameDetail() {
               </Button>
             </div>
             <p style={{ marginTop: 6, fontSize: 13, lineHeight: 1.6, color: '#8a8398' }}>
-              제목과 캐릭터를 가져와 바로 등록합니다(캐릭터 사전과 연결돼 진행판에서 밤 순서·그림이 나옵니다). 아래 게임명·인원을
+              제목과 캐릭터를 가져와 바로 등록합니다(캐릭터 사전과 연결돼 마도서에서 밤 순서·그림이 나옵니다). 아래 게임명·인원을
               적어 두면 그 값을 씁니다. 사전이 비어 있으면 [캐릭터 사전·스크립트 등록]에서 공식 데이터를 먼저 가져오세요.
             </p>
           </Field>

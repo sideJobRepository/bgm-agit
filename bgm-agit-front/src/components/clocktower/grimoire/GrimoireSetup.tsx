@@ -52,7 +52,7 @@ function saveRecent(ownerId: number | null, players: Player[]) {
   }
 }
 
-/** 진행판 시작: 스크립트 고르기 → 참가자(앉은 순서대로) 등록 → 시작 */
+/** 마도서 시작: 스크립트 고르기 → 참가자(앉은 순서대로) 등록 → 시작 */
 export default function GrimoireSetup({
   initialGameId,
   ownerId,
@@ -263,7 +263,7 @@ export default function GrimoireSetup({
       </SetupCard>
 
       <Btn type="button" $tone="primary" onClick={start} disabled={starting} style={{ minHeight: 52, fontSize: 16 }}>
-        {starting ? '불러오는 중…' : '진행판 시작'}
+        {starting ? '불러오는 중…' : '마도서 시작'}
       </Btn>
       <Hint>
         진행 상태는 이 기기에만 저장됩니다. 새로고침하거나 화면이 꺼져도 이어서 할 수 있습니다. 서버에는 [휴대폰으로

@@ -34,7 +34,7 @@ const STORYTELLER_NAME = '이야기꾼';
 /** 메모 상한(서버 @Size·DB TEXT 와 같은 값) */
 const MEMO_MAX = 5000;
 
-/** 참가자의 최종 선악. 진행판이 남긴 evil 이 우선이고, 없으면 캐릭터 진영(여행자·미정은 null) */
+/** 참가자의 최종 선악. 마도서가 남긴 evil 이 우선이고, 없으면 캐릭터 진영(여행자·미정은 null) */
 function sideOf(p: { evil?: boolean | null }, type: ClockTowerCharacterType | null | undefined): boolean | null {
   if (p.evil != null) return p.evil;
   if (type === 'MINION' || type === 'DEMON') return true;
@@ -167,7 +167,7 @@ interface PartRow {
   storyteller: boolean;
   characterName?: string | null; // 수정 진입 시 스냅샷 이름 (roster 도착 후 id 매칭용)
   characterType?: ClockTowerCharacterType | null; // 스냅샷 진영(같은 이름 캐릭터가 여럿일 때 구분)
-  evil?: boolean | null; // 진행판이 남긴 최종 선악. 이 화면에선 고치지 않고 그대로 돌려보낸다
+  evil?: boolean | null; // 마도서가 남긴 최종 선악. 이 화면에선 고치지 않고 그대로 돌려보낸다
 }
 
 export default function ClockTowerRecordDetail() {
@@ -368,7 +368,7 @@ export default function ClockTowerRecordDetail() {
         p.memberId === memberId
           ? value === 'ST'
             ? { ...p, storyteller: true, characterId: '', evil: null }
-            : // 캐릭터를 바꾸면 진행판이 남긴 선악도 의미가 없어지므로 캐릭터 진영대로 돌린다
+            : // 캐릭터를 바꾸면 마도서가 남긴 선악도 의미가 없어지므로 캐릭터 진영대로 돌린다
               { ...p, storyteller: false, characterId: value === '' ? '' : Number(value), evil: null }
           : p
       )
