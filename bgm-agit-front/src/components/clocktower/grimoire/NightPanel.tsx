@@ -246,7 +246,8 @@ function suggestions(state: GrimoireState, item: NightItem): Tip[] {
     if (tip) out.push(tip);
     else if (key === 'librarian') out.push({ label: '외지인 없음 → 0', content: { title: '외지인이 없습니다', roles: [], big: '0' } });
   }
-  if (key === 'grandmother') {
+  // 손주 알려주기는 첫날 밤만(그 외 밤 할머니 차례는 손주가 악마에게 죽었는지 확인뿐)
+  if (key === 'grandmother' && state.nightTab === 'first') {
     const g = shuffle(ring.filter(s => !selfIds.has(s.id) && (teamOf(s) === 'TOWNSFOLK' || teamOf(s) === 'OUTSIDER')))[0];
     const role = g ? roles.get(g.roleKey ?? '') : null;
     if (g && role) {

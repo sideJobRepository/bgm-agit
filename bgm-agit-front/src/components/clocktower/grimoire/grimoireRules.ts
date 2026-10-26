@@ -454,7 +454,12 @@ export function nightItems(state: GrimoireState, tab: NightTab): NightItem[] {
       seats,
       allDead,
       diedTonight,
-      hiddenDead: tab === 'other' && allDead && !diedTonight,
+      // 죽은 그 밤에도 깨우는 캐릭터(달의 자손·이발사 등)는 바로 전 낮에 죽었어도 오늘 밤 차례를 남긴다
+      hiddenDead:
+        tab === 'other' &&
+        allDead &&
+        !diedTonight &&
+        !(ACTS_WHEN_DEAD.has(key) && seats.some(s => s.dead && s.death?.day === state.day - 1 && s.death?.phase === 'DAY')),
     });
   }
   return items.sort((a, b) => a.order - b.order);
