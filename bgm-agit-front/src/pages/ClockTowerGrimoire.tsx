@@ -58,6 +58,7 @@ import {
   expectedCounts,
   isEvilSeat,
   isUnderway,
+  nightItems,
   killSeat,
   phaseLabel,
   pickBluffs,
@@ -313,6 +314,22 @@ export default function ClockTowerGrimoire() {
     if (loadNotice) toast.error(loadNotice);
   }, [loadNotice]);
 
+  // 밤 순서를 다 체크하면 아침으로 넘어갈지 한 번 묻는다(밤마다 한 번). endNight 는 아래(판이 있을 때)에서 정의돼 ref 로 부른다
+  const endNightRef = useRef<() => void>(() => {});
+  const askedNightEnd = useRef<string | null>(null);
+  useEffect(() => {
+    if (!state || state.phase !== 'NIGHT') return;
+    const items = nightItems(state, state.nightTab).filter(i => !i.hiddenDead && !i.skippedReason);
+    if (items.length === 0 || !items.every(i => state.nightChecked.includes(i.key))) return;
+    const key = `${state.day}:${state.nightTab}`;
+    if (askedNightEnd.current === key) return;
+    askedNightEnd.current = key;
+    showConfirmModal({
+      message: '밤 순서를 모두 마쳤습니다. 아침(낮)으로 넘어갈까요?',
+      onConfirm: () => endNightRef.current(),
+    });
+  }, [state]);
+
   if (!user) {
     return (
       <GrimoireRoot $immersive={false}>
@@ -532,6 +549,8 @@ export default function ClockTowerGrimoire() {
       { kind: 'DAWN' }
     );
 
+  endNightRef.current = endNight;
+
   // 살아 있던 악마가 죽으면 넘기기 창을 띄운다(탕녀·임프 자결 등)
   const openDemonPassIfDemon = (seatId: string) => {
     const seat = seats.find(s => s.id === seatId);
@@ -555,10 +574,17 @@ export default function ClockTowerGrimoire() {
   }) => {
     const seatId = executeSeatId;
     if (!seatId) return;
+    const seat = seats.find(s => s.id === seatId);
+    const demonDied = opts.died && !!seat && !seat.dead && roles.get(seat.roleKey ?? '')?.team === 'DEMON';
     const next = update(prev => applyExecution(leaveSetup(prev), seatId, opts));
     setExecuteSeatId(null);
     suggest(next, { kind: 'EXECUTION', seatId });
     if (opts.died) openDemonPassIfDemon(seatId);
+    // 처형은 하루 한 번이라 끝나면 보통 밤이다. 악마가 죽었거나(넘기기 창) 게임이 끝나는 상황이면 묻지 않는다
+    const ends = !!next && next.settings.suggestionsEnabled && checkGameEnd(next, { kind: 'EXECUTION', seatId }).status !== 'CONTINUE';
+    if (next && next.phase === 'DAY' && !demonDied && !ends) {
+      showConfirmModal({ message: '처형을 마쳤습니다. 밤으로 넘어갈까요?', onConfirm: startNight });
+    }
   };
 
   const confirmExile = (opts: { supporters: number; survived: boolean }) => {
