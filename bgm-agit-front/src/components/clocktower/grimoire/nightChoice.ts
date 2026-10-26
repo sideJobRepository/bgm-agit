@@ -84,6 +84,11 @@ export function attackResult(state: GrimoireState, role: GrimoireRole, actor: Gr
   // 도박사는 맞히면 아무 일 없고 틀리면 도박사가 죽는다 — 고른 사람은 죽지 않는다(#51)
   if (role.key === 'gambler') return { verdict: 'NONE', reasons: ['추측이 틀리면 도박사 자신이 죽습니다(도박사 자리에서 사망 처리).'] };
 
+  // 늑대인간: 고른 사람이 선하면 죽는다(악이면 아무 일 없음). 죽이면 오늘 밤 악마는 아무도 못 죽인다
+  if (role.key === 'lycanthrope' && isEvilSeat(target, roles) === true) {
+    return { verdict: 'NONE', reasons: ['악한 사람이라 아무 일도 없습니다(은둔자·첩자는 반대로 등록될 수 있음).'] };
+  }
+
   // 암살자: 어떤 보호도 무시한다(#64, #72)
   if (role.key === 'assassin') {
     const r = ['보호를 무시하고 죽입니다(#64, #72).'];

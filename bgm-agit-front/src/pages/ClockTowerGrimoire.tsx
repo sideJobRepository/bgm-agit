@@ -1723,6 +1723,8 @@ export default function ClockTowerGrimoire() {
             onPickMode={setPickMode}
             onReminder={moveReminder}
             onKill={seatId => recordDeath(seatId, 'NIGHT')}
+            // 교수·샤발로스 되살리기 — 좌석 메뉴 [되살리기]와 같은 동작
+            onRevive={seatId => updateSeat(seatId, { dead: false, death: null, ghostVoteUsed: false })}
             onNote={text => addNote(text)}
           />
         )}
