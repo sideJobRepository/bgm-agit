@@ -188,6 +188,16 @@ export const Circle = styled.div`
   }
 `;
 
+/** 원 가운데 낮 토론 타이머(낮 화면에서도 보여서 플레이어도 남은 시간을 본다) */
+export const CenterTimer = styled.div<{ $done: boolean }>`
+  margin-top: 6px;
+  font-size: clamp(28px, 6vw, 56px);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  color: ${({ $done }) => ($done ? 'var(--ct-evil)' : 'var(--ct-text)')};
+`;
+
 export const CircleCenter = styled.div`
   position: absolute;
   top: 50%;

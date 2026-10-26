@@ -23,6 +23,7 @@ import { NightList, NightMode } from '../components/clocktower/grimoire/NightPan
 import WinBanner from '../components/clocktower/grimoire/WinBanner.tsx';
 import SetupWizard from '../components/clocktower/grimoire/SetupWizard.tsx';
 import ToolbarMenu, { MenuGroup } from '../components/clocktower/grimoire/ToolbarMenu.tsx';
+import { useDayTimer } from '../components/clocktower/grimoire/useDayTimer.ts';
 import { InfoCardPanel } from '../components/clocktower/grimoire/InfoCards.tsx';
 import ReminderToken, { CurvedText } from '../components/clocktower/grimoire/ReminderToken.tsx';
 import { dealBag, isDealt, usedKeys } from '../components/clocktower/grimoire/bagRules.ts';
@@ -76,6 +77,7 @@ import {
   Chip,
   Circle,
   CircleCenter,
+  CenterTimer,
   CountTable,
   GrimoireRoot,
   Layout,
@@ -268,6 +270,8 @@ export default function ClockTowerGrimoire() {
   useWakeLock(!!state);
   // 플레이어 휴대폰(/clocktower-my)으로 보낸 배정: 바뀐 좌석 자동 재전송 + 확인 여부
   const phone = usePhoneSession(state, updateSilently);
+  // 낮 토론 타이머(이 기기 화면에만)
+  const timer = useDayTimer();
   // 몰입 모드(사이트 머리·푸터 숨김 + 전체 화면)는 진행 중인 판에서만
   const { immersive, fullscreen, canFullscreen, enter, exit, requestFullscreen } = useImmersiveMode(
     !!user && !!state
@@ -963,6 +967,25 @@ export default function ClockTowerGrimoire() {
           <Btn type="button" $active={dayView} onClick={() => setDayView(v => !v)}>
             {dayView ? '이야기꾼 화면' : '낮 화면(가리기)'}
           </Btn>
+          {/* 낮 화면에서도 쓴다(토론 시간은 플레이어 앞에서 재기 때문) */}
+          <ToolbarMenu label={timer.running ? `⏱ ${timer.label}` : timer.finished ? '⏱ 시간 종료' : '⏱ 타이머'} active={timer.running || timer.finished}>
+            <MenuGroup>토론 시간</MenuGroup>
+            {[1, 3, 5, 8, 10].map(m => (
+              <Btn key={m} type="button" onClick={() => timer.start(m)}>
+                {m}분
+              </Btn>
+            ))}
+            {(timer.running || timer.finished) && (
+              <>
+                <Btn type="button" onClick={timer.addMinute}>
+                  +1분
+                </Btn>
+                <Btn type="button" $tone="danger" onClick={timer.stop}>
+                  타이머 끄기
+                </Btn>
+              </>
+            )}
+          </ToolbarMenu>
           {/* 낮 화면은 플레이어가 본다. 악마의 속임수·배정·되돌리기 같은 이야기꾼 버튼은 숨긴다 */}
           {!dayView && (
             <>
@@ -1192,6 +1215,9 @@ export default function ClockTowerGrimoire() {
               })}
               <CircleCenter>
                 <strong>{dayView ? phaseLabel(state) : state.data.gameName}</strong>
+                {(timer.running || timer.finished) && (
+                  <CenterTimer $done={timer.finished}>{timer.finished ? '시간 종료' : timer.label}</CenterTimer>
+                )}
                 <span>
                   생존 {alive}명 · 처형 {needed}표
                 </span>

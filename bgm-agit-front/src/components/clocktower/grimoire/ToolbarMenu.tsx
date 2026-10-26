@@ -6,12 +6,20 @@ import { Btn } from './grimoire.styles.ts';
  * 마도서 툴바의 [더보기]. 버튼이 15개 넘게 두 줄로 늘어서 자주 쓰는 것만 밖에 두고 나머지를 묶었다.
  * 안의 버튼을 누르면 그 동작을 한 뒤 메뉴를 닫는다(onClickCapture). 바깥을 누르면 그냥 닫힌다.
  */
-export default function ToolbarMenu({ children }: { children: ReactNode }) {
+export default function ToolbarMenu({
+  children,
+  label = '더보기 ▾',
+  active,
+}: {
+  children: ReactNode;
+  label?: ReactNode;
+  active?: boolean; // 메뉴가 닫혀 있어도 강조할 때(타이머가 도는 중 등)
+}) {
   const [open, setOpen] = useState(false);
   return (
     <Wrap>
-      <Btn type="button" $active={open} onClick={() => setOpen(v => !v)} aria-expanded={open}>
-        더보기 ▾
+      <Btn type="button" $active={open || !!active} onClick={() => setOpen(v => !v)} aria-expanded={open}>
+        {label}
       </Btn>
       {open && (
         <>
