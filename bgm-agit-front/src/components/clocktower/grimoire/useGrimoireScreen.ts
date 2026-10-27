@@ -1,10 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useSetRecoilState } from 'recoil';
-import { layoutModeState } from '../../../recoil/state/layoutState.ts';
+import { useCallback, useEffect, useRef } from 'react';
 import { toast } from '../../../utils/toast';
 
-// 마지막 선택(몰입 켬/끔)만 기억한다. 진행 상태와 무관한 화면 취향이라 마도서 키와 따로 둔다
-const PREF_KEY = 'clocktowerGrimoireImmersive';
 // 마도서 바탕색. 마도서에 있는 동안 html 배경·브라우저 상단 색(theme-color)을 맞춘다
 const DARK_BG = '#14101C';
 
@@ -14,22 +10,6 @@ type FullscreenDoc = Document & {
   webkitExitFullscreen?: () => Promise<void> | void;
 };
 type FullscreenEl = HTMLElement & { webkitRequestFullscreen?: () => Promise<void> | void };
-
-function readPref() {
-  try {
-    return localStorage.getItem(PREF_KEY) === 'Y';
-  } catch {
-    return false;
-  }
-}
-
-function writePref(on: boolean) {
-  try {
-    localStorage.setItem(PREF_KEY, on ? 'Y' : 'N');
-  } catch {
-    // 사파리 개인정보 보호 모드 등 — 기억만 못 할 뿐 동작은 그대로
-  }
-}
 
 export function fullscreenElement() {
   const d = document as FullscreenDoc;
@@ -72,39 +52,20 @@ export function exitFullscreen() {
 }
 
 /**
- * 마도서 몰입 모드(사이트 머리·메뉴·푸터 숨김) + 전체 화면.
- * - enabled 는 진행 중인 판을 보여 줄 때만 true(시작 화면·차단 화면은 사이트 틀 그대로)
- * - 마도서를 떠나면(언마운트) 반드시 normal 로 되돌리고 전체 화면도 끝낸다
+ * 마도서 화면 틀. 사이트 머리·메뉴·푸터는 Layout 이 주소(/clocktower-grimoire)를 보고 늘 숨긴다 — 여기는 그 밖의 것만.
  * - 마도서에 있는 동안 html 배경·theme-color 를 어둡게, 떠나면 원래 값으로
+ * - 브라우저 전체 화면은 [전체화면] 버튼으로만 켠다(사용자 동작이 있어야 허락된다). 이 화면이 켰으면 끌 때·떠날 때 같이 끈다
  */
-export function useImmersiveMode(enabled: boolean) {
-  const setLayoutMode = useSetRecoilState(layoutModeState);
-  const [wanted, setWanted] = useState(readPref);
-  const [fullscreen, setFullscreen] = useState(() => !!fullscreenElement());
-  const [canFullscreen] = useState(fullscreenSupported);
-  const immersive = enabled && wanted;
-
-  useEffect(() => {
-    setLayoutMode(immersive ? 'immersive' : 'normal');
-  }, [immersive, setLayoutMode]);
+export function useGrimoireScreen() {
+  // 들어올 때 이미 전체 화면이었으면(브라우저 메뉴로 켬) 우리가 끄지 않는다
+  const ownsFullscreen = useRef(false);
 
   useEffect(
     () => () => {
-      setLayoutMode('normal');
-      exitFullscreen();
+      if (ownsFullscreen.current) exitFullscreen();
     },
-    [setLayoutMode]
+    []
   );
-
-  useEffect(() => {
-    const sync = () => setFullscreen(!!fullscreenElement());
-    document.addEventListener('fullscreenchange', sync);
-    document.addEventListener('webkitfullscreenchange', sync);
-    return () => {
-      document.removeEventListener('fullscreenchange', sync);
-      document.removeEventListener('webkitfullscreenchange', sync);
-    };
-  }, []);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -119,19 +80,20 @@ export function useImmersiveMode(enabled: boolean) {
     };
   }, []);
 
-  const enter = useCallback(() => {
-    setWanted(true);
-    writePref(true);
-    if (canFullscreen) requestFullscreen();
-    else if (IS_IPHONE)
+  const enterFullscreen = useCallback(() => {
+    if (fullscreenElement()) return;
+    if (fullscreenSupported()) {
+      ownsFullscreen.current = true;
+      requestFullscreen();
+    } else if (IS_IPHONE) {
       toast.info('아이폰은 전체 화면을 지원하지 않습니다. 공유 → 홈 화면에 추가로 열면 주소창 없이 쓸 수 있습니다.');
-  }, [canFullscreen]);
-
-  const exit = useCallback(() => {
-    setWanted(false);
-    writePref(false);
-    exitFullscreen();
+    }
   }, []);
 
-  return { immersive, fullscreen, canFullscreen, enter, exit, requestFullscreen };
+  const leaveFullscreen = useCallback(() => {
+    if (ownsFullscreen.current) exitFullscreen();
+    ownsFullscreen.current = false;
+  }, []);
+
+  return { enterFullscreen, leaveFullscreen };
 }

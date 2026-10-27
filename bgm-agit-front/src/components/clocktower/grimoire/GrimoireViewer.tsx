@@ -25,7 +25,7 @@ import ReminderToken, { CurvedText } from './ReminderToken.tsx';
 import RoleArt from './RoleArt.tsx';
 import NightLogList from './NightLogList.tsx';
 import { tokenImageCandidates } from './tokenImage.ts';
-import { exitFullscreen, fullscreenElement, fullscreenSupported, requestFullscreen } from './useImmersiveMode.ts';
+import { exitFullscreen, fullscreenElement, fullscreenSupported, requestFullscreen } from './useGrimoireScreen.ts';
 
 /**
  * 읽기 전용 마도서. 임시저장한 판을 펼쳐 보거나, 끝난 기록의 마지막 마도서를 다시 볼 때 쓴다.
