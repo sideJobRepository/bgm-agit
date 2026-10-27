@@ -10,7 +10,6 @@ import { useEffect, Suspense } from 'react';
 import { userState } from '../../recoil/state/userState.ts';
 import { getRefreshedUser, restoreAuthSession } from '../../utils/axiosInstance';
 import type { CustomUser } from '../../types/user.ts';
-import { layoutModeState } from '../../recoil/state/layoutState.ts';
 import { Wrapper, Inner, TopArea, NavArea, MainArea, FooterBox } from './Layout.styles.ts';
 
 export default function Layout() {
@@ -18,10 +17,9 @@ export default function Layout() {
   const home = location.pathname === '/';
 
   const isLoading = useRecoilValue(loadingState);
-  // 시계탑 마도서 몰입 모드: 머리·메뉴·푸터·설치 배너를 그리지 않는다(인증 복구는 그대로 여기서 돈다)
-  // 마도서 주소에서만 적용한다 — 정리(cleanup)가 빠져 상태가 남아도 다른 화면 머리가 사라지지 않게
-  const immersive =
-    useRecoilValue(layoutModeState) === 'immersive' && location.pathname.startsWith('/clocktower-grimoire');
+  // 시계탑 마도서는 게임 진행 도구라 사이트 머리·메뉴·푸터를 그리지 않는다(나가기는 마도서 툴바의 [← 나가기]).
+  // 화면 상태가 아니라 주소로 정한다 — 첫 프레임부터 머리가 없고 떠날 때 되돌릴 것도 없다. 인증 복구는 그대로 여기서 돈다
+  const immersive = location.pathname.startsWith('/clocktower-grimoire');
 
   const setUser = useSetRecoilState(userState);
 

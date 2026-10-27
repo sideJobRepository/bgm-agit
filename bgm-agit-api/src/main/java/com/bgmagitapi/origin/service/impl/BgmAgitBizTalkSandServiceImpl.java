@@ -454,8 +454,10 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     }
 
     private void sendClockTowerRoleTalk(String message, String template, String phone, Long sessionId) {
+        // 이 템플릿은 버튼에 PC 링크까지 등록돼 있다. 모바일만 보냈더니 3027(버튼 불일치)로 전부 실패했다(2026-10-27)
+        String url = "https://bgmagit.co.kr/clocktower-my";
         sendTalk(message, template, phone, sessionId, BgmAgitSubject.CLOCKTOWER_ROLE,
-                "내 캐릭터 보기", "https://bgmagit.co.kr/clocktower-my");
+                new Attach(List.of(Attach.Button.wl("내 캐릭터 보기", url, url))));
     }
 
     private String nicknameOf(Record record) {
@@ -469,10 +471,13 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
      * 공통 전송 + 히스토리 저장
      */
     private void sendTalk(String message, String templateName, String rawPhone, Long subjectId, BgmAgitSubject bgmAgitSubject, String buttonName, String url) {
-        
+        sendTalk(message, templateName, rawPhone, subjectId, bgmAgitSubject, AlimtalkUtils.defaultAttach(buttonName, url));
+    }
+
+    private void sendTalk(String message, String templateName, String rawPhone, Long subjectId, BgmAgitSubject bgmAgitSubject, Attach attach) {
+
         String phone = AlimtalkUtils.formatRecipientKr(rawPhone);
-        Attach attach = AlimtalkUtils.defaultAttach(buttonName, url);
-        
+
         RestClient rest = RestClient.create();
         BizTalkTokenResponse token = bgmAgitBizTalkService.getBizTalkToken();
         

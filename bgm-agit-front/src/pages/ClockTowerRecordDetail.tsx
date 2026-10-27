@@ -663,7 +663,7 @@ export default function ClockTowerRecordDetail() {
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="닉네임으로 참가자 검색"
+              placeholder="닉네임으로 참가자 검색 (초성도 됩니다)"
               value={keyword}
               onChange={e => {
                 setKeyword(e.target.value);
@@ -676,6 +676,7 @@ export default function ClockTowerRecordDetail() {
                 {visibleCandidates.map(c => (
                   <Option key={c.id} type="button" onClick={() => addPart(c)}>
                     {c.nickname || `#${c.id}`}
+                    {c.loginType ? ` · ${c.loginType}` : ''}
                   </Option>
                 ))}
                 {visibleCandidates.length === 0 && keyword.trim() && (

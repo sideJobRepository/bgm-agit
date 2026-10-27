@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import { userState } from '../recoil/state/userState.ts';
 import { toast } from '../utils/toast';
@@ -43,7 +43,7 @@ import ReminderToken, { CurvedText } from '../components/clocktower/grimoire/Rem
 import { dealBag, isDealt, usedKeys } from '../components/clocktower/grimoire/bagRules.ts';
 import RoleArt from '../components/clocktower/grimoire/RoleArt.tsx';
 import { preloadGrimoireImages, tokenImageCandidates } from '../components/clocktower/grimoire/tokenImage.ts';
-import { useImmersiveMode } from '../components/clocktower/grimoire/useImmersiveMode.ts';
+import { useGrimoireScreen } from '../components/clocktower/grimoire/useGrimoireScreen.ts';
 import { buildEvilInfo, usePhoneSession } from '../components/clocktower/grimoire/usePhoneSession.ts';
 import {
   checkGameEnd,
@@ -205,7 +205,16 @@ type DragState = {
  */
 export default function ClockTowerGrimoire() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [params] = useSearchParams();
+  // 사이트 머리가 없어 이게 유일한 출구다. 사이트 안에서 왔으면 그 화면으로, 주소로 바로 열었으면 게임 목록으로.
+  // 진행 상태는 이 기기에 계속 저장돼 있어 묻지 않고 나간다(다시 들어오면 그대로 이어진다)
+  const leave = () => (location.key !== 'default' ? navigate(-1) : navigate('/clocktower-games'));
+  const leaveButton = (
+    <Btn type="button" onClick={leave}>
+      ← 나가기
+    </Btn>
+  );
   const user = useRecoilValue(userState);
   const userId = user ? Number(user.id) : null;
   const {
@@ -250,8 +259,6 @@ export default function ClockTowerGrimoire() {
   const [savedOpen, setSavedOpen] = useState(false);
   const [viewer, setViewer] = useState<{ state: GrimoireState; title: string } | null>(null);
   const [savingToServer, setSavingToServer] = useState(false);
-  // 전체화면이 몰입 모드를 켰으면 끝낼 때 같이 끈다(원래 몰입 중이었으면 그대로 둔다)
-  const fullViewOwnsImmersive = useRef(false);
   // 악마 넘기기 창(악마가 죽으면 자동으로 열린다)
   const [demonSeatId, setDemonSeatId] = useState<string | null>(null);
   // 처형 결과 창을 연 좌석(사망/생존을 거기서 고른다)
@@ -270,10 +277,7 @@ export default function ClockTowerGrimoire() {
   useWakeLock(!!state);
   // 플레이어 휴대폰(/clocktower-my)으로 보낸 배정: 바뀐 좌석 자동 재전송 + 확인 여부
   const phone = usePhoneSession(state, updateSilently);
-  // 몰입 모드(사이트 머리·푸터 숨김 + 전체 화면)는 진행 중인 판에서만
-  const { immersive, fullscreen, canFullscreen, enter, exit, requestFullscreen } = useImmersiveMode(
-    !!user && !!state
-  );
+  const { enterFullscreen, leaveFullscreen } = useGrimoireScreen();
 
   const roles = useMemo(
     () => (state ? roleMap(state.data) : new Map<string, GrimoireRole>()),
@@ -331,8 +335,16 @@ export default function ClockTowerGrimoire() {
 
   if (!user) {
     return (
-      <GrimoireRoot $immersive={false}>
-        <Muted>로그인 후 사용할 수 있습니다.</Muted>
+      <GrimoireRoot $immersive>
+        <Page>
+          <Toolbar $sticky>
+            {leaveButton}
+            <ToolTitle>
+              <strong>이야기꾼 마도서</strong>
+            </ToolTitle>
+          </Toolbar>
+          <Muted>로그인 후 사용할 수 있습니다.</Muted>
+        </Page>
       </GrimoireRoot>
     );
   }
@@ -340,16 +352,14 @@ export default function ClockTowerGrimoire() {
   if (!state) {
     const gameId = Number(params.get('gameId'));
     return (
-      <GrimoireRoot $immersive={false}>
+      <GrimoireRoot $immersive>
         <Page>
-          <Toolbar>
+          <Toolbar $sticky>
+            {leaveButton}
             <ToolTitle>
               <strong>이야기꾼 마도서</strong>
               <span>스크립트와 참가자를 정하면 시작합니다.</span>
             </ToolTitle>
-            <Btn type="button" onClick={() => navigate('/clocktower-games')}>
-              게임 목록
-            </Btn>
           </Toolbar>
           <GrimoireSetup
             initialGameId={Number.isFinite(gameId) && gameId > 0 ? gameId : null}
@@ -716,15 +726,12 @@ export default function ClockTowerGrimoire() {
 
   const openFullView = () => {
     setFullView(true);
-    fullViewOwnsImmersive.current = !immersive;
-    if (!immersive) enter();
-    else if (canFullscreen && !fullscreen) requestFullscreen();
+    enterFullscreen();
   };
 
   const closeFullView = () => {
     setFullView(false);
-    if (fullViewOwnsImmersive.current) exit();
-    fullViewOwnsImmersive.current = false;
+    leaveFullscreen();
   };
 
   // 지금 판을 서버에 임시저장(같은 판은 덮어쓴다)
@@ -1020,11 +1027,10 @@ export default function ClockTowerGrimoire() {
   };
 
   return (
-    // 밤 진행 패널(오른쪽 고정)이 사이트 머리 메뉴를 덮지 않게 몰입 모드가 아니면 그 아래에서 시작한다
-    <GrimoireRoot $immersive={immersive} style={{ ['--ct-dock-top' as string]: immersive ? '12px' : '128px' }}>
+    <GrimoireRoot $immersive>
       <Page>
         {fullView && (
-          <Toolbar $sticky={immersive}>
+          <Toolbar $sticky>
             <ToolTitle>
               <strong>{state.data.gameName}</strong>
               <span>
@@ -1037,7 +1043,9 @@ export default function ClockTowerGrimoire() {
           </Toolbar>
         )}
         {!fullView && (
-        <Toolbar $sticky={immersive}>
+        <Toolbar $sticky>
+          {/* 나가기는 낮 화면에서도 늘 같은 자리(맨 왼쪽)에 둔다 */}
+          {leaveButton}
           <ToolTitle>
             <strong>{state.data.gameName}</strong>
             <span>
@@ -1045,12 +1053,6 @@ export default function ClockTowerGrimoire() {
             </span>
           </ToolTitle>
           <Stat>처형 {needed}표 이상</Stat>
-          {/* 몰입 종료는 낮 화면에서도 늘 보이게 둔다. 브라우저 전체 화면은 [전체화면](마도서만 크게)이 같이 켠다 */}
-          {immersive && (
-            <Btn type="button" onClick={exit}>
-              몰입 종료
-            </Btn>
-          )}
           <Btn type="button" $active={dayView} onClick={() => setDayView(v => !v)}>
             {dayView ? '이야기꾼 화면' : '낮 화면(가리기)'}
           </Btn>
@@ -1132,14 +1134,6 @@ export default function ClockTowerGrimoire() {
                   <Btn type="button" onClick={resetPositions}>
                     리마인더 위치 원래대로
                   </Btn>
-                )}
-                {!immersive && (
-                  <>
-                    <MenuGroup>화면</MenuGroup>
-                    <Btn type="button" onClick={enter}>
-                      몰입 모드
-                    </Btn>
-                  </>
                 )}
                 <MenuGroup>게임</MenuGroup>
                 <Btn type="button" onClick={saveToServer} disabled={savingToServer}>

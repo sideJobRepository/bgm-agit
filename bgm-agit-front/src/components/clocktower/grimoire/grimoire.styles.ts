@@ -14,7 +14,7 @@ export const NARROW = '(max-width: 900px), (orientation: portrait) and (max-widt
 
 /**
  * 마도서 루트. 공통 Wrapper(데스크톱 min-width 1280px)를 쓰면 iPad 가로(1133·1180)에서 가로 스크롤이 생겨 자체 전체 폭으로 둔다.
- * --ct-chrome = 루트 위에 남는 사이트 머리(헤더 80 + 메뉴 40). 몰입 모드면 0 이고 루트가 화면 높이(dvh)를 그대로 쓴다
+ * --ct-chrome = 루트 위에 남는 사이트 머리(헤더 80 + 메뉴 40). $immersive(사이트 머리 없음 — 마도서는 늘 이쪽)면 0 이고 루트가 화면 높이(dvh)를 그대로 쓴다
  */
 export const GrimoireRoot = styled.div<WithTheme & { $immersive: boolean }>`
   --ct-bg: #14101c;
@@ -81,7 +81,7 @@ export const Toolbar = styled.div<{ $sticky?: boolean }>`
   ${({ $sticky }) =>
     $sticky &&
     css`
-      /* 몰입 모드에서 좁은 화면은 루트가 스크롤된다 — [몰입 종료]가 늘 보이게 위에 붙인다 */
+      /* 높이가 고정된 루트에서 좁은 화면은 루트가 스크롤된다 — [← 나가기]가 늘 보이게 위에 붙인다 */
       position: sticky;
       top: -12px;
       z-index: 5;
@@ -161,7 +161,7 @@ export const Layout = styled.div`
     min-height: 0;
   }
 
-  /* 세로·좁은 화면은 원 아래로 패널이 쌓인다. 높이가 고정된 몰입 모드에서 min-height:0 이 남아 있으면
+  /* 세로·좁은 화면은 원 아래로 패널이 쌓인다. 높이가 고정된 루트($immersive)에서 min-height:0 이 남아 있으면
      원 칸이 화면 높이에 맞춰 원보다 작게 줄어 패널이 원 위로 올라왔다 — 줄지 않게 하고 화면이 스크롤되게 한다 */
   @media ${NARROW} {
     flex: none;
@@ -623,7 +623,7 @@ export const Sheet = styled.div<WithTheme & { $wide?: boolean }>`
  */
 export const NightDock = styled.aside`
   position: fixed;
-  top: var(--ct-dock-top, 12px);
+  top: 12px;
   right: 12px;
   bottom: 12px;
   z-index: 900;

@@ -68,6 +68,8 @@ export interface MemberOption {
   id: number;
   nickname: string;
   name?: string | null;
+  // 시계탑 참가자 검색만 내려준다. 소셜 회원이면 "카카오"·"네이버"(닉네임이 자체로그인 회원과 겹칠 수 있어 구분용)
+  loginType?: string | null;
 }
 
 export interface ExperiencedMember {

@@ -94,6 +94,9 @@ export default function GrimoireSetup({
     };
   }, [keyword]);
 
+  // 이미 넣은 회원은 검색 결과에서 뺀다(같은 사람을 또 누르면 아무 일도 없어 헷갈렸다)
+  const available = candidates.filter(m => !players.some(p => p.memberId === m.id));
+
   const addMember = (m: MemberOption) => {
     setPlayers(prev =>
       prev.some(p => p.memberId === m.id) ? prev : [...prev, { memberId: m.id, name: m.nickname || `#${m.id}` }]
@@ -163,11 +166,11 @@ export default function GrimoireSetup({
         <Row style={{ marginTop: 8 }}>
           <TextInput
             value={keyword}
-            placeholder="닉네임 검색"
+            placeholder="닉네임 검색 (초성도 됩니다: ㅎㄱㄷ)"
             onChange={e => setKeyword(e.target.value)}
             onKeyDown={e => {
               if (e.key !== 'Enter') return;
-              if (candidates.length === 1) addMember(candidates[0]);
+              if (available.length === 1) addMember(available[0]);
             }}
           />
         </Row>
@@ -203,12 +206,12 @@ export default function GrimoireSetup({
         {players.length > 0 && players.length < 5 && (
           <Hint style={{ marginTop: 6 }}>공식 규칙은 5명 이상입니다. 그보다 적으면 셋업 점검·무작위 배정이 동작하지 않습니다.</Hint>
         )}
-        {candidates.length > 0 && (
+        {available.length > 0 && (
           <Dropdown>
-            {candidates.slice(0, 20).map(m => (
+            {available.slice(0, 20).map(m => (
               <button key={m.id} type="button" onClick={() => addMember(m)}>
                 {m.nickname}
-                {m.name ? ` (${m.name})` : ''}
+                {m.loginType ? ` · ${m.loginType}` : ''}
               </button>
             ))}
           </Dropdown>

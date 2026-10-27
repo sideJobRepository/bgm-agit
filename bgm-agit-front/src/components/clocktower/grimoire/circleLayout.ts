@@ -56,7 +56,7 @@ export function circleMargins(tokenSize: number, circleWidth: number) {
   };
 }
 
-/** 요소 크기를 따라간다(화면 회전·몰입 모드 전환 때 원 크기가 바뀐다) */
+/** 요소 크기를 따라간다(화면 회전·전체화면 전환 때 원 크기가 바뀐다) */
 export function useElementSize(el: HTMLElement | null) {
   const [size, setSize] = useState({ width: 0, height: 0 });
   useEffect(() => {
