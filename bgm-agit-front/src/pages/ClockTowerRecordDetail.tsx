@@ -663,7 +663,7 @@ export default function ClockTowerRecordDetail() {
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="닉네임으로 참가자 검색"
+              placeholder="닉네임으로 참가자 검색 (초성도 됩니다)"
               value={keyword}
               onChange={e => {
                 setKeyword(e.target.value);

@@ -166,7 +166,7 @@ export default function GrimoireSetup({
         <Row style={{ marginTop: 8 }}>
           <TextInput
             value={keyword}
-            placeholder="닉네임 검색"
+            placeholder="닉네임 검색 (초성도 됩니다: ㅎㄱㄷ)"
             onChange={e => setKeyword(e.target.value)}
             onKeyDown={e => {
               if (e.key !== 'Enter') return;
