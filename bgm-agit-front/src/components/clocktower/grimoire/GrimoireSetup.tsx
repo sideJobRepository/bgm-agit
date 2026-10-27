@@ -211,7 +211,7 @@ export default function GrimoireSetup({
             {available.slice(0, 20).map(m => (
               <button key={m.id} type="button" onClick={() => addMember(m)}>
                 {m.nickname}
-                {m.name ? ` (${m.name})` : ''}
+                {m.loginType ? ` · ${m.loginType}` : ''}
               </button>
             ))}
           </Dropdown>

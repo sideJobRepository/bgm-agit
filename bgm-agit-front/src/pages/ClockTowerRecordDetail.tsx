@@ -676,6 +676,7 @@ export default function ClockTowerRecordDetail() {
                 {visibleCandidates.map(c => (
                   <Option key={c.id} type="button" onClick={() => addPart(c)}>
                     {c.nickname || `#${c.id}`}
+                    {c.loginType ? ` · ${c.loginType}` : ''}
                   </Option>
                 ))}
                 {visibleCandidates.length === 0 && keyword.trim() && (
