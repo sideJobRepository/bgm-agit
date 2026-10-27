@@ -209,7 +209,6 @@ export default function ClockTowerMy() {
             </Card>
           </>
         )}
-        <Hint>낮에는 화면을 켜 두지 마세요. 확인은 밤에, 다른 사람이 보지 않게</Hint>
         {scriptLink}
       </Body>
     </GrimoireRoot>
