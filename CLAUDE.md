@@ -630,6 +630,12 @@ kml:
 
 ## TODO 후보
 
+- **[내일 2026-10-30] 벙주·하루 1룸 결제 승인 실검증** — 결제 승인 경로를 브라우저로 한 번도 안 태웠다(단위 테스트만). 스테이징(토스 테스트 키, 실과금 없음)에서 테스트 카드로 ① 일반 회원 평일 룸 결제 ② 벙주 평일 룸 결제(혜택가)를 끝까지 승인해 볼 것
+  - 확인: 승인 성공 → 예약 `approvalStatus='Y'` 확정 → 결제 완료 화면에 하루 1룸 안내 4줄(11/2 이후 룸만) → 예약내역 영수증
+  - 손댄 곳: `PaymentServiceImpl.validateAmountAgainstReservation`(벙주 단가 반영), `validateReservationSlotAvailable`(하루 1룸 재검사), `toConfirmResponse`(`oneRoomPerDay` 조회 추가)
+  - 하루 1룸 재검사: 같은 날 대기 예약 2건(DB 로 직접 만들거나 관리자 확정 후)을 두고 두 번째 결제가 토스 승인 전에 409 로 막히는지
+  - 스테이징 테스트 계정 "벙주테스트"(010-0000-1129, 비번 `bungju1129`, 벙주)와 예약 3건(11/2 B Room 혜택가, 11/7 2건)은 검증 뒤 정리
+
 - 닉네임 변경 시 KML synk 리셋
 - `AMBIGUOUS` 수동 해결 UI(마이페이지에서 KML ID 직접 선택)
 - `application-*.yml` 정리(`kakao.redirecturi2`, `naver.redirecturi2`, kml-front 소셜 OAuth env)
