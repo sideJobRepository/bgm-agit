@@ -144,7 +144,7 @@
 - 운영 적용 SQL 은 저장소에 두지 않는다(루트 SQL 정리됨). 순서는 **DDL·권한·계층·URL 매핑 → 백엔드 배포(재시작) → 프론트**. 백엔드를 먼저 올리면 예약 엔티티가 없는 컬럼을 읽어 예약 전체가 500
 - 환불 규정은 바꾸지 않았다(48h/24h). 문서의 "전날 50%·당일 0%"는 안내 문구에서 "24시간 전까지/이내"로 풀어 썼다
 - 역할을 하나 늘리면서 "USER·MENTOR 면 본인 것만" 식 블랙리스트가 새는 곳이 생긴다 — 문의 목록(`BgmAgitInquiryServiceImpl.getInquiry`)을 관리자만 전체로 고쳤다. 역할 판정을 새로 짤 땐 **관리자 여부**로 할 것
-- 추후: 인원·룸 변경에 따른 추가결제·부분환불, 수요일 예약 오픈(요일별 설정)
+- 추후: 인원·룸 변경에 따른 추가결제·부분환불, 요일별 예약 가능 여부 관리자 설정(수요일은 10-30 코드로 풀었다)
 
 ### 데이터 모델 (2026-10-09 방·예약 테이블 분리)
 예전엔 방이 `BGM_AGIT_IMAGE` 행이었고, 예약은 슬롯마다 1행을 쌓아 중복값 `RESERVATION_NO` 로 묶었다. 이관 SQL `room-reservation-split.sql`(스테이징·운영 적용 완료 2026-10-09).
@@ -167,7 +167,7 @@
 - 인원 범위(`minPeople`/`maxPeople`)는 **서버가 등록·결제주문·인원변경 세 곳에서 검증**한다. 인원이 곧 금액이라 프론트 스테퍼만 믿으면 `people=1` 로 7인 룸을 1인 요금에 잡을 수 있다
 - `GET /bgm-agit/reservation` 응답에 `slotRanges[{start,end}]`, `maxSelectableSlots`, `reservationType`(ROOM|DELEGATE_PLAY), `pricingMode`(PER_PERSON|FLAT), `prices[{date,price,colorGb}]` 포함 → `ReservationTimePanel.tsx`가 그대로 그림
 - `createReservation`은 **클라이언트가 보낸 예약타입을 무시**하고 방(링크)으로 결정
-- 수요일은 무인운영이라 예약 불가. 규칙은 `SlotSchedule.CLOSED_DAY_OF_WEEK`/`isClosedDay()`/`CLOSED_DAY_MESSAGE` 한 곳에 모임(등록 검증 + 방 목록 조회가 같은 값을 봄). 프론트는 `available-rooms` 응답의 `closedWeekday`(JS `getDay()` 규약)를 쓸 수 있다
+- **휴무 요일 없음**(2026-10-30 사장님 요청으로 수요일 예약을 풀었다). 규칙은 `SlotSchedule.CLOSED_DAY_OF_WEEK`(null = 없음)/`isClosedDay()`/`CLOSED_DAY_MESSAGE` 한 곳에 모임(등록 검증 + 방 목록 조회가 같은 값을 봄). 프론트는 `available-rooms` 응답의 `closedWeekday`(JS `getDay()` 규약, 없으면 -1)와 `ReservationDatePicker.DEFAULT_CLOSED_WEEKDAY`(-1)를 쓴다. 다시 막으려면 두 값을 `WEDNESDAY`/`3` 으로
 
 ### 공휴일 — 법정 자동 계산 + 관리자 수동 예외
 공휴일은 **주말 단가(1인 10,000원)** 를 받는다. 판정 출처는 `BgmAgitHolidayService.isWeekendRate()` 하나다(토·일 또는 공휴일).

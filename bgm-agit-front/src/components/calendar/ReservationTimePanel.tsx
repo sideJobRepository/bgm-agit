@@ -424,9 +424,6 @@ export default function ReservationTimePanel({
               </p>
             </>
           )}
-          <p>
-            <strong>※ 수요일은 무인운영으로 예약이 불가합니다.</strong>
-          </p>
         </MessageBox>
       </TitleBox>
 

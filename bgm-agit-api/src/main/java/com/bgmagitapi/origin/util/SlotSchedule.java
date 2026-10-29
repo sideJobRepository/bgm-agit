@@ -304,25 +304,26 @@ public class SlotSchedule {
     // ===== 휴무일 =====
 
     /**
-     * 무인운영으로 예약을 받지 않는 요일.
+     * 예약을 받지 않는 요일. null 이면 휴무 요일 없음.
      * 예약 조회(방 목록 가용 현황)·등록 검증·프론트 캘린더가 모두 이 값을 보게 하고, 바꿀 때는 이 상수만 고칠 것.
+     * 수요일은 무인운영이라 막아 두었다가 2026-10-30 사장님 요청으로 풀었다(되돌리려면 DayOfWeek.WEDNESDAY).
      */
-    public static final DayOfWeek CLOSED_DAY_OF_WEEK = DayOfWeek.WEDNESDAY;
+    public static final DayOfWeek CLOSED_DAY_OF_WEEK = null;
 
     /** 휴무일 안내 문구. 등록 시 예외 메시지와 조회 응답 message 가 같은 문구를 쓴다. */
     public static final String CLOSED_DAY_MESSAGE = "수요일은 무인운영으로 예약이 불가능합니다.";
 
     public static boolean isClosedDay(LocalDate date) {
-        return date.getDayOfWeek() == CLOSED_DAY_OF_WEEK;
+        return CLOSED_DAY_OF_WEEK != null && date.getDayOfWeek() == CLOSED_DAY_OF_WEEK;
     }
 
     /**
-     * 휴무 요일을 자바스크립트 Date.getDay() 규약(0=일 … 6=토)으로 변환한 값.
+     * 휴무 요일을 자바스크립트 Date.getDay() 규약(0=일 … 6=토)으로 변환한 값. 휴무 요일이 없으면 -1(어느 요일과도 안 맞음).
      * 자바 DayOfWeek 는 1=월 … 7=일이라 그대로 내보내면 프론트에서 하루가 밀린다.
      * % 7 을 태우면 월~토(1~6)는 그대로, 일요일만 7 → 0 이 되어 JS 규약과 정확히 일치한다.
      */
     public static int closedWeekdayForJs() {
-        return CLOSED_DAY_OF_WEEK.getValue() % 7;
+        return CLOSED_DAY_OF_WEEK == null ? -1 : CLOSED_DAY_OF_WEEK.getValue() % 7;
     }
 
     // ===== 정책 함수들 =====

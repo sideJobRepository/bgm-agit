@@ -36,9 +36,7 @@ export default function RefundPolicy() {
         <SubTitle>3. 예약 가능 기간 및 서비스 제공</SubTitle>
         <List>
           <li>예약은 예약일 기준 당일 예약이 불가하며, 오늘부터 3개월 이내의 날짜만 가능합니다.</li>
-          <li>서비스는 예약하신 날짜와 시간에 매장 현장에서 제공됩니다.</li>
-          <li>수요일은 무인운영으로 예약이 불가합니다.</li>
-        </List>
+          <li>서비스는 예약하신 날짜와 시간에 매장 현장에서 제공됩니다.</li>        </List>
       </Section>
 
       <Section>
