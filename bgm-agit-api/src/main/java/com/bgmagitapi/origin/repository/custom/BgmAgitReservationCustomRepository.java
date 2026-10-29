@@ -50,4 +50,13 @@ public interface BgmAgitReservationCustomRepository {
 
     /** 그 기간 확정 예약에 나온 인원 값들(오름차순). 인원수별 보기 선택지 */
     List<Integer> findConfirmedPeopleCounts(LocalDate from, LocalDate toExclusive);
+
+    /** 회원의 그날 룸 예약(마작 대탁 제외, 취소 제외 — 대기·확정)이 있는지. 하루 1룸 검증용 */
+    boolean existsActiveRoomReservation(Long memberId, LocalDate date);
+
+    /** 회원의 그날 다른 확정 룸 예약(취소 제외, 자기 예약 제외)이 있는지. 결제 승인 직전 하루 1룸 재검사용 */
+    boolean existsOtherApprovedRoomReservation(Long memberId, LocalDate date, Long excludeReservationId);
+
+    /** 벙주 혜택가 예약(이용일 [from, to] 양끝 포함, 회원 fetch). 관리자 혜택 적용 내역 */
+    List<BgmAgitReservation> findBungjuReservations(LocalDate from, LocalDate to);
 }

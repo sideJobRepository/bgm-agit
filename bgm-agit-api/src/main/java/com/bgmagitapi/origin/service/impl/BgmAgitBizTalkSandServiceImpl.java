@@ -114,12 +114,15 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
             int headCount = reservation.getBgmAgitReservationPeople() == null ? 0 : reservation.getBgmAgitReservationPeople();
             boolean weekendRate = bgmAgitHolidayService.isWeekendRate(useDate);
             // 월간패스 본인 1명분 할인도 결제 주문과 같은 판정으로 뺀다
-            boolean passCovered = useDate != null
+            // 벙주 요금 예약은 이미 할인 단가라 월간패스 할인을 겹치지 않는다
+            Integer bungjuPrice = reservation.getBgmAgitReservationBungjuPrice();
+            boolean bungjuRate = bungjuPrice != null;
+            boolean passCovered = !bungjuRate && useDate != null
                     && bgmAgitMonthlyPassRepository.coversMonth(member.getBgmAgitMemberId(), YearMonth.from(useDate));
             int discount = SlotSchedule.monthlyPassDiscount(
                     passCovered, reservation.getRoomList(), headCount, weekendRate, useDate);
             String deposit = AlimtalkUtils.formatAmount(SlotSchedule.totalPaymentAmount(
-                    reservation.getRoomList(), headCount, weekendRate, useDate) - discount);
+                    reservation.getRoomList(), headCount, weekendRate, useDate, bungjuPrice) - discount);
             // 전액결제 개정판(-2)은 카카오 검수를 따로 받아야 해서 스위치로 가른다.
             // 통과 전에는 구 템플릿이 나가고, 그 기간에는 환불 안내 문구가 실제 규정과 다르다
             // (예약 화면·결제 모달·환불정책 페이지가 정확한 문구를 갖고 있어 그쪽으로 보완한다).

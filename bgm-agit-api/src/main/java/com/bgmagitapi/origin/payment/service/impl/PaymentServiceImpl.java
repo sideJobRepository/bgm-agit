@@ -348,6 +348,15 @@ public class PaymentServiceImpl implements PaymentService {
             throw new ReservationConflictException("예약이 종료된 항목입니다. 결제는 진행되지 않았으니 매장으로 문의해 주세요.");
         }
 
+        // 회원 1명당 하루 1룸. 등록에서도 막지만 확인→저장 사이에 잠금이 없어 동시에 넣은 두 건이 모두 대기로 들어올 수 있다.
+        // 승인은 PaymentConfirmExecutor 로 한 줄로 서므로 여기서 다시 보면 두 번째 결제(=과금)는 막힌다
+        if (SlotSchedule.isOneRoomPerDay(reservation.getRoomList(), reservation.getBgmAgitReservationStartDate())
+                && bgmAgitReservationRepository.existsOtherApprovedRoomReservation(
+                        reservation.getMemberId(), reservation.getBgmAgitReservationStartDate(), reservationId)) {
+            throw new ReservationConflictException(
+                    "같은 날 이미 확정된 룸 예약이 있습니다. 회원 1명당 하루 1개의 룸만 예약할 수 있어 결제는 진행되지 않았습니다.");
+        }
+
         // 같은 방·같은 영업일의 확정건과 이용 구간이 조금이라도 겹치면 막는다(방별 구간 겹침).
         // 예전처럼 "시작-종료" 문자열이 같은지만 보면 13~17시 확정건 위에 15~18시 결제가 통과한다.
         SlotSchedule.Slot mine = reservation.getUseRange();
@@ -414,7 +423,8 @@ public class PaymentServiceImpl implements PaymentService {
                 reservation.getRoomList(),
                 people == null ? 0 : people,
                 bgmAgitHolidayService.isWeekendRate(useDate),
-                useDate) - (discount == null ? 0 : discount);
+                useDate,
+                reservation.getBgmAgitReservationBungjuPrice()) - (discount == null ? 0 : discount);
 
         if (!Objects.equals(payment.getBgmAgitPaymentAmount(), expected)) {
             paymentFailureRecorder.recordAborted(payment.getBgmAgitOrderNo(), null,
@@ -435,13 +445,18 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private PaymentConfirmResponse toConfirmResponse(BgmAgitPayment payment) {
+        // 결제 완료 화면의 "하루 1룸" 안내는 11/2 이후 룸 예약에만 맞는 말이라 대상 여부를 같이 내려준다
+        boolean oneRoomPerDay = bgmAgitReservationRepository.findReservationWithRooms(payment.getBgmAgitReservationId())
+                .map(r -> SlotSchedule.isOneRoomPerDay(r.getRoomList(), r.getBgmAgitReservationStartDate()))
+                .orElse(false);
         return new PaymentConfirmResponse(
                 payment.getBgmAgitOrderNo(),
                 payment.getBgmAgitReservationId(),
                 payment.getBgmAgitPaymentAmount(),
                 payment.getBgmAgitPaymentStatus().name(),
                 payment.getBgmAgitPaymentType(),
-                payment.getBgmAgitPaymentReceiptUrl()
+                payment.getBgmAgitPaymentReceiptUrl(),
+                oneRoomPerDay
         );
     }
 

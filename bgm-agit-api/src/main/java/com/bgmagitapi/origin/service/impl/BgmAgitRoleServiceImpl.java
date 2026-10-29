@@ -45,6 +45,9 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final String ROLE_MENTOR = "ROLE_MENTOR";
     private static final String ROLE_NAME_USER = "USER";
+    private static final String ROLE_NAME_BUNGJU = "BUNGJU";
+    /** 멘토가 관리할 수 있는 회원의 권한. 벙주는 유저 위 단계라 유저와 같이 다룬다 */
+    private static final java.util.Set<String> MENTOR_MANAGEABLE = java.util.Set.of(ROLE_NAME_USER, ROLE_NAME_BUNGJU);
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final BgmAgitRoleRepository bgmAgitRoleRepository;
@@ -101,7 +104,8 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
             if (actorIsMentor) {
                 String currentName = memberRole.getBgmAgitRole().getBgmAgitRoleName();
                 String newName = newRole.getBgmAgitRoleName();
-                if (!ROLE_NAME_USER.equals(currentName) || !ROLE_NAME_USER.equals(newName)) {
+                // 벙주 지정·해제는 관리자(사장님)만 한다. 멘토는 유저·벙주 회원을 그대로 저장하는 것까지만
+                if (!MENTOR_MANAGEABLE.contains(currentName) || !currentName.equals(newName)) {
                     throw new RuntimeException("멘토는 유저의 권한만 변경할 수 있습니다.");
                 }
             }
@@ -138,7 +142,7 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
             BgmAgitMemberRole memberRole = bgmAgitMemberRoleRepository
                     .findByBgmAgitMemberId(member.getBgmAgitMemberId())
                     .orElseThrow(() -> new RuntimeException("해당 회원의 권한 정보가 없습니다."));
-            if (!ROLE_NAME_USER.equals(memberRole.getBgmAgitRole().getBgmAgitRoleName())) {
+            if (!MENTOR_MANAGEABLE.contains(memberRole.getBgmAgitRole().getBgmAgitRoleName())) {
                 throw new RuntimeException("멘토는 유저의 비밀번호만 변경할 수 있습니다.");
             }
         }
@@ -167,7 +171,7 @@ public class BgmAgitRoleServiceImpl implements BgmAgitRoleService {
             BgmAgitMemberRole memberRole = bgmAgitMemberRoleRepository
                     .findByBgmAgitMemberId(member.getBgmAgitMemberId())
                     .orElseThrow(() -> new RuntimeException("해당 회원의 권한 정보가 없습니다."));
-            if (!ROLE_NAME_USER.equals(memberRole.getBgmAgitRole().getBgmAgitRoleName())) {
+            if (!MENTOR_MANAGEABLE.contains(memberRole.getBgmAgitRole().getBgmAgitRoleName())) {
                 throw new RuntimeException("멘토는 유저의 닉네임만 변경할 수 있습니다.");
             }
         }

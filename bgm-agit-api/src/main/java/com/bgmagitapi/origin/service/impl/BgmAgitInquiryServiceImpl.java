@@ -52,7 +52,8 @@ public class BgmAgitInquiryServiceImpl implements BgmAgitInquiryService {
     
     @Override
     public Page<BgmAgitInquiryGetResponse> getInquiry(Long memberId, String role, Pageable pageable, String titleOrCont) {
-        boolean isUser = "ROLE_USER".equals(role) || "ROLE_MENTOR".equals(role);
+        // 관리자만 전체를 본다. "유저·멘토면 본인 것만" 블랙리스트였을 때는 역할이 늘면(벙주) 전 회원 문의가 열렸다
+        boolean isUser = !"ROLE_ADMIN".equals(role);
         Page<BgmAgitInquiry> inquiry = inquiryRepository.findByInquirys(memberId, isUser, pageable,titleOrCont);
         return inquiry.map(item -> {
             return BgmAgitInquiryGetResponse

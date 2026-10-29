@@ -132,6 +132,20 @@
 - 할인액은 결제행 `BGM_AGIT_PAYMENT_DISCOUNT_AMOUNT` 스냅샷. 승인 재대조는 재계산액 − 스냅샷(주문~승인 사이 패스가 꺼져도 승인 실패 안 나게). 예약 대기 알림톡 금액도 같은 할인 함수
 - 프론트: 권한관리 `components/role/MonthlyPassTable.tsx` + 등록 모달 `confirmAlert.tsx` 의 `showMonthlyPassAddModal`. 마이페이지는 `monthlyPassPeriods`(예: "2026-11 ~ 2027-10")를 읽기 전용으로 표시
 
+### 벙주 혜택 + 하루 1룸 (2026-10-29, 사장님 2단계 요구사항)
+원문은 사장님 문서 `BGM아지트_홈페이지_2단계_요구사항.md`(바탕화면, 저장소 밖). **벙주 권한** 회원이 혜택 기간 안의 **평일** 룸을 예약하면 예약 인원 전원 1인 **5,000원**(주말·공휴일·마작 대탁은 정가). 월간패스 할인과 겹치지 않고 **둘 중 싼 쪽**을 준다(`isCheaperThanMonthlyPass` — 평일 2명이면 패스가 싸다).
+- 권한 `BUNGJU`(ROLE_ID **6** 고정, 프론트 `/role` 라디오가 6 을 쓴다). 계층 **관리자 > 멘토 > 벙주 > 유저** — 유저 URL 권한을 그대로 통과한다(계층 표 `BGM_AGIT_ROLE_HIERARCHY`: BUNGJU 행 부모 = MENTOR 행, USER 행 부모 = BUNGJU 행)
+- **혜택 설정은 DB** `BGM_AGIT_BUNGJU_SETTING`(1행, ID 1 — 기간·1인 요금·사용 여부). 관리자가 `/role` → **벙주 혜택 탭**(`components/role/BungjuPanel.tsx`)에서 바꾼다. `GET/PUT /bgm-agit/bungju/setting`, 혜택가 예약 내역 `GET /bgm-agit/bungju/reservations?from&to`(CSV 내려받기, 엑셀 라이브러리 대신 UTF-8 BOM) — 서비스단 `requireAdmin` + URL 매핑(관리자)
+- 판정은 `BgmAgitBungjuService.bungjuPriceFor`(벙주 + 설정 켜짐·기간 안 + 평일 + 룸) 하나. **등록 시점**에 판정해 예약 행 `BGM_AGIT_RESERVATION_BUNGJU_PRICE`(혜택 1인 단가, 아니면 null)에 박는다. 결제 주문·승인 재대조·대기 알림톡·결제 단가 스냅샷이 전부 이 값을 따르므로 나중에 권한·설정을 바꿔도 받은 예약 금액은 그대로다. 벙주 지정 전에 정가로 들어온 예약은 자동 처리하지 않는다(관리자 수동 환불)
+- 벙주 여부는 토큰이 아니라 DB 의 현재 권한으로 본다. 캘린더 `prices[]` 에 `regularPrice`·`bungju` 를, 결제 주문 응답에 `bungjuApplied`·`regularAmount` 를 실어 "벙주 혜택가 적용 — 정가 대비 N원 할인"을 보여 준다
+- **회원 1명당 하루 1룸** — 이용일 **2026-11-02 부터 모든 회원**(벙주 무관), 룸만(마작 대탁 제외), 취소건 제외. 같은 날 두 번째 룸 예약을 409로 거절(`SlotSchedule.ONE_ROOM_PER_DAY_FROM`/`ONE_ROOM_PER_DAY_MESSAGE`, 프론트 `config/reservationPolicy.ts` 같은 날짜). **관리자 계정은 제외**(전화·현장 예약 대행)
+  - 등록 검사는 잠금 없는 확인→저장이라 동시에 넣은 두 건이 통과할 수 있다. 그래서 **결제 승인 직전**(`validateReservationSlotAvailable`, 승인 직렬화 락 안)에 같은 날 다른 확정 룸 예약이 있으면 409로 한 번 더 막는다
+- **멘토는 벙주 회원도 유저처럼 관리**(비밀번호·닉네임, `BgmAgitRoleServiceImpl.MENTOR_MANAGEABLE`, kml-front `role/page.tsx` 같은 규칙). 벙주 지정·해제는 관리자만
+- 운영 적용 SQL 은 저장소에 두지 않는다(루트 SQL 정리됨). 순서는 **DDL·권한·계층·URL 매핑 → 백엔드 배포(재시작) → 프론트**. 백엔드를 먼저 올리면 예약 엔티티가 없는 컬럼을 읽어 예약 전체가 500
+- 환불 규정은 바꾸지 않았다(48h/24h). 문서의 "전날 50%·당일 0%"는 안내 문구에서 "24시간 전까지/이내"로 풀어 썼다
+- 역할을 하나 늘리면서 "USER·MENTOR 면 본인 것만" 식 블랙리스트가 새는 곳이 생긴다 — 문의 목록(`BgmAgitInquiryServiceImpl.getInquiry`)을 관리자만 전체로 고쳤다. 역할 판정을 새로 짤 땐 **관리자 여부**로 할 것
+- 추후: 인원·룸 변경에 따른 추가결제·부분환불, 수요일 예약 오픈(요일별 설정)
+
 ### 데이터 모델 (2026-10-09 방·예약 테이블 분리)
 예전엔 방이 `BGM_AGIT_IMAGE` 행이었고, 예약은 슬롯마다 1행을 쌓아 중복값 `RESERVATION_NO` 로 묶었다. 이관 SQL `room-reservation-split.sql`(스테이징·운영 적용 완료 2026-10-09).
 - **`BGM_AGIT_ROOM`** — 예약 대상(룸·마작 대탁). 이름·링크·최소/최대 인원·`GUIDE`(카드 인원 문구)·이미지·`USE_STATUS`. **`ROOM_ID` = 이관 전 IMAGE_ID** 값 그대로. 카테고리 컬럼은 없고 **`ROOM_LINK = /detail/mahjongRental` 이면 마작**(`BgmAgitRoom.isMahjong()`)

@@ -73,8 +73,13 @@ export type ReservedTimeDto = {
 
 export type ReservationPriceDto = {
   date: string;
+  // 이 손님이 낼 1인 단가(벙주 혜택이면 혜택가)
   price: number;
   colorGb: boolean;
+  // 정가(혜택이 없을 때의 단가)
+  regularPrice?: number;
+  // 벙주 혜택가가 적용된 날짜인지
+  bungju?: boolean;
 };
 
 // 서버가 내려주는 예약 후보 시간대 (예약 가능 여부와 무관)

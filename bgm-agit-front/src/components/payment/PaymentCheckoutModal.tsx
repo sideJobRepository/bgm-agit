@@ -176,6 +176,13 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
               {order.paymentKind === 'DEPOSIT'
                 ? `예약금 ${order.amount.toLocaleString()}원을 결제하시고 잔여 이용요금은 현장에서 결제합니다.`
                 : `결제 금액은 ${order.amount.toLocaleString()}원입니다. 금액은 서버가 예약 인원과 날짜로 계산합니다.`}
+              {order.bungjuApplied && order.regularAmount != null && (
+                <>
+                  <br />
+                  <strong>벙주 혜택가 적용</strong> — 정가 {order.regularAmount.toLocaleString()}원
+                  대비 {(order.regularAmount - order.amount).toLocaleString()}원 할인
+                </>
+              )}
               {!!order.discountAmount && (
                 <>
                   <br />

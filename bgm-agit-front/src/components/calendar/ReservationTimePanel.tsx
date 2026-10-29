@@ -29,6 +29,7 @@ import { toast } from '../../utils/toast';
 import LoginMoadl from '../LoginMoadl.tsx';
 import { RESERVATION_WINDOW_MONTHS } from './ReservationDatePicker.tsx';
 import { formatYmdWithWeekday } from '../../utils/date.ts';
+import { ONE_ROOM_PER_DAY_FROM } from '../../config/reservationPolicy.ts';
 
 type CombinableItem = { id: number; label: string };
 
@@ -109,10 +110,15 @@ export default function ReservationTimePanel({
     : reservation.depositAmount;
   // 10월 이용분 룸(종전 정책) — 예약금 1만원·잔액 현장결제·전날까지 취소
   const isLegacyRoom = !isPerPerson && reservation.reservationType !== 'DELEGATE_PLAY';
-  const unitPrice = useMemo(
-    () => reservation.prices?.find(p => p.date === date)?.price ?? null,
+  const priceOfDay = useMemo(
+    () => reservation.prices?.find(p => p.date === date) ?? null,
     [reservation.prices, date]
   );
+  const unitPrice = priceOfDay?.price ?? null;
+  // 벙주 혜택가 날짜면 정가를 같이 보여 준다
+  const regularUnitPrice = priceOfDay?.bungju ? (priceOfDay.regularPrice ?? null) : null;
+  // 11/2 이용분부터 회원 1명당 하루 1룸(서버 SlotSchedule.ONE_ROOM_PER_DAY_FROM 과 같은 날짜)
+  const isOneRoomPerDay = isPerPerson && date >= ONE_ROOM_PER_DAY_FROM;
 
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
 
@@ -253,6 +259,7 @@ export default function ReservationTimePanel({
       summary,
       depositAmount,
       unitPrice: isPerPerson ? unitPrice : null,
+      regularUnitPrice: isPerPerson ? regularUnitPrice : null,
       onConfirm: ({ count, reason }) => {
         // 이용 방식은 요청사항 맨 위에 기록 → 예약내역·알림톡에서 바로 확인 가능
         const modeText = useModes.length ? `[이용 방식] ${selectedUseMode}` : '';
@@ -362,17 +369,40 @@ export default function ReservationTimePanel({
                 <strong>
                   ※ 일무제한 요금제로 당일 오전 10시부터 익일 오전 10시까지 매장을 이용하실 수
                   있습니다. 룸은 선택하신 시간 동안 배정되며
-                  {maxSelectableHours !== null && `(한 번 예약 최대 ${maxSelectableHours}시간)`}, 그 외
-                  시간은 좌석으로 이용하실 수 있습니다.
+                  {maxSelectableHours !== null && `(한 번 예약 최대 ${maxSelectableHours}시간)`}, 그
+                  외 시간은 좌석으로 이용하실 수 있습니다.
                 </strong>
               </p>
               {unitPrice !== null && (
                 <p>
                   <strong>
-                    ※ 이용요금은 1인 {unitPrice.toLocaleString()}원이며, 예약 시 인원수만큼 전액
-                    결제합니다. (세트 이용을 원하시면 현장에서 3,000원만 추가 결제)
+                    ※ 이용요금은 1인 {unitPrice.toLocaleString()}원
+                    {regularUnitPrice !== null &&
+                      `(벙주 혜택가 적용, 정가 ${regularUnitPrice.toLocaleString()}원)`}
+                    이며, 예약 시 인원수만큼 전액 결제합니다. (세트 이용을 원하시면 현장에서
+                    3,000원만 추가 결제)
                   </strong>
                 </p>
+              )}
+              {isOneRoomPerDay && (
+                <>
+                  <p>
+                    <strong>
+                      ※ 회원 1명당 하루 1개의 룸만 예약할 수 있습니다. 한 룸을 예약해서 계속 이용해
+                      주세요.
+                    </strong>
+                  </p>
+                  <p>
+                    <strong>
+                      ※ 퇴실하시거나 식사 등으로 외출하시면 해당 룸의 예약 권한이 사라집니다.
+                    </strong>
+                  </p>
+                  <p>
+                    <strong>
+                      ※ 예약 후 추가되는 인원(당일·현장 추가)은 일반 요금으로 받습니다.
+                    </strong>
+                  </p>
+                </>
               )}
               <p>
                 <strong>

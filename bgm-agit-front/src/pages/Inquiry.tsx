@@ -48,7 +48,7 @@ export default function Inquiry() {
           </SearchBox>
         </SearchWrapper>
         <TableBox>
-          {user?.roles.includes('ROLE_USER') && (
+          {(user?.roles.includes('ROLE_USER') || user?.roles.includes('ROLE_BUNGJU')) && (
             <ButtonBox>
               <Button
                 color={theme.colors.primary}

@@ -19,10 +19,14 @@ import Pagination from '@/app/components/Pagination';
 const ROLE_OPTIONS = [
   { id: 1, label: '관리자' },
   { id: 4, label: '멘토' },
+  { id: 6, label: '벙주' },
   { id: 2, label: '유저' },
 ];
 
 const USER_ROLE_ID = 2;
+// 벙주(유저 위 단계). 멘토는 유저와 같이 관리(비밀번호·닉네임)하되 벙주 지정·해제는 관리자만
+const BUNGJU_ROLE_ID = 6;
+const MENTOR_MANAGEABLE = [USER_ROLE_ID, BUNGJU_ROLE_ID];
 
 export default function Role() {
   const { update } = useUpdatePost();
@@ -37,14 +41,14 @@ export default function Role() {
 
   const canEditTarget = (targetRoleId: number) => {
     if (isAdmin) return true;
-    if (isMentor) return targetRoleId === USER_ROLE_ID;
+    if (isMentor) return MENTOR_MANAGEABLE.includes(targetRoleId);
     return false;
   };
 
   const visibleRoleOptions = (targetRoleId: number) => {
     if (isAdmin) return ROLE_OPTIONS;
-    if (isMentor && targetRoleId === USER_ROLE_ID) {
-      return ROLE_OPTIONS.filter((opt) => opt.id === USER_ROLE_ID);
+    if (isMentor && MENTOR_MANAGEABLE.includes(targetRoleId)) {
+      return ROLE_OPTIONS.filter((opt) => opt.id === targetRoleId);
     }
     return [];
   };

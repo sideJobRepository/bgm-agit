@@ -44,3 +44,27 @@ export type PageRole = {
   last: boolean;
   empty: boolean;
 };
+
+// 벙주 혜택 설정(관리자)
+export type BungjuSetting = {
+  startDate: string | null;
+  endDate: string | null;
+  unitPrice: number | null;
+  use: boolean;
+};
+
+// 벙주 혜택가로 들어온 예약 한 줄(관리자)
+export type BungjuBenefit = {
+  reservationId: number;
+  date: string;
+  time: string;
+  roomNames: string;
+  memberName: string;
+  memberNickname: string;
+  phoneNo: string;
+  people: number;
+  unitPrice: number;
+  // 결제 잔액. 결제 전이면 null
+  paidAmount: number | null;
+  status: '대기' | '확정' | '취소';
+};

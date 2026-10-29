@@ -24,6 +24,9 @@ import com.bgmagitapi.origin.payment.repository.BgmAgitPaymentRepository;
 import com.bgmagitapi.origin.payment.service.PaymentService;
 import com.bgmagitapi.origin.payment.service.response.PaymentRefundResult;
 import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
+import com.bgmagitapi.origin.repository.BgmAgitMemberRoleRepository;
+import com.bgmagitapi.origin.entity.BgmAgitBungjuSetting;
+import com.bgmagitapi.origin.service.BgmAgitBungjuService;
 import com.bgmagitapi.origin.repository.BgmAgitMonthlyPassRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
 import com.bgmagitapi.origin.repository.BgmAgitRoomRepository;
@@ -88,6 +91,12 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
 
     // 월간패스 기간(본인 1명분 할인 판정)
     private final BgmAgitMonthlyPassRepository bgmAgitMonthlyPassRepository;
+
+    // 하루 1룸 규칙에서 관리자를 빼려고 권한을 본다
+    private final BgmAgitMemberRoleRepository bgmAgitMemberRoleRepository;
+
+    // 벙주 혜택(권한·설정·혜택가 판정)
+    private final BgmAgitBungjuService bgmAgitBungjuService;
 
     @Override
     @Transactional(readOnly = true)
@@ -169,6 +178,9 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         // 총액을 만들 수 없다. 그래서 단가만 내려주고 프론트가 "인원 × 단가"를 미리보기로 조립한다.
         // 실제 청구는 결제 주문 생성 시 서버가 저장된 인원으로 다시 계산한다.
         List<BgmAgitReservationResponse.PriceByDate> prices = new ArrayList<>();
+        // 벙주가 보는 캘린더면 혜택 날짜(설정 기간 안의 평일 룸)에 혜택 단가를 보여준다. 정가는 regularPrice 로 같이 내린다
+        boolean bungju = !mahjong && bgmAgitBungjuService.isBungju(userId);
+        BgmAgitBungjuSetting bungjuSetting = bungju ? bgmAgitBungjuService.currentSetting() : null;
 
         for (LocalDate d = today; !d.isAfter(endOfWindow); d = d.plusDays(1)) {
             if (d.isEqual(now)) {
@@ -181,7 +193,9 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             int price = mahjong
                     ? MAHJONG_RENTAL_PRICE
                     : SlotSchedule.isNewPolicy(d) ? SlotSchedule.unitPrice(isWeekend) : SlotSchedule.LEGACY_DEPOSIT_AMOUNT;
-            prices.add(new BgmAgitReservationResponse.PriceByDate(d, price, isWeekend));
+            Integer bungjuPrice = bgmAgitBungjuService.bungjuPriceFor(bungjuSetting, bungju, rooms, d, isWeekend);
+            prices.add(new BgmAgitReservationResponse.PriceByDate(
+                    d, bungjuPrice != null ? bungjuPrice : price, isWeekend, price, bungjuPrice != null));
         }
 
         // 5. 슬롯 정책(후보 시간대 / 선택 제한 / 예약 타입) — 프론트가 하드코딩 대신 이걸 쓴다.
@@ -313,6 +327,13 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         return room.isMahjong() ? "MAHJONG" : "ROOM";
     }
 
+    /** 관리자 회원인지(DB 의 지금 권한). 전화·현장 예약을 대신 넣는 관리자는 하루 1룸 규칙에서 뺀다 */
+    private boolean isAdminMember(Long userId) {
+        return bgmAgitMemberRoleRepository.findByBgmAgitMemberId(userId)
+                .map(memberRole -> "ADMIN".equals(memberRole.getBgmAgitRole().getBgmAgitRoleName()))
+                .orElse(false);
+    }
+
     /** 로그인 상태면 회원 id, 비로그인이면 null. 예약 조회는 비로그인도 허용된다. */
     private Long currentUserIdOrNull() {
         Authentication authentication = SecurityContextHolder.getContextHolderStrategy().getContext().getAuthentication();
@@ -380,6 +401,13 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         BgmAgitMember member = bgmAgitMemberRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User Not Found"));
 
+        // 회원 1명당 하루 1룸(11/2 이용분부터, 벙주 여부 무관, 마작 대탁 제외). 취소한 건은 세지 않는다
+        if (SlotSchedule.isOneRoomPerDay(rooms, kstDate)
+                && bgmAgitReservationRepository.existsActiveRoomReservation(userId, kstDate)
+                && !isAdminMember(userId)) {
+            throw new ReservationConflictException(SlotSchedule.ONE_ROOM_PER_DAY_MESSAGE);
+        }
+
         // 방별 구간 겹침 충돌 검사(확정건 + 내 대기건). 캘린더·배지와 같은 TimeRange.isOverlapping 규칙이다.
         // 슬롯 문자열 일치가 아니라 구간 겹침이라 13~17시 위에 15~18시를 거는 일부 겹침도 막힌다.
         Map<Long, List<ReservedTimeDto>> reservedByRoom = bgmAgitReservationRepository.findReservedTimesByRoomIdsAndDate(
@@ -412,6 +440,14 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                 reservationRequest
         );
         rooms.forEach(reservation::addRoom);
+        // 벙주 혜택가는 등록할 때 정해 예약 행에 박는다(결제·재대조·알림톡이 이 값을 따른다)
+        boolean weekendRate = bgmAgitHolidayService.isWeekendRate(kstDate);
+        Integer bungjuPrice = bgmAgitBungjuService.bungjuPriceFor(
+                bgmAgitBungjuService.currentSetting(), bgmAgitBungjuService.isBungju(userId),
+                rooms, kstDate, weekendRate);
+        if (bungjuPrice != null && isCheaperThanMonthlyPass(userId, rooms, people, kstDate, weekendRate, bungjuPrice)) {
+            reservation.applyBungjuPrice(bungjuPrice);
+        }
         bgmAgitReservationRepository.save(reservation);
 
         eventPublisher.publishEvent(new ReservationWaitingEvent(member, reservation));
@@ -485,20 +521,44 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
 
         LocalDate reservationDate = reservation.getBgmAgitReservationStartDate();
         boolean weekendRate = bgmAgitHolidayService.isWeekendRate(reservationDate);
+        Integer bungjuPrice = reservation.getBgmAgitReservationBungjuPrice();
         int discount = monthlyPassDiscount(reservation, rooms, people, weekendRate);
-        int amount = SlotSchedule.totalPaymentAmount(rooms, people, weekendRate, reservationDate) - discount;
+        int amount = SlotSchedule.totalPaymentAmount(rooms, people, weekendRate, reservationDate, bungjuPrice) - discount;
         String orderName = "BGM아지트 예약 - " + reservationDate;
 
         // 인원·단가를 결제행에 박아 둔다. 환불은 결제 시점 기준으로 계산해야 하는데
         // 예약의 인원은 뒤에 바뀔 수 있어서 그때 가서는 복원할 수 없다. 정액(마작·10월 이용분)은 null
-        Integer unitPrice = SlotSchedule.unitPriceSnapshot(rooms, reservationDate, weekendRate);
+        Integer unitPrice = SlotSchedule.unitPriceSnapshot(rooms, reservationDate, weekendRate, bungjuPrice);
         // 결제 모달 안내 문구용. 10월 이용분은 환불 규정까지 달라서(전날까지 전액) 따로 구분한다
         String paymentKind = !SlotSchedule.isNewPolicy(reservationDate)
                 ? "LEGACY_DEPOSIT"
                 : SlotSchedule.isFlatPricing(rooms, reservationDate) ? "DEPOSIT" : "FULL";
 
         // 공통 결제 모듈에 주문 생성 위임
-        return paymentService.createOrder(userId, reservationId, amount, orderName, people, unitPrice, discount, paymentKind);
+        PaymentOrderResponse order = paymentService.createOrder(userId, reservationId, amount, orderName, people, unitPrice, discount, paymentKind);
+        // 결제 모달의 "벙주 혜택가 적용" 표시용 정가(혜택이 없었다면 낼 금액)
+        if (bungjuPrice != null) {
+            order.markBungju(SlotSchedule.totalPaymentAmount(rooms, people, weekendRate, reservationDate));
+        }
+        return order;
+    }
+
+    /**
+     * 벙주 혜택가와 월간패스 할인은 겹치지 않으므로 손님에게 싼 쪽을 준다.
+     * 평일 2명이면 정가 18,000 − 패스 9,000 = 9,000원이 벙주 5,000 × 2 = 10,000원보다 싸다.
+     * 같으면 벙주(혜택 내역에 잡히게).
+     */
+    private boolean isCheaperThanMonthlyPass(Long userId, List<BgmAgitRoom> rooms, Integer people,
+                                             LocalDate useDate, boolean weekendRate, int bungjuPrice) {
+        int headCount = people == null ? 0 : people;
+        boolean covered = bgmAgitMonthlyPassRepository.coversMonth(userId, YearMonth.from(useDate));
+        if (!covered) {
+            return true;
+        }
+        int withPass = SlotSchedule.totalPaymentAmount(rooms, headCount, weekendRate, useDate)
+                - SlotSchedule.monthlyPassDiscount(true, rooms, headCount, weekendRate, useDate);
+        int withBungju = SlotSchedule.totalPaymentAmount(rooms, headCount, weekendRate, useDate, bungjuPrice);
+        return withBungju <= withPass;
     }
 
     /**
@@ -506,6 +566,10 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
      * 판정 시점은 주문 생성 때이고, 결과는 결제행 스냅샷으로 남아 승인 재대조에 쓰인다.
      */
     private int monthlyPassDiscount(BgmAgitReservation reservation, List<BgmAgitRoom> rooms, int people, boolean weekendRate) {
+        // 벙주 요금 예약은 이미 할인 단가라 월간패스 할인을 겹치지 않는다
+        if (reservation.isBungjuRate()) {
+            return 0;
+        }
         LocalDate useDate = reservation.getBgmAgitReservationStartDate();
         boolean covered = useDate != null
                 && bgmAgitMonthlyPassRepository.coversMonth(reservation.getMemberId(), YearMonth.from(useDate));

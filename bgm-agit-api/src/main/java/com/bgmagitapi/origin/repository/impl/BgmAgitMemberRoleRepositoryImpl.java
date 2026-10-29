@@ -123,13 +123,15 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
     private BooleanExpression nicknameOrNameOrPhoneNo(String res) {
         if (!StringUtils.hasText(res)) return null;
 
-        String keyword = res;
+        BooleanExpression byRaw = bgmAgitMember.bgmAgitMemberNickname.like("%" + res + "%")
+                .or(bgmAgitMember.bgmAgitMemberName.like("%" + res + "%"))
+                .or(bgmAgitMember.bgmAgitMemberPhoneNo.like("%" + res + "%"));
+        // 예전 소셜 가입자는 "+82 10-…" 로 저장된 번호가 있어 치환본도 같이 찾는다.
+        // 치환본만 찾던 시절엔 "010-…" 로 저장된 번호(지금 대부분)가 연락처 검색에 하나도 안 걸렸다
         if (res.startsWith("010")) {
-            keyword = res.replace("010", "+82 10");
+            return byRaw.or(bgmAgitMember.bgmAgitMemberPhoneNo.like("%" + res.replace("010", "+82 10") + "%"));
         }
-        return bgmAgitMember.bgmAgitMemberNickname.like("%" + keyword + "%")
-                .or(bgmAgitMember.bgmAgitMemberName.like("%" + keyword + "%"))
-                .or(bgmAgitMember.bgmAgitMemberPhoneNo.like("%" + keyword + "%"));
+        return byRaw;
     }
 
     @Override
@@ -145,9 +147,9 @@ public class BgmAgitMemberRoleRepositoryImpl implements BgmAgitMemberRoleCustomR
     
     private BooleanExpression emailOrNameOrPhoneNo(String res) {
         if (StringUtils.hasText(res) && res.startsWith("010")) {
+            // 원문("010-…")과 예전 소셜 저장 형식("+82 10-…")을 둘 다 찾는다
             String replace = res.replace("010", "+82 10");
-            return bgmAgitMember.bgmAgitMemberEmail.like("%" + replace + "%")
-                    .or(bgmAgitMember.bgmAgitMemberName.like("%" + replace + "%"))
+            return bgmAgitMember.bgmAgitMemberPhoneNo.like("%" + res + "%")
                     .or(bgmAgitMember.bgmAgitMemberPhoneNo.like("%" + replace + "%"));
         }
         if(StringUtils.hasText(res)) {

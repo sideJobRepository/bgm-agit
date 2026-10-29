@@ -420,7 +420,15 @@ public class SlotSchedule {
 
     /** 결제행에 박아 둘 1인 단가. 정액이면 null — 인원 축소 차액 환불이 null 을 보고 건너뛴다. */
     public static Integer unitPriceSnapshot(Collection<BgmAgitRoom> rooms, LocalDate useDate, boolean weekendRate) {
-        return isFlatPricing(rooms, useDate) ? null : unitPrice(weekendRate);
+        return unitPriceSnapshot(rooms, useDate, weekendRate, null);
+    }
+
+    /** 벙주 혜택 예약이면 그 단가를 박는다 — 인원 축소 환불이 결제한 단가 그대로 돌려주게. */
+    public static Integer unitPriceSnapshot(Collection<BgmAgitRoom> rooms, LocalDate useDate, boolean weekendRate, Integer bungjuPrice) {
+        if (isFlatPricing(rooms, useDate)) {
+            return null;
+        }
+        return bungjuPrice != null ? bungjuPrice : unitPrice(weekendRate);
     }
 
     /**
@@ -433,6 +441,11 @@ public class SlotSchedule {
      * 결제 주문 금액·승인 재대조·예약 대기 알림톡 안내 금액이 갈리지 않도록 전부 이 메서드만 쓸 것.
      */
     public static int totalPaymentAmount(Collection<BgmAgitRoom> rooms, int people, boolean weekendRate, LocalDate useDate) {
+        return totalPaymentAmount(rooms, people, weekendRate, useDate, null);
+    }
+
+    /** bungjuPrice = 그 예약에 박힌 벙주 혜택 단가(BgmAgitReservation.bungjuPrice), 아니면 null. 정액(마작·종전 정책)에는 영향 없다. */
+    public static int totalPaymentAmount(Collection<BgmAgitRoom> rooms, int people, boolean weekendRate, LocalDate useDate, Integer bungjuPrice) {
         if (rooms == null || rooms.isEmpty()) {
             return 0;
         }
@@ -447,7 +460,34 @@ public class SlotSchedule {
             }
             return total;
         }
-        return Math.max(people, 0) * unitPrice(weekendRate);
+        return Math.max(people, 0) * (bungjuPrice != null ? bungjuPrice : unitPrice(weekendRate));
+    }
+
+    // ===== 하루 1룸 =====
+
+    /**
+     * 이 이용일부터 회원 1명당 하루 1룸만 예약할 수 있다(사장님 요구사항 2026-10-29, 벙주 여부 무관).
+     * 마작 대탁은 해당하지 않는다. 한 룸을 잡아 계속 쓰라는 취지라 같은 날 두 번째 룸 예약을 막는다.
+     */
+    public static final LocalDate ONE_ROOM_PER_DAY_FROM = LocalDate.of(2026, 11, 2);
+
+    public static final String ONE_ROOM_PER_DAY_MESSAGE =
+            "회원 1명당 하루 1개의 룸만 예약할 수 있습니다. 이미 이 날짜에 룸 예약이 있습니다.";
+
+    public static boolean isOneRoomPerDay(Collection<BgmAgitRoom> rooms, LocalDate useDate) {
+        return useDate != null && !useDate.isBefore(ONE_ROOM_PER_DAY_FROM)
+                && rooms != null && !rooms.isEmpty() && !isMahjongRental(rooms.iterator().next());
+    }
+
+    // ===== 벙주 혜택 =====
+
+    /**
+     * 벙주 혜택가 대상 날짜인지. 혜택 기간·요금·사용 여부는 관리자 설정(BGM_AGIT_BUNGJU_SETTING)이고,
+     * 여기서는 그 결과(inPeriod)에 <b>평일</b>·룸(인원 × 단가) 조건을 얹는다. 주말·공휴일은 정가다.
+     * 회원이 벙주인지는 서비스가 따로 본다.
+     */
+    public static boolean isBungjuRateDate(boolean inPeriod, boolean weekendRate, Collection<BgmAgitRoom> rooms, LocalDate useDate) {
+        return inPeriod && !weekendRate && !isFlatPricing(rooms, useDate);
     }
 
     // ===== 월간패스 =====

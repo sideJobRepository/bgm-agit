@@ -73,6 +73,11 @@ public class BgmAgitReservation extends DateSuperClass {
     @Column(name = "BGM_AGIT_RESERVATION_CANCEL_STATUS")
     private String bgmAgitReservationCancelStatus;
 
+    // 벙주 혜택 1인 단가. 혜택이 아니면 null. 등록할 때 정해 두고 결제·재대조·알림톡이 이 값을 따른다.
+    // 뒤에 벙주 권한이나 혜택 설정(BGM_AGIT_BUNGJU_SETTING)이 바뀌어도 이미 받은 예약의 금액이 흔들리지 않게 스냅샷으로 둔다
+    @Column(name = "BGM_AGIT_RESERVATION_BUNGJU_PRICE")
+    private Integer bgmAgitReservationBungjuPrice;
+
     // 예약한 방들. 합쳐 예약이면 여러 개
     @OneToMany(mappedBy = "bgmAgitReservation", cascade = CascadeType.PERSIST)
     @OrderBy("bgmAgitReservationRoomId ASC")
@@ -94,6 +99,14 @@ public class BgmAgitReservation extends DateSuperClass {
         this.bgmAgitReservationRequest = request;
         this.bgmAgitReservationApprovalStatus = "N";
         this.bgmAgitReservationCancelStatus = "N";
+    }
+
+    public void applyBungjuPrice(int unitPrice) {
+        this.bgmAgitReservationBungjuPrice = unitPrice;
+    }
+
+    public boolean isBungjuRate() {
+        return this.bgmAgitReservationBungjuPrice != null;
     }
 
     public void addRoom(BgmAgitRoom room) {

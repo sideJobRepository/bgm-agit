@@ -2,6 +2,7 @@ package com.bgmagitapi.origin.repository.impl;
 
 import com.bgmagitapi.origin.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
+import com.bgmagitapi.origin.entity.enumeration.Reservation;
 import com.bgmagitapi.origin.repository.custom.BgmAgitReservationCustomRepository;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.group.GroupBy;
@@ -216,6 +217,52 @@ public class BgmAgitReservationRepositoryImpl implements BgmAgitReservationCusto
                 .from(bgmAgitReservation)
                 .where(confirmedBetween(from, toExclusive), bgmAgitReservation.bgmAgitReservationPeople.isNotNull())
                 .orderBy(bgmAgitReservation.bgmAgitReservationPeople.asc())
+                .fetch();
+    }
+
+    @Override
+    public boolean existsActiveRoomReservation(Long memberId, LocalDate date) {
+        if (memberId == null || date == null) {
+            return false;
+        }
+        Integer found = queryFactory
+                .selectOne()
+                .from(bgmAgitReservation)
+                .where(bgmAgitReservation.bgmAgitMember.bgmAgitMemberId.eq(memberId),
+                        bgmAgitReservation.bgmAgitReservationStartDate.eq(date),
+                        bgmAgitReservation.reservation.eq(Reservation.ROOM),
+                        bgmAgitReservation.bgmAgitReservationCancelStatus.eq("N"))
+                .fetchFirst();
+        return found != null;
+    }
+
+    @Override
+    public boolean existsOtherApprovedRoomReservation(Long memberId, LocalDate date, Long excludeReservationId) {
+        if (memberId == null || date == null) {
+            return false;
+        }
+        Integer found = queryFactory
+                .selectOne()
+                .from(bgmAgitReservation)
+                .where(bgmAgitReservation.bgmAgitMember.bgmAgitMemberId.eq(memberId),
+                        bgmAgitReservation.bgmAgitReservationStartDate.eq(date),
+                        bgmAgitReservation.reservation.eq(Reservation.ROOM),
+                        bgmAgitReservation.bgmAgitReservationApprovalStatus.eq("Y"),
+                        bgmAgitReservation.bgmAgitReservationCancelStatus.eq("N"),
+                        bgmAgitReservation.bgmAgitReservationId.ne(excludeReservationId))
+                .fetchFirst();
+        return found != null;
+    }
+
+    @Override
+    public List<BgmAgitReservation> findBungjuReservations(LocalDate from, LocalDate to) {
+        return queryFactory
+                .selectFrom(bgmAgitReservation)
+                .join(bgmAgitReservation.bgmAgitMember, bgmAgitMember).fetchJoin()
+                .where(bgmAgitReservation.bgmAgitReservationBungjuPrice.isNotNull(),
+                        bgmAgitReservation.bgmAgitReservationStartDate.between(from, to))
+                .orderBy(bgmAgitReservation.bgmAgitReservationStartDate.asc(),
+                        bgmAgitReservation.bgmAgitReservationStartTime.asc())
                 .fetch();
     }
 

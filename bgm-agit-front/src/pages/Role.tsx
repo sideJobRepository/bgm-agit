@@ -33,8 +33,9 @@ import { MdEdit } from 'react-icons/md';
 import Pagination from '../components/Pagination.tsx';
 import { theme } from '../styles/theme.ts';
 import MonthlyPassTable from '../components/role/MonthlyPassTable.tsx';
+import BungjuPanel from '../components/role/BungjuPanel.tsx';
 
-type Tab = 'social' | 'mahjong' | 'monthlyPass';
+type Tab = 'social' | 'mahjong' | 'monthlyPass' | 'bungju';
 
 // 로그인 타입 코드 → 한글 라벨
 const LOGIN_TYPE_LABEL: Record<string, string> = {
@@ -191,8 +192,8 @@ export default function Role() {
   }
 
   useEffect(() => {
-    // 월간패스 탭은 MonthlyPassTable 이 자기 목록을 따로 받는다
-    if (tab === 'monthlyPass') return;
+    // 월간패스·벙주 혜택 탭은 각 컴포넌트가 자기 목록을 따로 받는다
+    if (tab === 'monthlyPass' || tab === 'bungju') return;
     fetchRole(page, searchKeyword, tab === 'mahjong');
   }, [searchKeyword, page, tab]);
 
@@ -230,9 +231,16 @@ export default function Role() {
               월간패스
             </TabButton>
           )}
+          {isAdmin && (
+            <TabButton $active={tab === 'bungju'} onClick={() => handleTabChange('bungju')}>
+              벙주 혜택
+            </TabButton>
+          )}
         </TabBar>
         <TableBox>
-          {tab === 'monthlyPass' ? (
+          {tab === 'bungju' ? (
+            <BungjuPanel />
+          ) : tab === 'monthlyPass' ? (
             <MonthlyPassTable keyword={searchKeyword} />
           ) : (
             <TableWrapper>
@@ -337,6 +345,16 @@ export default function Role() {
                               onChange={() => setRoleMap(prev => ({ ...prev, [item.memberId]: 4 }))}
                             />
                             멘토
+                          </label>
+                          <label style={{ marginLeft: '12px' }}>
+                            <input
+                              type="radio"
+                              name={`role-${item.memberId}`}
+                              value="6"
+                              checked={(roleMap[item.memberId] ?? item.roleId) === 6}
+                              onChange={() => setRoleMap(prev => ({ ...prev, [item.memberId]: 6 }))}
+                            />
+                            벙주
                           </label>
                           <label style={{ marginLeft: '12px' }}>
                             <input
