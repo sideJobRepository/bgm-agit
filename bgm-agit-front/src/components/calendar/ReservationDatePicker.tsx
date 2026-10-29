@@ -28,13 +28,14 @@ export const RESERVATION_BLOCKED_FROM = null as string | null;
  * 예전에는 "내일"이 미리 선택돼 있어서 손님이 날짜를 안 고르고 시간만 눌러 엉뚱한 날짜로 예약되는 사고가 있었다.
  */
 /**
- * 휴무 요일 기본값(수요일). JS Date.getDay() 규약(0=일 … 6=토).
+ * 휴무 요일 기본값. JS Date.getDay() 규약(0=일 … 6=토), -1 이면 휴무 요일 없음.
  *
  * 서버가 available-rooms 응답의 closedWeekday 로 정답을 내려주지만, 날짜를 고르기 전에는
  * 그 응답이 아직 없어서 첫 렌더에 쓸 값이 필요하다. 서버 SlotSchedule.CLOSED_DAY_OF_WEEK 와
  * 같은 값을 유지할 것 — 휴무 요일을 바꾸면 여기도 같이 고쳐야 한다.
+ * 수요일(3)을 막다가 2026-10-30 풀었다.
  */
-export const DEFAULT_CLOSED_WEEKDAY = 3;
+export const DEFAULT_CLOSED_WEEKDAY = -1;
 
 export default function ReservationDatePicker({
   value,

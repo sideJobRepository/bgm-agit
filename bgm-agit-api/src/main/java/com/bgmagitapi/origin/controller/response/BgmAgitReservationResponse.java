@@ -65,7 +65,12 @@ public class BgmAgitReservationResponse {
     @AllArgsConstructor
     public static class PriceByDate {
         private LocalDate date;
+        // 이 손님이 낼 1인 단가(벙주 혜택이면 혜택가)
         private Integer price;
         private boolean colorGb;
+        // 정가(혜택이 없을 때의 단가). 혜택가 표시에서 "정가 대비"를 보여 줄 때 쓴다
+        private Integer regularPrice;
+        // 벙주 혜택가가 적용된 날짜인지
+        private boolean bungju;
     }
 }

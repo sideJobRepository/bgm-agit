@@ -12,4 +12,6 @@ public class PaymentConfirmResponse {
     private String status;
     private String method;
     private String receiptUrl;
+    // 회원 1명당 하루 1룸 대상 예약인지(11/2 이후 이용분 룸). 결제 완료 화면 안내용
+    private boolean oneRoomPerDay;
 }

@@ -4,7 +4,25 @@ import { confirmAlert } from 'react-confirm-alert';
 import { useState } from 'react';
 import { MdAdd, MdRemove } from 'react-icons/md';
 import { toast } from '../utils/toast';
-import { AlertWrapper, Message, FieldLabel, ButtonGroup, ReservationHeader, FieldGroup, FieldTitle, Stepper, IconButton, CountValue, SummaryList, ReasonTextarea, HelperText, NoticeMessage, CancelButton, ConfirmButton, ReasonInput } from './confirmAlert.styles.ts';
+import {
+  AlertWrapper,
+  Message,
+  FieldLabel,
+  ButtonGroup,
+  ReservationHeader,
+  FieldGroup,
+  FieldTitle,
+  Stepper,
+  IconButton,
+  CountValue,
+  SummaryList,
+  ReasonTextarea,
+  HelperText,
+  NoticeMessage,
+  CancelButton,
+  ConfirmButton,
+  ReasonInput,
+} from './confirmAlert.styles.ts';
 
 interface Props {
   message: React.ReactNode;
@@ -27,6 +45,8 @@ interface ReservationConfirmProps {
   depositAmount?: number | null;
   /** 룸 일무제한 1인 단가. 인원을 조절할 때마다 총액이 따라 움직인다 */
   unitPrice?: number | null;
+  /** 벙주 혜택가일 때의 정가(1인). 있으면 "벙주 혜택가 적용"과 정가 대비 금액을 보여 준다 */
+  regularUnitPrice?: number | null;
   onConfirm: (values: { count: number; reason: string }) => void;
   onCancel?: () => void;
 }
@@ -38,7 +58,7 @@ export function showConfirmModal({ message, onConfirm, onCancel }: Props) {
         <Message>{message}</Message>
         <ButtonGroup>
           <CancelButton
-             onClick={() => {
+            onClick={() => {
               onCancel?.();
               onClose();
             }}
@@ -68,6 +88,7 @@ function ReservationConfirmContent({
   summary = [],
   depositAmount,
   unitPrice,
+  regularUnitPrice,
   onClose,
   onConfirm,
   onCancel,
@@ -150,6 +171,14 @@ function ReservationConfirmContent({
             이용요금 {unitPrice.toLocaleString()}원 × {count}명 ={' '}
             <strong>{(totalAmount ?? 0).toLocaleString()}원</strong>
             <br />
+            {regularUnitPrice != null && (
+              <>
+                <strong>벙주 혜택가 적용</strong> — 정가{' '}
+                {(regularUnitPrice * count).toLocaleString()}원 대비{' '}
+                {((regularUnitPrice - unitPrice) * count).toLocaleString()}원 할인
+                <br />
+              </>
+            )}
             예약내역에서 전액 결제하시면 예약이 확정됩니다.
             <br />
             환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후에는 불가합니다.

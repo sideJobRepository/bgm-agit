@@ -6,3 +6,9 @@
  * 10월 이용분이 모두 끝나면 이 분기는 지워도 된다.
  */
 export const NEW_POLICY_FROM = '2026-11-01';
+
+/**
+ * 회원 1명당 하루 1룸 시행일('YYYY-MM-DD', 이용일 기준). 서버 SlotSchedule.ONE_ROOM_PER_DAY_FROM 과 같은 값을 유지할 것.
+ * 판정은 서버가 하고(같은 날 두 번째 룸 예약 거절) 여기서는 안내 문구 노출에만 쓴다.
+ */
+export const ONE_ROOM_PER_DAY_FROM = '2026-11-02';
