@@ -61,10 +61,11 @@ class BungjuRateTest {
     }
 
     @Test
-    @DisplayName("하루 1룸은 11/2 이용분부터 룸만")
+    @DisplayName("룸 이용 안내는 11/2 이용분부터 룸만, 하루 1룸 제한은 꺼져 있다")
     void oneRoomPerDay() {
-        assertThat(SlotSchedule.isOneRoomPerDay(B_ROOM, NOV_1)).isFalse();
-        assertThat(SlotSchedule.isOneRoomPerDay(B_ROOM, NOV_2)).isTrue();
-        assertThat(SlotSchedule.isOneRoomPerDay(TABLE, NOV_2)).isFalse();
+        assertThat(SlotSchedule.isRoomUseNoticeDay(B_ROOM, NOV_1)).isFalse();
+        assertThat(SlotSchedule.isRoomUseNoticeDay(B_ROOM, NOV_2)).isTrue();
+        assertThat(SlotSchedule.isRoomUseNoticeDay(TABLE, NOV_2)).isFalse();
+        assertThat(SlotSchedule.isOneRoomPerDay(B_ROOM, NOV_2)).isEqualTo(SlotSchedule.ONE_ROOM_PER_DAY_ENABLED);
     }
 }

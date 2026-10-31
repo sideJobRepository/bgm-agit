@@ -467,17 +467,29 @@ public class SlotSchedule {
     // ===== 하루 1룸 =====
 
     /**
-     * 이 이용일부터 회원 1명당 하루 1룸만 예약할 수 있다(사장님 요구사항 2026-10-29, 벙주 여부 무관).
-     * 마작 대탁은 해당하지 않는다. 한 룸을 잡아 계속 쓰라는 취지라 같은 날 두 번째 룸 예약을 막는다.
+     * 이 이용일부터 룸 이용 안내(퇴실·외출 시 예약 권한 소멸, 추가 인원 일반 요금)를 보여 준다(사장님 요구사항 2026-10-29).
+     * 마작 대탁은 해당하지 않는다. 하루 1룸 제한도 같은 날짜부터다.
      */
     public static final LocalDate ONE_ROOM_PER_DAY_FROM = LocalDate.of(2026, 11, 2);
+
+    /**
+     * 회원 1명당 하루 1룸 제한 사용 여부. 사장님 요청으로 풀었다(2026-10-31) — 다시 막으려면 true 로.
+     * 프론트 config/reservationPolicy.ts 의 ONE_ROOM_PER_DAY_ENABLED 도 같이 바꿀 것.
+     */
+    public static final boolean ONE_ROOM_PER_DAY_ENABLED = false;
 
     public static final String ONE_ROOM_PER_DAY_MESSAGE =
             "회원 1명당 하루 1개의 룸만 예약할 수 있습니다. 이미 이 날짜에 룸 예약이 있습니다.";
 
-    public static boolean isOneRoomPerDay(Collection<BgmAgitRoom> rooms, LocalDate useDate) {
+    /** 룸 이용 안내 대상(11/2 이후 이용분 룸)인지 */
+    public static boolean isRoomUseNoticeDay(Collection<BgmAgitRoom> rooms, LocalDate useDate) {
         return useDate != null && !useDate.isBefore(ONE_ROOM_PER_DAY_FROM)
                 && rooms != null && !rooms.isEmpty() && !isMahjongRental(rooms.iterator().next());
+    }
+
+    /** 하루 1룸 제한 대상인지. 제한을 꺼 두면 늘 false */
+    public static boolean isOneRoomPerDay(Collection<BgmAgitRoom> rooms, LocalDate useDate) {
+        return ONE_ROOM_PER_DAY_ENABLED && isRoomUseNoticeDay(rooms, useDate);
     }
 
     // ===== 벙주 혜택 =====

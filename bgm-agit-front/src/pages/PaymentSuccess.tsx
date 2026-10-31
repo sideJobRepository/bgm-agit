@@ -12,6 +12,7 @@ export default function PaymentSuccess() {
   const [message, setMessage] = useState('결제 승인 중입니다.');
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [showRoomNotice, setShowRoomNotice] = useState(false);
+  const [showOneRoomNotice, setShowOneRoomNotice] = useState(false);
 
   useEffect(() => {
     if (called.current) {
@@ -36,12 +37,13 @@ export default function PaymentSuccess() {
       })
       .then(res => {
         const data = res?.data as
-          | { receiptUrl?: string | null; oneRoomPerDay?: boolean }
+          | { receiptUrl?: string | null; roomNotice?: boolean; oneRoomPerDay?: boolean }
           | undefined;
         const url = data?.receiptUrl ?? null;
-        const roomNotice = !!data?.oneRoomPerDay;
+        const roomNotice = !!data?.roomNotice;
         setReceiptUrl(url);
         setShowRoomNotice(roomNotice);
+        setShowOneRoomNotice(!!data?.oneRoomPerDay);
         toast.success('예약 결제가 완료되었습니다.');
         // 영수증이 있거나 이용 안내를 읽어야 하면 자동 이동하지 않는다
         if (url || roomNotice) {
@@ -69,14 +71,16 @@ export default function PaymentSuccess() {
         </IconCircle>
         <h2>결제 완료</h2>
         <p>{message}</p>
-        {/* 하루 1룸 안내는 11/2 이후 룸 예약 결제가 승인됐을 때만(서버가 oneRoomPerDay 로 알려 준다) */}
+        {/* 룸 이용 안내는 11/2 이후 룸 예약 결제가 승인됐을 때만(서버가 roomNotice 로 알려 준다). 하루 1룸 줄은 제한이 켜져 있을 때만 */}
         {showRoomNotice && (
           <ul
             style={{ margin: 0, paddingLeft: 18, textAlign: 'left', fontSize: 13, lineHeight: 1.7 }}
           >
-            <li>
-              회원 1명당 하루 1개의 룸만 예약할 수 있습니다. 한 룸을 예약해서 계속 이용해 주세요.
-            </li>
+            {showOneRoomNotice && (
+              <li>
+                회원 1명당 하루 1개의 룸만 예약할 수 있습니다. 한 룸을 예약해서 계속 이용해 주세요.
+              </li>
+            )}
             <li>퇴실하시거나 식사 등으로 외출하시면 해당 룸의 예약 권한이 사라집니다.</li>
             <li>예약 후 추가되는 인원(당일·현장 추가)은 일반 요금으로 받습니다.</li>
             <li>
