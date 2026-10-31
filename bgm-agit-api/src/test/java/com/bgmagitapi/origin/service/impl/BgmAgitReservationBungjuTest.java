@@ -216,14 +216,18 @@ class BgmAgitReservationBungjuTest {
     }
 
     @Test
-    @DisplayName("11/2부터 회원 누구나 같은 날 두 번째 룸 예약은 막힌다")
+    @DisplayName("하루 1룸 제한을 풀어 11/2 이후에도 같은 날 두 번째 룸 예약이 된다")
     void oneRoomPerDay() {
         givenRole("USER");
         when(bgmAgitReservationRepository.existsActiveRoomReservation(USER_ID, NOV_2)).thenReturn(true);
-        assertThatThrownBy(() -> create(1L, NOV_2, List.of("13:00")))
-                .isInstanceOf(ReservationConflictException.class)
-                .hasMessage(SlotSchedule.ONE_ROOM_PER_DAY_MESSAGE);
-        verify(bgmAgitReservationRepository, never()).save(any());
+        if (SlotSchedule.ONE_ROOM_PER_DAY_ENABLED) {
+            assertThatThrownBy(() -> create(1L, NOV_2, List.of("13:00")))
+                    .isInstanceOf(ReservationConflictException.class)
+                    .hasMessage(SlotSchedule.ONE_ROOM_PER_DAY_MESSAGE);
+            verify(bgmAgitReservationRepository, never()).save(any());
+        } else {
+            assertThat(create(1L, NOV_2, List.of("13:00"))).isNotNull();
+        }
     }
 
     @Test

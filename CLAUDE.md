@@ -138,7 +138,8 @@
 - **혜택 설정은 DB** `BGM_AGIT_BUNGJU_SETTING`(1행, ID 1 — 기간·1인 요금·사용 여부). 관리자가 `/role` → **벙주 혜택 탭**(`components/role/BungjuPanel.tsx`)에서 바꾼다. `GET/PUT /bgm-agit/bungju/setting`, 혜택가 예약 내역 `GET /bgm-agit/bungju/reservations?from&to`(CSV 내려받기, 엑셀 라이브러리 대신 UTF-8 BOM) — 서비스단 `requireAdmin` + URL 매핑(관리자)
 - 판정은 `BgmAgitBungjuService.bungjuPriceFor`(벙주 + 설정 켜짐·기간 안 + 평일 + 룸) 하나. **등록 시점**에 판정해 예약 행 `BGM_AGIT_RESERVATION_BUNGJU_PRICE`(혜택 1인 단가, 아니면 null)에 박는다. 결제 주문·승인 재대조·대기 알림톡·결제 단가 스냅샷이 전부 이 값을 따르므로 나중에 권한·설정을 바꿔도 받은 예약 금액은 그대로다. 벙주 지정 전에 정가로 들어온 예약은 자동 처리하지 않는다(관리자 수동 환불)
 - 벙주 여부는 토큰이 아니라 DB 의 현재 권한으로 본다. 캘린더 `prices[]` 에 `regularPrice`·`bungju` 를, 결제 주문 응답에 `bungjuApplied`·`regularAmount` 를 실어 "벙주 혜택가 적용 — 정가 대비 N원 할인"을 보여 준다
-- **회원 1명당 하루 1룸** — 이용일 **2026-11-02 부터 모든 회원**(벙주 무관), 룸만(마작 대탁 제외), 취소건 제외. 같은 날 두 번째 룸 예약을 409로 거절(`SlotSchedule.ONE_ROOM_PER_DAY_FROM`/`ONE_ROOM_PER_DAY_MESSAGE`, 프론트 `config/reservationPolicy.ts` 같은 날짜). **관리자 계정은 제외**(전화·현장 예약 대행)
+- **회원 1명당 하루 1룸 — 2026-10-31 사장님 요청으로 풀었다(꺼짐).** 코드는 스위치로 남겨 두었다: 서버 `SlotSchedule.ONE_ROOM_PER_DAY_ENABLED` + 프론트 `config/reservationPolicy.ts` 의 `ONE_ROOM_PER_DAY_ENABLED` 를 `true` 로 바꾸면 다시 막힌다(두 값 같이). 켜면 이용일 2026-11-02(`ONE_ROOM_PER_DAY_FROM`)부터 모든 회원(벙주 무관), 룸만(마작 대탁 제외), 취소건 제외, 같은 날 두 번째 룸 예약을 409로 거절, **관리자 계정은 제외**
+  - 룸 이용 안내(퇴실·외출 시 예약 권한 소멸, 추가 인원 일반 요금)는 제한과 별개로 11/2 이용분 룸부터 계속 나온다(`isRoomUseNoticeDay`, 결제 승인 응답 `roomNotice`). "하루 1룸" 문구 한 줄만 스위치를 따른다(응답 `oneRoomPerDay`)
   - 등록 검사는 잠금 없는 확인→저장이라 동시에 넣은 두 건이 통과할 수 있다. 그래서 **결제 승인 직전**(`validateReservationSlotAvailable`, 승인 직렬화 락 안)에 같은 날 다른 확정 룸 예약이 있으면 409로 한 번 더 막는다
 - **멘토는 벙주 회원도 유저처럼 관리**(비밀번호·닉네임, `BgmAgitRoleServiceImpl.MENTOR_MANAGEABLE`, kml-front `role/page.tsx` 같은 규칙). 벙주 지정·해제는 관리자만
 - 운영 적용 SQL 은 저장소에 두지 않는다(루트 SQL 정리됨). 순서는 **DDL·권한·계층·URL 매핑 → 백엔드 배포(재시작) → 프론트**. 백엔드를 먼저 올리면 예약 엔티티가 없는 컬럼을 읽어 예약 전체가 500
@@ -631,9 +632,9 @@ kml:
 ## TODO 후보
 
 - **[내일 2026-10-30] 벙주·하루 1룸 결제 승인 실검증** — 결제 승인 경로를 브라우저로 한 번도 안 태웠다(단위 테스트만). 스테이징(토스 테스트 키, 실과금 없음)에서 테스트 카드로 ① 일반 회원 평일 룸 결제 ② 벙주 평일 룸 결제(혜택가)를 끝까지 승인해 볼 것
-  - 확인: 승인 성공 → 예약 `approvalStatus='Y'` 확정 → 결제 완료 화면에 하루 1룸 안내 4줄(11/2 이후 룸만) → 예약내역 영수증
+  - 확인: 승인 성공 → 예약 `approvalStatus='Y'` 확정 → 결제 완료 화면에 룸 이용 안내 3줄(11/2 이후 룸만, 하루 1룸 줄은 없음) → 예약내역 영수증
   - 손댄 곳: `PaymentServiceImpl.validateAmountAgainstReservation`(벙주 단가 반영), `validateReservationSlotAvailable`(하루 1룸 재검사), `toConfirmResponse`(`oneRoomPerDay` 조회 추가)
-  - 하루 1룸 재검사: 같은 날 대기 예약 2건(DB 로 직접 만들거나 관리자 확정 후)을 두고 두 번째 결제가 토스 승인 전에 409 로 막히는지
+  - 하루 1룸은 2026-10-31 풀었으므로 같은 날 두 번째 룸 결제가 **정상 승인되는지**만 보면 된다
   - 스테이징 테스트 계정 "벙주테스트"(010-0000-1129, 비번 `bungju1129`, 벙주)와 예약 3건(11/2 B Room 혜택가, 11/7 2건)은 검증 뒤 정리
 
 - 닉네임 변경 시 KML synk 리셋

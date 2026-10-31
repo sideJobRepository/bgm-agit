@@ -8,7 +8,13 @@
 export const NEW_POLICY_FROM = '2026-11-01';
 
 /**
- * 회원 1명당 하루 1룸 시행일('YYYY-MM-DD', 이용일 기준). 서버 SlotSchedule.ONE_ROOM_PER_DAY_FROM 과 같은 값을 유지할 것.
- * 판정은 서버가 하고(같은 날 두 번째 룸 예약 거절) 여기서는 안내 문구 노출에만 쓴다.
+ * 룸 이용 안내(퇴실·외출 시 예약 권한 소멸, 추가 인원 일반 요금) 시작일('YYYY-MM-DD', 이용일 기준).
+ * 서버 SlotSchedule.ONE_ROOM_PER_DAY_FROM 과 같은 값을 유지할 것. 하루 1룸 제한도 같은 날짜부터다.
  */
 export const ONE_ROOM_PER_DAY_FROM = '2026-11-02';
+
+/**
+ * 회원 1명당 하루 1룸 제한 사용 여부. 사장님 요청으로 풀었다(2026-10-31).
+ * 서버 SlotSchedule.ONE_ROOM_PER_DAY_ENABLED 와 같은 값을 유지할 것. 판정은 서버가 하고 여기서는 안내 문구에만 쓴다.
+ */
+export const ONE_ROOM_PER_DAY_ENABLED = false;

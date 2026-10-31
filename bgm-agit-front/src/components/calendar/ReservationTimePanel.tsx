@@ -29,7 +29,7 @@ import { toast } from '../../utils/toast';
 import LoginMoadl from '../LoginMoadl.tsx';
 import { RESERVATION_WINDOW_MONTHS } from './ReservationDatePicker.tsx';
 import { formatYmdWithWeekday } from '../../utils/date.ts';
-import { ONE_ROOM_PER_DAY_FROM } from '../../config/reservationPolicy.ts';
+import { ONE_ROOM_PER_DAY_ENABLED, ONE_ROOM_PER_DAY_FROM } from '../../config/reservationPolicy.ts';
 
 type CombinableItem = { id: number; label: string };
 
@@ -117,8 +117,9 @@ export default function ReservationTimePanel({
   const unitPrice = priceOfDay?.price ?? null;
   // 벙주 혜택가 날짜면 정가를 같이 보여 준다
   const regularUnitPrice = priceOfDay?.bungju ? (priceOfDay.regularPrice ?? null) : null;
-  // 11/2 이용분부터 회원 1명당 하루 1룸(서버 SlotSchedule.ONE_ROOM_PER_DAY_FROM 과 같은 날짜)
-  const isOneRoomPerDay = isPerPerson && date >= ONE_ROOM_PER_DAY_FROM;
+  // 11/2 이용분부터 룸 이용 안내(서버 SlotSchedule.ONE_ROOM_PER_DAY_FROM 과 같은 날짜). 하루 1룸 문구는 제한이 켜져 있을 때만
+  const isRoomNoticeDay = isPerPerson && date >= ONE_ROOM_PER_DAY_FROM;
+  const isOneRoomPerDay = ONE_ROOM_PER_DAY_ENABLED && isRoomNoticeDay;
 
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
 
@@ -384,14 +385,16 @@ export default function ReservationTimePanel({
                   </strong>
                 </p>
               )}
-              {isOneRoomPerDay && (
+              {isRoomNoticeDay && (
                 <>
-                  <p>
-                    <strong>
-                      ※ 회원 1명당 하루 1개의 룸만 예약할 수 있습니다. 한 룸을 예약해서 계속 이용해
-                      주세요.
-                    </strong>
-                  </p>
+                  {isOneRoomPerDay && (
+                    <p>
+                      <strong>
+                        ※ 회원 1명당 하루 1개의 룸만 예약할 수 있습니다. 한 룸을 예약해서 계속
+                        이용해 주세요.
+                      </strong>
+                    </p>
+                  )}
                   <p>
                     <strong>
                       ※ 퇴실하시거나 식사 등으로 외출하시면 해당 룸의 예약 권한이 사라집니다.

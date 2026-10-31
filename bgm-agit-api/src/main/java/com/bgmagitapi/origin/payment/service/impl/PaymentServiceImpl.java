@@ -445,10 +445,13 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private PaymentConfirmResponse toConfirmResponse(BgmAgitPayment payment) {
-        // 결제 완료 화면의 "하루 1룸" 안내는 11/2 이후 룸 예약에만 맞는 말이라 대상 여부를 같이 내려준다
-        boolean oneRoomPerDay = bgmAgitReservationRepository.findReservationWithRooms(payment.getBgmAgitReservationId())
-                .map(r -> SlotSchedule.isOneRoomPerDay(r.getRoomList(), r.getBgmAgitReservationStartDate()))
-                .orElse(false);
+        // 결제 완료 화면의 룸 이용 안내·"하루 1룸" 안내는 11/2 이후 룸 예약에만 맞는 말이라 대상 여부를 같이 내려준다
+        BgmAgitReservation reservation = bgmAgitReservationRepository
+                .findReservationWithRooms(payment.getBgmAgitReservationId()).orElse(null);
+        boolean roomNotice = reservation != null
+                && SlotSchedule.isRoomUseNoticeDay(reservation.getRoomList(), reservation.getBgmAgitReservationStartDate());
+        boolean oneRoomPerDay = reservation != null
+                && SlotSchedule.isOneRoomPerDay(reservation.getRoomList(), reservation.getBgmAgitReservationStartDate());
         return new PaymentConfirmResponse(
                 payment.getBgmAgitOrderNo(),
                 payment.getBgmAgitReservationId(),
@@ -456,6 +459,7 @@ public class PaymentServiceImpl implements PaymentService {
                 payment.getBgmAgitPaymentStatus().name(),
                 payment.getBgmAgitPaymentType(),
                 payment.getBgmAgitPaymentReceiptUrl(),
+                roomNotice,
                 oneRoomPerDay
         );
     }
