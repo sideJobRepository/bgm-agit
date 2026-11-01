@@ -8,9 +8,10 @@ import { userState } from '../recoil/state/userState.ts';
 import { toast } from '../utils/toast';
 import api from '../utils/axiosInstance.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
-import { CT_TYPE_COLOR, CT_TYPE_OPTIONS } from '../config/clocktower.ts';
+import { CT_TYPE_COLOR, CT_TYPE_OPTIONS, isClockTowerManager } from '../config/clocktower.ts';
 import { renderNightText } from '../utils/clocktowerText.tsx';
 import RoleArt from '../components/clocktower/grimoire/RoleArt.tsx';
+import ScriptBuilderModal from '../components/clocktower/ScriptBuilderModal.tsx';
 import type {
   ClockTowerCharacterType,
   ClockTowerImageStatus,
@@ -43,7 +44,7 @@ interface EditForm {
 }
 
 /**
- * 시계탑 캐릭터 사전·스크립트 관리 (관리자 전용).
+ * 시계탑 캐릭터 사전·스크립트 관리 (멘토 이상).
  *
  * 공식 데이터(캐릭터·밤 순서·징크스·공식 한국어 번역)를 받아 사전을 채우고, 기본 3종 스크립트를 만든다.
  * 커스텀 스크립트는 스크립트 도구 JSON 을 붙여넣어 등록한다. 원작 문구라 공개 화면에는 내리지 않는다.
@@ -51,7 +52,7 @@ interface EditForm {
 export default function ClockTowerRoles() {
   const navigate = useNavigate();
   const user = useRecoilValue(userState);
-  const isAdmin = !!user?.roles.includes('ROLE_ADMIN');
+  const isAdmin = isClockTowerManager(user?.roles);
 
   const [roles, setRoles] = useState<ClockTowerRole[]>([]);
   const [team, setTeam] = useState<ClockTowerCharacterType | ''>('');
@@ -79,6 +80,7 @@ export default function ClockTowerRoles() {
   const [scriptMin, setScriptMin] = useState('');
   const [scriptMax, setScriptMax] = useState('');
   const [registering, setRegistering] = useState(false);
+  const [builderOpen, setBuilderOpen] = useState(false);
 
   const fetchRoles = useCallback(async () => {
     setLoading(true);
@@ -299,7 +301,7 @@ export default function ClockTowerRoles() {
   if (!isAdmin) {
     return (
       <Wrapper>
-        <Empty>관리자만 사용할 수 있는 화면입니다.</Empty>
+        <Empty>멘토 이상만 사용할 수 있는 화면입니다.</Empty>
       </Wrapper>
     );
   }
@@ -399,6 +401,9 @@ export default function ClockTowerRoles() {
       <Section>
         <SectionHead>
           <h3>커스텀 스크립트 등록</h3>
+          <PrimaryButton type="button" onClick={() => setBuilderOpen(true)}>
+            사전에서 골라 스크립트 짜기
+          </PrimaryButton>
         </SectionHead>
         <NoticeBox>
           커스텀 시계탑 시트 주소를 넣고 [주소로 불러오기]를 누르거나, 스크립트 도구·커뮤니티에서 받은 JSON 을 그대로 붙여넣으세요.
@@ -592,6 +597,7 @@ export default function ClockTowerRoles() {
           </List>
         )}
       </Section>
+      {builderOpen && <ScriptBuilderModal onClose={() => setBuilderOpen(false)} />}
     </Wrapper>
   );
 }

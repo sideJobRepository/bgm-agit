@@ -1,5 +1,6 @@
 package com.bgmagitapi.origin.clocktower.controller;
 
+import com.bgmagitapi.origin.clocktower.util.ClockTowerPermission;
 import com.bgmagitapi.origin.advice.exception.ForbiddenException;
 import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.origin.clocktower.dto.request.ClockTowerGameCreateRequest;
@@ -64,9 +65,8 @@ public class BgmAgitClockTowerGameController {
     }
 
     private void requireAdmin(Jwt jwt) {
-        List<String> roles = jwt == null ? null : jwt.getClaim("roles");
-        if (roles == null || !(roles.contains("ROLE_ADMIN") || roles.contains("ADMIN"))) {
-            throw new ForbiddenException("관리자만 사용할 수 있습니다.");
+        if (!ClockTowerPermission.isManager(jwt)) {
+            throw new ForbiddenException("멘토 이상만 사용할 수 있습니다.");
         }
     }
 }

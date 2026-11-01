@@ -1,4 +1,5 @@
 import { Wrapper } from '../styles';
+import { isClockTowerManager } from '../config/clocktower.ts';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
@@ -6,6 +7,7 @@ import { clockTowerGameListState } from '../recoil/state/clocktowerState.ts';
 import { useClockTowerGameListFetch } from '../recoil/clocktowerFetch.ts';
 import { userState } from '../recoil/state/userState.ts';
 import Pagination from '../components/Pagination.tsx';
+import ScriptBuilderModal from '../components/clocktower/ScriptBuilderModal.tsx';
 import type { ClockTowerGame } from '../types/clocktower.ts';
 import { AdminButtons, Box, Header, TitleBox, CreateButton, SearchRow, CardList, Card, CardBody, CardTitle, Meta, Empty, PaginationWrapper, SourceTabs, SourceTab, SourceBadge } from './ClockTowerGames.styles.ts';
 
@@ -32,6 +34,7 @@ export default function ClockTowerGames() {
   const [keyword, setKeyword] = useState('');
   const [input, setInput] = useState('');
   const [source, setSource] = useState<SourceFilter>('ALL');
+  const [builderOpen, setBuilderOpen] = useState(false);
 
   useEffect(() => {
     fetchGames(page, keyword, source === 'ALL' ? undefined : source);
@@ -55,8 +58,9 @@ export default function ClockTowerGames() {
               <CreateButton onClick={() => navigate('/clocktower-grimoire')}>이야기꾼 마도서</CreateButton>
             </AdminButtons>
           )}
-          {user?.roles.includes('ROLE_ADMIN') && (
+          {isClockTowerManager(user?.roles) && (
             <AdminButtons>
+              <CreateButton onClick={() => setBuilderOpen(true)}>스크립트 짜기</CreateButton>
               <CreateButton onClick={() => navigate('/clocktower-roles')}>캐릭터 사전·스크립트 등록</CreateButton>
               <CreateButton onClick={() => navigate('/clockTowerGameDetail')}>게임 직접 등록</CreateButton>
             </AdminButtons>
@@ -102,6 +106,12 @@ export default function ClockTowerGames() {
           <Pagination current={page} totalPages={data.totalPages} onChange={setPage} />
         </PaginationWrapper>
       </Box>
+      {builderOpen && (
+        <ScriptBuilderModal
+          onClose={() => setBuilderOpen(false)}
+          onRegistered={() => fetchGames(page, keyword, source === 'ALL' ? undefined : source)}
+        />
+      )}
     </Wrapper>
   );
 }

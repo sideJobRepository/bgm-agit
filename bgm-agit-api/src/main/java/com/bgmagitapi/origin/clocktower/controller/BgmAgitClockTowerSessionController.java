@@ -1,5 +1,6 @@
 package com.bgmagitapi.origin.clocktower.controller;
 
+import com.bgmagitapi.origin.clocktower.util.ClockTowerPermission;
 import com.bgmagitapi.origin.advice.exception.ForbiddenException;
 import com.bgmagitapi.origin.clocktower.dto.request.ClockTowerSessionCreateRequest;
 import com.bgmagitapi.origin.clocktower.dto.request.ClockTowerSessionSeatsRequest;
@@ -18,7 +19,7 @@ import java.util.Map;
 
 /**
  * 이야기꾼 진행판 ↔ 플레이어 휴대폰 "내 캐릭터".
- * 전부 로그인 필수. 이야기꾼 동작(만들기·좌석 갱신·상태·닫기)은 세션을 만든 회원 또는 관리자만(서비스에서 확인).
+ * 전부 로그인 필수. 이야기꾼 동작(만들기·좌석 갱신·상태·닫기)은 세션을 만든 회원 또는 멘토 이상만(서비스에서 확인).
  * 플레이어 조회(mine)는 내 줄만 내려준다.
  */
 @RestController
@@ -84,7 +85,7 @@ public class BgmAgitClockTowerSessionController {
     }
 
     private boolean isAdmin(Jwt jwt) {
-        List<String> roles = JwtParserUtil.extractRoles(jwt);
-        return roles.contains("ROLE_ADMIN") || roles.contains("ADMIN");
+        // 시계탑은 멘토 이상이 관리한다
+        return ClockTowerPermission.isManager(jwt);
     }
 }

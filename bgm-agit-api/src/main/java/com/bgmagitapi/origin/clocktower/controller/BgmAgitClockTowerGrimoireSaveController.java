@@ -1,5 +1,6 @@
 package com.bgmagitapi.origin.clocktower.controller;
 
+import com.bgmagitapi.origin.clocktower.util.ClockTowerPermission;
 import com.bgmagitapi.origin.advice.exception.ForbiddenException;
 import com.bgmagitapi.origin.clocktower.dto.request.ClockTowerGrimoireSaveRequest;
 import com.bgmagitapi.origin.clocktower.dto.response.ClockTowerGrimoireSaveResponse;
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 마도서 임시저장. 전부 로그인 필수, 열기·덮어쓰기·삭제는 저장한 회원 또는 관리자만(서비스에서 확인).
+ * 마도서 임시저장. 전부 로그인 필수, 열기·덮어쓰기·삭제는 저장한 회원 또는 멘토 이상만(서비스에서 확인).
  */
 @RestController
 @RequiredArgsConstructor
@@ -54,7 +55,7 @@ public class BgmAgitClockTowerGrimoireSaveController {
     }
 
     private boolean isAdmin(Jwt jwt) {
-        List<String> roles = JwtParserUtil.extractRoles(jwt);
-        return roles.contains("ROLE_ADMIN") || roles.contains("ADMIN");
+        // 시계탑은 멘토 이상이 관리한다
+        return ClockTowerPermission.isManager(jwt);
     }
 }

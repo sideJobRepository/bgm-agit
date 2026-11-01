@@ -1,5 +1,6 @@
 package com.bgmagitapi.origin.clocktower.controller;
 
+import com.bgmagitapi.origin.clocktower.util.ClockTowerPermission;
 import com.bgmagitapi.origin.advice.exception.ForbiddenException;
 import com.bgmagitapi.origin.clocktower.util.VnamuScriptFetcher;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * 커스텀 시계탑(botc.vnamu.com) 시트 주소 → 제목·스크립트 JSON 미리 받기(관리자).
+ * 커스텀 시계탑(botc.vnamu.com) 시트 주소 → 제목·스크립트 JSON 미리 받기(멘토 이상).
  * 등록은 하지 않는다. 화면이 받은 값을 입력칸에 채우고, 관리자가 확인한 뒤 기존 [스크립트 등록]으로 저장한다.
  */
 @RestController
@@ -31,9 +32,8 @@ public class BgmAgitClockTowerScriptFetchController {
     }
 
     private void requireAdmin(Jwt jwt) {
-        List<String> roles = jwt == null ? null : jwt.getClaim("roles");
-        if (roles == null || !(roles.contains("ROLE_ADMIN") || roles.contains("ADMIN"))) {
-            throw new ForbiddenException("관리자만 사용할 수 있습니다.");
+        if (!ClockTowerPermission.isManager(jwt)) {
+            throw new ForbiddenException("멘토 이상만 사용할 수 있습니다.");
         }
     }
 }

@@ -1,5 +1,5 @@
 import { Wrapper } from '../styles';
-import { Box, ButtonRow, Button, DetailHead, Thumb, NoImage, DetailTitle, DetailMeta, BigResult, DraftBadge, SectionTitle, WinTag, Memo, FormTitle, ResultToggle, ToggleBtn, SearchBox, Dropdown, Option, EmptyOption, PartEditList, PartEditRow, PartNickEdit, MeTag, RemovePart, Hint, LabelRow, LoadButton, LoadPanel, LoadPanelHead, LoadClose, LoadItem, LoadItemTop, LoadItemNicks, LoadEmpty, PickerWrap, PickerControl, PickerDropdown, PickerSearch, FilterRow, FilterChip, PickerList, PickerOption, PickerEmpty, Field } from './ClockTowerRecordDetail.styles.ts';
+import { Box, ButtonRow, Button, DetailHead, Thumb, NoImage, DetailTitle, DetailMeta, BigResult, DraftBadge, SectionTitle, WinTag, Memo, FormTitle, ResultToggle, ToggleBtn, PartEditList, PartEditRow, PartNickEdit, MeTag, RemovePart, Hint, LabelRow, LoadButton, LoadPanel, LoadPanelHead, LoadClose, LoadItem, LoadItemTop, LoadItemNicks, LoadEmpty, PickerWrap, PickerControl, PickerDropdown, PickerSearch, FilterRow, FilterChip, PickerList, PickerOption, PickerEmpty, Field } from './ClockTowerRecordDetail.styles.ts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
@@ -13,8 +13,9 @@ import { userState } from '../recoil/state/userState.ts';
 import { showConfirmModal } from '../components/confirmAlert.tsx';
 import GameSelect from '../components/GameSelect.tsx';
 import GrimoireViewer from '../components/clocktower/grimoire/GrimoireViewer.tsx';
+import MemberSearchModal from '../components/clocktower/MemberSearchModal.tsx';
 import { restoreSaved } from '../components/clocktower/grimoire/useGrimoire.ts';
-import { CT_TYPE_COLOR as TYPE_COLOR, CT_TYPE_LABEL, isSeatableType } from '../config/clocktower.ts';
+import { CT_TYPE_COLOR as TYPE_COLOR, CT_TYPE_LABEL, isSeatableType, isClockTowerManager } from '../config/clocktower.ts';
 import { TeamSection, TeamHeader, SheetGrid, SheetCard, SheetIcon, SheetBody } from './ClockTowerGameDetail.styles.ts';
 import type {
   ClockTowerCharacter,
@@ -183,9 +184,9 @@ export default function ClockTowerRecordDetail() {
   const id = searchParams.get('id');
 
   const user = useRecoilValue(userState);
-  // 자체로그인(MAHJONG) 회원만 등록·수정·삭제 가능. 소셜 회원은 socialId 보유. 관리자는 모더레이션 예외.
+  // 자체로그인(MAHJONG) 회원만 등록·수정·삭제 가능. 소셜 회원은 socialId 보유. 멘토 이상은 모더레이션 예외.
   const isSelfLogin = !!user && !user.socialId;
-  const isAdmin = !!user && (user.roles ?? []).some(r => r === 'ROLE_ADMIN' || r === 'ADMIN');
+  const isAdmin = !!user && isClockTowerManager(user.roles);
   const canWrite = isSelfLogin || isAdmin;
   const detail = useRecoilValue(clockTowerRecordDetailState);
   const fetchDetail = useClockTowerRecordDetailFetch();
@@ -215,13 +216,8 @@ export default function ClockTowerRecordDetail() {
   const [parts, setParts] = useState<PartRow[]>([]);
   const [memo, setMemo] = useState('');
 
-  // 참가자 검색
-  const [keyword, setKeyword] = useState('');
-  const [candidates, setCandidates] = useState<MemberOption[]>([]);
-  const [open, setOpen] = useState(false);
-  const searchRef = useRef<HTMLDivElement | null>(null);
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const debounce = useRef<number | null>(null);
+  // 참가자 검색 창
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // 지난 기록 불러오기 패널
   const [loadOpen, setLoadOpen] = useState(false);
@@ -300,40 +296,12 @@ export default function ClockTowerRecordDetail() {
     );
   }, [roster]);
 
-  // 회원 검색 디바운스
-  useEffect(() => {
-    if (debounce.current) window.clearTimeout(debounce.current);
-    debounce.current = window.setTimeout(() => {
-      api
-        // 시계탑 참가자는 전원 회원이고 메인 사이트 가입자도 찾아야 해서 마작 회원 전용 /all-members 대신 닉네임 검색을 쓴다
-        .get('/bgm-agit/clocktower-members', { params: { keyword } })
-        .then(res => setCandidates(res.data as MemberOption[]))
-        .catch(() => setCandidates([]));
-    }, 250);
-    return () => {
-      if (debounce.current) window.clearTimeout(debounce.current);
-    };
-  }, [keyword]);
-
-  // 바깥 클릭 시 검색 닫기
-  useEffect(() => {
-    const onDown = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, []);
-
   const addPart = (m: MemberOption) => {
     setParts(prev =>
       prev.some(p => p.memberId === m.id)
         ? prev
         : [...prev, { memberId: m.id, nickname: m.nickname || `#${m.id}`, characterId: '', storyteller: false }]
     );
-    // 연속 추가: 검색창을 닫지 않고 비운 뒤 포커스 유지 → 이름만 연달아 입력
-    setKeyword('');
-    setOpen(true);
-    searchInputRef.current?.focus();
   };
 
   // 멤버 명단을 폼에 적용(캐릭터·진행자는 비움). 작성자는 항상 포함.
@@ -393,11 +361,6 @@ export default function ClockTowerRecordDetail() {
           : p
       )
     );
-
-  const visibleCandidates = useMemo(
-    () => candidates.filter(c => !parts.some(p => p.memberId === c.id)),
-    [candidates, parts]
-  );
 
   const onSubmit = (opts: { draft?: boolean } = {}) => {
     const draft = opts.draft ?? false;
@@ -659,32 +622,16 @@ export default function ClockTowerRecordDetail() {
             </LoadPanel>
           )}
 
-          <SearchBox ref={searchRef}>
-            <input
-              ref={searchInputRef}
-              type="text"
-              placeholder="닉네임으로 참가자 검색 (초성도 됩니다)"
-              value={keyword}
-              onChange={e => {
-                setKeyword(e.target.value);
-                setOpen(true);
-              }}
-              onFocus={() => setOpen(true)}
+          <LoadButton type="button" onClick={() => setSearchOpen(true)} style={{ alignSelf: 'flex-start' }}>
+            + 참가자 검색해서 추가
+          </LoadButton>
+          {searchOpen && (
+            <MemberSearchModal
+              addedIds={parts.map(p => p.memberId)}
+              onAdd={addPart}
+              onClose={() => setSearchOpen(false)}
             />
-            {open && (visibleCandidates.length > 0 || keyword.trim()) && (
-              <Dropdown>
-                {visibleCandidates.map(c => (
-                  <Option key={c.id} type="button" onClick={() => addPart(c)}>
-                    {c.nickname || `#${c.id}`}
-                    {c.loginType ? ` · ${c.loginType}` : ''}
-                  </Option>
-                ))}
-                {visibleCandidates.length === 0 && keyword.trim() && (
-                  <EmptyOption>검색 결과가 없습니다.</EmptyOption>
-                )}
-              </Dropdown>
-            )}
-          </SearchBox>
+          )}
 
           <PartEditList>
             {parts.map(p => (
@@ -709,7 +656,7 @@ export default function ClockTowerRecordDetail() {
             ))}
           </PartEditList>
           {!gameId && <Hint>게임을 먼저 선택하면 캐릭터를 고를 수 있습니다.</Hint>}
-          {!canEditSelf && id && <Hint>본인이 작성한 기록이 아닙니다. 관리자 권한으로 수정 중입니다.</Hint>}
+          {!canEditSelf && id && <Hint>본인이 작성한 기록이 아닙니다. 관리 권한으로 수정 중입니다.</Hint>}
         </Field>
 
         <Field>

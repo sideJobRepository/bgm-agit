@@ -1,5 +1,6 @@
 package com.bgmagitapi.origin.clocktower.controller;
 
+import com.bgmagitapi.origin.clocktower.util.ClockTowerPermission;
 import com.bgmagitapi.origin.apiresponse.ApiResponse;
 import com.bgmagitapi.origin.clocktower.dto.request.ClockTowerRecordCreateRequest;
 import com.bgmagitapi.origin.clocktower.dto.request.ClockTowerRecordModifyRequest;
@@ -36,7 +37,7 @@ public class BgmAgitClockTowerRecordController {
             @AuthenticationPrincipal Jwt jwt) {
         Long viewerId = jwt != null ? JwtParserUtil.extractMemberId(jwt) : null;
         List<String> roles = jwt != null ? JwtParserUtil.extractRoles(jwt) : null;
-        boolean isAdmin = roles != null && (roles.contains("ROLE_ADMIN") || roles.contains("ADMIN"));
+        boolean isAdmin = ClockTowerPermission.isManager(roles);
         return PageResponse.from(bgmAgitClockTowerRecordService.getRecords(pageable, gameId, memberId, year, month, viewerId, isAdmin));
     }
 
