@@ -2,15 +2,6 @@
 
 한국마작연맹(KML) 기록 생태계와 연동되는 bgm-agit(마작장 + 보드게임카페) 도메인 시스템.
 
-> ### ⏰ 2026년 11월 1일이 지나면 할 일 — 10월 종전 정책 코드 정리
-> 11월 개편을 10월에 미리 배포하면서 **10월 이용분만 위한 임시 분기**를 넣어 두었다(예약 절 "정책 시행일 = 이용일 기준 날짜 분기").
-> 10/31 이용분이 끝나면(11/1 새벽 02시 이후) 10월 예약은 더 이상 결제·취소·인원 변경이 일어나지 않으므로 아래를 지운다.
-> - 서버 `SlotSchedule`: `NEW_POLICY_FROM`·`isNewPolicy`·`legacy()`·`isGroom`·`LEGACY_DEPOSIT_AMOUNT`, `of(room,d)`·`maxSelectableSlots`·`isFlatPricing` 안의 종전 분기
-> - 서버 `ReservationRefundPolicy.refundRate(useDate, …)` 종전 분기, `BgmAgitReservationServiceImpl` 의 종전 분기(G룸 하루 1팀, 전날까지 취소, 인원 검증 생략), 결제 `paymentKind` 의 `LEGACY_DEPOSIT`, 알림톡 `-1`/`-2` 날짜 분기
-> - 프론트 `config/reservationPolicy.ts`(`NEW_POLICY_FROM`)와 그 분기(`ReservationList` 취소·환불 문구, `ReservationTimePanel` 의 `isLegacyRoom` 안내, `PaymentCheckoutModal` 의 `LEGACY_DEPOSIT` 문구)
-> - 약관·환불정책·예약내역의 "10월 31일 이용분까지는 종전 규정" 경과 문구, 테스트 `PolicySwitchTest` 의 10월 경우
-> - 지운 뒤 이 알림도 지운다
-
 ## 구성
 
 | 앱 | 스택 | 경로 | 비고 |
@@ -111,24 +102,20 @@
 ## 예약
 
 > **11월 개편(일무제한·인원 × 단가 전액결제·48h/24h 환불·최대 12시간·월간패스)은 2026-10-20 운영 배포 완료.**
-> 적용은 **11/1 이용분부터**이고 10월 이용분은 종전 정책이다(아래 날짜 분기). 개편 배경·결정 근거는 **개편 결정 기록** 절.
+> 적용은 **11/1 이용분부터**. 10월 이용분용 날짜 분기(종전 정책)는 2026-11-01 에 코드에서 걷어냈다. 개편 배경·결정 근거는 **개편 결정 기록** 절.
 >
 > 룸 8시간 상한은 사장님이 요청(2026-09-22)했다가 **철회**(2026-10-09)했고, 대신 **12시간 상한**을 새로 정했다(2026-10-20).
 > 마작 대탁의 3시간×4타임 시간 모델은 개편에서도 **바꾸지 않는다**.
 
-### 정책 시행일 = 이용일 기준 날짜 분기 (2026-10-20)
-사장님 요청으로 개편 코드를 10월에 미리 배포하고 **11/1 이용분부터** 새 정책을 적용한다. 11월 차단(`RESERVATION_BLOCKED_FROM`)은 서버·프론트 모두 null 로 풀었다.
-- 판정은 `SlotSchedule.NEW_POLICY_FROM`(2026-11-01) / `isNewPolicy(useDate)` 하나. 프론트는 `config/reservationPolicy.ts` 에 같은 날짜(안내 문구·취소 버튼용)
-- 10월 이용분(종전): 슬롯 `SlotSchedule.legacy()`(룸 13~02시 1h, G룸 13~18·19~24 하루 1팀·1칸), 룸 예약금 항목당 1만원(`isFlatPricing`), 인원 서버검증 없음, 손님 취소는 전날까지·환불 100%(`ReservationRefundPolicy.refundRate(useDate,…)`), 알림톡은 `-1`
+### 요금·응답 공통
 - `GET /reservation` 의 `timeSlots[]` 항목마다 그날의 `slotRanges/maxSelectableSlots/pricingMode/depositAmount` 를 싣는다. 최상위 값은 조회 기준일 값
-- 결제 주문 응답 `paymentKind`(LEGACY_DEPOSIT / DEPOSIT / FULL)로 결제 모달 문구를 가른다
-- **10월이 지나면 종전 분기(`legacy`, `isGroom`, `LEGACY_*`, 프론트 `NEW_POLICY_FROM` 분기)는 지워도 된다**
+- 결제 주문 응답 `paymentKind`(DEPOSIT = 마작 대탁 예약금 / FULL = 룸 전액)로 결제 모달 문구를 가른다
 - 예약 주말·공휴일 단가는 **10,000원**(공지 4-2). 워크인 주말 11,000원과 헷갈리지 말 것
 
 ### 월간패스 (2026-10-20)
 - **기간 표 `BGM_AGIT_MONTHLY_PASS`(회원·시작월·끝월, 둘 다 포함)가 정본**(`monthly-pass-period-2026-11.sql`). 회원당 여러 기간 가능. 다음 달·1년치를 미리 산 손님 때문에 처음의 "회원 Y/N + 매월 1일 초기화" 방식을 버렸다 — 회원 컬럼 `BGM_AGIT_MEMBER_MONTHLY_PASS_STATUS` 는 DB 에만 남고 코드는 안 읽는다. 초기화 배치도 없다(기간이 지나면 저절로 끝)
 - 관리자: 권한관리 `/role` → **월간패스 탭**(전체 회원)에서 시작월 + 개월 수(1~12)로 등록, 기간별 삭제. `GET/POST /bgm-agit/role/monthly-pass`, `DELETE /bgm-agit/role/monthly-pass/{id}` — 서비스단 `requireAdmin` + URL 매핑(관리자)
-- 예약자 본인의 패스 기간에 **이용일의 달**이 들어 있으면 결제 시 **본인 1명분 단가 할인** — `SlotSchedule.monthlyPassDiscount` + `BgmAgitMonthlyPassRepository.coversMonth`. 결제하는 날이 아니라 이용하는 달 기준이라 10월에 11월 이용분을 결제해도 11월 패스가 있으면 할인. 룸(신 정책)·2명 이상만. 일행 중 다른 패스 회원은 현장 부분환불
+- 예약자 본인의 패스 기간에 **이용일의 달**이 들어 있으면 결제 시 **본인 1명분 단가 할인** — `SlotSchedule.monthlyPassDiscount` + `BgmAgitMonthlyPassRepository.coversMonth`. 결제하는 날이 아니라 이용하는 달 기준이라 10월에 11월 이용분을 결제해도 11월 패스가 있으면 할인. 룸·2명 이상만. 일행 중 다른 패스 회원은 현장 부분환불
 - 할인액은 결제행 `BGM_AGIT_PAYMENT_DISCOUNT_AMOUNT` 스냅샷. 승인 재대조는 재계산액 − 스냅샷(주문~승인 사이 패스가 꺼져도 승인 실패 안 나게). 예약 대기 알림톡 금액도 같은 할인 함수
 - 프론트: 권한관리 `components/role/MonthlyPassTable.tsx` + 등록 모달 `confirmAlert.tsx` 의 `showMonthlyPassAddModal`. 마이페이지는 `monthlyPassPeriods`(예: "2026-11 ~ 2027-10")를 읽기 전용으로 표시
 
@@ -138,8 +125,8 @@
 - **혜택 설정은 DB** `BGM_AGIT_BUNGJU_SETTING`(1행, ID 1 — 기간·1인 요금·사용 여부). 관리자가 `/role` → **벙주 혜택 탭**(`components/role/BungjuPanel.tsx`)에서 바꾼다. `GET/PUT /bgm-agit/bungju/setting`, 혜택가 예약 내역 `GET /bgm-agit/bungju/reservations?from&to`(CSV 내려받기, 엑셀 라이브러리 대신 UTF-8 BOM) — 서비스단 `requireAdmin` + URL 매핑(관리자)
 - 판정은 `BgmAgitBungjuService.bungjuPriceFor`(벙주 + 설정 켜짐·기간 안 + 평일 + 룸) 하나. **등록 시점**에 판정해 예약 행 `BGM_AGIT_RESERVATION_BUNGJU_PRICE`(혜택 1인 단가, 아니면 null)에 박는다. 결제 주문·승인 재대조·대기 알림톡·결제 단가 스냅샷이 전부 이 값을 따르므로 나중에 권한·설정을 바꿔도 받은 예약 금액은 그대로다. 벙주 지정 전에 정가로 들어온 예약은 자동 처리하지 않는다(관리자 수동 환불)
 - 벙주 여부는 토큰이 아니라 DB 의 현재 권한으로 본다. 캘린더 `prices[]` 에 `regularPrice`·`bungju` 를, 결제 주문 응답에 `bungjuApplied`·`regularAmount` 를 실어 "벙주 혜택가 적용 — 정가 대비 N원 할인"을 보여 준다
-- **회원 1명당 하루 1룸 — 2026-10-31 사장님 요청으로 풀었다(꺼짐).** 코드는 스위치로 남겨 두었다: 서버 `SlotSchedule.ONE_ROOM_PER_DAY_ENABLED` + 프론트 `config/reservationPolicy.ts` 의 `ONE_ROOM_PER_DAY_ENABLED` 를 `true` 로 바꾸면 다시 막힌다(두 값 같이). 켜면 이용일 2026-11-02(`ONE_ROOM_PER_DAY_FROM`)부터 모든 회원(벙주 무관), 룸만(마작 대탁 제외), 취소건 제외, 같은 날 두 번째 룸 예약을 409로 거절, **관리자 계정은 제외**
-  - 룸 이용 안내(퇴실·외출 시 예약 권한 소멸, 추가 인원 일반 요금)는 제한과 별개로 11/2 이용분 룸부터 계속 나온다(`isRoomUseNoticeDay`, 결제 승인 응답 `roomNotice`). "하루 1룸" 문구 한 줄만 스위치를 따른다(응답 `oneRoomPerDay`)
+- **회원 1명당 하루 1룸 — 2026-10-31 사장님 요청으로 풀었다(꺼짐).** 코드는 스위치로 남겨 두었다: 서버 `SlotSchedule.ONE_ROOM_PER_DAY_ENABLED` + 프론트 `config/reservationPolicy.ts` 의 `ONE_ROOM_PER_DAY_ENABLED` 를 `true` 로 바꾸면 다시 막힌다(두 값 같이). 켜면 모든 회원(벙주 무관), 룸만(마작 대탁 제외), 취소건 제외, 같은 날 두 번째 룸 예약을 409로 거절, **관리자 계정은 제외**
+  - 룸 이용 안내(퇴실·외출 시 예약 권한 소멸, 추가 인원 일반 요금)는 제한과 별개로 룸 예약이면 늘 나온다(`isRoomUseNoticeDay`, 결제 승인 응답 `roomNotice`). "하루 1룸" 문구 한 줄만 스위치를 따른다(응답 `oneRoomPerDay`)
   - 등록 검사는 잠금 없는 확인→저장이라 동시에 넣은 두 건이 통과할 수 있다. 그래서 **결제 승인 직전**(`validateReservationSlotAvailable`, 승인 직렬화 락 안)에 같은 날 다른 확정 룸 예약이 있으면 409로 한 번 더 막는다
 - **멘토는 벙주 회원도 유저처럼 관리**(비밀번호·닉네임, `BgmAgitRoleServiceImpl.MENTOR_MANAGEABLE`, kml-front `role/page.tsx` 같은 규칙). 벙주 지정·해제는 관리자만
 - 운영 적용 SQL 은 저장소에 두지 않는다(루트 SQL 정리됨). 순서는 **DDL·권한·계층·URL 매핑 → 백엔드 배포(재시작) → 프론트**. 백엔드를 먼저 올리면 예약 엔티티가 없는 컬럼을 읽어 예약 전체가 500
@@ -163,7 +150,7 @@
 `SlotSchedule`(origin/util)에 전부 모임: `of()`(open/close/interval/durationHours), `slots()`, `isContiguous()`, `maxSelectableSlots()`, `resolveReservationType()`, `isCombinable()`, `unitPrice()`, `totalPaymentAmount()`, 그리고 하루 경계(`DAY_BOUNDARY`/`slotDateTime`/`toSortableMinutes`/`useStartAt`).
 - **ROOM** = 하루 경계 10:00 ~ 익일 10:00, 1시간 간격 **24슬롯**(일무제한) / **MAHJONG** = 14:00~익일 02:00, 3시간 간격 4슬롯(개편 대상 아님)
 - **하루 경계는 오전 10시** — `DAY_BOUNDARY` 하나가 정본이고 현황판 정렬(`toBoardMinutes`)·알림톡 정렬(`AlimtalkUtils.BOUNDARY`)·환불 기한이 전부 여기에 위임한다. 예전엔 슬롯 13:00 / 알림톡 13:00 / 현황판 06:00 으로 **세 곳에 다른 값**이 흩어져 있었다
-- **한 번 예약 최대 12시간** — 11월 이용분부터 모든 방(룸·M·마작 대탁). `SlotSchedule.MAX_RESERVATION_HOURS` ÷ 칸 간격이 `maxSelectableSlots`(룸 12칸, 마작 4칸)이고, 등록 검증·프론트 선택 차단·안내 문구가 이 값 하나를 쓴다. 한 팀이 하루 종일 방을 잡는 걸 막으려는 사장님 결정(2026-10-20, 금액 2배안 대신). 10월 이용분은 종전대로(G룸 1칸, 나머지 제한 없음)
+- **한 번 예약 최대 12시간** — 모든 방(룸·M·마작 대탁). `SlotSchedule.MAX_RESERVATION_HOURS` ÷ 칸 간격이 `maxSelectableSlots`(룸 12칸, 마작 4칸)이고, 등록 검증·프론트 선택 차단·안내 문구가 이 값 하나를 쓴다. 한 팀이 하루 종일 방을 잡는 걸 막으려는 사장님 결정(2026-10-20, 금액 2배안 대신)
 - 시간은 **연속 구간만** 선택 가능(`isContiguous`). 띄엄띄엄 고르면 사이 시간이 비어 보이면서 실제로는 못 쓰는 룸이 된다. 프론트도 같은 규칙으로 즉시 막는다
 - 인원 범위(`minPeople`/`maxPeople`)는 **서버가 등록·결제주문·인원변경 세 곳에서 검증**한다. 인원이 곧 금액이라 프론트 스테퍼만 믿으면 `people=1` 로 7인 룸을 1인 요금에 잡을 수 있다
 - `GET /bgm-agit/reservation` 응답에 `slotRanges[{start,end}]`, `maxSelectableSlots`, `reservationType`(ROOM|DELEGATE_PLAY), `pricingMode`(PER_PERSON|FLAT), `prices[{date,price,colorGb}]` 포함 → `ReservationTimePanel.tsx`가 그대로 그림
@@ -225,8 +212,8 @@
 - 환불 비율은 `ReservationRefundPolicy.refundRate()` — 48h 전 100% / 48~24h 50% / 그 안쪽 0%. **관리자 취소도 같은 규칙**(노쇼는 당일이라 자동 0%). 매장 귀책으로 전액을 돌려줄 땐 토스 상점관리자에서 직접 환불한다
 - **인원 축소** `PUT /bgm-agit/reservation/people` — 줄이기만 된다(증원은 현장 워크인 결제). 확정건은 줄어든 인원 × **결제 시점 단가** × 환불비율만큼 부분환불, 미결제 대기건은 인원만 바꾸고 READY 주문을 무효화
   - **예약내역 카드의 [인원 변경] 버튼**(손님·관리자, 2026-10-20 다시 붙임) → `showPeopleReduceModal`(최소~현재-1 스테퍼 + 환불 예상액)
-  - 버튼 노출은 서버가 내려주는 `GroupedReservationResponse.peopleReducible`(11월 이용분 룸·취소 안 됨·시작 전·인원 > 최소 인원)만 따른다. 9월에 한 번 뺐던 이유가 "최소 인원을 몰라 줄일 수 없는데 버튼이 뜸"이라 `minPeople`(합쳐 예약이면 합산)·`unitPrice`(결제 당시 단가)도 같이 내려준다
-  - 마작 대탁·10월 이용분(정액)은 인원이 금액과 무관해 손님 요청을 서버가 거절한다(관리자는 기록 정정용으로 허용)
+  - 버튼 노출은 서버가 내려주는 `GroupedReservationResponse.peopleReducible`(룸·취소 안 됨·시작 전·인원 > 최소 인원)만 따른다. 9월에 한 번 뺐던 이유가 "최소 인원을 몰라 줄일 수 없는데 버튼이 뜸"이라 `minPeople`(합쳐 예약이면 합산)·`unitPrice`(결제 당시 단가)도 같이 내려준다
+  - 마작 대탁(정액)은 인원이 금액과 무관해 손님 요청을 서버가 거절한다(관리자는 기록 정정용으로 허용)
   - URL 권한은 유저(2) 하나만 — 권한 계층(관리자 > 멘토 > 유저)이라 주소당 역할 하나가 규칙이다. 1·2·4 를 넣었다가 매핑 로딩이 하나만 남겨 유저가 403 이 났다
 - 사용자·관리자 모두 `modifyReservation` 한 곳으로 모이고, 취소·인원변경은 컨트롤러에서 **`ReservationCancelExecutor`** 를 거친다(아래 결제 참고)
 - 현황판은 **지난 예약 확정·취소 불가**(`canManage = date >= todayYmd()`)
@@ -256,7 +243,7 @@
 `Date.toISOString()`은 UTC 변환이라 **KST 자정 Date가 하루 앞으로 밀린다**(`ReservationList` 검색이 실제로 이 버그였음). 서버로 보내는 날짜는 항상 `src/utils/date.ts`의 `toLocalYmd()`(`toLocaleDateString('sv-SE')` 기반) 사용. 같은 파일에 `todayYmd`/`addDaysYmd`/`formatYmdWithWeekday`.
 
 ### 남은 것: 방 메타의 하드코딩
-방 테이블은 분리됐지만 10월 종전 슬롯정책(`SlotSchedule.isGroom` — `"G Room".equals(...)`)·코멘트/옵션 맵(`reservationComments.ts`)·합쳐 예약 조합은 아직 이름 기준 코드에 있다. 필요해지면 `BGM_AGIT_ROOM` 컬럼으로 옮길 것.
+방 테이블은 분리됐지만 코멘트/옵션 맵(`reservationComments.ts`)·합쳐 예약 조합은 아직 이름 기준 코드에 있다. 필요해지면 `BGM_AGIT_ROOM` 컬럼으로 옮길 것.
 
 ---
 
@@ -278,7 +265,7 @@
 4. `POST /bgm-agit/payments/confirm` → 금액 대조·멱등·**중복결제 차단·서버 재계산 재대조** → 토스 승인 → **예약 `approvalStatus='Y'` 자동 확정 + 확정 알림톡**
 5. 취소(`modifyReservation`, `cancelStatus='Y'`) → 환불 비율만큼 **부분/전액 환불**
 
-- **금액**: `SlotSchedule.totalPaymentAmount(rooms, people, weekendRate, useDate)` — 11월 이용분 룸은 **인원 × 단가**(`unitPrice`: 평일 9,000 / 토·일·공휴일 10,000), 마작 대탁과 10월 이용분 룸은 **항목당 10,000원 정액**(`isFlatPricing`). 슬롯 수는 금액과 무관하다(일무제한). 월간패스 본인 1명분 할인(`monthlyPassDiscount`)은 이 금액에서 뺀다
+- **금액**: `SlotSchedule.totalPaymentAmount(rooms, people, weekendRate, useDate)` — 룸은 **인원 × 단가**(`unitPrice`: 평일 9,000 / 토·일·공휴일 10,000), 마작 대탁은 **항목당 10,000원 정액**(`isFlatPricing`). 슬롯 수는 금액과 무관하다(일무제한). 월간패스 본인 1명분 할인(`monthlyPassDiscount`)은 이 금액에서 뺀다
   - **호출부(결제 주문·승인 재대조·예약 대기 알림톡)는 반드시 같은 메서드와 같은 할인 판정을 쓴다.** 갈리면 고지액 ≠ 청구액이 된다
   - 조회 시점에는 인원이 미정이라 총액을 못 만든다 → 응답은 `pricingMode` + `prices`(날짜별 1인 단가)를 내려주고 프론트가 미리보기를 조립한다. **청구는 서버 재계산이 유일 출처**
 - **결제 시점 인원·단가를 결제행에 스냅샷으로 박는다.** 환불을 "지금 인원"으로 재계산하면 결제액과 어긋나고, 개편 전 1만원 결제건에 새 단가를 적용하면 `NOT_CANCELABLE_AMOUNT` 가 난다. 스냅샷이 없는 결제(마작 정액·개편 전)는 인원 차액 환불을 하지 않는다
@@ -448,7 +435,7 @@ kml:
 금액은 변수라 상관없지만 고정 문구 변경은 재심사 대상이라 `-1` 을 고치지 않고 템플릿을 새로 팠다.
 - 빌더는 `AlimtalkUtils.buildReservationFullPaymentMessage`, 스위치는 **`biztalk.reservation-payment-v2`(기본 false)**
 - **통과 전에는 `-1` 이 그대로 나가므로 그 기간 동안 알림톡의 환불 안내가 실제 규정과 다르다.** 예약 화면·결제 모달·환불정책 페이지가 정확한 문구를 갖고 있어 그쪽으로 보완한다
-- 통과하면 real·staging yml 의 그 한 줄만 `true` 로 바꾸면 된다. 켜도 **10월 이용분은 늘 `-1`**(예약금·전날까지 취소 문구가 맞다)
+- 통과하면 real·staging yml 의 그 한 줄만 `true` 로 바꾸면 된다
 - **예약 대기 알림톡은 예약자 본인에게만 간다**(`sandBizTalk`). 결제 전이라 확정이 아니고 관리자가 대응할 일도 없는 데다, 템플릿 고정 문구를 글자 단위로 맞춰야 해서 관리자 전용 문구를 못 만들어 "예약금을 결제해 주세요" 안내가 그대로 나갔다. 관리자 발송(`ownerMessage`/`AlimtalkUtils.buildOwnerReservationMessage`)은 제거됨
 - 마작강의 신청(`bgmagit-res-lecture*`)은 결제 연동이 없어 **계좌 입금 안내 그대로**다(`AlimtalkUtils.buildLectureMessage`, 프론트 `components/academy/BaseTable.tsx`)
 
@@ -632,7 +619,7 @@ kml:
 ## TODO 후보
 
 - **[내일 2026-10-30] 벙주·하루 1룸 결제 승인 실검증** — 결제 승인 경로를 브라우저로 한 번도 안 태웠다(단위 테스트만). 스테이징(토스 테스트 키, 실과금 없음)에서 테스트 카드로 ① 일반 회원 평일 룸 결제 ② 벙주 평일 룸 결제(혜택가)를 끝까지 승인해 볼 것
-  - 확인: 승인 성공 → 예약 `approvalStatus='Y'` 확정 → 결제 완료 화면에 룸 이용 안내 3줄(11/2 이후 룸만, 하루 1룸 줄은 없음) → 예약내역 영수증
+  - 확인: 승인 성공 → 예약 `approvalStatus='Y'` 확정 → 결제 완료 화면에 룸 이용 안내(룸만, 하루 1룸 줄은 없음) → 예약내역 영수증
   - 손댄 곳: `PaymentServiceImpl.validateAmountAgainstReservation`(벙주 단가 반영), `validateReservationSlotAvailable`(하루 1룸 재검사), `toConfirmResponse`(`oneRoomPerDay` 조회 추가)
   - 하루 1룸은 2026-10-31 풀었으므로 같은 날 두 번째 룸 결제가 **정상 승인되는지**만 보면 된다
   - 스테이징 테스트 계정 "벙주테스트"(010-0000-1129, 비번 `bungju1129`, 벙주)와 예약 3건(11/2 B Room 혜택가, 11/7 2건)은 검증 뒤 정리
@@ -644,7 +631,6 @@ kml:
 - 새 엔드포인트 권한 매핑 확인 — `/bgm-agit/ranks/{memberId}/stats`, `.../games`, `/my-rank`
 - 대국 기록 알림톡을 수정/삭제 흐름에도 적용(`eventPublisher.publishEvent(new MatchRecordRegisteredEvent(...))` 한 줄씩)
 - 메인 퀵메뉴 추가(현재 "내 기록"만 들어감) / 개인기록 "더보기" 영역 / 사이드바 외부 클릭 닫기
-- **11월이 지나면 10월 종전 분기 제거** — `SlotSchedule.legacy`/`isGroom`/`LEGACY_DEPOSIT_AMOUNT`/`NEW_POLICY_FROM`, `ReservationRefundPolicy.refundRate(useDate,…)` 의 종전 분기, 결제 `LEGACY_DEPOSIT`, 프론트 `config/reservationPolicy.ts` 와 그 분기
 - **테스트 DB 분리** — `@SpringBootTest` 테스트가 `.env` DB 에 롤백 없이 쓴다. 테스트 전용 프로필·DB 를 두거나 쓰기 테스트에 `@Transactional` 을 붙일 것
 - 환불 실패 시 관리자 자동 알림(알림톡 템플릿 신규 필요, 현재는 로그 + `BGM_AGIT_PAYMENT_CANCEL` FAILED 행만)
 - 프론트 `RESERVATION_COMBINABLE_GROUPS` 하드코딩 — 서버 화이트리스트를 응답으로 내려 제거 가능 / `ReservationDatePicker.DEFAULT_CLOSED_WEEKDAY` 기본값
@@ -655,7 +641,7 @@ kml:
 ## 개편 결정 기록 (2026-11 예약 정책)
 
 사장님 공지(2026-09-16, 이후 11/1 시행으로 연기)로 예약의 **요금·시간·환불 모델이 한꺼번에** 바뀌었다. 배경은 머더미스터리 동호회의 알박기·인원 부풀리기·노쇼 — 예약금 1만원 정액 + 전날까지 전액환불 구조라 자리를 선점하는 비용이 사실상 0원이었다.
-코드는 2026-10-20 운영에 배포했고 **11/1 이용분부터** 적용된다(예약 절의 날짜 분기). 구현 설명은 **예약**·**예약 결제** 절에 있고, 여기는 결정 근거만 남긴다.
+코드는 2026-10-20 운영에 배포했고 **11/1 이용분부터** 적용됐다(10월 이용분용 날짜 분기는 2026-11-01 제거). 구현 설명은 **예약**·**예약 결제** 절에 있고, 여기는 결정 근거만 남긴다.
 
 | | 10월 이용분까지 | 11월 이용분부터 |
 |---|---|---|

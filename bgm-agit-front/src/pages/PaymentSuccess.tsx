@@ -71,7 +71,7 @@ export default function PaymentSuccess() {
         </IconCircle>
         <h2>결제 완료</h2>
         <p>{message}</p>
-        {/* 룸 이용 안내는 11/2 이후 룸 예약 결제가 승인됐을 때만(서버가 roomNotice 로 알려 준다). 하루 1룸 줄은 제한이 켜져 있을 때만 */}
+        {/* 룸 이용 안내는 룸 예약 결제가 승인됐을 때만(서버가 roomNotice 로 알려 준다). 하루 1룸 줄은 제한이 켜져 있을 때만 */}
         {showRoomNotice && (
           <ul
             style={{ margin: 0, paddingLeft: 18, textAlign: 'left', fontSize: 13, lineHeight: 1.7 }}

@@ -15,7 +15,6 @@ import api from '../utils/axiosInstance.ts';
 import PaymentCheckoutModal from '../components/payment/PaymentCheckoutModal.tsx';
 import type { PaymentOrderResponse } from '../types/tossPayments.ts';
 import { todayYmd, toLocalYmd } from '../utils/date.ts';
-import { NEW_POLICY_FROM } from '../config/reservationPolicy.ts';
 import { theme } from '../styles/theme.ts';
 import {
   NoticeBox,
@@ -120,8 +119,6 @@ export default function ReservationList() {
    */
   function canCancelBeforeReservationDate(item: Reservation) {
     if (item.cancelStatus === 'Y') return false;
-    // 10월 31일 이용분까지는 종전 규정(예약일 전날까지 취소·예약금 전액 환불)이라 당일엔 서버가 거절한다
-    if (item.reservationDate < NEW_POLICY_FROM) return item.reservationDate > todayYmd();
     return item.reservationDate >= todayYmd();
   }
 
@@ -135,9 +132,6 @@ export default function ReservationList() {
     const amount = item.refundAmount ?? 0;
     if (amount <= 0) {
       return `이용일 24시간 이내라 환불이 불가합니다. (결제 ${paid.toLocaleString()}원)`;
-    }
-    if (item.reservationDate < NEW_POLICY_FROM) {
-      return `예약금 ${amount.toLocaleString()}원이 전액 환불됩니다.`;
     }
     return `환불 예상 금액 ${amount.toLocaleString()}원 (결제 ${paid.toLocaleString()}원의 ${rate}%)`;
   }
