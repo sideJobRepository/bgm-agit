@@ -8,7 +8,8 @@
 | 영역 | 백엔드 (`origin/clocktower`) | 프론트 (`bgm-agit-front/src`) |
 |---|---|---|
 | 게임(=스크립트) 카탈로그 | `BgmAgitClockTowerGame*` | `pages/ClockTowerGames.tsx`, `ClockTowerGameDetail.tsx` |
-| 캐릭터 사전·공식 데이터 가져오기·스크립트 JSON 등록 | `BgmAgitClockTowerRole*`, `ClockTowerRoleWriter`, `util/ClockTowerOfficialData(Client)`, `util/ClockTowerScriptParser` | `pages/ClockTowerRoles.tsx`(관리자, `/clocktower-roles`) |
+| 캐릭터 사전·공식 데이터 가져오기·스크립트 JSON 등록 | `BgmAgitClockTowerRole*`, `ClockTowerRoleWriter`, `util/ClockTowerOfficialData(Client)`, `util/ClockTowerScriptParser` | `pages/ClockTowerRoles.tsx`(멘토 이상, `/clocktower-roles`) |
+| 스크립트 짜기(사전에서 골라 등록) | 서버 변경 없음 — 기존 `POST /clocktower-games/script` | `components/clocktower/ScriptBuilderModal.tsx`(게임 목록·사전 화면 버튼) |
 | 커스텀 시계탑 시트 주소 불러오기 | `util/VnamuScriptFetcher`, `BgmAgitClockTowerScriptFetchController` | 사전 화면 스크립트 등록 칸 |
 | 이야기꾼 마도서(그리모어) | `GET /clocktower-games/{id}/grimoire`(묶음 조회만) | `pages/ClockTowerGrimoire.tsx`(`/clocktower-grimoire`), `components/clocktower/grimoire/*` |
 | 플레이 기록·통계 | `BgmAgitClockTowerRecord*`, `Participant`, `Stats*` | `pages/ClockTowerRecord*.tsx`, `ClockTowerHistory/Stats.tsx` |
@@ -52,6 +53,8 @@
 - 진영 enum 에 `TRAVELLER/FABLED/LORIC`. 전설·로릭은 좌석 캐릭터가 아니라 기록 참가자 선택지에서 뺀다(`isSeatableType`)
 
 ## API·권한
+
+> **시계탑 관리는 멘토 이상**(2026-11-02 사용자 결정 — 예전엔 관리자만). 판정은 서버 `util/ClockTowerPermission.isManager`(JWT roles 에 관리자 또는 멘토), 프론트 `config/clocktower.ts` 의 `isClockTowerManager` 한 곳. 아래 표의 "관리자"는 전부 멘토 이상으로 읽는다. 게임·사전·스크립트 등록, 남의 기록 수정·삭제, 남의 임시저장·세션 관리, 임시저장 기록 보기가 이 판정을 쓴다. URL 매핑(`/clocktower-games` POST·`/**` POST·PUT·DELETE, `/clocktower-roles`·`/**` GET·POST·PUT, `/script/fetch` GET — 스테이징 id 65~73 / 운영 id 60~68)도 역할 1 → 4. **스테이징·운영 적용**(2026-11-02, 운영은 새 백엔드 배포 재시작 때 반영)
 
 | 메서드·경로 | 권한 |
 |---|---|
@@ -140,8 +143,21 @@
 - 엔티티가 이미지 컬럼을 읽으므로 이 파일 2) 없이 백엔드를 배포하면 사전 조회가 전부 실패한다(운영은 이미 적용됨)
 - 운영 매핑은 **앱 재시작 후** 반영된다(로딩이 @PostConstruct 1회)
 - 운영의 "시계탑에 흐른피" 상위 메뉴(id 37)는 켜져 있지만 **권한 4(멘토)** — 아직 만드는 중이라 멘토·관리자에게만 보이게 둔 것(사용자 결정 2026-10-26). 손님에게 열 때 상위 메뉴의 `BGM_AGIT_MENU_ROLE` 만 3 으로 바꾸면 된다. "내 캐릭터"(`/clocktower-my`, 권한 3) 하위 메뉴는 운영 id 47·스테이징 id 44 로 넣어 둠(2026-10-26)
+7. **시계탑 관리 멘토 이상**(2026-11-02) — `UPDATE BGM_AGIT_URL_RESOURCES_ROLE SET BGM_AGIT_ROLE_ID = 4 WHERE BGM_AGIT_ROLE_ID = 1 AND BGM_AGIT_URL_RESOURCES_ID IN (…)` — 스테이징 65~73, 운영 60~68(**둘 다 적용** 2026-11-02, 앱 재시작 후 반영)
 - 운영 nginx `$bgm_spa_route` 에 `/clocktower-roles`, `/clocktower-grimoire`, `/clocktower-my` 추가 완료(2026-10-25)
 - 스테이징 MCP DB 도구는 DDL 금지 설정이다. 스키마 변경은 `.env` 접속정보 + mysql 클라이언트(`C:/Program Files/MySQL/MySQL Workbench 8.0/mysql`)로, **포트 33070 + 컨테이너명 `1b4addd69ee9` 확인 후** 실행
+
+## 스크립트 짜기 (2026-11-02)
+
+- `ScriptBuilderModal` — 사전(`GET /clocktower-roles`)에서 **공식 캐릭터만**(자작 `g{id}:…`·밤 특수 단계 제외) 진영·이름/능력 검색으로(판 필터는 넣었다가 뺐다) 골라, 스크립트 도구와 같은 JSON(`[{"id":"_meta","name","author"}, "washerwoman", …]`, 진영 순·고른 순)으로 조립해 기존 [스크립트 등록]에 보낸다. 등록·사전 연결 규칙이 서버 한 곳에 남게 하려고 서버 API 를 새로 만들지 않았다
+- [기존 게임에서 시작]은 그 게임 캐릭터(roleKey)를 불러와 이름 "(수정본)"으로 **새 게임**을 만든다(기존 게임 수정 아님). 공식 사전에 없는 캐릭터는 빼고 알린다. 자작 캐릭터가 든 스크립트는 여전히 JSON 붙여넣기로
+- 진영별 수 옆에 기본 스크립트 구성(13·4·4·4)을 기준으로 보여 준다. 악마 0명이면 등록을 막는다. [JSON 복사]도 있다
+- 모바일은 [캐릭터 고르기]/[고른 캐릭터] 두 화면 전환
+
+## 참가자 검색 창 (2026-11-02)
+
+- 마도서 시작 화면·기록 작성 화면 둘 다 `components/clocktower/MemberSearchModal.tsx` — [+ 참가자 검색해서 추가]로 창을 열고 닉네임(초성)으로 찾아 한 명씩 [추가], 다 넣으면 [완료]. 넣을 때마다 검색어를 비우고 입력칸에 포커스를 돌린다. 이미 넣은 회원은 "추가됨". Enter 는 첫 번째 미추가 결과를 넣는다
+- 색은 마도서 변수(`--ct-*`)를 쓰고 없으면 밝은 색 — 마도서(어두운 테마)·기록 화면(밝은 화면) 양쪽에서 같은 컴포넌트
 
 ## 테스트
 

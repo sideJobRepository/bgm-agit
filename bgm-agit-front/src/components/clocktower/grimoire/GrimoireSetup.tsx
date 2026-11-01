@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import api from '../../../utils/axiosInstance.ts';
 import { toast } from '../../../utils/toast';
 import type { ClockTowerGame, GrimoireData, GrimoireSeat, GrimoireState, MemberOption } from '../../../types/clocktower.ts';
 import { createSeat, createState } from './useGrimoire.ts';
+import MemberSearchModal from '../MemberSearchModal.tsx';
 import {
   Btn,
-  Dropdown,
   Hint,
   PlayerItem,
   PlayerList,
@@ -13,7 +13,6 @@ import {
   SelectBox,
   SetupBox,
   SetupCard,
-  TextInput,
 } from './grimoire.styles.ts';
 
 interface Player {
@@ -63,10 +62,8 @@ export default function GrimoireSetup({
   const [games, setGames] = useState<ClockTowerGame[]>([]);
   const [gameId, setGameId] = useState<number | ''>(initialGameId ?? '');
   const [players, setPlayers] = useState<Player[]>([]);
-  const [keyword, setKeyword] = useState('');
-  const [candidates, setCandidates] = useState<MemberOption[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [starting, setStarting] = useState(false);
-  const debounce = useRef<number | null>(null);
   const [recentStore] = useState<RecentStore>(() => loadRecent(ownerId));
 
   useEffect(() => {
@@ -76,32 +73,11 @@ export default function GrimoireSetup({
       .catch(() => setGames([]));
   }, []);
 
-  useEffect(() => {
-    if (debounce.current) window.clearTimeout(debounce.current);
-    if (!keyword.trim()) {
-      setCandidates([]);
-      return;
-    }
-    debounce.current = window.setTimeout(() => {
-      api
-        // 시계탑 전용 검색: 메인 사이트로 가입한 회원(마작 이용 N)도 찾는다
-        .get<MemberOption[]>('/bgm-agit/clocktower-members', { params: { keyword: keyword.trim() } })
-        .then(res => setCandidates(res.data))
-        .catch(() => setCandidates([]));
-    }, 250);
-    return () => {
-      if (debounce.current) window.clearTimeout(debounce.current);
-    };
-  }, [keyword]);
-
-  // 이미 넣은 회원은 검색 결과에서 뺀다(같은 사람을 또 누르면 아무 일도 없어 헷갈렸다)
-  const available = candidates.filter(m => !players.some(p => p.memberId === m.id));
-
+  // 검색 창에서 한 명씩 넣는다(넣은 순서 = 앉은 순서)
   const addMember = (m: MemberOption) => {
     setPlayers(prev =>
       prev.some(p => p.memberId === m.id) ? prev : [...prev, { memberId: m.id, name: m.nickname || `#${m.id}` }]
     );
-    setKeyword('');
   };
 
   const move = (idx: number, dir: -1 | 1) =>
@@ -160,19 +136,13 @@ export default function GrimoireSetup({
       <SetupCard>
         <h3>2. 참가자 ({players.length}명)</h3>
         <Hint>
-          앉은 순서대로(시계 방향) 닉네임으로 찾아 넣어 주세요. 참가자는 모두 회원이어야 합니다. 가입하지 않은 손님은
+          앉은 순서대로(시계 방향) [참가자 검색해서 추가]로 한 명씩 넣어 주세요. 참가자는 모두 회원이어야 합니다. 가입하지 않은 손님은
           사이트에서 회원가입 후 넣어 주세요(각자 휴대폰으로 로그인해 자기 캐릭터를 봅니다).
         </Hint>
         <Row style={{ marginTop: 8 }}>
-          <TextInput
-            value={keyword}
-            placeholder="닉네임 검색 (초성도 됩니다: ㅎㄱㄷ)"
-            onChange={e => setKeyword(e.target.value)}
-            onKeyDown={e => {
-              if (e.key !== 'Enter') return;
-              if (available.length === 1) addMember(available[0]);
-            }}
-          />
+          <Btn type="button" $tone="primary" onClick={() => setSearchOpen(true)} style={{ flex: 1, minHeight: 44 }}>
+            + 참가자 검색해서 추가
+          </Btn>
         </Row>
         {recentStore.last.length > 0 && (
           <Row style={{ marginTop: 8 }}>
@@ -206,16 +176,6 @@ export default function GrimoireSetup({
         {players.length > 0 && players.length < 5 && (
           <Hint style={{ marginTop: 6 }}>공식 규칙은 5명 이상입니다. 그보다 적으면 셋업 점검·무작위 배정이 동작하지 않습니다.</Hint>
         )}
-        {available.length > 0 && (
-          <Dropdown>
-            {available.slice(0, 20).map(m => (
-              <button key={m.id} type="button" onClick={() => addMember(m)}>
-                {m.nickname}
-                {m.loginType ? ` · ${m.loginType}` : ''}
-              </button>
-            ))}
-          </Dropdown>
-        )}
         {players.length > 0 && (
           <PlayerList>
             {players.map((p, i) => (
@@ -238,6 +198,15 @@ export default function GrimoireSetup({
           </PlayerList>
         )}
       </SetupCard>
+
+      {searchOpen && (
+        <MemberSearchModal
+          addedIds={players.map(p => p.memberId).filter((id): id is number => id != null)}
+          onAdd={addMember}
+          onClose={() => setSearchOpen(false)}
+          title="참가자 추가 (앉은 순서대로)"
+        />
+      )}
 
       <Btn type="button" $tone="primary" onClick={start} disabled={starting} style={{ minHeight: 52, fontSize: 16 }}>
         {starting ? '불러오는 중…' : '마도서 시작'}

@@ -51,3 +51,13 @@ export const CT_IMAGES_ENABLED = true;
 export function isSeatableType(type?: ClockTowerCharacterType | null) {
   return !!type && type !== 'FABLED' && type !== 'LORIC';
 }
+
+/**
+ * 시계탑 관리 권한 — 멘토 이상(관리자·멘토). 서버 ClockTowerPermission.isManager 와 같은 규칙.
+ * 게임·사전·스크립트 등록, 남의 기록 수정·삭제가 이 판정을 쓴다(2026-11-02, 예전엔 관리자만).
+ */
+export function isClockTowerManager(roles: string[] | null | undefined): boolean {
+  return (roles ?? []).some(
+    r => r === 'ROLE_ADMIN' || r === 'ADMIN' || r === 'ROLE_MENTOR' || r === 'MENTOR'
+  );
+}

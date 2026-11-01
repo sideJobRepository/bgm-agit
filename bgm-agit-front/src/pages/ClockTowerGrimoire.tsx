@@ -6,7 +6,7 @@ import { userState } from '../recoil/state/userState.ts';
 import { toast } from '../utils/toast';
 import api from '../utils/axiosInstance.ts';
 import { showConfirmModal, showInputModal } from '../components/confirmAlert.tsx';
-import { CT_TYPE_COLOR_DARK, CT_TYPE_LABEL } from '../config/clocktower.ts';
+import { CT_TYPE_COLOR_DARK, CT_TYPE_LABEL, isClockTowerManager } from '../config/clocktower.ts';
 import { renderNightText } from '../utils/clocktowerText.tsx';
 import GrimoireSetup from '../components/clocktower/grimoire/GrimoireSetup.tsx';
 import { dayAbilityKey } from '../components/clocktower/grimoire/DayAbility.tsx';
@@ -1672,10 +1672,8 @@ export default function ClockTowerGrimoire() {
             state={state}
             writerId={Number(user.id)}
             initialResult={endResult}
-            // 자체로그인(소셜 아님) 또는 관리자만 시계탑 기록을 쓸 수 있다(서버 규칙과 같음)
-            canWrite={
-              !user.socialId || (user.roles ?? []).some(r => r === 'ROLE_ADMIN' || r === 'ADMIN')
-            }
+            // 자체로그인(소셜 아님) 또는 멘토 이상만 시계탑 기록을 쓸 수 있다(서버 규칙과 같음)
+            canWrite={!user.socialId || isClockTowerManager(user.roles)}
             onClose={() => setEndOpen(false)}
             onSaved={() => {
               setEndOpen(false);

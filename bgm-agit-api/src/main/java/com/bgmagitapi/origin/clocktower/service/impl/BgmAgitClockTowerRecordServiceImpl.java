@@ -1,5 +1,6 @@
 package com.bgmagitapi.origin.clocktower.service.impl;
 
+import com.bgmagitapi.origin.clocktower.util.ClockTowerPermission;
 import org.springframework.util.StringUtils;
 
 import com.bgmagitapi.origin.advice.exception.ValidException;
@@ -334,14 +335,14 @@ public class BgmAgitClockTowerRecordServiceImpl implements BgmAgitClockTowerReco
         }
     }
 
+    /** 시계탑 관리 권한(멘토 이상). */
     private boolean isAdmin(List<String> roles) {
-        if (roles == null) return false;
-        return roles.contains("ROLE_ADMIN") || roles.contains("ADMIN");
+        return ClockTowerPermission.isManager(roles);
     }
 
     /**
      * 시계탑 기록 수정·삭제는 자체로그인(MAHJONG) 회원만 가능.
-     * 단, 관리자는 모더레이션을 위해 socialType 무관하게 허용한다.
+     * 단, 멘토 이상은 모더레이션을 위해 socialType 무관하게 허용한다.
      * 차단 시 403 ApiResponse 를 반환하고, 통과 시 null 을 반환한다.
      */
     private ApiResponse requireClockTowerWriter(Long memberId, List<String> roles) {

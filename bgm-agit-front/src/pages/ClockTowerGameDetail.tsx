@@ -13,7 +13,7 @@ import { showConfirmModal } from '../components/confirmAlert.tsx';
 import { ctPlayersLabel } from './ClockTowerGames.tsx';
 import { BASE_TEAMS, MAX_BASE_PLAYERS, expectedCounts } from '../components/clocktower/grimoire/grimoireRules.ts';
 import type { ClockTowerCharacterType } from '../types/clocktower.ts';
-import { CT_TYPE_COLOR as TYPE_COLOR, CT_TYPE_OPTIONS as TYPE_OPTIONS } from '../config/clocktower.ts';
+import { CT_TYPE_COLOR as TYPE_COLOR, CT_TYPE_OPTIONS as TYPE_OPTIONS, isClockTowerManager } from '../config/clocktower.ts';
 
 const SOURCE_LABEL: Record<string, string> = {
   OFFICIAL: '공식 기본 스크립트',
@@ -148,7 +148,7 @@ export default function ClockTowerGameDetail() {
       <Wrapper>
         <Box>
           <ButtonRow>
-            {user?.roles.includes('ROLE_ADMIN') && (
+            {isClockTowerManager(user?.roles) && (
               <>
                 <Button $variant="primary" color="#4A2C82" onClick={() => setEditMode(true)}>수정</Button>
                 <Button $variant="danger" color="#FF5E57" onClick={onDelete}>삭제</Button>
