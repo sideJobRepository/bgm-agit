@@ -27,9 +27,8 @@ import { getReservationComment, getReservationUseModes } from '../../config/rese
 import { useNavigate } from 'react-router-dom';
 import { toast } from '../../utils/toast';
 import LoginMoadl from '../LoginMoadl.tsx';
-import { RESERVATION_WINDOW_MONTHS } from './ReservationDatePicker.tsx';
 import { formatYmdWithWeekday } from '../../utils/date.ts';
-import { ONE_ROOM_PER_DAY_ENABLED, ONE_ROOM_PER_DAY_FROM } from '../../config/reservationPolicy.ts';
+import { ONE_ROOM_PER_DAY_ENABLED } from '../../config/reservationPolicy.ts';
 
 type CombinableItem = { id: number; label: string };
 
@@ -101,15 +100,13 @@ export default function ReservationTimePanel({
   const [combineIds, setCombineIds] = useState<number[]>([]);
 
   // 요금 방식도 서버가 정한다(날짜별).
-  // PER_PERSON(11월 이후 룸 일무제한)은 인원이 정해져야 총액이 나오므로 그날 단가만 내려오고,
-  // FLAT(마작 대탁·10월 이용분 룸)은 확정된 예약금이 내려온다.
+  // PER_PERSON(룸 일무제한)은 인원이 정해져야 총액이 나오므로 그날 단가만 내려오고,
+  // FLAT(마작 대탁)은 확정된 예약금이 내려온다.
   const pricingMode = matchedSlots?.pricingMode ?? reservation.pricingMode;
   const isPerPerson = pricingMode !== 'FLAT';
   const depositAmount = matchedSlots?.pricingMode
     ? matchedSlots.depositAmount
     : reservation.depositAmount;
-  // 10월 이용분 룸(종전 정책) — 예약금 1만원·잔액 현장결제·전날까지 취소
-  const isLegacyRoom = !isPerPerson && reservation.reservationType !== 'DELEGATE_PLAY';
   const priceOfDay = useMemo(
     () => reservation.prices?.find(p => p.date === date) ?? null,
     [reservation.prices, date]
@@ -117,8 +114,8 @@ export default function ReservationTimePanel({
   const unitPrice = priceOfDay?.price ?? null;
   // 벙주 혜택가 날짜면 정가를 같이 보여 준다
   const regularUnitPrice = priceOfDay?.bungju ? (priceOfDay.regularPrice ?? null) : null;
-  // 11/2 이용분부터 룸 이용 안내(서버 SlotSchedule.ONE_ROOM_PER_DAY_FROM 과 같은 날짜). 하루 1룸 문구는 제한이 켜져 있을 때만
-  const isRoomNoticeDay = isPerPerson && date >= ONE_ROOM_PER_DAY_FROM;
+  // 룸 이용 안내는 룸(인원 × 단가)만. 하루 1룸 문구는 제한이 켜져 있을 때만
+  const isRoomNoticeDay = isPerPerson;
   const isOneRoomPerDay = ONE_ROOM_PER_DAY_ENABLED && isRoomNoticeDay;
 
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
@@ -325,13 +322,6 @@ export default function ReservationTimePanel({
           <p>
             <strong>※ 당일 예약은 불가합니다.</strong>
           </p>
-          {/* 서비스제공기간 고지 (카드사 심사 요건: 구매자가 제공기간을 인지할 수 있어야 함) */}
-          <p>
-            <strong>
-              ※ 예약은 오늘부터 {RESERVATION_WINDOW_MONTHS}개월 이내의 날짜만 가능하며, 서비스는
-              예약하신 날짜에 현장에서 제공됩니다.
-            </strong>
-          </p>
           {maxSelectableSlots === 1 && (
             <p>
               <strong>※ 예약하는 날짜에 한 팀당 한 개의 시간대만 선택이 가능합니다.</strong>
@@ -346,20 +336,6 @@ export default function ReservationTimePanel({
               </p>
               <p>
                 <strong>※ 잔여 이용요금은 현장에서 결제합니다.</strong>
-              </p>
-            </>
-          )}
-          {isLegacyRoom && (
-            <>
-              <p>
-                <strong>
-                  ※ 10월 31일 이용분까지는 종전 요금제입니다. 예약금{' '}
-                  {(depositAmount ?? 10000).toLocaleString()}원을 결제하시고 잔여 이용요금은
-                  현장에서 결제합니다.
-                </strong>
-              </p>
-              <p>
-                <strong>※ 취소는 예약일 전날까지 가능하며, 예약금은 전액 환불됩니다.</strong>
               </p>
             </>
           )}
@@ -411,12 +387,6 @@ export default function ReservationTimePanel({
                 <strong>
                   ※ 환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후에는 불가합니다.
                   인원을 줄이실 때도 같은 기준으로 환불됩니다.
-                </strong>
-              </p>
-              <p>
-                <strong>
-                  ※ 예약 시간 기준 30분 이상 지각(일행 전원 미도착) 시 룸 배정이 해제될 수 있으며,
-                  결제 금액은 당일 좌석 이용으로 전환됩니다.
                 </strong>
               </p>
               <p>

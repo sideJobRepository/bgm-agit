@@ -14,8 +14,7 @@ export const RESERVATION_WINDOW_MONTHS = 3;
 /**
  * 이 날짜부터는 달력에서 고를 수 없다. 서버 SlotSchedule.RESERVATION_BLOCKED_FROM 과 같은 값을 유지할 것.
  *
- * 개편 배포 전에는 11월 이후를 막아 두었다. 지금은 서버가 이용일로 정책을 나누므로(SlotSchedule.NEW_POLICY_FROM)
- * 막지 않는다. 다시 막아야 하면 서버와 같은 날짜를 넣을 것 — 서버가 슬롯을 안 내려줘도 달력이 열려 있으면
+ * 지금은 막지 않는다. 다시 막아야 하면 서버와 같은 날짜를 넣을 것 — 서버가 슬롯을 안 내려줘도 달력이 열려 있으면
  * 날짜를 골랐을 때 방이 하나도 안 뜨는 화면이 된다.
  */
 // 리터럴 null 로 두면 TS 가 null 로 좁혀서 아래 분기가 never 가 된다

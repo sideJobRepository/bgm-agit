@@ -126,8 +126,7 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
             // 전액결제 개정판(-2)은 카카오 검수를 따로 받아야 해서 스위치로 가른다.
             // 통과 전에는 구 템플릿이 나가고, 그 기간에는 환불 안내 문구가 실제 규정과 다르다
             // (예약 화면·결제 모달·환불정책 페이지가 정확한 문구를 갖고 있어 그쪽으로 보완한다).
-            // 10월 이용분(종전 정책)은 "예약금 결제·전날까지 취소" 문구가 맞으므로 늘 -1 이다
-            if (reservationFullPaymentTalkLive && SlotSchedule.isNewPolicy(useDate)) {
+            if (reservationFullPaymentTalkLive) {
                 message = AlimtalkUtils.buildReservationFullPaymentMessage(
                         member.getBgmAgitMemberName(), formattedDate, formattedTimes, roomName, people, deposit, reservationRequest
                 );

@@ -164,37 +164,25 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
         <NoticeBox>
           이 결제는 예약 확정을 위한 결제입니다.
           <br />
-          {order.paymentKind === 'LEGACY_DEPOSIT' ? (
+          {order.paymentKind === 'DEPOSIT'
+            ? `예약금 ${order.amount.toLocaleString()}원을 결제하시고 잔여 이용요금은 현장에서 결제합니다.`
+            : `결제 금액은 ${order.amount.toLocaleString()}원입니다. 금액은 서버가 예약 인원과 날짜로 계산합니다.`}
+          {order.bungjuApplied && order.regularAmount != null && (
             <>
-              예약금 {order.amount.toLocaleString()}원을 결제하시고 잔여 이용요금은 현장에서
-              결제합니다.
               <br />
-              취소는 예약일 전날까지 가능하며 예약금은 전액 환불됩니다.
-            </>
-          ) : (
-            <>
-              {order.paymentKind === 'DEPOSIT'
-                ? `예약금 ${order.amount.toLocaleString()}원을 결제하시고 잔여 이용요금은 현장에서 결제합니다.`
-                : `결제 금액은 ${order.amount.toLocaleString()}원입니다. 금액은 서버가 예약 인원과 날짜로 계산합니다.`}
-              {order.bungjuApplied && order.regularAmount != null && (
-                <>
-                  <br />
-                  <strong>벙주 혜택가 적용</strong> — 정가 {order.regularAmount.toLocaleString()}원
-                  대비 {(order.regularAmount - order.amount).toLocaleString()}원 할인
-                </>
-              )}
-              {!!order.discountAmount && (
-                <>
-                  <br />
-                  월간패스 회원 본인 1명분 {order.discountAmount.toLocaleString()}원이
-                  할인되었습니다.
-                </>
-              )}
-              <br />
-              환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후(당일·노쇼 포함)에는
-              불가합니다.
+              <strong>벙주 혜택가 적용</strong> — 정가 {order.regularAmount.toLocaleString()}원 대비{' '}
+              {(order.regularAmount - order.amount).toLocaleString()}원 할인
             </>
           )}
+          {!!order.discountAmount && (
+            <>
+              <br />
+              월간패스 회원 본인 1명분 {order.discountAmount.toLocaleString()}원이 할인되었습니다.
+            </>
+          )}
+          <br />
+          환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후(당일·노쇼 포함)에는
+          불가합니다.
         </NoticeBox>
         <PayButton type="button" onClick={requestPayment} disabled={!ready || paying}>
           {paying ? '결제 요청 중' : `${order.amount.toLocaleString()}원 결제하기`}
