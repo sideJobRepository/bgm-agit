@@ -210,11 +210,17 @@
 - 사용자: 본인 예약만 + **아직 시작하지 않은 예약**(`validateUserCancelableReservation`이 `SlotSchedule.useStartAt` 시각으로 판정). 날짜 비교가 아니다
 - **24시간 이내여도 취소는 된다. 환불만 0원**이다 — 자리를 비워주는 쪽이 매장에 이득이라 막지 않는다
 - 환불 비율은 `ReservationRefundPolicy.refundRate()` — 48h 전 100% / 48~24h 50% / 그 안쪽 0%. **관리자 취소도 같은 규칙**(노쇼는 당일이라 자동 0%). 매장 귀책으로 전액을 돌려줄 땐 토스 상점관리자에서 직접 환불한다
-- **인원 축소** `PUT /bgm-agit/reservation/people` — 줄이기만 된다(증원은 현장 워크인 결제). 확정건은 줄어든 인원 × **결제 시점 단가** × 환불비율만큼 부분환불, 미결제 대기건은 인원만 바꾸고 READY 주문을 무효화
-  - **예약내역 카드의 [인원 변경] 버튼**(손님·관리자, 2026-10-20 다시 붙임) → `showPeopleReduceModal`(최소~현재-1 스테퍼 + 환불 예상액)
-  - 버튼 노출은 서버가 내려주는 `GroupedReservationResponse.peopleReducible`(룸·취소 안 됨·시작 전·인원 > 최소 인원)만 따른다. 9월에 한 번 뺐던 이유가 "최소 인원을 몰라 줄일 수 없는데 버튼이 뜸"이라 `minPeople`(합쳐 예약이면 합산)·`unitPrice`(결제 당시 단가)도 같이 내려준다
-  - 마작 대탁(정액)은 인원이 금액과 무관해 손님 요청을 서버가 거절한다(관리자는 기록 정정용으로 허용)
-  - URL 권한은 유저(2) 하나만 — 권한 계층(관리자 > 멘토 > 유저)이라 주소당 역할 하나가 규칙이다. 1·2·4 를 넣었다가 매핑 로딩이 하나만 남겨 유저가 403 이 났다
+- **예약 변경(룸 + 인원 한 번에)** `GET /reservation/change-options`·`PUT /reservation/change` — 2026-11-02 사장님 확정. 서비스 `BgmAgitReservationChangeServiceImpl`, 순수 판정 `util/ReservationChangePolicy`. 예: B Room 6명 → G Room 10명, G Room 10명 → B Room 4명
+  - **마감 = 이용 시작 24시간 전**(손님). 관리자는 시작 전까지. 그래서 손님 감소 환불은 늘 100%/50% — 환불 규정(48h/24h) 자체는 그대로
+  - **증원(확정 예약)** = 늘어난 인원 × 원결제 단가 스냅샷을 토스 **추가결제**(결제행 `BGM_AGIT_PAYMENT_KIND=CHANGE`). 변경 요청 `BGM_AGIT_RESERVATION_CHANGE`(PENDING)만 만들고, **승인 순간** 방·인원 반영. 승인 전 재검증(주문 READY·요청 PENDING·예약이 요청 당시 그대로·금액·새 방 빈지) 후 **예약 반영을 flush 한 다음 토스 승인**. 현장 워크인으로만 받으면 예약 할인 의미가 없다는 사장님 판단
+  - **감소** = 즉시 반영 + 부분환불(`refundPeopleReduction`). **DB 반영을 flush 한 뒤 환불을 마지막에** 부른다(환불 후 쓰기가 실패하면 롤백된 잔액 기준으로 재시도 시 이중 환불)
+  - 룸만 이동·미결제 예약은 즉시 반영. 새 변경·즉시 반영·예약 취소·"원래대로 되돌리기" 때 PENDING 요청과 READY 주문을 끊는다(옛 추가결제가 뒤늦게 승인되지 않게)
+  - 관리자 **[현장 결제로 처리]** = 결제 없이 증원 반영 + `BGM_AGIT_RESERVATION_ONSITE_PEOPLE` 누적. 감소 땐 현장 인원부터 환불 없이 차감, 원결제 금액 계산(`getPayablePeople`)에서도 뺀다. 남의 예약을 결제로 증원하는 건 막는다(주문은 예약자 명의)
+  - 룸 후보 = 같은 메뉴 링크의 숨김 아닌 방 단독 + `isCombinable` 조합(`SlotSchedule.combinableSets`), 인원 범위·확정 예약 겹침(결제 승인과 같은 기준)으로 거름. 방 교체는 `replaceRooms` **차집합 방식**(clear 후 재추가하면 INSERT 가 DELETE 보다 먼저 나가 UNIQUE 충돌), 컬렉션 `orphanRemoval`
+  - 마작 대탁은 손님 변경 불가, 관리자는 인원 기록 정정만(룸 변경·금액 없음)
+  - 예약내역 응답 `changeable`(버튼)·`deadline`·`onsitePeople`·`receiptUrls`(원결제 + 추가결제). 프론트 `showReservationChangeModal`(`confirmAlert.tsx`)
+  - 구 `PUT /reservation/people` 은 같은 로직으로 위임(감소만). URL 권한은 유저(2) 하나만 — 권한 계층(관리자 > 멘토 > 유저)이라 주소당 역할 하나가 규칙이다. 1·2·4 를 넣었다가 매핑 로딩이 하나만 남겨 유저가 403 이 났다
+  - DDL·URL 매핑은 운영·스테이징 적용 완료(2026-11-02). `.mcp.json` 의 MySQL MCP 는 DDL 이 꺼져 있어 로컬 `mysql` 클라이언트로 넣었다
 - 사용자·관리자 모두 `modifyReservation` 한 곳으로 모이고, 취소·인원변경은 컨트롤러에서 **`ReservationCancelExecutor`** 를 거친다(아래 결제 참고)
 - 현황판은 **지난 예약 확정·취소 불가**(`canManage = date >= todayYmd()`)
 
@@ -333,7 +339,7 @@ SDK 에러코드 → 문구 매핑은 `src/config/paymentErrors.ts`. `USER_CANCE
 - **외부 호출이 트랜잭션 안에 있음** — 토스 승인 성공 후 뒤쪽에서 예외가 나면 롤백되어 "돈은 움직였는데 DB엔 없음". 환불 쪽은 시도 행 선커밋 + 멱등키로 완화했지만 승인 경로는 그대로다
 - **노쇼는 별도 액션이 아니다** — 관리자가 취소 버튼을 누르면 3단계 규정이 적용되고, 당일이라 자동으로 0% 가 된다. 매장 귀책으로 전액을 돌려주려면 토스 상점관리자에서 직접 환불해야 한다
 - **관리자 수동 확정에는 슬롯 충돌 재검증이 없음**(`modifyReservation`의 `approvalStatus='Y'`). 결제 없이 확정되는 경로라 환불 대상도 없다
-- **합쳐 예약에서 방만 빼는 축소는 없다** — 인원만 줄이면 M-2 슬롯이 남아 자리를 점유한다. 관리자 수동 대응
+- 합쳐 예약에서 방만 빼는 축소는 예약 변경(룸 이동)으로 된다(M-1+M-2 → M-1). 단 남는 조합의 최소 인원 안이어야 한다
 
 ### 키·심사 메모
 - 결제창 방식이므로 **API 개별 연동 키**(`test_ck_`/`test_sk_`, `live_ck_`/`live_sk_`). **clientKey 와 secretKey 는 반드시 같은 계열로 맞출 것** — clientKey 만 `ck_` 로 바꾸고 secretKey 를 위젯용 `gsk_` 로 두면 **결제창은 멀쩡히 뜨는데 승인(`confirm`)에서 `INVALID_API_KEY`** 가 난다(UI만 보고 판단하면 놓친다). 위젯용 키(`gck_`/`gsk_`)는 더 이상 쓰지 않는다

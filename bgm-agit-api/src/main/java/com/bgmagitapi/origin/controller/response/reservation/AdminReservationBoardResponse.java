@@ -70,5 +70,8 @@ public class AdminReservationBoardResponse {
          */
         private int startMinutes;
         private int endMinutes;
+
+        // 현장 결제 인원(관리자가 증원을 현장 결제로 처리한 인원). 현장에서 받아야 할 몫이라 현황판에 띄운다
+        private int onsitePeople;
     }
 }

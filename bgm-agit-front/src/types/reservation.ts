@@ -1,3 +1,5 @@
+import type { PaymentOrderResponse } from './tossPayments.ts';
+
 // 예약 대상 방(BGM_AGIT_ROOM). GET /bgm-agit/rooms 응답
 export type Room = {
   roomId: number;
@@ -135,6 +137,14 @@ export type Reservation = {
   minPeople?: number | null;
   unitPrice?: number | null;
   peopleReducible?: boolean;
+  // 이 조회자가 지금 예약 변경(룸·인원)을 할 수 있는지. [예약 변경] 버튼 노출은 이것만 따른다
+  changeable?: boolean;
+  // 관리자가 현장 결제로 늘린 인원(현장에서 받는다)
+  onsitePeople?: number | null;
+  // 정산된 결제 영수증 전부(오래된 순). 첫 번째가 원결제, 그 뒤는 변경 추가결제
+  receiptUrls?: string[] | null;
+  // 손님 변경 마감(이용 시작 24시간 전) 'yyyy-MM-dd HH:mm'
+  deadline?: string | null;
   timeSlots: {
     startTime: string;
     endTime: string;
@@ -159,6 +169,8 @@ export type ReservationBoardItem = {
   // 자정 기준 분값. 하루 경계(오전 10시) 이전 슬롯은 +1440 되어 있음 (24시간 영업 대응)
   startMinutes: number;
   endMinutes: number;
+  // 관리자가 현장 결제로 늘린 인원
+  onsitePeople?: number | null;
 };
 
 export type ReservationBoardRoom = {
@@ -205,6 +217,65 @@ export type ReservationRanking = {
   totalReservations: number;
   totalPeople: number;
   items: ReservationRankingItem[];
+};
+
+// 예약 변경 후보 방 집합 (단독 또는 합쳐 예약 조합)
+export type ReservationChangeRoomOption = {
+  roomIds: number[];
+  // 'G Room' / 'M-1, M-2'
+  label: string;
+  minPeople: number | null;
+  maxPeople: number | null;
+  // 지금 예약된 방 집합인지
+  current: boolean;
+};
+
+// GET /bgm-agit/reservation/change-options — 후보·금액은 전부 서버 계산이다
+export type ReservationChangeOptions = {
+  reservationId: number;
+  reservationDate: string;
+  startTime: string;
+  endTime: string;
+  currentPeople: number;
+  onsitePeople: number;
+  currentRoomIds: number[];
+  currentRoomNames: string;
+  // 이번 조회 기준 인원(rooms·금액이 이 인원 기준)
+  people: number;
+  peopleMin: number;
+  peopleMax: number;
+  // 원결제 1인 단가 스냅샷. 미결제·정액이면 null
+  unitPrice: number | null;
+  approved: boolean;
+  // 마작 대탁(정액). 인원이 금액과 무관해 결제·환불 안내를 띄우지 않는다
+  flat: boolean;
+  refundRate: number;
+  deadline: string;
+  changeable: boolean;
+  message: string | null;
+  // people 을 수용하고 그 시간대에 빈 집합만. current 먼저
+  rooms: ReservationChangeRoomOption[];
+  addPeople: number;
+  addAmount: number;
+  reducePeople: number;
+  // 감소 인원 중 환불 대상(현장 결제 인원은 먼저 빠진다)
+  refundPeople: number;
+  refundAmount: number;
+};
+
+// PUT /bgm-agit/reservation/change
+export type ReservationChangeRequest = {
+  reservationId: number;
+  people: number;
+  roomIds: number[];
+  onsite?: boolean;
+};
+
+export type ReservationChangeResponse = {
+  // 즉시 적용됐는지. 확정 예약 증원(손님)이면 false + order(추가결제가 승인돼야 적용)
+  applied: boolean;
+  message: string;
+  order: PaymentOrderResponse | null;
 };
 
 export type PagedReservation = {

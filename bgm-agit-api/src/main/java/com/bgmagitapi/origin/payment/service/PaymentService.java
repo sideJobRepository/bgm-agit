@@ -15,6 +15,13 @@ public interface PaymentService {
     PaymentOrderResponse createOrder(Long memberId, Long reservationId, int amount, String orderName,
                                      Integer people, Integer unitPrice, int discountAmount, String paymentKind);
 
+    /**
+     * 예약 변경(증원) 추가결제 주문 생성(paymentKind = CHANGE). amount = 늘어난 인원 × 원결제 단가, 할인 없음.
+     * 원결제 중복 차단 대신 "같은 변경 요청에 정산된 결제가 있으면" 막는다.
+     */
+    PaymentOrderResponse createChangeOrder(Long memberId, Long reservationId, Long changeId, int amount,
+                                           int addPeople, Integer unitPrice, String orderName);
+
     PaymentConfirmResponse confirmPayment(String paymentKey, String orderId, Integer amount, Long memberId);
 
     /** 예약 전체 취소에 따른 환불. 남은 결제 잔액에 비율을 적용한다. */

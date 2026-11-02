@@ -1,6 +1,7 @@
 package com.bgmagitapi.origin.payment.repository.impl;
 
 import com.bgmagitapi.origin.payment.entity.BgmAgitPayment;
+import com.bgmagitapi.origin.payment.entity.enumeration.PaymentKind;
 import com.bgmagitapi.origin.payment.entity.enumeration.PaymentStatus;
 import com.bgmagitapi.origin.payment.repository.custom.BgmAgitPaymentCustomRepository;
 import com.querydsl.core.Tuple;
@@ -10,6 +11,7 @@ import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -60,6 +62,26 @@ public class BgmAgitPaymentRepositoryImpl implements BgmAgitPaymentCustomReposit
                 .from(bgmAgitPayment)
                 .where(
                         bgmAgitPayment.bgmAgitReservationId.eq(reservationId),
+                        settled(),
+                        // 원결제만 본다. 증원 추가결제(CHANGE)가 정산돼 있어도 원결제 중복 판정과는 무관하다.
+                        // 컬럼이 생기기 전 결제는 null 이라 ORIGINAL 로 친다
+                        bgmAgitPayment.bgmAgitPaymentKind.isNull()
+                                .or(bgmAgitPayment.bgmAgitPaymentKind.eq(PaymentKind.ORIGINAL))
+                )
+                .fetchFirst();
+        return hit != null;
+    }
+
+    @Override
+    public boolean existsSettledPaymentByChangeId(Long changeId) {
+        if (changeId == null) {
+            return false;
+        }
+        Integer hit = queryFactory
+                .selectOne()
+                .from(bgmAgitPayment)
+                .where(
+                        bgmAgitPayment.bgmAgitReservationChangeId.eq(changeId),
                         settled()
                 )
                 .fetchFirst();
@@ -128,10 +150,11 @@ public class BgmAgitPaymentRepositoryImpl implements BgmAgitPaymentCustomReposit
                         settled(),
                         bgmAgitPayment.bgmAgitReservationId.in(reservationIds)
                 )
-                .orderBy(bgmAgitPayment.bgmAgitPaymentId.desc())
+                .orderBy(bgmAgitPayment.bgmAgitPaymentId.asc())
                 .fetch();
 
-        // id 내림차순이라 예약별 첫 값이 최신 결제 (재결제로 여러 건일 때 최신 우선)
+        // id 오름차순이라 예약별 첫 값이 원결제다. 증원 추가결제(CHANGE)가 생긴 뒤에도
+        // 대표 영수증은 원결제여야 하므로 최신이 아니라 가장 오래된 정산 결제를 고른다
         for (Tuple row : rows) {
             Long reservationId = row.get(bgmAgitPayment.bgmAgitReservationId);
             String receiptUrl = row.get(bgmAgitPayment.bgmAgitPaymentReceiptUrl);
@@ -139,6 +162,34 @@ public class BgmAgitPaymentRepositoryImpl implements BgmAgitPaymentCustomReposit
                 continue;
             }
             result.putIfAbsent(reservationId, receiptUrl);
+        }
+        return result;
+    }
+
+    @Override
+    public Map<Long, List<String>> findSettledReceiptUrlListsByReservationIds(List<Long> reservationIds) {
+        Map<Long, List<String>> result = new LinkedHashMap<>();
+        if (reservationIds == null || reservationIds.isEmpty()) {
+            return result;
+        }
+
+        List<Tuple> rows = queryFactory
+                .select(bgmAgitPayment.bgmAgitReservationId, bgmAgitPayment.bgmAgitPaymentReceiptUrl)
+                .from(bgmAgitPayment)
+                .where(
+                        settled(),
+                        bgmAgitPayment.bgmAgitReservationId.in(reservationIds)
+                )
+                .orderBy(bgmAgitPayment.bgmAgitPaymentId.asc())
+                .fetch();
+
+        for (Tuple row : rows) {
+            Long reservationId = row.get(bgmAgitPayment.bgmAgitReservationId);
+            String receiptUrl = row.get(bgmAgitPayment.bgmAgitPaymentReceiptUrl);
+            if (reservationId == null || receiptUrl == null) {
+                continue;
+            }
+            result.computeIfAbsent(reservationId, key -> new ArrayList<>()).add(receiptUrl);
         }
         return result;
     }
@@ -191,6 +242,8 @@ public class BgmAgitPaymentRepositoryImpl implements BgmAgitPaymentCustomReposit
                         bgmAgitPayment.bgmAgitReservationId.in(reservationIds),
                         bgmAgitPayment.bgmAgitPaymentUnitPrice.isNotNull()
                 )
+                // 원결제 단가가 기준이다(추가결제도 같은 단가를 박지만 순서를 고정해 둔다)
+                .orderBy(bgmAgitPayment.bgmAgitPaymentId.asc())
                 .fetch();
 
         // 환불 쪽(refundPeopleReduction)도 정산 결제 중 단가가 있는 첫 값을 쓴다

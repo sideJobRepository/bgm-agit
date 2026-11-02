@@ -448,6 +448,7 @@ export default function ReservationBoard() {
 
                   <CardName $canceled={status === 'CANCELED'}>
                     {item.memberName ?? '이름없음'} · {item.people ?? 0}명
+                    {(item.onsitePeople ?? 0) > 0 && ` (현장 ${item.onsitePeople}명)`}
                   </CardName>
 
                   <CardMeta>
@@ -547,7 +548,10 @@ export default function ReservationBoard() {
                           <BlockTime>
                             {item.startTime}~{item.endTime}
                           </BlockTime>
-                          <BlockTime>{item.people ?? 0}명</BlockTime>
+                          <BlockTime>
+                            {item.people ?? 0}명
+                            {(item.onsitePeople ?? 0) > 0 && ` · 현장 ${item.onsitePeople}명`}
+                          </BlockTime>
                           {item.roomNames?.length > 1 && (
                             <BlockTime>합쳐 예약 · {item.roomNames.join(', ')}</BlockTime>
                           )}
@@ -610,7 +614,11 @@ export default function ReservationBoard() {
               </DetailField>
               <DetailField>
                 <dt>인원</dt>
-                <dd>{selected.people ?? 0}명</dd>
+                <dd>
+                  {selected.people ?? 0}명
+                  {/* 관리자가 현장 결제로 늘린 인원 — 현장에서 받아야 할 돈이라 따로 보여 준다 */}
+                  {(selected.onsitePeople ?? 0) > 0 && ` (현장 ${selected.onsitePeople}명)`}
+                </dd>
               </DetailField>
               <DetailField>
                 <dt>신청일시</dt>

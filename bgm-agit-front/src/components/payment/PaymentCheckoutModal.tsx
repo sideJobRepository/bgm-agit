@@ -60,6 +60,7 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
   const [paying, setPaying] = useState(false);
   const paymentRef = useRef<TossPaymentWindow | null>(null);
   const renderedOrderId = useRef<string | null>(null);
+  const isChange = order.paymentKind === 'CHANGE';
 
   useEffect(() => {
     let alive = true;
@@ -152,7 +153,7 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
     <Overlay>
       <Modal>
         <Header>
-          <Title>예약 결제</Title>
+          <Title>{isChange ? '예약 변경 추가결제' : '예약 결제'}</Title>
           <CloseButton type="button" onClick={onClose}>
             닫기
           </CloseButton>
@@ -161,29 +162,43 @@ export default function PaymentCheckoutModal({ order, user, onClose }: PaymentCh
           <strong>{order.orderName}</strong>
           <span>{order.amount.toLocaleString()}원</span>
         </Summary>
-        <NoticeBox>
-          이 결제는 예약 확정을 위한 결제입니다.
-          <br />
-          {order.paymentKind === 'DEPOSIT'
-            ? `예약금 ${order.amount.toLocaleString()}원을 결제하시고 잔여 이용요금은 현장에서 결제합니다.`
-            : `결제 금액은 ${order.amount.toLocaleString()}원입니다. 금액은 서버가 예약 인원과 날짜로 계산합니다.`}
-          {order.bungjuApplied && order.regularAmount != null && (
-            <>
-              <br />
-              <strong>벙주 혜택가 적용</strong> — 정가 {order.regularAmount.toLocaleString()}원 대비{' '}
-              {(order.regularAmount - order.amount).toLocaleString()}원 할인
-            </>
-          )}
-          {!!order.discountAmount && (
-            <>
-              <br />
-              월간패스 회원 본인 1명분 {order.discountAmount.toLocaleString()}원이 할인되었습니다.
-            </>
-          )}
-          <br />
-          환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후(당일·노쇼 포함)에는
-          불가합니다.
-        </NoticeBox>
+        {isChange ? (
+          // 증원 추가결제는 원결제 단가 스냅샷 기준이라 벙주·월간패스 문구가 해당 없다
+          <NoticeBox>
+            이 결제는 예약 변경(인원 추가)을 위한 추가결제입니다.
+            <br />
+            결제가 승인되는 순간 룸·인원이 변경되며, 결제 전에는 기존 예약이 그대로 유지됩니다.
+            <br />
+            추가 금액 {order.amount.toLocaleString()}원은 처음 결제하신 1인 단가로 계산했습니다.
+            <br />
+            환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후(당일·노쇼 포함)에는
+            불가합니다.
+          </NoticeBox>
+        ) : (
+          <NoticeBox>
+            이 결제는 예약 확정을 위한 결제입니다.
+            <br />
+            {order.paymentKind === 'DEPOSIT'
+              ? `예약금 ${order.amount.toLocaleString()}원을 결제하시고 잔여 이용요금은 현장에서 결제합니다.`
+              : `결제 금액은 ${order.amount.toLocaleString()}원입니다. 금액은 서버가 예약 인원과 날짜로 계산합니다.`}
+            {order.bungjuApplied && order.regularAmount != null && (
+              <>
+                <br />
+                <strong>벙주 혜택가 적용</strong> — 정가 {order.regularAmount.toLocaleString()}원
+                대비 {(order.regularAmount - order.amount).toLocaleString()}원 할인
+              </>
+            )}
+            {!!order.discountAmount && (
+              <>
+                <br />
+                월간패스 회원 본인 1명분 {order.discountAmount.toLocaleString()}원이 할인되었습니다.
+              </>
+            )}
+            <br />
+            환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후(당일·노쇼 포함)에는
+            불가합니다.
+          </NoticeBox>
+        )}
         <PayButton type="button" onClick={requestPayment} disabled={!ready || paying}>
           {paying ? '결제 요청 중' : `${order.amount.toLocaleString()}원 결제하기`}
         </PayButton>

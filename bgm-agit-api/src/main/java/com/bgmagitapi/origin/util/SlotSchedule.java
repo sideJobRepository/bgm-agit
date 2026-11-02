@@ -10,8 +10,11 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * 예약 항목별 슬롯/이용시간/요금/선택제한 정책의 단일 출처.
@@ -329,6 +332,85 @@ public class SlotSchedule {
             return true;
         }
         return COMBINABLE_LABEL_GROUPS.stream().anyMatch(group -> group.containsAll(labels));
+    }
+
+    /**
+     * 기준 목록에서 예약할 수 있는 방 집합 후보 — 각 방 단독 + 화이트리스트가 허용하는 2개 이상 조합 전부.
+     * 예약 변경(룸 이동) 후보를 만들 때 쓴다. 순서는 입력 순서를 따른다(단독 먼저, 그다음 조합).
+     * 라벨 함수로 받는 이유는 엔티티 없이 단위 테스트하려고.
+     */
+    public static <T> List<List<T>> combinableSets(List<T> items, Function<T, String> labelOf) {
+        List<List<T>> result = new ArrayList<>();
+        if (items == null || items.isEmpty()) {
+            return result;
+        }
+        for (T item : items) {
+            result.add(List.of(item));
+        }
+        Set<List<T>> seen = new LinkedHashSet<>();
+        for (Set<String> group : COMBINABLE_LABEL_GROUPS) {
+            List<T> members = items.stream()
+                    .filter(item -> group.contains(labelOf.apply(item)))
+                    .toList();
+            // 조합 그룹은 몇 개짜리라 부분집합 전수가 작다. 이상 데이터로 커지면 폭발하지 않게 막는다
+            if (members.size() < 2 || members.size() > 10) {
+                continue;
+            }
+            for (int mask = 1; mask < (1 << members.size()); mask++) {
+                if (Integer.bitCount(mask) < 2) {
+                    continue;
+                }
+                List<T> subset = new ArrayList<>();
+                for (int i = 0; i < members.size(); i++) {
+                    if ((mask & (1 << i)) != 0) {
+                        subset.add(members.get(i));
+                    }
+                }
+                List<String> labels = subset.stream().map(labelOf).toList();
+                // 같은 이름의 방이 둘이면 조합으로 치지 않는다
+                if (new HashSet<>(labels).size() == labels.size() && isCombinable(labels)) {
+                    seen.add(List.copyOf(subset));
+                }
+            }
+        }
+        seen.stream()
+                .sorted((a, b) -> Integer.compare(a.size(), b.size()))
+                .forEach(result::add);
+        return result;
+    }
+
+    // ===== 인원 =====
+
+    /**
+     * 방 집합의 최소 인원 — 방별 최소값 <b>합산</b>(최대 인원 합산과 같은 규칙). 값이 하나도 없으면 null.
+     *
+     * 룸은 인원 × 단가가 곧 결제액이라 최소 인원이 과금 하한이다(합쳐 예약의 하한은 합산).
+     * 예전처럼 "최소값 중 최대"를 쓰면 M-1+M-2+M-3(각 4~7명)을 4명 36,000원에 잡을 수 있었다.
+     * 조회 응답·등록·결제 주문·예약 변경 검증이 모두 이 값을 봐야 화면과 서버가 갈리지 않는다.
+     */
+    public static Integer effectiveMinPeople(Collection<BgmAgitRoom> rooms) {
+        if (rooms == null) {
+            return null;
+        }
+        List<Integer> minima = rooms.stream()
+                .filter(Objects::nonNull)
+                .map(BgmAgitRoom::getBgmAgitRoomMinPeople)
+                .filter(Objects::nonNull)
+                .toList();
+        return minima.isEmpty() ? null : minima.stream().reduce(0, Integer::sum);
+    }
+
+    /** 방 집합의 최대 인원 — 방별 최대값 합산. 값이 하나도 없으면 null(=제한 없음). */
+    public static Integer effectiveMaxPeople(Collection<BgmAgitRoom> rooms) {
+        if (rooms == null) {
+            return null;
+        }
+        List<Integer> maxima = rooms.stream()
+                .filter(Objects::nonNull)
+                .map(BgmAgitRoom::getBgmAgitRoomMaxPeople)
+                .filter(Objects::nonNull)
+                .toList();
+        return maxima.isEmpty() ? null : maxima.stream().reduce(0, Integer::sum);
     }
 
     // ===== 요금 =====
