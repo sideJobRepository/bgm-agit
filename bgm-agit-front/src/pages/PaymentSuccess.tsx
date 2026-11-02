@@ -37,9 +37,27 @@ export default function PaymentSuccess() {
       })
       .then(res => {
         const data = res?.data as
-          | { receiptUrl?: string | null; roomNotice?: boolean; oneRoomPerDay?: boolean }
+          | {
+              receiptUrl?: string | null;
+              roomNotice?: boolean;
+              oneRoomPerDay?: boolean;
+              paymentKind?: string;
+              roomNames?: string | null;
+              people?: number | null;
+            }
           | undefined;
         const url = data?.receiptUrl ?? null;
+        // 예약 변경 추가결제는 이미 확정된 예약의 룸·인원을 바꾸는 결제라 "확정" 문구 대신 변경 결과를 보여 준다
+        if (data?.paymentKind === 'CHANGE') {
+          const detail = [data.roomNames, data.people != null ? `${data.people}명` : null]
+            .filter(Boolean)
+            .join(', ');
+          const changed = detail ? `예약이 변경되었습니다 (${detail})` : '예약이 변경되었습니다.';
+          setReceiptUrl(url);
+          toast.success('추가결제가 완료되었습니다.');
+          setMessage(changed);
+          return;
+        }
         const roomNotice = !!data?.roomNotice;
         setReceiptUrl(url);
         setShowRoomNotice(roomNotice);

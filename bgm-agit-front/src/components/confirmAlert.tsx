@@ -1,9 +1,11 @@
 // 코드 분할 이후 이 CSS 를 쓰는 화면이 따로 import 하면 그 화면을 거치지 않은 경우 확인창이 오버레이 없이 깨진다
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import { confirmAlert } from 'react-confirm-alert';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { MdAdd, MdRemove } from 'react-icons/md';
 import { toast } from '../utils/toast';
+import api from '../utils/axiosInstance.ts';
+import type { ReservationChangeOptions } from '../types/reservation.ts';
 import {
   AlertWrapper,
   Message,
@@ -221,71 +223,190 @@ export function showReservationConfirmModal(props: ReservationConfirmProps) {
   });
 }
 
-interface PeopleReduceProps {
+interface ReservationChangeProps {
   label: string;
-  currentPeople: number;
-  minPeople: number;
-  /** 결제 당시 1인 단가. 미결제면 null — 환불 없이 결제할 금액만 줄어든다 */
-  unitPrice?: number | null;
-  /** 지금 줄이면 적용될 환불 비율(%) */
-  refundRate?: number | null;
-  /** 아직 남아 있는 결제 금액. 예상 환불액은 이 값을 넘지 않는다 */
-  paidAmount?: number | null;
-  onConfirm: (people: number) => void;
+  /** 버튼을 누를 때 받아 둔 첫 조회 결과(현재 인원 기준) */
+  initialOptions: ReservationChangeOptions;
+  /**
+   * 관리자 여부. react-confirm-alert 는 별도 React 루트에 그려서 recoil 을 읽을 수 없어 호출부가 넘긴다.
+   * 관리자면 증원을 [현장 결제로 처리] 할 수 있다(관리자는 결제창을 쓰지 않는다)
+   */
+  isAdmin: boolean;
+  onConfirm: (values: { people: number; roomIds: number[]; onsite: boolean }) => void;
 }
 
-// 예약 인원 줄이기 모달. 늘리기는 현장 워크인 결제라 받지 않는다
-function PeopleReduceContent({
+const roomKey = (roomIds: number[]) => [...roomIds].sort((a, b) => a - b).join(',');
+
+// 예약 변경(룸·인원) 모달. 후보 룸·금액은 전부 서버가 계산하고 여기서는 보여 주기만 한다
+function ReservationChangeContent({
   label,
-  currentPeople,
-  minPeople,
-  unitPrice,
-  refundRate,
-  paidAmount,
+  initialOptions,
+  isAdmin,
   onConfirm,
   onClose,
-}: PeopleReduceProps & { onClose: () => void }) {
-  const maxNext = currentPeople - 1;
-  const [count, setCount] = useState(Math.max(minPeople, maxNext));
-  const reduced = currentPeople - count;
-  const paid = (paidAmount ?? 0) > 0 && unitPrice != null;
-  const rate = refundRate ?? 0;
-  // 서버(PaymentServiceImpl.refundPeopleReduction → doRefund)와 같은 순서:
-  // 줄인 인원 × 결제 당시 단가를 결제 잔액으로 자른 뒤 비율을 적용하고 원 단위 내림
-  const base = paid ? Math.min(reduced * (unitPrice as number), paidAmount ?? 0) : 0;
-  const expected = Math.floor((base * rate) / 100);
+}: ReservationChangeProps & { onClose: () => void }) {
+  const [people, setPeople] = useState(initialOptions.currentPeople);
+  const [options, setOptions] = useState<ReservationChangeOptions>(initialOptions);
+  const [loading, setLoading] = useState(false);
+  const [selectedKey, setSelectedKey] = useState<string | null>(
+    roomKey(initialOptions.currentRoomIds)
+  );
+  // 관리자는 결제창을 쓰지 않으므로 증원 기본값을 현장 결제로 둔다
+  const [onsite, setOnsite] = useState(isAdmin);
+  // 스테퍼를 빠르게 누르면 응답 순서가 뒤바뀔 수 있어 마지막 요청 번호만 반영한다
+  const requestSeq = useRef(0);
+  // 마지막으로 성공한 응답. 재조회가 실패하면 화면 인원을 이 기준으로 되돌린다(안 그러면 '불러오는 중'에 멈춘다)
+  const lastOptions = useRef(initialOptions);
+
+  const changePeople = (next: number) => {
+    setPeople(next);
+    const seq = ++requestSeq.current;
+    setLoading(true);
+    api
+      .get<ReservationChangeOptions>('/bgm-agit/reservation/change-options', {
+        params: { reservationId: initialOptions.reservationId, people: next },
+      })
+      .then(({ data }) => {
+        if (seq !== requestSeq.current) return;
+        lastOptions.current = data;
+        setOptions(data);
+        // 고른 룸이 새 인원으로도 비어 있으면 유지, 아니면 현재 룸, 그것도 없으면 직접 고르게 비운다
+        // (다른 룸을 몰래 골라 두면 손님이 모르는 사이 룸이 바뀐다)
+        setSelectedKey(prev => {
+          const keys = data.rooms.map(r => roomKey(r.roomIds));
+          if (prev && keys.includes(prev)) return prev;
+          const current = data.rooms.find(r => r.current);
+          return current ? roomKey(current.roomIds) : null;
+        });
+      })
+      .catch(error => {
+        if (seq !== requestSeq.current) return;
+        const message = (error?.response?.data as { message?: string } | undefined)?.message;
+        toast.error(message ?? '변경 가능한 룸을 불러오지 못했습니다.');
+        setPeople(lastOptions.current.people);
+      })
+      .finally(() => {
+        if (seq === requestSeq.current) setLoading(false);
+      });
+  };
+
+  // 지금 화면의 인원과 응답 기준 인원이 같을 때만 금액·룸 목록을 믿는다
+  const synced = !loading && options.people === people;
+  const selectedRoom = synced
+    ? (options.rooms.find(r => roomKey(r.roomIds) === selectedKey) ?? null)
+    : null;
+  const diff = people - options.currentPeople;
+  const roomChanged =
+    selectedRoom != null && roomKey(selectedRoom.roomIds) !== roomKey(options.currentRoomIds);
+  const nothingChanged = diff === 0 && !roomChanged;
+  // 현장 결제는 확정(결제완료) 예약을 관리자가 늘릴 때만 의미가 있다
+  // 마작 대탁(정액)은 인원이 금액과 무관하다 — 서버도 결제·환불·현장 인원 없이 기록만 고친다
+  const showOnsite = isAdmin && options.approved && !options.flat && diff > 0;
+  const useOnsite = showOnsite && onsite;
+  const needsPayment = options.approved && !options.flat && diff > 0 && !useOnsite;
+  const canSubmit = synced && options.changeable && selectedRoom != null && !nothingChanged;
+
+  function amountNotice() {
+    if (!synced) return <>변경 내용을 계산하고 있습니다.</>;
+    if (options.flat) {
+      return <>마작 대탁은 인원 기록만 정정됩니다. 금액 변동은 없습니다.</>;
+    }
+    if (diff > 0) {
+      if (!options.approved) {
+        return <>아직 결제 전이라 결제할 금액이 {people}명 기준으로 바뀝니다.</>;
+      }
+      if (useOnsite) {
+        return <>추가 {diff}명은 현장에서 결제받습니다. 결제 없이 바로 변경됩니다.</>;
+      }
+      return (
+        <>
+          추가결제 <strong>{options.addAmount.toLocaleString()}원</strong>
+          {options.unitPrice != null &&
+            ` (1인 ${options.unitPrice.toLocaleString()}원 × ${options.addPeople}명)`}
+          <br />
+          추가결제가 승인되는 순간 변경되며, 결제 전에는 기존 예약이 그대로입니다.
+        </>
+      );
+    }
+    if (diff < 0) {
+      if (!options.approved) {
+        return <>아직 결제 전이라 환불 없이 결제할 금액만 줄어듭니다.</>;
+      }
+      const onsiteOnly = options.reducePeople - options.refundPeople;
+      return (
+        <>
+          {onsiteOnly > 0 && (
+            <>
+              현장 결제 인원 {onsiteOnly}명은 환불 없이 먼저 빠집니다.
+              <br />
+            </>
+          )}
+          {options.refundPeople > 0 ? (
+            options.refundAmount > 0 ? (
+              <>
+                환불 예상 <strong>{options.refundAmount.toLocaleString()}원</strong> (규정{' '}
+                {options.refundRate}%)
+              </>
+            ) : (
+              <>이용일 24시간 이내라 줄어든 인원에 대한 환불은 없습니다.</>
+            )
+          ) : (
+            <>환불할 금액이 없습니다.</>
+          )}
+        </>
+      );
+    }
+    if (roomChanged) return <>같은 인원으로 룸만 옮깁니다. 금액 변동은 없습니다.</>;
+    return <>인원이나 룸을 바꾸면 변경 금액을 안내해 드립니다.</>;
+  }
 
   return (
     <AlertWrapper $wide>
       <ReservationHeader>
-        <span>예약 인원 변경</span>
+        <span>예약 변경</span>
         <strong>{label}</strong>
       </ReservationHeader>
+
+      <FieldGroup>
+        <SummaryList>
+          <li>
+            {options.reservationDate} {options.startTime} ~ {options.endTime}
+          </li>
+          <li>
+            현재 {options.currentRoomNames} · {options.currentPeople}명
+            {options.onsitePeople > 0 && ` (현장 결제 ${options.onsitePeople}명)`}
+          </li>
+        </SummaryList>
+        <HelperText style={{ textAlign: 'left' }}>
+          이용 24시간 전({options.deadline})까지 변경할 수 있습니다.
+          {isAdmin && ' 관리자는 이용 시작 전까지 변경할 수 있습니다.'}
+        </HelperText>
+      </FieldGroup>
 
       <FieldGroup>
         <FieldTitle>
           <span>변경할 인원</span>
           <small>
-            현재 {currentPeople}명 · 최소 {minPeople}명
+            {options.peopleMin}명 - {options.peopleMax}명
           </small>
         </FieldTitle>
         <Stepper>
           <IconButton
             type="button"
-            disabled={count <= minPeople}
-            onClick={() => setCount(c => Math.max(minPeople, c - 1))}
+            disabled={people <= options.peopleMin}
+            onClick={() => changePeople(Math.max(options.peopleMin, people - 1))}
             aria-label="인원 줄이기"
           >
             <MdRemove />
           </IconButton>
           <CountValue>
-            <strong>{count}</strong>
+            <strong>{people}</strong>
             <span>명</span>
           </CountValue>
           <IconButton
             type="button"
-            disabled={count >= maxNext}
-            onClick={() => setCount(c => Math.min(maxNext, c + 1))}
+            disabled={people >= options.peopleMax}
+            onClick={() => changePeople(Math.min(options.peopleMax, people + 1))}
             aria-label="인원 늘리기"
           >
             <MdAdd />
@@ -293,35 +414,80 @@ function PeopleReduceContent({
         </Stepper>
       </FieldGroup>
 
-      <NoticeMessage>
-        {paid ? (
-          rate > 0 ? (
-            <>
-              {reduced}명 × {(unitPrice as number).toLocaleString()}원의 {rate}% ={' '}
-              <strong>{expected.toLocaleString()}원</strong> 환불 예정
-            </>
-          ) : (
-            <>이용일 24시간 이내라 줄어든 인원에 대한 환불은 없습니다.</>
-          )
+      <FieldGroup>
+        <FieldTitle>
+          <span>룸</span>
+          <small>{people}명이 이용 가능한 빈 룸</small>
+        </FieldTitle>
+        {!synced ? (
+          <HelperText style={{ textAlign: 'left' }}>불러오는 중…</HelperText>
+        ) : options.rooms.length === 0 ? (
+          <HelperText style={{ textAlign: 'left' }}>
+            이 인원으로 이용 가능한 빈 룸이 없습니다.
+          </HelperText>
         ) : (
-          <>아직 결제 전이라 환불 없이 결제할 금액만 줄어듭니다.</>
+          <SummaryList>
+            {options.rooms.map(room => {
+              const key = roomKey(room.roomIds);
+              return (
+                <li key={key}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="radio"
+                      name="reservation-change-room"
+                      checked={selectedKey === key}
+                      onChange={() => setSelectedKey(key)}
+                    />
+                    <span>
+                      {room.label}
+                      {room.minPeople != null &&
+                        room.maxPeople != null &&
+                        ` (${room.minPeople}~${room.maxPeople}명)`}
+                      {room.current && ' · 현재'}
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+          </SummaryList>
         )}
-        <br />
-        인원을 늘리시려면 현장에서 워크인 요금으로 결제해 주세요.
+      </FieldGroup>
+
+      {showOnsite && (
+        <FieldGroup>
+          <label
+            style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 600 }}
+          >
+            <input type="checkbox" checked={onsite} onChange={e => setOnsite(e.target.checked)} />
+            현장 결제로 처리 (결제 없이 바로 변경)
+          </label>
+        </FieldGroup>
+      )}
+
+      <NoticeMessage>
+        {!options.changeable && options.message ? options.message : amountNotice()}
       </NoticeMessage>
       <ButtonGroup>
         <CancelButton onClick={onClose}>닫기</CancelButton>
         <ConfirmButton
+          disabled={!canSubmit}
           onClick={() => {
-            onConfirm(count);
+            if (!selectedRoom) return;
+            onConfirm({ people, roomIds: selectedRoom.roomIds, onsite: useOnsite });
             onClose();
           }}
         >
-          {count}명으로 변경
+          {needsPayment ? '추가결제하기' : '변경하기'}
         </ConfirmButton>
       </ButtonGroup>
     </AlertWrapper>
   );
+}
+
+export function showReservationChangeModal(props: ReservationChangeProps) {
+  confirmAlert({
+    customUI: ({ onClose }) => <ReservationChangeContent {...props} onClose={onClose} />,
+  });
 }
 
 interface MonthlyPassAddProps {
@@ -427,12 +593,6 @@ function MonthlyPassAddContent({
 export function showMonthlyPassAddModal(props: MonthlyPassAddProps) {
   confirmAlert({
     customUI: ({ onClose }) => <MonthlyPassAddContent {...props} onClose={onClose} />,
-  });
-}
-
-export function showPeopleReduceModal(props: PeopleReduceProps) {
-  confirmAlert({
-    customUI: ({ onClose }) => <PeopleReduceContent {...props} onClose={onClose} />,
   });
 }
 

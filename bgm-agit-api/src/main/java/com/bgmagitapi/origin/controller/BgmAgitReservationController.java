@@ -1,7 +1,9 @@
 package com.bgmagitapi.origin.controller;
 
 
+import com.bgmagitapi.origin.advice.exception.ReservationConflictException;
 import com.bgmagitapi.origin.apiresponse.ApiResponse;
+import com.bgmagitapi.origin.controller.request.BgmAgitReservationChangeRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationCreateRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationModifyRequest;
 import com.bgmagitapi.origin.controller.request.BgmAgitReservationPeopleRequest;
@@ -9,9 +11,12 @@ import com.bgmagitapi.origin.controller.response.BgmAgitReservationResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AdminReservationBoardResponse;
 import com.bgmagitapi.origin.controller.response.reservation.AvailableRoomsResponse;
 import com.bgmagitapi.origin.controller.response.reservation.GroupedReservationResponse;
+import com.bgmagitapi.origin.controller.response.reservation.ReservationChangeOptionsResponse;
+import com.bgmagitapi.origin.controller.response.reservation.ReservationChangeResponse;
 import com.bgmagitapi.origin.controller.response.reservation.ReservationRankingResponse;
 import com.bgmagitapi.origin.page.PageResponse;
 import com.bgmagitapi.origin.payment.service.ReservationCancelExecutor;
+import com.bgmagitapi.origin.service.BgmAgitReservationChangeService;
 import com.bgmagitapi.origin.service.BgmAgitReservationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +42,8 @@ public class BgmAgitReservationController {
     private final BgmAgitReservationService bgmAgitReservationService;
     // 취소·인원축소는 환불이 걸려 있어 한 줄로 세운다(트랜잭션 바깥 락)
     private final ReservationCancelExecutor reservationCancelExecutor;
+    // 예약 룸/인원 변경
+    private final BgmAgitReservationChangeService bgmAgitReservationChangeService;
     
     @GetMapping("/reservation")
     public BgmAgitReservationResponse getReservation(
@@ -142,10 +149,36 @@ public class BgmAgitReservationController {
         return reservationCancelExecutor.execute(
                 () -> bgmAgitReservationService.modifyReservationPeople(id, request, roles));
     }
-    
-    
-    
-    
+
+    /**
+     * 예약 변경 모달 옵션(후보 룸·인원 범위·금액 미리보기). 읽기만 해서 락을 걸지 않는다.
+     * 소유자·관리자 확인은 서비스가 한다.
+     */
+    @GetMapping("/reservation/change-options")
+    public ReservationChangeOptionsResponse getReservationChangeOptions(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(name = "reservationId") Long reservationId,
+            @RequestParam(name = "people", required = false) Integer people) {
+        // URL 매핑이 없으면 기본 permit 이라 jwt 가 null 일 수 있다 — null 이면 소유자 검사에서 409 로 걸러진다
+        Long id = jwt == null ? null : extractMemberId(jwt);
+        return bgmAgitReservationChangeService.getChangeOptions(id, extractRoles(jwt), reservationId, people);
+    }
+
+    /**
+     * 예약 룸/인원 변경. 감소 환불·추가결제 주문 생성이 걸려 있어 취소·결제 승인과 같은 락으로 한 줄로 세운다.
+     */
+    @PutMapping("/reservation/change")
+    public ReservationChangeResponse changeReservation(@AuthenticationPrincipal Jwt jwt,
+                                                       @Valid @RequestBody BgmAgitReservationChangeRequest request) {
+        Long id = jwt == null ? null : extractMemberId(jwt);
+        List<String> roles = extractRoles(jwt);
+        return reservationCancelExecutor.execute(
+                () -> bgmAgitReservationChangeService.change(id, roles, request),
+                interrupted -> new ReservationConflictException(interrupted
+                        ? "변경 처리가 중단되었습니다. 잠시 후 다시 시도해 주세요."
+                        : "요청이 많아 변경을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."));
+    }
+
     private Long extractMemberId(Jwt jwt) {
         return jwt.getClaim("id");
     }

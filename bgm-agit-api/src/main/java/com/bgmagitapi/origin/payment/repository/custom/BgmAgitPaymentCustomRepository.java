@@ -20,6 +20,12 @@ public interface BgmAgitPaymentCustomRepository {
     boolean existsSettledPaymentByReservationId(Long reservationId);
 
     /**
+     * 변경 요청에 정산된 추가결제가 있는지. CHANGE 주문의 중복 결제 차단용 —
+     * 원결제 차단(existsSettledPaymentByReservationId)은 원결제만 보므로 추가결제는 변경 요청 단위로 막는다.
+     */
+    boolean existsSettledPaymentByChangeId(Long changeId);
+
+    /**
      * 환불할 잔액이 남은 결제 전부를 오래된 순으로. 행 잠금(PESSIMISTIC_WRITE)을 건다.
      *
      * 최신 1건만 보면(구 findLatest...) 재결제로 DONE 이 2건일 때 한쪽이 환불되지 않고,
@@ -43,8 +49,11 @@ public interface BgmAgitPaymentCustomRepository {
     /** 예약의 살아있는 READY 주문을 전부 무효화(ABORTED)하고 건수를 반환. 인원이 바뀌면 옛 금액 주문은 못 쓴다. */
     long abortReadyOrders(Long reservationId, String reason);
 
-    // 예약별 최신 결제의 영수증 URL 배치 조회 (예약내역 리스트에 임베드, N+1 방지)
+    // 예약별 원결제(가장 오래된 정산 결제)의 영수증 URL 배치 조회 (예약내역·현황판, N+1 방지)
     Map<Long, String> findDoneReceiptUrlsByReservationIds(List<Long> reservationIds);
+
+    /** 예약별 정산 결제 영수증 URL 전부(오래된 순 — 원결제, 추가결제 1, 2 …). 예약내역 영수증 링크 목록용 */
+    Map<Long, List<String>> findSettledReceiptUrlListsByReservationIds(List<Long> reservationIds);
 
     /** 예약별 실제 결제 잔액(결제액 - 누적취소액) 배치 조회. 환불 예상액 표시에 쓴다. */
     Map<Long, Integer> findPaidAmountsByReservationIds(List<Long> reservationIds);

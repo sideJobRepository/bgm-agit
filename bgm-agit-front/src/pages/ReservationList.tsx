@@ -7,9 +7,14 @@ import { useReservationListFetch, useUpdatePost } from '../recoil/fetch.ts';
 import { useRecoilValue } from 'recoil';
 import { reservationListDataState } from '../recoil/state/reservationState.ts';
 import { userState } from '../recoil/state/userState.ts';
-import { showConfirmModal, showPeopleReduceModal } from '../components/confirmAlert.tsx';
+import { showConfirmModal, showReservationChangeModal } from '../components/confirmAlert.tsx';
 import { toast } from '../utils/toast';
-import type { Reservation } from '../types/reservation.ts';
+import type {
+  Reservation,
+  ReservationChangeOptions,
+  ReservationChangeRequest,
+  ReservationChangeResponse,
+} from '../types/reservation.ts';
 import Pagination from '../components/Pagination.tsx';
 import api from '../utils/axiosInstance.ts';
 import PaymentCheckoutModal from '../components/payment/PaymentCheckoutModal.tsx';
@@ -90,6 +95,7 @@ export default function ReservationList() {
   const [page, setPage] = useState(0);
   const [paymentOrder, setPaymentOrder] = useState<PaymentOrderResponse | null>(null);
   const [payingReservationId, setPayingReservationId] = useState<number | null>(null);
+  const [changingReservationId, setChangingReservationId] = useState<number | null>(null);
   const closePaymentModal = useCallback(() => setPaymentOrder(null), []);
 
   const isMobile = useMediaQuery({ query: theme.device.mobile });
@@ -182,30 +188,86 @@ export default function ReservationList() {
   }
 
   /**
-   * 예약 인원 줄이기. 확정(결제)된 예약이면 줄인 인원 × 결제 당시 단가 × 환불 비율만큼 바로 부분환불된다.
-   * 버튼 노출은 서버가 판정한 peopleReducible(11월 룸·시작 전·최소 인원 초과)을 따른다.
+   * 예약 변경(룸·인원). 버튼 노출은 서버가 판정한 changeable 만 따른다.
+   * 후보 룸·금액은 서버가 계산하므로 먼저 현재 인원 기준 옵션을 받아 모달을 연다.
    */
-  function reducePeople(item: Reservation) {
-    showPeopleReduceModal({
-      label: item.reservationAddr,
-      currentPeople: item.reservationPeople,
-      minPeople: item.minPeople ?? 1,
-      unitPrice: item.unitPrice,
-      refundRate: item.refundRate,
-      paidAmount: item.paidAmount,
-      onConfirm: people => {
-        update<{ reservationId: number; people: number }, ApiMessageResponse>({
-          url: '/bgm-agit/reservation/people',
-          body: { reservationId: item.reservationId, people },
-          ignoreHttpError: true,
+  async function openChange(item: Reservation) {
+    setChangingReservationId(item.reservationId);
+    try {
+      const { data } = await api.get<ReservationChangeOptions>(
+        '/bgm-agit/reservation/change-options',
+        { params: { reservationId: item.reservationId } }
+      );
+      // 목록을 열어둔 사이 마감(이용 24시간 전)을 넘겼을 수 있다
+      if (!data.changeable) {
+        toast.error(data.message ?? '지금은 예약을 변경할 수 없습니다.');
+        return;
+      }
+      showReservationChangeModal({
+        label: item.reservationAddr,
+        initialOptions: data,
+        isAdmin,
+        onConfirm: values => submitChange(item, values),
+      });
+    } catch (error) {
+      console.error(error);
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
+      toast.error(message ?? '예약 변경 정보를 불러오지 못했습니다.');
+    } finally {
+      setChangingReservationId(null);
+    }
+  }
+
+  function submitChange(
+    item: Reservation,
+    values: { people: number; roomIds: number[]; onsite: boolean }
+  ) {
+    update<ReservationChangeRequest, ReservationChangeResponse>({
+      url: '/bgm-agit/reservation/change',
+      body: {
+        reservationId: item.reservationId,
+        people: values.people,
+        roomIds: values.roomIds,
+        // 손님이 onsite 를 보내면 서버가 거절하므로 관리자일 때만 싣는다
+        ...(isAdmin && values.onsite ? { onsite: true } : {}),
+      },
+      ignoreHttpError: true,
+      onSuccess: res => {
+        // URL 권한 403 등은 ApiResponse(HTTP 200)로 올 수 있어 본문을 한 번 더 본다
+        const denied = res as unknown as { success?: boolean; message?: string } | undefined;
+        if (denied?.success === false) {
+          toast.error(denied.message ?? '예약을 변경하지 못했습니다.');
+          return;
+        }
+        if (res?.order) {
+          // 확정 예약 증원: 추가결제가 승인돼야 바뀐다. 기존 '이용요금 결제'와 같은 결제창을 연다
+          setPaymentOrder(res.order);
+          return;
+        }
+        if (res?.applied) {
           // 실제 환불액은 서버가 처리한 금액으로 안내한다(목록을 열어둔 채 48시간 경계를 넘길 수 있다)
-          onSuccess: res => {
-            toast.success(res?.message ?? '예약 인원이 변경되었습니다.');
-            fetchReservationList(page, { startDate: start, endDate: end }, pageSize);
-          },
-        });
+          toast.success(res.message ?? '예약이 변경되었습니다.');
+          fetchReservationList(page, { startDate: start, endDate: end }, pageSize);
+          return;
+        }
+        toast.info(res?.message ?? '변경할 내용이 없습니다.');
       },
     });
+  }
+
+  /** 정산된 결제 영수증 목록. 예전 응답(receiptUrls 없음)이면 receiptUrl 하나로 */
+  function receiptLinks(item: Reservation) {
+    const urls = item.receiptUrls?.length
+      ? item.receiptUrls
+      : item.receiptUrl
+        ? [item.receiptUrl]
+        : [];
+    return urls.map((url, index) => ({
+      url,
+      label:
+        index === 0 ? '영수증' : isNarrow ? `추가 영수증 ${index}` : `추가결제 영수증 ${index}`,
+    }));
   }
 
   //공유하기
@@ -270,10 +332,10 @@ export default function ReservationList() {
       회원분은 현장에서 환불해 드립니다.
       <br />※ 환불은 이용일 48시간 전까지 100%, 24시간 전까지 50%, 그 이후(당일·노쇼 포함)에는
       불가합니다.
-      <br />※ 예약 인원은 예약 카드의 [인원 변경] 버튼으로 줄이실 수 있습니다. 결제하신 예약이면 줄어든 인원만큼 위
-      환불 기준으로 바로 환불됩니다. 인원이 늘어나는 경우 추가 인원은 현장에서 워크인 요금으로 결제해 주세요.
-      <br />※ 마작 대탁 대여는 기존과 같이 예약금 10,000원 결제 후 잔여 요금을 현장에서
-      결제합니다.
+      <br />※ 예약 카드의 [예약 변경] 버튼으로 이용 24시간 전까지 인원과 룸을 바꾸실 수 있습니다.
+      결제하신 예약이면 늘어난 인원만큼 추가결제하고(결제가 끝나야 변경됩니다), 줄어든 인원만큼은 위
+      환불 기준으로 바로 환불됩니다.
+      <br />※ 마작 대탁 대여는 기존과 같이 예약금 10,000원 결제 후 잔여 요금을 현장에서 결제합니다.
       <br />※ 기타 문의는 0507-1445-3503로 연락 부탁드립니다.
     </span>
   );
@@ -299,9 +361,7 @@ export default function ReservationList() {
           {/* 모바일은 접되 예약금·취소 고지 한 줄은 항상 노출한다 (토스페이먼츠 심사 대응 문구) */}
           {isMobile ? (
             <InfoBox>
-              <InfoSummary>
-                인원수만큼 전액 결제 / 48시간 전 100%·24시간 전 50% 환불
-              </InfoSummary>
+              <InfoSummary>인원수만큼 전액 결제 / 48시간 전 100%·24시간 전 50% 환불</InfoSummary>
               <InfoToggle type="button" onClick={() => setInfoOpen(prev => !prev)}>
                 이용 안내 {infoOpen ? '▴' : '▾'}
               </InfoToggle>
@@ -353,6 +413,7 @@ export default function ReservationList() {
                       <span>예약 인원</span>
                       <span>
                         {item.reservationPeople != null ? `${item.reservationPeople}명` : '-'}
+                        {(item.onsitePeople ?? 0) > 0 && ` (현장 결제 ${item.onsitePeople}명)`}
                       </span>
                     </Row>
                     <Row>
@@ -401,15 +462,16 @@ export default function ReservationList() {
                         확정
                       </ActionButton>
                     )}
-                    {item.peopleReducible && (
+                    {item.changeable && (
                       <ActionButton
                         type="button"
                         $variant="secondary"
                         $tone="people"
-                        onClick={() => reducePeople(item)}
+                        disabled={changingReservationId === item.reservationId}
+                        onClick={() => openChange(item)}
                       >
                         <UsersThree weight="bold" />
-                        {isNarrow ? '인원' : '인원 변경'}
+                        {isNarrow ? '변경' : '예약 변경'}
                       </ActionButton>
                     )}
                     {canCancel && (
@@ -423,19 +485,18 @@ export default function ReservationList() {
                         취소
                       </ActionButton>
                     )}
-                    {item.receiptUrl && (
+                    {receiptLinks(item).map(receipt => (
                       <ActionButton
+                        key={receipt.url}
                         type="button"
                         $variant="secondary"
                         $tone="receipt"
-                        onClick={() =>
-                          window.open(item.receiptUrl as string, '_blank', 'noopener,noreferrer')
-                        }
+                        onClick={() => window.open(receipt.url, '_blank', 'noopener,noreferrer')}
                       >
                         <Receipt weight="bold" />
-                        영수증
+                        {receipt.label}
                       </ActionButton>
-                    )}
+                    ))}
                     <ActionButton
                       type="button"
                       $variant="secondary"

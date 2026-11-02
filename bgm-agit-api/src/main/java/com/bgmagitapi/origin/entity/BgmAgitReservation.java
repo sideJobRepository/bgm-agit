@@ -15,6 +15,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -78,8 +79,16 @@ public class BgmAgitReservation extends DateSuperClass {
     @Column(name = "BGM_AGIT_RESERVATION_BUNGJU_PRICE")
     private Integer bgmAgitReservationBungjuPrice;
 
-    // 예약한 방들. 합쳐 예약이면 여러 개
-    @OneToMany(mappedBy = "bgmAgitReservation", cascade = CascadeType.PERSIST)
+    /**
+     * 현장 결제 인원. 관리자가 증원을 "현장 결제로 처리"하면 여기에 더한다(null 은 0).
+     * 돈을 받지 않은 인원이라, 인원을 줄일 때 이 인원부터 환불 없이 빼고 원결제 금액 재대조에서도 뺀다.
+     */
+    @Column(name = "BGM_AGIT_RESERVATION_ONSITE_PEOPLE")
+    private Integer bgmAgitReservationOnsitePeople;
+
+    // 예약한 방들. 합쳐 예약이면 여러 개.
+    // 룸 변경에서 빠진 방 행을 지우려고 orphanRemoval 을 켠다(교체는 replaceRooms 의 차집합 방식만 쓸 것)
+    @OneToMany(mappedBy = "bgmAgitReservation", cascade = CascadeType.PERSIST, orphanRemoval = true)
     @OrderBy("bgmAgitReservationRoomId ASC")
     private List<BgmAgitReservationRoom> rooms = new ArrayList<>();
 
@@ -111,6 +120,50 @@ public class BgmAgitReservation extends DateSuperClass {
 
     public void addRoom(BgmAgitRoom room) {
         this.rooms.add(new BgmAgitReservationRoom(this, room));
+    }
+
+    /**
+     * 방 교체(룸 변경). 새 집합에 없는 행만 지우고 없던 방만 더한다.
+     *
+     * clear 후 다시 넣으면 Hibernate 가 flush 때 INSERT 를 DELETE 보다 먼저 보내서
+     * 남는 방(M-1 → M-1+M-2 의 M-1)이 UNIQUE(RESERVATION_ID, ROOM_ID) 에 걸린다.
+     */
+    public void replaceRooms(List<BgmAgitRoom> newRooms) {
+        Set<Long> newIds = newRooms.stream()
+                .map(BgmAgitRoom::getBgmAgitRoomId)
+                .collect(Collectors.toSet());
+        this.rooms.removeIf(row -> row.getBgmAgitRoom() == null
+                || !newIds.contains(row.getBgmAgitRoom().getBgmAgitRoomId()));
+        Set<Long> kept = getRoomIds().stream().collect(Collectors.toSet());
+        for (BgmAgitRoom room : newRooms) {
+            if (kept.add(room.getBgmAgitRoomId())) {
+                addRoom(room);
+            }
+        }
+    }
+
+    // ===== 현장 결제 인원 =====
+
+    public int getOnsitePeopleOrZero() {
+        return this.bgmAgitReservationOnsitePeople == null ? 0 : Math.max(this.bgmAgitReservationOnsitePeople, 0);
+    }
+
+    /** 온라인으로 결제해야(했던) 인원 = 예약 인원 − 현장 결제 인원 */
+    public int getPayablePeople() {
+        int people = this.bgmAgitReservationPeople == null ? 0 : this.bgmAgitReservationPeople;
+        return Math.max(people - getOnsitePeopleOrZero(), 0);
+    }
+
+    public void addOnsitePeople(int count) {
+        if (count > 0) {
+            this.bgmAgitReservationOnsitePeople = getOnsitePeopleOrZero() + count;
+        }
+    }
+
+    public void deductOnsitePeople(int count) {
+        if (count > 0) {
+            this.bgmAgitReservationOnsitePeople = Math.max(getOnsitePeopleOrZero() - count, 0);
+        }
     }
 
     // ===== 상태 =====

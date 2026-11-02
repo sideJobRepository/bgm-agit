@@ -2,6 +2,7 @@ package com.bgmagitapi.origin.payment.entity;
 
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.mapperd.DateSuperClass;
+import com.bgmagitapi.origin.payment.entity.enumeration.PaymentKind;
 import com.bgmagitapi.origin.payment.entity.enumeration.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -95,6 +96,15 @@ public class BgmAgitPayment extends DateSuperClass {
     @Column(name = "BGM_AGIT_PAYMENT_DISCOUNT_AMOUNT")
     private Integer bgmAgitPaymentDiscountAmount;
 
+    /** 결제 성격. null 은 이 컬럼이 생기기 전 결제라 ORIGINAL 로 본다({@link #isChangeOrder()}). */
+    @Column(name = "BGM_AGIT_PAYMENT_KIND")
+    @Enumerated(EnumType.STRING)
+    private PaymentKind bgmAgitPaymentKind;
+
+    /** CHANGE 결제의 변경 요청 id(BGM_AGIT_RESERVATION_CHANGE). 원결제는 null */
+    @Column(name = "BGM_AGIT_RESERVATION_CHANGE_ID")
+    private Long bgmAgitReservationChangeId;
+
     // 주문 생성용 생성자 (READY 상태로 저장)
     public BgmAgitPayment(BgmAgitMember member, Long reservationId, String orderNo, Integer amount,
                           Integer people, Integer unitPrice, Integer discountAmount) {
@@ -106,6 +116,32 @@ public class BgmAgitPayment extends DateSuperClass {
         this.bgmAgitPaymentUnitPrice = unitPrice;
         this.bgmAgitPaymentDiscountAmount = discountAmount;
         this.bgmAgitPaymentStatus = PaymentStatus.READY;
+        this.bgmAgitPaymentKind = PaymentKind.ORIGINAL;
+    }
+
+    /**
+     * 예약 변경(증원) 추가결제 주문. people = 늘어난 인원, unitPrice = 원결제 단가 스냅샷, 할인 0.
+     * 단가를 원결제와 같게 박아 두어야 뒤에 인원을 다시 줄일 때 환불 단가가 갈리지 않는다.
+     */
+    public static BgmAgitPayment changeOrder(BgmAgitMember member, Long reservationId, Long changeId, String orderNo,
+                                             Integer amount, Integer addPeople, Integer unitPrice) {
+        BgmAgitPayment payment = new BgmAgitPayment(member, reservationId, orderNo, amount, addPeople, unitPrice, 0);
+        payment.bgmAgitPaymentKind = PaymentKind.CHANGE;
+        payment.bgmAgitReservationChangeId = changeId;
+        return payment;
+    }
+
+    public boolean isChangeOrder() {
+        return PaymentKind.CHANGE.equals(this.bgmAgitPaymentKind);
+    }
+
+    public boolean isReady() {
+        return PaymentStatus.READY.equals(this.bgmAgitPaymentStatus);
+    }
+
+    /** 응답용 결제 성격 문자열. null(옛 결제)은 ORIGINAL */
+    public String paymentKindName() {
+        return isChangeOrder() ? PaymentKind.CHANGE.name() : PaymentKind.ORIGINAL.name();
     }
 
     // 상태 변경 도메인 메서드(markDone/markCanceled/markAborted)는 STEP 2 승인 단계에서 추가

@@ -5,6 +5,9 @@ import com.bgmagitapi.origin.advice.exception.ReservationConflictException;
 import com.bgmagitapi.origin.advice.exception.TossPaymentApiException;
 import com.bgmagitapi.origin.entity.BgmAgitMember;
 import com.bgmagitapi.origin.entity.BgmAgitReservation;
+import com.bgmagitapi.origin.entity.BgmAgitReservationChange;
+import com.bgmagitapi.origin.entity.BgmAgitRoom;
+import com.bgmagitapi.origin.entity.enumeration.ReservationChangeSettleType;
 import com.bgmagitapi.origin.event.dto.ReservationTalkEvent;
 import com.bgmagitapi.origin.event.dto.TalkAction;
 import com.bgmagitapi.origin.payment.controller.response.PaymentConfirmResponse;
@@ -21,7 +24,9 @@ import com.bgmagitapi.origin.payment.service.response.PaymentRefundResult;
 import com.bgmagitapi.origin.payment.service.response.TossPaymentResponse;
 import com.bgmagitapi.origin.payment.util.TossErrorMessages;
 import com.bgmagitapi.origin.repository.BgmAgitMemberRepository;
+import com.bgmagitapi.origin.repository.BgmAgitReservationChangeRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
+import com.bgmagitapi.origin.repository.BgmAgitRoomRepository;
 import com.bgmagitapi.origin.service.BgmAgitHolidayService;
 import com.bgmagitapi.origin.controller.response.reservation.ReservedTimeDto;
 import com.bgmagitapi.origin.service.response.ReservationTalkContext;
@@ -37,6 +42,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -60,6 +67,11 @@ public class PaymentServiceImpl implements PaymentService {
     // 주말/공휴일 단가 판정. 주문 생성 때와 같은 기준으로 재계산해야 금액이 갈리지 않는다
     private final BgmAgitHolidayService bgmAgitHolidayService;
     private final ApplicationEventPublisher eventPublisher;
+    // 예약 변경(증원) 추가결제 승인 때 변경 요청을 반영한다. 변경 서비스를 부르면 순환 의존이라 리포지토리로 직접 한다
+    private final BgmAgitReservationChangeRepository bgmAgitReservationChangeRepository;
+    private final BgmAgitRoomRepository bgmAgitRoomRepository;
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     // 토스 clientKey는 공개키(프론트 전달용). secretKey는 STEP 2 승인부터 사용
     @Value("${toss.client-key}")
@@ -89,6 +101,25 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    public PaymentOrderResponse createChangeOrder(Long memberId, Long reservationId, Long changeId, int amount,
+                                                  int addPeople, Integer unitPrice, String orderName) {
+        BgmAgitMember member = bgmAgitMemberRepository.findById(memberId)
+                .orElseThrow(() -> new PaymentException("존재 하지 않은 회원입니다."));
+
+        // 원결제 중복 차단(existsSettledPaymentByReservationId)을 쓰면 확정 예약이라 늘 막힌다.
+        // 추가결제는 변경 요청 단위로 한 번만 받는다
+        if (bgmAgitPaymentRepository.existsSettledPaymentByChangeId(changeId)) {
+            throw new PaymentException("이미 결제가 완료된 변경 요청입니다.");
+        }
+
+        String orderNo = "bgmagit_" + reservationId + "_" + System.currentTimeMillis();
+        BgmAgitPayment payment = BgmAgitPayment.changeOrder(member, reservationId, changeId, orderNo, amount, addPeople, unitPrice);
+        bgmAgitPaymentRepository.save(payment);
+
+        return new PaymentOrderResponse(orderNo, amount, orderName, tossClientKey, 0, payment.paymentKindName());
+    }
+
+    @Override
     public PaymentConfirmResponse confirmPayment(String paymentKey, String orderId, Integer amount, Long memberId) {
         BgmAgitPayment payment = bgmAgitPaymentRepository.findByBgmAgitOrderNo(orderId)
                 .orElseThrow(() -> new PaymentException("존재하지 않는 주문입니다."));
@@ -98,6 +129,11 @@ public class PaymentServiceImpl implements PaymentService {
 
         if (payment.isDone()) {
             return toConfirmResponse(payment);
+        }
+
+        // 예약 변경 추가결제는 원결제 검증(이미 결제된 예약 차단·금액 재계산)과 맞지 않아 따로 검증한다
+        if (payment.isChangeOrder()) {
+            return confirmChangePayment(payment, paymentKey, orderId);
         }
 
         // 같은 예약에 이미 정산된 결제가 있으면 여기서 끊는다. 멱등성이 orderNo 단위라
@@ -116,6 +152,142 @@ public class PaymentServiceImpl implements PaymentService {
         // 돈이 빠져나간 뒤에 알면 환불로 풀어야 하므로 반드시 confirm 앞에서 걸러낸다.
         validateReservationSlotAvailable(payment.getBgmAgitReservationId());
 
+        TossPaymentResponse result = approveWithToss(payment, paymentKey, orderId);
+
+        payment.markDone(
+                result.getPaymentKey(),
+                result.getMethod(),
+                parseDateTime(result.getApprovedAt()),
+                result.getReceiptUrl()
+        );
+
+        // 심사 기간(payment.live=false)엔 결제행만 DONE 처리하고 예약 자동확정은 하지 않는다.
+        // (테스트키라 실입금이 없는데 자동확정되면 공짜 예약이 되므로. 카드사 심사는 결제창 작동만 확인)
+        if (paymentLive) {
+            approveReservation(payment.getBgmAgitReservationId());
+        }
+        return toConfirmResponse(payment);
+    }
+
+    /**
+     * 예약 변경(증원) 추가결제 승인. 검증은 전부 토스 승인(=과금) <b>전에</b> 한다.
+     * 승인되는 순간 룸·인원이 바뀐다 — 결제 전에는 아무것도 바꾸지 않고 방도 잡지 않았으므로
+     * 그 사이 다른 확정 예약이 들어왔을 수 있어 빈 방 여부를 여기서 다시 본다(원결제 승인 재검증과 같은 기준).
+     * 확정 알림톡은 보내지 않는다(이미 확정된 예약이다).
+     */
+    private PaymentConfirmResponse confirmChangePayment(BgmAgitPayment payment, String paymentKey, String orderId) {
+        ChangeTarget target = validateChangeOrder(payment);
+
+        // 예약 반영을 토스 승인(=과금) <b>전에</b> 하고 flush 한다. 방 교체(orphan DELETE/INSERT)가 제약조건에 걸리면
+        // 돈이 움직이기 전에 실패해야 한다. 토스 승인이 실패하면 예외로 이 반영까지 같이 롤백된다.
+        // 심사 모드(payment.live=false)에선 원결제와 같이 결제행만 DONE 으로 두고 예약은 건드리지 않는다
+        if (paymentLive) {
+            BgmAgitReservation reservation = target.reservation();
+            reservation.replaceRooms(target.newRooms());
+            reservation.changePeople(target.change().getBgmAgitAfterPeople());
+            target.change().markApplied(payment.getBgmAgitPaymentId(), ReservationChangeSettleType.TOSS);
+            bgmAgitReservationChangeRepository.flush();
+        }
+
+        TossPaymentResponse result = approveWithToss(payment, paymentKey, orderId);
+
+        payment.markDone(
+                result.getPaymentKey(),
+                result.getMethod(),
+                parseDateTime(result.getApprovedAt()),
+                result.getReceiptUrl()
+        );
+        return toConfirmResponse(payment);
+    }
+
+    private record ChangeTarget(BgmAgitReservationChange change, BgmAgitReservation reservation, List<BgmAgitRoom> newRooms) {
+    }
+
+    private ChangeTarget validateChangeOrder(BgmAgitPayment payment) {
+        String orderId = payment.getBgmAgitOrderNo();
+        String expired = "변경 요청이 만료되었습니다. 결제는 진행되지 않았으니 예약내역에서 다시 변경해 주세요.";
+
+        // ABORTED 주문(새 변경 요청·예약 취소로 무효화)은 승인하지 않는다
+        if (!payment.isReady()) {
+            throw rejectChange(orderId, "추가결제 주문 상태 " + payment.getBgmAgitPaymentStatus(), expired);
+        }
+        BgmAgitReservationChange change = payment.getBgmAgitReservationChangeId() == null
+                ? null
+                : bgmAgitReservationChangeRepository.findById(payment.getBgmAgitReservationChangeId()).orElse(null);
+        if (change == null || !change.isPending()
+                || !Objects.equals(change.getBgmAgitReservationId(), payment.getBgmAgitReservationId())) {
+            throw rejectChange(orderId, "변경 요청 없음/만료", expired);
+        }
+
+        BgmAgitReservation reservation = bgmAgitReservationRepository
+                .findReservationWithRooms(payment.getBgmAgitReservationId()).orElse(null);
+        if (reservation == null) {
+            throw rejectChange(orderId, "예약 없음", "존재하지 않는 예약입니다.");
+        }
+        if (reservation.isCanceled()) {
+            throw rejectChange(orderId, "취소된 예약", "취소된 예약입니다. 결제는 진행되지 않았습니다.");
+        }
+        if (!reservation.isApproved()) {
+            throw rejectChange(orderId, "확정되지 않은 예약", "확정되지 않은 예약은 추가결제할 수 없습니다. 예약내역에서 다시 확인해 주세요.");
+        }
+        LocalDateTime useStartAt = reservation.getUseStartAt();
+        if (useStartAt == null || !useStartAt.isAfter(LocalDateTime.now(KST))) {
+            throw rejectChange(orderId, "이미 시작된 예약", "이미 시작된 예약은 변경할 수 없습니다. 결제는 진행되지 않았습니다.");
+        }
+
+        // 요청 이후 예약이 다른 경로(감소·룸 이동·관리자 처리)로 바뀌었으면 옛 기준의 변경을 덮어쓰면 안 된다
+        boolean samePeople = Objects.equals(reservation.getBgmAgitReservationPeople(), change.getBgmAgitBeforePeople());
+        boolean sameRooms = BgmAgitReservationChange.joinRoomIds(reservation.getRoomIds())
+                .equals(change.getBgmAgitBeforeRoomIds());
+        if (!samePeople || !sameRooms) {
+            throw rejectChange(orderId, "예약 내용이 변경 요청 이후 바뀜", expired);
+        }
+
+        if (!Objects.equals(payment.getBgmAgitPaymentAmount(), change.getBgmAgitDiffAmount())) {
+            throw rejectChange(orderId,
+                    "추가결제 금액 불일치(주문 " + payment.getBgmAgitPaymentAmount() + " / 변경 " + change.getBgmAgitDiffAmount() + ")",
+                    expired);
+        }
+
+        List<Long> afterIds = change.getAfterRoomIdList();
+        List<BgmAgitRoom> newRooms = bgmAgitRoomRepository.findAllById(afterIds).stream()
+                .sorted(Comparator.comparing(BgmAgitRoom::getBgmAgitRoomId))
+                .toList();
+        if (afterIds.isEmpty() || newRooms.size() != afterIds.size()) {
+            throw rejectChange(orderId, "변경할 룸 없음", "변경할 룸을 찾을 수 없습니다. 결제는 진행되지 않았습니다.");
+        }
+        // 방을 그대로 두는 증원이면 지금 방이 숨김이어도 된다. 다른 방으로 옮길 땐 숨김 방 금지(변경 요청 검증과 같은 규칙)
+        boolean sameAsCurrent = BgmAgitReservationChange.joinRoomIds(afterIds)
+                .equals(BgmAgitReservationChange.joinRoomIds(reservation.getRoomIds()));
+        boolean movingToHidden = !sameAsCurrent && newRooms.stream().anyMatch(BgmAgitRoom::isHidden);
+        if (movingToHidden) {
+            throw rejectChange(orderId, "숨김 룸", "예약이 종료된 룸입니다. 결제는 진행되지 않았으니 다른 룸으로 변경해 주세요.");
+        }
+
+        SlotSchedule.Slot mine = reservation.getUseRange();
+        boolean taken = bgmAgitReservationRepository
+                .findConfirmedReservations(afterIds, reservation.getBgmAgitReservationStartDate(), reservation.getBgmAgitReservationId())
+                .stream()
+                .map(ReservedTimeDto::toTimeRange)
+                .anyMatch(other -> SlotSchedule.isOverlapping(mine.start(), mine.end(), other.getStart(), other.getEnd()));
+        if (taken) {
+            throw rejectChange(orderId, "변경할 룸에 확정 예약 있음",
+                    "선택한 룸에 그 시간대 다른 예약이 확정되었습니다. 결제는 진행되지 않았으니 다른 룸으로 변경해 주세요.");
+        }
+        return new ChangeTarget(change, reservation, newRooms);
+    }
+
+    /** 실패 사유를 별도 트랜잭션으로 남기고 손님용 409 를 만든다 */
+    private ReservationConflictException rejectChange(String orderId, String reason, String userMessage) {
+        paymentFailureRecorder.recordAborted(orderId, null, "[예약변경] " + reason);
+        return new ReservationConflictException(userMessage);
+    }
+
+    /**
+     * 토스 승인 호출 + 입금 대기(가상계좌) 차단. 실패는 별도 트랜잭션으로 기록하고 던진다.
+     * 원결제·추가결제가 같은 경로를 쓴다.
+     */
+    private TossPaymentResponse approveWithToss(BgmAgitPayment payment, String paymentKey, String orderId) {
         TossPaymentResponse result;
         try {
             // 토스에 넘기는 금액은 클라이언트가 보낸 값이 아니라 저장된 주문 금액이다(위에서 대조를 마쳤다)
@@ -140,20 +312,7 @@ public class PaymentServiceImpl implements PaymentService {
             throw new ReservationConflictException(
                     "입금 확인이 필요한 결제수단(가상계좌 등)은 예약금 결제에 사용할 수 없습니다. 카드 또는 간편결제로 다시 시도해 주세요.");
         }
-
-        payment.markDone(
-                result.getPaymentKey(),
-                result.getMethod(),
-                parseDateTime(result.getApprovedAt()),
-                result.getReceiptUrl()
-        );
-
-        // 심사 기간(payment.live=false)엔 결제행만 DONE 처리하고 예약 자동확정은 하지 않는다.
-        // (테스트키라 실입금이 없는데 자동확정되면 공짜 예약이 되므로. 카드사 심사는 결제창 작동만 확인)
-        if (paymentLive) {
-            approveReservation(payment.getBgmAgitReservationId());
-        }
-        return toConfirmResponse(payment);
+        return result;
     }
 
     @Override
@@ -414,7 +573,8 @@ public class PaymentServiceImpl implements PaymentService {
         if (reservation == null) {
             return;
         }
-        Integer people = reservation.getBgmAgitReservationPeople();
+        // 현장 결제 인원(관리자 처리)은 온라인으로 받지 않는 몫이라 빼고 계산한다(주문 생성도 같은 기준)
+        Integer people = reservation.getPayablePeople();
         LocalDate useDate = reservation.getBgmAgitReservationStartDate();
         // 월간패스 할인은 지금의 패스 여부로 다시 판정하지 않고 주문 때 박아 둔 값을 뺀다.
         // 주문 뒤 1일 초기화·관리자 해제로 패스가 꺼지면 안내받은 금액으로 결제하려는 손님이 승인에서 막힌다
@@ -460,7 +620,10 @@ public class PaymentServiceImpl implements PaymentService {
                 payment.getBgmAgitPaymentType(),
                 payment.getBgmAgitPaymentReceiptUrl(),
                 roomNotice,
-                oneRoomPerDay
+                oneRoomPerDay,
+                payment.paymentKindName(),
+                reservation == null ? null : reservation.getRoomNames(),
+                reservation == null ? null : reservation.getBgmAgitReservationPeople()
         );
     }
 

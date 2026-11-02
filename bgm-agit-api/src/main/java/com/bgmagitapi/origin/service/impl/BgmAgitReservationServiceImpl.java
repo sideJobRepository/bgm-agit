@@ -28,7 +28,10 @@ import com.bgmagitapi.origin.repository.BgmAgitMemberRoleRepository;
 import com.bgmagitapi.origin.entity.BgmAgitBungjuSetting;
 import com.bgmagitapi.origin.service.BgmAgitBungjuService;
 import com.bgmagitapi.origin.repository.BgmAgitMonthlyPassRepository;
+import com.bgmagitapi.origin.repository.BgmAgitReservationChangeRepository;
 import com.bgmagitapi.origin.repository.BgmAgitReservationRepository;
+import com.bgmagitapi.origin.service.BgmAgitReservationChangeService;
+import com.bgmagitapi.origin.util.ReservationChangePolicy;
 import com.bgmagitapi.origin.repository.BgmAgitRoomRepository;
 import com.bgmagitapi.origin.service.BgmAgitHolidayService;
 import com.bgmagitapi.origin.service.BgmAgitReservationService;
@@ -93,6 +96,12 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
 
     // 벙주 혜택(권한·설정·혜택가 판정)
     private final BgmAgitBungjuService bgmAgitBungjuService;
+
+    // 예약 룸/인원 변경. 구 인원 변경 API(/reservation/people)가 여기로 위임한다
+    private final BgmAgitReservationChangeService bgmAgitReservationChangeService;
+
+    // 예약 취소 시 결제 대기 중인 변경 요청을 끊는다
+    private final BgmAgitReservationChangeRepository bgmAgitReservationChangeRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -493,9 +502,13 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         }
         // 인원 범위는 등록·인원 변경 때 이미 검증했다. 여기서 지금의 방 인원 범위로 다시 보면
         // 관리자가 최소 인원을 올린 뒤 그 전에 들어온 대기 예약이 영영 결제하지 못하게 된다
-        Integer people = reservation.getBgmAgitReservationPeople();
-        if (people == null || people < 1) {
+        if (reservation.getBgmAgitReservationPeople() == null || reservation.getBgmAgitReservationPeople() < 1) {
             throw new ReservationConflictException("예약 인원 정보가 없어 결제할 수 없습니다. 매장으로 문의해 주세요.");
+        }
+        // 관리자가 현장 결제로 처리한 인원은 온라인으로 받지 않는다(승인 재대조도 같은 기준)
+        Integer people = reservation.getPayablePeople();
+        if (people < 1) {
+            throw new ReservationConflictException("온라인으로 결제할 인원이 없습니다. 매장으로 문의해 주세요.");
         }
 
         LocalDate reservationDate = reservation.getBgmAgitReservationStartDate();
@@ -576,8 +589,10 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         }
 
         List<Long> pageIds = page.getContent().stream().map(BgmAgitReservation::getBgmAgitReservationId).toList();
-        // 결제 완료건 영수증 URL 배치 조회 (예약별 최신 결제)
+        // 결제 완료건 영수증 URL 배치 조회 (대표 = 원결제, 목록 = 원결제 + 추가결제 오래된 순)
         Map<Long, String> receiptUrls = bgmAgitPaymentRepository.findDoneReceiptUrlsByReservationIds(pageIds);
+        Map<Long, List<String>> receiptUrlLists = bgmAgitPaymentRepository.findSettledReceiptUrlListsByReservationIds(pageIds);
+        boolean admin = !isUser;
         // 환불 예상액 계산에 쓸 결제 잔액 배치 조회
         Map<Long, Integer> paidAmounts = bgmAgitPaymentRepository.findPaidAmountsByReservationIds(pageIds);
         // 인원 변경 화면의 환불 예상액용 결제 당시 단가
@@ -602,11 +617,17 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             dto.setMinPeople(floor);
             dto.setUnitPrice(unitPrices.get(reservationId));
             LocalDateTime useStartAt = reservation.getUseStartAt();
-            Integer people = reservation.getBgmAgitReservationPeople();
-            dto.setPeopleReducible(!reservation.isCanceled()
-                    && !SlotSchedule.isFlatPricing(reservation.getRoomList(), reservation.getBgmAgitReservationStartDate())
-                    && useStartAt != null && useStartAt.isAfter(now)
-                    && people != null && people > floor);
+            // 예약 변경 버튼 — 변경 옵션 조회·변경 요청과 같은 판정(ReservationChangePolicy.blockReason)을 쓴다
+            boolean changeable = ReservationChangePolicy.blockReason(
+                    reservation.isCanceled(),
+                    SlotSchedule.isFlatPricing(reservation.getRoomList(), reservation.getBgmAgitReservationStartDate()),
+                    admin, useStartAt, now) == null;
+            dto.setChangeable(changeable);
+            // 구 프론트 호환: 인원 변경 버튼 노출도 같은 값
+            dto.setPeopleReducible(changeable);
+            dto.setOnsitePeople(reservation.getOnsitePeopleOrZero());
+            dto.setReceiptUrls(receiptUrlLists.getOrDefault(reservationId, List.of()));
+            dto.setDeadline(ReservationChangePolicy.formatDeadline(useStartAt));
             content.add(dto);
         }
 
@@ -682,7 +703,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     formatTime(reservation.getBgmAgitReservationStartTime()),
                     formatTime(reservation.getBgmAgitReservationEndTime()),
                     startMinutes,
-                    endMinutes
+                    endMinutes,
+                    reservation.getOnsitePeopleOrZero()
             );
 
             roomsOfReservation.forEach((roomKey, category) -> {
@@ -824,6 +846,8 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             refund = paymentService.refundReservation(reservationId, rate, "예약 취소");
             // 승인되지 않은 주문이 남아 있으면 취소 뒤에 결제되는 일이 생긴다
             paymentService.abortReadyOrders(reservationId, "예약 취소됨");
+            // 결제 대기 중인 예약 변경 요청도 끊는다(그 추가결제 주문은 위에서 이미 무효화됐다)
+            bgmAgitReservationChangeRepository.abortPendingChanges(reservationId);
         }
 
         // 변경 전 확정 여부를 상태 변경보다 먼저 읽는다(예전 findBizTalkCancel 을 업데이트 전에 읽던 순서).
@@ -856,80 +880,9 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
 
     @Override
     public ApiResponse modifyReservationPeople(Long userId, BgmAgitReservationPeopleRequest request, List<String> roles) {
-        Long reservationId = request.getReservationId();
-        Integer newPeople = request.getPeople();
-
-        BgmAgitReservation reservation = bgmAgitReservationRepository.findReservationWithRooms(reservationId)
-                .orElseThrow(() -> new ReservationConflictException("존재하지 않는 예약입니다."));
-
-        if (!isAdmin(roles) && !Objects.equals(reservation.getMemberId(), userId)) {
-            throw new ReservationConflictException("본인의 예약만 변경할 수 있습니다.");
-        }
-        if (reservation.isCanceled()) {
-            throw new ReservationConflictException("취소된 예약입니다.");
-        }
-
-        LocalDateTime useStartAt = reservation.getUseStartAt();
-        if (useStartAt != null && !useStartAt.isAfter(LocalDateTime.now(KST))) {
-            throw new ReservationConflictException("이미 시작된 예약은 변경할 수 없습니다. 매장으로 문의해 주세요.");
-        }
-
-        Integer currentPeople = reservation.getBgmAgitReservationPeople();
-        if (currentPeople == null) {
-            throw new ReservationConflictException("예약 인원 정보가 없어 변경할 수 없습니다. 매장으로 문의해 주세요.");
-        }
-        if (newPeople == null || newPeople.equals(currentPeople)) {
-            return new ApiResponse(200, true, "변경할 내용이 없습니다.");
-        }
-        // 증원은 받지 않는다. 룸 정원·다른 예약까지 다시 봐야 해서 결제만 더 받는 걸로 끝나지 않는다
-        if (newPeople > currentPeople) {
-            throw new ReservationConflictException(
-                    "예약 인원은 줄일 수만 있습니다. 추가 인원은 현장에서 워크인 요금으로 결제해 주세요.");
-        }
-
-        LocalDate useDate = reservation.getBgmAgitReservationStartDate();
-        // 마작 대탁은 예약금 정액이라 인원이 금액과 무관하다. 차액 환불이 없는데 "환불 없음"으로 안내되면
-        // 손님이 손해 본 것처럼 읽히므로 손님 요청은 막고, 관리자는 기록 정정용으로 인원만 바꿀 수 있게 둔다
-        if (SlotSchedule.isFlatPricing(reservation.getRoomList(), useDate) && !isAdmin(roles)) {
-            throw new ReservationConflictException("이 예약은 인원 변경이 필요 없습니다. 매장으로 문의해 주세요.");
-        }
-        validateReservationPeople(reservation.getRoomList(), newPeople);
-
-        PaymentRefundResult refund = null;
-        if (reservation.isApproved()) {
-            int rate = ReservationRefundPolicy.refundRate(useStartAt, LocalDateTime.now(KST));
-            refund = paymentService.refundPeopleReduction(
-                    reservationId, currentPeople - newPeople, rate, "예약 인원 축소");
-            // 토스가 환불을 거절했고 한 푼도 안 나갔으면 인원 변경도 되돌린다(예외 → 롤백).
-            // 인원만 줄고 환불이 없으면 다음 축소는 줄어든 인원을 기준으로 계산해 그 차액이 영영 청구되지 않는다.
-            // 실패 시도 이력(PaymentCancel)은 별도 트랜잭션이라 남는다.
-            // 타임아웃처럼 토스 처리 여부를 모르는 실패는 되돌리지 않는다 — 재시도가 새 멱등키로 나가 이중 환불이 될 수 있어서다.
-            if (refund.failed() && refund.rejected() && refund.refundedAmount() == 0) {
-                throw new ReservationConflictException(
-                        "환불이 처리되지 않아 인원을 변경하지 않았습니다. 매장으로 문의해 주세요. (" + refund.failMessage() + ")");
-            }
-        } else {
-            // 미결제 대기건은 환불할 게 없다. 다만 옛 인원으로 만들어 둔 주문은 못 쓰게 막아야 한다
-            paymentService.abortReadyOrders(reservationId, "예약 인원 변경");
-        }
-
-        reservation.changePeople(newPeople);
-
-        return new ApiResponse(200, true, peopleChangeMessage(newPeople, refund));
-    }
-
-    private String peopleChangeMessage(Integer newPeople, PaymentRefundResult refund) {
-        String base = "예약 인원이 " + newPeople + "명으로 변경되었습니다.";
-        if (refund == null) {
-            return base + " 결제 시 변경된 인원으로 금액이 계산됩니다.";
-        }
-        if (refund.failed()) {
-            return base + " 환불 처리 중 문제가 있어 확인 후 안내드리겠습니다. (" + refund.failMessage() + ")";
-        }
-        if (refund.refundedAmount() <= 0) {
-            return base + " 환불 규정에 따라 환불 금액은 없습니다.";
-        }
-        return base + " " + String.format("%,d", refund.refundedAmount()) + "원이 환불됩니다.";
+        // 예약 변경 로직(현재 방 유지, 인원만)으로 위임한다. 감소만 보내던 구 프론트 호환용이라
+        // 증원은 추가결제 주문을 돌려줄 수 없는 응답 형태(ApiResponse)여서 거기서 거절한다
+        return bgmAgitReservationChangeService.changePeopleOnly(userId, request.getReservationId(), request.getPeople(), roles);
     }
 
     /** 기준 방 + 합쳐 쓸 방을 중복 없이 합친다(기준 방이 항상 첫 번째). */
@@ -1030,29 +983,13 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         return "예약이 취소되었습니다. " + String.format("%,d", refund.refundedAmount()) + "원이 환불됩니다.";
     }
 
-    /**
-     * 합쳐 예약의 최소 인원 — 방별 최소값 <b>합산</b>(최대 인원 합산과 같은 규칙). 값이 하나도 없으면 null.
-     *
-     * 룸은 인원 × 단가가 곧 결제액이라 최소 인원이 과금 하한이다(CLAUDE.md 개편 설계: 합쳐 예약의 하한은 합산).
-     * 예전처럼 "최소값 중 최대"를 쓰면 M-1+M-2+M-3(각 4~7명)을 4명 36,000원에 잡을 수 있었고,
-     * 인원 축소로 이미 결제한 합쳐 예약도 4명까지 줄여 차액을 돌려받을 수 있었다.
-     * 조회 응답(minPeople)·등록·결제 주문·인원 변경 검증이 모두 이 값을 봐야 화면과 서버가 갈리지 않는다.
-     */
+    // 합산 규칙은 예약 변경(BgmAgitReservationChangeServiceImpl)과 같이 쓰려고 SlotSchedule 로 옮겼다
     private Integer effectiveMinPeople(List<BgmAgitRoom> rooms) {
-        List<Integer> minima = rooms.stream()
-                .map(BgmAgitRoom::getBgmAgitRoomMinPeople)
-                .filter(Objects::nonNull)
-                .toList();
-        return minima.isEmpty() ? null : minima.stream().reduce(0, Integer::sum);
+        return SlotSchedule.effectiveMinPeople(rooms);
     }
 
-    /** 합쳐 예약의 최대 인원 — 방별 최대값 합산. 값이 하나도 없으면 null(=제한 없음). */
     private Integer effectiveMaxPeople(List<BgmAgitRoom> rooms) {
-        List<Integer> maxima = rooms.stream()
-                .map(BgmAgitRoom::getBgmAgitRoomMaxPeople)
-                .filter(Objects::nonNull)
-                .toList();
-        return maxima.isEmpty() ? null : maxima.stream().reduce(0, Integer::sum);
+        return SlotSchedule.effectiveMaxPeople(rooms);
     }
 
     /** 예약 인원이 방의 허용 범위 안인지. 컬럼이 비어 있는 방은 그 방향 검증을 건너뛴다. */

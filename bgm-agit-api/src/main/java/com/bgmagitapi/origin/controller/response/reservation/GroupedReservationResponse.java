@@ -51,6 +51,17 @@ public class GroupedReservationResponse {
      * 마작 대탁·10월 이용분은 정액이라 인원이 금액과 무관해 버튼을 두지 않는다.
      */
     private boolean peopleReducible;
+    /**
+     * [예약 변경] 버튼을 보일지 — 이 조회자가 지금 바꿀 수 있는지(룸 예약, 미취소, 손님은 이용 24시간 전까지,
+     * 관리자는 시작 전까지, 마작 대탁은 관리자만). 판정은 ReservationChangePolicy.blockReason 하나다.
+     */
+    private boolean changeable;
+    // 현장 결제 인원(관리자가 증원을 현장 결제로 처리한 인원). 없으면 0
+    private int onsitePeople;
+    // 정산된 결제 영수증 전부(오래된 순 — 원결제, 추가결제 1, 2 …). receiptUrl 은 그중 첫 번째(원결제)
+    private List<String> receiptUrls = List.of();
+    // 손님 변경 마감(이용 시작 − 24시간) "yyyy-MM-dd HH:mm"
+    private String deadline;
 
     private List<TimeSlot> timeSlots;
     
