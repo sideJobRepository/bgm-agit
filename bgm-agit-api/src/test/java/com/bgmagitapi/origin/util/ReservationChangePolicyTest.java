@@ -50,19 +50,6 @@ class ReservationChangePolicyTest {
     }
 
     @Test
-    @DisplayName("감소 인원은 현장 결제 인원부터 빼고 나머지만 환불 대상이다")
-    void splitReduction() {
-        assertThat(ReservationChangePolicy.splitReduction(3, 2))
-                .isEqualTo(new ReservationChangePolicy.Reduction(2, 1));
-        assertThat(ReservationChangePolicy.splitReduction(2, 5))
-                .isEqualTo(new ReservationChangePolicy.Reduction(2, 0));
-        assertThat(ReservationChangePolicy.splitReduction(4, 0))
-                .isEqualTo(new ReservationChangePolicy.Reduction(0, 4));
-        assertThat(ReservationChangePolicy.splitReduction(0, 3))
-                .isEqualTo(new ReservationChangePolicy.Reduction(0, 0));
-    }
-
-    @Test
     @DisplayName("룸 후보는 단독 전부 + M-1/M-2/M-3 의 2·3개 조합")
     void combinableSets() {
         List<String> rooms = List.of("B Room", "G Room", "M-1", "M-2", "M-3");

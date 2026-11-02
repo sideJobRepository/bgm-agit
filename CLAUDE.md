@@ -215,10 +215,10 @@
   - **증원(확정 예약)** = 늘어난 인원 × 원결제 단가 스냅샷을 토스 **추가결제**(결제행 `BGM_AGIT_PAYMENT_KIND=CHANGE`). 변경 요청 `BGM_AGIT_RESERVATION_CHANGE`(PENDING)만 만들고, **승인 순간** 방·인원 반영. 승인 전 재검증(주문 READY·요청 PENDING·예약이 요청 당시 그대로·금액·새 방 빈지) 후 **예약 반영을 flush 한 다음 토스 승인**. 현장 워크인으로만 받으면 예약 할인 의미가 없다는 사장님 판단
   - **감소** = 즉시 반영 + 부분환불(`refundPeopleReduction`). **DB 반영을 flush 한 뒤 환불을 마지막에** 부른다(환불 후 쓰기가 실패하면 롤백된 잔액 기준으로 재시도 시 이중 환불)
   - 룸만 이동·미결제 예약은 즉시 반영. 새 변경·즉시 반영·예약 취소·"원래대로 되돌리기" 때 PENDING 요청과 READY 주문을 끊는다(옛 추가결제가 뒤늦게 승인되지 않게)
-  - 관리자 **[현장 결제로 처리]** = 결제 없이 증원 반영 + `BGM_AGIT_RESERVATION_ONSITE_PEOPLE` 누적. 감소 땐 현장 인원부터 환불 없이 차감, 원결제 금액 계산(`getPayablePeople`)에서도 뺀다. 남의 예약을 결제로 증원하는 건 막는다(주문은 예약자 명의)
+  - **현장 결제 처리는 없다**(2026-11-02 사장님 결정으로 넣었다가 뺐다). 늘어난 인원은 언제나 예약자 본인의 온라인 추가결제로만 받는다. 그래서 관리자는 남의 확정 예약을 증원할 수 없다(감소·룸 이동은 가능, 미결제 예약은 결제 전이라 증원 가능)
   - 룸 후보 = 같은 메뉴 링크의 숨김 아닌 방 단독 + `isCombinable` 조합(`SlotSchedule.combinableSets`), 인원 범위·확정 예약 겹침(결제 승인과 같은 기준)으로 거름. 방 교체는 `replaceRooms` **차집합 방식**(clear 후 재추가하면 INSERT 가 DELETE 보다 먼저 나가 UNIQUE 충돌), 컬렉션 `orphanRemoval`
   - 마작 대탁은 손님 변경 불가, 관리자는 인원 기록 정정만(룸 변경·금액 없음)
-  - 예약내역 응답 `changeable`(버튼)·`deadline`·`onsitePeople`·`receiptUrls`(원결제 + 추가결제). 프론트 `showReservationChangeModal`(`confirmAlert.tsx`)
+  - 예약내역 응답 `changeable`(버튼)·`deadline`·`receiptUrls`(원결제 + 추가결제). 프론트 `showReservationChangeModal`(`confirmAlert.tsx`)
   - 구 `PUT /reservation/people` 은 같은 로직으로 위임(감소만). URL 권한은 유저(2) 하나만 — 권한 계층(관리자 > 멘토 > 유저)이라 주소당 역할 하나가 규칙이다. 1·2·4 를 넣었다가 매핑 로딩이 하나만 남겨 유저가 403 이 났다
   - DDL·URL 매핑은 운영·스테이징 적용 완료(2026-11-02). `.mcp.json` 의 MySQL MCP 는 DDL 이 꺼져 있어 로컬 `mysql` 클라이언트로 넣었다
 - 사용자·관리자 모두 `modifyReservation` 한 곳으로 모이고, 취소·인원변경은 컨트롤러에서 **`ReservationCancelExecutor`** 를 거친다(아래 결제 참고)

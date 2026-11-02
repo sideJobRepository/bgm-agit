@@ -79,13 +79,6 @@ public class BgmAgitReservation extends DateSuperClass {
     @Column(name = "BGM_AGIT_RESERVATION_BUNGJU_PRICE")
     private Integer bgmAgitReservationBungjuPrice;
 
-    /**
-     * 현장 결제 인원. 관리자가 증원을 "현장 결제로 처리"하면 여기에 더한다(null 은 0).
-     * 돈을 받지 않은 인원이라, 인원을 줄일 때 이 인원부터 환불 없이 빼고 원결제 금액 재대조에서도 뺀다.
-     */
-    @Column(name = "BGM_AGIT_RESERVATION_ONSITE_PEOPLE")
-    private Integer bgmAgitReservationOnsitePeople;
-
     // 예약한 방들. 합쳐 예약이면 여러 개.
     // 룸 변경에서 빠진 방 행을 지우려고 orphanRemoval 을 켠다(교체는 replaceRooms 의 차집합 방식만 쓸 것)
     @OneToMany(mappedBy = "bgmAgitReservation", cascade = CascadeType.PERSIST, orphanRemoval = true)
@@ -139,30 +132,6 @@ public class BgmAgitReservation extends DateSuperClass {
             if (kept.add(room.getBgmAgitRoomId())) {
                 addRoom(room);
             }
-        }
-    }
-
-    // ===== 현장 결제 인원 =====
-
-    public int getOnsitePeopleOrZero() {
-        return this.bgmAgitReservationOnsitePeople == null ? 0 : Math.max(this.bgmAgitReservationOnsitePeople, 0);
-    }
-
-    /** 온라인으로 결제해야(했던) 인원 = 예약 인원 − 현장 결제 인원 */
-    public int getPayablePeople() {
-        int people = this.bgmAgitReservationPeople == null ? 0 : this.bgmAgitReservationPeople;
-        return Math.max(people - getOnsitePeopleOrZero(), 0);
-    }
-
-    public void addOnsitePeople(int count) {
-        if (count > 0) {
-            this.bgmAgitReservationOnsitePeople = getOnsitePeopleOrZero() + count;
-        }
-    }
-
-    public void deductOnsitePeople(int count) {
-        if (count > 0) {
-            this.bgmAgitReservationOnsitePeople = Math.max(getOnsitePeopleOrZero() - count, 0);
         }
     }
 
