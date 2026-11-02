@@ -45,8 +45,7 @@ import java.util.stream.Collectors;
  *
  * <ul>
  *   <li>증원(확정 예약, 손님): 늘어난 인원 × 원결제 단가를 추가결제. 결제 승인 순간 반영(PaymentServiceImpl) — 그 전엔 아무것도 안 바꾼다</li>
- *   <li>증원(관리자 현장 처리): 바로 반영하고 현장 결제 인원에 더한다</li>
- *   <li>감소: 바로 반영 + 기존 환불 규정으로 부분환불. 현장 결제 인원부터 환불 없이 뺀다</li>
+ *   <li>감소: 바로 반영 + 기존 환불 규정으로 부분환불</li>
  *   <li>룸만 이동·미결제 예약: 바로 반영(미결제는 결제할 때 새 인원으로 계산)</li>
  * </ul>
  * BgmAgitReservationServiceImpl 이 이미 커서 따로 뺐다. 결제 서비스만 의존한다(예약 서비스 의존 금지 — 순환).
@@ -84,7 +83,6 @@ public class BgmAgitReservationChangeServiceImpl implements BgmAgitReservationCh
 
         int currentPeople = reservation.getBgmAgitReservationPeople() == null ? 0 : reservation.getBgmAgitReservationPeople();
         int target = people == null ? currentPeople : people;
-        int onsite = reservation.getOnsitePeopleOrZero();
 
         List<BgmAgitRoom> currentRooms = sortedRooms(reservation.getRoomList());
         List<Long> currentIds = idsOf(currentRooms);
@@ -127,9 +125,8 @@ public class BgmAgitReservationChangeServiceImpl implements BgmAgitReservationCh
         int addPeople = Math.max(target - currentPeople, 0);
         int addAmount = approved && unitPrice != null ? addPeople * unitPrice : 0;
         int reducePeople = Math.max(currentPeople - target, 0);
-        ReservationChangePolicy.Reduction split = ReservationChangePolicy.splitReduction(reducePeople, onsite);
         int refundAmount = approved && unitPrice != null
-                ? Math.min(ReservationRefundPolicy.refundAmount(split.refundPeople() * unitPrice, rate), paidRemaining)
+                ? Math.min(ReservationRefundPolicy.refundAmount(reducePeople * unitPrice, rate), paidRemaining)
                 : 0;
 
         return ReservationChangeOptionsResponse.builder()
@@ -139,7 +136,6 @@ public class BgmAgitReservationChangeServiceImpl implements BgmAgitReservationCh
                 .startTime(formatTime(reservation.getBgmAgitReservationStartTime()))
                 .endTime(formatTime(reservation.getBgmAgitReservationEndTime()))
                 .currentPeople(currentPeople)
-                .onsitePeople(onsite)
                 .currentRoomIds(currentIds)
                 .currentRoomNames(reservation.getRoomNames())
                 .people(target)
@@ -156,7 +152,7 @@ public class BgmAgitReservationChangeServiceImpl implements BgmAgitReservationCh
                 .addPeople(addPeople)
                 .addAmount(addAmount)
                 .reducePeople(reducePeople)
-                .refundPeople(split.refundPeople())
+                .refundPeople(approved ? reducePeople : 0)
                 .refundAmount(Math.max(refundAmount, 0))
                 .build();
     }
@@ -171,10 +167,6 @@ public class BgmAgitReservationChangeServiceImpl implements BgmAgitReservationCh
         boolean owner = Objects.equals(reservation.getMemberId(), userId);
         if (!admin && !owner) {
             throw new ReservationConflictException("본인의 예약만 변경할 수 있습니다.");
-        }
-        boolean onsite = Boolean.TRUE.equals(request.getOnsite());
-        if (onsite && !admin) {
-            throw new ReservationConflictException("현장 결제 처리는 관리자만 할 수 있습니다.");
         }
 
         LocalDateTime now = LocalDateTime.now(KST);
@@ -225,10 +217,11 @@ public class BgmAgitReservationChangeServiceImpl implements BgmAgitReservationCh
         String beforeNames = reservation.getRoomNames();
 
         // 확정 예약 증원 → 추가결제. 결제 승인 순간 반영하므로 여기서는 예약을 건드리지 않는다
-        if (!flat && approved && delta > 0 && !onsite) {
+        // 현장 결제 처리는 두지 않는다(사장님 결정) — 늘어난 인원은 언제나 온라인 추가결제로 받는다
+        if (!flat && approved && delta > 0) {
             if (!owner) {
                 // 추가결제 주문은 결제할 사람(예약자) 명의로만 만든다
-                throw new ReservationConflictException("관리자는 현장 결제로 처리해 주세요.");
+                throw new ReservationConflictException("인원 추가는 예약자가 예약내역에서 직접 추가결제해야 합니다.");
             }
             Integer unitPrice = originalUnitPrice(reservationId);
             if (unitPrice == null) {
@@ -256,26 +249,7 @@ public class BgmAgitReservationChangeServiceImpl implements BgmAgitReservationCh
         // DB 변경을 전부 먼저 하고 flush 한 뒤 토스 환불을 <b>마지막</b>에 부른다.
         // 환불을 먼저 하면 뒤의 쓰기(방 교체·이력 INSERT)가 실패할 때 돈은 나갔는데 예약·결제행은 롤백되고,
         // 같은 요청을 다시 보내면 롤백돼 부푼 로컬 잔액 기준으로 또 환불된다.
-        ReservationChangeSettleType settleType = ReservationChangeSettleType.NONE;
-        int diffAmount = 0;
-        int onsiteAdded = 0;
-        int onsiteDeducted = 0;
-        int refundPeople = 0;
-
-        if (delta > 0 && onsite && !flat) {
-            // 관리자 현장 결제 처리. 미결제 예약이어도 현장 몫은 온라인 결제에서 빠진다(주문·승인 재대조가 payablePeople 기준)
-            reservation.addOnsitePeople(delta);
-            onsiteAdded = delta;
-            settleType = ReservationChangeSettleType.ONSITE;
-            Integer unitPrice = approved ? originalUnitPrice(reservationId) : null;
-            diffAmount = unitPrice == null ? 0 : delta * unitPrice;
-        } else if (delta < 0 && !flat) {
-            ReservationChangePolicy.Reduction split =
-                    ReservationChangePolicy.splitReduction(-delta, reservation.getOnsitePeopleOrZero());
-            reservation.deductOnsitePeople(split.onsiteDeduct());
-            onsiteDeducted = split.onsiteDeduct();
-            refundPeople = approved ? split.refundPeople() : 0;
-        }
+        int refundPeople = delta < 0 && !flat && approved ? -delta : 0;
 
         if (roomChanged) {
             reservation.replaceRooms(newRooms);
@@ -289,7 +263,7 @@ public class BgmAgitReservationChangeServiceImpl implements BgmAgitReservationCh
         // saveAndFlush 로 방 교체(orphan DELETE/INSERT)·인원·이력까지 여기서 내보내 제약조건 오류를 돈이 움직이기 전에 드러낸다
         BgmAgitReservationChange history = bgmAgitReservationChangeRepository.saveAndFlush(new BgmAgitReservationChange(
                 reservationId, userId, currentPeople, newPeople, currentIds, requestedIds,
-                diffAmount, ReservationChangeStatus.APPLIED, settleType));
+                0, ReservationChangeStatus.APPLIED, ReservationChangeSettleType.NONE));
 
         PaymentRefundResult refund = null;
         if (refundPeople > 0) {
@@ -317,12 +291,6 @@ public class BgmAgitReservationChangeServiceImpl implements BgmAgitReservationCh
                 message.append(" 환불 규정에 따라 환불 금액은 없습니다.");
             }
         }
-        if (onsiteDeducted > 0) {
-            message.append(" 현장 결제 인원 ").append(onsiteDeducted).append("명은 환불 없이 차감되었습니다.");
-        }
-        if (onsiteAdded > 0) {
-            message.append(" 추가 인원 ").append(onsiteAdded).append("명은 현장에서 결제해 주세요.");
-        }
         if (!approved && !flat && delta != 0) {
             message.append(" 결제 시 변경된 인원으로 금액이 계산됩니다.");
         }
@@ -338,7 +306,7 @@ public class BgmAgitReservationChangeServiceImpl implements BgmAgitReservationCh
                     "예약 인원은 줄일 수만 있습니다. 인원을 늘리려면 예약내역의 [예약 변경]을 이용해 주세요.");
         }
         BgmAgitReservationChangeRequest request = new BgmAgitReservationChangeRequest(
-                reservationId, people, reservation.getRoomIds(), false);
+                reservationId, people, reservation.getRoomIds());
         ReservationChangeResponse response = change(userId, roles, request);
         return new ApiResponse(200, true, response.getMessage());
     }

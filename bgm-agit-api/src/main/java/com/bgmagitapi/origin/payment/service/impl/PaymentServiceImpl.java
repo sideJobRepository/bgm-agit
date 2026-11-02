@@ -573,8 +573,7 @@ public class PaymentServiceImpl implements PaymentService {
         if (reservation == null) {
             return;
         }
-        // 현장 결제 인원(관리자 처리)은 온라인으로 받지 않는 몫이라 빼고 계산한다(주문 생성도 같은 기준)
-        Integer people = reservation.getPayablePeople();
+        Integer people = reservation.getBgmAgitReservationPeople();
         LocalDate useDate = reservation.getBgmAgitReservationStartDate();
         // 월간패스 할인은 지금의 패스 여부로 다시 판정하지 않고 주문 때 박아 둔 값을 뺀다.
         // 주문 뒤 1일 초기화·관리자 해제로 패스가 꺼지면 안내받은 금액으로 결제하려는 손님이 승인에서 막힌다

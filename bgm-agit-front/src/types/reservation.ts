@@ -138,10 +138,7 @@ export type Reservation = {
   unitPrice?: number | null;
   peopleReducible?: boolean;
   // 이 조회자가 지금 예약 변경(룸·인원)을 할 수 있는지. [예약 변경] 버튼 노출은 이것만 따른다
-  changeable?: boolean;
-  // 관리자가 현장 결제로 늘린 인원(현장에서 받는다)
-  onsitePeople?: number | null;
-  // 정산된 결제 영수증 전부(오래된 순). 첫 번째가 원결제, 그 뒤는 변경 추가결제
+  changeable?: boolean;  // 정산된 결제 영수증 전부(오래된 순). 첫 번째가 원결제, 그 뒤는 변경 추가결제
   receiptUrls?: string[] | null;
   // 손님 변경 마감(이용 시작 24시간 전) 'yyyy-MM-dd HH:mm'
   deadline?: string | null;
@@ -168,10 +165,7 @@ export type ReservationBoardItem = {
   endTime: string;
   // 자정 기준 분값. 하루 경계(오전 10시) 이전 슬롯은 +1440 되어 있음 (24시간 영업 대응)
   startMinutes: number;
-  endMinutes: number;
-  // 관리자가 현장 결제로 늘린 인원
-  onsitePeople?: number | null;
-};
+  endMinutes: number;};
 
 export type ReservationBoardRoom = {
   roomName: string;
@@ -237,7 +231,6 @@ export type ReservationChangeOptions = {
   startTime: string;
   endTime: string;
   currentPeople: number;
-  onsitePeople: number;
   currentRoomIds: number[];
   currentRoomNames: string;
   // 이번 조회 기준 인원(rooms·금액이 이 인원 기준)
@@ -258,7 +251,7 @@ export type ReservationChangeOptions = {
   addPeople: number;
   addAmount: number;
   reducePeople: number;
-  // 감소 인원 중 환불 대상(현장 결제 인원은 먼저 빠진다)
+  // 감소 인원 중 환불 대상(확정 예약이면 감소 인원 전부)
   refundPeople: number;
   refundAmount: number;
 };
@@ -268,7 +261,6 @@ export type ReservationChangeRequest = {
   reservationId: number;
   people: number;
   roomIds: number[];
-  onsite?: boolean;
 };
 
 export type ReservationChangeResponse = {

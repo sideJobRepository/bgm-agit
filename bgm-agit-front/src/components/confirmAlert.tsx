@@ -228,11 +228,10 @@ interface ReservationChangeProps {
   /** 버튼을 누를 때 받아 둔 첫 조회 결과(현재 인원 기준) */
   initialOptions: ReservationChangeOptions;
   /**
-   * 관리자 여부. react-confirm-alert 는 별도 React 루트에 그려서 recoil 을 읽을 수 없어 호출부가 넘긴다.
-   * 관리자면 증원을 [현장 결제로 처리] 할 수 있다(관리자는 결제창을 쓰지 않는다)
+   * 관리자 여부(마감 안내 문구용). react-confirm-alert 는 별도 React 루트에 그려서 recoil 을 읽을 수 없어 호출부가 넘긴다
    */
   isAdmin: boolean;
-  onConfirm: (values: { people: number; roomIds: number[]; onsite: boolean }) => void;
+  onConfirm: (values: { people: number; roomIds: number[] }) => void;
 }
 
 const roomKey = (roomIds: number[]) => [...roomIds].sort((a, b) => a - b).join(',');
@@ -251,8 +250,6 @@ function ReservationChangeContent({
   const [selectedKey, setSelectedKey] = useState<string | null>(
     roomKey(initialOptions.currentRoomIds)
   );
-  // 관리자는 결제창을 쓰지 않으므로 증원 기본값을 현장 결제로 둔다
-  const [onsite, setOnsite] = useState(isAdmin);
   // 스테퍼를 빠르게 누르면 응답 순서가 뒤바뀔 수 있어 마지막 요청 번호만 반영한다
   const requestSeq = useRef(0);
   // 마지막으로 성공한 응답. 재조회가 실패하면 화면 인원을 이 기준으로 되돌린다(안 그러면 '불러오는 중'에 멈춘다)
@@ -299,11 +296,8 @@ function ReservationChangeContent({
   const roomChanged =
     selectedRoom != null && roomKey(selectedRoom.roomIds) !== roomKey(options.currentRoomIds);
   const nothingChanged = diff === 0 && !roomChanged;
-  // 현장 결제는 확정(결제완료) 예약을 관리자가 늘릴 때만 의미가 있다
-  // 마작 대탁(정액)은 인원이 금액과 무관하다 — 서버도 결제·환불·현장 인원 없이 기록만 고친다
-  const showOnsite = isAdmin && options.approved && !options.flat && diff > 0;
-  const useOnsite = showOnsite && onsite;
-  const needsPayment = options.approved && !options.flat && diff > 0 && !useOnsite;
+  // 마작 대탁(정액)은 인원이 금액과 무관하다 — 서버도 결제·환불 없이 기록만 고친다
+  const needsPayment = options.approved && !options.flat && diff > 0;
   const canSubmit = synced && options.changeable && selectedRoom != null && !nothingChanged;
 
   function amountNotice() {
@@ -314,9 +308,6 @@ function ReservationChangeContent({
     if (diff > 0) {
       if (!options.approved) {
         return <>아직 결제 전이라 결제할 금액이 {people}명 기준으로 바뀝니다.</>;
-      }
-      if (useOnsite) {
-        return <>추가 {diff}명은 현장에서 결제받습니다. 결제 없이 바로 변경됩니다.</>;
       }
       return (
         <>
@@ -332,15 +323,8 @@ function ReservationChangeContent({
       if (!options.approved) {
         return <>아직 결제 전이라 환불 없이 결제할 금액만 줄어듭니다.</>;
       }
-      const onsiteOnly = options.reducePeople - options.refundPeople;
       return (
         <>
-          {onsiteOnly > 0 && (
-            <>
-              현장 결제 인원 {onsiteOnly}명은 환불 없이 먼저 빠집니다.
-              <br />
-            </>
-          )}
           {options.refundPeople > 0 ? (
             options.refundAmount > 0 ? (
               <>
@@ -374,7 +358,6 @@ function ReservationChangeContent({
           </li>
           <li>
             현재 {options.currentRoomNames} · {options.currentPeople}명
-            {options.onsitePeople > 0 && ` (현장 결제 ${options.onsitePeople}명)`}
           </li>
         </SummaryList>
         <HelperText style={{ textAlign: 'left' }}>
@@ -453,17 +436,6 @@ function ReservationChangeContent({
         )}
       </FieldGroup>
 
-      {showOnsite && (
-        <FieldGroup>
-          <label
-            style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 600 }}
-          >
-            <input type="checkbox" checked={onsite} onChange={e => setOnsite(e.target.checked)} />
-            현장 결제로 처리 (결제 없이 바로 변경)
-          </label>
-        </FieldGroup>
-      )}
-
       <NoticeMessage>
         {!options.changeable && options.message ? options.message : amountNotice()}
       </NoticeMessage>
@@ -473,7 +445,7 @@ function ReservationChangeContent({
           disabled={!canSubmit}
           onClick={() => {
             if (!selectedRoom) return;
-            onConfirm({ people, roomIds: selectedRoom.roomIds, onsite: useOnsite });
+            onConfirm({ people, roomIds: selectedRoom.roomIds });
             onClose();
           }}
         >

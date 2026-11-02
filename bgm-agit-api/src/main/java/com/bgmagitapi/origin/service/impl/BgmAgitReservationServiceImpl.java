@@ -502,13 +502,9 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
         }
         // 인원 범위는 등록·인원 변경 때 이미 검증했다. 여기서 지금의 방 인원 범위로 다시 보면
         // 관리자가 최소 인원을 올린 뒤 그 전에 들어온 대기 예약이 영영 결제하지 못하게 된다
-        if (reservation.getBgmAgitReservationPeople() == null || reservation.getBgmAgitReservationPeople() < 1) {
+        Integer people = reservation.getBgmAgitReservationPeople();
+        if (people == null || people < 1) {
             throw new ReservationConflictException("예약 인원 정보가 없어 결제할 수 없습니다. 매장으로 문의해 주세요.");
-        }
-        // 관리자가 현장 결제로 처리한 인원은 온라인으로 받지 않는다(승인 재대조도 같은 기준)
-        Integer people = reservation.getPayablePeople();
-        if (people < 1) {
-            throw new ReservationConflictException("온라인으로 결제할 인원이 없습니다. 매장으로 문의해 주세요.");
         }
 
         LocalDate reservationDate = reservation.getBgmAgitReservationStartDate();
@@ -625,7 +621,6 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
             dto.setChangeable(changeable);
             // 구 프론트 호환: 인원 변경 버튼 노출도 같은 값
             dto.setPeopleReducible(changeable);
-            dto.setOnsitePeople(reservation.getOnsitePeopleOrZero());
             dto.setReceiptUrls(receiptUrlLists.getOrDefault(reservationId, List.of()));
             dto.setDeadline(ReservationChangePolicy.formatDeadline(useStartAt));
             content.add(dto);
@@ -703,8 +698,7 @@ public class BgmAgitReservationServiceImpl implements BgmAgitReservationService 
                     formatTime(reservation.getBgmAgitReservationStartTime()),
                     formatTime(reservation.getBgmAgitReservationEndTime()),
                     startMinutes,
-                    endMinutes,
-                    reservation.getOnsitePeopleOrZero()
+                    endMinutes
             );
 
             roomsOfReservation.forEach((roomKey, category) -> {

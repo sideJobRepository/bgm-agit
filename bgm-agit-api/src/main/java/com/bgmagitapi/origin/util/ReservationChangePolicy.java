@@ -52,18 +52,4 @@ public final class ReservationChangePolicy {
         }
         return null;
     }
-
-    /**
-     * 인원 감소분을 현장 결제 인원과 환불 대상으로 나눈다. 현장 결제 인원부터 뺀다 —
-     * 돈을 받지 않은(현장에서 받을) 인원까지 환불하면 받지도 않은 돈을 돌려주게 된다.
-     */
-    public static Reduction splitReduction(int reducePeople, int onsitePeople) {
-        int reduce = Math.max(reducePeople, 0);
-        int onsiteDeduct = Math.min(Math.max(onsitePeople, 0), reduce);
-        return new Reduction(onsiteDeduct, reduce - onsiteDeduct);
-    }
-
-    /** onsiteDeduct = 현장 결제 인원에서 빼는 수(환불 없음), refundPeople = 부분환불 대상 인원 */
-    public record Reduction(int onsiteDeduct, int refundPeople) {
-    }
 }

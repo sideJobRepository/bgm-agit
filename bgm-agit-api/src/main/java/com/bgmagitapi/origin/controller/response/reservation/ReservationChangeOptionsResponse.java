@@ -23,7 +23,6 @@ public class ReservationChangeOptionsResponse {
     private String endTime;
 
     private int currentPeople;
-    private int onsitePeople;
     private List<Long> currentRoomIds;
     private String currentRoomNames;
 
@@ -37,7 +36,7 @@ public class ReservationChangeOptionsResponse {
     private Integer unitPrice;
     // 결제 확정 예약인지
     private boolean approved;
-    // 마작 대탁(정액)인지. 인원이 금액과 무관해 추가결제·환불·현장 결제 안내를 띄우지 않는다(관리자 기록 정정만)
+    // 마작 대탁(정액)인지. 인원이 금액과 무관해 추가결제·환불 안내를 띄우지 않는다(관리자 기록 정정만)
     private boolean flat;
     // 지금 기준 환불 비율(%)
     private int refundRate;
@@ -51,11 +50,11 @@ public class ReservationChangeOptionsResponse {
     // people 을 수용하고 그 시간대에 빈 방 집합만. current 먼저, 그다음 라벨순
     private List<RoomOption> rooms;
 
-    // 확정 예약 증원 시 추가결제(현장 결제 아님 기준)
+    // 확정 예약 증원 시 추가결제액
     private int addPeople;
     private int addAmount;
 
-    // 감소 인원, 그중 환불 대상(현장 결제 인원 제외), 예상 환불액(비율 적용, 결제 잔액으로 클램프)
+    // 감소 인원, 그중 환불 대상(확정 예약이면 감소 인원 전부), 예상 환불액(비율 적용, 결제 잔액으로 클램프)
     private int reducePeople;
     private int refundPeople;
     private int refundAmount;

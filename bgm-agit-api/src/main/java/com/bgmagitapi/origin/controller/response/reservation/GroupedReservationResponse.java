@@ -56,8 +56,6 @@ public class GroupedReservationResponse {
      * 관리자는 시작 전까지, 마작 대탁은 관리자만). 판정은 ReservationChangePolicy.blockReason 하나다.
      */
     private boolean changeable;
-    // 현장 결제 인원(관리자가 증원을 현장 결제로 처리한 인원). 없으면 0
-    private int onsitePeople;
     // 정산된 결제 영수증 전부(오래된 순 — 원결제, 추가결제 1, 2 …). receiptUrl 은 그중 첫 번째(원결제)
     private List<String> receiptUrls = List.of();
     // 손님 변경 마감(이용 시작 − 24시간) "yyyy-MM-dd HH:mm"

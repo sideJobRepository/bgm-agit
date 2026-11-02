@@ -221,7 +221,7 @@ export default function ReservationList() {
 
   function submitChange(
     item: Reservation,
-    values: { people: number; roomIds: number[]; onsite: boolean }
+    values: { people: number; roomIds: number[] }
   ) {
     update<ReservationChangeRequest, ReservationChangeResponse>({
       url: '/bgm-agit/reservation/change',
@@ -229,8 +229,6 @@ export default function ReservationList() {
         reservationId: item.reservationId,
         people: values.people,
         roomIds: values.roomIds,
-        // 손님이 onsite 를 보내면 서버가 거절하므로 관리자일 때만 싣는다
-        ...(isAdmin && values.onsite ? { onsite: true } : {}),
       },
       ignoreHttpError: true,
       onSuccess: res => {
@@ -412,9 +410,7 @@ export default function ReservationList() {
                     <Row>
                       <span>예약 인원</span>
                       <span>
-                        {item.reservationPeople != null ? `${item.reservationPeople}명` : '-'}
-                        {(item.onsitePeople ?? 0) > 0 && ` (현장 결제 ${item.onsitePeople}명)`}
-                      </span>
+                        {item.reservationPeople != null ? `${item.reservationPeople}명` : '-'}                      </span>
                     </Row>
                     <Row>
                       <span>연락처</span>
