@@ -619,7 +619,7 @@ kml:
    - URL 매핑만으로 못 막는 경우가 있다. 같은 엔드포인트 안의 관리자 전용 동작은 **서비스단에서 걸러야 한다**. 프론트 조건부 렌더링은 인가가 아니다
    - **주소당 역할 하나만 건다.** 권한이 계층(관리자 > 멘토 > 유저)이라 유저만 걸면 위 역할도 통과한다. 매핑 로딩(`BgmAgitUrlRoleMapping`)이 주소당 하나만 남겨서, 1·2·4 를 같이 넣었던 `/reservation/people` 이 유저 403 이 났다(2026-10-20 수정)
    - 실제 매핑(2026-10-20 운영 확인): `POST·PUT·DELETE /bgm-agit/reservation`·`GET /reservation/detail`·`PUT /reservation/people` → **2(유저)**, `PUT /reservation/admin` → **1(관리자)**. 와일드카드 행은 없다
-   - **`GET /bgm-agit/reservation/board` 는 매핑이 없다**(=기본 permit). 회원 연락처가 나가는 API 인데 서비스단 `isAdmin(roles)` 검사 하나로만 막히고 있다. 위 현황판 절의 "URL 레벨 ADMIN 매핑" 은 아직 실제로 안 들어가 있으니 넣을 것
+   - `GET /bgm-agit/reservation/board` → **1(관리자)** 매핑을 2026-11-02 운영·스테이징에 넣었다(그 전엔 매핑 없이 서비스단 `isAdmin` 검사만 있었다). 반영은 다음 앱 재시작부터
 6. **DB 에 쓰는 작업은 포트부터 확인** — 스테이징·운영이 같은 호스트이고 **33060 = 운영, 33070 = 스테이징**. 로컬 `.env` 가 운영을 가리킬 때가 있다
 
 ## TODO 후보
