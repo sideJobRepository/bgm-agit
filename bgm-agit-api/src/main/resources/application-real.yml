@@ -77,6 +77,10 @@ biztalk:
   reservation-payment-live: true
   # 전액결제 개정 템플릿(bgmagit-res-payment-2). 카카오 검수 통과 후 true 로 전환
   reservation-payment-v2: false
+  # 시계탑 캐릭터 안내 알림톡. 운영만 true(로컬·스테이징에서 마도서 시험할 때 실제 회원에게 나가지 않게)
+  clocktower-role-enabled: true
+  # 발송 결과 조회 스케줄러. 운영만 true — 결과 버퍼가 계정 공용이라 다른 환경이 돌면 운영 결과를 가로챈다
+  result-sync-enabled: true
 
 server:
   tomcat:

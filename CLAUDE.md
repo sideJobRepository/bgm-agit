@@ -411,6 +411,7 @@ kml:
 - 템플릿 코드 상수 `util/AlimtalkTemplate.java` / 메시지 빌더 `util/AlimtalkUtils.java`(점수·전화번호 포맷터도 여기)
 - 발송 `service/BgmAgitBizTalkSandService(.Impl)` — `sendTalk(...)` 공통 + 이력 `BgmAgitBiztalkSendHistory`
 - 리스너 `event/BizTalkEventListener` — `@Async("bizTalkExecutor")` + `AFTER_COMMIT`. catch에서 1회 재시도(부분 실패 시 중복 발송 가능)
+- **발송 결과 조회(`BgmAgitBiztalkResultSyncScheduler`)는 운영만** — `biztalk.result-sync-enabled`(기본 false, `application-real.yml` 만 true, 2026-11-23). `getResultAll` 은 계정 결과 버퍼를 소비하는데 운영·스테이징이 같은 계정이라, 스테이징이 돌면 운영 결과를 가져가 버리고 운영 이력이 `PENDING` 으로 남았다. 로컬·스테이징에서 보낸 건은 `PENDING` 그대로(정상)
 
 ### 이벤트 종류
 `MemberJoinedEvent`(발행 주석처리) / `ReservationWaitingEvent`·`ReservationTalkEvent` / `InquiryEvent` / `LecturePostEvent`·`MyAcademyApprovalEvent`·`MyAcademyCancelEvent` / `ReviewPostEvents` / `MatchRecordRegisteredEvent`
@@ -599,7 +600,7 @@ kml:
 | 주기 | 클래스 | 하는 일 |
 |---|---|---|
 | 매분 | `kml/tournament/.../TournamentScheduler` | 종료시각 지난 대회 CLOSED 전환 |
-| 5분 | `BgmAgitBiztalkResultSyncScheduler` | 알림톡 발송 결과 동기화 |
+| 5분 | `BgmAgitBiztalkResultSyncScheduler` | 알림톡 발송 결과 동기화(운영만) |
 | 매시 정각 | `KmlSyncScheduler` | `kml_synk='N'` 회원 재조회·등록 |
 | 매시 30분 | `KmlMatchsRetryScheduler` | KML 기록 전송 실패분 재시도 |
 | 09:00 | `BgmAgitAdminReservationNotifyScheduler` | 관리자 당일 예약 알림톡 |

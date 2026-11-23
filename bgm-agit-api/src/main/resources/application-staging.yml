@@ -74,6 +74,10 @@ biztalk:
   reservation-payment-live: true
   # 전액결제 개정 템플릿(bgmagit-res-payment-2). 카카오 검수 통과 후 true 로 전환
   reservation-payment-v2: false
+  # 시계탑 캐릭터 안내 알림톡 미발송(운영만 true)
+  clocktower-role-enabled: false
+  # 발송 결과 조회 안 함(운영만 true). 여기서 보낸 건은 이력이 PENDING 으로 남는다
+  result-sync-enabled: false
 
 server:
   tomcat:

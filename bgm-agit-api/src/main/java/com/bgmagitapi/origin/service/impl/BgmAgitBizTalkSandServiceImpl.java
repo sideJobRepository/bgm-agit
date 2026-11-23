@@ -86,6 +86,10 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
     private boolean reservationFullPaymentTalkLive;
 
 
+    // 시계탑 캐릭터 안내 알림톡 발송 스위치. 운영(real)만 true, 값이 없으면 false
+    @Value("${biztalk.clocktower-role-enabled:false}")
+    private boolean clockTowerRoleTalkEnabled;
+
     @Value("${biztalk.sender-key}")
     private String senderKey;
     
@@ -429,6 +433,12 @@ public class BgmAgitBizTalkSandServiceImpl implements BgmAgitBizTalkSandService 
      */
     @Override
     public void sendClockTowerRole(ClockTowerRoleTalkEvent event) {
+        // 로컬·스테이징에서 마도서를 시험하면 실제 회원 휴대폰으로 캐릭터 안내가 나간다. 운영만 보낸다
+        if (!clockTowerRoleTalkEnabled) {
+            log.info("[ALIMTALK] 시계탑 캐릭터 안내 꺼짐(biztalk.clocktower-role-enabled=false) sessionId={} 대상={}명",
+                    event.getSessionId(), event.getTargets().size());
+            return;
+        }
         Map<Long, BgmAgitMember> members = bgmAgitMemberRepository.findAllById(
                         event.getTargets().stream().map(ClockTowerRoleTalkEvent.Target::memberId).toList())
                 .stream()
